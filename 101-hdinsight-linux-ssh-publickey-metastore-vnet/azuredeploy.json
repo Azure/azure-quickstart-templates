@@ -1,30 +1,31 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "clusterName": {
       "type": "string",
+      "defaultValue": "[concat('hdi-', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the cluster to create."
       }
     },
     "clusterVersion": {
       "type": "string",
-      "defaultValue": "3.2",
+      "defaultValue": "3.6",
       "metadata": {
         "description": "The HDInsight version to deploy."
       }
     },
     "headNodeSize": {
       "type": "string",
-      "defaultValue": "Standard_D3",
+      "defaultValue": "Standard_D12_V2",
       "metadata": {
         "description": "The VM size of the head nodes."
       }
     },
     "workerNodeSize": {
       "type": "string",
-      "defaultValue": "Standard_D3",
+      "defaultValue": "Standard_D13_V2",
       "metadata": {
         "description": "The VM size of the worker nodes."
       }
@@ -38,7 +39,6 @@
     },
     "clusterLoginUserName": {
       "type": "string",
-      "defaultValue": "admin",
       "metadata": {
         "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
       }
@@ -79,10 +79,16 @@
         "description": "The name of the storage container to use."
       }
     },
+    "existingHiveMetastoreServerResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource group name where the existing metastore SQL server is located."
+      }
+    },
     "existingHiveMetastoreServerName": {
       "type": "string",
       "metadata": {
-        "description": "The fully-qualified domain name of the SQL server to use for the external Hive metastore."
+        "description": "The fully-qualified domain name (FQDN) of the SQL server to use for the external Hive metastore."
       }
     },
     "existingHiveMetastoreDatabaseName": {
@@ -120,18 +126,21 @@
       "metadata": {
         "description": "The existing virtual network subnet name."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
-  },
-  "variables": {
-    "defaultApiVersion": "2015-06-15",
-    "clusterApiVersion": "2015-03-01-preview"
   },
   "resources": [
     {
       "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-03-01-preview",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-06-01-preview",
       "properties": {
         "clusterVersion": "[parameters('clusterVersion')]",
         "osType": "Linux",
@@ -145,7 +154,7 @@
             },
             "hive-site": {
               "javax.jdo.option.ConnectionDriverName": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
-              "javax.jdo.option.ConnectionURL": "[concat('jdbc:sqlserver://',parameters('existingHiveMetastoreServerName'),';database=',parameters('existingHiveMetastoreDatabaseName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
+              "javax.jdo.option.ConnectionURL": "[concat('jdbc:sqlserver://', reference(resourceId(parameters('existingHiveMetastoreServerResourceGroupName'), 'Microsoft.Sql/servers',parameters('existingHiveMetastoreServerName')), '2018-06-01-preview').fullyQualifiedDomainName, ';database=',parameters('existingHiveMetastoreDatabaseName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
               "javax.jdo.option.ConnectionUserName": "[parameters('existingHiveMetastoreUsername')]",
               "javax.jdo.option.ConnectionPassword": "[parameters('existingHiveMetastorePassword')]"
             },
@@ -154,18 +163,19 @@
               "hive_database_name": "[parameters('existingHiveMetastoreDatabaseName')]",
               "hive_database_type": "mssql",
               "hive_existing_mssql_server_database": "[parameters('existingHiveMetastoreDatabaseName')]",
-              "hive_existing_mssql_server_host": "[parameters('existingHiveMetastoreServerName')]",
-              "hive_hostname": "[parameters('existingHiveMetastoreServerName')]"
+              "hive_existing_mssql_server_host": "[reference(resourceId(parameters('existingHiveMetastoreServerResourceGroupName'),'Microsoft.Sql/servers',parameters('existingHiveMetastoreServerName')), '2018-06-01-preview').fullyQualifiedDomainName]",
+              "hive_hostname": "[reference(resourceId(parameters('existingHiveMetastoreServerResourceGroupName'),'Microsoft.Sql/servers',parameters('existingHiveMetastoreServerName')), '2018-06-01-preview').fullyQualifiedDomainName]"
+
             }
           }
         },
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(concat(reference(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts/', parameters('existingClusterStorageAccountName')), variables('defaultApiVersion')).primaryEndpoints.blob),'https:',''),'/','')]",
+              "name": "[replace(replace(concat(reference(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts/', parameters('existingClusterStorageAccountName')), '2018-02-01').primaryEndpoints.blob),'https:',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('newOrExistingClusterStorageContainerName')]",
-              "key": "[listKeys(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('existingClusterStorageAccountName')), variables('defaultApiVersion')).key1]"
+              "key": "[listKeys(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('existingClusterStorageAccountName')), '2018-02-01').keys[0].value]"
             }
           ]
         },
@@ -173,7 +183,7 @@
           "roles": [
             {
               "name": "headnode",
-              "targetInstanceCount": "2",
+              "targetInstanceCount": 2,
               "hardwareProfile": {
                 "vmSize": "[parameters('headNodeSize')]"
               },
@@ -202,7 +212,7 @@
               },
               "virtualNetworkProfile": {
                 "id": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName'))]",
-                "subnet": "[concat(resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName')), '/subnets/', parameters('existingVirtualNetworkSubnetName'))]"
+                "subnet": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingVirtualNetworkSubnetName'))]"
               }
             }
           ]

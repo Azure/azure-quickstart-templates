@@ -1,18 +1,28 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.1",
   "parameters": {
     "adminUsername": {
       "type": "string",
-      "defaultValue": "azureuser",
       "metadata": {
         "description": "Admin user name for the VMs"
       }
     },
-    "adminPassword": {
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
       "type": "securestring",
       "metadata": {
-        "description": "Admin password for the VMs (A mix of upper and lower-case characters, digits and symbols)"
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     },
     "dbUsername": {
@@ -243,7 +253,21 @@
         "Security / Compliance",
         "Storage"
       ]
-    }
+    },
+     "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+          },
+          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudera-director-on-centos/"
+      },
+      "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+          },
+          "defaultValue": ""
+      }
   },
   "variables": {
     "version":{
@@ -254,10 +278,9 @@
     },
     "addressPrefix":"[parameters('addressPrefix')]",
     "subnetPrefix":"[parameters('subnetPrefix')]",
-    "scriptsUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudera-director-on-centos",
-    "share-resourcesUri": "[concat(variables('scriptsUri'), '/shared-resources-', parameters('vnetNewOrExisting'), '-vnet.json')]",
-    "vnetUri": "[concat(variables('scriptsUri'), '/update-', parameters('vnetNewOrExisting'), '-vnet-dns.json')]",
-    "networkRestartUri": "[concat(variables('scriptsUri'), '/network-restart-', parameters('vnetNewOrExisting'), '-vnet.json')]",
+    "share-resourcesUri": "[uri(parameters('_artifactsLocation'), concat('shared-resources-', parameters('vnetNewOrExisting'), '-vnet.json', parameters('_artifactsLocationSasToken')))]",
+    "vnetUri": "[uri(parameters('_artifactsLocation'), concat('update-', parameters('vnetNewOrExisting'), '-vnet-dns.json', parameters('_artifactsLocationSasToken')))]",
+    "networkRestartUri": "[uri(parameters('_artifactsLocation'), concat('network-restart-', parameters('vnetNewOrExisting'), '-vnet.json', parameters('_artifactsLocationSasToken')))]",
     "storageAccount": {
       "prefix": "[concat(uniquestring(resourceGroup().id),'storage')]",
       "type": "Premium_LRS"
@@ -299,7 +322,8 @@
     "vmSpec": {
       "vmSize": "[parameters('directorSize')]",
       "adminUsername": "[parameters('adminUsername')]",
-      "adminPassword": "[parameters('adminPassword')]",
+      "adminPasswordOrKey": "[parameters('adminPasswordOrKey')]",
+      "authenticationType": "[parameters('authenticationType')]",
       "dbUsername": "[parameters('dbUsername')]",
       "dbPassword": "[parameters('dbPassword')]"
     },
@@ -349,7 +373,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/director-node-and-shared-resources.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('director-node-and-shared-resources.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "[variables('version').contentVersion]"
         },
         "parameters": {
@@ -365,8 +389,11 @@
           "dnsNameSuffix": {
             "value": "[parameters('dnsNameSuffix')]"
           },
-          "scriptsUri": {
-            "value": "[variables('scriptsUri')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           },
           "storageAccount": {
             "value": "[variables('storageAccount')]"
@@ -429,8 +456,11 @@
           "vmName":{
             "value": "[parameters('dnsNamePrefix')]"
           },
-          "scriptsUri": {
-            "value": "[variables('scriptsUri')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           },
           "dnsServerIPAddress": {
             "value": "[parameters('directorServerIPAddress')]"
@@ -449,7 +479,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/prepare-conf-launch-cluster.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('prepare-conf-launch-cluster.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "[variables('version').contentVersion]"
         },
         "parameters": {
@@ -459,8 +489,11 @@
           "vmName":{
             "value": "[parameters('dnsNamePrefix')]"
           },
-          "scriptsUri": {
-            "value": "[variables('scriptsUri')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           },
           "clusterParameters":{
             "value": "[variables('clusterParameters')]"

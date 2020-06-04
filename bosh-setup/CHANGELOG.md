@@ -1,3 +1,61 @@
+# v6.0.0 (2018-11-15)
+
+- Upgrade Azure CPI version to v35.5.0. Please see new features in [bosh-azure-cpi-release v35.5.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.5.0)
+  - Azure CPI v35.5.0 doesn't require the stemcell container to be public
+- Use cf-deployment [6.0.0](https://github.com/cloudfoundry/cf-deployment/tree/v6.0.0)
+
+# v5.0.0 (2018-08-31)
+
+- Upgrade Azure CPI version to v35.4.0. Please see new features in [bosh-azure-cpi-release v35.4.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.4.0)
+- Use cf-deployment [v4.0.0](https://github.com/cloudfoundry/cf-deployment/tree/v4.0.0)
+- Bump bosh-deployment
+- Use Azure Storage as blobstore in Azure Stack
+- Bump bosh-cli to 5.1.2
+
+# v4.1.0 (2018-08-02)
+
+- Use cf-deployment [v3.0.0](https://github.com/cloudfoundry/cf-deployment/tree/v3.0.0)
+- Update runtime-config for BOSH DNS
+- Deploy UAA and credhub in BOSH director
+- Use General Purpose v2 storage account
+- Support ubuntu-xenial stemcell
+- Add load balancing rule for UDP port for standard LB
+- Use `Standard_D11_v2` for compilation VMs
+
+# v4.0.0 (2018-06-23)
+
+- Use cf-deployment [v2.2.0](https://github.com/cloudfoundry/cf-deployment/tree/v2.2.0)
+- Use bosh-deployment [v1.0.0](https://github.com/cloudfoundry/bosh-deployment/tree/v1.0.0)
+- Use standard load balancer by default
+- Add a new parameter to specify cloud foundry system domain
+- Use Azure CLI v2 when uploading artifacts in Azure China
+
+# v3.10.0 (2018-06-13)
+
+- Upgrade Azure CPI version to v35.3.0. Please see new features in [bosh-azure-cpi-release v35.3.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.3.0)
+- Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/tree/1102ce016d4772dcb69c26ae4f301e023503953b)
+- Bump cf-deployment to [v1.40.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.40.0)
+- Use the ops file [use-external-blobstore.yml](https://raw.githubusercontent.com/cloudfoundry/cf-deployment/v2-fast/operations/use-external-blobstore.yml)
+- Fixed the version of Azure CLI
+
+# v3.9.0 (2018-05-26)
+
+- Bump cf-deployment to [v1.36.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.36.0)
+- Update the signing key for installing azure-cli
+- Use compiled packages for Azure China Cloud
+
+# v3.8.0 (2018-05-14)
+
+- Bump cf-deployment to [v1.31.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.31.0)
+- Redirect the logs to both `~/install.log` and standard output.
+
+# v3.7.0 (2018-05-01)
+
+- Upgrade Azure CPI version to v35.2.0. Please see new features in [bosh-azure-cpi-release v35.2.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.2.0)
+- Bump cf-deployment to [v1.27.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.27.0)
+- Add `AzureChinaCloudAD` as AzureStack authentication
+- Use Azure CLI to prepare the storage account. Now the template doesn't depend on any python packages.
+
 # v3.6.0 (2018-04-02)
 
 - Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/tree/b848368815a2c81c59c8710850e7b56bc4649152)

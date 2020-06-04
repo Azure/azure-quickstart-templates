@@ -1,58 +1,69 @@
-# **Azure Resource Optimization(ARO) Toolkit**
-Deploy an Azure Automation account with preconfigured runbooks and schedules to your subscription and start saving money.  Azure resource optimization happens automatically on your subscription once you enable or create your own schedule including on new resources!  
+# Azure Resource Optimization(ARO) Toolkit
 
-***Objective:*** Provide decentralized automation capabilities for customers who want to reduce their costs.  Features include: 
-1.  Auto Snooze ARM VMs based on low CPU
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/PublicDeployment.svg" />&nbsp;
 
-2.  Schedule ARM VMs to snooze/un-snooze
-
-3.  Schedule ARM VMs to snooze/un-snooze in ascending and descending order using Azure Tags
-
-4.  Bulk delete resource groups on demand
-
-# **How to On-board - ARO Toolkit**
-
-# **Step 1 Deploy ARO Toolkit**
-
-## **From Github**
-Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variables".
-
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json)
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FMicrosoft%2FMSITARM%2Fmaster%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json" target="_blank">
-<img src="http://armviz.io/visualizebutton.png"/>
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/FairfaxDeployment.svg" />&nbsp;
+    
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/CredScanResult.svg" />&nbsp;
+    
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json" target="_blank">
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
+</a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json" target="_blank">
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
 </a>
 
-Important!  A bootstrap runbook can take up to 15 minutes to complete setting up your Azure Automation account.  Before you use ARO Toolkit, validate the Azure Run As account is created as show below.  If not, follow the steps in Appendix D. 
+Deploy an Azure Automation account with preconfigured runbooks and schedules to your subscription and start saving money.  Azure resource optimization happens automatically on your subscription once you enable or create your own schedule including on new resources!  
+
+***Objective:*** Provide decentralized automation capabilities for customers who want to reduce their costs.  Features include:
+
+1. Auto Snooze ARM VMs based on low CPU
+
+1. Schedule ARM VMs to snooze/un-snooze
+
+1. Schedule ARM VMs to snooze/un-snooze in ascending and descending order using Azure Tags
+
+1. Bulk delete resource groups on demand
+
+## **How to On-board - ARO Toolkit**
+
+## **Step 1 Deploy ARO Toolkit**
+
+## **From Github**
+
+Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variables".
+
+Important!  A bootstrap runbook can take up to 15 minutes to complete setting up your Azure Automation account.  Before you use ARO Toolkit, validate the Azure Run As account is created as show below.  If not, follow the steps in Appendix D.
 ![alt text](images/AROToolkit/validateRunAs.png "Azure Run As account")
 
-    
+## **Step 2 Configure Azure Automation Variables**
 
-# **Step 2 Configure Azure Automation Variables**
-
-1.  Navigate to Azure portal and select your subscription (if you have
+1. Navigate to Azure portal and select your subscription (if you have
     more than one)
 
-2.  Click on “**Automation Accounts**” from the service blade
+1. Click on “**Automation Accounts**” from the service blade
 
-![alt text](images/AROToolkit/image10.png "Services")
-    
+![alt text](images/AROToolkit/image10.png "Services")  
 
-3.  Select the Azure Automation Account which you deployed
+1. Select the Azure Automation Account which you deployed
 
-4.  Navigate to the dashboard by clicking “Overview”
+1. Navigate to the dashboard by clicking “Overview”
 
-5.  Click “**Assets**”
+1. Click “**Assets**”
 
     ![alt text](images/AROToolkit/image11.png "Assets")
 
-6.  Click “**Variables**” tile
+1. Click “**Variables**” tile
 
     ![alt text](images/AROToolkit/image12.png "Variables")
 
-7.  If needed you can maximize the variables window to get better
+1. If needed you can maximize the variables window to get better
     visibility
 
-8.  Update the variables as per your requirements
+1. Update the variables as per your requirements
 
     a.  **External\_ResourceGroupNames:** Enter the resource group names
         with comma separated values. (Example: RG1, RG2, RG3).  If you want to act on all the VMs at the subscription level, then leave this field blank.
@@ -67,39 +78,41 @@ Important!  A bootstrap runbook can take up to 15 minutes to complete setting up
         variables that prefixed with “Internal”
 
     ![alt text](images/AROToolkit/image13a.png "Variables")
-     
-# **Step 3 Enable Azure Automation Schedules**
+
+## **Step 3 Enable Azure Automation Schedules**
+
 By Default, all default schedules deployed with the AROToolkit are disabled.  Based upon which optimization you wish to perform, you will need to enable the corresponding schedule.  To learn more about which schedule is right for you, please refer to Appendix -B. 
 
-1.  Navigate to Azure portal and select your subscription (if you have
+1. Navigate to Azure portal and select your subscription (if you have
     more than one)
 
-2.  Select the Automation Account where you have deployed (follow the
+1. Select the Automation Account where you have deployed (follow the
     step 2-2)
 
-3.  Click on “**Schedules**”
+1. Click on “**Schedules**”
 
     ![alt text](images/AROToolkit/image14a.png "Schedules")
 
-4.  Select each schedule which will open the edit blade where you can
+1. Select each schedule which will open the edit blade where you can
     enable them
 
-5.  Click “**Yes**” in the Enabled attribute and click “**Save**”
+1. Click “**Yes**” in the Enabled attribute and click “**Save**”
 
     ![alt text](images/AROToolkit/image15.png "Enable Schedule")
 
-6.  If you want to create the custom schedule, please refer to Appendix - A
-7.  If you want to learn more about the default schedules installed with the AROToolkit, please refer to Appendix -B.
+1. If you want to create the custom schedule, please refer to Appendix - A
 
-# **Appendix – A : How to create a custom schedule?**
+1. If you want to learn more about the default schedules installed with the AROToolkit, please refer to Appendix -B.
 
-1.  Follow the procedure provided in step-4 to navigate to “Schedules”
+## **Appendix – A : How to create a custom schedule?**
 
-2.  Click on “Add a schedule”
+1. Follow the procedure provided in step-4 to navigate to “Schedules”
+
+1. Click on “Add a schedule”
 
     ![alt text](images/AROToolkit/image16.png "Add Schedule")
 
-3.  New Schedule blade will be open. Provide all the inputs
+1. New Schedule blade will be open. Provide all the inputs
 
     a.  Name : Schedule name
 
@@ -111,18 +124,16 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
     e.  Select the recurrence
 
-4.  Click on “**Create**”
+1. Click on “**Create**”
 
-    ![alt text](images/AROToolkit/image17.png "Create Schedule")
-   
+    ![alt text](images/AROToolkit/image17.png "Create Schedule"
 
-5.  Click on “Runbooks” to link the runbook to the above created
+1. Click on “Runbooks” to link the runbook to the above created
     schedule.
 
     ![alt text](images/AROToolkit/image18.png "Runbooks schedule")
-    
 
-6.  Select the required Runbook
+1. Select the required Runbook
 
     a.  For AutoSnooze: Select “**AutoSnooze\_CreateAlert\_Parent**”
         runbook
@@ -132,25 +143,24 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
     c.  For SequencedSnooze: Select “**SequencedSnooze\_Parent**”
         runbook
 
-7.  After selecting the runbook, click on “**Schedules**” tile.
+1. After selecting the runbook, click on “**Schedules**” tile.
 
      ![alt text](images/AROToolkit/image19.png "Schedules")
 
-8.  Click on “**Add a schedule**”
+1. Click on “**Add a schedule**”
 
      ![alt text](images/AROToolkit/image20.png "Add Schedule")
   
-9.  Click on “**Link a schedule to your runbook**”
+1. Click on “**Link a schedule to your runbook**”
 
      ![alt text](images/AROToolkit/image21.png "Link Schedule")
 
-10. Select the schedule which you have created earlier. In this example,
+1. Select the schedule which you have created earlier. In this example,
     it is “TestSchedule1” so select that
 
      ![alt text](images/AROToolkit/image22.png "Select Schedule")
-    
 
-11. Click on “**Parameters and run settings**” to add the parameters
+1. Click on “**Parameters and run settings**” to add the parameters
 
     a.  For AutoSnooze, no additional parameters needed
 
@@ -161,9 +171,10 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
     d.  For StopVM have the parameter value as “Stop”
 
-12. Click “**Ok**” to finish the schedule configuration
+1. Click “**Ok**” to finish the schedule configuration
 
-# **Appendix – B : All about each Default Schedule**
+## **Appendix – B : All about each Default Schedule**
+
 This is a list of each of the Default Schedules which will be deployed with the AROToolkit.   It is not recommended that you modify the Default Schedules.  If a different schedule is required,  you should create a custom schedule as outlined in Appendix A.  By default each of these schedules are disabled, and is up to you to enable per your requirements.
 
 It is not recommended to enable ALL schedules as there would an overlap on which schedule performs an action, rather it would be best to determine which optimizations you wish to perform and choose accordingly. 
@@ -177,8 +188,7 @@ ScheduledSnooze_StopVM | 1:00AM (UTC), Every Day | Runs the ScheduledSnooze_Pare
  SequencedSnooze-StopVM | 1:00AM (UTC), Every Friday | Runs the SequencedSnooze_Parent runbook with a parameter of “Stop” every Friday at the given time.  Will sequentially (ascending) stop all VM’s with a tag of “Sequence” defined.  Refer to Appendix – C for more details on tagging.  Recommend enabling the sister schedule, SequencedSnooze-StartVM.
  SequencedSnooze-StartVM | 1:00PM (UTC), Every Monday | Runs the SequencedSnooze_Parent runbook with a parameter of “Start” Every Monday at the given time.  Will  sequentially (descending) start all VM’s with a tag of “Sequence” defined.  Refer to Appendix – C for more details on tagging.  Recommend enabling the sister schedule, SequencedSnooze-StopVM.
 
-
-# **Appendix – C : All about each Runbook**
+## **Appendix – C : All about each Runbook**
 
 This is a list of runbooks that will be deployed with the AROToolkit.  It is not recommended that you make changes to the runbook code, as any changes made will be lost if you use the AROToolkit_AutoUpdate runbook. 
 
@@ -200,7 +210,7 @@ appended to the end.
   ScheduledSnooze\_Parent | Action: Stop or Start <br> WhatIF: True or False | This will take effect on all VMs in the subscription unless you edit the “External\_ResourceGroupNames” which will restrict it to only execute on these target resource groups. You can also exclude specific VMs by updating the “External\_ExcludeVMNames” variable. WhatIf behaves the same as in other runbooks.
   SequencedSnooze\_Parent | Action: Stop or Start <br> WhatIf:  True or False | Create a tag called “Sequence” on each VM that you want to sequence snooze\\unsnooze activity for. The value of the tag should be an integer (1,2,3) that corresponds to the order you want to snooze\\unsnooze. For snoozing VMs, the order goes ascending (1,2,3) and for unsnoozing it goes descending (3,2,1). WhatIf behaves the same as in other runbooks. <br> **Note: This will work exclusively off tag values and will run subscription wide.**
 
-# **Appendix – D : How can I make this work with an account that has dual factor authentication?**
+## **Appendix – D : How can I make this work with an account that has dual factor authentication?**
 
 With our AAD policy, it requires that a user account has dual factor
 authentication (password and smart card or phone call). It’s not
@@ -208,21 +218,19 @@ possible for our bootstrap runbook to run with a dual factor account.
 However, there is a relatively easy workaround if you don’t want to go
 to the trouble of provisioning a service account to deploy ARO Toolkit.
 
-1.  Deploy the ARO Toolkit with the steps listed out at the start of
+1. Deploy the ARO Toolkit with the steps listed out at the start of
     this document
 
-2.  Go into your automation account and navigate to “Run As Accounts”
+1. Go into your automation account and navigate to “Run As Accounts”
     and then click Create for Azure Run As Account.
 
      ![alt text](images/AROToolkit/image23.png "Run As Accounts")
 
-
-1.  Once this completes, navigate to the Bootstrap\_Main runbook and
+1. Once this completes, navigate to the Bootstrap\_Main runbook and
     start it.
 
      ![alt text](images/AROToolkit/image24.png "Bootstrap")
 
-
      ![alt text](images/AROToolkit/image25.png "Bootstrap")
 
-2. After this runs successfully, you should be all set up
+1. After this runs successfully, you should be all set up

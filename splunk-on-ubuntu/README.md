@@ -1,5 +1,14 @@
 # Create Splunk Enterprise standalone or cluster on Azure
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/splunk-on-ubuntu/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/splunk-on-ubuntu/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/splunk-on-ubuntu/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/splunk-on-ubuntu/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/splunk-on-ubuntu/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/splunk-on-ubuntu/CredScanResult.svg)
+
 **US Government Cloud**
 
 [![Deploy to Azure Gov](https://azuredeploy.net/AzureGov.png)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fsplunk-on-ubuntu%2Fazuredeploy-gov.json)
@@ -47,7 +56,6 @@ Below is the list of template parameters:
 | domainNamePrefix | :heavy_check_mark: | Prefix for domain name to access Splunk |
 | publicIPName | | Name of the Search Head public IP address. Default: splunksh-publicip |
 
-
 NOTE:
 * This solution uses Splunk's default certificates to enable HTTPS which will create a browser warning. Please follow instructions in Splunk Docs to secure Splunk Web [with your own SSL certificates](http://docs.splunk.com/Documentation/Splunk/latest/Security/SecureSplunkWebusingasignedcertificate).
 
@@ -84,3 +92,4 @@ Cluster indexers have the following ports open:
 ##Third-party software credits
 - VM utility shell script: MIT license
 - [Opscode Chef Splunk Cookbook](https://github.com/rarsan/chef-splunk): Apache 2.0 license
+

@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "_artifactsLocation": {
@@ -182,7 +182,6 @@
     "LeaderSetupScriptFileName": "BELeaderSetup.sh",
     "loadBalancerName": "cheffelb",
     "location": "[resourceGroup().location]",
-    "natPoolName": "chefnatpool",
     "osType": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
@@ -194,9 +193,8 @@
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
     "subnetName": "chefsubnet",
     "subnetPrefix": "10.0.0.0/24",
-    "SubnetRef": "[concat(variables('VnetID'), '/subnets/', variables('subnetName'))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'),  variables('subnetName'))]",
     "virtualNetworkName": "chefvnet",
-    "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "tagvalues": {
       "provider": "[toUpper('33194f91-eb5f-4110-827a-e95f640a9e46')]"
     }
@@ -306,7 +304,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('frontEndIPConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 50000,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -318,7 +316,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('frontEndIPConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 50001,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -330,7 +328,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('frontEndIPConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 50002,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -390,12 +388,16 @@
       "name": "[variables('ChefBEAvailName')]",
       "type": "Microsoft.Compute/availabilitySets",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-12-01", 
+
       "dependsOn": [],
       "tags": {
         "displayName": "BEAvailSet",
         "provider": "[variables('tagvalues').provider]"
       },
+      "sku": {
+        "name": "Aligned"
+        },
       "properties": {
         "platformUpdateDomainCount": 3,
         "platformFaultDomainCount": 3
@@ -405,12 +407,15 @@
       "name": "[variables('ChefFEAvailName')]",
       "type": "Microsoft.Compute/availabilitySets",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-12-01", 
       "dependsOn": [],
       "tags": {
         "displayName": "FEAvailSet",
         "provider": "[variables('tagvalues').provider]"
       },
+      "sku": {
+        "name": "Aligned"
+        },
       "properties": {
         "platformUpdateDomainCount": 3,
         "platformFaultDomainCount": 3
@@ -447,7 +452,7 @@
       "name": "BE0",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30", 
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('chefbeName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'BE0Nic')]",
@@ -479,10 +484,8 @@
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "BE0OSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('chefbeName'), '.blob.', parameters('storageURL'), '/', variables('BEStorageAccountContainerName'), '/', 'BE0OSDisk', '.vhd')]"
-            },
+            
+            "name": "[concat('BE0','_OSDisk')]",  
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -558,7 +561,7 @@
       "name": "BE1",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30", 
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('chefbeName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'BE1Nic')]",
@@ -590,10 +593,7 @@
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "BE1OSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('chefbeName'), '.blob.', parameters('storageURL'), '/', variables('BEStorageAccountContainerName'), '/', 'BE1OSDisk', '.vhd')]"
-            },
+            "name": "[concat('BE1','_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -670,7 +670,7 @@
       "name": "BE2",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30", 
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('chefbeName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'BE2Nic')]",
@@ -702,10 +702,8 @@
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "BE2OSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('chefbeName'), '.blob.', parameters('storageURL'), '/', variables('BEStorageAccountContainerName'), '/', 'BE2OSDisk', '.vhd')]"
-            },
+            
+           "name": "[concat('BE2','_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -794,7 +792,7 @@
       "name": "FE0",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30", 
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('cheffeName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'FE0Nic')]",
@@ -826,10 +824,8 @@
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "FE0OSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('cheffeName'), '.blob.', parameters('storageURL'), '/', variables('FEStorageAccountContainerName'), '/', 'FE0OSDisk', '.vhd')]"
-            },
+            
+            "name": "[concat('FE0','_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -919,7 +915,7 @@
       "name": "FE1",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion":  "2017-03-30", 
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('cheffeName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'FE1Nic')]",
@@ -951,10 +947,7 @@
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "FE1OSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('cheffeName'), '.blob.', parameters('storageURL'), '/', variables('FEStorageAccountContainerName'), '/', 'FE1OSDisk', '.vhd')]"
-            },
+            "name": "[concat('FE1','_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -1042,7 +1035,7 @@
       "name": "FE2",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30", 
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('cheffeName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'FE2Nic')]",
@@ -1074,10 +1067,8 @@
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "FE2OSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('cheffeName'), '.blob.', parameters('storageURL'), '/', variables('FEStorageAccountContainerName'), '/', 'FE2OSDisk', '.vhd')]"
-            },
+           
+            "name": "[concat('FE2','_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }

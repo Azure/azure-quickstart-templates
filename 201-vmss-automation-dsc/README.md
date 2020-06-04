@@ -1,11 +1,22 @@
 
 # VM Scale Set Configuration managed by Azure Automation DSC
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmgreenegit%2FARM-ScaleSetmanagedbyAADSC%2Fmaster%2Fazuredeploy.json)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-automation-dsc/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-automation-dsc/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-automation-dsc/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-automation-dsc/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-automation-dsc/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-automation-dsc/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-automation-dsc%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-automation-dsc%2Fazuredeploy.json)
 
 This repo serves to prove an ARM template to deploy a VM Scale Set where virtual machines are deployed as registered nodes in the Azure Automation Desired State Configuration service, and node configuration is guaranteed consistent after deployment, and the AADSC service components are provided in the same deployment template.
 
 The Azure Resource Manager template includes:
+
 - Deploy virtual machines in Scale Set with autoscale rules defined
 - Distribute VHD files across 5 storage accounts
 - Configure Azure Automation DSC service with configuration and modules to manage the virtual machines
@@ -15,6 +26,7 @@ The Azure Resource Manager template includes:
 - NAT remote management ports across VM Scale Set
 
 Tested scenarios:
+
 - End to end deployment
 - Modify configuration of live VM Scale Set by updating Configuration in AADSC
 - Report on VM configuration consistency from AADSC
@@ -23,46 +35,27 @@ Tested scenarios:
 - VM AutoScale based on CPU % with bursted VM's remaining in consistent state through DSC
 
 Future work:
-- Add OMS monitoring
+
 - Add Operational Validation
 - Deliver web app using Containers managed by [DSC](https://github.com/bgelens/cWindowsContainer)
 
+## Release Notes
+
+2019-02-20: Updated and revised entire solution to align with [101-automation-configuration](https://github.com/Azure/azure-quickstart-templates/tree/master/101-automation-configuration) example.  Also added runbook solution for tombstoning stale nodes per customer request.
+
 ## To verify the nodes are deployed and configured (manual operational validation)
+
 The webServer configuration adds the Windows Features to support IIS and manages the Windows Firewall settings to allow access to the default site.  To verify, open the Public FQDN of the deployment in a browser and confirm the default IIS page.
 
 ## To clone the module to your local machine from Git Shell
-    
-	git clone https://github.com/mgreenegit/ARM-ScaleSetmanagedbyAADSC
-    
-## From Azure PowerShell
-This commands assumes you want to either create a new Resource Group named "TestScaleSet0001", or deploy in to an existing Resource Group by that name.
-    
-	Login-AzureRmAccount
-	
-	$ResourceGroupName = 'TestScaleSets0001'
-	
-	$AccountName = 'myAutomationAccount'
-	
-	New-AzureRmResourcegroup -Name $ResourceGroupName -Location 'East US' -Verbose
-	
-	New-AzureRMAutomationAccount -ResourceGroupName $ResourceGroupName -Name $AccountName -Location 'East US 2' -Plan Free -Verbose
-	
-	$RegistrationInfo = Get-AzureRmAutomationRegistrationInfo -ResourceGroupName $ResourceGroupName -AutomationAccountName $AccountName
-	
-    $NewGUID = [system.guid]::newguid().guid
-    
-	New-AzureRmResourceGroupDeployment -Name TestDeployment -ResourceGroupName $ResourceGroupName -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy.parameters.json -registrationKey ($RegistrationInfo.PrimaryKey | ConvertTo-SecureString -AsPlainText -Force) -registrationUr $RegistrationInfo.Endpoint -automationAccountName $AccountName -jobid $NewGUID -Verbose
-	
-## To remove registered nodes from Azure Automation DSC if you are not ready to delete the account
-Replace with values for your account.  The resource group in this case refers to the Azure Automation instance.
 
-	Login-AzureRmAccount
-	
-	Get-AzureRMAutomationDSCNode -ResourceGroupName 'YOUR_RG_HERE' -AutomationAccountName 'YOUR_ACCOUNT_NAME_HERE' | ? Name -like YOUR_NAME_PATTERN_HERE-* | Unregister-AzureRmAutomationDscNode -Force
+```PowerShell
+git clone https://github.com/Azure/azure-quickstart-templates/blob/master/201-vmss-automation-dsc
+```
 
 ## Prior Examples
 
-[Register an existing Azure virtual machine as a managed DSC node in Azure Automation DSC](https://github.com/Azure/azure-quickstart-templates/tree/master/dsc-extension-azure-automation-pullserver)<br>
-[Deployment of Multiple VM Scale Sets of Windows VMs](https://github.com/Azure/azure-quickstart-templates/tree/02d32850258f5b172266896e498e30e8e526080a/301-multi-vmss-windows)<br>
-[Copy a DSC Configuration to Azure Automation and compile](https://github.com/azureautomation/automation-packs/tree/master/201-Deploy-And-Compile-DSC-Configuration-Credentials)<br>
+[Register an existing Azure virtual machine as a managed DSC node in Azure Automation DSC](https://github.com/Azure/azure-quickstart-templates/tree/master/dsc-extension-azure-automation-pullserver)
+[Deployment of Multiple VM Scale Sets of Windows VMs](https://github.com/Azure/azure-quickstart-templates/tree/02d32850258f5b172266896e498e30e8e526080a/301-multi-vmss-windows)
+[Copy a DSC Configuration to Azure Automation and compile](https://github.com/azureautomation/automation-packs/tree/master/201-Deploy-And-Compile-DSC-Configuration-Credentials)
 [azure-myriad](https://github.com/gbowerman/azure-myriad) - this repo is a great resource for learning about VM Scale Sets!

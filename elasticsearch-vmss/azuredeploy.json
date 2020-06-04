@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "clusterName": {
@@ -21,7 +21,7 @@
       "metadata": {
         "description": "Number of VM instances (200 or less)."
       },
-      "defaultValue": 5,
+      "defaultValue": 2,
       "maxValue": 200
     },
     "adminUsername": {
@@ -30,25 +30,43 @@
         "description": "Admin username on all VMs."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Admin password for all VMs."
+        "description": "Location for all resources."
       }
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch-vmss/",
       "metadata": {
         "description": "Change this value to your repo name if deploying from a fork"
       }
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
-          "metadata": {
-              "description": "Auto-generated token to access _artifactsLocation"
-          },
-          "defaultValue": ""
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      },
+      "defaultValue": ""
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -73,24 +91,34 @@
     "loadBalancerProbeId": "[concat(variables('loadBalancerId'),'/probes/tcpProbe')]",
     "sshProbeId": "[concat(variables('loadBalancerId'),'/probes/sshProbe')]",
     "subnetName": "[concat(variables('namingInfix'), '-subnet')]",
-    "vmStorageAccountContainerName": "vhds",
-    "masterSize": "Standard_DS3_v2",
-    "vmSku": "Standard_DS4_v2",
+    "masterSize": "Standard_DS2_v2",
+    "vmSku": "Standard_DS2_v2",
     "imageReference": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
-      "sku": "16.04-LTS",
+      "sku": "18.04-LTS",
       "version": "latest"
     },
-    "elasticSetupScriptUrl": "[concat(parameters('_artifactsLocation'), '/elasticsearch-vmss/install-elasticsearch.sh', parameters('_artifactsLocationSasToken'))]",
-    "diskSetupScriptUrl": "[concat(parameters('_artifactsLocation'), '/shared_scripts/ubuntu/vm-disk-utils-0.1.sh', parameters('_artifactsLocationSasToken'))]"
+    "elasticSetupScriptUrl": "[uri(parameters('_artifactsLocation'), concat('install-elasticsearch.sh', parameters('_artifactsLocationSasToken')))]",
+    "diskSetupScriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
-      "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgName')]",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2018-07-01",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -98,7 +126,7 @@
             "properties": {
               "description": "Allows inbound ssh traffic",
               "protocol": "Tcp",
-              "sourcePortRange": "22",
+              "sourcePortRange": "*",
               "destinationPortRange": "22",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
@@ -112,7 +140,7 @@
             "properties": {
               "description": "Allows inbound HTTP traffic from anyone",
               "protocol": "Tcp",
-              "sourcePortRange": "5601",
+              "sourcePortRange": "*",
               "destinationPortRange": "5601",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
@@ -127,8 +155,8 @@
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-07-01",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -148,8 +176,8 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIpAddressName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-07-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -160,8 +188,8 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-07-01",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpAddressName'))]"
       ],
@@ -244,21 +272,23 @@
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-06-01",
       "properties": {
         "platformUpdateDomainCount": 3,
-        "platformFaultDomainCount": 3,
-        "managed": true
+        "platformFaultDomainCount": 3
+      },
+      "sku": {
+        "name": "Aligned"
       }
     },
     {
-      "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-07-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
@@ -281,20 +311,20 @@
                 {
                   "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/', variables('backendPoolName'))]"
                 }
-              ],
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
-              }
+              ]
             }
           }
-        ]
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+        }
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('masterName'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-06-01",
       "copy": {
         "name": "masterVmLoop",
         "count": 3
@@ -313,7 +343,8 @@
         "osProfile": {
           "computerName": "[concat('master-vm', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
@@ -337,8 +368,8 @@
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(variables('masterName'), copyindex(), '/installelasticsearch')]",
-          "apiVersion": "2016-04-30-preview",
-          "location": "[resourceGroup().location]",
+          "apiVersion": "2017-03-30",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', variables('masterName'), copyindex())]"
           ],
@@ -361,8 +392,8 @@
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('namingInfix')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-04-30-preview",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-06-01",
       "dependsOn": [
         "masterVmLoop",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -388,7 +419,7 @@
               {
                 "lun": 0,
                 "createOption": "Empty",
-                "diskSizeGB": "128",
+                "diskSizeGB": 128,
                 "caching": "ReadWrite",
                 "managedDisk": {
                   "storageAccountType": "[variables('storageAccountType')]"
@@ -399,7 +430,8 @@
           "osProfile": {
             "computerNamePrefix": "[variables('namingInfix')]",
             "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[parameters('adminPassword')]"
+            "adminPassword": "[parameters('adminPasswordOrKey')]",
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [

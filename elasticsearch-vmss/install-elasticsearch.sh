@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -90,18 +90,18 @@ done
 # Install Oracle Java
 install_java()
 {
-    if [ -f "jdk-8u151-linux-x64.tar.gz" ];
+    if [ -f "jdk-8u201-linux-x64.tar.gz" ];
     then
         log "Java already downloaded"
         return
     fi
-    
+
     log "Installing Java"
     RETRY=0
     MAX_RETRY=5
     while [ $RETRY -lt $MAX_RETRY ]; do
-        log "Retry $RETRY: downloading jdk-8u151-linux-x64.tar.gz"
-        wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u151-b12/e758a0de34e24606bca991d704f6dcbf/jdk-8u151-linux-x64.tar.gz
+        log "Retry $RETRY: downloading jdk-8u201-linux-x64.tar.gz"
+        wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz
         if [ $? -ne 0 ]; then
             let RETRY=RETRY+1
         else
@@ -109,16 +109,16 @@ install_java()
         fi
     done
     if [ $RETRY -eq $MAX_RETRY ]; then
-        log "Failed to download jdk-8u151-linux-x64.tar.gz"
+        log "Failed to download jdk-8u201-linux-x64.tar.gz"
         exit 1
     fi
-    
-    tar xzf jdk-8u151-linux-x64.tar.gz -C /var/lib
-    export JAVA_HOME=/var/lib/jdk1.8.0_151
+
+    tar xzf jdk-8u201-linux-x64.tar.gz -C /var/lib
+    export JAVA_HOME=/var/lib/jdk1.8.0_201
     export PATH=$PATH:$JAVA_HOME/bin
     log "JAVA_HOME: $JAVA_HOME"
     log "PATH: $PATH"
-    
+
     java -version
     if [ $? -ne 0 ]; then
         log "Java installation failed"
@@ -130,14 +130,14 @@ install_es()
 {
     wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
     apt-get install apt-transport-https
-    echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-5.x.list    
-    apt-get update -y 
+    echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-5.x.list
+    apt-get update -y
     apt-get install -y elasticsearch
     pushd /usr/share/elasticsearch/
     bin/elasticsearch-plugin install x-pack --batch
     popd
-    
-    if [ ${IS_DATA_NODE} -eq 0 ]; 
+
+    if [ ${IS_DATA_NODE} -eq 0 ];
     then
         apt-get install -y kibana
         pushd /usr/share/kibana/
@@ -176,34 +176,34 @@ configure_system()
     echo "JAVA_HOME=$JAVA_HOME" >> /etc/default/elasticsearch
     echo 'MAX_OPEN_FILES=65536' >> /etc/default/elasticsearch
     echo 'MAX_LOCKED_MEMORY=unlimited' >> /etc/default/elasticsearch
-   
+
     #https://www.elastic.co/guide/en/elasticsearch/reference/current/setting-system-settings.html#systemd
     mkdir -p /etc/systemd/system/elasticsearch.service.d
     touch /etc/systemd/system/elasticsearch.service.d/override.conf
     echo '[Service]' >> /etc/systemd/system/elasticsearch.service.d/override.conf
     echo 'LimitMEMLOCK=infinity' >> /etc/systemd/system/elasticsearch.service.d/override.conf
     sudo systemctl daemon-reload
-   
+
     chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
-    
-    if [ ${IS_DATA_NODE} -eq 0 ]; 
+
+    if [ ${IS_DATA_NODE} -eq 0 ];
     then
-        # Kibana    
-        IPADDRESS=$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')
-        echo "server.host: \"$IPADDRESS\"" >> /etc/kibana/kibana.yml
-        echo "elasticsearch.url: \"http://$IPADDRESS:9200\"" >> /etc/kibana/kibana.yml
+        # Kibana
+        IP_ADDRESS=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
+        echo "server.host: \"$IP_ADDRESS\"" >> /etc/kibana/kibana.yml
+        echo "elasticsearch.url: \"http://$IP_ADDRESS:9200\"" >> /etc/kibana/kibana.yml
         echo "xpack.security.enabled: false" >> /etc/kibana/kibana.yml
         chown -R kibana:kibana /usr/share/kibana
     else
         # data disk
         DATA_DIR="/datadisks/disk1"
-        if ! [ -f "vm-disk-utils-0.1.sh" ]; 
+        if ! [ -f "vm-disk-utils-0.1.sh" ];
         then
             DOWNLOAD_SCRIPT="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
             log "Disk setup script not found in `pwd`, download from $DOWNLOAD_SCRIPT"
             wget -q $DOWNLOAD_SCRIPT
         fi
-        
+
         bash ./vm-disk-utils-0.1.sh
         if [ $? -eq 0 ] && [ -d "$DATA_DIR" ];
         then
@@ -223,25 +223,25 @@ start_service()
     systemctl enable elasticsearch.service
     systemctl start elasticsearch.service
     sleep 60
-    
+
     if [ `systemctl is-failed elasticsearch.service` == 'failed' ];
     then
         log "Elasticsearch unit failed to start"
         exit 1
     fi
-    
-    if [ ${IS_DATA_NODE} -eq 0 ]; 
+
+    if [ ${IS_DATA_NODE} -eq 0 ];
     then
         log "Starting Kibana on ${HOSTNAME}"
         systemctl enable kibana.service
         systemctl start kibana.service
         sleep 10
-    
+
         if [ `systemctl is-failed kibana.service` == 'failed' ];
         then
             log "Kibana unit failed to start"
             exit 1
-        fi    
+        fi
     fi
 }
 

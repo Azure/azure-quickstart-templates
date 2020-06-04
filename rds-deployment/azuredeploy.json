@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "gwdnsLabelPrefix": {
@@ -57,24 +57,32 @@
     "rdshVmSize": {
       "type": "string",
       "allowedValues": [
-        "Standard_A0",
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_A5",
-        "Standard_A6",
-        "Standard_A7",
-        "Standard_D1",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4",
-        "Standard_D5"
+        "Standard_A1_v2",
+        "Standard_A2_v2",
+        "Standard_A4_v2",
+        "Standard_A8_v2",
+        "Standard_A2m_v2",
+        "Standard_A4m_v2",
+        "Standard_A8m_v2",
+        "Standard_D2_v3",
+        "Standard_D4_v3",
+        "Standard_D8_v3",
+        "Standard_D16_v3",
+        "Standard_D32_v3",
+        "Standard_D48_v3",
+        "Standard_D64_v3"
       ],
       "metadata": {
         "description": "The size of the RDSH VMs"
       },
-      "defaultValue": "Standard_A4"
+      "defaultValue": "Standard_D4_v3"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -82,8 +90,7 @@
     "adVMSize": "Standard_A1",
     "adVnetName": "[concat('ADVNET',resourceGroup().name)]",
     "adSubnetName": "[concat('ADStaticSubnet',resourceGroup().name)]",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('adVnetName'))]",
-    "staticSubnetID": "[concat(variables('vnetID'),'/subnets/', variables('adSubnetName'))]",
+    "staticSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVnetName'), variables('adSubnetName'))]",
     "adTemplateURL": "[concat(variables('adAssetLocation'),'/adVmTemplate.json')]",
     "adStorageName": "[tolower(concat('adsa',uniqueString(resourceGroup().id)))]",
     "adVmDeployment": "CreateAdVms",
@@ -94,8 +101,6 @@
     "adPDCVMName": "advm",
     "vnetwithDNSTemplateURL": "[concat(variables('adAssetLocation'),'/vnet-with-dns-server.json')]",
     "updateVNetDNS1": "updateVNetDNS",
-    "updateVNetDNS1ID": "[concat('Microsoft.Resources/deployments/', variables('updateVNetDNS1'))]",
-    "nicTemplateURL": "[concat(variables('adAssetLocation'),'/nic.json')]",
     "publicLBName": "[concat('ADPLB',resourceGroup().name)]",
     "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
     "lbFE": "ADLBFE",
@@ -106,7 +111,6 @@
     "adRDPNATRuleID": "[concat(variables('publiclbID'),'/inboundNatRules/',variables('rdpNAT'))]",
     "adNICName": "[concat('ADNic',resourceGroup().name)]",
     "lbBE": "ADLBBE",
-    "publicBEAddressPoolID": "[concat(variables('publiclbID'),'/backendAddressPools/',variables('lbBE'))]",
     "gwLBName": "[concat('GWPLB',resourceGroup().name)]",
     "publicIPAddressName": "[tolower(concat('adpip',uniqueString(resourceGroup().Id)))]",
     "gwIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('gwpublicIPAddressName'))]",
@@ -139,13 +143,12 @@
         }
       }
     ]
-
   },
   "resources": [
     {
       "name": "[variables('nsgName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "properties": {
         "securityRules": [
@@ -168,7 +171,7 @@
     {
       "name": "[variables('adVnetName')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[variables('nsgID')]"
@@ -195,10 +198,10 @@
     {
       "name": "[variables('publicIPAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[variables('vnetID')]"
+        "[variables('adVnetName')]"
       ],
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -210,7 +213,7 @@
     {
       "name": "[parameters('gwpublicIPAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[variables('deployPrimaryAdID')]"
@@ -226,25 +229,25 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "gw-availabilityset",
-      "location": "[resourceGroup().location]"
+      "location": "[parameters('location')]"
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "cb-availabilityset",
-      "location": "[resourceGroup().location]"
+      "location": "[parameters('location')]"
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "rdsh-availabilityset",
-      "location": "[resourceGroup().location]"
+      "location": "[parameters('location')]"
     },
     {
       "name": "[variables('publiclbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('publicIPAddressID')]"
       ],
@@ -271,7 +274,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('publiclbFEConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[variables('rdpPort')]",
               "backendPort": 3389,
               "enableFloatingIP": false
@@ -284,7 +287,7 @@
       "name": "[variables('gwlbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('gwIPAddressID')]"
       ],
@@ -373,13 +376,12 @@
               "frontendIPConfiguration": {
                 "id": "[variables('gwlbFEConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 3389,
               "backendPort": 3389,
               "enableFloatingIP": false
             }
           }
-
         ]
       }
     },
@@ -497,7 +499,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -506,7 +508,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "gw-nic",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('gwlbID')]",
         "[variables('adVmDeploymentID')]"
@@ -544,7 +546,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "cb-nic",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('publiclbID')]",
         "[variables('adVmDeploymentID')]"
@@ -572,7 +574,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('rdsh-', copyindex(), '-nic')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "rdsh-nic-loop",
         "count": "[parameters('numberOfRdshInstances')]"
@@ -604,7 +606,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "gw-vm",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('deployPrimaryAdID')]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
@@ -632,7 +634,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,variables('uniqueStorageAccountContainerName'),'/','gw-vm-os-disk.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),'2016-01-01').primaryEndpoints.blob,variables('uniqueStorageAccountContainerName'),'/','gw-vm-os-disk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -651,7 +653,7 @@
           "apiVersion": "2015-06-15",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "gw-vm/gateway",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', 'gw-vm')]"
           ],
@@ -684,7 +686,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('rdsh-', copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "rdsh-vm-loop",
         "count": "[parameters('numberOfRdshInstances')]"
@@ -716,8 +718,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,variables('uniqueStorageAccountContainerName'),'/','rdsh-',copyindex(),'-os-disk.vhd')]"
-
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),'2016-01-01').primaryEndpoints.blob,variables('uniqueStorageAccountContainerName'),'/','rdsh-',copyindex(),'-os-disk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -736,7 +737,7 @@
           "apiVersion": "2015-06-15",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat('rdsh-', copyindex(),'/sessionhost')]",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', concat('rdsh-', copyindex()))]"
           ],
@@ -769,7 +770,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "cb-vm",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('deployPrimaryAdID')]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
@@ -798,7 +799,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,variables('uniqueStorageAccountContainerName'),'/','cb-vm-os-disk.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),'2016-01-01').primaryEndpoints.blob,variables('uniqueStorageAccountContainerName'),'/','cb-vm-os-disk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -817,7 +818,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "cb-vm/rdsdeployment",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', 'cb-vm')]",
         "Microsoft.Compute/virtualMachines/gw-vm/extensions/gateway",

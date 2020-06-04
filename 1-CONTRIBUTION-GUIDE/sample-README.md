@@ -1,42 +1,27 @@
-# Solution name
+# Sample name
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-blank-template%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-blank-template%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/PublicDeployment.svg)
 
-To deploy this template using the scripts from the root of this repo: (change the folder name below to match the folder name for this sample)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/FairfaxDeployment.svg)
 
-```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '[foldername]'
-```
-```bash
-azure-group-deploy.sh -a [foldername] -l eastus -u
-```
-If your sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
-You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
-one will be created by the script (think of this as "temp" storage for AzureRM) and reused by subsequent deployments.
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/CredScanResult.svg)
 
-```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '100-blank-template' -UploadArtifacts 
-```
-```bash
-azure-group-deploy.sh -a 100-blank-template -l eastus -u
-```
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpath-to-sample%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpath-to-sample%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpath-to-sample%2Fazuredeploy.json)
 
 This template deploys a **solution name**. The **solution name** is a **description**
 
-`Tags: Tag1, Tag2, Tag3`
-
-## Solution overview and deployed resources
+## Sample overview and deployed resources
 
 This is an overview of the solution
 
 The following resources are deployed as part of the solution
 
-#### Resource provider 1
+### Resource provider 1
 
 Description Resource Provider 1
 
@@ -44,13 +29,13 @@ Description Resource Provider 1
 + **Resource type 1B**: Description Resource type 1B
 + **Resource type 1C**: Description Resource type 1C
 
-#### Resource provider 2
+### Resource provider 2
 
 Description Resource Provider 2
 
 + **Resource type 2A**: Description Resource type 2A
 
-#### Resource provider 3
+### Resource provider 3
 
 Description Resource Provider 3
 
@@ -67,7 +52,7 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 ## Usage
 
-#### Connect
+### Connect
 
 How to connect to the solution
 
@@ -78,3 +63,5 @@ How to manage the solution
 ## Notes
 
 Solution notes
+
+`Tags: Tag1, Tag2, Tag3`

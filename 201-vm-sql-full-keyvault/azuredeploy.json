@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "virtualMachineName": {
@@ -37,22 +37,16 @@
         "description": "SQL Server Virtual Machine Administrator Password"
       }
     },
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "SQL Server Virtual Machine Storage Account Name"
-      }
-    },
     "storageAccountType": {
       "type": "string",
       "metadata": {
         "description": "SQL Server Virtual Machine Storage Account Type"
       },
-      "allowedValues":[  
-            "Premium_LRS",
-            "Standard_LRS"
-         ],
-      "defaultValue":"Premium_LRS"
+      "allowedValues": [
+        "Premium_LRS",
+        "Standard_LRS"
+      ],
+      "defaultValue": "Premium_LRS"
     },
     "virtualNetworkName": {
       "type": "string",
@@ -175,21 +169,40 @@
       "metadata": {
         "description": "SQL Server Authentication Login Account Password"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-sql-full-keyvault/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "vnetId": "[resourceId(resourceGroup().Name,'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'),  parameters('subnetName'))]"
   },
   "resources": [
     {
       "name": "[parameters('virtualMachineName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-03-01",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
       ],
       "properties": {
         "osProfile": {
@@ -206,33 +219,27 @@
         "storageProfile": {
           "imageReference": {
             "publisher": "MicrosoftSQLServer",
-            "offer": "SQL2014SP1-WS2012R2",
+            "offer": "sql2014sp3-ws2012r2",
             "sku": "Enterprise",
             "version": "latest"
           },
           "osDisk": {
-            "name": "[parameters('virtualMachineName')]",
-            "vhd": {
-              "uri": "[concat(concat(reference(resourceId(resourceGroup().Name, 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('virtualMachineName'), '201624135551.vhd')]"
-            },
-            "createOption": "FromImage"
+            "name": "[concat(parameters('virtualMachineName'), '_OSDisk')]",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('storageAccountType')]"
+            }
           },
           "dataDisks": [
             {
-              "name": "[concat(parameters('virtualMachineName'), '-disk-1')]",
-              "vhd": {
-                "uri": "[concat(concat(reference(resourceId(resourceGroup().Name, 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('virtualMachineName'), '-disk-1-201624135551', '.vhd')]"
-              },
+              "name": "[concat(parameters('virtualMachineName'), '_DataDisk-1')]",
               "createOption": "Empty",
               "lun": 0,
               "diskSizeGB": 1023,
               "caching": "ReadOnly"
             },
             {
-              "name": "[concat(parameters('virtualMachineName'), '-disk-2')]",
-              "vhd": {
-                "uri": "[concat(concat(reference(resourceId(resourceGroup().Name, 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('virtualMachineName'), '-disk-2-201624135551', '.vhd')]"
-              },
+              "name": "[concat(parameters('virtualMachineName'), '_DataDisk-2')]",
               "createOption": "Empty",
               "lun": 1,
               "diskSizeGB": 1023,
@@ -250,12 +257,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-03-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('virtualMachineName'), '/SqlIaasExtension')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
       ],
       "properties": {
         "type": "SqlIaaSAgent",
@@ -264,7 +271,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "AutoTelemetrySettings": {
-            "Region": "[resourceGroup().location]"
+            "Region": "[parameters('location')]"
           },
           "KeyVaultCredentialSettings": {
             "Enable": true,
@@ -283,21 +290,21 @@
     {
       "type": "Microsoft.Resources/deployments",
       "name": "prepareSqlVmDeployment",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-05-10",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'), '/extensions/SqlIaasExtension')]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'SqlIaasExtension')]"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-sql-full-keyvault/nested/preparingSqlServerSa.json"
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/preparingSqlServerSa.json', parameters('_artifactsLocationSasToken')))]"
         },
         "parameters": {
           "sqlVMName": {
             "value": "[parameters('virtualMachineName')]"
           },
           "location": {
-            "value": "[resourceGroup().location]"
+            "value": "[parameters('location')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -327,7 +334,7 @@
             "value": "[parameters('sqlConnectivityType')]"
           },
           "sqlVMPrepareModulesURL": {
-            "value": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-sql-full-keyvault/scripts/PrepareSqlServer.ps1.zip"
+            "value": "[uri(parameters('_artifactsLocation'), concat('scripts/PrepareSqlServer.ps1.zip', parameters('_artifactsLocationSasToken')))]"
           },
           "sqlVMPrepareConfigurationFunction": {
             "value": "PrepareSqlServerSa.ps1\\PrepareSqlServerSa"
@@ -336,19 +343,10 @@
       }
     },
     {
-      "name": "[parameters('storageAccountName')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
-    },
-    {
       "name": "[parameters('virtualNetworkName')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -368,12 +366,12 @@
     {
       "name": "[parameters('networkInterfaceName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -385,21 +383,24 @@
               },
               "privateIPAllocationMethod": "Dynamic",
               "publicIpAddress": {
-                "id": "[resourceId(resourceGroup().Name,'Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
               }
             }
           }
         ],
         "networkSecurityGroup": {
-          "id": "[resourceId(resourceGroup().Name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
         }
       }
     },
     {
       "name": "[parameters('publicIpAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
+      "sku":{
+        "name":"Basic"
+      },
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIpAddressType')]"
       }
@@ -407,8 +408,8 @@
     {
       "name": "[parameters('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {

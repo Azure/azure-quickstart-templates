@@ -1,25 +1,7 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "virtualNetworkName": {
-      "type": "string",
-      "metadata": {
-        "description": "This is the name of the Virtual Network"
-      }
-    },
-    "networkInterfaceName": {
-      "type": "string",
-      "metadata": {
-        "description": "This is the prefix name of the Network interfaces"
-      }
-    },
-    "loadBalancerName": {
-      "type": "string",
-      "metadata": {
-        "description": "This is the name of the load balancer"
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -32,13 +14,6 @@
         "description": "Admin password"
       }
     },
-    "imagePublisher": {
-      "type": "string",
-      "defaultValue": "MicrosoftWindowsServer",
-      "metadata": {
-        "description": "Image Publisher"
-      }
-    },
     "vmNamePrefix": {
       "type": "string",
       "defaultValue": "BackendVM",
@@ -46,82 +21,55 @@
         "description": "Prefix to use for VM names"
       }
     },
-    "imageOffer": {
+    "location": {
       "type": "string",
-      "defaultValue": "WindowsServer",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Image Offer"
-      }
-    },
-    "imageSKU": {
-      "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
-      "metadata": {
-        "description": "Image SKU"
-      }
-    },
-    "vmStorageAccountContainerName": {
-      "type": "string",
-      "defaultValue": "vhds",
-      "metadata": {
-        "description": "This is the storage account container name"
-      }
-    },
-    "vmName": {
-      "type": "string",
-      "metadata": {
-        "description": "This is the prefix name for the virtual machines"
-      }
-    },
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Storage account name"
-      }
-    },
-    "vmSize": {
-      "type": "string",
-      "defaultValue": "Standard_D1",
-      "metadata": {
-        "description": "This is the allowed list of VM sizes"
+        "description": "Location for all resources."
       }
     }
   },
   "variables": {
     "availabilitySetName": "AvSet",
     "storageAccountType": "Standard_LRS",
+    "storageAccountName": "[uniqueString(resourceGroup().id)]",
+    "virtualNetworkName": "vNet",
     "subnetName": "backendSubnet",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables ('subnetName'))]",
+    "loadBalancerName": "ilb",
+    "networkInterfaceName": "nic",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "numberOfInstances": 2,
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancerName'))]"
+    "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]"
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2018-02-01",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccountName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "kind": "Storage",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2018-04-01",
       "type": "Microsoft.Compute/availabilitySets",
+      "location": "[parameters('location')]",
       "name": "[variables('availabilitySetName')]",
-      "location": "[resourceGroup().location]",
       "properties": {
-        "platformFaultDomainCount": 2,
-        "platformUpdateDomainCount": 2,
-        "managed": true
+        "PlatformUpdateDomainCount": 2,
+        "PlatformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2018-04-01",
       "type": "Microsoft.Network/virtualNetworks",
-      "name": "[parameters('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -139,17 +87,17 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2018-04-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(parameters('networkInterfaceName'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "name": "[concat(variables('networkInterfaceName'), copyindex())]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', parameters('loadBalancerName'))]"
+        "[variables('virtualNetworkName')]",
+        "[variables('loadBalancerName')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -171,12 +119,12 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2018-04-01",
       "type": "Microsoft.Network/loadBalancers",
-      "name": "[parameters('loadBalancerName')]",
-      "location": "[resourceGroup().location]",
+      "name": "[variables('loadBalancerName')]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[variables('vnetID')]"
+        "[variables('virtualNetworkName')]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -200,13 +148,13 @@
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/backendAddressPools/BackendPool1')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/BackendPool1')]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/probes/lbprobe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/probes/lbprobe')]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
@@ -230,25 +178,25 @@
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2018-04-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('vmNamePrefix'), copyindex())]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfInstances')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'), copyindex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[variables('storageAccountName')]",
+        "nicLoop",
+        "[variables('availabilitySetName')]"
       ],
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
         },
         "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
+          "vmSize": "Standard_DS2_V2"
         },
         "osProfile": {
           "computerName": "[concat(parameters('vmNamePrefix'), copyIndex())]",
@@ -257,9 +205,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('imagePublisher')]",
-            "offer": "[parameters('imageOffer')]",
-            "sku": "[parameters('imageSKU')]",
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2016-Datacenter",
             "version": "latest"
           },
           "osDisk": {
@@ -269,14 +217,14 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('networkInterfaceName'),copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'), copyindex()))]"
             }
           ]
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net')]"
+            "storageUri": "[reference(variables('storageAccountName')).primaryEndpoints.blob]"
           }
         }
       }

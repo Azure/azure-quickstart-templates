@@ -1,9 +1,10 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sapSystemId": {
       "type": "string",
+      "defaultValue": "DEV",
       "maxLength": 3,
       "minLength": 3,
       "metadata": {
@@ -18,10 +19,10 @@
         "Windows Server 2016 Datacenter",
         "SLES 12",
         "SLES 12 BYOS",
-        "RHEL 7.2",
-        "Oracle Linux 7.2"
+        "RHEL 7",
+        "Oracle Linux 7"
       ],
-      "defaultValue": "Windows Server 2012 R2 Datacenter",
+      "defaultValue": "Windows Server 2016 Datacenter",
       "metadata": {
         "description": "The type of the operating system you want to deploy."
       }
@@ -57,17 +58,35 @@
         "description": "Username for the Virtual Machine."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "minLength": 12,
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
       "metadata": {
-        "description": "Password for the Virtual Machine."
+        "description": "Type of authentication to use on the Virtual Machine."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password or ssh key for the Virtual Machine."
       }
     },
     "subnetId": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "The id of the subnet you want to use."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
       }
     },
     "_artifactsLocation": {
@@ -115,7 +134,7 @@
         "UsePlan": false
       },
       "SLES 12": {
-        "sku": "12-SP1",
+        "sku": "12-SP3",
         "offer": "SLES-SAP",
         "publisher": "SUSE",
         "version": "latest",
@@ -124,7 +143,7 @@
         "UsePlan": false
       },
       "SLES 12 BYOS": {
-        "sku": "12-SP1",
+        "sku": "12-SP3",
         "offer": "SLES-SAP-BYOS",
         "publisher": "SUSE",
         "version": "latest",
@@ -132,8 +151,8 @@
         "Plan": {},
         "UsePlan": false
       },
-      "RHEL 7.2": {
-        "sku": "7.2",
+      "RHEL 7": {
+        "sku": "7.4",
         "offer": "RHEL",
         "publisher": "RedHat",
         "version": "latest",
@@ -141,8 +160,8 @@
         "Plan": {},
         "UsePlan": false
       },
-      "Oracle Linux 7.2": {
-        "sku": "7.2",
+      "Oracle Linux 7": {
+        "sku": "7.3",
         "offer": "Oracle-Linux",
         "publisher": "Oracle",
         "version": "latest",
@@ -152,16 +171,36 @@
       }
     },
     "internalOSType": "[variables('images')[parameters('osType')].OSType]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    },
     "csExtension": {
       "Windows": {
-        "script": "[concat(parameters('_artifactsLocation'), '/shared/noop.ps1', parameters('_artifactsLocationSasToken'))]",
-        "scriptCall": "powershell.exe -ExecutionPolicy bypass -File .\\shared\\noop.ps1"
+        "Publisher": "Microsoft.Compute",
+        "Name": "CustomScriptExtension",
+        "Version": "1.7",
+        "script": "[uri(parameters('_artifactsLocation'), concat('scripts/noop.ps1', parameters('_artifactsLocationSasToken')))]",
+        "scriptCall": "powershell.exe -ExecutionPolicy bypass -File noop.ps1"
       },
       "Linux": {
-        "script": "[concat(parameters('_artifactsLocation'), '/shared/noop.sh', parameters('_artifactsLocationSasToken'))]",
+        "Publisher": "Microsoft.Azure.Extensions",
+        "Name": "CustomScript",
+        "Version": "2.0",
+        "script": "[uri(parameters('_artifactsLocation'), concat('scripts/noop.sh', parameters('_artifactsLocationSasToken')))]",
         "scriptCall": "sh noop.sh"
       }
     },
+    "cseExtPublisher": "[variables('csExtension')[variables('internalOSType')].Publisher]",
+    "cseExtName": "[variables('csExtension')[variables('internalOSType')].Name]",
+    "cseExtVersion": "[variables('csExtension')[variables('internalOSType')].Version]",
     "csExtensionScript": "[variables('csExtension')[variables('internalOSType')].script]",
     "csExtensionscriptCall": "[variables('csExtension')[variables('internalOSType')].scriptCall]",
     "vmSizes": {
@@ -219,21 +258,99 @@
     "divmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].diserversize]",
     "divmCount": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].diservercount]",
     "sidlower": "[toLower(parameters('sapSystemId'))]",
+    "publicIpNameDB": "[concat(variables('sidlower'), '-pip-di')]",
+    "vnetName": "[concat(variables('sidlower'), '-vnet')]",
+    "subnetName": "Subnet",
+    "subnets": {
+      "true": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]",
+      "false": "[parameters('subnetId')]"
+    },
+    "selectedSubnetId": "[variables('subnets')[string(equals(length(parameters('subnetId')), 0))]]",
+    "nsgName": "[concat(variables('sidlower'), '-nsg')]",
     "vmName": "[variables('sidlower')]",
-    "nestedDeploymentName": "nestedTemplate",
-    "nestedDeploymentNameDI": "[concat(variables('nestedDeploymentName'), 'di')]",
-    "nestedDeploymentNameProf": "[concat(variables('nestedDeploymentName'), 'prof')]",
+    "osSecurityRules": {
+      "Windows": [
+        {
+          "name": "RDP",
+          "properties": {
+            "description": "Allow RDP Subnet",
+            "protocol": "Tcp",
+            "sourcePortRange": "*",
+            "destinationPortRange": "3389",
+            "sourceAddressPrefix": "*",
+            "destinationAddressPrefix": "*",
+            "access": "Allow",
+            "priority": 100,
+            "direction": "Inbound"
+          }
+        }
+      ],
+      "Linux": [
+        {
+          "name": "SSH",
+          "properties": {
+            "description": "Allow SSH Subnet",
+            "protocol": "Tcp",
+            "sourcePortRange": "*",
+            "destinationPortRange": "22",
+            "sourceAddressPrefix": "*",
+            "destinationAddressPrefix": "*",
+            "access": "Allow",
+            "priority": 100,
+            "direction": "Inbound"
+          }
+        }
+      ]
+    },
+    "selectedSecurityRules": "[variables('osSecurityRules')[variables('internalOSType')]]",
     "avSetNameDI": "[concat(variables('sidlower'), '-avset-di')]",
     "nicNameDI": "[concat(variables('sidlower'), '-nic-di')]",
-    "vmNameDI": "[concat(variables('vmName'), '-di')]",
-    "osDiskType": "image"
+    "vmNameDI": "[concat(variables('vmName'), '-di')]"
   },
   "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[concat(variables('nsgName'))]",
+      "apiVersion": "2018-04-01",
+      "location": "[parameters('location')]",
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
+      "properties": {
+        "securityRules": "[variables('selectedSecurityRules')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "apiVersion": "2018-04-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+      ],
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameDI')]",
       "apiVersion": "2017-03-30",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
       },
@@ -243,22 +360,44 @@
       }
     },
     {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('publicIpNameDB'), '-', copyIndex())]",
+      "apiVersion": "2018-04-01",
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "dipipLoop",
+        "count": "[variables('divmCount')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicNameDI'), '-', copyindex())]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-06-01",
       "copy": {
         "name": "nicDILoop",
         "count": "[variables('divmCount')]"
       },
-      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "dipipLoop",
+        "[concat('Microsoft.Network/virtualNetworks/',  variables('vnetName'))]"
+      ],
+      "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": "[if(equals(length(parameters('subnetId')), 0), json(concat('{\"id\": \"', resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIpNameDB'), '-', copyIndex())) ,'\"}')), json('null'))]",
               "subnet": {
-                "id": "[parameters('subnetId')]"
+                "id": "[variables('selectedSubnetId')]"
               }
             }
           }
@@ -266,126 +405,89 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
-      "name": "[concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())]",
-      "type": "Microsoft.Resources/deployments",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmNameDI'), '-', copyIndex())]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "nicDILoop",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameDI'))]"
+      ],
       "copy": {
-        "name": "osDiskPartsDILoop",
+        "name": "vmLoop",
         "count": "[variables('divmCount')]"
       },
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/os-disk-parts-md.json', parameters('_artifactsLocationSasToken'))]",
-          "contentVersion": "1.0.0.0"
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameDI'))]"
         },
-        "parameters": {
-          "imageSku": {
-            "value": "[variables('images')[parameters('osType')].sku]"
+        "hardwareProfile": {
+          "vmSize": "[variables('divmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('vmNameDI'), '-', copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('images')[parameters('osType')].publisher]",
+            "offer": "[variables('images')[parameters('osType')].offer]",
+            "sku": "[variables('images')[parameters('osType')].sku]",
+            "version": "[variables('images')[parameters('osType')].version]"
           },
-          "imagePublisher": {
-            "value": "[variables('images')[parameters('osType')].publisher]"
+          "osDisk": {
+            "name": "[concat(variables('vmNameDI'), '-', copyIndex(), '-osdisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            }
           },
-          "imageOffer": {
-            "value": "[variables('images')[parameters('osType')].offer]"
-          },
-          "imageVersion": {
-            "value": "[variables('images')[parameters('osType')].version]"
-          },
-          "osDiskType": {
-            "value": "[variables('osDiskType')]"
-          },
-          "osType": {
-            "value": "[variables('internalOSType')]"
-          },
-          "vmName": {
-            "value": "[concat(variables('vmNameDI'), '-', copyIndex())]"
-          },
-          "storageType": {
-            "value": "Premium_LRS"
-          }
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": 1,
+              "input": {
+                "lun": 0,
+                "createOption": "Empty",
+                "diskSizeGB": 128
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicNameDI'), '-', copyindex()))]"
+            }
+          ]
         }
       }
     },
     {
-      "apiVersion": "2017-05-10",
-      "name": "[concat(variables('nestedDeploymentNameDI'), '-', copyIndex())]",
-      "type": "Microsoft.Resources/deployments",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmNameDI'), '-', copyIndex(), '/', variables('cseExtName'))]",
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "vmLoop"
+      ],
       "copy": {
-        "name": "vmDILoop",
+        "name": "extVMLoop",
         "count": "[variables('divmCount')]"
       },
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameDI'), '-', copyIndex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameDI'))]",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameProf'), '-di-', copyIndex())]"
-      ],
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/server-md.json', parameters('_artifactsLocationSasToken'))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "imageReference": {
-            "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())).outputs.imageReference.value]"
-          },
-          "osDisk": {
-            "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())).outputs.osDisk.value]"
-          },
-          "osDiskType": {
-            "value": "[variables('osDiskType')]"
-          },
-          "vmName": {
-            "value": "[concat(variables('vmNameDI'), '-', copyIndex())]"
-          },
-          "vmSize": {
-            "value": "[variables('divmSize')]"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "csExtensionScript": {
-            "value": "[variables('csExtensionScript')]"
-          },
-          "csExtensionscriptCall": {
-            "value": "[variables('csExtensionscriptCall')]"
-          },
-          "csExtensionscriptArgs": {
-            "value": ""
-          },
-          "avSetObj": {
-            "value": {
-              "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameDI'))]"
-            }
-          },
-          "useAVSet": {
-            "value": true
-          },
-          "nicName": {
-            "value": "[concat(variables('nicNameDI'), '-', copyIndex())]"
-          },
-          "dataDisksObj": {
-            "value": {
-              "copy": [
-                {
-                  "name": "dataDisks",
-                  "count": 1,
-                  "input": {
-                    "lun": 0,
-                    "createOption": "Empty",
-                    "diskSizeGB": "128"
-                  }
-                }
-              ]
-            }
-          },
-          "osType": {
-            "value": "[variables('internalOSType')]"
-          }
+        "publisher": "[variables('cseExtPublisher')]",
+        "type": "[variables('cseExtName')]",
+        "typeHandlerVersion": "[variables('cseExtVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('csExtensionScript')]"
+          ],
+          "commandToExecute": "[variables('csExtensionscriptCall')]"
         }
       }
     }

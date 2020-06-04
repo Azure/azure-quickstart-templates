@@ -1,17 +1,11 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Administrator user name used when provisioning virtual machines"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Administrator password used when provisioning virtual machines"
       }
     },
     "mysqlPassword": {
@@ -45,7 +39,7 @@
         "6.7",
         "7.0",
         "7.1",
-        "7.2"		
+        "7.2"
       ],
       "metadata": {
         "description": "The CentOS version for the VM. This will pick a fully patched image of this given CentOS version."
@@ -64,71 +58,92 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-	    "description": "The zabbix server IP which will monitor the nodes' status. Null means no zabbix server."
-	  }
-	},
+        "description": "The zabbix server IP which will monitor the nodes' status. Null means no zabbix server."
+      }
+    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
-      "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/website-cluster-centos/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
       "metadata": {
-      "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
       "defaultValue": ""
     },
     "_artifactsChinaLocation": {
       "type": "string",
       "metadata": {
-      "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
       "defaultValue": "http://msmirrors.blob.core.chinacloudapi.cn/website-cluster-centos/"
     },
     "_artifactsChinaLocationSasToken": {
       "type": "securestring",
       "metadata": {
-      "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
       "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
     "environmentAzureCloud": {
-      "serviceEndPoint": ".blob.core.windows.net/vhds/",
-      "templateBaseUrl": "[concat(parameters('_artifactsLocation'), 'nested/')]",
-      "templateBaseScriptsUrl": "[concat(parameters('_artifactsLocation'), 'scripts/')]"
+      "artifactsLocation": "[parameters('_artifactsLocation')]",
+      "artifactsLocationSasToken": "[parameters('_artifactsLocationSasToken')]"
     },
     "environmentAzureChinaCloud": {
-      "serviceEndPoint": ".blob.core.chinacloudapi.cn/vhds/",
-      "templateBaseUrl": "[concat(parameters('_artifactsChinaLocation'), 'nested/')]",
-      "templateBaseScriptsUrl": "[concat(parameters('_artifactsChinaLocation'), 'scripts/')]"
+      "artifactsLocation": "[parameters('_artifactsChinaLocation')]",
+      "artifactsLocationSasToken": "[parameters('_artifactsChinaLocationSasToken')]"
     },
-    "environment": "[variables(concat('environment', parameters('environment')))]",    
-    "sharedTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'shared-resources.json')]",
-    "lbTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'lb-resources.json')]",
-    "webTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'web-resources.json')]",
-    "redisMasterTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'redisMaster-resources.json')]",
-    "redisSlaveTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'redisSlave-resources.json')]",
-    "mysqlMasterTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'mysqlMaster-resources.json')]",
-    "mysqlSlaveTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'mysqlSlave-resources.json')]",
-    "lbNodeScript": "[concat(variables('environment').templateBaseScriptsUrl, 'lb.sh')]",
-    "webNodeScript": "[concat(variables('environment').templateBaseScriptsUrl, 'web.sh')]",
-    "redisMasterNodeScript": "[concat(variables('environment').templateBaseScriptsUrl, 'redisMaster.sh')]",
-    "redisSlaveNodeScript": "[concat(variables('environment').templateBaseScriptsUrl, 'redisSlave.sh')]",
-    "mysqlMasterNodeScript": "[concat(variables('environment').templateBaseScriptsUrl, 'mysqlMaster.sh')]",
-    "mysqlSlaveNodeScript": "[concat(variables('environment').templateBaseScriptsUrl, 'mysqlSlave.sh')]",
+    "environment": "[variables(concat('environment', parameters('environment')))]",
+    "sharedTemplateUrl": "[uri(variables('environment').artifactsLocation, concat('nested/shared-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "lbTemplateUrl": "[uri(variables('environment').artifactsLocation, concat('nested/lb-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "webTemplateUrl": "[uri(variables('environment').artifactsLocation, concat('nested/web-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "redisMasterTemplateUrl": "[uri(variables('environment').artifactsLocation, concat('nested/redisMaster-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "redisSlaveTemplateUrl": "[uri(variables('environment').artifactsLocation, concat('nested/redisSlave-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "mysqlMasterTemplateUrl": "[uri(variables('environment').artifactsLocation, concat('nested/mysqlMaster-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "mysqlSlaveTemplateUrl": "[uri(variables('environment').artifactsLocation, concat('nested/mysqlSlave-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "lbNodeScript": "[uri(variables('environment').artifactsLocation, concat('scripts/lb.sh', variables('environment').artifactsLocationSasToken))]",
+    "webNodeScript": "[uri(variables('environment').artifactsLocation, concat('scripts/web.sh', variables('environment').artifactsLocationSasToken))]",
+    "redisMasterNodeScript": "[uri(variables('environment').artifactsLocation, concat('scripts/redisMaster.sh', variables('environment').artifactsLocationSasToken))]",
+    "redisSlaveNodeScript": "[uri(variables('environment').artifactsLocation, concat('scripts/redisSlave.sh', variables('environment').artifactsLocationSasToken))]",
+    "mysqlMasterNodeScript": "[uri(variables('environment').artifactsLocation, concat('scripts/mysqlMaster.sh', variables('environment').artifactsLocationSasToken))]",
+    "mysqlSlaveNodeScript": "[uri(variables('environment').artifactsLocation, concat('scripts/mysqlSlave.sh', variables('environment').artifactsLocationSasToken))]",
     "namespace": "websiteCluster-",
     "virtualNetworkName": "websiteVNET1",
     "numDataDisks": "4",
     "sizeOfDataDiskInGB": 100,
-    "lbNodeVmSize": "Standard_A3",
-    "webNodeVmSize": "Standard_A3",
-    "dbNodeVmSize": "Standard_A3",
-    "apiVersion": "2015-01-01",
+    "lbNodeVmSize": "Standard_A4_v2",
+    "webNodeVmSize": "Standard_A4_v2",
+    "dbNodeVmSize": "Standard_A4_v2",
     "networkSettings": {
       "virtualNetworkName": "[variables('virtualNetworkName')]",
       "addressPrefix": "10.0.0.0/24",
@@ -271,9 +286,6 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
           "mysqlPassword": {
             "value": "[parameters('mysqlPassword')]"
           },
@@ -292,12 +304,6 @@
           "numDataDisks": {
             "value": "[variables('numDataDisks')]"
           },
-          "templateBaseUrl": {
-            "value": "[variables('environment').templateBaseUrl]"
-          },
-          "serviceEndPoint": {
-            "value": "[variables('environment').serviceEndPoint]"
-          },
           "dnsname": {
             "value": "[parameters('dnsNamePrefix')]"
           },
@@ -305,10 +311,16 @@
             "value": "[variables('webNodeVmSize')]"
           },
           "zabbixServerIPAddress": {
-             "value": "[parameters('zabbixServerIPAddress')]"
+            "value": "[parameters('zabbixServerIPAddress')]"
           },
           "osSettings": {
             "value": "[variables('webOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
           }
         }
       }
@@ -330,9 +342,6 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
           "namespace": {
             "value": "[variables('namespace')]"
           },
@@ -351,20 +360,20 @@
           "numDataDisks": {
             "value": "[variables('numDataDisks')]"
           },
-          "templateBaseUrl": {
-            "value": "[variables('environment').templateBaseUrl]"
-          },
-          "serviceEndPoint": {
-            "value": "[variables('environment').serviceEndPoint]"
-          },
           "vmSize": {
             "value": "[variables('dbNodeVmSize')]"
           },
           "zabbixServerIPAddress": {
-             "value": "[parameters('zabbixServerIPAddress')]"
+            "value": "[parameters('zabbixServerIPAddress')]"
           },
           "osSettings": {
             "value": "[variables('redisMasterOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
           }
         }
       }
@@ -387,9 +396,6 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
           "namespace": {
             "value": "[variables('namespace')]"
           },
@@ -408,20 +414,20 @@
           "numDataDisks": {
             "value": "[variables('numDataDisks')]"
           },
-          "templateBaseUrl": {
-            "value": "[variables('environment').templateBaseUrl]"
-          },
-          "serviceEndPoint": {
-            "value": "[variables('environment').serviceEndPoint]"
-          },
           "vmSize": {
             "value": "[variables('dbNodeVmSize')]"
           },
           "zabbixServerIPAddress": {
-             "value": "[parameters('zabbixServerIPAddress')]"
+            "value": "[parameters('zabbixServerIPAddress')]"
           },
           "osSettings": {
             "value": "[variables('redisSlaveOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
           }
         }
       }
@@ -442,9 +448,6 @@
         "parameters": {
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
           },
           "mysqlPassword": {
             "value": "[parameters('mysqlPassword')]"
@@ -467,20 +470,20 @@
           "numDataDisks": {
             "value": "[variables('numDataDisks')]"
           },
-          "templateBaseUrl": {
-            "value": "[variables('environment').templateBaseUrl]"
-          },
-          "serviceEndPoint": {
-            "value": "[variables('environment').serviceEndPoint]"
-          },
           "vmSize": {
             "value": "[variables('dbNodeVmSize')]"
           },
           "zabbixServerIPAddress": {
-             "value": "[parameters('zabbixServerIPAddress')]"
+            "value": "[parameters('zabbixServerIPAddress')]"
           },
           "osSettings": {
             "value": "[variables('mysqlMasterOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
           }
         }
       }
@@ -503,9 +506,6 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
           "mysqlPassword": {
             "value": "[parameters('mysqlPassword')]"
           },
@@ -527,20 +527,20 @@
           "numDataDisks": {
             "value": "[variables('numDataDisks')]"
           },
-          "templateBaseUrl": {
-            "value": "[variables('environment').templateBaseUrl]"
-          },
-          "serviceEndPoint": {
-            "value": "[variables('environment').serviceEndPoint]"
-          },
           "vmSize": {
             "value": "[variables('dbNodeVmSize')]"
           },
           "zabbixServerIPAddress": {
-             "value": "[parameters('zabbixServerIPAddress')]"
+            "value": "[parameters('zabbixServerIPAddress')]"
           },
           "osSettings": {
             "value": "[variables('mysqlSlaveOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
           }
         }
       }
@@ -564,9 +564,6 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
           "namespace": {
             "value": "[variables('namespace')]"
           },
@@ -588,20 +585,20 @@
           "webNodeCount": {
             "value": "[parameters('webNodeCount')]"
           },
-          "templateBaseUrl": {
-            "value": "[variables('environment').templateBaseUrl]"
-          },
-          "serviceEndPoint": {
-            "value": "[variables('environment').serviceEndPoint]"
-          },
           "vmSize": {
             "value": "[variables('lbNodeVmSize')]"
           },
           "zabbixServerIPAddress": {
-             "value": "[parameters('zabbixServerIPAddress')]"
+            "value": "[parameters('zabbixServerIPAddress')]"
           },
           "osSettings": {
             "value": "[variables('lbOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
           }
         }
       }

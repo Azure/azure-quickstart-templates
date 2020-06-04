@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
@@ -19,12 +19,6 @@
         "description": "Username for the Virtual Machine."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machine."
-      }
-    },
     "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
@@ -40,6 +34,23 @@
       "defaultValue": "Ubuntu",
       "metadata": {
         "description": "Operation System for the Virtual Machine."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -65,13 +76,24 @@
       "offer": "UbuntuServer",
       "sku": "16.04.0-LTS",
       "version": "latest"
+    },
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
     }
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2018-07-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -80,7 +102,7 @@
       "properties": {}
     },
     {
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2018-10-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -95,7 +117,7 @@
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2018-10-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
@@ -119,7 +141,7 @@
       }
     },
     {
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2018-10-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -140,7 +162,7 @@
       }
     },
     {
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2018-10-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
@@ -170,7 +192,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2018-10-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "zones": [
@@ -188,7 +210,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[if(equals(parameters('windowsOrUbuntu'), 'Windows'), variables('windowsImage'), variables('linuxImage'))]",
@@ -212,7 +235,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
           }
         }

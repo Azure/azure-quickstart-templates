@@ -74,7 +74,7 @@ docker run -i --rm \
   --ucp-username $USER --ucp-password $PASSWORD \
   --replica-id $REPLICA_ID"0" \
   --ucp-ca "$(cat ucp-ca.pem)"
-  
+
 if [ $? -eq 0 ]
 then
 echo $(date) " - Completed DTR installation on master DTR node"
@@ -86,7 +86,7 @@ fi
 for ((loop=1; loop<=$COUNT; loop++))
 do
 
-echo $(date) " - Start DTR installation on replica DTR node"  
+echo $(date) " - Start DTR installation on replica DTR node"
 
 # Install DTR Replica
 docker run -i --rm \
@@ -97,7 +97,7 @@ docker/dtr:2.0.2 join \
 --existing-replica-id $REPLICA_ID"0" \
 --ucp-username $USER --ucp-password $PASSWORD \
 --ucp-ca "$(cat ucp-ca.pem)"
-  
+
 if [ $? -eq 0 ]
 then
  echo $(date) " - Completed DTR installation on replica DTR node - $UCP_NODE_REP$loop$UCP_NODE_SUF"

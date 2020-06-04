@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.2.0.0",
   "parameters": {
     "dDisks": {
@@ -196,6 +196,13 @@
       "metadata": {
         "description": "Activate boot diagnostics. MUST be set to false is premium storage option is used"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -203,7 +210,6 @@
     "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontend')]",
     "natRuleName": "[concat(parameters('natRulePrefix'), parameters('computerName'), parameters('indx'))]",
     "inboundNatName": "[concat(parameters('lbName'), '/', variables('natRuleName'))]",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
     "subnetIndex": "[mod(parameters('indx'),length(parameters('subnets')))]",
     "subnetRef": "[parameters('subnets')[variables('subnetIndex') ].id]",
     "vmName": "[concat(parameters('vmNamePrefix'), parameters('computerName'), parameters('indx'))]",
@@ -216,12 +222,12 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/loadBalancers/inboundNatRules",
       "name": "[variables('inboundNatName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "frontendIPConfiguration": {
           "id": "[variables('frontEndIPConfigID')]"
         },
-        "protocol": "tcp",
+        "protocol": "Tcp",
         "frontendPort": "[variables('rdpPort')]",
         "backendPort": 3389,
         "enableFloatingIP": false
@@ -231,7 +237,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'), '/inboundNatRules/', variables('natRuleName'))]"
       ],
@@ -260,10 +266,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
@@ -288,9 +294,6 @@
           },
           "osDisk": {
             "name": "[concat('osdisk', variables('vmName'))]",
-            "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/','AnOSDisk-', variables('vmName'), '.vhd')]"
-            },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
@@ -314,7 +317,7 @@
         {
           "name": "[concat(variables('vmName'),'/BgInfo')]",
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "[variables('apiVersion')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
@@ -332,7 +335,7 @@
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(variables('vmName'),'/MyCustomScriptExtension')]",
           "apiVersion": "[variables('apiVersion')]",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
             "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'),'/extensions/BgInfo')]"

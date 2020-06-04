@@ -1,11 +1,15 @@
 # Install a Spark cluster on Ubuntu Virtual Machines using Custom Script Linux Extension
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-on-ubuntu%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-on-ubuntu%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/spark-on-ubuntu/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/spark-on-ubuntu/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/spark-on-ubuntu/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/spark-on-ubuntu/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/spark-on-ubuntu/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/spark-on-ubuntu/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-on-ubuntu%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-on-ubuntu%2Fazuredeploy.json)
 
 Apache Spark is a fast and general engine for large-scale data processing.
 Spark has an advanced DAG execution engine that supports cyclic data flow and in-memory computing.
@@ -44,7 +48,7 @@ Start deployment
                         adminPassword    SecureString
                         imagePublisher   String                     Canonical
                         imageOffer       String                     UbuntuServer
-                        imageSKU         String                     14.04.2-LTS
+                        imageSKU         String                     14.04.5-LTS
                         storageAccountName  String                     spkldeploysparknnuu1
                         region           String                     West US
                         virtualNetworkName  String                     sparkClustVnet
@@ -58,7 +62,6 @@ Start deployment
                         sparkSlaveNodeIPAddressPrefix  String                     10.0.0.3
                         jumpbox          String                     enabled
                         tshirtSize       String                     S
-
 
 Check Deployment
 ----------------
@@ -92,3 +95,5 @@ To check deployment errors go to the new azure portal and look under Resource Gr
 - SSH key is not yet implemented and the template currently takes a password for the admin user
 - The deployment script is not yet handling data disks and using local storage. There will be a separate checkin for disks as per T shirt sizing.
 - Spark cluster is current enabled for one master and multi slaves.
+
+

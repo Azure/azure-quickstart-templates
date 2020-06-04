@@ -1,17 +1,11 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Administrator user name used when provisioning virtual machines"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Administrator password used when provisioning virtual machines"
       }
     },
     "dnsLabelPrefix": {
@@ -56,15 +50,51 @@
       "metadata": {
         "description": "The size of the virtual machines used when provisioning Neo4J node(s)"
       }
-    }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+     "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+          },
+          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-neo4j-ubuntu/"
+      },
+      "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+          },
+          "defaultValue": ""
+      }
   },
   "variables": {
-    "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-neo4j-ubuntu/nested/",
-    "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
-    "lanpLapTemplateUrl": "[concat(variables('templateBaseUrl'), 'lanplap-resources.json')]",
-    "lanpneo4jTemplateUrl": "[concat(variables('templateBaseUrl'), 'lanpneo4j-resources.json')]",
+    "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "lanpLapTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/lanplap-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "lanpneo4jTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/lanpneo4j-resources.json', parameters('_artifactsLocationSasToken')))]",
     "namespace": "lanp-",
-    "apiVersion": "2015-01-01",
     "virtualNetworkName": "myVNET",
     "networkSettings": {
       "virtualNetworkName": "myVNET",
@@ -93,7 +123,7 @@
         "version": "latest"
       },
       "scripts": [
-        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-neo4j-ubuntu/scripts/install-lap.sh"
+        "[uri(parameters('_artifactsLocation'), concat('scripts/install-lap.sh', parameters('_artifactsLocationSasToken')))]"
       ]
     },
     "neo4jOsSettings": {
@@ -104,7 +134,7 @@
         "version": "latest"
       },
       "scripts": [
-        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-neo4j-ubuntu/scripts/install-neo4j.sh"
+        "[uri(parameters('_artifactsLocation'), concat('scripts/install-neo4j.sh', parameters('_artifactsLocationSasToken')))]"
       ]
     }
   },
@@ -143,9 +173,6 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
           "namespace": {
             "value": "[variables('namespace')]"
           },
@@ -169,6 +196,12 @@
           },
           "osSettings": {
             "value": "[variables('lapOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
           }
         }
       }
@@ -195,9 +228,6 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
           "namespace": {
             "value": "[variables('namespace')]"
           },
@@ -218,6 +248,12 @@
           },
           "osSettings": {
             "value": "[variables('neo4jOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
           }
         }
       }

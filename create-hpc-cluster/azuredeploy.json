@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "clusterName": {
@@ -86,7 +86,7 @@
       "type": "string",
       "defaultValue": "IaaSCN-",
       "minLength": 1,
-      "maxLength": 12,      
+      "maxLength": 12,
       "metadata": {
         "description": "The name prefix of the compute nodes. It must be no more than 12 characters, begin with a letter, and contain only letters, numbers and hyphens. For example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-000', 'IaaSCN-001', ..."
       }
@@ -95,7 +95,7 @@
       "type": "int",
       "defaultValue": 2,
       "minValue": 1,
-      "maxValue": 500,      
+      "maxValue": 500,
       "metadata": {
         "description": "The number of the compute nodes"
       }
@@ -193,24 +193,31 @@
       "metadata": {
         "description": "Optional URL of a public available PowerShell script you want to run on the compute nodes after they are configured. The script will be run as the Local System account. You can also specify arguments for the script, for example 'http://www.contoso.com/mycnpostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "virtualNetworkName": "[concat(parameters('clusterName'), 'VNet')]",
-    "storageAccountNamePrefix": "[toLower(concat('hpc', uniqueString(resourceGroup().id, toLower(parameters('clusterName')))))]",
-    "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-HN')]",
     "computeNodeImageOsPlatform": "Windows",
     "computeNodeImages": {
       "ComputeNode": {
         "publisher": "MicrosoftWindowsServerHPCPack",
         "offer": "WindowsServerHPCPack",
-        "sku": "2012R2CN"
+        "sku": "2012R2CN",
+        "version": "latest"
       },
       "ComputeNodeWithExcel": {
         "publisher": "MicrosoftWindowsServerHPCPack",
         "offer": "WindowsServerHPCPack",
-        "sku": "2012R2CNExcel"
+        "sku": "2012R2CNExcel",
+        "version": "latest"
       }
     },
     "currentComputeNodeImage": "[variables('computeNodeImages')[parameters('computeNodeImage')]]",
@@ -218,7 +225,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "type": "Microsoft.Resources/deployments",
       "name": "mainTemplate",
       "properties": {
@@ -237,20 +244,11 @@
           "privateDomainName": {
             "value": "[parameters('privateDomainName')]"
           },
-          "storageAccountNamePrefix": {
-            "value": "[variables('storageAccountNamePrefix')]"
-          },
-          "storageAccountStartIndex": {
-            "value": 0
-          },
-          "storageAccountType": {
-            "value": "[variables('storageAccountType')]"
-          },
-          "nbrCNPerStorageAccount": {
-            "value": 20
-          },
           "headNodeVMSize": {
             "value": "[parameters('headNodeVMSize')]"
+          },
+          "headNodeDiskType": {
+            "value": "HDD"
           },
           "computeNodeImageOsPlatform": {
             "value": "[variables('computeNodeImageOsPlatform')]"
@@ -269,6 +267,9 @@
           },
           "computeNodeNumber": {
             "value": "[parameters('computeNodeNumber')]"
+          },
+          "computeNodeDiskType": {
+            "value": "HDD"
           },
           "computeNodeVMSize": {
             "value": "[parameters('computeNodeVMSize')]"

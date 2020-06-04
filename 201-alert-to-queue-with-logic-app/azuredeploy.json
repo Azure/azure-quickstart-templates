@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "logicAppName": {
@@ -25,20 +25,27 @@
       "metadata": {
         "description": "The name of the queue to add a message to."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
-    "$singleQuote":"'"
+    "singleQuote": "'"
   },
   "resources": [
     {
       "type": "Microsoft.Web/connections",
-      "apiVersion": "2016-06-01",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2018-07-01-preview",
+      "location": "[parameters('location')]",
       "name": "[parameters('serviceBusConnectionName')]",
       "properties": {
         "api": {
-          "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/servicebus')]"
+          "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'servicebus')]"
         },
         "displayName": "servicebus",
         "parameterValues": {
@@ -48,9 +55,9 @@
     },
     {
       "type": "Microsoft.Logic/workflows",
-      "apiVersion": "2016-06-01",
+      "apiVersion": "2019-05-01",
       "name": "[parameters('logicAppName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/connections', parameters('serviceBusConnectionName'))]"
       ],
@@ -60,21 +67,18 @@
           "contentVersion": "1.0.0.0",
           "parameters": {
             "$connections": {
-              "defaultValue": { },
+              "defaultValue": {},
               "type": "Object"
             }
           },
           "triggers": {
             "manual": {
               "type": "request",
-              "kind": "Http",
-              "inputs": {
-                "schema": {}
-              }
+              "kind": "Http"
             }
           },
           "actions": {
-            "Send_message.": {
+            "Send_message": {
               "type": "ApiConnection",
               "inputs": {
                 "body": {
@@ -86,9 +90,8 @@
                   }
                 },
                 "method": "post",
-                "path": "[concat('/@{encodeURIComponent(', variables('$singleQuote'), parameters('serviceBusQueueName'), variables('$singleQuote'), ')}/messages')]"
-              },
-              "runAfter": {}
+                "path": "[concat('/@{encodeURIComponent(', variables('singleQuote'), parameters('serviceBusQueueName'), variables('singleQuote'), ')}/messages')]"
+              }
             }
           },
           "outputs": {}
@@ -97,7 +100,7 @@
           "$connections": {
             "value": {
               "servicebus": {
-                "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/servicebus')]",
+                "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'servicebus')]",
                 "connectionId": "[resourceId('Microsoft.Web/connections', parameters('serviceBusConnectionName'))]"
               }
             }
@@ -107,9 +110,9 @@
     }
   ],
   "outputs": {
-      "WebHookURI": { 
-            "type": "string", 
-            "value": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows/', parameters('logicAppName')), '/triggers/manual'), '2016-06-01').value]" 
-       } 
+    "WebHookURI": {
+      "type": "string",
+      "value": "Use listCallbackURL(resourceId('Microsoft.Logic/workflows/triggers', parameters('logicAppName'), 'manual'), '2019-05-01').value to retrieve the URL.  The value contains a secret."
+    }
   }
 }

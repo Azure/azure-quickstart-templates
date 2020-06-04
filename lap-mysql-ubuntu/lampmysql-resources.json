@@ -1,12 +1,9 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
       "type": "string"
-    },
-    "adminPassword": {
-      "type": "securestring"
     },
     "namespace": {
       "type": "string"
@@ -28,6 +25,19 @@
     },
     "subnet": {
       "type": "object"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string"
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring"
     }
   },
   "variables": {
@@ -35,21 +45,38 @@
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
     "availabilitySetName": "[concat(parameters('namespace'), 'set')]",
     "nicName": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))]",
-    "vmName": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]"
+    "vmName": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
       "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {}
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
       "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
           {
@@ -66,10 +93,10 @@
       }
     },
     {
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('nicName')]",
         "[variables('availabilitySetName')]"
@@ -84,15 +111,13 @@
         "osProfile": {
           "computerName": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm'))]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds/', parameters('vmbasename'), '-osdisk.vhd')]"
-            },
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -116,7 +141,7 @@
       "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'), '/lampInstall')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('vmName')]"
       ],

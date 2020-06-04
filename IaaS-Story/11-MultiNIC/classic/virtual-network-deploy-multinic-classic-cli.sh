@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 alias azure=azure.cmd
 
 # Set variables for existing resource group
@@ -28,7 +28,7 @@ azure service create --serviceName $backendCSName \
 
 azure storage account create $prmStorageAccountName \
     --location $location \
-    --type PLRS 
+    --type PLRS
 
 # Loop to create NICs and VMs
 for ((suffixNumber=1;suffixNumber<=numberOfVMs;suffixNumber++));

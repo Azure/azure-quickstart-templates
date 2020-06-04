@@ -20,14 +20,13 @@ try {
 
     # Create the storage account if it doesn't already exist
     if ($StorageAccount -eq $null) {
-        if ($StorageResourceGroupLocation -eq "") { throw "The StorageResourceGroupLocaiton parameter is required on first run in a subscription." }
+        if ($StorageResourceGroupLocation -eq "") { throw "The StorageResourceGroupLocation parameter is required on first run in a subscription." }
         $StorageResourceGroupName = 'ARM_Deploy_Staging'
         New-AzureRmResourceGroup -Location "$StorageResourceGroupLocation" -Name $StorageResourceGroupName -Force
-        $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$ResourceGroupLocation"
+        $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$StorageResourceGroupLocation"
     }
 
     New-AzureStorageContainer -Name $StorageContainerName -Context $StorageAccount.Context -ErrorAction SilentlyContinue *>&1
-
 
     Set-AzureStorageBlobContent -Container $StorageContainerName -File "$ArtifactsStagingDirectory\$createUIDefFile"  -Context $storageAccount.Context -Force
         
@@ -37,14 +36,14 @@ try {
 if ($Gov) {
 
 $target=@"
-https://portal.azure.us/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"initialData":{},"providerConfig":{"createUiDefinition":"$encodedurl"}}
+https://portal.azure.us/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"providerConfig":{"createUiDefinition":"$encodedurl"}}
 "@
 
 }
 else {
 
 $target=@"
-https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"initialData":{},"providerConfig":{"createUiDefinition":"$encodedurl"}}
+https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"providerConfig":{"createUiDefinition":"$encodedurl"}}
 "@
 
 }

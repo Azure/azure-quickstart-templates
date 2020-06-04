@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -30,7 +30,7 @@
     },
     "imageSKU": {
       "type": "string",
-      "defaultValue": "14.04.2-LTS",
+      "defaultValue": "14.04.5-LTS",
       "metadata": {
         "description": "Image SKU"
       }
@@ -68,6 +68,7 @@
       "defaultValue": "1.2.1",
       "allowedValues": [
         "1.2.1",
+        "3.0.0",
         "1.3.0"
       ],
       "metadata": {
@@ -116,13 +117,17 @@
       "metadata": {
         "description": "T-shirt size of the Spark cluster"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
-    "vmStorageAccountContainerName": "vhd",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
     "computerNamePrefix": "sparknode",
     "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spark-on-ubuntu/",
     "templateUrl": "[variables('scriptUrl')]",
@@ -159,9 +164,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "storageAccountName": {
-            "value": "[variables('storageAccountName')]"
-          },
           "virtualNetworkName": {
             "value": "[parameters('virtualNetworkName')]"
           },
@@ -197,9 +199,6 @@
           "subnetName": {
             "value": "[parameters('subnetName')]"
           },
-          "storageAccountName": {
-            "value": "[variables('storageAccountName')]"
-          },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
@@ -216,7 +215,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('nic', copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
         "count": "[variables('numberOfMasterInstances')]"
@@ -243,7 +242,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('nicsl', copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "nicslLoop",
         "count": "[variables('numberOfSlavesInstances')]"
@@ -267,10 +266,11 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion":  "2017-03-30", 
+
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('mastervm', copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineLoopMaster",
         "count": "[variables('numberOfMasterInstances')]"
@@ -302,10 +302,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/','osdisk', copyindex() ,'.vhd')]"
-            },
+            "name": "[concat('mastervm', copyindex(),'_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -320,10 +317,10 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30", 
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('slavevm', copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfSlavesInstances')]"
@@ -356,10 +353,8 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisksl",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/','osdisksl', copyindex() ,'.vhd')]"
-            },
+            
+           "name": "[concat('slavevm', copyindex(),'_OSDisk')]",    
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -377,7 +372,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat('mastervm', copyindex(), '/installsparkmaster')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineExtensionsLoopMaster",
         "count": "[variables('numberOfMasterInstances')]"
@@ -403,7 +398,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat('slavevm', copyindex(), '/installsparkslave')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineExtensionsLoopSlave",
         "count": "[variables('numberOfSlavesInstances')]"

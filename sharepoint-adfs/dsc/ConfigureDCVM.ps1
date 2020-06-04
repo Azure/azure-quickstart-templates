@@ -8,7 +8,7 @@
         [Parameter(Mandatory)] [String]$PrivateIP
     )
 
-    Import-DscResource -ModuleName xActiveDirectory, xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer
+    Import-DscResource -ModuleName xActiveDirectory, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, cADFS, xDnsServer, ComputerManagementDsc
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
@@ -46,7 +46,7 @@
 
         WindowsFeature DnsTools { Name = "RSAT-DNS-Server"; Ensure = "Present" }
 
-        xDnsServerAddress DnsServerAddress 
+        DnsServerAddress DnsServerAddress 
         {
             Address        = '127.0.0.1' 
             InterfaceAlias = $InterfaceAlias
@@ -62,10 +62,10 @@
             DatabasePath = "C:\NTDS"
             LogPath = "C:\NTDS"
             SysvolPath = "C:\SYSVOL"
-            DependsOn = "[xDnsServerAddress]DnsServerAddress"
+            DependsOn = "[DnsServerAddress]DnsServerAddress"
         }
 
-        xPendingReboot Reboot1
+        PendingReboot Reboot1
         {
             Name = "RebootServer"
             DependsOn = "[xADDomain]FirstDS"
@@ -75,7 +75,7 @@
         {
             Name = $AppDomainFQDN
             Ensure= 'Present'
-            DependsOn = "[xPendingReboot]Reboot1"
+            DependsOn = "[PendingReboot]Reboot1"
         }
 
         xDnsServerPrimaryZone CreateAppsIntranetDnsZone
@@ -98,56 +98,38 @@
             PasswordAuthentication = 'Negotiate'
             Ensure = "Present"
             PasswordNeverExpires = $true
-            DependsOn = "[xPendingReboot]Reboot1"
+            DependsOn = "[PendingReboot]Reboot1"
         }
 
-        WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
-        WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
+        WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
+        WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
 
         #**********************************************************
         # Configure AD CS
         #**********************************************************
-        WindowsFeature AddCertAuthority       { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
-        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
-        xADCSCertificationAuthority ADCS
+        WindowsFeature AddCertAuthority       { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
+        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
+        ADCSCertificationAuthority ADCS
         {
+            IsSingleInstance = "Yes"
+            CAType = "EnterpriseRootCA"
             Ensure = "Present"
             Credential = $DomainCredsNetbios
-            CAType = "EnterpriseRootCA"
             DependsOn = "[WindowsFeature]AddCertAuthority"
         }
 
         #**********************************************************
         # Configure AD FS
         #**********************************************************
-        xWaitForCertificateServices WaitAfterADCSProvisioning
+        WaitForCertificateServices WaitAfterADCSProvisioning
         {
             CAServerFQDN = "$ComputerName.$DomainFQDN"
             CARootName = "$DomainNetbiosName-$ComputerName-CA"
-            DependsOn = '[xADCSCertificationAuthority]ADCS'
+            DependsOn = '[ADCSCertificationAuthority]ADCS'
             PsDscRunAsCredential = $DomainCredsNetbios
         }
-        <#xScript WaitAfterADCSProvisioning
-        {
-            SetScript = 
-            {
-                # Add a timer to mitigate issue https://github.com/PowerShell/xCertificate/issues/73
-                Start-Sleep -s 30
-            }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                return @{ "Result" = "false" }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-               return $false
-            }
-            DependsOn = '[xADCSCertificationAuthority]ADCS'
-        }#>
 
-        xCertReq ADFSSiteCert
+        CertReq ADFSSiteCert
         {
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
             CAServerFQDN              = "$ComputerName.$DomainFQDN"
@@ -160,12 +142,12 @@
             KeyUsage                  = '0xa0'
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
-            SubjectAltName            = "dns=certauth.$ADFSSiteName.$DomainFQDN&dns=$ADFSSiteName.$DomainFQDN"
+            SubjectAltName            = "dns=certauth.$ADFSSiteName.$DomainFQDN&dns=$ADFSSiteName.$DomainFQDN&dns=enterpriseregistration.$DomainFQDN"
             Credential                = $DomainCredsNetbios
-            DependsOn = '[xWaitForCertificateServices]WaitAfterADCSProvisioning'
+            DependsOn = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
         }
 
-        xCertReq ADFSSigningCert
+        CertReq ADFSSigningCert
         {
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
             CAServerFQDN              = "$ComputerName.$DomainFQDN"
@@ -179,10 +161,10 @@
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
             Credential                = $DomainCredsNetbios
-            DependsOn = '[xWaitForCertificateServices]WaitAfterADCSProvisioning'
+            DependsOn = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
         }
 
-        xCertReq ADFSDecryptionCert
+        CertReq ADFSDecryptionCert
         {
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
             CAServerFQDN              = "$ComputerName.$DomainFQDN"
@@ -196,7 +178,7 @@
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
             Credential                = $DomainCredsNetbios
-            DependsOn = '[xWaitForCertificateServices]WaitAfterADCSProvisioning'
+            DependsOn = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
         }
 
         xADUser CreateAdfsSvcAccount
@@ -208,7 +190,7 @@
             Ensure = "Present"
             PasswordAuthentication = 'Negotiate'
             PasswordNeverExpires = $true
-            DependsOn = "[xCertReq]ADFSSiteCert", "[xCertReq]ADFSSigningCert", "[xCertReq]ADFSDecryptionCert"
+            DependsOn = "[CertReq]ADFSSiteCert", "[CertReq]ADFSSigningCert", "[CertReq]ADFSDecryptionCert"
         }
 
         Group AddAdfsSvcAccountToDomainAdminsGroup
@@ -229,7 +211,17 @@
             Target = $PrivateIP
             Type = "ARecord"
             Ensure = "Present"
-            DependsOn = "[xPendingReboot]Reboot1"
+            DependsOn = "[PendingReboot]Reboot1"
+        }
+
+        # https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/deployment/configure-corporate-dns-for-the-federation-service-and-drs
+        xDnsRecord AddADFSDevideRegistrationAlias {
+            Name = "enterpriseregistration"
+            Zone = $DomainFQDN
+            Target = "$ComputerName.$DomainFQDN"
+            Type = "CName"
+            Ensure = "Present"
+            DependsOn = "[PendingReboot]Reboot1"
         }
 
         xScript ExportCertificates
@@ -259,6 +251,11 @@
             DependsOn = "[WindowsFeature]AddADFS"
         }
 
+        # Since 2019-10, DSC regularly fails at cADFSFarm CreateADFSFarm with error below, but I don't know why or how to fix it.
+        # Machine restart message is present even when there is no error and PendingReboot before cADFSFarm detects no pending reboot
+        # VERBOSE: [2019-10-04 11:14:42Z] [VERBOSE] [DC]: [[cADFSFarm]CreateADFSFarm] Entering function InstallADFSFarm
+        # VERBOSE: [2019-10-04 11:14:42Z] [WARNING] [DC]: [[cADFSFarm]CreateADFSFarm] A machine restart is required to complete ADFS service configuration. For more information, see: http://go.microsoft.com/fwlink/?LinkId=798725
+        # VERBOSE: [2019-10-04 11:19:14Z] [ERROR] ADMIN0121: An attempt to update service settings failed because the data set that was used for updating was stale. Refresh the data in your session or console view, and then try the update again.
         cADFSFarm CreateADFSFarm
         {
             ServiceCredential = $AdfsSvcCredsQualified
@@ -282,14 +279,15 @@
             Identifier = "https://$SPTrustedSitesName.$DomainFQDN"
             ClaimsProviderName = @("Active Directory")
             WsFederationEndpoint = "https://$SPTrustedSitesName.$DomainFQDN/_trust/"
-            IssuanceAuthorizationRules = '=> issue (Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");'
+            AdditionalWSFedEndpoint = @("https://*.$DomainFQDN/")
+            IssuanceAuthorizationRules = '=> issue(Type = "https://schemas.microsoft.com/authorization/claims/permit", value = "true");'
             IssuanceTransformRules = @"
 @RuleTemplate = "LdapClaims"
 @RuleName = "AD"
-c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+c:[Type == "https://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
 => issue(
 store = "Active Directory", 
-types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"), 
+types = ("https://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "https://schemas.microsoft.com/ws/2008/06/identity/claims/role"), 
 query = ";mail,tokenGroups(longDomainQualifiedName);{0}", 
 param = c.Value);
 "@
@@ -344,8 +342,8 @@ function Get-AppDomain
 }
 
 <#
-# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
-# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
+# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.80.0.0
+# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.0\DSCWork
 
 Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
@@ -364,9 +362,10 @@ $AdfsSvcCreds = Get-Credential -Credential "adfssvc"
 $DomainFQDN = "contoso.local"
 $PrivateIP = "10.0.1.4"
 
-ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
-Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
-Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM" -Wait -Verbose -Force
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
+ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+Set-DscLocalConfigurationManager -Path $outputPath
+Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
 https://github.com/PowerShell/xActiveDirectory/issues/27
 Uninstall-WindowsFeature "ADFS-Federation"

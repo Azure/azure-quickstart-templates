@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "virtualMachineName": {
@@ -48,11 +48,11 @@
       "metadata": {
         "description": "SQL Server Virtual Machine Storage Account Type"
       },
-      "allowedValues":[  
-            "Premium_LRS",
-            "Standard_LRS"
-         ],
-      "defaultValue":"Premium_LRS"
+      "allowedValues": [
+        "Premium_LRS",
+        "Standard_LRS"
+      ],
+      "defaultValue": "Premium_LRS"
     },
     "virtualNetworkName": {
       "type": "string",
@@ -251,11 +251,11 @@
       }
     },
     "sqlAutobackupEncryptionPassword": {
-            "type": "string",
-            "metadata": {
-                "description": "SQL Server Auto Backup Encryption Password"
-            }
-        },
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Auto Backup Encryption Password"
+      }
+    },
     "sqlAkvCredentialName": {
       "type": "string",
       "metadata": {
@@ -292,18 +292,24 @@
       "metadata": {
         "description": "SQL Server Authentication Login Account Password"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
-    "vnetId": "[resourceId(resourceGroup().Name,'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'),  parameters('subnetName'))]"
   },
   "resources": [
     {
       "name": "[parameters('virtualMachineName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "apiVersion":  "2017-03-30", 
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]",
         "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
@@ -328,28 +334,20 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[parameters('virtualMachineName')]",
-            "vhd": {
-              "uri": "[concat(concat(reference(resourceId(resourceGroup().Name, 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('virtualMachineName'), '201624135551.vhd')]"
-            },
+            
+           "name": "[concat(parameters('virtualMachineName'),'_OSDisk')]", 
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "[concat(parameters('virtualMachineName'), '-disk-1')]",
-              "vhd": {
-                "uri": "[concat(concat(reference(resourceId(resourceGroup().Name, 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('virtualMachineName'), '-disk-1-201624135551', '.vhd')]"
-              },
+              "name": "[concat(parameters('virtualMachineName'),'_DataDisk1')]",
               "createOption": "Empty",
               "lun": 0,
               "diskSizeGB": 1023,
               "caching": "ReadOnly"
             },
             {
-              "name": "[concat(parameters('virtualMachineName'), '-disk-2')]",
-              "vhd": {
-                "uri": "[concat(concat(reference(resourceId(resourceGroup().Name, 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('virtualMachineName'), '-disk-2-201624135551', '.vhd')]"
-              },
+              "name": "[concat(parameters('virtualMachineName'),'_DataDisk2')]",
               "createOption": "Empty",
               "lun": 1,
               "diskSizeGB": 1023,
@@ -370,7 +368,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('virtualMachineName'), '/SqlIaasExtension')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
       ],
@@ -381,7 +379,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "AutoTelemetrySettings": {
-            "Region": "[resourceGroup().location]"
+            "Region": "[parameters('location')]"
           },
           "AutoPatchingSettings": {
             "PatchCategory": "WindowsMandatoryUpdates",
@@ -403,7 +401,7 @@
         "protectedSettings": {
           "StorageUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2015-06-15').primaryEndpoints['blob']]",
           "StorageAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2015-06-15').key1]",
-           "Password": "[parameters('sqlAutobackupEncryptionPassword')]",
+          "Password": "[parameters('sqlAutobackupEncryptionPassword')]",
           "PrivateKeyVaultCredentialSettings": {
             "AzureKeyVaultUrl": "[parameters('sqlAkvUrl')]",
             "ServicePrincipalName": "[parameters('sqlAkvPrincipalName')]",
@@ -415,7 +413,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "name": "prepareSqlVmDeployment",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-05-01",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'), '/extensions/SqlIaasExtension')]"
       ],
@@ -429,7 +427,7 @@
             "value": "[parameters('virtualMachineName')]"
           },
           "location": {
-            "value": "[resourceGroup().location]"
+            "value": "[parameters('location')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -471,7 +469,7 @@
       "name": "[parameters('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
       }
@@ -480,16 +478,16 @@
       "name": "[parameters('sqlAutobackupStorageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
-        "accountType": "['Standard_LRS']"
+        "accountType": "Standard_LRS"
       }
     },
     {
       "name": "[parameters('virtualNetworkName')]",
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -510,7 +508,7 @@
       "name": "[parameters('networkInterfaceName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
         "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]",
@@ -540,7 +538,7 @@
       "name": "[parameters('publicIpAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIpAddressType')]"
       }
@@ -549,7 +547,7 @@
       "name": "[parameters('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {

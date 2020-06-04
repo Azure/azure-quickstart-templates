@@ -1,17 +1,11 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {    
+  "parameters": {
     "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Linux VM user account name"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Administrator password for Linux VM user account"
       }
     },
     "dnsLabelPrefix": {
@@ -38,12 +32,36 @@
       "metadata": {
         "description": "Pass phrase for SSH certificate"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
     "imagePublisher": "redhat",
     "imageOffer": "rhel",
-    "imageSKU":"7.2",
+    "imageSKU": "7.2",
     "baseName": "[uniquestring(parameters('dnsLabelPrefix'),resourceGroup().id,uniquestring(deployment().name))]",
     "nicName": "[concat('myNic8',variables('baseName'))]",
     "addressPrefix": "10.0.0.0/16",
@@ -59,26 +77,36 @@
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "storageAccountType": "Standard_LRS",
     "storageAccountName": "[concat('vsts8',variables('baseName'))]",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]"
+    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('StorageAccountName')]",
       "apiVersion": "2016-01-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "[variables('storageAccountType')]"
       },
       "kind": "Storage",
-      "properties": {
-      }
+      "properties": {}
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -90,7 +118,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('frontEndNSGName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "Custom Network Security Group"
       },
@@ -110,7 +138,7 @@
               "direction": "Inbound"
             }
           },
-        {
+          {
             "name": "default-allow-tomcat",
             "properties": {
               "description": "Allow WEB/Tomcat",
@@ -124,7 +152,7 @@
               "direction": "Inbound"
             }
           },
-         {
+          {
             "name": "default-allow-ftp",
             "properties": {
               "description": "Allow FTP",
@@ -159,7 +187,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
       ],
@@ -176,7 +204,7 @@
               "addressPrefix": "[variables('subnet1Prefix')]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
-               }
+              }
             }
           }
         ]
@@ -186,16 +214,16 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
       ],
       "properties": {
-          "networkSecurityGroup": {
+        "networkSecurityGroup": {
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
-          },
+        },
         "ipConfigurations": [
           {
             "name": "ipconfig1",
@@ -213,10 +241,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
@@ -228,8 +256,9 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "customData": "[base64(variables('publicIPAddressName'))]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "customData": "[base64(variables('publicIPAddressName'))]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -239,10 +268,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk1",
-            "vhd": {
-              "uri": "[concat('http://',variables('StorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1spec.vhd')]"
-            },
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -260,8 +286,10 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/newuserscript')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "dependsOn": ["[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"],
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",

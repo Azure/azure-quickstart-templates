@@ -1,22 +1,31 @@
 # Create an Active Directory forest with 1 or 2 domains, each with 1 or 2 DCs
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/CredScanResult.svg)
+
 Click the button below to deploy a forest to Azure. 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-create-ad-forest-with-subdomain%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-create-ad-forest-with-subdomain%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-create-ad-forest-with-subdomain%2Fazuredeploy.json)
+
 
 Warning: this template will **create running VMs**. 
-Be sure to deallocate them when you no longer need them
-to avoid incurring costs. 
+Be sure to deallocate the VMs when you no longer need them
+to avoid incurring costs.
 
 This template creates an Active Directory forest for you. The configuration
 is flexible. 
-* The root domain is always created; the child domain is optional. 
+
+* Have a choice of one or two domains. The root domain is always created; the child domain is optional. 
 * Choose to have one or two DCs per domain.
 * Choose names for the Domains, DCs, and network objects.  
 * Choose the VM type from a prepopulated list. 
-* Use either Windows Server 2012, Windows Server 2012 R2, or Windows Server 2016. 
+* Use Windows Server 2016, or Windows Server 2019.
 * Get a public IP endpoint to use with RDP, configured with a Network Security Group.
 
 A forest with two domains in Azure is especially useful for AD-related 
@@ -31,22 +40,26 @@ incoming traffic allowing only Remote Desktop Protocol (RDP). You can
 edit the NSG manually to permit traffic from your datacenters only. With 
 VNET peering it is easy to connect different VNETs in the same Azure 
 Region, so the fact that a dedicated VNET is used here is not a 
-connectivity limitation anymore. 
+connectivity limitation anymore.
 
 The Domain Controllers are placed in an Availability Set to maximize 
 uptime. Each domain has its own Availability set. 
-The VMs are provisioned with managed disks. The disk type (Standard or Premium)
-is derived from the VM size. If the name contains "DS", a Premium (SSD) 
-disk used. Otherwise, a Standard (HDD) type is used. 
+The VMs are provisioned with managed disks. 
 
 Most template parameters have sensible defaults. You will get a forest 
 root of _contoso.com_, a child domain called _child.contoso.com_, two 
 DCs in each domain, a small IP space of 10.0.0.0/22 (meaning 10.0.0.0 up 
 to 10.0.3.255), etc. Each VM will have the AD-related management tools installed.
 By default, the VMs are of type DS1_v2, meaning 3.5 GB of 
-memory, one core and SSD storage. This is plenty for a simple Active 
-Directory. The only thing you really need to do is to supply an admin 
-password. Make sure it is 8 characters or more, and complex. You know 
+memory and one CPU core. This is plenty for a simple Active 
+Directory. 
+
+**Note**: testing shows that slower disks such as Standard_LRS or StandardSSD_LRS are too slow for reliable DSC. This is because Server 2016 and 2019 are very busy directly after deployment
+and need all disk performance that they can get. So, for best results use _Premium_LRS_ for now, with VMs that
+support premium disks.
+
+The only thing you really need to do is to supply an administrator name and 
+password. Make sure the password is 8 characters or more, and complex. You know 
 the drill. 
 
 ### Credits
@@ -80,6 +93,7 @@ when it was not ready. So I reordered the dependencies to first promote
  DC1 (root), then DC3 (child), and only then add secondary DCs to both domains. 
 
 #### Subtemplates
+
 I spent a lot of time factoring this solution to avoid redundancy, 
 although I did not fully succeed in this. For repeatable jobs I use 
 subtemplates. Creating a new VM is a nice example. 
@@ -112,8 +126,9 @@ developing or maintaining my own:
 
 * xActivedirectory
 * xNetworking
+* xStorage
 * xDisk
-* cDisk
+* ComputerManagementDSC
 
 If you look into the DSC Configurations that I use you will see that I 
 had to add a Script resource to set the DNS forwarder. This is 
@@ -122,25 +137,37 @@ Apparently the DNS service is not stable enough directly after
 installation to support this module. I added a wait loop to solve this 
 issue. 
 
-Finally, I had to use an external script resource to enable the 
-Powershell execution policy specifically for Windows Server 2012 
-(non-R2). By default, DSC does not work here. I injected a small 
-powershell script to set the execution policy to unrestricted. 
-
-For similar reasons, this template does not support Windows Server 2008 
-R2. While the standard Azure image VM image for 2008 R2
- supports DSC now, it is still highly limited in which modules work or not. 
-This is almost undocumented, but the short version is that almost
- nothing worked for 2008 R2 so I had to give it up. 
-
 ### Update October 2017
 
 New features:
+
 * Converted VMs to use managed disks.
 * Removed the storage account.
 * Made the child domain optional.
 * Greatly simplified the optional parts of the template using the new "condition" keyword.
 
-Willem Kasdorp, 10-2-2017. 
+### Update September 2018
+
+New Features:
+
+* Added B-series (burstable) VM, very suitable to run DCs cheaply. 
+* Added Standard SSD disks, and made the choice for disk type explicit. 
+* Added the possibilty to deploy to a location different to that of the Resource Group.
+* general cleanup: updated all APIs to the most recent ones, updated DSC modules to the latest.
+
+### Update December 2018
+
+* Added support for Windows Server 2019.
+
+### Update November 2019
+
+* workaround breaking change in WMF causing reboot after AD install to fail.
+* removed static DSC packages, now downloading the latest during deployment.
+* removed Windows 2012 (R1 and R2) from list of supported operating systems. Too hard to get DSC to work.
+
+Willem Kasdorp, 11-11-2019.
 
 `Tags: active directory,forest,domain,DSC`
+
+
+

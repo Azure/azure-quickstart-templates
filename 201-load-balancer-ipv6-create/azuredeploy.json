@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -49,7 +49,8 @@
     "ipv4LbBackendPoolID": "[concat(variables('lbID'),'/backendAddressPools/BackendPoolIPv4')]",
     "ipv6LbBackendPoolID": "[concat(variables('lbID'),'/backendAddressPools/BackendPoolIPv6')]",
     "ipv4ipv6lbProbeName": "tcpProbeIPv4IPv6",
-    "ipv4ipv6lbProbeID": "[concat(variables('lbID'),'/probes/', variables('ipv4ipv6lbProbeName'))]"
+    "ipv4ipv6lbProbeID": "[concat(variables('lbID'),'/probes/', variables('ipv4ipv6lbProbeName'))]",
+    "networkSecurityGroupName": "[concat(variables('subnetName'), '-nsg')]"
   },
   "resources": [
     {
@@ -90,10 +91,21 @@
       }
     },
     {
+      "comments": "Simple Network Security Group for subnet [variables('subnetName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {}
+    },
+    {
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
       "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -104,7 +116,10 @@
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
@@ -203,7 +218,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('ipv4FrontEndIPConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 50001,
               "backendPort": 3389,
               "enableFloatingIP": false
@@ -215,7 +230,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('ipv4FrontEndIPConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 50002,
               "backendPort": 3389,
               "enableFloatingIP": false

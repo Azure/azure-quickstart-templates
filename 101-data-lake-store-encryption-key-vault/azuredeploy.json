@@ -1,9 +1,10 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "0.9.0.0",
     "parameters": {
-        "accountName": {
+        "dataLakeStoreName": {
             "type": "string",
+            "defaultValue": "[uniqueString(resourceGroup().id)]",
             "metadata": {
                 "description": "The name of the Data Lake Store account to create."
             }
@@ -11,28 +12,34 @@
         "location": {
             "type": "string",
             "allowedValues": [
-                "East US 2",
-                "Central US",
-                "North Europe"
+                "eastus2",
+                "centralus",
+                "northeurope"
             ],
-            "defaultValue": "East US 2",
+            "defaultValue": "eastus2",
             "metadata": {
                 "description": "The location in which to create the Data Lake Store account."
             }
         },
-        "keyVaultResourceId": {
+        "keyVaultName": {
             "type": "string",
             "metadata": {
-                "description": "The Azure Key Vault resource ID."
+                "description": "The Azure Key Vault name."
             }
         },
-        "encryptionKeyName": {
+        "keyVaultResourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "The Azure Key Vault resource group name."
+            }
+        },
+        "keyName": {
             "type": "string",
             "metadata": {
                 "description": "The Azure Key Vault encryption key name."
             }
         },
-        "encryptionKeyVersion": {
+        "keyVersion": {
             "type": "string",
             "metadata": {
                 "description": "The Azure Key Vault encryption key version."
@@ -42,23 +49,95 @@
     "resources": [
         {
             "apiVersion": "2016-11-01",
-            "name": "[parameters('accountName')]",
+            "name": "[parameters('dataLakeStoreName')]",
             "location": "[parameters('location')]",
             "type": "Microsoft.DataLakeStore/accounts",
             "properties": {
-                "newTier": "Consumption",
                 "encryptionState": "Enabled",
                 "encryptionConfig": {
                     "type": "UserManaged",
                     "keyVaultMetaInfo": {
-                        "keyVaultResourceId": "[parameters('keyVaultResourceId')]",
-                        "encryptionKeyName": "[parameters('encryptionKeyName')]",
-                        "encryptionKeyVersion": "[parameters('encryptionKeyVersion')]"
+                        "keyVaultResourceId": "[resourceId(parameters('keyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+                        "encryptionKeyName": "[parameters('keyName')]",
+                        "encryptionKeyVersion": "[parameters('keyVersion')]"
                     }
                 }
             },
             "identity": {
                 "type": "SystemAssigned"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-02-01",
+            "name": "addAccessPolicy",
+            "resourceGroup": "[parameters('keyVaultResourceGroupName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DataLakeStore/accounts', parameters('dataLakeStoreName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "0.9.0.0",
+                    "resources": [
+                        {
+                            "type": "Microsoft.KeyVault/vaults/accessPolicies",
+                            "name": "[concat(parameters('keyVaultName'), '/add')]",
+                            "apiVersion": "2015-06-01",
+                            "dependsOn": [],
+                            "properties": {
+                                "accessPolicies": [
+                                    {
+                                        "objectId": "[reference(resourceId('Microsoft.DataLakeStore/accounts', parameters('dataLakeStoreName')), '2016-11-01', 'Full').identity.principalId]",
+                                        "tenantId": "[reference(resourceId('Microsoft.DataLakeStore/accounts', parameters('dataLakeStoreName')), '2016-11-01', 'Full').identity.tenantId]",
+                                        "permissions": {
+                                            "keys": [
+                                                "encrypt",
+                                                "decrypt"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-02-01",
+            "name": "updateAdlsAccount",
+            "dependsOn": [
+                "addAccessPolicy"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "0.9.0.0",
+                    "resources": [
+                        {
+                            "apiVersion": "2016-11-01",
+                            "name": "[parameters('dataLakeStoreName')]",
+                            "location": "[parameters('location')]",
+                            "type": "Microsoft.DataLakeStore/accounts",
+                            "properties": {
+                                "encryptionConfig": {
+                                    "keyVaultMetaInfo": {
+                                        "keyVaultResourceId": "[resourceId(parameters('keyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+                                        "encryptionKeyName": "[parameters('keyName')]",
+                                        "encryptionKeyVersion": "[parameters('keyVersion')]"
+                                    }
+                                }
+                            },
+                            "identity": {
+                                "type": "SystemAssigned"
+                            }
+                        }
+                    ]
+                }
             }
         }
     ]

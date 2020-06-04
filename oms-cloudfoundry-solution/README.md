@@ -1,11 +1,18 @@
 # Azure OMS Log Analytics Solution for Cloud Foundry
 
-Version: [2018.1](./changelog.md "See change logs")
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/oms-cloudfoundry-solution/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/oms-cloudfoundry-solution/PublicDeployment.svg)
 
-[![Deploy to Azure](https://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2F%2Fazuredeploy.json)
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/oms-cloudfoundry-solution/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/oms-cloudfoundry-solution/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/oms-cloudfoundry-solution/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/oms-cloudfoundry-solution/CredScanResult.svg)
+
+Version: [2018.6](./changelog.md "See change logs")
+
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2F%2Fazuredeploy.json) 
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%oms-cloudfoundry-solution%2Fazuredeploy.json)
 
 ## Overview
 
@@ -45,8 +52,11 @@ Follow these instructions to deploy the template:
     1. `Location`: Select the region of the resource group. If you're using an existing workspace, make sure you input correct location here
     1. `OMS Workspace Name`: Enter the name of your existing workspace. A new workspace with this name will be created if it does not exist
     1. `OMS Workspace Region`: Select the region where your existing workspace is located, or select a region for your new workspace
-    1. `OMS Workspace Sku`: Select the pricing tier of the workspace
+    1. `Azure Monitor Pricing Model`*: Select Azure Monitor pricing model your subscription has enabled. _Note that April 2018 pricing model would be enabled automatically if you onboard Azure Monitor later than April 2, 2018_
+    1. `OMS Workspace Sku`: Select the pricing tier of the workspace. _Note that `PerGB2018` would be the only valid Sku if your subscription has enabled April 2018 pricing model. Thus, this parameter would be ignored if `April 2018` is selected for `Azure Monitor Pricing Model`_
     1. `System Metrics Provider`: Select provider for your system metrics, could be `Microsoft Azure OMS Agent`, `BOSH Health Metrics Forwarder` or both.
+
+        _*Please refer to document [here](https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-usage-and-estimated-costs#new-pricing-model-and-operations-management-suite-subscription-entitlements) for more detail about Azure Monitor April 2018 pricing model._
 
 1. Once you have customized all the parameters, click *Purchase*.
 
@@ -139,3 +149,5 @@ OMS also provides mobile apps available on [Windows (Mobile devices)](https://ww
 Simply download App from your app store and login with your account, you can have experience just the same as on your workplace everywhere.
 
 ## [Change Logs](./changelog.md "See change logs")
+
+

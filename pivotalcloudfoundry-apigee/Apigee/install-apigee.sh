@@ -82,7 +82,7 @@ if [ "$DEPLOYMENT_TOPOLOGY" == "XSmall" ]; then
 
 	echo "deploying a 1 node setup" >> /tmp/armscript.log
 	cd /tmp/apigee
-	
+
 
 
 	sed -i.bak s/ADMIN_EMAIL=/ADMIN_EMAIL="${APIGEE_ADMIN_EMAIL}"/g opdk.conf
@@ -110,11 +110,11 @@ if [ "$DEPLOYMENT_TOPOLOGY" == "XSmall" ]; then
 
 	#/opt/apigee4/share/installer/apigee-setup.sh -p sax -f /tmp/opdk.conf
 
-	
+
 else
 	TOPOLOGY_TYPE=""
 	#arr=$(echo $IN | tr ";" "\n")
-	
+
 
 	# This sets the delimiter for the array as ':'
 	IFS=:
@@ -124,10 +124,10 @@ else
 
 	cd /tmp/apigee/
 	curl -o /tmp/apigee/apigee_install_scripts.zip "${BASE_GIT_URL}/src/apigee_install_scripts.zip"
-	
+
 	#This will override the required install scripts. Think of this as a patch on the install scripts
 	unzip -qo apigee_install_scripts.zip
-	
+
 
 	if [ "$DEPLOYMENT_TOPOLOGY" == "Medium"  ]; then
 		TOPOLOGY_TYPE=EDGE_5node
@@ -137,16 +137,16 @@ else
 		fi
 		TOPOLOGY_TYPE=EDGE_5node
 		cp -rf apigee_install_scripts/common/source/instance_EDGE_5node.json apigee_install_scripts/common/source/instance.json
-		cp -rf apigee_install_scripts/common/source/host2_EDGE_5node apigee_install_scripts/common/source/host2 
-		cp -rf apigee_install_scripts/common/source/hosts_EDGE_5node apigee_install_scripts/common/source/hosts 
+		cp -rf apigee_install_scripts/common/source/host2_EDGE_5node apigee_install_scripts/common/source/host2
+		cp -rf apigee_install_scripts/common/source/hosts_EDGE_5node apigee_install_scripts/common/source/hosts
 	elif [ "$DEPLOYMENT_TOPOLOGY" == "Large"  ]; then
 		if [ "$hosts_ary_length" -lt "9" ]; then
 			echo "Not enough hosts defined: " $DEPLOYMENT_TOPOLOGY >> /tmp/armscript.log
 			exit 400
 		fi
-		cp -rf apigee_install_scripts/common/source/instance_EDGE_9node.json apigee_install_scripts/common/source/instance.json 
-		cp -rf apigee_install_scripts/common/source/host2_EDGE_9node apigee_install_scripts/common/source/host2 
-		cp -rf apigee_install_scripts/common/source/hosts_EDGE_9node apigee_install_scripts/common/source/hosts 
+		cp -rf apigee_install_scripts/common/source/instance_EDGE_9node.json apigee_install_scripts/common/source/instance.json
+		cp -rf apigee_install_scripts/common/source/host2_EDGE_9node apigee_install_scripts/common/source/host2
+		cp -rf apigee_install_scripts/common/source/hosts_EDGE_9node apigee_install_scripts/common/source/hosts
 		TOPOLOGY_TYPE=EDGE_9node
 	else
 		echo "unsupported deployment: " $DEPLOYMENT_TOPOLOGY >> /tmp/armscript.log
@@ -217,13 +217,13 @@ else
 	echo "Host Names updated"  >>/tmp/ansible_output.log
 	# /usr/local/bin/ansible-playbook -i ${hosts_path}/hosts  ${automation_path}/playbooks/update_security_config.yml -M ${automation_path}/playbooks  -u ${login_user} -e "${PARAMS}" --private-key ${key_path} -vvvv >>/tmp/ansible_output.log
 	# echo "Security Settings updated"  >>/tmp/ansible_output.log
-	
+
 	/usr/local/bin/ansible-playbook -i ${hosts_path}/hosts  ${automation_path}/playbooks/mount_disk_azure.yml -M ${automation_path}/playbooks  -u ${login_user} -e "${PARAMS}" --private-key ${key_path} -vvvv >>/tmp/ansible_output.log
 	echo "Disks Mounted"  >>/tmp/ansible_output.log
 	/usr/local/bin/ansible-playbook -i ${hosts_path}/hosts  ${automation_path}/playbooks/generate_silent_config.yml -M ${automation_path}/playbooks  -u ${login_user} -e "${PARAMS}" --private-key ${key_path} -vvvv >>/tmp/ansible_output.log
 
 
-	#sudo  path=$path topology_type=$topology_type automation_path=$automation_path hosts_path=$hosts_path login_user=$login_user key_path=$key_path mp_pod_name=$mp_pod_name WORKSPACE=$WORKSPACE resource_path=$resource_path smtp_conf=$smtp_conf res_ouput_directory=$resource_path -H -u apigeetrial bash -c 'export ANSIBLE_HOST_KEY_CHECKING=False; /usr/local/bin/ansible-playbook -i ${hosts_path}/hosts  ${automation_path}/playbooks/generate_silent_config.yml -M ${automation_path}/playbooks  -u ${login_user} -e "automation_path=$automation_path hosts_path=$hosts_path login_user=$login_user key_path=$key1_path mp_pod_name=$mp_pod_name WORKSPACE=$WORKSPACE resource_path=$resource_path smtp_conf=$smtp_conf res_ouput_directory=$resource_path topology_type=$topology_type " --private-key ${key1_path} -vvvv >>/tmp/ansible1_output.log ' 
+	#sudo  path=$path topology_type=$topology_type automation_path=$automation_path hosts_path=$hosts_path login_user=$login_user key_path=$key_path mp_pod_name=$mp_pod_name WORKSPACE=$WORKSPACE resource_path=$resource_path smtp_conf=$smtp_conf res_ouput_directory=$resource_path -H -u apigeetrial bash -c 'export ANSIBLE_HOST_KEY_CHECKING=False; /usr/local/bin/ansible-playbook -i ${hosts_path}/hosts  ${automation_path}/playbooks/generate_silent_config.yml -M ${automation_path}/playbooks  -u ${login_user} -e "automation_path=$automation_path hosts_path=$hosts_path login_user=$login_user key_path=$key1_path mp_pod_name=$mp_pod_name WORKSPACE=$WORKSPACE resource_path=$resource_path smtp_conf=$smtp_conf res_ouput_directory=$resource_path topology_type=$topology_type " --private-key ${key1_path} -vvvv >>/tmp/ansible1_output.log '
 
 
 	echo "Silent Config File generated and puhsed"  >>/tmp/ansible_output.log

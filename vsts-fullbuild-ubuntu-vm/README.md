@@ -1,11 +1,16 @@
 # VM-Ubuntu - Team Services Build Agent and Cross-Platform SDKs installation
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-ubuntu-vm%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-ubuntu-vm%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-ubuntu-vm%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-ubuntu-vm%2Fazuredeploy.json)
 
 This template allows you to create an Ubuntu VM with a full cross-platform development environment to support:
 * OpenJDK 7 and 8; 
@@ -26,7 +31,6 @@ https://github.com/Microsoft/vsts-dockerfiles/tree/master/ubuntu-xplat-build
 To learn more about Visual Studio Team Services (VSTS) and Team Foundation Server (TFS) support for Java, check out:
 http://java.visualstudio.com/
 
-
 ## Before you Deploy to Azure
 
 To create the VM, you will need to:
@@ -41,13 +45,11 @@ To create the VM, you will need to:
 
 4. Decide on a name for your build agent (i.e. the name for your agent within the above pool).
 
-
 ## Verifying the Agent
 Once the VM is successfully provisioned, Team Services build agent installation and initialization can be verified by accessing the the *Agent pools* tab under the Control panel for the Team Services account
 (e.g. https://myaccount.visualstudio.com/_admin/_AgentPool).  You should be able to click on the build agent pool (from #3 above)
 and see your agent listed by the name (used in #4 above).  If all is well, the colored bar to the left of the pool name should be green.
 If the colored bar is red, or if the agent name does not appear in the specified pool, see below for debugging hints.
-
 
 ## Debugging Agent Failures
 If the Azure portal under *Virtual machines* shows that your VM is *Running* (in the Status column) but either the build agent name does not 
@@ -61,3 +63,5 @@ in starting up the VSTS build agent.  The most common mistake is not having the 
 * If the agent started sucessfully and is running but an expected tool or software is not working from a build task (e.g. a build task can't find
 maven or java or ...), then you can check the file *"install.progress.txt"* in the top level directory to see if one of the packages
 may have failed to install or had errors (**cat install.progress.txt**).
+
+

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -133,6 +133,13 @@
       "metadata": {
         "description": "The shared secret key for the MongoDB replica set"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -201,13 +208,13 @@
       "osName": "ubuntu",
       "installerBaseUrl": "http://repo.mongodb.org/apt/ubuntu",
       "installerPackages": "mongodb-org",
+      "installerVersion": "4.0.2",
       "imagePublisher": "Canonical",
       "imageOffer": "UbuntuServer",
-      "imageSKU": "14.04.2-LTS"
+      "imageSKU": "14.04.5-LTS"
     },
     "vmStorageAccountContainerName": "vhd-mongodb",
     "vmStorageAccountDomain": ".blob.core.windows.net",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
     "sharedScriptUrl": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/', variables('osFamilySpec').osName, '/')]",
     "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mongodb-high-availability/",
     "templateBaseUrl": "[variables('scriptUrl')]",
@@ -234,7 +241,7 @@
       "addressPrefix": "[parameters('addressPrefix')]",
       "subnetName": "[parameters('subnetName')]",
       "subnetPrefix": "[parameters('subnetPrefix')]",
-      "subnetRef": "[concat(variables('vnetID'), '/subnets/', parameters('subnetName'))]",
+      "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'),  parameters('subnetName'))]",
       "machineIpPrefix": "[parameters('nodeAddressPrefix')]"
     },
     "machineSettings": {
@@ -250,7 +257,7 @@
     },
     "clusterSpec": "[variables(concat('tshirtSize', parameters('tshirtSize')))]",
     "osFamilySpec": "[variables(concat('osFamily', parameters('osFamily')))]",
-    "installCommand": "[concat('bash mongodb-', variables('osFamilySpec').osName, '-install.sh', ' -i ', variables('osFamilySpec').installerBaseUrl, ' -b ', variables('osFamilySpec').installerPackages, ' -r ', parameters('replicaSetName'), ' -k ', parameters('replicaSetKey'), ' -u ', parameters('adminUsername'), ' -p ', parameters('adminPassword'), ' -x ', variables('networkSettings').machineIpPrefix, ' -n ', variables('clusterSpec').totalMemberCount)]",
+    "installCommand": "[concat('bash mongodb-', variables('osFamilySpec').osName, '-install.sh', ' -i ', variables('osFamilySpec').installerBaseUrl, ' -b ', variables('osFamilySpec').installerPackages, ' -v ', variables('osFamilySpec').installerVersion , ' -r ', parameters('replicaSetName'), ' -k ', parameters('replicaSetKey'), ' -u ', parameters('adminUsername'), ' -p ', parameters('adminPassword'), ' -x ', variables('networkSettings').machineIpPrefix, ' -n ', variables('clusterSpec').totalMemberCount)]",
     "vmScripts": {
       "scriptsToDownload": [
         "[concat(variables('scriptUrl'), 'mongodb-', variables('osFamilySpec').osName, '-install.sh')]",

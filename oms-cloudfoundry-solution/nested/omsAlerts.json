@@ -1,11 +1,17 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "omsWorkspaceName": {
             "type": "string",
             "metadata": {
                 "description": "Input the name of your OMS Workspace"
+            }
+        },
+        "actionGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the action group for alert actions"
             }
         }
     },
@@ -1761,21 +1767,27 @@
                 "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'), '/savedSearches/', toLower(variables('alerts')[copyIndex()].search.category), '|', toLower(variables('alerts')[copyIndex()].search.name))]",
                 "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'), '/savedSearches/', toLower(variables('alerts')[copyIndex()].search.category), '|', toLower(variables('alerts')[copyIndex()].search.name), '/schedules/','schedule-',uniqueString(resourceGroup().id, deployment().name,parameters('omsWorkspaceName'), '/', variables('alerts')[copyIndex()].search.category, '|', variables('alerts')[copyIndex()].search.name))]"
             ],
-            "tags": {},
+            "tags": {
+                "Source": "QuickstartTemplates"
+            },
             "properties": {
                 "etag": "*",
                 "Type": "Alert",
-                "name": "[variables('alerts')[copyIndex()].alert.displayName]",
+                "Name": "[variables('alerts')[copyIndex()].alert.displayName]",
                 "Description": "[variables('alerts')[copyIndex()].alert.description]",
-                "Severity": "[variables('alerts')[copyIndex()].alert.severity]",
+                "Severity": "[toLower(variables('alerts')[copyIndex()].alert.severity)]",
                 "Threshold": {
                     "Operator": "[variables('alerts')[copyIndex()].alert.thresholdOperator]",
                     "Value": "[variables('alerts')[copyIndex()].alert.thresholdValue]"
                 },
                 "Throttling": {
                     "DurationInMinutes": "[variables('alerts')[copyIndex()].alert.throttleMinutes]"
+                },
+                "AzNsNotification": {
+                    "GroupIds": ["[concat(resourceGroup().id, '/providers/microsoft.insights/actiongroups/', parameters('actionGroupName'))]"],
+                    "CustomEmailSubject": "[concat('[', toUpper(variables('alerts')[copyIndex()].alert.severity), '] ', variables('alerts')[copyIndex()].alert.displayName)]"
                 }
             }
-        }        
+        }
     ]
 }

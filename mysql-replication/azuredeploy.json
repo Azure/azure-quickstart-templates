@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "dnsName": {
@@ -12,12 +12,6 @@
       "type": "string",
       "metadata": {
         "description": "user name to ssh to the VMs"
-      }
-    },
-    "vmPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "password to ssh to the VMs"
       }
     },
     "mysqlRootPassword": {
@@ -40,14 +34,18 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2",
+      "defaultValue": "Standard_D2_v2",
       "metadata": {
         "description": "size for the VMs"
       }
     },
-    "storageAccountType": {
+    "diskType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Premium_LRS"
+      ],
       "metadata": {
         "description": "Storage account type for the cluster"
       }
@@ -202,12 +200,33 @@
       "metadata": {
         "description": "public IP name for MySQL loadbalancer"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
-    "templateAPIVersion": "2015-01-01",
-    "resourceAPIVersion": "2015-06-15",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
     "nodeCount": 2,
     "lbPublicIPName": "[parameters('publicIPName')]",
     "lbPublicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName'))]",
@@ -215,8 +234,6 @@
     "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
     "ilbBackendAddressPoolName": "[concat(parameters('dnsName'), '-ilbBackendPool')]",
     "ilbBackendAddressPoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('ilbBackendAddressPoolName'))]",
-    "ilbRuleName": "[concat(parameters('dnsName'), '-ilbRule')]",
-    "ilbRuleID": "[concat(variables('lbID'),'/loadBalancingRules/',variables('ilbRuleName'))]",
     "sshIPConfigName": "[concat(parameters('dnsName'), '-sshIPCfg')]",
     "sshIPConfig": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('sshIPConfigName'))]",
     "nicName": "[concat(parameters('dnsName'), '-nic')]",
@@ -228,7 +245,18 @@
     "sa": "[parameters('dbSubnetStartAddress')]",
     "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
     "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
-    "ipOctet3": "[int(split(variables('sa'), '.')[3])]"
+    "ipOctet3": "[int(split(variables('sa'), '.')[3])]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('vmUserName'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -261,19 +289,10 @@
       }
     },
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
-    },
-    {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('lbPublicIPName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Static",
         "dnsSettings": {
@@ -282,17 +301,23 @@
       }
     },
     {
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/availabilitySets",
+      "location": "[parameters('location')]",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "properties": {}
+      "properties": {
+        "PlatformUpdateDomainCount": 20,
+        "PlatformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      }
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
         "count": "[variables('nodeCount')]"
@@ -309,7 +334,7 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255))]",
               "subnet": {
-                "id": "[reference('Microsoft.Resources/deployments/SettingUpVirtualNetwork', variables('templateAPIVersion')).outputs.dbSubnetRef.value]"
+                "id": "[reference('Microsoft.Resources/deployments/SettingUpVirtualNetwork', '2015-01-01').outputs.dbSubnetRef.value]"
               },
               "loadBalancerBackendAddressPools": [
                 {
@@ -335,15 +360,14 @@
     {
       "name": "[concat(parameters('dnsName'), copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "vmLoop",
         "count": "[variables('nodeCount')]"
       },
       "dependsOn": [
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
       ],
       "properties": {
@@ -356,7 +380,8 @@
         "osProfile": {
           "computerName": "[concat(parameters('dnsName'), copyIndex())]",
           "adminUsername": "[parameters('vmUserName')]",
-          "adminPassword": "[parameters('vmPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -366,29 +391,31 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('resourceAPIVersion')).primaryEndpoints.blob, 'vhds/', parameters('dnsName'), copyIndex(), 'osdisk.vhd')]"
-            },
+            "name": "[concat(parameters('dnsName'), copyIndex(),'_OSDisk')]",
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('diskType')]"
+            }
           },
           "dataDisks": [
             {
-              "name": "datadisk1",
-              "diskSizeGB": "1000",
+              "name": "[concat(parameters('dnsName'), copyIndex(),'_DataDisk1')]",
+              "diskSizeGB": 1024,
               "lun": 0,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('resourceAPIVersion')).primaryEndpoints.blob, 'vhds/', parameters('dnsName'), copyIndex(), 'dataDisk1.vhd')]"
+              "caching": "ReadWrite",
+              "managedDisk": {
+                "storageAccountType": "[parameters('diskType')]"
               },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk2",
-              "diskSizeGB": "1000",
+              "name": "[concat(parameters('dnsName'), copyIndex(),'_DataDisk2')]",
+              "diskSizeGB": 1024,
               "lun": 1,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('resourceAPIVersion')).primaryEndpoints.blob, 'vhds/', parameters('dnsName'), copyIndex(), 'dataDisk2.vhd')]"
+              "caching": "ReadWrite",
+              "managedDisk": {
+                "storageAccountType": "[parameters('diskType')]"
               },
               "createOption": "Empty"
             }
@@ -407,7 +434,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('dnsName'), copyIndex(), '/setupMySQL')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "extLoop",
         "count": "[variables('nodeCount')]"
@@ -434,7 +461,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('lbName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPName'))]"
       ],
@@ -461,7 +488,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort0')]",
               "backendPort": 22,
               "enableFloatingIP": false
@@ -473,7 +500,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort1')]",
               "backendPort": 22,
               "enableFloatingIP": false
@@ -485,7 +512,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('mysqlFrontEndPort0')]",
               "backendPort": 3306,
               "enableFloatingIP": false
@@ -497,7 +524,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('mysqlFrontEndPort1')]",
               "backendPort": 3306,
               "enableFloatingIP": false
@@ -509,7 +536,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('mysqlProbePort0')]",
               "backendPort": 9200,
               "enableFloatingIP": false
@@ -521,7 +548,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('mysqlProbePort1')]",
               "backendPort": 9200,
               "enableFloatingIP": false
@@ -533,11 +560,11 @@
   ],
   "outputs": {
     "fqdn": {
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn]",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),'2015-06-15').dnsSettings.fqdn]",
       "type": "string"
     },
     "ipaddress": {
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).ipAddress]",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),'2015-06-15').ipAddress]",
       "type": "string"
     }
   }

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -36,7 +36,7 @@
     },
     "authenticationType": {
       "type": "string",
-      "defaultValue": "password",
+      "defaultValue": "sshPublicKey",
       "allowedValues": [
         "password",
         "sshPublicKey"
@@ -296,7 +296,7 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch/",
       "metadata": {
         "description": "Change this value to your repo name if deploying from a fork"
       }
@@ -307,11 +307,17 @@
       "metadata": {
         "description": "Auto-generated token to access _artifactsLocation"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "nestedTemplatesFolderName": "nestedtemplates",
-    "scriptsLocation": "[concat(parameters('_artifactsLocation'), '/scripts/')]",
     "sharedScriptsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/",
     "storageAccountPrefix": "[concat(substring(uniqueString(resourceGroup().id, parameters('esClusterName')), 0, 6), substring(parameters('esClusterName'), 0, 3))]",
     "storageAccountNameAFS": "[concat(variables('storageAccountPrefix'), 'afs')]",
@@ -418,9 +424,9 @@
         "yes": "[concat(' -e ', variables('marvelNodesIpPrefix'), '-3')]",
         "no": ""
       },
-      "centos" : {
-        "yes" : "[concat(' -e ', variables('marvelNodesIpPrefix'), '-3')]",
-        "no": ""  
+      "centos": {
+        "yes": "[concat(' -e ', variables('marvelNodesIpPrefix'), '-3')]",
+        "no": ""
       },
       "windows": {
         "yes": "[concat(' -marvelEndpoints ', variables('marvelNodesIpPrefix'), '-3')]",
@@ -447,18 +453,18 @@
     },
     "kibanaTemplateFileName": "[variables('kibanaTemplates')[parameters('kibana')]]",
     "ubuntuScripts": [
-      "[concat(variables('scriptsLocation'), 'elasticsearch-ubuntu-install.sh', parameters('_artifactsLocationSasToken'))]",
-      "[concat(variables('scriptsLocation'), 'kibana-install.sh', parameters('_artifactsLocationSasToken'))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/elasticsearch-ubuntu-install.sh', parameters('_artifactsLocationSasToken')))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/kibana-install.sh', parameters('_artifactsLocationSasToken')))]",
       "[concat(variables('sharedScriptsLocation'), 'vm-disk-utils-0.1.sh')]",
       "[concat(variables('sharedScriptsLocation'), 'afs-utils-0.1.sh')]"
     ],
     "centosScripts": [
-      "[concat(variables('scriptsLocation'), 'elasticsearch-centos-install.sh', parameters('_artifactsLocationSasToken'))]",
-      "[concat(variables('scriptsLocation'), 'kibana-centos-install.sh', parameters('_artifactsLocationSasToken'))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/elasticsearch-centos-install.sh', parameters('_artifactsLocationSasToken')))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/kibana-centos-install.sh', parameters('_artifactsLocationSasToken')))]",
       "[concat(variables('sharedScriptsLocation'), 'vm-disk-utils-0.1.sh')]"
     ],
     "windowsScripts": [
-      "[concat(variables('scriptsLocation'), 'elasticsearch-windows-install.ps1', parameters('_artifactsLocationSasToken'))]"
+      "[uri(parameters('_artifactsLocation'), concat('scripts/elasticsearch-windows-install.ps1', parameters('_artifactsLocationSasToken')))]"
     ],
     "authSet": {
       "password": "[parameters('adminPassword')]",
@@ -531,7 +537,7 @@
         "kibana": {
           "publisher": "Microsoft.Azure.Extensions",
           "type": "CustomScript",
-	  "autoUpgradeMinorVersion": true,
+          "autoUpgradeMinorVersion": true,
           "typeHandlerVersion": "2.0",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]",
@@ -541,45 +547,45 @@
       }
     },
     "centosSettings": {
-      "imageReference":{
+      "imageReference": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
         "sku": "7.2",
         "version": "latest"
       },
       "linuxConfiguration": "[variables('configurationObject')[parameters('authenticationType')]]",
-      "managementPort":"22",
-      "extensionSettings":{
+      "managementPort": "22",
+      "extensionSettings": {
         "marvel": {
-            "publisher": "Microsoft.Azure.Extensions",
-            "type": "CustomScript",
-            "autoUpgradeMinorVersion": true,
-            "typeHandlerVersion": "2.0",
-            "settings": {
-              "fileUris": "[variables('centosScripts')]",
-              "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -wn ', variables('esSettings').marvelClusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').marvelHosts, ' -k ')]"
-            }
-          },
+          "publisher": "Microsoft.Azure.Extensions",
+          "type": "CustomScript",
+          "autoUpgradeMinorVersion": true,
+          "typeHandlerVersion": "2.0",
+          "settings": {
+            "fileUris": "[variables('centosScripts')]",
+            "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -wn ', variables('esSettings').marvelClusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').marvelHosts, ' -k ')]"
+          }
+        },
         "master": {
-            "publisher": "Microsoft.Azure.Extensions",
-            "type": "CustomScript",
-            "typeHandlerVersion": "2.0",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "fileUris": "[variables('centosScripts')]",
-              "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'), variables('cloudAzureParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
-            }
-          },
+          "publisher": "Microsoft.Azure.Extensions",
+          "type": "CustomScript",
+          "typeHandlerVersion": "2.0",
+          "autoUpgradeMinorVersion": true,
+          "settings": {
+            "fileUris": "[variables('centosScripts')]",
+            "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'), variables('cloudAzureParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
+          }
+        },
         "client": {
-            "publisher": "Microsoft.Azure.Extensions",
-            "type": "CustomScript",
-            "typeHandlerVersion": "2.0",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "fileUris": "[variables('centosScripts')]",
-              "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'),  variables('cloudAzureParamValue'),variables('marvelExportParamValue'), variables('afsParamValue'))]"
-            }
-          },
+          "publisher": "Microsoft.Azure.Extensions",
+          "type": "CustomScript",
+          "typeHandlerVersion": "2.0",
+          "autoUpgradeMinorVersion": true,
+          "settings": {
+            "fileUris": "[variables('centosScripts')]",
+            "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'),  variables('cloudAzureParamValue'),variables('marvelExportParamValue'), variables('afsParamValue'))]"
+          }
+        },
         "data": {
           "publisher": "Microsoft.Azure.Extensions",
           "type": "CustomScript",
@@ -810,7 +816,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('masterTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesFolderName'), '/', variables('masterTemplateFileName'), parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -851,7 +857,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('marvelTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesFolderName'), '/', variables('marvelTemplateFileName'), parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -889,7 +895,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('sharedTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesFolderName'), '/', variables('sharedTemplateFileName'), parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -918,7 +924,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('clientTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesFolderName'), '/', variables('clientTemplateFileName'), parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -962,7 +968,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('dataTemplateFileNameValue'), parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesFolderName'), '/', variables('dataTemplateFileNameValue'), parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -1006,7 +1012,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('jumpboxTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesFolderName'), '/', variables('jumpboxTemplateFileName'), parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -1041,7 +1047,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('kibanaTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesFolderName'), '/', variables('kibanaTemplateFileName'), parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {

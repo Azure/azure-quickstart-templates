@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "clusterName": {
@@ -73,23 +73,28 @@
     },
     "computeNodeImage": {
       "type": "string",
-      "defaultValue": "CentOS_7.0",
+      "defaultValue": "CentOS_7.3",
       "allowedValues": [
         "CentOS_6.5",
         "CentOS_6.6",
         "CentOS_6.7",
+        "CentOS_6.8",
         "CentOS_7.0",
         "CentOS_7.1",
         "CentOS_7.2",
+        "CentOS_7.3",
         "CentOS_6.5_HPC",
+        "CentOS_6.8_HPC",
         "CentOS_7.1_HPC",
+        "CentOS_7.3_HPC",
         "RHEL_6.7",
         "RHEL_6.8",
         "RHEL_7.2",
-        "SLES_12",
-        "SLES_12_Premium",
-        "SLES_12_HPC",
-        "SLES_12_HPC_Premium",
+        "RHEL_7.3",
+        "SLES_12_SP3",
+        "SLES_12_SP3_HPC",
+        "SLES_12_SP3_HPC_Premium",
+        "SLES_12_SP3_Premium",
         "Ubuntu_14.04",
         "Ubuntu_16.04"
       ],
@@ -101,7 +106,7 @@
       "type": "string",
       "defaultValue": "IaaSLnxCN-",
       "minLength": 1,
-      "maxLength": 12,      
+      "maxLength": 12,
       "metadata": {
         "description": "The name prefix of the compute nodes. It must be no more than 12 characters, begin with a letter, and contain only letters, numbers and hyphens. For example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-000', 'IaaSCN-001', ..."
       }
@@ -110,7 +115,7 @@
       "type": "int",
       "defaultValue": 2,
       "minValue": 1,
-      "maxValue": 500,      
+      "maxValue": 500,
       "metadata": {
         "description": "The number of the compute nodes"
       }
@@ -196,99 +201,151 @@
       "metadata": {
         "description": "Optional URL of a public available PowerShell script you want to run on the head node after it is configured. The script will be run as the Local System account. You can also specify arguments for the script, for example 'http://www.contoso.com/myhnpostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "virtualNetworkName": "[concat(parameters('clusterName'), 'VNet')]",
-    "storageAccountNamePrefix": "[toLower(concat('hpc', uniqueString(resourceGroup().id, toLower(parameters('clusterName')))))]",
-    "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-HN')]",
     "computeNodeImageOsPlatform": "Linux",
     "computeNodeImages": {
       "CentOS_6.5": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
-        "sku": "6.5"
+        "sku": "6.5",
+        "version": "latest"
       },
       "CentOS_6.6": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
-        "sku": "6.6"
+        "sku": "6.6",
+        "version": "latest"
       },
       "CentOS_6.7": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
-        "sku": "6.7"
+        "sku": "6.7",
+        "version": "latest"
+      },
+      "CentOS_6.8": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "6.8",
+        "version": "latest"
       },
       "CentOS_7.0": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
-        "sku": "7.0"
+        "sku": "7.0",
+        "version": "latest"
       },
       "CentOS_7.1": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
-        "sku": "7.1"
+        "sku": "7.1",
+        "version": "latest"
       },
       "CentOS_7.2": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
-        "sku": "7.2"
+        "sku": "7.2",
+        "version": "latest"
+      },
+      "CentOS_7.3": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "7.3",
+        "version": "latest"
       },
       "CentOS_6.5_HPC": {
         "publisher": "OpenLogic",
         "offer": "CentOS-HPC",
-        "sku": "6.5"
+        "sku": "6.5",
+        "version": "latest"
+      },
+      "CentOS_6.8_HPC": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS-HPC",
+        "sku": "6.8",
+        "version": "latest"
       },
       "CentOS_7.1_HPC": {
         "publisher": "OpenLogic",
         "offer": "CentOS-HPC",
-        "sku": "7.1"
+        "sku": "7.1",
+        "version": "latest"
+      },
+      "CentOS_7.3_HPC": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS-HPC",
+        "sku": "7.3",
+        "version": "latest"
       },
       "RHEL_6.7": {
         "publisher": "RedHat",
         "offer": "RHEL",
-        "sku": "6.7"
+        "sku": "6.7",
+        "version": "latest"
       },
       "RHEL_6.8": {
         "publisher": "RedHat",
         "offer": "RHEL",
-        "sku": "6.8"
+        "sku": "6.8",
+        "version": "latest"
       },
       "RHEL_7.2": {
         "publisher": "RedHat",
         "offer": "RHEL",
-        "sku": "7.2"
+        "sku": "7.2",
+        "version": "latest"
       },
-      "SLES_12": {
+      "RHEL_7.3": {
+        "publisher": "RedHat",
+        "offer": "RHEL",
+        "sku": "7.3",
+        "version": "latest"
+      },
+      "SLES_12_SP3": {
         "publisher": "SUSE",
         "offer": "SLES",
-        "sku": "12"
+        "sku": "12-SP3",
+        "version": "latest"
       },
-      "SLES_12_Premium": {
-        "publisher": "SUSE",
-        "offer": "SLES-Priority",
-        "sku": "12"
-      },
-      "SLES_12_HPC": {
+      "SLES_12_SP3_HPC": {
         "publisher": "SUSE",
         "offer": "SLES-HPC",
-        "sku": "12"
+        "sku": "12-SP3",
+        "version": "latest"
       },
-      "SLES_12_HPC_Premium": {
+      "SLES_12_SP3_HPC_Premium": {
         "publisher": "SUSE",
         "offer": "SLES-HPC-Priority",
-        "sku": "12"
+        "sku": "12-SP3",
+        "version": "latest"
+      },
+      "SLES_12_SP3_Premium": {
+        "publisher": "SUSE",
+        "offer": "SLES-Priority",
+        "sku": "12-SP3",
+        "version": "latest"
       },
       "Ubuntu_14.04": {
         "publisher": "Canonical",
         "offer": "UbuntuServer",
-        "sku": "14.04.3-LTS"
+        "sku": "14.04.5-LTS",
+        "version": "latest"
       },
       "Ubuntu_16.04": {
         "publisher": "Canonical",
         "offer": "UbuntuServer",
-        "sku": "16.04.0-LTS"
+        "sku": "16.04.0-LTS",
+        "version": "latest"
       }
     },
     "currentComputeNodeImage": "[variables('computeNodeImages')[parameters('computeNodeImage')]]",
@@ -296,7 +353,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "type": "Microsoft.Resources/deployments",
       "name": "mainTemplate",
       "properties": {
@@ -315,20 +372,12 @@
           "privateDomainName": {
             "value": "[parameters('privateDomainName')]"
           },
-          "storageAccountNamePrefix": {
-            "value": "[variables('storageAccountNamePrefix')]"
-          },
-          "storageAccountStartIndex": {
-            "value": 0
-          },
-          "storageAccountType": {
-            "value": "[variables('storageAccountType')]"
-          },
-          "nbrCNPerStorageAccount": {
-            "value": 20
-          },
+
           "headNodeVMSize": {
             "value": "[parameters('headNodeVMSize')]"
+          },
+          "headNodeDiskType": {
+            "value": "HDD"
           },
           "computeNodeImageOsPlatform": {
             "value": "[variables('computeNodeImageOsPlatform')]"
@@ -347,6 +396,9 @@
           },
           "computeNodeNumber": {
             "value": "[parameters('computeNodeNumber')]"
+          },
+          "computeNodeDiskType": {
+            "value": "HDD"
           },
           "computeNodeVMSize": {
             "value": "[parameters('computeNodeVMSize')]"

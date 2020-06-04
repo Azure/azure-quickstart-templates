@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmSku": {
@@ -27,12 +27,6 @@
       "type": "string",
       "metadata": {
         "description": "Admin username on all VMs."
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Admin password on all VMs."
       }
     },
     "_artifactsLocation": {
@@ -72,6 +66,30 @@
       "metadata": {
         "description": "Repo in form user@repo.gitservice.com"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -99,13 +117,24 @@
       "sku": "14.04.4-LTS",
       "version": "latest"
     },
-    "imageReference": "[variables('osType')]"
+    "imageReference": "[variables('osType')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2016-03-30",
       "properties": {
         "addressSpace": {
@@ -126,7 +155,7 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('pipName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2016-03-30",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -138,7 +167,7 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('lbName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'))]"
@@ -169,7 +198,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('feIpConfigId')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPortRangeStart": 10022,
               "frontendPortRangeEnd": 11022,
               "backendPort": 22
@@ -243,7 +272,7 @@
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('namingInfix')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2016-04-30-preview",
       "dependsOn": [
         "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]",
@@ -269,7 +298,8 @@
           "osProfile": {
             "computerNamePrefix": "[variables('namingInfix')]",
             "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[parameters('adminPassword')]"
+            "adminPassword": "[parameters('adminPasswordOrKey')]",
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [

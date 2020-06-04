@@ -1,12 +1,18 @@
 # Microsoft
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/CredScanResult.svg)
+
 # OSS Quickstart (Phase-2)
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdevopstools-jenkins-chefhabitat-kubernetes%2Fazuredeploy.json" target="_blank">
-<img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdevopstools-jenkins-chefhabitat-kubernetes%2Fazuredeploy.json" target="_blank">
-<img src="http://armviz.io/visualizebutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdevopstools-jenkins-chefhabitat-kubernetes%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdevopstools-jenkins-chefhabitat-kubernetes%2Fazuredeploy.json)
+
+
 
 **Table of Contents**  
 
@@ -55,7 +61,6 @@
 - [Access National Park Applications](#access-national-park-applications)
 - [Verifying Application Logs](#verifying-application-logs)
 
-
 ## Solution Architecture:
 
 This Solution will be helpfull to deploy an application using the integration of Jenkins, Chef Habitat and Kubernetes.
@@ -86,7 +91,6 @@ Terraform&#39;s manageable infrastructure includes low-level components such as 
 
 **Kubernetes** is an orchestrator tool provides a platform for automatic deployment, scaling and operations of applications. It is a system for managing containerized applications across a cluster of nodes and Kubernetes uses etcd to store configuration data that can be used by each of the nodes in the cluster.
 
-
   ### Why Kubernetes?
 
 - Developing and updating the software at scale.
@@ -97,7 +101,6 @@ Terraform&#39;s manageable infrastructure includes low-level components such as 
 
 **Elastic** is the company behind Elastic stack, which is a suite of products including **E** lasticsearch, **L** ogstash and **K** ibana.  The ELK stack makes it easier and faster to search and analyze large data sets. Logstash is used to normalize the data, Elasticsearch processes, and then Kibana visualizes it.
 
-
  ### Elasticsearch
 
 Elasticsearch is an open-source, broadly-distributable, readily-scalable, enterprise-grade search engine. Elasticsearch can power extremely fast searches that support your data discovery applications **.** Consider these benefits:
@@ -107,11 +110,9 @@ Elasticsearch is an open-source, broadly-distributable, readily-scalable, enterp
 - **Full text search:** Elasticsearch uses Lucene to provide the most powerful full-text search capabilities available in any open-source product. The search features come with multi-language support, an extensive query language, geolocation support, context-sensitive suggestions, and autocompletion.
 - **Document orientation:**  You can store complex, real-world entities in Elasticsearch as structured JSON documents. All fields have a default index, and you can use all the indices in a single query to get precise results in the blink of an eye.
 
-
  ### Logstash — Routing Your Log Data
 
 **Logstash** is a tool for log data intake, processing, and output. This includes virtually any type of log that you manage: system logs, webserver logs, error logs, and app logs.  You can save a lot of time by training Logstash to normalize the data, getting Elasticsearch to process the data, and then visualizing it with Kibana. With Logstash, it&#39;s easy to take all those logs and store them in a central location. The only prerequisite is a Java runtime, and it takes just two commands to get Logstash up and running. Logstash will serve as the workhorse for storage, querying, and analysis of your logs. Since it has an arsenal of ready-made inputs, filters, codecs, and outputs, you can grab hold of a very powerful feature-set with a very little effort on your part. Think of Logstash as a pipeline for event processing: it takes precious little time to choose the inputs, configure the filters, and extract the relevant, high-value data from your log.
-
 
   ### Kibana — Visualizing Your Log Data
 
@@ -128,25 +129,21 @@ Elasticsearch is an open-source, broadly-distributable, readily-scalable, enterp
 **Flow Diagram:**
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/2.png)
 
-
   ### The following logs are visualized in Kibana:
 | S.NO | Nodes            | Logs Path|
 | ---- |-------------     | -------- |
 | 1    | Application Node | /hab/svc/national-parks/logs/, /hab/pkgs/core/tomcat8/8.5.9/20170514144202/tc/logs/, /root/sup-national-parks.log|
 | 2    | mongoDB          | /hab/svc/mongodb/logs, /hab/svc/mongodb/var/mongod.log, /root/sup.mongodb.log|
 
-
 ## Jenkins:
 
 **Jenkins**  is an open-source, continuous integration software tool written in the Java programming language for testing and reporting on isolated changes in a larger code base in real time. This software enables developers to find and solve defects in a code base rapidly and automate testing of their builds. There are also hundreds of **plugins**  available to enhance its power and usability.
-
 
   ### Plugins:
 
 The concept of plugins makes Jenkins attractive, easy to learn, and easy to use. Jenkins has many plugins available for free. These plugins help to integrate with various software tools for better convenience.
 
 In this solution, we are using the Kubernetes Continuous Deploy plugins.
-
 
 **Kubernetes Continuous Deploy plugin:**
 
@@ -156,7 +153,6 @@ It supports three options as:
 - It helps to Fill the contents in kubeconfig file directly
 - It provides to Fetch cluster details through SSH connection to the mater node
 - To get the kubeconfig file from the workspace path.
-
 
   ### Jenkins Pipeline
 
@@ -178,18 +174,15 @@ To use any of the services provided by Azure Storage -- Blob storage, File stora
 
 Habitat essentially wraps applications into their own lightweight runtime environments and then allows you to run them in any environment, including bare metal servers, virtual machines, Docker containers (and their respective container management services), and PaaS systems like Cloud Foundry.
 
-
   ### Why Habitat?
 
 Habitat is a modern technology to build, deploy, and manage applications in any environment from traditional datacenters to containerized microservices.
 
 This is because in Habitat, the application is the unit of automation.  This means the application package contains everything needed to deploy, run, and maintain the application.
 
-
   ### Packaging an Application with Habitat:
 
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/3.png)  
-
 
   ### Habitat Components:
 
@@ -201,13 +194,11 @@ Habitat Supervisor is what runs the application artifact. The Supervisor is what
 
 A service group is a logical grouping of services with the same package and topology type connected in a ring. They are created to share configuration and file updates among the services within those groups and can be segmented based on workflow or deployment needs (QA, Production, and so on).
 
-
   ### Habitat Packaging Format:
 
 Habitat packages are in a format called the HART format, which stands for Habitat Artifact.
 
 These HART packages contain the compiled application itself – if, for example, you had a Java application you were automating, you would have the compiled Java application within this package. Along with the application, these packages also include everything needed to deploy and run the application, all in one place.
-
 
   ### Habitat Highlights:
 
@@ -223,7 +214,6 @@ Habitat is a first of its kind open source project that offers an entirely new a
 
 1. Generate your SSH key
 2. Create service principal
-
 
   ### Generate your SSH key:
 
@@ -263,7 +253,6 @@ https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azu
 
 The ARM template will deploy the following resources on Azure:
 
-
 | S.NO | Nodes                | Installed application            | No of nodes          |Node Purpose                                                                                                       | Ports
 | ---- |-------------         | --------------------             | ------------         |-------------                                                                                                      | -----
 | 1    |Jenkins server        | Jekins                           | 1                    |Install and configure plugins and jobs                                                                             | 8080   
@@ -273,7 +262,6 @@ The ARM template will deploy the following resources on Azure:
 | 5    |Azure Storage Account | packer,jenkins,ELK               | 3                    |Packer:To store the Packer VHD’s |
 | 6    |Kubernetes | -             | 1 master, 3 agents                    |To Deploy applications in pods |
 | 7    |Azure Container Registry | -             | 1                  |To store Docker images |
-
 
 ## Solution Workflow:
 
@@ -295,7 +283,6 @@ After the template has been successfully deployed, login in to the Jenkins serve
 
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/17.png)
 
-
 5. Change to the root user by using the below command:
 
 	``sudo -i``
@@ -314,9 +301,7 @@ After the template has been successfully deployed, login in to the Jenkins serve
 
 9. To unlock the Jenkins server, provide the Initialadminpassword which was retrieved as part of step 7.
 
-
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/19.png)
-
 
 10. Click on **Install suggested plugins**.
 
@@ -331,8 +316,6 @@ After the template has been successfully deployed, login in to the Jenkins serve
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/22.png)
 
 13. We can see the jobs which are created in Jenkins server.
-
-
 
  ### Jobs
 
@@ -372,7 +355,6 @@ This job will launch a Virtual Machine Scale set with three application nodes.
 
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/27.png)
 
-
 5. Once the ELKJob is successfully executed, move to the Jenkins Dashboard and click on **KuberentesClusterjob**.
 
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/28.png)
@@ -395,7 +377,6 @@ This job will launch a Virtual Machine Scale set with three application nodes.
 
 ## Chef Habitat:
 
-
   ### Configuring Habitat:
 
 To build the National Park application, begin by logging in to the Build Instance using Fully Qualified Domain Name (FQDN) from the output section of the ARM template. (As shown in the solution workflow step at page 22)
@@ -414,7 +395,6 @@ To build the National Park application, begin by logging in to the Build Instanc
 7. Enter &quot; **yes**&quot; to Enable analytics
 
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/35.png)
-
 
   ### Creating Hart File:
 
@@ -451,7 +431,6 @@ To build the National Park application, begin by logging in to the Build Instanc
 7. Once **build** is successful, a **HART** file will be generated in results Directory.
 
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/41.png)
-
 
 ### Get Azure Container Registry Password from Azure portal
 
@@ -543,8 +522,6 @@ To build the National Park application, begin by logging in to the Build Instanc
 
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/56.png)
 
-
-
 ## Verify Kubernetes Pods and Services:
 
 1. Get the DNS of Jenkins server and Kubernetes master Instances from Azure portal
@@ -562,7 +539,6 @@ To build the National Park application, begin by logging in to the Build Instanc
 	`Kubectl get pods`
 
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/57.png)
-
 
 5. Verify kubernetes service using below command
 
@@ -613,3 +589,5 @@ To build the National Park application, begin by logging in to the Build Instanc
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/66.PNG)
 
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/67.PNG)
+
+

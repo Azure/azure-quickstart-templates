@@ -8,20 +8,24 @@
 AZURE_STORAGE_NAME=$1
 AZURE_STORAGE_KEY=$2
 AZURE_FILESHARE_NAME=$3
-MOUNTPOINT_PATH=$4
-IS_RUNNING_ON_NODE=$5
-USERNAME=$6
-CLUSTER_MAXCPUS=$7
-NEXTFLOW_INSTALL_URL=$8
-ADDITIONAL_INSTALL_SCRIPT_URL=$9
-ADDITIONAL_INSTALL_SCRIPT_ARGUMENT=${10}
+AZURE_STORAGE_ENDPOINT=$4
+MOUNTPOINT_PATH=$5
+IS_RUNNING_ON_NODE=$6
+USERNAME=$7
+CLUSTER_MAXCPUS=$8
+NEXTFLOW_INSTALL_URL=$9
+ADDITIONAL_INSTALL_SCRIPT_URL=${10}
+ADDITIONAL_INSTALL_SCRIPT_ARGUMENT=${11}
+
 
 log () {
     echo "-------------------------" | tee -a "$2"
     date -Is | tee -a "$2"
-    echo $1 | tee -a "$2"
+    echo "$1" | tee -a "$2"
     echo "-------------------------" | tee -a "$2"
 }
+
+log "storageSuffix: $AZURE_STORAGE_ENDPOINT"
 
 installUtils() {
     #Install CIFS and JQ (used by this script)
@@ -31,14 +35,11 @@ installUtils() {
 
     #Create azure share if it doesn't already exist
     log "Installing AzureCLI and Mounting Azure Files Share" /tmp/nfinstall.log
-    echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | \
-        sudo tee /etc/apt/sources.list.d/azure-cli.list
+    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash #TODO: simplify CLI install - this one command will do
 
-    apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893 | tee -a /tmp/nfinstall.log
-    apt-get -y update | tee /tmp/nfinstall.log
-    apt-get install azure-cli -y | tee -a /tmp/nfinstall.log
 
-    az storage share create --name "$AZURE_FILESHARE_NAME" --quota 2048 --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=$AZURE_STORAGE_NAME;AccountKey=$AZURE_STORAGE_KEY" | tee -a /tmp/nfinstall.log
+
+    az storage share create --name "$AZURE_FILESHARE_NAME" --quota 2048 --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=$AZURE_STORAGE_ENDPOINT;AccountName=$AZURE_STORAGE_NAME;AccountKey=$AZURE_STORAGE_KEY" | tee -a /tmp/nfinstall.log
 
     #Wait for the file share to be available.
     sleep 10
@@ -65,7 +66,8 @@ mountCifs() {
 
     #Mount the share with symlink and fifo support: see https://wiki.samba.org/index.php/SMB3-Linux
     mkdir -p "$MOUNTPOINT_PATH/cifs" | tee -a /tmp/nfinstall.log
-    echo "//$AZURE_STORAGE_NAME.file.core.windows.net/$AZURE_FILESHARE_NAME $MOUNTPOINT_PATH/cifs cifs vers=3.0,username=$AZURE_STORAGE_NAME,password=$AZURE_STORAGE_KEY,dir_mode=0777,file_mode=0777,mfsymlinks,sfu" >> /etc/fstab
+    #TODO - hard coded endpoint
+    echo "//$AZURE_STORAGE_NAME.file.$AZURE_STORAGE_ENDPOINT/$AZURE_FILESHARE_NAME $MOUNTPOINT_PATH/cifs cifs vers=3.0,username=$AZURE_STORAGE_NAME,password=$AZURE_STORAGE_KEY,dir_mode=0777,file_mode=0777,mfsymlinks,sfu" >> /etc/fstab
     mount -a  | tee -a /tmp/nfinstall.log
     CIFS_SHAREPATH="$MOUNTPOINT_PATH/cifs"
 }
@@ -127,13 +129,12 @@ setupNfs() {
 copyLogsToCifsShareForDebugging() {
     log "Get machine metadata and copy logs to share"
 
-    apt-get install jq curl -y | tee -a /tmp/nfinstall.log
+    apt-get install curl -y | tee -a /tmp/nfinstall.log
 
-    #Write instance details into share log folder for debugging
-    METADATA=$(curl -H Metadata:true http://169.254.169.254/metadata/instance?api-version=2017-04-02)
-     # shellcheck disable=SC2116
-     # shellcheck disable=SC2086
-    NODENAME=$(echo $METADATA | jq -r '.compute.name')
+    #Get node name and other instance metadata and write details into share log folder for debugging
+    #see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service
+    METADATA=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance?api-version=2017-04-02")
+    NODENAME=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/compute/name?api-version=2017-04-02&format=text")
 
     #Create a log folder for each node
     mkdir -p "$CIFS_SHAREPATH/logs/$NODENAME" | tee -a /tmp/nfinstall.log
@@ -197,7 +198,7 @@ setNextflowEnvironmentVars() {
         echo export "NXF_AZ_NFSPATH=$NFS_SHAREPATH"
     } >> /etc/environment
 
-    #Use asure epherical instance drive for tmp
+    #Use azure epherical instance drive for tmp
     mkdir -p /mnt/nextflow_temp
     echo export NXF_TEMP=/mnt/nextflow_temp >> /etc/environment
 

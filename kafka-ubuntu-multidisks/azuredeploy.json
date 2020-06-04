@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "storageAccountNamePrefix": {
@@ -19,12 +19,6 @@
       "defaultValue": "azureuser",
       "metadata": {
         "description": "Virtual machine administrator username"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Virtual machine administrator password"
       }
     },
     "tshirtSize": {
@@ -57,15 +51,53 @@
       "metadata": {
         "description": "Virtual network name"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/kafka-ubuntu-multidisks/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
     "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/kafka-ubuntu-multidisks/",
-    "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
+    "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
     "tshirtSizeSmall": {
       "vmSize": "Standard_A1",
       "diskSize": 1023,
-      "vmTemplate": "[concat(variables('templateBaseUrl'), 'datastore-2disk-resources.json')]",
+      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-2disk-resources.json', parameters('_artifactsLocationSasToken')))]",
       "zookeeperCount": 1,
       "brokerCount": 3,
       "storage": {
@@ -83,7 +115,7 @@
     "tshirtSizeMedium": {
       "vmSize": "Standard_A3",
       "diskSize": 1023,
-      "vmTemplate": "[concat(variables('templateBaseUrl'), 'datastore-8disk-resources.json')]",
+      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-8disk-resources.json', parameters('_artifactsLocationSasToken')))]",
       "zookeeperCount": 3,
       "brokerCount": 5,
       "storage": {
@@ -103,7 +135,7 @@
     "tshirtSizeLarge": {
       "vmSize": "Standard_A4",
       "diskSize": 1023,
-      "vmTemplate": "[concat(variables('templateBaseUrl'), 'datastore-16disk-resources.json')]",
+      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-16disk-resources.json', parameters('_artifactsLocationSasToken')))]",
       "zookeeperCount": 3,
       "brokerCount": 5,
       "storage": {
@@ -123,7 +155,7 @@
     "tshirtSizeXLarge": {
       "vmSize": "Standard_A7",
       "diskSize": 1023,
-      "vmTemplate": "[concat(variables('templateBaseUrl'), 'datastore-16disk-resources.json')]",
+      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-16disk-resources.json', parameters('_artifactsLocationSasToken')))]",
       "zookeeperCount": 5,
       "brokerCount": 8,
       "storage": {
@@ -146,17 +178,17 @@
     "tshirtSize": "[variables(concat('tshirtSize', parameters('tshirtSize')))]",
     "jumpboxTemplateEnabled": "jumpbox-resources.json",
     "jumpboxTemplateDisabled": "empty-resources.json",
-    "vmTemplatezookeeper": "[concat(variables('templateBaseUrl'), 'zookeeper-resources.json')]",
-    "jumpboxTemplateUrl": "[concat(variables('templateBaseUrl'), variables(concat('jumpboxTemplate',parameters('jumpbox'))))]",
+    "vmTemplatezookeeper": "[uri(parameters('_artifactsLocation'), concat('zookeeper-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "jumpboxTemplateUrl": "[uri(parameters('_artifactsLocation'), concat(variables(concat('jumpboxTemplate',parameters('jumpbox'))), parameters('_artifactsLocationSasToken')))]",
     "osSettings": {
       "scripts": [
-        "[concat(variables('templateBaseUrl'), 'kafka-cluster-install.sh')]",
+        "[uri(parameters('_artifactsLocation'), concat('kafka-cluster-install.sh', parameters('_artifactsLocationSasToken')))]",
         "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
       ],
       "imageReference": {
         "publisher": "Canonical",
         "offer": "UbuntuServer",
-        "sku": "14.04.2-LTS",
+        "sku": "14.04.5-LTS",
         "version": "latest"
       }
     },
@@ -227,8 +259,11 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
           },
           "osSettings": {
             "value": "[variables('osSettings')]"
@@ -271,8 +306,11 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
           },
           "osSettings": {
             "value": "[variables('osSettings')]"
@@ -331,8 +369,11 @@
               "namespace": "jumpbox"
             }
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
           },
           "subnet": {
             "value": "[variables('networkSettings').subnets.dmz]"

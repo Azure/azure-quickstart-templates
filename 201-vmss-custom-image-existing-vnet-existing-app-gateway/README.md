@@ -1,11 +1,17 @@
 # VM Scale Set from a Managed Image connected to an existing Virtual Network and Application Gateway
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-custom-image-existing-vnet-existing-app-gateway%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-custom-image-existing-vnet-existing-app-gateway%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-custom-image-existing-vnet-existing-app-gateway/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-custom-image-existing-vnet-existing-app-gateway/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-custom-image-existing-vnet-existing-app-gateway/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-custom-image-existing-vnet-existing-app-gateway/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-custom-image-existing-vnet-existing-app-gateway/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-custom-image-existing-vnet-existing-app-gateway/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-custom-image-existing-vnet-existing-app-gateway%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-custom-image-existing-vnet-existing-app-gateway%2Fazuredeploy.json)
+
+
 
 This template deploys a VM Scale Set based on a specified custom image (in the form of a Managed Image), connected to an existing subnet in an existing Virtual Network, and adds the instances to a specified existing Application Gateway Backend Pool. This is useful in cases where you might want to deploy multiple VM Scale Sets in the same Virtual Network, as well as configure the Application Gateway outside of this template, such as through the portal, which provides a more reliable experience for things like adding HTTPS listeners.
 
@@ -39,3 +45,5 @@ To connect to individual instances of the VM Scale Set, utilize a jumpbox VM, th
 ## Notes
 
 The OS of the VM Scale Set will follow whatever is defined in the custom image.
+
+

@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
@@ -123,17 +123,22 @@
         "description": "Password for UCP Admin Account"
       }
     },
-    "baseUrl": {
+    "_artifactsLocation": {
       "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudbeesjenkins-dockerdatacenter/",
       "metadata": {
-        "description": "Base URL for Artifacts",
-        "artifactsBaseUrl": ""
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudbeesjenkins-dockerdatacenter"
+      "defaultValue": ""
     }
   },
   "variables": {
-    "deploymentApiVersion": "2015-01-01",
     "networkApiVersion": "2015-06-15",
     "storageAccountNameCloudbees": "[concat('cbstor',variables('uniqueString'))]",
     "storageAccountType": "Standard_LRS",
@@ -141,7 +146,6 @@
     "virtualNetworkAddressPrefix": "10.0.0.0/16",
     "jenkinsSubnetName": "jenkins-subnet",
     "jenkinsSubnetPrefix": "10.0.0.0/24",
-    "JenkinsdnsNameForPublicIP": "jenkins-0-",
     "ucpControllerSubnetName": "ucp-controller-subnet",
     "ucpControllerSubnetPrefix": "10.0.1.0/24",
     "ucpdtrNodeSubnetName": "ucp-node-subnet",
@@ -157,9 +161,9 @@
     "controllerLbPublicIpAddress": "clbpip",
     "nodeLbPublicIpAddress": "nlbpip",
     "nodeDtrLbPublicIpAddress": "dlbpip",
-    "vnetDeploymentURI": "[concat(parameters('baseUrl'), '/', 'nested/newvnet.json')]",
-    "cloubeesDeploymnetURI": "[concat(parameters('baseUrl'),'/nested/cloudbees-jenkins-deployment.json')]",
-    "dockerDataCenterDeploymentURI": "[concat(parameters('baseUrl'),'/nested/docker-data-center-deployment.json')]",
+    "vnetDeploymentURI": "[uri(parameters('_artifactsLocation'), concat('nested/newvnet.json', parameters('_artifactsLocationSasToken')))]",
+    "cloubeesDeploymnetURI": "[uri(parameters('_artifactsLocation'), concat('nested/cloudbees-jenkins-deployment.json', parameters('_artifactsLocationSasToken')))]",
+    "dockerDataCenterDeploymentURI": "[uri(parameters('_artifactsLocation'), concat('nested/docker-data-center-deployment.json', parameters('_artifactsLocationSasToken')))]",
     "cloudbeesLocation": "[parameters('location')]",
     "jenkinsPublicIPName": "jenkinsPublicIP",
     "jenkinsPublicIPNewOrExisting": "new",
@@ -239,7 +243,7 @@
       "name": "cloudbeesDeployment",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "['Microsoft.Resources/deployments/virtualNetworkDeployment']"
+        "Microsoft.Resources/deployments/virtualNetworkDeployment"
       ],
       "properties": {
         "mode": "Incremental",
@@ -310,7 +314,7 @@
       "name": "dockerDatacenterDeployment",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "['Microsoft.Resources/deployments/virtualNetworkDeployment']"
+        "Microsoft.Resources/deployments/virtualNetworkDeployment"
       ],
       "properties": {
         "mode": "Incremental",
@@ -319,8 +323,11 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "baseUrl": {
-            "value": "[parameters('baseUrl')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           },
           "location": {
             "value": "[parameters('location')]"

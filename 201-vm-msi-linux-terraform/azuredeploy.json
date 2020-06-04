@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -10,7 +10,7 @@
     },
     "authenticationType": {
       "type": "string",
-      "defaultValue": "password",
+      "defaultValue": "sshPublicKey",
       "allowedValues": [
         "password",
         "sshPublicKey"
@@ -38,7 +38,7 @@
       "metadata": {
         "description": "The size of the VM to create"
       },
-      "defaultValue": "Standard_D1_V2"
+      "defaultValue": "Standard_D2_V3"
     },
     "desktopInstall": {
       "type": "bool",
@@ -52,7 +52,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-msi-linux-terraform"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-msi-linux-terraform/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -60,20 +60,27 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
       "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "dnsLabelPrefix": "[concat('msi',uniquestring(resourceGroup().id))]",
     "infraStorageAccountName": "[take(concat('storeinfra', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
     "stateStorageAccountName": "[take(concat('storestate', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
-    "nicName": "[concat('nic',uniquestring(resourceGroup().id))]",
-    "networkSecurityGroupName": "[concat('nsg',uniquestring(resourceGroup().id))]",
+    "nicName": "[concat('nic', variables('vmName'))]",
+    "networkSecurityGroupName": "[concat('nsg', variables('vmName'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "publicIPAddressName": "[concat('pip',uniquestring(resourceGroup().id))]",
     "vmName": "[concat('vm',uniquestring(resourceGroup().id))]",
-    "virtualNetworkName": "[concat('vnet',uniquestring(resourceGroup().id))]",
+    "virtualNetworkName": "vnet",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
@@ -86,20 +93,19 @@
         ]
       }
     },
-    "contributor" : "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]",
+    "contributor": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]",
     "installParm1": "[concat(' -u ', parameters('adminUsername'))]",
     "installParm2": "[concat(' -s ', subscription().subscriptionId)]",
     "installParm3": "[concat(' -a ', variables('stateStorageAccountName'))]",
     "installParm4": "[if(equals(parameters('desktopInstall'), bool('true')), concat(' -d ', parameters('desktopInstall')), '')]",
     "installParm5": "[concat(' -t ', subscription().tenantId)]"
-
-   },
+  },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('infraStorageAccountName')]",
-      "apiVersion": "2017-10-01",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
       },
@@ -109,8 +115,8 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('stateStorageAccountName')]",
-      "apiVersion": "2017-10-01",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
       },
@@ -118,10 +124,10 @@
       "properties": {}
     },
     {
-      "apiVersion": "2017-11-01",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -130,10 +136,10 @@
       }
     },
     {
-      "apiVersion": "2017-11-01",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -153,8 +159,8 @@
     {
       "name": "[variables('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2017-11-01",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-11-01",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -188,13 +194,14 @@
       }
     },
     {
-      "apiVersion": "2017-11-01",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -217,10 +224,13 @@
       }
     },
     {
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+          "[resourceId('Microsoft.Network/networkinterfaces', variables('nicName'))]"
+      ],
       "identity": {
         "type": "SystemAssigned"
       },
@@ -238,7 +248,7 @@
           "imageReference": {
             "publisher": "Canonical",
             "offer": "UbuntuServer",
-            "sku": "17.10",
+            "sku": "18.04-LTS",
             "version": "latest"
           }
         },
@@ -252,50 +262,32 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('infraStorageAccountName')),'2016-12-01').primaryEndpoints.blob]"
+            "storageUri": "[reference(variables('infraStorageAccountName')).primaryEndpoints.blob]"
           }
         }
       }
     },
     {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/MSILinuxExtension')]",
-      "apiVersion": "2017-12-01",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.ManagedIdentity",
-        "type": "ManagedIdentityExtensionForLinux",
-        "typeHandlerVersion": "1.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "port": 50342
-        },
-        "protectedSettings": {}
-      }
-    },
-    {
-      "apiVersion": "2017-09-01",
-      "name": "[guid(resourceGroup().id)]",
+      "apiVersion": "2019-04-01-preview",
+      "name": "[guid(resourceGroup().id, variables('contributor'))]",
       "type": "Microsoft.Authorization/roleAssignments",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions/', variables('vmName'),'MSILinuxExtension')]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
       ],
-        "properties": {
+      "properties": {
         "roleDefinitionId": "[variables('contributor')]",
-        "principalId": "[reference(concat(resourceId('Microsoft.Compute/virtualMachines/', variables('vmName')),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId]",
-        "scope": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name)]"
+        "principalId": "[reference(variables('vmName'), '2019-12-01', 'Full').identity.principalId]",
+        "scope": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', resourceGroup().name)]",
+        "principalType": "ServicePrincipal"
       }
     },
     {
       "name": "[concat(variables('vmName'),'/customscriptextension')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2017-03-30",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-07-01",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id))]"
+        "[resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, variables('contributor')))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -304,21 +296,28 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), '/scripts/infra.sh', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'), '/scripts/install.sh', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'), '/scripts/desktop.sh', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'), '/scripts/azureProviderAndCreds.tf', parameters('_artifactsLocationSasToken'))]"
+            "[uri(parameters('_artifactsLocation'), concat('scripts/infra.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/install.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/desktop.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/azureProviderAndCreds.tf', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash infra.sh && bash install.sh ', variables('installParm1'), variables('installParm2'), variables('installParm3'), variables('installParm4'), variables('installParm5'), ' -k ', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('stateStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value, ' -l ', reference(concat(resourceId('Microsoft.Compute/virtualMachines/', variables('vmName')),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId)]"
+          "commandToExecute": "[concat('bash infra.sh && bash install.sh ', 
+                                        variables('installParm1'), 
+                                        variables('installParm2'), 
+                                        variables('installParm3'), 
+                                        variables('installParm4'), 
+                                        variables('installParm5'), 
+                                        ' -k ', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('stateStorageAccountName')), '2019-06-01').keys[0].value, 
+                                        ' -l ', reference(variables('vmName'), '2019-12-01', 'Full').identity.principalId)]"
         }
       }
     }
   ],
   "outputs": {
     "fqdn": {
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2017-10-01').dnsSettings.fqdn]",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2019-09-01').dnsSettings.fqdn]",
       "type": "string"
     }
   }

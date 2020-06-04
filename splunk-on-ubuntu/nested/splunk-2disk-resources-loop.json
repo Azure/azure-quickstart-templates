@@ -1,9 +1,10 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
-      "type": "string"
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
     },
     "storageSettings": {
       "type": "object"
@@ -45,8 +46,6 @@
     }
   },
   "variables": {
-    "templateAPIVersion": "2015-01-01",
-    "resourceAPIVersion": "2015-06-15",
     "singleQuote": "'",
     "vmCount": "[parameters('machineSettings').vmCount]",
     "vmName": "[concat(parameters('namespace'), '-vm')]",
@@ -56,9 +55,7 @@
     "securityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('securityGroupName'))]",
     "ipOctet01": "[parameters('machineSettings').staticIps.ipOctet01]",
     "ipOctet2": "[parameters('machineSettings').staticIps.ipOctet2]",
-    "ipOctet3": "[parameters('machineSettings').staticIps.ipOctet3]",
-    "storageReferencePrefix": "[concat('Microsoft.Storage/storageAccounts/', parameters('storageSettings').name)]",
-    "storageApiVersion": "[providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]]"
+    "ipOctet3": "[parameters('machineSettings').staticIps.ipOctet3]" 
   },
   "resources": [
     {
@@ -95,7 +92,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30", 
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), copyindex())]",
       "tags": {
@@ -129,31 +126,22 @@
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat(variables('storageReferencePrefix'), parameters('storageSettings').map[copyindex()]), variables('storageApiVersion')).primaryEndpoints.blob, 'vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
-            },
+            "name": "[concat(variables('vmName'), copyindex(),'_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk1",
+              "name": "[concat(variables('vmName'), copyindex(),'_DataDisk1')]", 
               "diskSizeGB": "[parameters('machineSettings').diskSize]",
-              "lun": 0,
-              "vhd": {
-                "uri": "[concat(reference(concat(variables('storageReferencePrefix'), parameters('storageSettings').map[copyindex()]), variables('storageApiVersion')).primaryEndpoints.blob, 'vhds/', variables('vmName'), copyindex(), '-datadisk1.vhd')]"
-              },
+              "lun": 0,              
               "caching": "ReadOnly",
               "createOption": "Empty"
             },
             {
-              "name": "datadisk2",
+              "name": "[concat(variables('vmName'), copyindex(),'_DataDisk2')]", 
               "diskSizeGB": "[parameters('machineSettings').diskSize]",
-              "lun": 1,
-              "vhd": {
-                "uri": "[concat(reference(concat(variables('storageReferencePrefix'), parameters('storageSettings').map[copyindex()]), variables('storageApiVersion')).primaryEndpoints.blob, 'vhds/', variables('vmName'), copyindex(), '-datadisk2.vhd')]"
-              },
+              "lun": 1,             
               "caching": "ReadOnly",
               "createOption": "Empty"
             }

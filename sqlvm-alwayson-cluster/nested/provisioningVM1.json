@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adPDCVMName": {
@@ -93,31 +93,38 @@
       "type": "string"
     }
   },
-  "variables": {
-    "sqlstorageName": "[parameters('sqlStorageAccountName')]",
-    "dcstorageName": "[parameters('dcStorageAccountName')]",
-    "fwstorageName": "[concat(uniquestring(parameters('sqlStorageAccountName')), 'fsw')]",
+  "variables": { 
     "diagstorageName": "[concat(uniquestring(parameters('sqlStorageAccountName')), 'diag')]"
   },
   "resources": [
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[parameters('adAvailabilitySetName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]"
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Aligned"
+        },
+        "properties": { 
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+        }
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[parameters('sqlAvailabilitySetName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
+      "sku": {
+        "name": "Aligned"
+        },
       "properties": {
         "platformFaultDomainCount": 3,
         "platformUpdateDomainCount": 3
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('adPDCVMName')]",
       "location": "[parameters('location')]",
@@ -144,18 +151,12 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('dcstorageName'),'.blob.core.windows.net/',parameters('vmContainerName'),'/',parameters('adPDCVMName'),'-osdisk.vhd')]"
-            },
+            "name": "[concat(parameters('adPDCVMName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "vhd": {
-                "uri": "[concat('http://',variables('dcstorageName'),'.blob.core.windows.net/',parameters('vmContainerName'),'/', parameters('adPDCVMName'),'data-1.vhd')]"
-              },
               "name": "[concat(parameters('adPDCVMName'),'-data-disk1')]",
               "createOption": "Empty",
               "caching": "None",
@@ -173,16 +174,16 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[concat('http://',variables('diagstorageName'),'.blob.core.windows.net')]"
           }
         }
       },
       "resources": [
         {
-          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "type": "extensions",
           "name": "[concat(parameters('adPDCVMName'),'/InstallDomainController')]",
-          "apiVersion": "2015-06-15",
+          "apiVersion": "2017-03-30",
           "location": "[parameters('location')]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('adPDCVMName'))]"
@@ -213,7 +214,7 @@
       ]
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('adBDCVMName')]",
       "location": "[parameters('location')]",
@@ -240,18 +241,12 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('dcstorageName'),'.blob.core.windows.net/',parameters('vmContainerName'),'/',parameters('adBDCVMName'),'-osdisk.vhd')]"
-            },
+            "name": "[concat(parameters('adBDCVMName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "vhd": {
-                "uri": "[concat('http://',variables('dcstorageName'),'.blob.core.windows.net/',parameters('vmContainerName'),'/', parameters('adBDCVMName'),'data-1.vhd')]"
-              },
               "name": "[concat(parameters('adBDCVMName'),'-data-disk1')]",
               "createOption": "Empty",
               "caching": "None",
@@ -269,14 +264,14 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled":  true ,
             "storageUri": "[concat('http://',variables('diagstorageName'),'.blob.core.windows.net')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('sqlwVMName')]",
       "location": "[parameters('location')]",
@@ -304,17 +299,11 @@
           },
           "osDisk": {
             "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('fwstorageName'),'.blob.core.windows.net/',parameters('vmContainerName'),'/',parameters('sqlwVMName'),'-osdisk.vhd')]"
-            },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "vhd": {
-                "uri": "[concat('http://',variables('fwstorageName'),'.blob.core.windows.net/',parameters('vmContainerName'),'/', parameters('sqlwVMName'),'-data-1.vhd')]"
-              },
               "name": "[concat(parameters('sqlwVMName'),'-data-disk1')]",
               "caching": "None",
               "createOption": "Empty",
@@ -332,14 +321,14 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled":  true ,
             "storageUri": "[concat('http://',variables('diagstorageName'),'.blob.core.windows.net')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('sqlVMName'), copyindex())]",
       "location": "[parameters('location')]",
@@ -370,18 +359,12 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('sqlstorageName'),'.blob.core.windows.net/',parameters('vmContainerName'),'/',parameters('sqlVMName'), copyindex(), '-osdisk.vhd')]"
-            },
+            "name": "[concat(parameters('sqlVMName'), copyindex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
-            {
-              "vhd": {
-                "uri": "[concat('http://',variables('sqlstorageName'),'.blob.core.windows.net/',parameters('vmContainerName'),'/', parameters('sqlVMName'), copyindex(), '-Data-1.vhd')]"
-              },
+            { 
               "name": "[concat(parameters('sqlVMName'), copyindex(),'-data-disk1')]",
               "caching": "None",
               "createOption": "Empty",
@@ -399,14 +382,12 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[concat('http://',variables('diagstorageName'),'.blob.core.windows.net')]"
           }
         }
       }
     }
   ],
-  "outputs": {
-
-  }
+  "outputs": {}
 }

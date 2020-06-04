@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "virtualNetworkName": {
@@ -14,13 +14,6 @@
       "defaultValue": "Subnet-1",
       "metadata": {
         "Description": "Subnet name for the virtual network that resources will be provisioned in to"
-      }
-    },
-    "storageAccountName": {
-      "type": "string",
-      "defaultValue": "uniquestoragejumpspark",
-      "metadata": {
-        "Description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
       }
     },
     "adminUsername": {
@@ -51,7 +44,7 @@
     },
     "imageSKU": {
       "type": "string",
-      "defaultValue": "14.04.2-LTS",
+      "defaultValue": "14.04.5-LTS",
       "metadata": {
         "Description": "Image SKU"
       }
@@ -61,14 +54,18 @@
       "metadata": {
         "Description": "The global VM name prefix"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "vmStorageAccountContainerName": "vhd",
-    "vmSourceImageName": "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB",
-    "sourceImageName": "[concat('/',subscription().subscriptionId,'/services/images/',variables('vmSourceImageName'))]",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
     "vmSize": "Standard_A0"
   },
   "resources": [
@@ -76,7 +73,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "publicIP",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
@@ -85,7 +82,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "nicJumpbox",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP')]"
       ],
@@ -107,10 +104,10 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "jumpbox",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', 'nicJumpbox')]"
       ],
@@ -134,10 +131,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdiskjumpbox",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/','osdiskjumpbox.vhd')]"
-            },
+            "name": "jumpbox_OSDisk",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -154,7 +148,7 @@
               "endpointName": "SSH",
               "privatePort": 22,
               "publicPort": 22,
-              "protocol": "tcp"
+              "protocol": "Tcp"
             }
           ]
         }

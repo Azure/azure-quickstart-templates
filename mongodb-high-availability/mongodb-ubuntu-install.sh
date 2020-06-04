@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -31,6 +31,7 @@
 
 PACKAGE_URL=http://repo.mongodb.org/apt/ubuntu
 PACKAGE_NAME=mongodb-org
+PACKAGE_VERSION="4.0.2"
 REPLICA_SET_KEY_DATA=""
 REPLICA_SET_NAME=""
 REPLICA_SET_KEY_FILE="/etc/mongo-replicaset-key"
@@ -53,19 +54,20 @@ help()
 	echo "Options:"
 	echo "		-i Installation package URL"
 	echo "		-b Installation package name"
+	echo "		-v Installation package version"
 	echo "		-r Replica set name"
 	echo "		-k Replica set key"
 	echo "		-u System administrator's user name"
 	echo "		-p System administrator's password"
-	echo "		-x Member node IP prefix"	
-	echo "		-n Number of member nodes"	
-	echo "		-a (arbiter indicator)"	
-	echo "		-l (last member indicator)"	
+	echo "		-x Member node IP prefix"
+	echo "		-n Number of member nodes"
+	echo "		-a (arbiter indicator)"
+	echo "		-l (last member indicator)"
 }
 
 log()
 {
-	# If you want to enable this logging add a un-comment the line below and add your account key 
+	# If you want to enable this logging add a un-comment the line below and add your account key
 	#curl -X POST -H "content-type:text/plain" --data-binary "$(date) | ${HOSTNAME} | $1" https://logs-01.loggly.com/inputs/${LOGGING_KEY}/tag/redis-extension,${HOSTNAME}
 	echo "$1"
 }
@@ -80,13 +82,13 @@ then
 fi
 
 # Parse script parameters
-while getopts :i:b:r:k:u:p:x:n:alh optname; do
+while getopts :i:b:v:r:k:u:p:x:n:alh optname; do
 
 	# Log input parameters (except the admin password) to facilitate troubleshooting
 	if [ ! "$optname" == "p" ] && [ ! "$optname" == "k" ]; then
 		log "Option $optname set with value ${OPTARG}"
 	fi
-  
+
 	case $optname in
 	i) # Installation package location
 		PACKAGE_URL=${OPTARG}
@@ -94,31 +96,33 @@ while getopts :i:b:r:k:u:p:x:n:alh optname; do
 	b) # Installation package name
 		PACKAGE_NAME=${OPTARG}
 		;;
+	v) # Installation package version
+		PACKAGE_VERSION=${OPTARG}
+		;;
 	r) # Replica set name
 		REPLICA_SET_NAME=${OPTARG}
-		;;	
+		;;
 	k) # Replica set key
 		REPLICA_SET_KEY_DATA=${OPTARG}
-		;;	
+		;;
 	u) # Administrator's user name
 		ADMIN_USER_NAME=${OPTARG}
-		;;		
+		;;
 	p) # Administrator's user name
 		ADMIN_USER_PASSWORD=${OPTARG}
-		;;	
+		;;
 	x) # Private IP address prefix
 		NODE_IP_PREFIX=${OPTARG}
-		;;				
+		;;
 	n) # Number of instances
 		INSTANCE_COUNT=${OPTARG}
-		;;		
+		;;
 	a) # Arbiter indicator
 		IS_ARBITER=true
-		JOURNAL_ENABLED=false
-		;;		
+		;;
 	l) # Last member indicator
 		IS_LAST_MEMBER=true
-		;;		
+		;;
     h)  # Helpful hints
 		help
 		exit 2
@@ -168,7 +172,7 @@ tune_system()
 	  # Append it to the hsots file if not there
 	  echo "127.0.0.1 $(hostname)" >> /etc/hosts
 	  log "Hostname ${HOSTNAME} added to /etc/hosts"
-	fi	
+	fi
 }
 
 #############################################################################
@@ -177,8 +181,8 @@ install_mongodb()
 	log "Downloading MongoDB package $PACKAGE_NAME from $PACKAGE_URL"
 
 	# Configure mongodb.list file with the correct location
-	apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
-	echo "deb ${PACKAGE_URL} "$(lsb_release -sc)"/mongodb-org/3.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-3.0.list
+	apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
+	echo "deb ${PACKAGE_URL} "$(lsb_release -sc)"/mongodb-org/4.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
 
 	# Install updates
 	apt-get -y update
@@ -187,11 +191,11 @@ install_mongodb()
 	if [ -f /etc/mongod.conf ]; then
 		rm /etc/mongod.conf
 	fi
-	
+
 	#Install Mongo DB
-	log "Installing MongoDB package $PACKAGE_NAME"
-	apt-get -y install $PACKAGE_NAME
-	
+	log "Installing MongoDB package $PACKAGE_NAME=$PACKAGE_VERSION"
+	apt-get -y install $PACKAGE_NAME=$PACKAGE_VERSION
+
 	# Stop Mongod as it may be auto-started during the above step (which is not desirable)
 	stop_mongodb
 }
@@ -199,9 +203,9 @@ install_mongodb()
 #############################################################################
 configure_datadisks()
 {
-	# Stripe all of the data 
+	# Stripe all of the data
 	log "Formatting and configuring the data disks"
-	
+
 	bash ./vm-disk-utils-0.1.sh -b $DATA_DISKS -s
 }
 
@@ -209,48 +213,48 @@ configure_datadisks()
 configure_replicaset()
 {
 	log "Configuring a replica set $REPLICA_SET_NAME"
-	
+
 	echo "$REPLICA_SET_KEY_DATA" | tee "$REPLICA_SET_KEY_FILE" > /dev/null
 	chown -R mongodb:mongodb "$REPLICA_SET_KEY_FILE"
 	chmod 600 "$REPLICA_SET_KEY_FILE"
-	
+
 	# Enable replica set in the configuration file
 	sed -i "s|#keyFile: \"\"$|keyFile: \"${REPLICA_SET_KEY_FILE}\"|g" /etc/mongod.conf
 	sed -i "s|authorization: \"disabled\"$|authorization: \"enabled\"|g" /etc/mongod.conf
 	sed -i "s|#replication:|replication:|g" /etc/mongod.conf
 	sed -i "s|#replSetName:|replSetName:|g" /etc/mongod.conf
-	
+
 	# Stop the currently running MongoDB daemon as we will need to reload its configuration
 	stop_mongodb
-	
+
 	# Attempt to start the MongoDB daemon so that configuration changes take effect
 	start_mongodb
-	
+
 	# Initiate a replica set (only run this section on the very last node)
 	if [ "$IS_LAST_MEMBER" = true ]; then
 		# Log a message to facilitate troubleshooting
 		log "Initiating a replica set $REPLICA_SET_NAME with $INSTANCE_COUNT members"
-	
+
 		# Initiate a replica set
-		mongo master -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.initiate())"
-		
+		mongo --authenticationDatabase "admin" -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.initiate())"
+
 		# Add all members except this node as it will be included into the replica set after the above command completes
-		for (( n=0 ; n<($INSTANCE_COUNT-1) ; n++)) 
-		do 
+		for (( n=0 ; n<($INSTANCE_COUNT-1) ; n++))
+		do
 			MEMBER_HOST="${NODE_IP_PREFIX}${n}:${MONGODB_PORT}"
-			
-			log "Adding member $MEMBER_HOST to replica set $REPLICA_SET_NAME" 
-			mongo master -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.add('${MEMBER_HOST}'))"
+
+			log "Adding member $MEMBER_HOST to replica set $REPLICA_SET_NAME"
+			mongo --authenticationDatabase "admin" -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.add('${MEMBER_HOST}'))"
 		done
-		
+
 		# Print the current replica set configuration
-		mongo master -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.conf())"	
-		mongo master -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.status())"	
+		mongo --authenticationDatabase "admin" -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.conf())"
+		mongo --authenticationDatabase "admin" -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.status())"
 	fi
-	
+
 	# Register an arbiter node with the replica set
 	if [ "$IS_ARBITER" = true ]; then
-	
+
 		# Work out the IP address of the last member node where we initiated a replica set
 		let "PRIMARY_MEMBER_INDEX=$INSTANCE_COUNT-1"
 		PRIMARY_MEMBER_HOST="${NODE_IP_PREFIX}${PRIMARY_MEMBER_INDEX}:${MONGODB_PORT}"
@@ -258,7 +262,7 @@ configure_replicaset()
 		CURRENT_NODE_IP=${CURRENT_NODE_IPS[@]}
 
 		log "Adding an arbiter ${HOSTNAME} ($CURRENT_NODE_IP) node to the replica set $REPLICA_SET_NAME"
-		mongo master -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host $PRIMARY_MEMBER_HOST --eval "printjson(rs.addArb('${CURRENT_NODE_IP}'))"
+		mongo --authenticationDatabase "admin" -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host $PRIMARY_MEMBER_HOST --eval "printjson(rs.addArb('${CURRENT_NODE_IP}'))"
 	fi
 }
 
@@ -270,15 +274,11 @@ configure_mongodb()
 	mkdir -p "$MONGODB_DATA"
 	mkdir "$MONGODB_DATA/log"
 	mkdir "$MONGODB_DATA/db"
-	
+
 	chown -R mongodb:mongodb "$MONGODB_DATA/db"
 	chown -R mongodb:mongodb "$MONGODB_DATA/log"
 	chmod 755 "$MONGODB_DATA"
-	
-	mkdir /var/run/mongodb
-	touch /var/run/mongodb/mongod.pid
-	chmod 777 /var/run/mongodb/mongod.pid
-	
+
 	tee /etc/mongod.conf > /dev/null <<EOF
 systemLog:
     destination: file
@@ -289,6 +289,7 @@ processManagement:
     fork: true
     pidFilePath: "/var/run/mongodb/mongod.pid"
 net:
+    bindIpAll: true
     port: $MONGODB_PORT
 security:
     #keyFile: ""
@@ -304,7 +305,7 @@ EOF
 
 	# Fixing an issue where the mongod will not start after reboot where when /run is tmpfs the /var/run/mongodb directory will be deleted at reboot
 	# After reboot, mongod wouldn't start since the pidFilePath is defined as /var/run/mongodb/mongod.pid in the configuration and path doesn't exist
-	sed -i "s|pre-start script|pre-start script\n  if [ ! -d /var/run/mongodb ]; then\n    mkdir -p /var/run/mongodb \&\& touch /var/run/mongodb/mongod.pid \&\& chmod 777 /var/run/mongodb/mongod.pid\n  fi\n|" /etc/init/mongod.conf
+	sed -i "s|pre-start script|pre-start script\n  if [ ! -d /var/run/mongodb ]; then\n    mkdir -p /var/run/mongodb \&\& touch /var/run/mongodb/mongod.pid \&\& chmod 777 /var/run/mongodb/mongod.pid \&\& chown mongodb:mongodb /var/run/mongodb/mongod.pid\n  fi\n|" /etc/init/mongod.conf
 
 
 }
@@ -313,7 +314,7 @@ start_mongodb()
 {
 	log "Starting MongoDB daemon processes"
 	service mongod start
-	
+
 	# Wait for MongoDB daemon to start and initialize for the first time (this may take up to a minute or so)
 	while ! timeout 1 bash -c "echo > /dev/tcp/localhost/$MONGODB_PORT"; do sleep 10; done
 }
@@ -322,22 +323,22 @@ stop_mongodb()
 {
 	# Find out what PID the MongoDB instance is running as (if any)
 	MONGOPID=`ps -ef | grep '/usr/bin/mongod' | grep -v grep | awk '{print $2}'`
-	
+
 	if [ ! -z "$MONGOPID" ]; then
 		log "Stopping MongoDB daemon processes (PID $MONGOPID)"
-		
+
 		kill -15 $MONGOPID
 	fi
-	
+
 	# Important not to attempt to start the daemon immediately after it was stopped as unclean shutdown may be wrongly perceived
-	sleep 15s	
+	sleep 15s
 }
 
 configure_db_users()
 {
 	# Create a system administrator
 	log "Creating a system administrator"
-	mongo master --host 127.0.0.1 --eval "db.createUser({user: '${ADMIN_USER_NAME}', pwd: '${ADMIN_USER_PASSWORD}', roles:[{ role: 'userAdminAnyDatabase', db: 'admin' }, { role: 'clusterAdmin', db: 'admin' }, { role: 'readWriteAnyDatabase', db: 'admin' }, { role: 'dbAdminAnyDatabase', db: 'admin' } ]})"
+	mongo admin --host 127.0.0.1 --eval "db.createUser({user: '${ADMIN_USER_NAME}', pwd: '${ADMIN_USER_PASSWORD}', roles:[{ role: 'userAdminAnyDatabase', db: 'admin' }, { role: 'clusterAdmin', db: 'admin' }, { role: 'readWriteAnyDatabase', db: 'admin' }, { role: 'dbAdminAnyDatabase', db: 'admin' } ]})"
 }
 
 # Step 1

@@ -1,0 +1,181 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "allowedValues": [
+                "australiaeast",
+                "australiasoutheast",
+                "eastus",
+                "westus2",
+                "westeurope",
+                "northeurope",
+                "canadacentral",
+                "canadaeast",
+                "japaneast",
+                "japanwest"            ],
+            "metadata": {
+                "description": "Location for the resources."
+            }
+        },
+        "logicAppName": {
+            "type": "string",
+            "defaultValue": "[uniqueString(resourceGroup().id)]",
+            "metadata": {
+                "description": "Name of the logic app to be created."
+            }
+        },
+        "customResourceProviderName": {
+            "type": "string",
+            "defaultValue": "[uniqueString(resourceGroup().id)]",
+            "metadata": {
+                "description": "Name of the custom provider to be created."
+            }
+        },
+        "customResourceName": {
+            "type": "string",
+            "defaultValue": "myDemoCustomResource",
+            "metadata": {
+                "description": "Name of the custom resource that is being created."
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2019-05-01",
+            "name": "[parameters('logicAppName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "actions": {
+                        "Switch": {
+                            "cases": {
+                                "CreateResource": {
+                                    "actions": {
+                                        "CreateCustomResource": {
+                                            "inputs": {
+                                                "body": {
+                                                    "properties": "@addProperty(triggerBody().Body['properties'], 'myDynamicProperty', 'myDynamicValue')"
+                                                },
+                                                "statusCode": 200
+                                            },
+                                            "kind": "Http",
+                                            "type": "Response"
+                                        }
+                                    },
+                                    "case": "CREATE"
+                                }
+                            },
+                            "default": {
+                                "actions": {
+                                    "DefaultHttpResponse": {
+                                        "inputs": {
+                                            "statusCode": 200
+                                        },
+                                        "kind": "Http",
+                                        "type": "Response"
+                                    }
+                                }
+                            },
+                            "expression": "@triggerBody().operationType",
+                            "type": "Switch"
+                        }
+                    },
+                    "contentVersion": "1.0.0.0",
+                    "outputs": {},
+                    "parameters": {},
+                    "triggers": {
+                        "CustomProviderWebhook": {
+                            "inputs": {
+                                "schema": {
+                                    "required": [
+                                        "OperationType",
+                                        "ResourceType",
+                                        "ResourceId",
+                                        "ResourceName",
+                                        "Body"
+                                    ],
+                                    "properties": {
+                                        "OperationType": {
+                                            "$id": "#/properties/OperationType",
+                                            "type": "string",
+                                            "enum": [
+                                                "CREATE",
+                                                "DELETE",
+                                                "GET",
+                                                "LIST",
+                                                "TRIGGER"
+                                            ]
+                                        },
+                                        "ResourceType": {
+                                            "$id": "#/properties/ResourceType",
+                                            "type": "string"
+                                        },
+                                        "ResourceId": {
+                                            "$id": "#/properties/ResourceId",
+                                            "type": "string"
+                                        },
+                                        "ResourceName": {
+                                            "$id": "#/properties/ResourceName",
+                                            "type": "string"
+                                        },
+                                        "Body": {
+                                            "$id": "#/properties/Body",
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            },
+                            "kind": "Http",
+                            "type": "Request"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.CustomProviders/resourceProviders",
+            "apiVersion": "2018-09-01-preview",
+            "name": "[parameters('customResourceProviderName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]"
+            ],
+            "properties": {
+                "resourceTypes": [
+                    {
+                        "name": "customResources",
+                        "mode": "Secure",
+                        "routingType": "Webhook,Cache",
+                        "endpoint": "[listCallbackURL(resourceId('Microsoft.Logic/workflows/triggers', parameters('logicAppName'), 'CustomProviderWebhook'), '2019-05-01').value]"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.CustomProviders/resourceProviders/customResources",
+            "apiVersion": "2018-09-01-preview",
+            "name": "[concat(parameters('customResourceProviderName'), '/', parameters('customResourceName'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.CustomProviders/resourceProviders', parameters('customResourceProviderName'))]"
+            ],
+            "properties": {
+                "myCustomInputProperty": "myCustomInputValue",
+                "myCustomInputObject": {
+                    "Property1": "Value1"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "customResource": {
+            "type": "object",
+            "value": "[reference(parameters('customResourceName'), '2018-09-01-preview', 'Full')]"
+        }
+    }
+}
