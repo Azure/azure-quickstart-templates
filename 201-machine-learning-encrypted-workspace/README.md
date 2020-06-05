@@ -142,6 +142,34 @@ PowerShell
     Set-AzKeyVaultAccessPolicy -VaultName <keyvault-name> -ObjectId <object-ID> -PermissionsToKeys get, unwrapKey, wrapKey
 ```
 
+### Look up cmk_keyvault and resource_cmk_uri
+
+Use this command to see cmk_keyvault.
+
+Azure CLI: Id at the beginning of output is cmk_keyvault. Like this: /subscriptions/<subscripiton id>/resourceGroup/<rg name>/providers/Microsoft.KeyVault/vaults/<keyvault-name>.
+
+```bash
+    az keyvault show --name <keyvault-name>
+```
+
+PowerShell: Resource id  is cmk_keyvault. Like this: /subscriptions/<subscripiton id>/resourceGroup/<rg name>/providers/Microsoft.KeyVault/vaults/<keyvault-name>.
+
+```powershell
+    Get-AzureRMKeyVault -VaultName '<keyvault-name>'
+```
+Use this command to see resource_cmk_uri.
+
+Azure CLI: Kid is resource_cmk_uri. Like this: https://<keyvault-name>.vault.azure.net/keys/<key-name>/******.
+
+```bash
+    az keyvault key show --vault-name <keyvault-name> --name <key-name> 
+```
+
+PowerShell: Id is resource_cmk_uri. Like this: https://<keyvault-name>.vault.azure.net/keys/<key-name>/******.
+
+```powershell
+    Get-AzureKeyVaultKey -VaultName '<keyvault-name>' -KeyName '<key-name>'
+
 ## More information
 
 * [Encryption at rest](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security#data-encryption)
