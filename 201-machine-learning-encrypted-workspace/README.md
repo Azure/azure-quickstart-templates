@@ -104,9 +104,9 @@ PowerShell
     Add-AzKeyVaultKey -VaultName <keyvault-name> -Name <key-name> -Destination 'Software'
 ```
 
-### Enable customer-managged keys for Azure Cosmos DB (preview)
+### Enable customer-managged keys for Azure Cosmos DB
 
-To enable your subscription for customer-managed keys, send mail to azurecosmosdbcmk@service.microsoft.com with your subscription ID. For more information, see [Configure customer-managed keys for your AzureCosmos account](https://docs.microsoft.com/azure/cosmos-db/how-to-setup-cmk).
+See data encryption section of [Enterprise Security for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security#data-encryption) and [Configure customer-managed keys for your AzureCosmos account](https://docs.microsoft.com/azure/cosmos-db/how-to-setup-cmk).
 
 ### Add an access policy to the key vault
 
