@@ -13,8 +13,4 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-hdinsight-kafka-with-edge-schema-registry%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-hdinsight-kafka-with-edge-schema-registry%2Fazuredeploy.json)
 
-This template allows you to create a Linux-based HDInsight Kafka cluster with a
-Schema Registry edge node. The Schema Registry edge node is a Linux virtual
-machine with the Confluent Schema Registry package available. You can use the
-edge node for registering a schema, validating schema and managing your message
-schema versions.
+This template allows you to create a Linux-based HDInsight Kafka cluster with a Schema Registry edge node. The Schema Registry edge node is a Linux virtual machine with the Confluent Schema Registry package available. You can use the edge node for registering a schema, validating schema and managing your message schema versions.
