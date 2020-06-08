@@ -1,4 +1,5 @@
-# Creation AKS ARM template can be attached as Azure ML compute target with MSI enabled
+# Create AKS ARM template can be attached as Azure ML compute target with MSI enabled
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/BestPracticeResult.svg)
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://github.com/cloudmelon/azure-quickstart-templates/blob/master/101-aks-azml-targetcompute/azuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -13,3 +14,4 @@ The template allows us to deploy an AKS cluster that can be easily integrated wi
 
 
 
+`Tags: aks, azureml, msi, devops`
