@@ -38,7 +38,7 @@ The following resources are deployed as part of this solution
 `$ az ad group create --display-name <new group name> --mail-nickname <new group name> --output json`
 - Add your AAD identity as a member of this group
 `$ az ad group member add --group <group objectId from previous step> --member-id <your user object id>`
-- Either add the group objectId GUID to the 'aadAdminGroupObjectIds' parameter value in the azuredeploy.parameters.json file or supply the value during deployment via the portal, PowerShell or AZ CLI commands
+- Either add the group objectId GUID to the 'aadAdminGroupObjectIds' parameter value in the azuredeploy.parameters.json file or supply the value during deployment via the Azure Portal, PowerShell or AZ CLI commands
 
 ### Scenario Deployment Validation
 
@@ -53,4 +53,3 @@ Validate that the AKS API service's private IP is only accessible from the Linux
   - `$ kubectl get nodes`
   - `$ kubectl get pod -A`
 - Use a machine located outside of the Azure virtual network, run the previous commands to verify that you're unable to communicate with the Kubernetes API server
-
