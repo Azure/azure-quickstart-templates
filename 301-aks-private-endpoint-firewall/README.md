@@ -13,7 +13,6 @@
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-aks-private-endpoint-firewall%2Fazuredeploy.json)    
 
-
 ### Overview
 
 This solution deploys an AKS cluster with a private IP for the API server endpoint using Private Link.
@@ -34,22 +33,24 @@ The following resources are deployed as part of this solution
 - Azure Monitor workspace for AKS container insights data
 
 ### Prerequisites
+- Ensure the user or service principal deploying the solution has at least Contributor rights to the Azure subscription. This is because during the AKS cluster creation a new resource group named 'MC_<resource group name>_<cluster name>_<deployment region>'
 - Create an AAD group to use for RBAC admin access to the AKS cluster
-  - obtain the objectId of the group & use it as the ARM template deployment's 'aadAdminGroupObjectIds' parameter value
-  - add your AAD identity as a member of this group
+`$ az ad group create --display-name <new group name> --mail-nickname <new group name> --output json`
+- Add your AAD identity as a member of this group
+`$ az ad group member add --group <group objectId from previous step> --member-id <your user object id>`
+- Either add the group objectId GUID to the 'aadAdminGroupObjectIds' parameter value in the azuredeploy.parameters.json file or supply the value during deployment via the portal, PowerShell or AZ CLI commands
 
 ### Scenario Deployment Validation
 
-To validate that the AKS API service's private IP is accessibile from the Linux VM.
+Validate that the AKS API service's private IP is only accessible from the Linux VM. 
 - SSH to the Azure Firewall public IP returned as output from the ARM deployment
   - `$ ssh localadmin@<Azure Firewall public IP>`
-- Install kubectl & az-cli tools
-  - `$ curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl`
-  - `$ curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`
 - Get the Kubernetes config file
   - `$ az login`
   - `$ az account set --subscription <your azure subscription id>`
   - `$ az aks get-credentials -g <aks resource group name> -n <aks cluster name> --admin`
-- Test access by listing the current nodes & pods in the cluster
+- Test access by listing the current nodes & pods in the cluster (kubectl & azure cli tools are automatically installed by cloud-init)
   - `$ kubectl get nodes`
   - `$ kubectl get pod -A`
+- Use a machine located outside of the Azure virtual network, run the previous commands to verify that you're unable to communicate with the Kubernetes API server
+
