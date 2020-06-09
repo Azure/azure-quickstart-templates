@@ -66,6 +66,10 @@ echo $(date) " - Install Podman"
 yum install -y podman
 echo $(date) " - Install Podman Complete"
 
+echo $(date) " - Install httpd-tools"
+yum install -y httpd-tools
+echo $(date) " - Install httpd-tools Complete"
+
 echo $(date) " - Download Binaries"
 runuser -l $SUDOUSER -c "mkdir -p /home/$SUDOUSER/.openshift"
 
@@ -295,6 +299,33 @@ spec:
 EOF"
 runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/machine-health-check.yaml"
 echo $(date) " - Machine Health Check setup complete"
+
+echo $(date) " - Create User"
+runuser -l $SUDOUSER -c "oc create user ${SUDOUSER}"
+runuser -l $SUDOUSER -c "htpasswd -c -B -b /tmp/htpasswd '${SUDOUSER}' '${OPENSHIFTPASSWORD}'"
+runuser -l $SUDOUSER -c "oc create secret generic htpass-secret --from-file=htpasswd=/tmp/htpasswd -n openshift-config"
+runuser -l $SUDOUSER -c "cat > ${INSTALLERHOME}/openshiftfourx/auth.yaml <<EOF
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: htpasswdAuth
+spec:
+  identityProviders:
+  - name: htpasswdProvider 
+    challenge: true 
+    login: true 
+    mappingMethod: claim 
+    type: HTPasswd
+    htpasswd:
+      fileData:
+        name: htpass-secret 
+EOF"
+runuser -l $SUDOUSER -c "oc create -f ${INSTALLERHOME}/openshiftfourx/auth.yaml"
+runuser -l $SUDOUSER -c "oc adm policy add-cluster-role-to-user cluster-admin '${SUDOUSER}'"
+runuser -l $SUDOUSER -c "oc login https://api.${CLUSTERNAME}.${BASEDOMAIN}:6443 -u '${SUDOUSER}' -p '${OPENSHIFTPASSWORD}'"
+#Delete kubeadmin
+# runuser -l $SUDOUSER -c "oc delete secrets kubeadmin -n kube-system"
+echo $(date) " - Create User Complete"
 
 echo $(date) " - Setting up $STORAGEOPTION"
 if [[ $STORAGEOPTION == "portworx" ]]; then
