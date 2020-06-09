@@ -29,11 +29,11 @@ The following resources are deployed as part of this solution
 - Azure Private Link endpoint for AKS
 - Linux VM with private IP
 - Azure Firewall
-  - Inbound DNAT rule to allow access to the Linux VM from the internet on port 22
+  - Inbound Destination NAT (DNAT) rule to allow access to the Linux VM from the internet on port 22
 - Azure Monitor workspace for AKS container insights data
 
 ### Prerequisites
-- Ensure the user or service principal deploying the solution has at least Contributor rights to the Azure subscription. This is because during the AKS cluster creation a new resource group named 'MC_<resource group name>_<cluster name>_<deployment region>'
+- Ensure the user or service principal deploying the solution has at least Contributor rights to the Azure subscription. During the AKS cluster creation a new resource group named 'MC_<resource group name>_<cluster name>_<deployment region>' is created which contains the private DNS zone and A record for the cluster. The final stage of the solution links this DNS zone to the hub virtual network, allowing the VM to resolve the cluster IP address. In order to link the DNS zone to the virtual network, Contributor permissions are required to the DNS zone resource.
 - Create an AAD group to use for RBAC admin access to the AKS cluster
 `$ az ad group create --display-name <new group name> --mail-nickname <new group name> --output json`
 - Add your AAD identity as a member of this group
