@@ -4,54 +4,19 @@
   "parameters": {
     "dnsName": {
       "type": "string",
+      "defaultValue": "[concat('tm-', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Traffic Manager profile DNS name. Must be unique in .trafficmanager.net"
       }
     },
     "primarylocation": {
       "type": "string",
-      "allowedValues": [
-        "East Asia",
-        "Southeast Asia",
-        "Central US",
-        "East US",
-        "East US 2",
-        "West US",
-        "North Central US",
-        "South Central US",
-        "North Europe",
-        "West Europe",
-        "Japan West",
-        "Japan East",
-        "Brazil South",
-        "Canada Central",
-        "Canada East"
-      ],
-      "defaultValue": "East US",
       "metadata": {
         "description": "Location of the primary endpoint"
       }
     },
     "secondarylocation": {
       "type": "string",
-      "allowedValues": [
-        "East Asia",
-        "Southeast Asia",
-        "Central US",
-        "East US",
-        "East US 2",
-        "West US",
-        "North Central US",
-        "South Central US",
-        "North Europe",
-        "West Europe",
-        "Japan West",
-        "Japan East",
-        "Brazil South",
-        "Canada Central",
-        "Canada East"
-      ],
-      "defaultValue": "West US",
       "metadata": {
         "description": "Location of the secondary endpoint"
       }
@@ -86,25 +51,34 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/traffic-manager-demo-setup"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/traffic-manager-demo-setup/"
     },
-    "location": {
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "vmSize": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
+      "defaultValue": "Standard_D2_v3",
       "metadata": {
         "description": "Location for all resources."
       }
     }
   },
   "variables": {
-    "virtualNetworkName": "virtualNetwork1",
-    "subnetName": "subnet1",
+
     "backendDnsPrefix": "backend-",
-    "addressPrefix": "10.0.0.0/16",
-    "subnetPrefix": "10.0.0.0/28",
     "nestedTemplatesFolder": "nested",
     "webServerTemplateName": "azuredeploywebserver.json",
-    "serverTestPageInfo": "<p><strong>Request headers:</strong> <br /><?php $hs = apache_request_headers();foreach($hs as $h => $value){echo \"$h: $value <br />\n\";}?></p>"
+    "serverTestPageInfo": "<p><strong>Request headers:</strong> <br /><?php $hs = apache_request_headers();foreach($hs as $h => $value){echo \"$h: $value <br />\n\";}?></p>",
+    "dnsPrefix": "[concat(variables('backendDnsPrefix'), uniqueString(resourceGroup().id))]",
+    "locations": [
+      "[parameters('primarylocation')]",
+      "[parameters('secondarylocation')]"
+    ]
   },
   "resources": [
     {
@@ -115,13 +89,10 @@
         "name": "wscopy",
         "count": 2
       },
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolder'), '/', variables('webServerTemplateName'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesFolder'), '/', variables('webServerTemplateName'), parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -132,10 +103,10 @@
             "value": "[parameters('adminPassword')]"
           },
           "dnsNameForPublicIP": {
-            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))).resourceGuid), '-', copyIndex(1))]"
+            "value": "[concat(variables('dnsPrefix'), '-', copyIndex(1))]"
           },
           "testPageBody": {
-            "value": "[concat(variables(concat('serverTestPage', copyIndex(1))), variables('serverTestPageInfo'))]"
+            "value": "[variables('serverTestPageInfo')]"
           },
           "testPage": {
             "value": "index.php"
@@ -147,42 +118,26 @@
             "value": true
           },
           "location": {
-            "value": "[variables(concat('location', copyIndex(1)))]"
+            "value": "[variables('locations')[copyIndex()]]"
           },
           "_artifactsLocation": {
-            "value": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolder'))]"
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetworkName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('addressPrefix')]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-11-01",
+      "apiVersion": "2018-08-01",
       "type": "Microsoft.Network/trafficManagerProfiles",
       "name": "trafficManagerDemo",
       "location": "global",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "wscopy"
       ],
       "properties": {
@@ -202,7 +157,7 @@
             "name": "endpoint1",
             "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
             "properties": {
-              "targetResourceId": "[reference('webServer1').outputs.ipId.value]",
+              "targetResourceId": "[resourceId('Microsoft.Network/publicIpAddresses', concat(variables('dnsPrefix'), '-1'))]",
               "endpointStatus": "Enabled",
               "weight": 1
             }
@@ -211,7 +166,7 @@
             "name": "endpoint2",
             "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
             "properties": {
-              "targetResourceId": "[reference('webServer2').outputs.ipId.value]",
+              "targetResourceId": "[resourceId('Microsoft.Network/publicIpAddresses', concat(variables('dnsPrefix'), '-2'))]",
               "endpointStatus": "Enabled",
               "weight": 1
             }

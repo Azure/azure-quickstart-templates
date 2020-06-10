@@ -10,9 +10,8 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/manifold-endpoint/CredScanResult.svg)
 By clicking "Deploy to Azure" you agree to the Terms and Conditions below.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmanifoldtechnology%2Fazure-quickstart-templates%2Fmaster%2Fmanifold-endpoint%2Fazuredeploy.json" target="_blank">
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmanifoldtechnology%2Fazure-quickstart-templates%2Fmaster%2Fmanifold-endpoint%2Fazuredeploy.json" target="_blank">
-    
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmanifold-endpoint%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmanifold-endpoint%2Fazuredeploy.json)    
 
 # This template deploys a Manifold Platform Server on a CentOS VM into the selected resource group.
  

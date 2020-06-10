@@ -206,6 +206,7 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-VNET-NAME** - the name of the virtual network
 + **GEN-VNET-RESOURCEGROUP-NAME** - the name of the resource group for the virtual network
 + **GEN-VNET-SUBNET1-NAME** - the name of subnet-1
++ **GEN-VNET-SUBNET2-NAME** - the name of subnet-2
 
 **Key Vault Related placeholders:**
 
@@ -259,6 +260,9 @@ Quickstart CI engine provides few pre-created azure components which can be used
 
 + **GEN-USER-ASSIGNED-IDENTITY-NAME** - name of a userAssigned MSI that has permission to the keyvault secrets
 + **GEN-USER-ASSIGNED-IDENTITY-RESOURCEGROUP-NAME** - resource group of the userAssigned identity for retrieving the resourceId
+
++ **GEN-MACHINE-LEARNING-SP-OBJECTID** - objectId of the Azure ML Service Principal in the tenant
++ **GEN-COSMOS-DB-SP-OBJECTID** - objectId of the Cosmos DB Service Principal in the tenant
 
 Here's an example in an `azuredeploy.parameters.json` file:
 
