@@ -10,16 +10,18 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/CredScanResult.svg)
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftwo-tier-nodejsapp-migration-to-containers-on-Azure%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%two-tier-nodejsapp-migration-to-containers-on-Azure%2Fazuredeploy.json)
 
 <!-- TOC -->
 
-1. [Solution Overview](#solution-overview)
-2. [Template Solution Architecture ](#template-solution-architecture)
-3. [Licenses and Costs ](#licenses-and-costs)
-4. [Prerequisites](#prerequisites)
-5. [Deployment Steps](#deployment-steps)
-6. [Deployment Time](#deployment-time)
-7. [Support](#support)
+- [Two-tier Nodejs app migration to Azure Container and PaaS DB](#two-tier-nodejs-app-migration-to-azure-container-and-paas-db)
+  - [Solution Overview](#solution-overview)
+  - [Template Solution Architecture](#template-solution-architecture)
+  - [Licenses and Costs](#licenses-and-costs)
+  - [Prerequisites](#prerequisites)
+  - [Deployment Steps](#deployment-steps)
+  - [Deployment Time](#deployment-time)
+  - [Support](#support)
 
 <!-- /TOC -->
 

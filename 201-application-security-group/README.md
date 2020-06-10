@@ -9,18 +9,17 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-application-security-group/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-application-security-group/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/urihttps%3A%2F%2raw.githubusercontent.com%2Azure%2azure-quickstart-templates%2master%2azure-quickstart-templates%2azuredeploy.json" target="_blank">
-
-<a href="http://armviz.io/#/?load=https%3A%2F%2raw.githubusercontent.com%2Azure%2azure-quickstart-templates%2master%2azure-quickstart-templates%2azuredeploy.json" target="_blank">
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-application-security-group%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-application-security-group%2Fazuredeploy.json)
 
 This template shows how to work with Application Security Groups using templates. It assigns a VM to the Application Security Group and assigns this Application Security group to two security rules on Network Security Group, one that allows SSH and another one that allows HTTP using the Destination Application Security Group Id property of the security rule. 
 
 It deploys the following items:
 1. Application Security Group
-1. Network Security with two Security Rules, both using destinationApplicationSecurityGroups attribute
-1. Virtual Network with one Subnet assigned to this NSG.
-1. Network Interface assigned to Application Security Group, through its ID (notice that more than one can be assigned)
-1. Centos 6.9 Linux Web server with NGINX installed through Custom Script Extension for Linux
+2. Network Security with two Security Rules, both using destinationApplicationSecurityGroups attribute
+3. Virtual Network with one Subnet assigned to this NSG.
+4. Network Interface assigned to Application Security Group, through its ID (notice that more than one can be assigned)
+5. Centos 6.9 Linux Web server with NGINX installed through Custom Script Extension for Linux
 
 For more information about Application Security Groups, please refer to:
 

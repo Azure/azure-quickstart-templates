@@ -1,26 +1,24 @@
 # Refer to install instructions Cloudera + Tableau Quickstart Deployment and Usage Guide.pdf located in the root folder
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/CredScanResult.svg" />&nbsp;
-# Deploy a Cloudera Express cluster with the option to unlock Cloudera Enterprise features for a free 60-day trial
-# Will also deploy the latest Bring Your Own License version of Tableau
-# Important!  You must increase the default 20 cores in the region you are deploying
-# Once the trial has concluded, the Cloudera Enterprise features will be disabled until you obtain and upload a license.
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/CredScanResult.svg)
 
-# By clicking "Deploy to Azure" you agree to the Terms and Conditions below.
-# Deployment to Azure (use this if you are not sure)
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-tableau%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-tableau%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
-</a>
+Deploy a Cloudera Express cluster with the option to unlock Cloudera Enterprise features for a free 60-day trial  
+Will also deploy the latest Bring Your Own License version of Tableau  
+Important!  You must increase the default 20 cores in the region you are deploying  
+Once the trial has concluded, the Cloudera Enterprise features will be disabled until you obtain and upload a license.  
+
+By clicking "Deploy to Azure" you agree to the Terms and Conditions below.  
+Deployment to Azure (use this if you are not sure)  
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-tableau%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-tableau%2Fazuredeploy.json) 
 
 # Readme
 This template creates a multi-server Cloudera CDH 5.4.x Apache Hadoop deployment on CentOS virtual machines, and configures the CDH installation for either POC or high availability production cluster.
