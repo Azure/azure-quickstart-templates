@@ -8,12 +8,11 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-data-factory-v2-azure-sql-database-to-sql-data-warehouse-copy/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-data-factory-v2-azure-sql-database-to-sql-data-warehouse-copy/CredScanResult.svg)
+
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-data-factory-v2-azure-sql-database-to-sql-data-warehouse-copy%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-data-factory-v2-azure-sql-database-to-sql-data-warehouse-copy%2Fazuredeploy.json)
+
 This template creates a data factory that copies a number of tables from Azure SQL Database to Azure SQL Data Warehouse. 
-
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-v2-blob-to-sql-copy%2Fazuredeploy.json" target="_blank">
-    
-
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-v2-blob-to-sql-copy" target="_blank">
 
 When you deploy this Azure Resource Manager template, a data factory of version 2 is created with the following entities: 
 

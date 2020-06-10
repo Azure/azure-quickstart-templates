@@ -63,28 +63,6 @@
     },
     "location": {
       "type": "string",
-      "allowedValues": [
-        "East Asia",
-        "Southeast Asia",
-        "Central US",
-        "East US",
-        "East US 2",
-        "West US",
-        "North Central US",
-        "South Central US",
-        "North Europe",
-        "West Europe",
-        "Japan West",
-        "Japan East",
-        "Brazil South",
-        "Australia East",
-        "Australia Southeast",
-        "South India",
-        "Central India",
-        "West India",
-        "Canada Central",
-        "Canada East"
-      ],
       "metadata": {
         "description": "Location of resources"
       }
@@ -101,59 +79,31 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
       "defaultValue": ""
+    },
+    "vmSize": {
+      "type": "string"
     }
   },
   "variables": {
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "OSDiskName": "[concat('webtestosdisk-', parameters('dnsNameForPublicIP'))]",
-    "nicName": "[concat('webtestnic-', parameters('dnsNameForPublicIP'), '-', uniqueString(resourceGroup().id))]",
+    "nicName": "[concat('webtestnic-', parameters('dnsNameForPublicIP'))]",
     "addressPrefix": "10.0.0.0/16",
-    "subnetName": "Subnet",
+    "subnetName": "default",
     "subnetPrefix": "10.0.0.0/24",
-    "vhdStorageType": "Standard_LRS",
     "publicIPAddressType": "Dynamic",
-    "vhdStorageContainerName": "vhds",
-    "vmName": "[concat('webtestvm-', parameters('dnsNameForPublicIP'), '-', uniqueString(resourceGroup().id))]",
-    "vmSize": "Standard_D2_v2",
-    "virtualNetworkName": "[concat('webtestvnet-', uniqueString(resourceGroup().id, parameters('dnsNameForPublicIP')))]",
+    "vmName": "[concat('webtestvm-', parameters('dnsNameForPublicIP'))]",
+    "virtualNetworkName": "[concat('webtestvnet-', parameters('dnsNameForPublicIP'))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'),  variables('subnetName'))]",
-    "vhdStorageName": "[concat('webtestvhd', uniqueString(resourceGroup().id, parameters('dnsNameForPublicIP')))]",
     "singleQuote": "'",
-    "frontEndNSGName": "[concat('webtestnsg-', uniqueString(resourceGroup().id, parameters('dnsNameForPublicIP')))]",
+    "frontEndNSGName": "[concat('webtestnsg-', parameters('dnsNameForPublicIP'))]",
     "testPageMarkup": "[concat('<html><head><title>', parameters('testPageTitle'), '</title></head><body>', parameters('testPageBody'), '</body></html>')]",
     "scriptFolder": "scripts",
     "serverPrepareScriptFileName": "prepwebserver.sh"
   },
-  "outputs": {
-    "fqdn": {
-      "type": "string",
-      "value": "[reference(parameters('dnsNameForPublicIP')).dnsSettings.fqdn]"
-    },
-    "ipId": {
-      "type": "string",
-      "value": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dnsNameForPublicIP'))]"
-    },
-    "pageContent": {
-      "type": "string",
-      "value": "[variables('testPageMarkup')]"
-    }
-  },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('vhdStorageName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "tags": {
-        "displayName": "StorageAccount"
-      },
-      "properties": {
-        "accountType": "[variables('vhdStorageType')]"
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[parameters('dnsNameForPublicIP')]",
       "location": "[parameters('location')]",
@@ -168,7 +118,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -192,7 +142,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('frontEndNSGName')]",
       "location": "[parameters('location')]",
@@ -232,8 +182,9 @@
         ]
       }
     },
+
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
@@ -241,9 +192,9 @@
         "displayName": "NetworkInterface"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('dnsNameForPublicIP'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dnsNameForPublicIP'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -266,7 +217,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
@@ -274,12 +225,11 @@
         "displayName": "VirtualMachine"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -294,7 +244,6 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),'_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -312,9 +261,9 @@
           "name": "PrepareServer",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2015-06-15",
+          "apiVersion": "2019-12-01",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
           ],
           "tags": {
             "displayName": "PrepareServer"
@@ -326,7 +275,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(parameters('_artifactsLocation'), '/', variables('scriptFolder'), '/', variables('serverPrepareScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+                "[uri(parameters('_artifactsLocation'), concat(variables('scriptFolder'), '/', variables('serverPrepareScriptFileName'), parameters('_artifactsLocationSasToken')))]"
               ],
               "commandToExecute": "[concat('sh prepwebserver.sh', ' ', string(parameters('installPHP')), ' ', variables('singleQuote'), variables('testPageMarkup'), variables('singleQuote'), ' ', parameters('testPage'), ' ', variables('singleQuote'), parameters('ubuntuOSVersion'), variables('singleQuote'))]"
             }
@@ -334,5 +283,18 @@
         }
       ]
     }
-  ]
+  ],  "outputs": {
+    "fqdn": {
+      "type": "string",
+      "value": "[reference(parameters('dnsNameForPublicIP')).dnsSettings.fqdn]"
+    },
+    "ipId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dnsNameForPublicIP'))]"
+    },
+    "pageContent": {
+      "type": "string",
+      "value": "[variables('testPageMarkup')]"
+    }
+  }
 }
