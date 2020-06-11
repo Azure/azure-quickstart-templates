@@ -301,14 +301,14 @@ runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/machine-heal
 echo $(date) " - Machine Health Check setup complete"
 
 echo $(date) " - Create User"
-runuser -l $SUDOUSER -c "oc create user ${SUDOUSER}"
 runuser -l $SUDOUSER -c "htpasswd -c -B -b /tmp/htpasswd '${SUDOUSER}' '${OPENSHIFTPASSWORD}'"
+sleep 3
 runuser -l $SUDOUSER -c "oc create secret generic htpass-secret --from-file=htpasswd=/tmp/htpasswd -n openshift-config"
 runuser -l $SUDOUSER -c "cat > ${INSTALLERHOME}/openshiftfourx/auth.yaml <<EOF
 apiVersion: config.openshift.io/v1
 kind: OAuth
 metadata:
-  name: htpasswdAuth
+  name: cluster
 spec:
   identityProviders:
   - name: htpasswdProvider 
@@ -320,9 +320,9 @@ spec:
       fileData:
         name: htpass-secret 
 EOF"
-runuser -l $SUDOUSER -c "oc create -f ${INSTALLERHOME}/openshiftfourx/auth.yaml"
+runuser -l $SUDOUSER -c "oc apply -f ${INSTALLERHOME}/openshiftfourx/auth.yaml"
 runuser -l $SUDOUSER -c "oc adm policy add-cluster-role-to-user cluster-admin '${SUDOUSER}'"
-runuser -l $SUDOUSER -c "oc login https://api.${CLUSTERNAME}.${BASEDOMAIN}:6443 -u '${SUDOUSER}' -p '${OPENSHIFTPASSWORD}'"
+#runuser -l $SUDOUSER -c "oc login https://api.${CLUSTERNAME}.${BASEDOMAIN}:6443 -u '${SUDOUSER}' -p '${OPENSHIFTPASSWORD}'"
 #Delete kubeadmin
 # runuser -l $SUDOUSER -c "oc delete secrets kubeadmin -n kube-system"
 echo $(date) " - Create User Complete"
