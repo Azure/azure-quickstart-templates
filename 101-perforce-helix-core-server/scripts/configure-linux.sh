@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script is only tested on CentOS 7.5, RHEL 7.6 and Ubuntu 18.04 LTS.
+# This script is only tested on CentOS 7.5, RHEL 7.x (7.6+) and Ubuntu 18.04 LTS.
 MOUNTPOINT="/hxdata"
 
 # An set of disks to ignore from partitioning and formatting
