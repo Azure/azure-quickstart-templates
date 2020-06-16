@@ -1,5 +1,5 @@
 # ExpressRoute private peering and connection with VNet
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-er-private-peering-vnet/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-er-private-peering-vnet/PublicLastTestDate.svg)
 
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-er-private-peering-vnet/FairfaxLastTestDate.svg)
 
