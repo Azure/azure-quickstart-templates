@@ -26,35 +26,29 @@
         "description": "The Elastic Pool name."
       }
     },
-    "edition": {
+    "skuName": {
       "type": "string",
-      "defaultValue": "Standard",
+      "defaultValue": "StandardPool",
       "allowedValues": [
-        "Basic",
-        "Standard",
-        "Premium"
+        "BasicPool",
+        "StandardPool",
+        "PremiumPool"
       ],
       "metadata": {
-        "description": "The Elastic Pool edition."
+        "description": "The Elastic Pool sku name."
       }
     },
-    "poolDtu": {
-      "type": "int",
-      "metadata": {
-        "description": "The Elastic Pool DTU."
-      }
-    },
-    "databaseDtuMin": {
+    "poolMinCapacity": {
       "type": "int",
       "defaultValue": 0,
       "metadata": {
-        "description": "The Elastic Pool database DTU min."
+        "description": "The minimum capacity all databases are guaranteed."
       }
     },
-    "databaseDtuMax": {
+    "poolMaxCapacity": {
       "type": "int",
       "metadata": {
-        "description": "The Elastic Pool database DTU max."
+        "description": "The maximum capacity any one database can consume."
       }
     },
     "databasesNames": {
@@ -85,36 +79,41 @@
   "variables": {},
   "resources": [
     {
-      "apiVersion": "2014-04-01-preview",
-      "location": "[parameters('location')]",
       "name": "[parameters('serverName')]",
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2019-06-01-preview",
+      "location": "[parameters('location')]",
       "properties": {
         "administratorLogin": "[parameters('administratorLogin')]",
         "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
         "version": "12.0"
-      },
-      "type": "Microsoft.Sql/servers"
+      }
+
     },
     {
-      "apiVersion": "2014-04-01",
+      "name": "[concat(parameters('serverName'), '/', parameters('elasticPoolName'))]",
+      "type": "Microsoft.Sql/servers/elasticPools",
+      "apiVersion": "2017-10-01-preview",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Sql/servers/', parameters('serverName'))]"
       ],
-      "location": "[parameters('location')]",
-      "name": "[concat(parameters('serverName'), '/', parameters('elasticPoolName'))]",
-      "properties": {
-        "edition": "[parameters('edition')]",
-        "dtu": "[parameters('poolDtu')]",
-        "databaseDtuMin": "[parameters('databaseDtuMin')]",
-        "databaseDtuMax": "[parameters('databaseDtuMax')]"
+      "sku": {
+        "name": "[parameters('skuName')]"
       },
-      "type": "Microsoft.Sql/servers/elasticPools"
+      "properties": {
+        "perDatabaseSettings": {
+          "minCapacity": "[parameters('poolMinCapacity')]",
+          "maxCapacity": "[parameters('poolMaxCapacity')]"
+        }
+      }
+
     },
     {
-      "type": "Microsoft.Sql/servers/databases",
       "name": "[concat(parameters('serverName'), '/', parameters('databasesNames')[copyIndex()])]",
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2019-06-01-preview",
       "location": "[parameters('location')]",
-      "apiVersion": "2014-04-01-preview",
       "dependsOn": [
         "[concat('Microsoft.Sql/servers/', parameters('serverName'))]",
         "[concat('Microsoft.Sql/servers/', parameters('serverName') ,'/elasticpools/', parameters('elasticPoolName'))]"
@@ -130,17 +129,17 @@
       }
     },
     {
-      "apiVersion": "2014-04-01-preview",
+      "name": "[concat(parameters('serverName'), '/', 'AllowAllWindowsAzureIps')]",
+      "type": "Microsoft.Sql/servers/firewallrules",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Sql/servers/', parameters('serverName'))]"
       ],
-      "location": "[parameters('location')]",
-      "name": "[concat(parameters('serverName'), '/', 'AllowAllWindowsAzureIps')]",
       "properties": {
         "endIpAddress": "0.0.0.0",
         "startIpAddress": "0.0.0.0"
-      },
-      "type": "Microsoft.Sql/servers/firewallrules"
+      }
     }
   ]
 }
