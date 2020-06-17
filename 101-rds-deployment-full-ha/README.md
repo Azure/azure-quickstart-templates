@@ -27,7 +27,7 @@ To be able to request certificates and have a highly available environment, do t
 
 1. Create two CNAME entries ("remoteapps" and "broker") in your external DNS domain registrar, pointing to the following:
 
-    **projectName**lbwebpip.**location**.cloudapp.azure.com
+    **projectName**lbpip.**location**.cloudapp.azure.com
     
     Example:
 
@@ -38,8 +38,8 @@ To be able to request certificates and have a highly available environment, do t
         
         DNS CNAMEs to be created:
 
-        "remoteapps.contosocorp.com" CNAME "rdslbwebpip.eastus.cloudapp.azure.com"
-        "broker.contosocorp.com"     CNAME "rdslbwebpip.eastus.cloudapp.azure.com"
+        "remoteapps.contosocorp.com" CNAME "rdslbpip.eastus.cloudapp.azure.com"
+        "broker.contosocorp.com"     CNAME "rdslbpip.eastus.cloudapp.azure.com"
 
     This is required by letsencrypt's validation process, which will connect via HTTP to your websites.
 
