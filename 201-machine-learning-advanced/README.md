@@ -18,6 +18,45 @@ This template is an advanced Azure Machine Learning workspace creation templates
 - Create workspace with link to Azure Databricks workspace.
 - Create workspace with dependent resources(new resources only) behind virtual network. 
 
+### Supported Scenarios
+The following commands shows the advanced scenarios for workspace creation
+
+#### Create machine learning workspace with private endpoint
+This command creates a workspace with private endpoint
+
+```PowerShell
+# The deployment is only valid in regions which support private endpoints. For manual approval private endpoint, just set privateEndpointType="ManualApproval"
+
+# Create a workspace with private endpoint
+New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -privateEndpointType "AutoApproval"
+
+# Create a workspace with private endpoint with user specified virtual network name
+New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -privateEndpointType "AutoApproval" -vnetName "vnet" -subnetName "subnet"
+
+# Create a workspace with private endpoint with user specified existing vnet
+New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -privateEndpointType "AutoApproval" -vnetName "vnet" -vnetOption "existing" -vnetResourceGroupName "rg" -subnetName "subnet" -subnetOption "existing"
+```
+
+#### Create machine learning workspace with resources behind virtual network
+This command is an example of creating workspace with resource behind vnet.
+
+```PowerShell
+# Parameter 'vnetOption' is required for this scenario and should not be 'none'. The example shows how to put the storage account behind vnet. You can also apply the scenario into key vault and container registry. For container registry, only 'Premium' sku is supported.
+
+# Create a workspace with storage account behind a new vnet.
+New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -storageAccountBehindVNet "true" -vnetOption "new" -vnetName "vnet"
+
+# Create a workspace with storage account behind an existing vnet and an existing subnet.
+# Prerequisite: Subnet should have Microsoft.Storage service endpoint
+# Enable service endpoint
+Get-AzVirtualNetwork -ResourceGroupName "rg" -Name "vnet" | Set-AzVirtualNetworkSubnetConfig -Name "subnet" -AddressPrefix "<subnet prefix>" -ServiceEndpoint "Microsoft.Storage" | Set-AzVirtualNetwork
+# Deployment
+New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -storageAccountBehindVNet "true" -vnetOption "existing" -vnetName "vnet" -vnetResourceGroupName "rg" -subnetName "subnet" -subnetOption "existing"
+
+# Create a workspace with all dependent resources behind a new vnet
+New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -containerRegistryOption "new" -containerRegistrySku "Premium" -storageAccountBehindVNet "true" -keyVaultBehindVNet "true" -containerRegistryBehindVNet "true" -vnetOption "new" -vnetName "vnet"
+```
+
 If you are new to Azure Machine Learning, see:
 
 - [Azure Machine Learning service](https://azure.microsoft.com/services/machine-learning-service/)
