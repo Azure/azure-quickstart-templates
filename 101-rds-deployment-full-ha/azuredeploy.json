@@ -5,7 +5,7 @@
         "projectName": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 8,
+            "maxLength": 5,
             "metadata": {
                 "description": "Define the project name or prefix for all objects."
             }
@@ -160,15 +160,15 @@
     "variables": {
         "uniqueName": "[substring(uniqueString(resourceGroup().id,deployment().name),0,5)]",
         "dnsEntry": "remoteapps",
-        "brokerName": "broker",   
-        "externalFqdn": "[concat(variables('dnsEntry'),'.',parameters('externalDnsZone'))]",
-        "brokerFqdn": "[concat(variables('brokerName'),'.',parameters('externalDnsZone'))]",
+        "brokerName": "broker",
+        "externalFqdn": "[concat(variables('dnsEntry'),'.',toLower(parameters('externalDnsZone')))]",
+        "brokerFqdn": "[concat(variables('brokerName'),'.',toLower(parameters('externalDnsZone')))]",
         "vmNames": [
-            "[concat(parameters('projectName'),variables('uniqueName'),'dc')]",
-            "[concat(parameters('projectName'),variables('uniqueName'),'wg')]",
-            "[concat(parameters('projectName'),variables('uniqueName'),'cb')]",
-            "[concat(parameters('projectName'),variables('uniqueName'),'sh')]",
-            "[concat(parameters('projectName'),variables('uniqueName'),'lf')]"
+            "[concat(toLower(parameters('projectName')),variables('uniqueName'),'dc')]",
+            "[concat(toLower(parameters('projectName')),variables('uniqueName'),'wg')]",
+            "[concat(toLower(parameters('projectName')),variables('uniqueName'),'cb')]",
+            "[concat(toLower(parameters('projectName')),variables('uniqueName'),'sh')]",
+            "[concat(toLower(parameters('projectName')),variables('uniqueName'),'lf')]"
         ],
         "vmProperties": [
             {
@@ -207,12 +207,14 @@
                 "dscFunction": "DeployRDSLab.ps1\\RDLicenseServer"
             }                               
         ],
-        "diagStorageName": "[concat(parameters('projectName'),variables('uniqueName'),'diag')]",
+        "diagStorageName": "[concat(toLower(parameters('projectName')),variables('uniqueName'),'diag')]",
+        "publicLbIpName": "[concat(toLower(parameters('projectName')),'lbpip')]",
         "diagStorageSkuType": "Standard_LRS",
         "vNetName": "[concat(parameters('projectName'),'vnet')]",
         "firstDcIP": "[concat(parameters('vNetPrefix'),'.0.99')]",
         "nsgRef": "[resourceId('Microsoft.Network/networkSecurityGroups',concat(parameters('projectName'),'nsg'))]",
         "subNetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vNetName'),concat(parameters('projectName'),'main'))]",
+        "sqlServerName": "[concat(toLower(parameters('projectName')),variables('uniqueName'),'sql')]",
         "rdsDBName": "rdsdb",
         "dscScriptName": "deployrdslab.zip",
         "scriptName": "deploycertha.ps1"
@@ -480,7 +482,7 @@
             }
         },
         {
-            "name": "[concat(parameters('projectName'),'lbwebpip')]",
+            "name": "[variables('publicLbIpName')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2019-11-01",
             "location": "[parameters('location')]",
@@ -490,7 +492,7 @@
             "properties": {
                 "publicIPAllocationMethod": "Static",
                 "dnsSettings": {
-                    "domainNameLabel": "[concat(parameters('projectName'),'lbwebpip')]"
+                    "domainNameLabel": "[variables('publicLbIpName')]"
                 }
             }
         },
@@ -500,7 +502,7 @@
             "apiVersion": "2019-11-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('projectName'),'lbwebpip'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicLbIpName'))]",
                 "[resourceId('Microsoft.Network/virtualNetworks',concat(parameters('projectName'),'vnet'))]"
             ],
             "sku": {
@@ -512,7 +514,7 @@
                         "name": "rds-webgateways-frontend",
                         "properties": {
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('projectName'),'lbwebpip'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicLbIpName'))]"
                             }
                         }
                     }
@@ -595,7 +597,7 @@
             }
         },
         {
-            "name": "[concat(parameters('projectName'),'sqlsrv')]",
+            "name": "[variables('sqlServerName')]",
             "type": "Microsoft.Sql/servers",
             "apiVersion": "2019-06-01-preview",
             "location": "[parameters('location')]",
@@ -608,7 +610,7 @@
                     "type": "firewallRules",
                     "apiVersion": "2019-06-01-preview",
                     "dependsOn": [
-                        "[resourceId('Microsoft.Sql/servers', concat(parameters('projectName'),'sqlsrv'))]"
+                        "[resourceId('Microsoft.Sql/servers',variables('sqlServerName'))]"
                     ],
                     "location": "[parameters('location')]",
                     "name": "AllowAllWindowsAzureIps",
@@ -620,12 +622,12 @@
             ]
         },
         {
-            "name": "[concat(parameters('projectName'),'sqlsrv','/',variables('rdsDBName'))]",
+            "name": "[concat(variables('sqlServerName'),'/',variables('rdsDBName'))]",
             "type": "Microsoft.Sql/servers/databases",
             "apiVersion": "2019-06-01-preview",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers',concat(parameters('projectName'),'sqlsrv'))]"
+                "[resourceId('Microsoft.Sql/servers',variables('sqlServerName'))]"
             ],
             "properties": {
                 "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -647,7 +649,7 @@
                 "[resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb'))]",
                 "[resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'publb'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts',variables('diagStorageName'))]",
-                "[resourceId('Microsoft.Sql/servers/databases',concat(parameters('projectName'),'sqlsrv'),variables('rdsDBName'))]"
+                "[resourceId('Microsoft.Sql/servers/databases',variables('sqlServerName'),variables('rdsDBName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -764,7 +766,7 @@
                         "value": "[variables('rdsDBName')]"
                     },
                     "azureSqlFqdn": {
-                        "value": "[reference(resourceId('Microsoft.Sql/servers',concat(parameters('projectName'),'sqlsrv'))).fullyQualifiedDomainName]"
+                        "value": "[reference(resourceId('Microsoft.Sql/servers',variables('sqlServerName'))).fullyQualifiedDomainName]"
                     },
                     "webGwName": {
                         "value": "[variables('dnsEntry')]"
@@ -1105,7 +1107,7 @@
         },
         "WebAccessFQDN": {
             "type": "string",
-            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('projectName'),'lbwebpip'))).dnsSettings.fqdn]"
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicLbIpName'))).dnsSettings.fqdn]"
         },
         "ExternalFQDN": {
             "type": "string",
