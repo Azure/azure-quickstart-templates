@@ -55,6 +55,14 @@ New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredepl
 
 # Create a workspace with all dependent resources behind a new vnet
 New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -containerRegistryOption "new" -containerRegistrySku "Premium" -storageAccountBehindVNet "true" -keyVaultBehindVNet "true" -containerRegistryBehindVNet "true" -vnetOption "new" -vnetName "vnet"
+
+# Create a workspace with all dependent resources behind an existing vnet
+# Service endpoints
+Get-AzVirtualNetwork -ResourceGroupName "rg" -Name "vnet" | Set-AzVirtualNetworkSubnetConfig -Name "subnet" -AddressPrefix "<subnet prefix>" -ServiceEndpoint "Microsoft.Storage" | Set-AzVirtualNetwork
+Get-AzVirtualNetwork -ResourceGroupName "rg" -Name "vnet" | Set-AzVirtualNetworkSubnetConfig -Name "subnet" -AddressPrefix "<subnet prefix>" -ServiceEndpoint "Microsoft.KeyVault" | Set-AzVirtualNetwork
+Get-AzVirtualNetwork -ResourceGroupName "rg" -Name "vnet" | Set-AzVirtualNetworkSubnetConfig -Name "subnet" -AddressPrefix "<subnet prefix>" -ServiceEndpoint "Microsoft.ContainerRegistry" | Set-AzVirtualNetwork
+# Deployment
+New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -containerRegistryOption "new" -containerRegistrySku "Premium" -storageAccountBehindVNet "true" -keyVaultBehindVNet "true" -containerRegistryBehindVNet "true" -vnetOption "existing" -vnetName "vnet" -vnetResourceGroupName "rg" -subnetName "subnet" -subnetOption "existing"
 ```
 
 If you are new to Azure Machine Learning, see:
