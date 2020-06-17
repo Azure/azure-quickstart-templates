@@ -1,4 +1,4 @@
-# Create an Azure Machine Learning workspace with private endpoints
+# Advanced template to create an Azure Machine Learning workspace.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-machine-learning-private-endpoint/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-machine-learning-private-endpoint/PublicDeployment.svg)
@@ -11,7 +11,12 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-machine-learning-private-endpoint%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-machine-learning-private-endpoint%2Fazuredeploy.json)
 
-This template creates an Azure Machine Learning workspace with private endpoints. 
+This template is an advanced Azure Machine Learning workspace creation templates which support:
+
+- Create workspace with auto-approval or manual approval private endpoint.
+- Create workspace with customer managed key.
+- Create workspace with link to Azure Databricks workspace.
+- Create workspace with dependent resources(new resources only) behind virtual network. 
 
 If you are new to Azure Machine Learning, see:
 
