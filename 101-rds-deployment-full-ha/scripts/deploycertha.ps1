@@ -1,6 +1,9 @@
 Param (
     [Parameter(Mandatory)]
-    [string]$ProjectName,
+    [string]$AdminUser,
+
+    [Parameter(Mandatory)]
+    [string]$Passwd,    
 
     [Parameter(Mandatory)]
     [string]$MainConnectionBroker,
@@ -16,9 +19,6 @@ Param (
 
     [Parameter(Mandatory)]    
     [string]$AzureSQLDBName,
-
-    [Parameter(Mandatory)]
-    [string]$Passwd,
 
     [Parameter(Mandatory)]
     [string]$WebAccessServerName,
@@ -52,9 +52,9 @@ $ServerName = $ServerObj.DNSHostName
 $DomainName = $ServerObj.Domain
 $ServerFQDN = $ServerName + "." + $DomainName
 $CertPasswd = ConvertTo-SecureString -String $Passwd -Force -AsPlainText
-$AzureSQLUserID = $ProjectName
+$AzureSQLUserID = $AdminUser
 $AzureSQLPasswd = $Passwd
-[System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($ProjectName)", $CertPasswd)
+[System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($AdminUser)", $CertPasswd)
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
@@ -81,7 +81,7 @@ Function RequestCert([string]$Fqdn) {
     $CertMaxRetries = 10
 
     Set-PAServer LE_PROD
-    New-PAAccount -AcceptTOS -Contact "$($ProjectName)@$($Fqdn)" -Force
+    New-PAAccount -AcceptTOS -Contact "$($AdminUser)@$($Fqdn)" -Force
     New-PAOrder $Fqdn
     $auth = Get-PAOrder | Get-PAAuthorizations | Where-Object { $_.HTTP01Status -eq "Pending" }
     $AcmeBody = Get-KeyAuthorization $auth.HTTP01Token (Get-PAAccount)
