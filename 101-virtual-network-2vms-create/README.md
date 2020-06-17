@@ -44,6 +44,12 @@ Description
 
 + **virtualMachines**: Virtual machine for solution
 
+## Deployment steps
+You can select Deploy to Azure at the top of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+
+## Notes
+This template is used by the Azure Virtual Network documentation QuickStart article.
+
 `Tags: virtual network, vnet, virtual machine`
 
 
