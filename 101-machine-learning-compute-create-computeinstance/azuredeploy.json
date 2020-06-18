@@ -14,8 +14,9 @@
               "description": "Specifies the name of the Azure Machine Learning compute target."
             }
         },        
-        "workspacelocation": {
+        "location": {
             "type": "string",
+            "defaultValue":"[resourceGroup().location]",
             "metadata": {
               "description": "Location of the Azure Machine Learning workspace."
             }
@@ -55,11 +56,25 @@
               "description": "The size of agent VMs. More details can be found here: https://aka.ms/azureml-vm-details."
             }
         },
-        "subnet": {
+        "vnetResourceGroupName": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
-              "description": "The subnet to use to create this compute instance."
+                "description": "Name of the resource group which holds the VNET to which you want to inject your compute in."
+            }
+        },
+        "vnetName": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Name of the vnet which you want to inject your compute in."
+            }
+        },
+        "subnetName": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Name of the subnet inside the VNET which you want to inject your compute in."
             }
         }
     },
@@ -76,14 +91,14 @@
             "type": "Microsoft.MachineLearningServices/workspaces/computes",
             "name": "[concat(parameters('workspaceName'), '/', parameters('computeName'))]",
             "apiVersion": "2020-04-01",
-            "location" : "[parameters('workspacelocation')]",
+            "location" : "[parameters('location')]",
             "properties": {
                 "computeType": "ComputeInstance",
                 "properties":
                 {
                     "vmSize" : "[parameters('vmSize')]",
-                    "subnet" : "[if(not(empty(parameters('subnet'))), parameters('subnet'), json('null'))]",
-                    "sshSettings" : "[if(not(empty(parameters('sshPublicAccess'))), parameters('sshSettings'), json('null'))]"
+                    "subnet" : "[if(not(empty(parameters('subnetName'))), [resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))], json('null'))]",
+                    "sshSettings" : "[if(not(empty(parameters('sshPublicAccess'))), variables('sshSettings'), json('null'))]"
                 }
             }
         }
