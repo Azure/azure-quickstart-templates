@@ -28,8 +28,9 @@
                 "description": " The maximum number of nodes to use on the cluster. If not specified, defaults to 4."
             }
         },
-        "workspacelocation": {
+        "location": {
             "type": "string",
+            "defaultValue":"[resourceGroup().location]",
             "metadata": {
                 "description": "The location of the Azure Machine Learning Workspace."
             }
@@ -53,17 +54,31 @@
                 "description": " The size of agent VMs. More details can be found here: https://aka.ms/azureml-vm-details."
             }
         },
-        "subnetId": {
+        "vnetResourceGroupName": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "Specifies the name of the Azure Machine Learning workspace."
+                "description": "Name of the resource group which holds the VNET to which you want to inject your compute in."
             }
         }
+        "vnetName": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Name of the vnet which you want to inject your compute in."
+            }
+        }
+        "subnetName": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Name of the subnet inside the VNET which you want to inject your compute in."
+            }
+        }, 
     },
     "variables": {
         "subnet": {
-            "id" : "[parameters('subnetId')]"
+            "id" : "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
         }
     },
     "resources": [        
@@ -71,7 +86,7 @@
             "type": "Microsoft.MachineLearningServices/workspaces/computes",
             "name": "[concat(parameters('workspaceName'), '/', parameters('clusterName'))]",
             "apiVersion": "2018-11-19",
-            "location" : "[parameters('workspacelocation')]",
+            "location" : "[parameters('location')]",
             "properties": {
                 "computeType": "AmlCompute",
                 "properties":
@@ -87,7 +102,7 @@
                         "adminUserName" : "[parameters('adminUserName')]",
                         "adminUserPassword" : "[parameters('adminUserPassword')]"
                     },
-                    "subnet" : "[if(not(empty(parameters('subnetId'))), variables('subnet'), json('null'))]"
+                    "subnet" : "[if(not(empty(parameters('subnetName'))), variables('subnet'), json('null'))]"
                 }                
             }
         }
