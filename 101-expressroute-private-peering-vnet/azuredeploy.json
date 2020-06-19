@@ -2,24 +2,31 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "erAzureSubscriptionId": {
+    "location": {
       "type": "string",
-      "defaultValue": "[subscription().subscriptionId]",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Azure subscription Id of provisioned ExpressRoute circuit"
+        "description": "Location for all resources deployed in the ARM template"
       }
     },
-    "erResourceGroup": {
+    "erpeeringLocation": {
       "type": "string",
-      "defaultValue": "[resourceGroup().name]",
+      "defaultValue": "Washington DC",
       "metadata": {
-        "description": "Azure subscription Id of provisioned ExpressRoute circuit"
+        "description": "ExpressRoute peering location"
       }
     },
     "erCircuitName": {
       "type": "string",
       "metadata": {
-        "description": "Name of provisioned ExpressRoute circuit. The ExpressRoute Circuit must be already created successfully and must have its circuitProvisioningState property set to 'Enabled', and serviceProviderProvisioningState property set to 'Provisioned'."
+        "description": "Name of the ExpressRoute circuit"
+      }
+    },
+    "serviceProviderName": {
+      "type": "string",
+      "defaultValue": "Equinix",
+      "metadata": {
+        "description": "Name of the ExpressRoute provider"
       }
     },
     "erSKU_Tier": {
@@ -44,20 +51,40 @@
         "description": "Billing model ExpressRoute circuit"
       }
     },
+    "bandwidthInMbps": {
+      "type": "int",
+      "defaultValue": 50,
+      "allowedValues": [
+        50,
+        100,
+        200,
+        500,
+        1000,
+        2000,
+        5000,
+        10000
+      ],
+      "metadata": {
+        "description": "Bandwidth ExpressRoute circuit"
+      }
+    },
     "peerASN": {
       "type": "int",
+      "defaultValue": 65001,
       "metadata": {
         "description": "autonomous system number used to create private peering between the customer edge router and MSEE routers"
       }
     },
     "primaryPeerAddressPrefix": {
       "type": "string",
+      "defaultValue": "192.168.10.16/30",
       "metadata": {
         "description": "point-to-point network prefix of primary link between the customer edge router and MSEE router"
       }
     },
     "secondaryPeerAddressPrefix": {
       "type": "string",
+      "defaultValue": "192.168.10.20/30",
       "metadata": {
         "description": "point-to-point network prefix of secondary link between the customer edge router and MSEE router"
       }
@@ -65,14 +92,7 @@
     "vlanId": {
       "type": "int",
       "metadata": {
-        "description": "VLAN Id used between the customer edge routers and MSEE routers"
-      }
-    },
-    "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Location for all resources deployed in the ARM template"
+        "description": "VLAN Id used between the customer edge routers and MSEE routers. primary and secondary link have the same VLAN Id"
       }
     },
     "vnetName": {
@@ -91,26 +111,30 @@
     },
     "vnetAddressSpace": {
       "type": "string",
+      "defaultValue": "10.10.10.0/24",
       "metadata": {
-        "description": "address space assigned to the VNet"
+        "description": "address space assigned to the Virtual Network"
       }
     },
     "subnet1Prefix": {
       "type": "string",
+      "defaultValue": "10.10.10.0/25",
       "metadata": {
         "description": "network prefix assigned to the subnet"
       }
     },
     "gatewaySubnetPrefix": {
       "type": "string",
+      "defaultValue": "10.10.10.224/27",
       "metadata": {
-        "description": "network prefixes assigned to the gateway subnet. it has to be a network prefix with mask /27 or larger"
+        "description": "network prefixes assigned to the gateway subnet. It has to be a network prefix with mask /27 or larger"
       }
     },
     "gatewayName": {
       "type": "string",
+      "defaultValue": "er-gw",
       "metadata": {
-        "description": "name of the ExpressRoute Gateway has to be deployed in the VNet"
+        "description": "name of the ExpressRoute Gateway"
       }
     },
     "gatewaySku": {
@@ -130,19 +154,19 @@
     }
   },
   "variables": {
-    "erAzureSubscriptionId": "[parameters('erAzureSubscriptionId')]",
-    "erResourceGroup": "[parameters('erResourceGroup')]",
+    "location": "[parameters('location')]",
     "erlocation": "[parameters('location')]",
     "erCircuitName": "[parameters('erCircuitName')]",
-    "erCircuitId": "[resourceId(variables('erAzureSubscriptionId'),variables('erResourceGroup'),'Microsoft.Network/expressRouteCircuits',variables('erCircuitName'))]",
+    "serviceProviderName": "[parameters('serviceProviderName')]",
+    "erpeeringLocation": "[parameters('erpeeringLocation')]",
     "erSKU_Tier": "[parameters('erSKU_Tier')]",
     "erSKU_Family": "[parameters('erSKU_Family')]",
     "erSKU_Name": "[concat(variables('erSKU_Tier'),'_',variables('erSKU_Family'))]",
+    "bandwidthInMbps": "[parameters('bandwidthInMbps')]",
     "peerASN": "[parameters('peerASN')]",
     "primaryPeerAddressPrefix": "[parameters('primaryPeerAddressPrefix')]",
     "secondaryPeerAddressPrefix": "[parameters('secondaryPeerAddressPrefix')]",
     "vlanId": "[parameters('vlanId')]",
-    "location": "[parameters('location')]",
     "vnetName": "[parameters('vnetName')]",
     "subnet1Name": "[parameters('subnet1Name')]",
     "vnetAddressSpace": "[parameters('vnetAddressSpace')]",
@@ -151,16 +175,15 @@
     "gatewayName": "[parameters('gatewayName')]",
     "gatewayPublicIPName": "[concat(variables('gatewayName'),'-pubIP')]",
     "gatewaySku": "[parameters('gatewaySku')]",
-    "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'GatewaySubnet')]",
     "nsg": "nsg"
   },
   "resources": [
     {
-      "apiVersion": "2019-12-01",
+      "comments": "Create the ER circuit",
       "type": "Microsoft.Network/expressRouteCircuits",
+      "apiVersion": "2019-12-01",
       "name": "[variables('erCircuitName')]",
       "location": "[variables('erlocation')]",
-      "comments": "Create the ER circuit",
       "sku": {
         "name": "[variables('erSKU_Name')]",
         "tier": "[variables('erSKU_Tier')]",
@@ -168,18 +191,19 @@
       },
       "properties": {
         "serviceProviderProperties": {
-          "serviceProviderName": "Equinix",
-          "peeringLocation": "Washington DC",
-          "bandwidthInMbps": 50
+          "serviceProviderName": "[variables('serviceProviderName')]",
+          "peeringLocation": "[variables('erpeeringLocation')]",
+          "bandwidthInMbps": "[variables('bandwidthInMbps')]",
         },
         "allowClassicOperations": false
       }
     },
     {
-      "apiVersion": "2019-12-01",
+      "comments": "Create ER private peering",
       "type": "Microsoft.Network/expressRouteCircuits/peerings",
+      "apiVersion": "2019-12-01",
       "name": "[concat(variables('erCircuitName'),'/','AzurePrivatePeering')]",
-      "comments": "Create ER private peering- it can run only after the creation of the ER circuit",
+      "location": "[variables('erlocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/expressRouteCircuits', variables('erCircuitName'))]"
       ],
@@ -192,11 +216,11 @@
       }
     },
     {
-      "apiVersion": "2019-12-01",
+      "comments": "NSG applied to the subnets in VNet1",
       "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-12-01",
       "name": "[variables('nsg')]",
       "location": "[variables('location')]",
-      "comments": "NSG applied to the subnets in VNet1",
       "properties": {
         "securityRules": [
           {
@@ -231,11 +255,11 @@
       }
     },
     {
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('vnetName')]",
-      "apiVersion": "2019-12-01",
-      "location": "[variables('location')]",
       "comments": "it builds a Virtual Network with GatewaySubnet",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2019-12-01",
+      "name": "[variables('vnetName')]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg'))]"
       ],
@@ -265,21 +289,21 @@
       }
     },
     {
+      "comments": "public IP of the ExpressRoute Gateway. Only public IP Dynamic allocation is supported",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('gatewayPublicIPName')]",
       "apiVersion": "2019-12-01",
+      "name": "[variables('gatewayPublicIPName')]",
       "location": "[variables('location')]",
-      "comments": "public IP of the ExpressRoute Gateway. Only public IP Dynamic allocation is supported.",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
-      "type": "Microsoft.Network/virtualNetworkGateways",
-      "name": "[variables('gatewayName')]",
-      "apiVersion": "2019-12-01",
-      "location": "[variables('location')]",
       "comments": "ExpressRoute Gateway in the GatewaySubnet",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "apiVersion": "2019-12-01",
+      "name": "[variables('gatewayName')]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('gatewayPublicIPName'))]",
         "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
@@ -290,7 +314,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('gatewaySubnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'GatewaySubnet')]"
               },
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('gatewayPublicIPName'))]"
@@ -309,10 +333,6 @@
     }
   ],
   "outputs": {
-    "erCircuitId": {
-      "type": "string",
-      "value": "[variables('erCircuitId')]"
-    },
     "erCircuitName": {
       "type": "string",
       "value": "[variables('erCircuitName')]"
