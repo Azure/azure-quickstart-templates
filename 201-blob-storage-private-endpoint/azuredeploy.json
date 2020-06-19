@@ -91,12 +91,6 @@
     "imageSku": {
       "type": "string",
       "defaultValue": "18.04-LTS",
-      "allowedValues": [
-        "12.04.5-LTS",
-        "14.04.5-LTS",
-        "16.04.0-LTS",
-        "18.04-LTS"
-      ],
       "metadata": {
         "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
       }
@@ -148,11 +142,18 @@
         "description": "Specifies the caching requirements for the data disks."
       }
     },
-    "scriptFilePath": {
+    "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://paolosalvatori.blob.core.windows.net/scripts",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-blob-storage-private-endpoint/",
       "metadata": {
-        "description": "The relative path of the script to download"
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
       }
     },
     "scriptFileName": {
@@ -223,13 +224,15 @@
       },
       "provisionVMAgent": true
     },
-    "publicDNSZoneForwarder": ".blob.core.windows.net",
+    "publicDNSZoneForwarder": "[concat('.blob.', environment().suffixes.storage)]",
+    "blobServicePrimaryEndpoint": "[concat(parameters('storageAccountName'), variables('publicDNSZoneForwarder'))]",
     "privateDnsZoneName": "[concat('privatelink', variables('publicDNSZoneForwarder'))]",
     "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
     "privateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('privateEndpointName'))]",
     "privateEndpointGroupId": "blob",
     "customScriptId": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('vmName'), 'CustomScript')]",
-    "omsAgentForLinuxId": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('vmName'), 'LogAnalytics')]"
+    "omsAgentForLinuxId": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('vmName'), 'LogAnalytics')]",
+    "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', parameters('scriptFileName'), parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
     {
@@ -253,7 +256,7 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-           "domainNameLabel": "[concat(toLower(parameters('vmName')), uniquestring(resourceGroup().id))]"
+          "domainNameLabel": "[concat(toLower(parameters('vmName')), uniquestring(resourceGroup().id))]"
         }
       }
     },
@@ -422,11 +425,11 @@
           "skipDos2Unix": false,
           "timestamp": 123456789,
           "fileUris": [
-            "[concat(parameters('scriptFilePath'), '/', parameters('scriptFileName'))]"
+            "[variables('scriptFileUri')]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash ',  parameters('scriptFileName'), ' ', parameters('storageAccountName'))]"
+          "commandToExecute": "[concat('bash ',  parameters('scriptFileName'), ' ', variables('blobServicePrimaryEndpoint'))]"
         }
       }
     },
@@ -899,6 +902,14 @@
     "workspaceName": {
       "value": "[parameters('workspaceName')]",
       "type": "string"
+    },
+    "scriptFileUri": {
+      "value": "[variables('scriptFileUri')]",
+      "type": "string"
+    },
+    "environment": {
+      "value": "[environment()]",
+      "type": "object"
     }
   }
 }
