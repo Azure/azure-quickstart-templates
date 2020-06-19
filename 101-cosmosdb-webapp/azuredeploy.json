@@ -1,5 +1,5 @@
 {
-"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "applicationName": {
@@ -46,9 +46,9 @@
         "description": "App Service Plan's instance count"
       }
     },
-    "repoURL": {
+    "repositoryURL": {
       "type": "string",
-      "defaultValue": "https://github.com/Azure-Samples/cosmos-db-to-do.git",
+      "defaultValue": "https://github.com/Azure-Samples/cosmos-dotnet-core-todo-app.git",
       "metadata": {
         "description": "The URL for the GitHub repository that contains the project to deploy."
       }
@@ -59,14 +59,26 @@
       "metadata": {
         "description": "The branch of the GitHub repository to use."
       }
+    },
+    "databaseName": {
+      "type": "string",
+      "defaultValue": "Tasks",
+      "metadata": {
+        "description": "The Cosmos DB database name."
+      }
+    },
+    "containerName": {
+      "type": "string",
+      "defaultValue": "Items",
+      "metadata": {
+        "description": "The Cosmos DB container name."
+      }
     }
   },
   "variables": {
     "cosmosAccountName": "[toLower(parameters('applicationName'))]",
     "webSiteName": "[parameters('applicationName')]",
-    "hostingPlanName": "[parameters('applicationName')]",
-    "repoUrl": "[parameters('repoURL')]",
-    "branch": "[parameters('branch')]"
+    "hostingPlanName": "[parameters('applicationName')]"
   },
   "resources": [
     {
@@ -76,9 +88,17 @@
       "kind": "GlobalDocumentDB",
       "location": "[parameters('location')]",
       "properties": {
-        "consistencyPolicy": {"defaultConsistencyLevel": "Session"},
-        "locations": [{"locationName": "[parameters('location')]", "failoverPriority": 0, "isZoneRedundant": false}],
-        "databaseAccountOfferType": "Standard"    
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Session"
+        },
+        "locations": [
+          {
+            "locationName": "[parameters('location')]",
+            "failoverPriority": 0,
+            "isZoneRedundant": false
+          }
+        ],
+        "databaseAccountOfferType": "Standard"
       }
     },
     {
@@ -86,11 +106,13 @@
       "name": "[variables('hostingPlanName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[parameters('location')]",
-      "dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName'))]" ],
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName'))]"
+      ],
       "sku": {
         "name": "[parameters('appServicePlanTier')]",
         "capacity": "[parameters('appServicePlanInstances')]"
-        },
+      },
       "properties": {
         "name": "[variables('hostingPlanName')]"
       }
@@ -100,18 +122,28 @@
       "name": "[variables('webSiteName')]",
       "type": "Microsoft.Web/sites",
       "location": "[parameters('location')]",
-      "dependsOn": [ "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]" ],
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+      ],
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
         "siteConfig": {
           "appSettings": [
             {
-              "name": "Endpoint",
-              "value": "[reference(concat('Microsoft.DocumentDb/databaseAccounts/', variables('cosmosAccountName'))).documentEndpoint]"
+              "name": "CosmosDb:Account",
+              "value": "[reference(resourceId('Microsoft.DocumentDb/databaseAccounts/', variables('cosmosAccountName'))).documentEndpoint]"
             },
             {
-              "name": "Key",
+              "name": "CosmosDb:Key",
               "value": "[listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', variables('cosmosAccountName')), '2020-04-01').primaryMasterKey]"
+            },
+            {
+              "name": "CosmosDb:DatabaseName",
+              "value": "[parameters('DatabaseName')]"
+            },
+            {
+              "name": "CosmosDb:ContainerName",
+              "value": "[parameters('ContainerName')]"
             }
           ]
         }
@@ -122,10 +154,12 @@
           "apiVersion": "2019-08-01",
           "name": "web",
           "location": "[parameters('location')]",
-          "dependsOn": [ "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]" ],
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
+          ],
           "properties": {
-            "repoUrl": "[variables('repoUrl')]",
-            "branch": "[variables('branch')]",
+            "repoUrl": "[parameters('repositoryURL')]",
+            "branch": "[parameters('branch')]",
             "isManualIntegration": true
           }
         }
