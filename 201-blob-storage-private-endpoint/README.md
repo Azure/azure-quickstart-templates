@@ -23,8 +23,8 @@ The following picture shows the architecture and network topology of the sample.
 
 The ARM template deploys the following resources:
 
-- Virtual Network: this virtual network has a single subnet that hosts an Linux (Ubuntu) virtual machine
-- Network Security Group: this resource contains an inbound rule to allow the access to the virtual machine on port 22 (SSH)
+- Virtual Network: this virtual network has a single subnet that hosts a Linux (Ubuntu) virtual machine
+- Network Security Group: this resource contains an inbound rule to allow access to the virtual machine on port 22 (SSH)
 - The virtual machine is created with a managed identity which is assigned the contributor role at the resource group scope level
 - A Public IP for the Linux virtual machine
 - The NIC used by the Linux virtual machine that makes use of the Public IP
@@ -34,7 +34,7 @@ The ARM template deploys the following resources:
 - A Private DNS Zone for a blob storage resource
 - A Private Endpoint for the blob storage account
 
-The ARM deployes uses the [Azure Custom Script Extension](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux) to download and run the following Bash script. The script runs the nslookup command against the public URL of the storage account to verify that this gets resolved to a private address.
+The ARM template uses an[Azure Custom Script Extension](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux) to download and run the following Bash script. The script runs the nslookup command against the public URL of the storage account to verify that this gets resolved to a private address.
 
 ```bash
 #!/bin/bash
@@ -59,6 +59,14 @@ sudo apt-get upgrade -y
 # and the latter mapped to the private address by the A record
 nslookup "$storageAccountName.blob.core.windows.net"
 ```
+
+## Deployment ##
+
+You can use the template.json ARM template and parameters.json file included in this repository to deploy the sample. Make sure to edit the parameters.json file to customize the installation. You can also use the deploy.sh Bash script under the scripts folder to deploy the ARM template. The following figure shows the resources deployed by the ARM template in the target resource group.
+
+![Resource Group](images/resourcegroup.png)
+
+## Testing ##
 
 if you open an ssh session to the Linux virtual machine and manually run the nslookup command, you should see an output like the following:
 
