@@ -9,7 +9,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-webapp/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-webapp/CredScanResult.svg)
 
-This template creates an Azure Cosmos account and Azure Web App, then automatically deploys a [Sample To Do ASP MVC web app](https://github.com/Azure-Samples/cosmos-db-to-do) hosted on GitHub and injects the Cosmos DB endpoint and auth key into the Web App's Application Settings allowing it to connect automatically upon first run.
+This template creates an Azure Cosmos account and Azure Web App, then automatically deploys the [Cosmos DB sample To-Do ASP MVC web app](https://github.com/Azure-Samples/cosmos-dotnet-core-todo-app) hosted on GitHub and injects the Cosmos DB endpoint and auth key into the Web App's Application Settings allowing it to connect automatically upon first run.
 
 This sample is useful where you want to deploy these resources and have the web app automatically connect to Cosmos DB in a single operation without having to manually add connection information to Application Settings in the portal.
 
