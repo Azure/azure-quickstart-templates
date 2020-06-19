@@ -1,7 +1,11 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
         "Use a New or Existing Virtual Network?": {
             "type": "string",
             "defaultValue": "New",
@@ -43,6 +47,13 @@
             "type": "String",
             "metadata": {
                 "description": "Name of the Proximity Placement Group to use for All Resources."
+            }
+        },
+        "Admin User for VM Access": {
+            "defaultValue": "AzureUser",
+            "type": "String",
+            "metadata": {
+                "description": "Admin User for all VMs."
             }
         },
         "ssh Key for VM Access": {
@@ -338,7 +349,7 @@
             "name": "[parameters('Proximity PlacementGroup Name')]",
             "properties": {
             },
-            "location": "[resourceGroup().location]"
+            "location": "[parameters('location')]"
         },
         {
             "type": "Microsoft.Compute/availabilitySets",
@@ -348,12 +359,12 @@
                 "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
             ],
             "condition": "[greater(parameters('Backend VM Count'),1)]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "sku": {
                 "name": "Aligned"
             },
             "properties": {
-                "platformFaultDomainCount": "[variables('AvailabilitySetFaultDomain')[resourceGroup().location]]",
+                "platformFaultDomainCount": "[variables('AvailabilitySetFaultDomain')[parameters('location')]]",
                 "platformUpdateDomainCount": 6,
                 "proximityPlacementGroup": {
                     "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',parameters('Proximity PlacementGroup Name'))]"
@@ -368,12 +379,12 @@
                 "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
             ],
             "condition": "[greater(parameters('Midtier VM Count'),1)]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "sku": {
                 "name": "Aligned"
             },
             "properties": {
-                "platformFaultDomainCount": "[variables('AvailabilitySetFaultDomain')[resourceGroup().location]]",
+                "platformFaultDomainCount": "[variables('AvailabilitySetFaultDomain')[parameters('location')]]",
                 "platformUpdateDomainCount": 6,
                 "proximityPlacementGroup": {
                     "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',parameters('Proximity PlacementGroup Name'))]"
@@ -388,7 +399,7 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
             ],
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "securityRules": [
                 ]
@@ -402,7 +413,7 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
             ],
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "securityRules": [
                 ]
@@ -416,7 +427,7 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
             ],
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "securityRules": [
                     {
@@ -551,7 +562,7 @@
                 },
                 "parameters": {
                     "location": {
-                        "value": "[resourceGroup().location]"
+                        "value": "[parameters('location')]"
                     },
                     "lb_name": {
                         "value": "frontend-loadbalancer"
@@ -602,6 +613,9 @@
                     "Proximity PlacementGroup Name": {
                         "value": "[parameters('Proximity PlacementGroup Name')]"
                     },
+                    "Admin User for VM Access": {
+                        "value": "[parameters('Admin User for VM Access')]"
+                    },
                     "ssh Key for VM Access": {
                         "value": "[parameters('ssh Key for VM Access')]"
                     },
@@ -631,7 +645,7 @@
                     }
                 },
                 "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/deploymentTemplate.json#",
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
                     "contentVersion": "1.0.0.0",
                     "parameters": {
                         "templateUri": {
@@ -647,6 +661,9 @@
                             "type": "int"
                         },
                         "Proximity PlacementGroup Name": {
+                            "type": "string"
+                        },
+                        "Admin User for VM Access": {
                             "type": "string"
                         },
                         "ssh Key for VM Access": {
@@ -690,7 +707,7 @@
                                 },
                                 "parameters": {
                                     "location": {
-                                        "value": "[resourceGroup().location]"
+                                        "value": "[parameters('location')]"
                                     },
                                     "vm_name": {
                                         "value": "[concat(parameters('Backend VM Name Base'),'-', copyIndex())]"
@@ -706,6 +723,9 @@
                                     },
                                     "proximity_group_name": {
                                         "value": "[parameters('Proximity PlacementGroup Name')]"
+                                    },
+                                    "admin_user": {
+                                        "value": "[parameters('Admin User for VM Access')]"
                                     },
                                     "ssh_pub_key": {
                                         "value": "[parameters('ssh Key for VM Access')]"
@@ -773,7 +793,7 @@
                 },
                 "parameters": {
                     "location": {
-                        "value": "[resourceGroup().location]"
+                        "value": "[parameters('location')]"
                     },
                     "vm_name": {
                         "value": "[concat(parameters('Midtier VM Name Base'),'-', copyIndex())]"
@@ -789,6 +809,9 @@
                     },
                     "proximity_group_name": {
                         "value": "[parameters('Proximity PlacementGroup Name')]"
+                    },
+                    "admin_user": {
+                        "value": "[parameters('Admin User for VM Access')]"
                     },
                     "ssh_pub_key": {
                         "value": "[parameters('ssh Key for VM Access')]"
@@ -845,7 +868,7 @@
                 },
                 "parameters": {
                     "location": {
-                        "value": "[resourceGroup().location]"
+                        "value": "[parameters('location')]"
                     },
                     "vm_name": {
                         "value": "frontend-jumpvm"
@@ -861,6 +884,9 @@
                     },
                     "proximity_group_name": {
                         "value": "[parameters('Proximity PlacementGroup Name')]"
+                    },
+                    "admin_user": {
+                        "value": "[parameters('Admin User for VM Access')]"
                     },
                     "ssh_pub_key": {
                         "value": "[parameters('ssh Key for VM Access')]"
@@ -903,7 +929,7 @@
             "condition": "[equals(parameters('Use a New or Existing Virtual Network?'), 'New')]",
             "apiVersion": "2019-12-01",
             "name": "[parameters('Virtual Network Name')]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('Backend Network Security Group Name'))]",
                 "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('Midtier Network Security Group Name'))]",
@@ -975,7 +1001,7 @@
             "apiVersion": "2019-12-01",
             "name": "frontend-bastion-ip",
             "condition": "[equals(parameters('Deploy Azure Bastion Frontend'), 'Yes')]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
             ],
@@ -991,7 +1017,7 @@
             "apiVersion": "2019-12-01",
             "name": "frontend-jumpvm-ip",
             "condition": "[equals(parameters('Deploy Jump Box Frontend'), 'Yes')]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
             ],
@@ -1007,7 +1033,7 @@
             "apiVersion": "2019-12-01",
             "name": "frontend-loadbalancer-ip",
             "condition": "[equals(parameters('Deploy App Gateway Frontend'), 'Yes')]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
             ],
@@ -1023,7 +1049,7 @@
             "apiVersion": "2019-12-01",
             "name": "bastion",
             "condition": "[equals(parameters('Deploy Azure Bastion Frontend'), 'Yes')]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', parameters('Virtual Network Name'))]",
                 "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
