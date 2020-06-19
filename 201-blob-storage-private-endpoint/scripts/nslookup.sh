@@ -4,7 +4,7 @@
 blobServicePrimaryEndpoint=$1
 
 # Parameter validation
-if [[ -z blobServicePrimaryEndpoint ]]; then
+if [[ -z $blobServicePrimaryEndpoint ]]; then
     echo "blobServicePrimaryEndpoint parameter cannot be null or empty"
     exit 1
 fi

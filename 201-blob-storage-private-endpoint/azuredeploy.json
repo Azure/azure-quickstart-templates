@@ -37,7 +37,7 @@
         "description": "Unique DNS Name for the Storage Account."
       }
     },
-    "storageAccountType": {
+    "storageAccountSku": {
       "type": "string",
       "defaultValue": "Premium_LRS",
       "allowedValues": [
@@ -52,6 +52,13 @@
       ],
       "metadata": {
         "description": "Gets or sets the SKU name. Required for account creation; optional for update. Note that in older versions, SKU name was called accountType."
+      }
+    },
+    "bootDiagnosticsStorageAccount": {
+      "type": "string",
+      "defaultValue": "[concat('store', uniquestring(resourceGroup().id))]",
+      "metadata": {
+        "description": "Unique DNS Name for the Storage Account used for boot diagnostics logs of the virtual machine."
       }
     },
     "adminUsername": {
@@ -204,6 +211,7 @@
     "nsgName": "[concat(parameters('subnetName'), 'SubnetNsg')]",
     "publicIPAddressName": "[concat(parameters('vmName'), 'PublicIp')]",
     "publicIPAddressType": "Dynamic",
+    "bootDiagnosticsStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('bootDiagnosticsStorageAccount'))]",
     "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
     "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]",
     "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
@@ -238,15 +246,22 @@
     {
       "apiVersion": "2019-06-01",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccountName')]",
+      "name": "[parameters('bootDiagnosticsStorageAccount')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
       },
-      "kind": "StorageV2",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
+      "kind": "StorageV2"
+    },
+    {
+      "apiVersion": "2019-06-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountSku')]"
+      },
+      "kind": "StorageV2"
     },
     {
       "apiVersion": "2020-04-01",
@@ -343,11 +358,8 @@
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
-      "identity": {
-        "type": "SystemAssigned"
-      },
       "dependsOn": [
-        "[variables('storageAccountId')]",
+        "[variables('bootDiagnosticsStorageAccountId')]",
         "[variables('nicId')]"
       ],
       "properties": {
@@ -372,7 +384,7 @@
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
-              "storageAccountType": "[parameters('storageAccountType')]"
+              "storageAccountSku": "[parameters('storageAccountSku')]"
             }
           },
           "copy": [
@@ -386,7 +398,7 @@
                 "name": "[concat(parameters('vmName'),'-DataDisk',copyIndex('dataDisks'))]",
                 "createOption": "Empty",
                 "managedDisk": {
-                  "storageAccountType": "[parameters('storageAccountType')]"
+                  "storageAccountSku": "[parameters('storageAccountSku')]"
                 }
               }
             }
@@ -402,7 +414,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(variables('storageAccountId')).primaryEndpoints['blob']]"
+            "storageUri": "[reference(variables('bootDiagnosticsStorageAccountId')).primaryEndpoints['blob']]"
           }
         }
       }
@@ -813,26 +825,6 @@
             "ipv4Address": "[reference(variables('privateEndpointId'), '2020-04-01').customDnsConfigs[0].ipAddresses[0]]"
           }
         ]
-      }
-    },
-    {
-      "type": "Microsoft.Network/privateDnsZones/SOA",
-      "apiVersion": "2018-09-01",
-      "name": "[concat(variables('privateDnsZoneName'), '/@')]",
-      "dependsOn": [
-        "[variables('privateDnsZoneId')]"
-      ],
-      "properties": {
-        "ttl": 3600,
-        "soaRecord": {
-          "email": "azureprivatedns-host.microsoft.com",
-          "expireTime": 2419200,
-          "host": "azureprivatedns.net",
-          "refreshTime": 3600,
-          "retryTime": 300,
-          "serialNumber": 1,
-          "minimumTtl": 300
-        }
       }
     },
     {
