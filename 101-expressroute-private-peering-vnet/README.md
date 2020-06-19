@@ -1,4 +1,4 @@
-# ExpressRoute private peering and connection with VNet
+# ExpressRoute private peering and ExpressRoute Gateway
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-expressroute-private-peering-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-expressroute-private-peering-vnet/PublicDeployment.svg)
 
@@ -22,7 +22,7 @@ This template makes the following actions:
 
 
 ## Note
-* The deployment leaves the ExpressRoute circuit with *circuitProvisioningState* property in **'Enabled'** and *serviceProviderProvisioningState* property in **'NotProvisioned'**. You have to work with your ExpressRoute provider to complete the provisioning process of ExpressRoute circuit. In case od ExpressRoute Direct port pair, follow the steps shown in the [article](https://docs.microsoft.com/en-us/azure/expressroute/expressroute-howto-erdirect).
+* The deployment leaves the ExpressRoute circuit with *circuitProvisioningState* property in **'Enabled'** and *serviceProviderProvisioningState* property in **'NotProvisioned'**. After running the template, you have to work with your ExpressRoute provider to complete the provisioning process of ExpressRoute circuit. In case od ExpressRoute Direct port pair, follow the steps shown in the [article](https://docs.microsoft.com/en-us/azure/expressroute/expressroute-howto-erdirect).
 You can create a connection, to link the ExpressRoute circuit to the ExpressRoute gateway, only when the *serviceProviderProvisioningState* will be in **'Provisioned'** state.
 
 ```
