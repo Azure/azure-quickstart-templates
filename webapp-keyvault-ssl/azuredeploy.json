@@ -18,6 +18,7 @@
     },
     "certificateName": {
       "type": "string",
+      "defaultValue": "[concat('cert', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "User friendly certificate resource name"
       }
@@ -36,12 +37,14 @@
     },
     "webAppName": {
       "type": "string",
+      "defaultValue": "[concat('web-', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "App name to use for creating SSL binding. This App should have the hostname assigned as a custom domain"
       }
     },
     "servicePlanName": {
       "type": "string",
+      "defaultValue": "[concat('plan-', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Service Plan"
       }
@@ -67,6 +70,9 @@
   "resources": [
     {
       "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2019-08-01",
+      "name": "[parameters('servicePlanName')]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "S1",
         "tier": "Standard",
@@ -74,9 +80,6 @@
         "family": "S",
         "capacity": 1
       },
-      "name": "[parameters('servicePlanName')]",
-      "apiVersion": "2015-08-01",
-      "location": "[parameters('location')]",
       "properties": {
         "name": "[parameters('servicePlanName')]",
         "numberOfWorkers": 1
@@ -85,7 +88,7 @@
     {
       "type": "Microsoft.Web/certificates",
       "name": "[parameters('certificateName')]",
-      "apiVersion": "2016-03-01",
+      "apiVersion": "2019-08-01",
       "location": "[parameters('location')]",
       "properties": {
         "keyVaultId": "[parameters('existingKeyVaultId')]",
@@ -95,7 +98,7 @@
     {
       "type": "Microsoft.Web/sites",
       "name": "[parameters('webAppName')]",
-      "apiVersion": "2016-08-01",
+      "apiVersion": "2019-08-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', parameters('servicePlanName'))]",
@@ -103,15 +106,14 @@
       ],
       "resources": [
         {
-          "apiVersion": "2016-08-01",
+          "apiVersion": "2019-08-01",
           "type": "hostNameBindings",
           "name": "[parameters('hostname')]",
           "dependsOn": [
-            "[concat('Microsoft.Web/sites/', parameters('webAppName'))]"
+            "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
           ],
           "properties": {
             "siteName": "[parameters('webAppName')]",
-            "domainId": null,
             "hostNameType": "Verified"
           }
         }
@@ -122,11 +124,11 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2019-10-01",
       "name": "linkedTemplate",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat('Microsoft.Web/sites/', parameters('webAppName'))]"
+        "[resourceId('Microsoft.Web/sites/hostNameBindings', parameters('webAppName'), parameters('hostname'))]"
       ],
       "properties": {
         "mode": "Incremental",
