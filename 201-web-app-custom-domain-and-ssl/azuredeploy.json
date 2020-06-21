@@ -23,20 +23,23 @@
         },
         "existingKeyVaultId": {
             "type": "string",
+            "defaultValue": "",
             "metadata": {
-                "description": "Existing Key Vault resource Id with an access policy to allow Microsoft.Web RP to read Key Vault secrets (Checkout README.md for more information)"
+                "description": "Existing Key Vault resource Id for the SSL certificate, leave this blank if not enabling SSL"
             }
         },
         "existingKeyVaultSecretName": {
             "type": "string",
+            "defaultValue": "",
             "metadata": {
-                "description": "Key Vault Secret that contains a PFX certificate"
+                "description": "Key Vault Secret that contains a PFX certificate, leave this blank if not enabling SSL"
             }
         }
     },
     "variables": {
         "appServicePlanName": "[concat(parameters('webAppName'),'-asp-', uniquestring(resourceGroup().id))]",
-        "certificateName": "[concat(parameters('webAppName'),'-cert')]"
+        "certificateName": "[concat(parameters('webAppName'),'-cert')]",
+        "enableSSL": "[not(empty(parameters('existingKeyVaultId')))]"
     },
     "resources": [
         {
@@ -69,6 +72,7 @@
             }
         },
         {
+            "condition": "[variables('enableSSL')]",
             "type": "Microsoft.Web/certificates",
             "apiVersion": "2019-08-01",
             "name": "[variables('certificateName')]",
@@ -91,8 +95,8 @@
                 "[resourceId('Microsoft.Web/certificates', variables('certificateName'))]"
             ],
             "properties": {
-                "sslState": "SniEnabled",
-                "thumbprint": "[reference(resourceId('Microsoft.Web/certificates', variables('certificateName'))).Thumbprint]"
+                "sslState": "[if(variables('enableSSL'), 'SniEnabled', json('null'))]",
+                "thumbprint": "[if(variables('enableSSL'), reference(resourceId('Microsoft.Web/certificates', variables('certificateName'))).Thumbprint, json('null'))]"
             }
         }
     ]
