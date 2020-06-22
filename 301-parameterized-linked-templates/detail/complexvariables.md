@@ -1,5 +1,7 @@
 # Using Variables to Centralize Configurable Elements
 
+#TODO Update Docs Once Template Passes Validation
+
 The variables section in this sample's [azuredeploy.json](../azuredeploy.json#L137-L285) is used mostly to create lookup tables that are used to alter the deployment configuration based on the user's selections.  Several examples are described below.
 
 The variable `AvailabilitySetFaultDomain` is used to allow selection of the number of fault domains for Availability Sets based on the maximum number for the deployment region:

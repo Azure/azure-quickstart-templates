@@ -1,5 +1,7 @@
 # Use Linked Template for Multiple Resources
 
+#TODO Update Docs Once Template Passes Validation
+
 When referring to linked templates or script files you have to point to a location where the files are accessible to the Azure infrastructure target VMs.  While it is possible to hardcode URIs to these resources, it is easier to utilize the deployment() function to get a link to the base template and then use it to construct a reference to the associated resources.
 
 Example of using `deployment().properties.templateLink.uri` to construct links to scripts in a subfolder for use with the CustomScript extension:
