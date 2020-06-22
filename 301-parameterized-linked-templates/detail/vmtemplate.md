@@ -1,5 +1,7 @@
 # Use Linked Template for Multiple Resources (IaaS)
 
+#TODO Update Docs Once Template Passes Validation
+
 The template [paramvm.json](../nested/paramvm.json) encapsulates some common parameters that are used for all Virtual Machines that are part of this deployment.  By limiting the parameters to things that change from VM to VM, and collecting dependent resources like Disks and the NIC into a single template, the main deployment json can focus on the parameters that need to be different.
 
 The template is referenced three different times in [azuredeploy.json](../azuredeploy.json).

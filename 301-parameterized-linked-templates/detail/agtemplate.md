@@ -1,5 +1,7 @@
 # Use Linked Template to Limit Main Template Complexity (App Gateway)
 
+#TODO Update Docs Once Template Passes Validation
+
 The template [paramlb.json](../nested/paramlb.json) is used to limit the complexity of the main template by encapsulating the deployment of an Application Gateway and only exposing parameters for the things that need to be changed for each deployment.  The template is only referenced one time in [azuredeploy.json](../azuredeploy.json).
 
 The values that need to change for each deployment are listed as parameters:
