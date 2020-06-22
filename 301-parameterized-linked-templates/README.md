@@ -13,10 +13,10 @@ This sample template will deploy multiple tiers of resources into an Azure Resou
 
 ## Deploy this template to Azure
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-parameterized-linked-templates%2Fazuredeploy.json)
-
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-parameterized-linked-templates%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-parameterized-linked-templates%2Fazuredeploy.json)
-*Note: If you fork this repository, you will need to modify the link in [README.md](README.md) to point to your repo.  If you create a separate branch for testing, you will have to include a change to this link to point to your branch as well. You must include a URL-encoded link to the raw [azuredeploy.json](azuredeploy.json) file after `/uri/` in the link defined for the deployment button. If you use the link in [deploy.html (hosted with Github Pages or any Static Web Location)](https://hallihan.github.io/arm-examples/deploy.html) the template URI will be constructed automatically.* 
+
+*Note: If you fork this repository, you will need to modify the link in [README.md](README.md) to point to your repo.  If you create a separate branch for testing, you will have to include a change to this link to point to your branch as well. You must include a URL-encoded link to the raw [azuredeploy.json](azuredeploy.json) file after `/uri/` in the link defined for the deployment button. You should also change the default value of `_artifactsLocation`.* 
 
 ## Overview
 
@@ -38,7 +38,6 @@ Each node in the back-end tier currently runs a script to start a simple web ser
 
 #### [Naming Parameters to be User Friendly](detail/userfriendlyparameters.md)
 #### [Using Variables to Centralize Configurable Elements](detail/complexvariables.md)
-#### [Use Deployment Properties to avoid hardcoded URIs](detail/templatelink.md)
 #### [Use Linked Template for Multiple Resources (IaaS)](detail/vmtemplate.md)
 #### [Use Linked Template to Limit Main Template Complexity (App Gateway)](detail/agtemplate.md)
 

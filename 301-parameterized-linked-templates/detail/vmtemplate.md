@@ -1,12 +1,10 @@
 # Use Linked Template for Multiple Resources (IaaS)
 
-#TODO Update Docs Once Template Passes Validation
-
 The template [paramvm.json](../nested/paramvm.json) encapsulates some common parameters that are used for all Virtual Machines that are part of this deployment.  By limiting the parameters to things that change from VM to VM, and collecting dependent resources like Disks and the NIC into a single template, the main deployment json can focus on the parameters that need to be different.
 
 The template is referenced three different times in [azuredeploy.json](../azuredeploy.json).
 
-For the frontend jump VM, it is used as a single instance and many values are hardcoded ([azuredeploy.json](../azuredeploy.json#L782)):
+For the frontend jump VM, it is used as a single instance and many values are hardcoded ([azuredeploy.json](../azuredeploy.json#L849)):
 
 ```
 {
@@ -18,7 +16,7 @@ For the frontend jump VM, it is used as a single instance and many values are ha
   "properties": {
     "mode": "Incremental",
     "templateLink": {
-      "uri": "[uri(deployment().properties.templateLink.uri, 'nested/paramvm.json')]"
+      "uri": "[uri(parameters('_artifactsLocation'), concat('nested/paramvm.json', parameters('_artifactsLocationSasToken')))]"
     },
 ```
 
@@ -33,11 +31,11 @@ For the midtier VM set, the linked template is used in a simple copy loop.  Note
   "properties": {
     "mode": "Incremental",
     "templateLink": {
-      "uri": "[uri(deployment().properties.templateLink.uri, 'nested/paramvm.json')]"
+      "uri": "[uri(parameters('_artifactsLocation'), concat('nested/paramvm.json', parameters('_artifactsLocationSasToken')))]"
     },
     "parameters": {
       "location": {
-        "value": "[resourceGroup().location]"
+        "value": "[parameters('location')]"
       },
       "vm_name": {
         "value": "[concat(parameters('Midtier VM Name Base'),'-', copyIndex())]"
@@ -73,7 +71,7 @@ For the backend VM set, the linked template is inside a copy loop that is wrappe
     },
     "parameters": {
       "templateUri": {
-        "value": "[uri(deployment().properties.templateLink.uri, 'nested/paramvm.json')]"
+        "value": "[uri(parameters('_artifactsLocation'), concat('nested/paramvm.json', parameters('_artifactsLocationSasToken')))]"
       },
       "Backend VM Template": {
         "value": "[parameters('Backend VM Template')]"
