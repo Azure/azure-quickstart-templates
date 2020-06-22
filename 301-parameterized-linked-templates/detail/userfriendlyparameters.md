@@ -1,7 +1,5 @@
 # Naming Parameters to be User Friendly
 
-#TODO Update Docs Once Template Passes Validation
-
 In the main deployment template, conventionally named azuredeploy.json, you can define parameters that will be used to prompt the user for configuration at the beginning of the deployment.  These selections can be used to alter the number or type of resources that will be deployed.
 
 #### Naming Parameters for top-level parameters
@@ -98,7 +96,7 @@ In this example, a full text description is used to let the user know exactly wh
 }
 ```
 
-There are many more examples in [azuredeploy.json](../azuredeploy.json#L4-L136).
+There are many more examples in [azuredeploy.json](../azuredeploy.json#L4-L176).
 
 
 [Home](../README.md)

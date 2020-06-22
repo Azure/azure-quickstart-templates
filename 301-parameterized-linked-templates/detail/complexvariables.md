@@ -1,8 +1,6 @@
 # Using Variables to Centralize Configurable Elements
 
-#TODO Update Docs Once Template Passes Validation
-
-The variables section in this sample's [azuredeploy.json](../azuredeploy.json#L137-L285) is used mostly to create lookup tables that are used to alter the deployment configuration based on the user's selections.  Several examples are described below.
+The variables section in this sample's [azuredeploy.json](../azuredeploy.json#L192-L341) is used mostly to create lookup tables that are used to alter the deployment configuration based on the user's selections.  Several examples are described below.
 
 The variable `AvailabilitySetFaultDomain` is used to allow selection of the number of fault domains for Availability Sets based on the maximum number for the deployment region:
 ```
@@ -13,10 +11,11 @@ The variable `AvailabilitySetFaultDomain` is used to allow selection of the numb
   "GermanyNorth": 2,
   "NorwayWest": 2
 },
+"maxFaultDomainsforLocation": "[if(contains(variables('AvailabilitySetFaultDomain'),parameters('location')),variables('AvailabilitySetFaultDomain')[parameters('location')],2)]",
 ```
 ```
 "properties": {
-  "platformFaultDomainCount": "[variables('AvailabilitySetFaultDomain')[resourceGroup().location]]",
+  "platformFaultDomainCount": "[variables('maxFaultDomainsforLocation')]",
   "platformUpdateDomainCount": 6
 },
 ```
@@ -48,23 +47,23 @@ In the example below, you can see that there are entire objects defined under `p
   "backend": {
     "commandToExecute": "[concat('sh ',variables('osProfile')[variables('ostag')]['diskscript'],'; sh examplepostinstall1.sh; sh examplepostinstall2.sh')]",
     "fileUris": [
-      "[uri(deployment().properties.templateLink.uri, variables('osProfile')[variables('ostag')]['diskscript'])]",
-      "[uri(deployment().properties.templateLink.uri, 'scripts/examplepostinstall1.sh')]",
-      "[uri(deployment().properties.templateLink.uri, 'scripts/examplepostinstall2.sh')]"
+      "[uri(parameters('_artifactsLocation'), concat(variables('osProfile')[variables('ostag')]['diskscript'], parameters('_artifactsLocationSasToken')))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/examplepostinstall1.sh', parameters('_artifactsLocationSasToken')))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/examplepostinstall2.sh', parameters('_artifactsLocationSasToken')))]"
     ]
   },
   "midtier": {
     "commandToExecute": "[concat('sh ',variables('osProfile')[variables('ostag')]['diskscript'],'; sh examplepostinstall1.sh')]",
     "fileUris": [
-      "[uri(deployment().properties.templateLink.uri, variables('osProfile')[variables('ostag')]['diskscript'])]",
-      "[uri(deployment().properties.templateLink.uri, 'scripts/examplepostinstall1.sh')]"
+      "[uri(parameters('_artifactsLocation'), concat(variables('osProfile')[variables('ostag')]['diskscript'], parameters('_artifactsLocationSasToken')))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/examplepostinstall1.sh', parameters('_artifactsLocationSasToken')))]"
     ]
   },
   "jump": {
     "commandToExecute": "[concat('sh ',variables('osProfile')[variables('ostag')]['diskscript'],'; sh examplepostinstall3.sh')]",
     "fileUris": [
-      "[uri(deployment().properties.templateLink.uri, variables('osProfile')[variables('ostag')]['diskscript'])]",
-      "[uri(deployment().properties.templateLink.uri, 'scripts/examplepostinstall3.sh')]"
+      "[uri(parameters('_artifactsLocation'), concat(variables('osProfile')[variables('ostag')]['diskscript'], parameters('_artifactsLocationSasToken')))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/examplepostinstall3.sh', parameters('_artifactsLocationSasToken')))]"
     ]
   }
 }
