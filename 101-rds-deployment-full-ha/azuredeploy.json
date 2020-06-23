@@ -96,19 +96,27 @@
                 "Standard_D2_v2",
                 "Standard_D3_v2",                
                 "Standard_D2_v3",
-                "Standard_D4_v3"
+                "Standard_D4_v3",
+                "Standard_DS1_v2",
+                "Standard_DS2_v2"
             ],
             "metadata": {
                 "description": "What is the VM size for all VMs?"
             }            
+        },
+        "vmSpot": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Create Azure Spot VMs?"
+            }
         },
         "vmStorageSkuType": {
             "type": "string",
             "defaultValue": "Standard_LRS",
             "allowedValues": [
                 "StandardSSD_LRS",
-                "Standard_LRS",
-                "Premium_LRS"
+                "Standard_LRS"
             ],
             "metadata": {
                 "description": "What is the SKU for the storage to VM managed disks?"
@@ -681,6 +689,9 @@
                     "vmSize": {
                         "value": "[parameters('vmSize')]"
                     },
+                    "vmSpot": {
+                        "value": "[parameters('vmSpot')]"
+                    },
                     "vmStorageSkuType": {
                         "value": "[parameters('vmStorageSkuType')]"
                     },
@@ -802,6 +813,9 @@
                         },
                         "vmSize": {
                             "type": "string"
+                        },
+                        "vmSpot": {
+                            "type": "bool"
                         },
                         "vmStorageSkuType": {
                             "type": "string"
@@ -970,6 +984,9 @@
                             "apiVersion": "2019-07-01",
                             "name": "[concat(parameters('vmName'),copyIndex(1))]",                             
                             "location": "[parameters('location')]",
+                            "zones": [
+                                "1"
+                            ],
                             "copy": {
                                 "name": "[concat(parameters('vmName'),'vmcopy')]",
                                 "count": "[parameters('loopCount')]"                                
@@ -980,8 +997,10 @@
                             "properties": {
                                 "licenseType": "Windows_Server",
                                 "billingProfile": {
-                                    "maxPrice": -1
+                                    "maxPrice": "[if(equals(parameters('vmSpot'),bool('true')),'-1',json('null'))]"
                                 },
+                                "priority": "[if(equals(parameters('vmSpot'),bool('true')),'Spot',json('null'))]",
+                                "evictionPolicy": "[if(equals(parameters('vmSpot'),bool('true')),'Deallocate',json('null'))]",
                                 "diagnosticsProfile": {
                                     "bootDiagnostics": {
                                         "enabled": true,
@@ -1003,8 +1022,6 @@
                                 "hardwareProfile": {
                                     "vmSize": "[parameters('vmSize')]"
                                 },
-                                "priority": "Spot",
-                                "evictionPolicy": "Deallocate",
                                 "storageProfile": {
                                     "osDisk": {
                                         "createOption": "FromImage",
