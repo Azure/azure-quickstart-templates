@@ -91,7 +91,7 @@ Function RequestCert([string]$Fqdn) {
         $AcmePath = "C:\Inetpub\wwwroot\.well-known\acme-challenge"
         New-Item -ItemType Directory -Path $AcmePath -Force
         New-Item -Path $AcmePath -Name $auth.HTTP01Token -ItemType File -Value $AcmeBody
-        If (-Not (Get-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$" -ErrorAction SilentlyContinue)) {
+        If (-Not (Get-LocalGroupMember -Group "Administrators" | Where-Object {$_.Name -match "$($BrokerName)"} -ErrorAction SilentlyContinue)) {
             Add-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$"
         }
     } -ArgumentList $auth, $AcmeBody, $ServerName, $DomainName
@@ -190,7 +190,7 @@ If ($ServerName -eq $MainConnectionBroker) {
     ForEach($NewServer In $WebGatewayServers) {
         Invoke-Command -ComputerName $NewServer -Credential $DomainCreds -ScriptBlock {
             Param($DomainName,$BrokerName)
-            If (-Not (Get-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$" -ErrorAction SilentlyContinue)) {
+            If (-Not (Get-LocalGroupMember -Group "Administrators" | Where-Object {$_.Name -match "$($BrokerName)"} -ErrorAction SilentlyContinue)) {
                 Add-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$" -ErrorAction SilentlyContinue
             }
         } -ArgumentList $DomainName, $ServerName
@@ -203,7 +203,7 @@ If ($ServerName -eq $MainConnectionBroker) {
     ForEach($NewServer In $WebGatewayServers) {
         Invoke-Command -ComputerName $NewServer -Credential $DomainCreds -ScriptBlock {
             Param($DomainName,$BrokerName)
-            If (-Not (Get-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$" -ErrorAction SilentlyContinue)) {
+            If (-Not (Get-LocalGroupMember -Group "Administrators" | Where-Object {$_.Name -match "$($BrokerName)"} -ErrorAction SilentlyContinue)) {
                 Add-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$" -ErrorAction SilentlyContinue
             }
         } -ArgumentList $DomainName, $ServerName
@@ -216,7 +216,7 @@ If ($ServerName -eq $MainConnectionBroker) {
     ForEach($NewServer In $SessionHosts) {
         Invoke-Command -ComputerName $NewServer -Credential $DomainCreds -ScriptBlock {
             Param($DomainName,$BrokerName)
-            If (-Not (Get-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$" -ErrorAction SilentlyContinue)) {
+            If (-Not (Get-LocalGroupMember -Group "Administrators" | Where-Object {$_.Name -match "$($BrokerName)"} -ErrorAction SilentlyContinue)) {
                 Add-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$" -ErrorAction SilentlyContinue
             }
         } -ArgumentList $DomainName, $ServerName
@@ -229,7 +229,7 @@ If ($ServerName -eq $MainConnectionBroker) {
     ForEach($NewServer In $LicenseServers) {
         Invoke-Command -ComputerName $NewServer -Credential $DomainCreds -ScriptBlock {
             Param($DomainName,$BrokerName)
-            If (-Not (Get-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$" -ErrorAction SilentlyContinue)) {
+            If (-Not (Get-LocalGroupMember -Group "Administrators" | Where-Object {$_.Name -match "$($BrokerName)"} -ErrorAction SilentlyContinue)) {
                 Add-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$" -ErrorAction SilentlyContinue
             }
         } -ArgumentList $DomainName, $ServerName
@@ -286,7 +286,7 @@ Else {
         #As we're executing via SYSTEM, make sure the broker is able to manage servers
         Invoke-Command -ComputerName $MainConnectionBroker -Credential $DomainCreds -ScriptBlock {
             Param($DomainName,$BrokerName)
-            If (-Not (Get-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$" -ErrorAction SilentlyContinue)) {
+            If (-Not (Get-LocalGroupMember -Group "Administrators" | Where-Object {$_.Name -match "$($BrokerName)"} -ErrorAction SilentlyContinue)) {
                 Add-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$"
             }
         } -ArgumentList $DomainName, $ServerName
@@ -300,7 +300,7 @@ Else {
         Get-RDServer -ConnectionBroker $MainBrokerFQDN | ForEach-Object {
             Invoke-Command -ComputerName $_.Server -Credential $DomainCreds -ScriptBlock {
                 Param($DomainName,$BrokerName)
-                If (-Not (Get-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$" -ErrorAction SilentlyContinue)) {
+                If (-Not (Get-LocalGroupMember -Group "Administrators" | Where-Object {$_.Name -match "$($BrokerName)"} -ErrorAction SilentlyContinue)) {
                     Add-LocalGroupMember -Group "Administrators" -Member "$($DomainName)\$($BrokerName)$" -ErrorAction SilentlyContinue
                 }
             } -ArgumentList $DomainName, $ServerName
