@@ -5,7 +5,7 @@
 [CmdletBinding()]
 Param(
     [Parameter(Mandatory = $true)]$GitHubRepo,
-    [Parameter(Mandatory = $true)]$GitHubToken,
+    [Parameter(Mandatory = $true)]$GitHubPAT,
     [Parameter(Mandatory = $true)]$AgentName
 )
 
@@ -77,6 +77,21 @@ Write-Verbose "Configuring agent" -Verbose
 
 # Set the current directory to the agent dedicated one previously created.
 Push-Location -Path $agentInstallationPath
+
+Write-Verbose "Retrieving runner token" -Verbose
+
+$baseUri = "https://api.github.com/orgs"
+if (-1 -ne $GitHubRepo.IndexOf("/")) {
+    $baseUri = "https://api.github.com/repos"
+}
+
+$headers = @{
+    authorization = "token $GitHubPAT"
+    accept = "application/vnd.github.everest-preview+json"
+}
+
+$r = Invoke-RestMethod -Uri "$baseUri/$GitHubRepo/actions/runners/registration-token" -Headers $headers -Method POST
+$GitHubToken = $r.token
 
 # Setup the agent as a service
 .\config.cmd --unattended --url $serverUrl --token $GitHubToken --runasservice
