@@ -131,6 +131,19 @@ foreach($r in $redisCaches){
     }
 }
 
+#ACI create a subnet delegation that must be removed before the vnet can be deleted
+$vnets = Get-AzVirtualNetwork -ResourceGroupName $ResourceGroupName -Verbose
+
+foreach($vnet in $vnets){
+    foreach($subnet in $vnets.Subnets){
+        $delegations = Get-AzDelegation -Subnet $subnet -Verbose
+        foreach($d in $delegations){
+            Write-Output "Removing VNet Delegation: $($d.name)"
+            Remove-AzDelegation -Name $d.Name -Subnet $subnet -Verbose
+        }
+    }
+}
+
 
 #finally...
 Remove-AzResourceGroup -Force -Verbose -Name $ResourceGroupName
