@@ -78,7 +78,7 @@ For($I=1;$I -le $LicenseServerCount;$I++){
 }
 
 Function RequestCert([string]$Fqdn) {
-    $CertMaxRetries = 10
+    $CertMaxRetries = 30
 
     Set-PAServer LE_PROD
     New-PAAccount -AcceptTOS -Contact "$($AdminUser)@$($Fqdn)" -Force
@@ -106,6 +106,7 @@ Function RequestCert([string]$Fqdn) {
     } While (((Get-PAOrder | Get-PAAuthorizations).HTTP01Status -ne "valid") -And ($Retries -ne $CertMaxRetries))
 
     If ((Get-PAOrder | Get-PAAuthorizations).HTTP01Status -ne "valid"){
+        Write-Error "Certificate for $($Fqdn) not ready in 15 minutes. Exiting..."
         [Environment]::Exit(-1)
     }
 
@@ -281,6 +282,7 @@ Else {
     #If not the first broker, just install SQL OBDC driver and join the farm
     InstallSQLClient
     If ($?) {
+        $WaitHAMaxRetries = 60
         $MainBrokerFQDN = $($MainConnectionBroker + "." + $DomainName)
 
         #As we're executing via SYSTEM, make sure the broker is able to manage servers
@@ -292,9 +294,16 @@ Else {
         } -ArgumentList $DomainName, $ServerName
 
         #First broker HA deployment might be still running in parallel, wait for HA.
-        While(-Not (Get-RDConnectionBrokerHighAvailability -ConnectionBroker $MainBrokerFQDN)) {
+        $Retries = 1
+        Do {
             Write-Host "Waiting 30 seconds for RDS Deployment..."
             Start-Sleep -Seconds 30
+            $Retries++
+        } While(-Not (Get-RDConnectionBrokerHighAvailability -ConnectionBroker $MainBrokerFQDN) -And ($Retries -ne $WaitHAMaxRetries))
+
+        If (-Not (Get-RDConnectionBrokerHighAvailability -ConnectionBroker $MainBrokerFQDN)) {
+            Write-Error "RDS Deployment not ready in 30 minutes. Exiting..."
+            [Environment]::Exit(-1)            
         }
 
         Get-RDServer -ConnectionBroker $MainBrokerFQDN | ForEach-Object {
