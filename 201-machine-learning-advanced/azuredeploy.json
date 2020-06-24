@@ -310,7 +310,7 @@
     "applicationInsights": "[resourceId(parameters('applicationInsightsResourceGroupName'), 'Microsoft.Insights/components', parameters('applicationInsightsName'))]",
     "vnet": "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
     "subnet": "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]",
-    "privateEndpointName": "[concat(parameters('workspaceName'), '-PrivateEndpoint')]",
+    "privateEdnpoint": "[resourceId('Microsoft.Network/privateEndpoints', concat(parameters('workspaceName'), '-PrivateEndpoint'))]",
     "privateDnsGuid": "[guid(resourceGroup().id, deployment().name)]",
     "locationsPEAvailable": [
       "southcentralus",
@@ -401,8 +401,7 @@
               "type": "Microsoft.Network/virtualNetworks/subnets",
               "apiVersion": "2019-09-01",
               "name": "[concat(parameters('vnetName'), '/', parameters('subnetName'))]",
-              "properties": "[if(and(equals(parameters('subnetOption'), 'existing'), not(equals(parameters('privateEndpointType'), 'none'))),
-                              union(reference(variables('subnet'), '2019-09-01'), variables('subnetPolicyForPE')), json('null'))]"
+              "properties": "[if(and(equals(parameters('subnetOption'), 'existing'), not(equals(parameters('privateEndpointType'), 'none'))), union(reference(variables('subnet'), '2019-09-01'), variables('subnetPolicyForPE')), json('null'))]"
             }
           ]
         }
@@ -544,7 +543,7 @@
       "apiVersion": "2018-09-01",
       "name": "privatelink.api.azureml.ms",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
+        "[variables('privateEdnpoint')]"
       ],
       "location": "global",
       "properties":{}
@@ -556,7 +555,7 @@
       "name": "[concat('privatelink.api.azureml.ms', '/', uniqueString(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))))]",
       "location": "global",
       "dependsOn": [
-        "[resourceid('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]",
+        "[variables('privateEdnpoint')]",
         "privatelink.api.azureml.ms"
       ],
       "properties": {
@@ -581,9 +580,7 @@
         },
         "parameters": {
           "privateEndpointIPConfig": {
-            "value": "[if(equals(parameters('privateEndpointType'), 'AutoApproval'),
-                reference(resourceid('Microsoft.Network/privateEndpoints', variables('privateEndpointName')), '2020-04-01', 'Full').properties.customDnsConfigs,
-                json('null'))]"
+            "value": "[if(equals(parameters('privateEndpointType'), 'AutoApproval'), reference(variables('privateEdnpoint'), '2020-04-01').customDnsConfigs, json('null'))]"
           }
         },
         "template": {
@@ -599,8 +596,7 @@
               {
                 "name": "aRecordName",
                 "count": "[length(parameters('privateEndpointIPConfig'))]",
-                "input": "[substring(parameters('privateEndpointIPConfig')[copyIndex('aRecordName')].fqdn, 0, 
-                  sub(length(parameters('privateEndpointIPConfig')[copyIndex('aRecordName')].fqdn), 15))]"
+                "input": "[substring(parameters('privateEndpointIPConfig')[copyIndex('aRecordName')].fqdn, 0, sub(length(parameters('privateEndpointIPConfig')[copyIndex('aRecordName')].fqdn), 15))]"
               }
             ]
           },
