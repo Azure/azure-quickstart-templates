@@ -14,35 +14,64 @@
             "description":"The name of the Managed Cluster resource."
          }
       },
-      "dnsPrefix":{
-         "type":"string",
-         "metadata":{
-            "description":"Optional DNS prefix to use with hosted Kubernetes API server FQDN."
-         }
-      },
       "osDiskSizeGB":{
          "type":"int",
-         "defaultValue":0,
+         "defaultValue":100,
          "metadata":{
-            "description":"Disk size (in GB) to provision for each of the agent pool nodes. This value ranges from 0 to 1023. Specifying 0 will apply the default disk size for that agentVMSize."
+            "description":"Disk size (in GB) to provision for each of the agent pool nodes. This value minimun 30 to 1023. Specifying 100 is the default value required to be attached to Azure ML."
          },
-         "minValue":0,
+         "minValue":30,
          "maxValue":1023
       },
       "agentCount":{
          "type":"int",
-         "defaultValue":3,
+         "defaultValue":6,
          "metadata":{
             "description":"The number of nodes for the cluster."
          },
          "minValue":1,
          "maxValue":50
       },
+      "podCidr":{
+         "type":"string",
+         "defaultValue":"10.244.0.0/16",
+         "metadata":{
+            "description":"A CIDR notation IP range from which to assign pod IPs when kubenet is used"
+         }
+      },
+      "serviceCidr":{
+         "type":"string",
+         "defaultValue":"10.0.0.0/16",
+         "metadata":{
+            "description":"A CIDR notation IP range from which to assign service cluster IPs."
+         }
+      },
+      "dnsServiceIP":{
+         "type":"string",
+         "defaultValue":"10.0.0.10",
+         "metadata":{
+            "description":"An IP address assigned to the Kubernetes DNS service"
+         }
+      },
+      "dockerBridgeCidr":{
+         "type":"string",
+         "defaultValue":"172.17.0.1/16",
+         "metadata":{
+            "description":"A specific IP address and netmask for the Docker bridge, using standard CIDR notation."
+         }
+      },
       "agentVMSize":{
          "type":"string",
-         "defaultValue":"Standard_DS2_v2",
+         "defaultValue":"Standard_D3_v2",
          "metadata":{
-            "description":"The size of the Virtual Machine."
+            "description":"The size of the VM instances."
+         }
+      },
+      "kuberneteVersion":{
+         "type":"string",
+         "defaultValue":"1.16.9",
+         "metadata":{
+            "description":"Supported Azure Kubernetes version"
          }
       },
       "linuxAdminUsername":{
@@ -55,28 +84,6 @@
          "type":"string",
          "metadata":{
             "description":"Configure all linux machines with the SSH RSA public key string. Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
-         }
-      },
-      "servicePrincipalClientId":{
-         "metadata":{
-            "description":"Client ID (used by cloudprovider)"
-         },
-         "type":"securestring"
-      },
-      "servicePrincipalClientSecret":{
-         "metadata":{
-            "description":"The Service Principal Client Secret."
-         },
-         "type":"securestring"
-      },
-      "osType":{
-         "type":"string",
-         "defaultValue":"Linux",
-         "allowedValues":[
-            "Linux"
-         ],
-         "metadata":{
-            "description":"The type of operating system."
          }
       },
       "location":{
@@ -117,20 +124,31 @@
    },
    "resources":[
       {
-         "apiVersion":"2020-03-01",
          "type":"Microsoft.ContainerService/managedClusters",
-         "location":"[parameters('location')]",
+         "apiVersion":"2020-03-01",
          "name":"[parameters('clusterName')]",
+         "location":"[parameters('location')]",
+         "sku":{
+            "name":"Basic",
+            "tier":"Free"
+         },
+         "identity":{
+            "type":"SystemAssigned"
+         },
          "properties":{
-            "dnsPrefix":"[parameters('dnsPrefix')]",
+            "kubernetesVersion":"[parameters('kuberneteVersion')]",
+            "dnsPrefix":"[variables('dnsPrefix')]",
             "agentPoolProfiles":[
                {
                   "name":"agentpool",
-                  "osDiskSizeGB":"[parameters('osDiskSizeGB')]",
-                  "count":"[parameters('agentCount')]",
+                  "count":3,
                   "vmSize":"[parameters('agentVMSize')]",
-                  "osType":"[parameters('osType')]",
-                  "storageProfile":"ManagedDisks"
+                  "osDiskSizeGB":"[parameters('osDiskSizeGB')]",
+                  "maxPods":110,
+                  "type":"VirtualMachineScaleSets",
+                  "orchestratorVersion":"[parameters('kuberneteVersion')]",
+                  "mode":"System",
+                  "osType":"Linux"
                }
             ],
             "linuxProfile":{
@@ -144,8 +162,18 @@
                }
             },
             "servicePrincipalProfile":{
-               "clientId":"[parameters('servicePrincipalClientId')]",
-               "Secret":"[parameters('servicePrincipalClientSecret')]"
+               "clientId":"msi"
+            },
+            "nodeResourceGroup":"[concat('MC_', resourceGroup().name,'_', parameters('clusterName'), '_',parameters('location'))]",
+            "enableRBAC":true,
+            "networkProfile":{
+               "networkPlugin":"kubenet",
+               "loadBalancerSku":"Basic",
+               "podCidr":"[parameters('podCidr')]",
+               "serviceCidr":"[parameters('serviceCidr')]",
+               "dnsServiceIP":"[parameters('dnsServiceIP')]",
+               "dockerBridgeCidr":"[parameters('dockerBridgeCidr')]",
+               "outboundType":"loadBalancer"
             }
          }
       },
