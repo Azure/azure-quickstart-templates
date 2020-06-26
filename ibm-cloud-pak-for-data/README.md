@@ -153,7 +153,7 @@ eg: the value for "apiKeyUsername" is "cp", and for "apiKey", use the trial key 
 <br/><br/>
 
 ![Alt text](images/template2.png?raw=true "parameters2")
-
+<br/><br/>
 
 * Specify Openshift cluster admin username and password.
 
