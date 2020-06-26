@@ -17,7 +17,7 @@ This is a starter template that shows how to consume an Azure SQL private endpoi
 
 ## Architecture Diagram
 
-:::image type="content" source="images/webappsqlpvtlink.png" alt-text="architecture diagram":::
+![architecture diagram](images/webappsqlpvtlink.png)
 
 ## Notes
 
