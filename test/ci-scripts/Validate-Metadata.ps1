@@ -50,6 +50,14 @@ else {
     $supportedEnvironments = @("AzureCloud", "AzureUSGovernment") # Default is all clouds are supported
 }
 
+# if there is a docOwner, we need to notify that owner via a PR comment
+$docOwner = ($metadata | convertfrom-json).docOwner
+Write-Host "docOwner: $docOwner"
+if ($null -ne $docOwner){
+    $msg = "@$docOwner - check this PR for updates that may be needed to documentation that references this sample."
+    Write-Host "##vso[task.setvariable variable=docOwner.message]$msg"    
+}
+
 $s = $supportedEnvironments | ConvertTo-Json -Compress
 Write-Host "##vso[task.setvariable variable=supported.environments]$s"
 # Set-Item -path "env:supported_environments" -value "$s"
