@@ -23,28 +23,62 @@ The following picture shows the architecture and network topology of the sample.
 
 The ARM template deploys the following resources:
 
-- Virtual Network: this virtual network has a single subnet that hosts a Linux (Ubuntu) virtual machine
-- Network Security Group: this resource contains an inbound rule to allow access to the virtual machine on port 22 (SSH)
+- Virtual Network: this virtual network has a single subnet that hosts an Linux (Ubuntu) virtual machine
+- Network Security Group: this resource contains an inbound rule to allow the access to the virtual machine on port 22 (SSH)
 - The virtual machine is created with a managed identity which is assigned the contributor role at the resource group scope level
 - A Public IP for the Linux virtual machine
 - The NIC used by the Linux virtual machine that makes use of the Public IP
 - A Linux virtual machine used for testing the connectivity to the storage account via a private endpoint
 - A Log Analytics workspace used to monitor the health status of the Linux VM
-- An Azure Data Lake Storage (ADLS) Gen2 storage account
+- An Azure Data Lake Storage (ADLS) Gen 2 storage account
 - A Private DNS Zone for a blob storage resource
 - A Private Endpoint for the blob storage account
 
-The ARM template uses an[Azure Custom Script Extension](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux) to download and run the following Bash script. The script runs the nslookup command against the public URL of the storage account to verify that this gets resolved to a private address.
+The ARM template uses the [Azure Custom Script Extension](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux) to download and run the following Bash script on the virtual machine. The script performs the following steps:
+
+- Validates the parameters received by the Custom Script extension
+- Update the system and upgrade packages
+- Installs curl and traceroute packages
+- Runs the nslookup command against the public URL of the storage account to verify that this gets resolved to a private address
+- Downloads and installs the Azure CLI
+- Logins using the system-assigned managed identity of the virtual machine
+- Creates a file system in the ADLS Gen 2 storage account
+- Creates a directory in the file system
+- Creates a file in the directory with the content passed as a parameter
 
 ```bash
 #!/bin/bash
 
 # Variables
-blobServicePrimaryEndpoint=$1
+storageAccountName=$1
+fileSystemName=$2
+directoryName=$3
+fileName=$4
+fileContent=$5
 
 # Parameter validation
-if [[ -z $blobServicePrimaryEndpoint ]]; then
-    echo "blobServicePrimaryEndpoint parameter cannot be null or empty"
+if [[ -z storageAccountName ]]; then
+    echo "storageAccountName parameter cannot be null or empty"
+    exit 1
+fi
+
+if [[ -z fileSystemName ]]; then
+    echo "fileSystemName parameter cannot be null or empty"
+    exit 1
+fi
+
+if [[ -z directoryName ]]; then
+    echo "directoryName parameter cannot be null or empty"
+    exit 1
+fi
+
+if [[ -z fileName ]]; then
+    echo "fileName parameter cannot be null or empty"
+    exit 1
+fi
+
+if [[ -z fileContent ]]; then
+    echo "fileContent parameter cannot be null or empty"
     exit 1
 fi
 
@@ -54,10 +88,46 @@ sudo apt-get update -y
 # Upgrade packages
 sudo apt-get upgrade -y
 
+# Install curl and traceroute
+sudo apt install -y curl traceroute
+
+# Install Azure CLI
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
 # Run nslookup to verify that the <storage-account>.blob.core.windows.net public hostname of the storage account 
 # is properly mapped to <storage-account>.privatelink.blob.core.windows.net by the private DNS zone
 # and the latter mapped to the private address by the A record
-nslookup $blobServicePrimaryEndpoint
+nslookup "$storageAccountName.blob.core.windows.net"
+
+# Login using the virtual machine system-assigned managed identity
+az login --identity
+
+# Create file system for the Azure Data Lake Storage Gen2 account
+az storage fs create \
+    --name $fileSystemName \
+    --account-name $storageAccountName
+
+# Create a directory in the ADLS Gen2 file system
+az storage fs directory create \
+    --file-system $fileSystemName \
+    --name $directoryName \
+    --account-name $storageAccountName
+
+# Create a file to upload to the ADLS Gen2 file system in the storage account
+echo $fileContent > $fileName
+
+# Upload the file to a file path in ADLS Gen2 file system.
+az storage fs file upload \
+    --file-system $fileSystemName \
+    --path "$directoryName/$fileName" \
+    --source "./$fileName" \
+    --account-name $storageAccountName
+
+# List files and directories in the directory in the ADLS Gen2 file system.
+az storage fs file list \
+    --file-system $fileSystemName \
+    --path $directoryName \
+    --account-name $storageAccountName
 ```
 
 ## Deployment ##
