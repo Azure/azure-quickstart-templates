@@ -13,6 +13,6 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-power-bi-embedded%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-power-bi-embedded%2Fazuredeploy.json)
 
-This template creates an example dashboard in the Azure portal, showing performance of an existing virtual machine in your subscription, as well as some static information and links.
+This template creates a Power BI capacity in Azure, which simplifies how ISVs and developers use Power BI capabilities with embedded analytics.
 
 `Tags: Power BI Embedded`
