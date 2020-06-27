@@ -262,6 +262,6 @@ Log into Openshift using the credentials created during deployment.
 
 * If NFS node is rebooted, the nfs client has to be recreated.
   * Delete the existing client: `oc delete deployment nfs-client-provisioner`
-  * Re-create the provisioner: `oc create -f /home/<user>/nfs-template.yaml -p NFS_SERVER=<nfs-node-ip> -p NFS_PATH=/exports/home | oc create -n kube-system -f -`
+  * Recreate the provisioner: `oc create -f /home/<user>/nfs-template.yaml -p NFS_SERVER=<nfs-node-ip> -p NFS_PATH=/exports/home | oc create -n kube-system -f -`
 
 
