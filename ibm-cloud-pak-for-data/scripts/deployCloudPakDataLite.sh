@@ -11,7 +11,6 @@ export HOME=/root
 
 # Download Installer files
 assembly="lite"
-version="v2.5.0.0"
 namespace=$NAMESPACE
 storageclass=$STORAGEOPTION
 mkdir -p /ibm/$assembly
