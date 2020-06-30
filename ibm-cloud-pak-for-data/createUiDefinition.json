@@ -1,0 +1,747 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+    "handler": "Microsoft.Azure.CreateUIDef",
+    "version": "0.1.2-preview",
+    "parameters": {
+        "basics": [
+            {
+                "name": "azureClientId",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Service Principal Azure App ID",
+                "toolTip": "Service Principal Azure App ID",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$",
+                    "validationMessage": "Must be a of format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                }
+            },
+            {
+                "name": "azureClientSecret",
+                "type": "Microsoft.Common.PasswordBox",
+                "label": {
+                    "password": "Azure AD Client Secret",
+                    "confirmPassword": "Confirm Client Secret"
+                },
+                "toolTip": "Service Principal Client Secret",
+                "constraints": {
+                    "required": true
+                },
+                "options": {
+                    "hideConfirmation": true
+                }
+            }
+        ],
+        "steps": [
+            {
+                "name": "InfrastructureConfig",
+                "label": "Infrastructure Settings",
+                "subLabel": {
+                    "preValidation": "Configure the cluster resources and settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Infrastructure Settings",
+                "elements": [
+                    {
+                        "name": "adminUsername",
+                        "type": "Microsoft.Compute.UserNameTextBox",
+                        "label": "Bastion VM Username",
+                        "toolTip": "Admin username for the bastion VM machine",
+                        "osPlatform": "Linux",
+                        "constraints": {
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "bastionVmSize",
+                        "type": "Microsoft.Compute.SizeSelector",
+                        "label": "Bastion Virtual machine size",
+                        "toolTip": "The size of virtual machine to serve as a bastion host. Recommended size is 8vCPUs and 16GB RAM",
+                        "recommendedSizes": [
+                            "Standard_D8s_v3"
+                        ],
+                        "osPlatform": "Linux",
+                        "count": 1
+                    },
+                    {
+                        "name": "SSHCredentials",
+                        "type": "Microsoft.Compute.CredentialsCombo",
+                        "label": {
+                            "authenticationType": "Authentication Type",
+                            "password": "Password",
+                            "confirmPassword": "Confirm Password",
+                            "sshPublicKey": "SSH public key"
+                        },
+                        "toolTip": {
+                            "authenticationType": "Authentication Type for the Virtual Machine",
+                            "sshPublicKey": "SSH Public Key for the Virtual Machine"
+                        },
+                        "constraints": {
+                            "required": true
+                        },
+                        "options": {
+                            "hideConfirmation": false,
+                            "hidePassword": true
+                        },
+                        "osPlatform": "Linux"
+                    },
+                    {
+                        "name": "masterNodeCount",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Number of Master Nodes",
+                        "defaultValue": "3",
+                        "toolTip": "Number of Master Nodes in OCP Cluster",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "1",
+                                    "value": 1
+                                },
+                                {
+                                    "label": "3",
+                                    "value": 3
+                                },
+                                {
+                                    "label": "5",
+                                    "value": 5
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "workerNodeCount",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Number of Worker Nodes",
+                        "defaultValue": "3",
+                        "toolTip": "Number of Worker Nodes in OCP Cluster",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "3",
+                                    "value": 3
+                                },
+                                {
+                                    "label": "4",
+                                    "value": 4
+                                },
+                                {
+                                    "label": "5",
+                                    "value": 5
+                                },
+                                {
+                                    "label": "6",
+                                    "value": 6
+                                },
+                                {
+                                    "label": "7",
+                                    "value": 7
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "masterVmSize",
+                        "type": "Microsoft.Compute.SizeSelector",
+                        "label": "Master Node Virtual machine size",
+                        "toolTip": "The size of virtual machine to provision. Minimum required size is 8vCPUs and 32GB RAM",
+                        "recommendedSizes": [
+                            "Standard_D8s_v3"
+                        ],
+                        "osPlatform": "Linux",
+                        "count": "[steps('InfrastructureConfig').masterNodeCount]"
+                    },
+                    {
+                        "name": "workerVmSize",
+                        "type": "Microsoft.Compute.SizeSelector",
+                        "label": "Worker Node Virtual machine size",
+                        "toolTip": "The size of virtual machine to provision. Minimum required size is 16vCPUs and 64GB RAM",
+                        "recommendedSizes": [
+                            "Standard_D16s_v3"
+                        ],
+                        "osPlatform": "Linux",
+                        "count": "[steps('InfrastructureConfig').workerNodeCount]"
+                    },
+                    {
+                        "name": "virtualNetwork",
+                        "type": "Microsoft.Network.VirtualNetworkCombo",
+                        "label": {
+                            "virtualNetwork": "Virtual network",
+                            "subnets": "Subnets"
+                        },
+                        "toolTip": {
+                            "virtualNetwork": "Name of the virtual network. Minimum of a /16 prefix size",
+                            "subnets": "Subnets for the virtual network"
+                        },
+                        "defaultValue": {
+                            "name": "VirtualNetwork",
+                            "addressPrefixSize": "/16"
+                        },
+                        "constraints": {
+                            "minAddressPrefixSize": "/16"
+                        },
+                        "subnets": {
+                            "bastionSubnet": {
+                                "label": "Bastion Subnet",
+                                "defaultValue": {
+                                    "name": "bastion-subnet",
+                                    "addressPrefixSize": "/24"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/24",
+                                    "requireContiguousAddresses": false
+                                }
+                            },
+                            "masterSubnet": {
+                                "label": "Master Subnet",
+                                "defaultValue": {
+                                    "name": "master-subnet",
+                                    "addressPrefixSize": "/24"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/24",
+                                    "requireContiguousAddresses": false
+                                }
+                            },
+                            "workerSubnet": {
+                                "label": "Worker Subnet",
+                                "defaultValue": {
+                                    "name": "worker-subnet",
+                                    "addressPrefixSize": "/24"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/24",
+                                    "requireContiguousAddresses": false
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "singleMulti",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Single or Multi Zone",
+                        "defaultValue": "multi",
+                        "toolTip": "Deploy VMs to Single (Availability Sets) or Multizone (Availability Zones)",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "multi",
+                                    "value": "multi"
+                                },
+                                {
+                                    "label": "single",
+                                    "value": "single"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "zone",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Zone",
+                        "defaultValue": "1",
+                        "toolTip": "Zone to deploy resources (if single zone selected)",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "1",
+                                    "value": 1
+                                },
+                                {
+                                    "label": "2",
+                                    "value": 2
+                                },
+                                {
+                                    "label": "3",
+                                    "value": 3
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    }
+                ]
+            },
+            {
+                "name": "OpenshiftConfig",
+                "label": "Openshift Settings",
+                "subLabel": {
+                    "preValidation": "Configure the virtual machine's resources and settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Openshift Settings",
+                "elements": [
+                    {
+                        "name": "dnsZoneResourceGroup",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "DNS Zone Resource Group",
+                        "toolTip": "DNS Zone Resource Group",
+                        "constraints": {
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "dnsZoneName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "DNS Zone (Domain Name)",
+                        "toolTip": "DNS Zone Name",
+                        "constraints": {
+                            "regex": "^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9].[a-zA-Z]{2,}$",
+                            "required": true,
+                            "validationMessage": "Must be a valid domain name"
+                        }
+                    },
+                    {
+                        "name": "keyVaultResourceGroup",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Key Vault Resource Group",
+                        "toolTip": "Key Vault Resource Group",
+                        "constraints": {
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "keyVaultName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Key Vault Name",
+                        "toolTip": "Key Vault Name",
+                        "constraints": {
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "keyVaultSecretName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Key Vault Secret Name",
+                        "toolTip": "Key Vault Secret Name for Pull Secret",
+                        "constraints": {
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "clusterName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Cluster Prefix",
+                        "toolTip": "Openshift Cluster name for prefixing azure resources",
+                        "defaultValue": "cpd",
+                        "constraints": {
+                            "regex": "^[a-zA-Z]{3,}$",
+                            "required": true,
+                            "validationMessage": "Must be characters and more than 3 characters"
+                        }
+                    },
+                    {
+                        "name": "openshiftUsername",
+                        "type": "Microsoft.Compute.UserNameTextBox",
+                        "label": "Openshift Username",
+                        "toolTip": "Username for Openshift Cluster",
+                        "osPlatform": "Linux",
+                        "constraints": {
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "openshiftPassword",
+                        "type": "Microsoft.Common.PasswordBox",
+                        "label": {
+                            "password": "Openshift Password",
+                            "confirmPassword": "Openshift Password"
+                        },
+                        "toolTip": "Openshift Password",
+                        "constraints": {
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "enableFips",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Enable FIPS encryption",
+                        "defaultValue": "true",
+                        "toolTip": "Enable FIPS encryption",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "true",
+                                    "value": true
+                                },
+                                {
+                                    "label": "false",
+                                    "value": false
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "storageOption",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Storage Option",
+                        "defaultValue": "Portworx",
+                        "toolTip": "Portworx or NFS storage",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Portworx",
+                                    "value": "portworx"
+                                },
+                                {
+                                    "label": "NFS",
+                                    "value": "nfs"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "pxSpecUrl",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Portworx Spec URL",
+                        "toolTip": "Generated Spec URL for Portworx",
+                        "constraints": {
+                            "required": true,
+                            "validationMessage": "Must be a valid URL generated from install.portworx.com"
+                        }
+                    },
+                    {
+                        "name": "enableNfsBackup",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Enable Backup on NFS Node",
+                        "defaultValue": "false",
+                        "toolTip": "Enable Backup on NFS Node (Applicable only if NFS storage was selected)",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "false",
+                                    "value": false
+                                },
+                                {
+                                    "label": "true",
+                                    "value": true
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "dataDiskSize",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "NFS Data Storage Size",
+                        "defaultValue": "1024",
+                        "toolTip": "Data Storage Size",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "512",
+                                    "value": 512
+                                },
+                                {
+                                    "label": "1024",
+                                    "value": 1024
+                                },
+                                {
+                                    "label": "2048",
+                                    "value": 2048
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "privateOrPublicEndpoints",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Use Private or Public Endpoints",
+                        "defaultValue": "public",
+                        "toolTip": "Cluster to use public (internet) facing endpoints or not.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "public",
+                                    "value": "public"
+                                },
+                                {
+                                    "label": "private",
+                                    "value": "private"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    }
+                ]
+            },
+            {
+                "name": "CloudPakConfig",
+                "label": "CloudPak Settings",
+                "subLabel": {
+                    "preValidation": "Configure the CloudPak settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "CloudPak Settings",
+                "elements": [
+                    {
+                        "name": "projectName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Project Name or Namespace",
+                        "toolTip": "Project Name or Namespace to Deploy CloudPak for Data",
+                        "defaultValue": "zen",
+                        "constraints": {
+                            "regex": "^[a-zA-Z]{3,}$",
+                            "required": true,
+                            "validationMessage": "Must be characters and more than 2 characters"
+                        }
+                    },
+                    {
+                        "name": "watsonStudioLibrary",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Watson Studio Library",
+                        "defaultValue": "no",
+                        "toolTip": "Watson Studio Library",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "no",
+                                    "value": "no"
+                                },
+                                {
+                                    "label": "yes",
+                                    "value": "yes"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "watsonMachineLearning",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Watson Machine Learning",
+                        "defaultValue": "no",
+                        "toolTip": " Watson Machine Learning",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "no",
+                                    "value": "no"
+                                },
+                                {
+                                    "label": "yes",
+                                    "value": "yes"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "watsonKnowledgeCatalog",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Watson Knowledge Catalog",
+                        "defaultValue": "no",
+                        "toolTip": " Watson Knowledge Catalog",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "no",
+                                    "value": "no"
+                                },
+                                {
+                                    "label": "yes",
+                                    "value": "yes"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "dataVirtualization",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Data Virtualization",
+                        "defaultValue": "no",
+                        "toolTip": " Data Virtualization",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "no",
+                                    "value": "no"
+                                },
+                                {
+                                    "label": "yes",
+                                    "value": "yes"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "cognosDashboard",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Cognos Dashboard",
+                        "defaultValue": "no",
+                        "toolTip": "Cognos Dashboard",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "no",
+                                    "value": "no"
+                                },
+                                {
+                                    "label": "yes",
+                                    "value": "yes"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "apacheSpark",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Apache Spark",
+                        "defaultValue": "no",
+                        "toolTip": "Apache Spark",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "no",
+                                    "value": "no"
+                                },
+                                {
+                                    "label": "yes",
+                                    "value": "yes"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "watsonOpenscale",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Watson Openscale and Watson Machine Learning",
+                        "defaultValue": "no",
+                        "toolTip": " Watson Openscale",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "no",
+                                    "value": "no"
+                                },
+                                {
+                                    "label": "yes",
+                                    "value": "yes"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "apiKeyUsername",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "API Key Username",
+                        "toolTip": "API Key Username for Registry Entitlement of Cloud Pak Images",
+                        "constraints": {
+                            "regex": ".*$",
+                            "required": true,
+                            "validationMessage": "Username obtained should 2 or more characters long"
+                        }
+                    },
+                    {
+                        "name": "apiKey",
+                        "type": "Microsoft.Common.PasswordBox",
+                        "label": {
+                            "password": "API Key",
+                            "confirmPassword": "Confirm API Key"
+                        },
+                        "toolTip": "API Key for Registry Entitlement of Cloud Pak Images",
+                        "options": {
+                            "hideConfirmation": true
+                        },
+                        "constraints": {
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "cloudPakLicenseAgreement",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "CloudPak License Agreement",
+                        "defaultValue": "Reject",
+                        "toolTip": "CloudPak License Agreement",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Reject",
+                                    "value": "reject"
+                                },
+                                {
+                                    "label": "Accept",
+                                    "value": "accept"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    }
+                ]
+            }
+        ],
+        "outputs": {
+            "location": "[location()]",
+            "azureClientId": "[basics('azureClientId')]",
+            "azureClientSecret": "[basics('azureClientSecret')]",
+            "adminUsername": "[steps('InfrastructureConfig').adminUsername]",
+            "bastionVmSize": "[steps('InfrastructureConfig').bastionVmSize]",
+            "sshPublicKey": "[steps('InfrastructureConfig').SSHCredentials.sshPublicKey]",
+            "masterInstanceCount": "[steps('InfrastructureConfig').masterNodeCount]",
+            "workerInstanceCount": "[steps('InfrastructureConfig').workerNodeCount]",
+            "masterVmSize": "[steps('InfrastructureConfig').masterVmSize]",
+            "workerVmSize": "[steps('InfrastructureConfig').workerVmSize]",
+            "newOrExistingNetwork": "[steps('InfrastructureConfig').virtualNetwork.newOrExisting]",
+            "existingVnetResourceGroupName": "[steps('InfrastructureConfig').virtualNetwork.resourceGroup]",
+            "virtualNetworkName": "[steps('InfrastructureConfig').virtualNetwork.name]",
+            "masterSubnetName": "[steps('InfrastructureConfig').virtualNetwork.subnets.masterSubnet.name]",
+            "workerSubnetName": "[steps('InfrastructureConfig').virtualNetwork.subnets.workerSubnet.name]",
+            "bastionSubnetName": "[steps('InfrastructureConfig').virtualNetwork.subnets.bastionSubnet.name]",
+            "masterSubnetPrefix": "[steps('InfrastructureConfig').virtualNetwork.subnets.masterSubnet.addressPrefix]",
+            "workerSubnetPrefix": "[steps('InfrastructureConfig').virtualNetwork.subnets.workerSubnet.addressPrefix]",
+            "bastionSubnetPrefix": "[steps('InfrastructureConfig').virtualNetwork.subnets.bastionSubnet.addressPrefix]",
+            "singleZoneOrMultiZone": "[steps('InfrastructureConfig').singleMulti]",
+            "zone": "[steps('InfrastructureConfig').zone]",
+            "dnsZoneRG": "[steps('OpenshiftConfig').dnsZoneResourceGroup]",
+            "dnsZone": "[steps('OpenshiftConfig').dnsZoneName]",
+            "keyVaultResourceGroup": "[steps('OpenshiftConfig').keyVaultResourceGroup]",
+            "keyVaultName": "[steps('OpenshiftConfig').keyVaultName]",
+            "keyVaultSecretName": "[steps('OpenshiftConfig').keyVaultSecretName]",
+            "clusterName": "[steps('OpenshiftConfig').clusterName]",
+            "openshiftUsername": "[steps('OpenshiftConfig').openshiftUsername]",
+            "openshiftPassword": "[steps('OpenshiftConfig').openshiftPassword]",
+            "enableFips": "[steps('OpenshiftConfig').enableFips]",
+            "storageOption": "[steps('OpenshiftConfig').storageOption]",
+            "pxSpecUrl": "[steps('OpenshiftConfig').pxSpecUrl]",
+            "enableNfsBackup": "[steps('OpenshiftConfig').enableNfsBackup]",
+            "dataDiskSize": "[steps('OpenshiftConfig').dataDiskSize]",
+            "privateOrPublicEndpoints": "[steps('OpenshiftConfig').privateOrPublicEndpoints]",
+            "projectName": "[steps('CloudPakConfig').projectName]",
+            "installWatsonStudioLibrary": "[steps('CloudPakConfig').watsonStudioLibrary]",
+            "installWatsonMachineLearning": "[steps('CloudPakConfig').watsonMachineLearning]",
+            "installWatsonKnowledgeCatalog": "[steps('CloudPakConfig').watsonKnowledgeCatalog]",
+            "installDataVirtualization": "[steps('CloudPakConfig').dataVirtualization]",
+            "cognosDashboard": "[steps('CloudPakConfig').cognosDashboard]",
+            "apacheSpark": "[steps('CloudPakConfig').apacheSpark]",
+            "installWatsonOpenscaleAndWatsonMachineLearning": "[steps('CloudPakConfig').watsonOpenscale]",
+            "apiKeyUsername": "[steps('CloudPakConfig').apiKeyUsername]",
+            "apiKey": "[steps('CloudPakConfig').apiKey]",
+            "cloudPakLicenseAgreement": "[steps('CloudPakConfig').cloudPakLicenseAgreement]"
+        }
+    }
+}
