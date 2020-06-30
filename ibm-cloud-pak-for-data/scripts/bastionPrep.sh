@@ -20,21 +20,21 @@ sleep 20
 # Register Host with Cloud Access Subscription
 echo $(date) " - Register host with Cloud Access Subscription"
 
-subscription-manager register --force --username="$USERNAME_ORG" --password="$PASSWORD_ACT_KEY" || subscription-manager register --force --activationkey="$PASSWORD_ACT_KEY" --org="$USERNAME_ORG"
-RETCODE=$?
+#subscription-manager register --force --username="$USERNAME_ORG" --password="$PASSWORD_ACT_KEY" || subscription-manager register --force --activationkey="$PASSWORD_ACT_KEY" --org="$USERNAME_ORG"
+#RETCODE=$?
 
-if [ $RETCODE -eq 0 ]
-then
-    echo "Subscribed successfully"
-elif [ $RETCODE -eq 64 ]
-then
-    echo "This system is already registered."
-else
-    echo "Incorrect Username / Password or Organization ID / Activation Key specified"
-    exit 3
-fi
+#if [ $RETCODE -eq 0 ]
+#then
+#    echo "Subscribed successfully"
+#elif [ $RETCODE -eq 64 ]
+#then
+#    echo "This system is already registered."
+#else
+#    echo "Incorrect Username / Password or Organization ID / Activation Key specified"
+#    exit 3
+#fi
 
-subscription-manager attach --pool=$POOL_ID > attach.log
+#subscription-manager attach --pool=$POOL_ID > attach.log
 # if [ $? -eq 0 ]
 # then
 #     echo "Pool attached successfully"
@@ -54,14 +54,14 @@ subscription-manager attach --pool=$POOL_ID > attach.log
 
 # subscription-manager repos --disable="*"
 
-subscription-manager repos \
-    --enable="rhel-7-server-rpms" \
-    --enable="rhel-7-server-extras-rpms" \
-    --enable="rhel-7-server-ose-3.11-rpms" \
-    --enable="rhel-7-server-ansible-2.6-rpms" \
-    --enable="rhel-7-fast-datapath-rpms" \
-    --enable="rh-gluster-3-client-for-rhel-7-server-rpms" \
-    --enable="rhel-7-server-optional-rpms"
+#subscription-manager repos \
+#    --enable="rhel-7-server-rpms" \
+#    --enable="rhel-7-server-extras-rpms" \
+#    --enable="rhel-7-server-ose-3.11-rpms" \
+#    --enable="rhel-7-server-ansible-2.6-rpms" \
+#    --enable="rhel-7-fast-datapath-rpms" \
+#    --enable="rh-gluster-3-client-for-rhel-7-server-rpms" \
+#    --enable="rhel-7-server-optional-rpms"
 
 # Update system to latest packages
 echo $(date) " - Update system to latest packages"
@@ -104,12 +104,13 @@ yum -y install java-1.8.0-openjdk-headless
 
 echo $(date) " - Java installed successfully"
 
-
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+yum install docker-ce
 # Install docker
-echo "Install docker"
-yum -y install docker-1.13.1
-systemctl start docker
-systemctl enable docker
+#echo "Install docker"
+#yum -y install docker-1.13.1
+#systemctl start docker
+#systemctl enable docker
 echo "Docker install complete"
 
 
