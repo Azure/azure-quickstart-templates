@@ -15,7 +15,7 @@ if [[ -z $blobServicePrimaryEndpoint ]]; then
     exit 1
 fi
 
-# Eliminate debconf: warnings
+# Eliminate debconf warnings
 echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 # Update the system
