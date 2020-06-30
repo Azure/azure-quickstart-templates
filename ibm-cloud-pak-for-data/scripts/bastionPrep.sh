@@ -23,18 +23,18 @@ echo $(date) " - Register host with Cloud Access Subscription"
 subscription-manager register --force --username="$USERNAME_ORG" --password="$PASSWORD_ACT_KEY" || subscription-manager register --force --activationkey="$PASSWORD_ACT_KEY" --org="$USERNAME_ORG"
 RETCODE=$?
 
-if [ $RETCODE -eq 0 ]
-then
-    echo "Subscribed successfully"
-elif [ $RETCODE -eq 64 ]
-then
-    echo "This system is already registered."
-else
-    echo "Incorrect Username / Password or Organization ID / Activation Key specified"
-    exit 3
-fi
+# if [ $RETCODE -eq 0 ]
+# then
+#     echo "Subscribed successfully"
+# elif [ $RETCODE -eq 64 ]
+# then
+#     echo "This system is already registered."
+# else
+#     echo "Incorrect Username / Password or Organization ID / Activation Key specified"
+#     exit 3
+# fi
 
-subscription-manager attach --pool=$POOL_ID > attach.log
+# subscription-manager attach --pool=$POOL_ID > attach.log
 # if [ $? -eq 0 ]
 # then
 #     echo "Pool attached successfully"
@@ -54,14 +54,14 @@ subscription-manager attach --pool=$POOL_ID > attach.log
 
 # subscription-manager repos --disable="*"
 
-subscription-manager repos \
-    --enable="rhel-7-server-rpms" \
-    --enable="rhel-7-server-extras-rpms" \
-    --enable="rhel-7-server-ose-3.11-rpms" \
-    --enable="rhel-7-server-ansible-2.6-rpms" \
-    --enable="rhel-7-fast-datapath-rpms" \
-    --enable="rh-gluster-3-client-for-rhel-7-server-rpms" \
-    --enable="rhel-7-server-optional-rpms"
+# subscription-manager repos \
+#     --enable="rhel-7-server-rpms" \
+#     --enable="rhel-7-server-extras-rpms" \
+#     --enable="rhel-7-server-ose-3.11-rpms" \
+#     --enable="rhel-7-server-ansible-2.6-rpms" \
+#     --enable="rhel-7-fast-datapath-rpms" \
+#     --enable="rh-gluster-3-client-for-rhel-7-server-rpms" \
+#     --enable="rhel-7-server-optional-rpms"
 
 # Update system to latest packages
 echo $(date) " - Update system to latest packages"
@@ -78,7 +78,7 @@ echo $(date) " - Base package installation complete"
 # python-passlib needed for metrics
 echo $(date) " - Installing Ansible, pyOpenSSL and python-passlib"
 yum -y install pyOpenSSL python-passlib
-yum -y install ansible python-pip vim pyOpenSSL
+yum -y install python-pip vim pyOpenSSL
 curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 python get-pip.py
 pip install ansible==2.6.11

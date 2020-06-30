@@ -59,12 +59,7 @@ echo $(date) " - Generating Private keys for use by Ansible for OpenShift Instal
 runuser -l $SUDOUSER -c "echo \"$PRIVATEKEY\" > /home/$SUDOUSER/.ssh/id_rsa"
 runuser -l $SUDOUSER -c "chmod 600 /home/$SUDOUSER/.ssh/id_rsa*"
 
-echo $(date) "- Configuring SSH ControlPath to use shorter path name"
-
-sed -i -e "s/^# control_path = %(directory)s\/%%h-%%r/control_path = %(directory)s\/%%h-%%r/" /etc/ansible/ansible.cfg
-sed -i -e "s/^#host_key_checking = False/host_key_checking = False/" /etc/ansible/ansible.cfg
-sed -i -e "s/^#pty=False/pty=False/" /etc/ansible/ansible.cfg
-sed -i -e "s/^#stdout_callback = skippy/stdout_callback = skippy/" /etc/ansible/ansible.cfg
+echo $(date) "- Cloning Ansible playbook repository"
 
 # Cloning Ansible playbook repository
 ((cd /home/$SUDOUSER && git clone https://github.com/Microsoft/openshift-container-platform-playbooks.git) || (cd /home/$SUDOUSER/openshift-container-platform-playbooks && git pull))
@@ -227,7 +222,7 @@ ansible_become=yes
 ansible_ssh_pass=${38}
 oreg_auth_user=$RHEL_USERNAME
 oreg_auth_password=$RHEL_PASSWORD
-openshift_deployment_type=openshift-enterprise
+openshift_deployment_type=origin
 openshift_override_hostname_check=true
 openshift_master_api_port=443
 openshift_master_console_port=443
@@ -338,8 +333,9 @@ then
 fi
 
 # Configure Cluster
-echo $(date) " - Configure Cluster"
-runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/config.yml --extra-vars \"poolid=$RHELPOOLID\""
+# echo $(date) " - Configure Cluster"
+# runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/config.yml --extra-vars \"poolid=$RHELPOOLID\""
+runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/config.yml"
 
 if [[ $STORAGEOPTION != "portworx" ]]
 then
