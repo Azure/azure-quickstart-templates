@@ -225,9 +225,9 @@ $STORAGEOPTION
 ansible_ssh_user=$SUDOUSER
 ansible_become=yes
 ansible_ssh_pass=${38}
-oreg_auth_user=$RHEL_USERNAME
-oreg_auth_password=$RHEL_PASSWORD
-openshift_deployment_type=openshift-enterprise
+#oreg_auth_user=$RHEL_USERNAME
+#oreg_auth_password=$RHEL_PASSWORD
+openshift_deployment_type=origin
 openshift_override_hostname_check=true
 openshift_master_api_port=443
 openshift_master_console_port=443
@@ -339,7 +339,7 @@ fi
 
 # Configure Cluster
 echo $(date) " - Configure Cluster"
-runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/config.yml --extra-vars \"poolid=$RHELPOOLID\""
+#runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/config.yml --extra-vars \"poolid=$RHELPOOLID\""
 
 if [[ $STORAGEOPTION != "portworx" ]]
 then
