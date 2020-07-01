@@ -1,4 +1,4 @@
-# Copy data from one folder to another folder in an Azure Blob Storage
+# Create a data share account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-share-account/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-share-account/PublicDeployment.svg)
@@ -15,7 +15,7 @@
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-share-account%2Fazuredeploy.json)
 
-When you deploy this Azure Resource Manager template, a data share account is created.
+When you deploy this Azure Resource Manager template, a data share account is created. Further infomation please refer to this : https://docs.microsoft.com/en-us/azure/data-share/overview
 
 `Tags: data share, data share account`
 	```
