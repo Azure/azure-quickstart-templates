@@ -14,7 +14,7 @@ runuser -l $SUDOUSER -c "chmod 600 /home/$SUDOUSER/.ssh/id_rsa*"
 
 # Remove RHUI
 
-rm -f /etc/yum.repos.d/rh-cloud.repo
+#rm -f /etc/yum.repos.d/rh-cloud.repo
 sleep 20
 
 # Register Host with Cloud Access Subscription
@@ -78,7 +78,7 @@ echo $(date) " - Base package installation complete"
 # python-passlib needed for metrics
 echo $(date) " - Installing Ansible, pyOpenSSL and python-passlib"
 yum -y install pyOpenSSL python-passlib
-yum -y install ansible python-pip vim pyOpenSSL
+yum -y install python-pip vim pyOpenSSL
 curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 python get-pip.py
 pip install ansible==2.6.11
