@@ -101,7 +101,7 @@ do
 $MASTER-$c openshift_node_group_name=\"$masterinfra\""
 done
 
-# Create Infra nodes grouping 
+# Create Infra nodes grouping
 echo $(date) " - Creating Infra nodes grouping"
 
 for (( c=0; c<$INFRACOUNT; c++ ))
@@ -392,7 +392,7 @@ then
 	runuser -l $SUDOUSER -c "oc adm policy add-scc-to-user privileged system:serviceaccount:kube-system:px-csi-account"
 
 	#Create Secrets for PX
-	runuser -l $SUDOUSER -c "kubectl create secret generic -n kube-system px-azure --from-literal=AZURE_TENANT_ID=$TENANTID \
+	runuser -l $SUDOUSER -c "oc create secret generic -n kube-system px-azure --from-literal=AZURE_TENANT_ID=$TENANTID \
 														--from-literal=AZURE_CLIENT_ID=$AADCLIENTID \
 														--from-literal=AZURE_CLIENT_SECRET=$AADCLIENTSECRET"
 
@@ -413,7 +413,7 @@ parameters:
 EOF
 	runuser -l $SUDOUSER -c "oc create -f /home/$SUDOUSER/px-sc.yaml"
 	echo $(date) "Set PX as default"
-	runuser -l $SUDOUSER -c "kubectl patch storageclass portworx-sc -p '{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}'"
+	runuser -l $SUDOUSER -c "oc patch storageclass portworx-sc -p '{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}'"
 	echo $(date) "Set PX as default complete"
 fi
 
@@ -422,7 +422,7 @@ if [[ $STORAGEOPTION == "nfs" ]]; then
   runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/nfs-template.yaml\"$ARTIFACTSLOCATIONTOKEN\" -O nfs-template.yaml)"
   runuser -l $SUDOUSER -c "oc process -f /home/$SUDOUSER/nfs-template.yaml -p NFS_SERVER=$(getent hosts $storagegroup | awk '{ print $1 }') -p NFS_PATH=/exports/home | oc create -n kube-system -f -"
   echo $(date) "Set NFS as default"
-  runuser -l $SUDOUSER -c "kubectl patch storageclass nfs -p '{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}'"
+  runuser -l $SUDOUSER -c "oc patch storageclass nfs -p '{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}'"
   echo $(date) "Set NFS as default complete"
 fi
 
@@ -434,7 +434,7 @@ echo $(date) "Azure File StorageClass Create Complete"
 # Configure Metrics
 if [ $METRICS == "true" ]
 then
-	sleep 30	
+	sleep 30
 	echo $(date) "- Deploying Metrics"
 	if [ $AZURE == "true" ]
 	then
@@ -453,7 +453,7 @@ fi
 
 # Configure Logging
 
-if [ $LOGGING == "true" ] 
+if [ $LOGGING == "true" ]
 then
 	sleep 60
 	echo $(date) "- Deploying Logging"
