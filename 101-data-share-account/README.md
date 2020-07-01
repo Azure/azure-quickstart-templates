@@ -18,7 +18,6 @@
 When you deploy this Azure Resource Manager template, a data share account is created. Further infomation please refer to this : https://docs.microsoft.com/en-us/azure/data-share/overview
 
 `Tags: data share, data share account`
-	```
 
 
 
