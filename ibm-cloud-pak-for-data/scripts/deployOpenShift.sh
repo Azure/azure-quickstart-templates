@@ -339,7 +339,7 @@ fi
 
 # Configure Cluster
 echo $(date) " - Configure Cluster"
-#runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/config.yml --extra-vars \"poolid=$RHELPOOLID\""
+runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/config.yml --extra-vars \"poolid=$RHELPOOLID\""
 
 if [[ $STORAGEOPTION != "portworx" ]]
 then
