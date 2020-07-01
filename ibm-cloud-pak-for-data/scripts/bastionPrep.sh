@@ -95,7 +95,10 @@ echo $(date) " - Azure CLI installation complete"
 # Install ImageMagick to resize image for Custom Header
 sudo yum install -y ImageMagick
 
-yum install atomic-openshift-clients -y
+#yum install atomic-openshift-clients -y
+sudo wget https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
+sudo tar -zxf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
+sudo mv openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/oc /usr/bin/
 
 # Install java to support metrics
 echo $(date) " - Installing Java"
