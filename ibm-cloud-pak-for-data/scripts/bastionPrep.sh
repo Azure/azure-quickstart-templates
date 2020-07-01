@@ -14,14 +14,14 @@ runuser -l $SUDOUSER -c "chmod 600 /home/$SUDOUSER/.ssh/id_rsa*"
 
 # Remove RHUI
 
-rm -f /etc/yum.repos.d/rh-cloud.repo
+# rm -f /etc/yum.repos.d/rh-cloud.repo
 sleep 20
 
 # Register Host with Cloud Access Subscription
 echo $(date) " - Register host with Cloud Access Subscription"
 
-subscription-manager register --force --username="$USERNAME_ORG" --password="$PASSWORD_ACT_KEY" || subscription-manager register --force --activationkey="$PASSWORD_ACT_KEY" --org="$USERNAME_ORG"
-RETCODE=$?
+# subscription-manager register --force --username="$USERNAME_ORG" --password="$PASSWORD_ACT_KEY" || subscription-manager register --force --activationkey="$PASSWORD_ACT_KEY" --org="$USERNAME_ORG"
+# RETCODE=$?
 
 # if [ $RETCODE -eq 0 ]
 # then
