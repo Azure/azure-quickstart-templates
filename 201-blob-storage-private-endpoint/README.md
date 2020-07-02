@@ -23,8 +23,8 @@ The following picture shows the architecture and network topology of the sample.
 
 The ARM template deploys the following resources:
 
-- Virtual Network: this virtual network has a single subnet that hosts an Linux (Ubuntu) virtual machine
-- Network Security Group: this resource contains an inbound rule to allow the access to the virtual machine on port 22 (SSH)
+- Virtual Network: this virtual network has a single subnet that hosts a Linux (Ubuntu) virtual machine
+- Network Security Group: this resource contains an inbound rule to allow access to the virtual machine on port 22 (SSH)
 - The virtual machine is created with a managed identity which is assigned the contributor role at the resource group scope level
 - A Public IP for the Linux virtual machine
 - The NIC used by the Linux virtual machine that makes use of the Public IP
