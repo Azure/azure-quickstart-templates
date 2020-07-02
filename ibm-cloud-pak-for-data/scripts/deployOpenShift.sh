@@ -157,6 +157,16 @@ then
 	export HAMODE="openshift_master_cluster_method=native"
 fi
 
+if [[ $RHELPOOLID == "ignoreme" ]]
+then
+	export OPENSHIFT_OAUTH=""
+  export OPENSHIFT_TYPE="origin"
+else
+  export OPENSHIFT_TYPE="openshift-enterprise"
+  export OPENSHIFT_OAUTH="oreg_auth_user=$RHEL_USERNAME
+oreg_auth_password=$RHEL_PASSWORD"
+fi
+
 if [[ $ROUTING == "nipio" ]];then
 export PUBLICDEPLOY="openshift_master_default_subdomain=$INFRAPUBLICIP.nip.io
 openshift_master_cluster_hostname=$MASTERPUBLICIPHOSTNAME
@@ -225,9 +235,8 @@ $STORAGEOPTION
 ansible_ssh_user=$SUDOUSER
 ansible_become=yes
 ansible_ssh_pass=${38}
-#oreg_auth_user=$RHEL_USERNAME
-#oreg_auth_password=$RHEL_PASSWORD
-openshift_deployment_type=origin
+$OPENSHIFT_OAUTH
+openshift_deployment_type=$OPENSHIFT_TYPE
 openshift_override_hostname_check=true
 openshift_master_api_port=443
 openshift_master_console_port=443
