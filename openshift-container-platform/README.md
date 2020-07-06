@@ -27,11 +27,11 @@
 
 #### Retrieve Azure Client ID and Secret:
 
-* Create Azure Service Principal with `Owner`, `Contributor` and `User Access Administrator` roles.
+* Create Azure Service Principal with `Contributor` and `User Access Administrator` roles.
   * Create Service Principal, using your Azure Subscription ID, and save the returned json:
     ```bash
     az login
-    az ad sp create-for-rbac --role="Owner" --scopes="/subscriptions/<subscription_id>"
+    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<subscription_id>"
     ```
   * Get `Object ID`, using the AppId from the Service Principal just created:
     ```bash
@@ -40,6 +40,5 @@
   * Assign `Contributor` and `User Access Administrator` roles, using the `Object Id`.
     ```bash
     az role assignment create --role "User Access Administrator" --assignee-object-id "<object_id>"
-    az role assignment create --role "Contributor" --assignee-object-id "<object_id>"
     ```
 **NOTE** `appId` is the AAD Client ID and `password` is the AAD Client Secret.
