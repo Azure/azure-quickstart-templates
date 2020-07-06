@@ -57,13 +57,10 @@ yum -y install java-1.8.0-openjdk-headless
 
 echo $(date) " - Java installed successfully"
 
+echo "Install docker"
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 sudo yum -y install docker-ce
-# Install docker
-#echo "Install docker"
-#yum -y install docker-1.13.1
-#systemctl start docker
-#systemctl enable docker
+
 echo "Docker install complete"
 
 
