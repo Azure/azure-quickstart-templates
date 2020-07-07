@@ -157,7 +157,7 @@ then
 	export HAMODE="openshift_master_cluster_method=native"
 fi
 
-if [[ $RHELPOOLID == "" ]]
+if [[ $RHELPOOLID == "na" ]]
 then
 	export OPENSHIFT_OAUTH=""
   export OPENSHIFT_TYPE="origin"
