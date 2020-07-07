@@ -157,7 +157,7 @@ then
 	export HAMODE="openshift_master_cluster_method=native"
 fi
 
-if [[ $RHELPOOLID == "ignoreme" ]]
+if [[ $RHELPOOLID == "" ]]
 then
 	export OPENSHIFT_OAUTH=""
   export OPENSHIFT_TYPE="origin"
