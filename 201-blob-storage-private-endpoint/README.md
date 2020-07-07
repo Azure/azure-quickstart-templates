@@ -30,23 +30,42 @@ The ARM template deploys the following resources:
 - The NIC used by the Linux virtual machine that makes use of the Public IP
 - A Linux virtual machine used for testing the connectivity to the storage account via a private endpoint
 - A Log Analytics workspace used to monitor the health status of the Linux VM
-- An Azure Data Lake Storage (ADLS) Gen2 storage account
+- An Azure Data Lake Storage (ADLS) Gen 2 storage account
 - A Private DNS Zone for a blob storage resource
 - A Private Endpoint for the blob storage account
 
-The ARM template uses an[Azure Custom Script Extension](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux) to download and run the following Bash script. The script runs the nslookup command against the public URL of the storage account to verify that this gets resolved to a private address.
+The ARM template uses the [Azure Custom Script Extension](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux) to download and run the following Bash script on the virtual machine. The script performs the following steps:
+
+- Validates the parameters received by the Custom Script extension
+- Update the system and upgrade packages
+- Installs curl and traceroute packages
+- Runs the nslookup command against the public URL of the storage account to verify that this gets resolved to a private address
+- Downloads and installs the Azure CLI
+- Logins using the system-assigned managed identity of the virtual machine
+- Creates a file system in the ADLS Gen 2 storage account
+- Creates a directory in the file system
+- Creates a file in the directory with the content passed as a parameter
 
 ```bash
 #!/bin/bash
 
 # Variables
-blobServicePrimaryEndpoint=$1
+adlsServicePrimaryEndpoint=$1
+blobServicePrimaryEndpoint=$2
 
-# Parameter validation
+# Parameters validation
+if [[ -z $adlsServicePrimaryEndpoint ]]; then
+    echo "adlsServicePrimaryEndpoint parameter cannot be null or empty"
+    exit 1
+fi
+
 if [[ -z $blobServicePrimaryEndpoint ]]; then
     echo "blobServicePrimaryEndpoint parameter cannot be null or empty"
     exit 1
 fi
+
+# Eliminate debconf warnings
+echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 # Update the system
 sudo apt-get update -y
@@ -54,9 +73,12 @@ sudo apt-get update -y
 # Upgrade packages
 sudo apt-get upgrade -y
 
-# Run nslookup to verify that the <storage-account>.blob.core.windows.net public hostname of the storage account 
-# is properly mapped to <storage-account>.privatelink.blob.core.windows.net by the private DNS zone
-# and the latter mapped to the private address by the A record
+# Run nslookup to verify that public hostname of the ADLS Gen 2 storage account 
+# is properly mapped to the private address of the provate endpoint
+nslookup $adlsServicePrimaryEndpoint
+
+# Run nslookup to verify that public hostname of the Blob storage account 
+# is properly mapped to the private address of the provate endpoint
 nslookup $blobServicePrimaryEndpoint
 ```
 
