@@ -152,7 +152,7 @@ echo $(date) " - Setup Install config - Complete"
 
 echo $(date) " - Install OCP"
 runuser -l $SUDOUSER -c "$INSTALLERHOME/openshift-install create cluster --dir=$INSTALLERHOME/openshiftfourx --log-level=debug"
-runuser -l $SUDOUSER -c "sleep 120"
+runuser -l $SUDOUSER -c "sleep 110"
 echo $(date) " - OCP Install Complete"
 
 echo $(date) " - Kube Config setup"
