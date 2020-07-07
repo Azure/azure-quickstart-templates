@@ -14,7 +14,7 @@
 
 
 ## Oerview and deployed resources
-This template is used to demonstrate how ARM Templates can be used to configure the Backend Pool of a Load Balancer by IP Address as outlined in the [Backend Pool management] (https://docs.microsoft.com/azure/load-balancer/backend-pool-management) document.
+This template is used to demonstrate how ARM Templates can be used to configure the Backend Pool of a Load Balancer by IP Address as outlined in the [Backend Pool management](https://docs.microsoft.com/azure/load-balancer/backend-pool-management) document.
 
 The following resources are deployed in this template:
   * One Standard Public Load Balancer
@@ -24,4 +24,4 @@ The following resources are deployed in this template:
  
 The Load Balancer will be deployed and it's Backend Pool configured by IP Addresses. From here Virtual Machines will be added to the created Backend Pool by setting the IP Address in the IP Configuration of their attached NIC to the Backend Addresses that have been added to the Backend Pool. 
 
-For an example template which configures the Backend Pool by Network Interface please refer to the [Create an Internet-facing Standard Load Balancer with three VMs] (.../101-load-balancer-standard-create) template. 
+For an example template which configures the Backend Pool by Network Interface please refer to the [Create an Internet-facing Standard Load Balancer with three VMs](.../101-load-balancer-standard-create) template. 
