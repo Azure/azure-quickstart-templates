@@ -12,56 +12,6 @@ echo $(date) " - Generating Private keys for use by Ansible for OpenShift Instal
 runuser -l $SUDOUSER -c "echo \"$PRIVATEKEY\" > /home/$SUDOUSER/.ssh/id_rsa"
 runuser -l $SUDOUSER -c "chmod 600 /home/$SUDOUSER/.ssh/id_rsa*"
 
-# Remove RHUI
-
-rm -f /etc/yum.repos.d/rh-cloud.repo
-sleep 20
-
-# Register Host with Cloud Access Subscription
-echo $(date) " - Register host with Cloud Access Subscription"
-
-subscription-manager register --force --username="$USERNAME_ORG" --password="$PASSWORD_ACT_KEY" || subscription-manager register --force --activationkey="$PASSWORD_ACT_KEY" --org="$USERNAME_ORG"
-RETCODE=$?
-
-if [ $RETCODE -eq 0 ]
-then
-    echo "Subscribed successfully"
-elif [ $RETCODE -eq 64 ]
-then
-    echo "This system is already registered."
-else
-    echo "Incorrect Username / Password or Organization ID / Activation Key specified"
-    exit 3
-fi
-
-subscription-manager attach --pool=$POOL_ID > attach.log
-# if [ $? -eq 0 ]
-# then
-#     echo "Pool attached successfully"
-# else
-#     grep attached attach.log
-#     if [ $? -eq 0 ]
-#     then
-#         echo "Pool $POOL_ID was already attached and was not attached again."
-#     else
-#         echo "Incorrect Pool ID or no entitlements available"
-#         exit 4
-#     fi
-# fi
-
-# # Disable all repositories and enable only the required ones
-# echo $(date) " - Disabling all repositories and enabling only the required repos"
-
-# subscription-manager repos --disable="*"
-
-subscription-manager repos \
-    --enable="rhel-7-server-rpms" \
-    --enable="rhel-7-server-extras-rpms" \
-    --enable="rhel-7-server-ose-3.11-rpms" \
-    --enable="rhel-7-server-ansible-2.6-rpms" \
-    --enable="rhel-7-fast-datapath-rpms" \
-    --enable="rh-gluster-3-client-for-rhel-7-server-rpms" \
-    --enable="rhel-7-server-optional-rpms"
 
 # Update system to latest packages
 echo $(date) " - Update system to latest packages"
@@ -78,7 +28,7 @@ echo $(date) " - Base package installation complete"
 # python-passlib needed for metrics
 echo $(date) " - Installing Ansible, pyOpenSSL and python-passlib"
 yum -y install pyOpenSSL python-passlib
-yum -y install ansible python-pip vim pyOpenSSL
+yum -y install python-pip vim pyOpenSSL
 curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 python get-pip.py
 pip install ansible==2.6.11
@@ -95,7 +45,10 @@ echo $(date) " - Azure CLI installation complete"
 # Install ImageMagick to resize image for Custom Header
 sudo yum install -y ImageMagick
 
-yum install atomic-openshift-clients -y
+#yum install atomic-openshift-clients -y
+sudo wget https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
+sudo tar -zxf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
+sudo mv openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/oc /usr/bin/
 
 # Install java to support metrics
 echo $(date) " - Installing Java"
@@ -104,12 +57,10 @@ yum -y install java-1.8.0-openjdk-headless
 
 echo $(date) " - Java installed successfully"
 
-
-# Install docker
 echo "Install docker"
-yum -y install docker-1.13.1
-systemctl start docker
-systemctl enable docker
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo yum -y install docker-ce
+
 echo "Docker install complete"
 
 
@@ -135,4 +86,3 @@ else
 fi
 
 echo $(date) " - Script Complete"
-
