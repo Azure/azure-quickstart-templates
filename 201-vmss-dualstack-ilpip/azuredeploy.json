@@ -1,0 +1,394 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "virtualMachineScaleSetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the VMSS, cannot exceed 9 characters"
+            }
+        },
+        "singlePlacementGroup": {
+            "type": "string"
+        },
+        "instanceSize": {
+            "type": "string",
+            "defaultValue": "Standard_B1ms",
+            "metadata": {
+                "description": "Size for the VMSS instances"
+            }
+        },
+        "instanceCount": {
+            "type": "string",
+            "defaultValue": "2",
+            "metadata": {
+                "description": "Number of the VMSS instances"
+            }
+        },
+        "priority": {
+            "type": "string",
+            "defaultValue": "Regular",
+            "allowedValues": [ "Regular", "Spot" ],
+            "metadata": {
+                "description": "Whether using spot instances"
+            }
+        },
+        "osDiskType": {
+            "type": "string",
+            "defaultValue": "Premium_LRS"
+        },
+        "virtualNetworkName": {
+            "type": "string"
+        },
+        "addressPrefixes": {
+            "type": "array",
+            "metadata": {
+                "description": "IP prefixes for the Virtual Network (should be at least one IPv4 and one IPv6)"
+            }
+        },
+        "subnets": {
+            "type": "array",
+            "metadata": {
+                "description": "Subnets to create in the Virtual Network (should contain at least one IPv4 and one IPv6 prefixes)"
+            }
+        },
+        "networkSecurityGroups": {
+            "type": "array"
+        },
+        "publicIpAddressName": {
+            "type": "string",
+            "metadata": {
+                "description": "Public IP for the ALB frontend"
+            }
+        },
+        "backendPoolName": {
+            "type": "string",
+            "defaultValue": "backendpool"
+        },
+        "inboundNatPoolName": {
+            "type": "string",
+            "defaultValue": "natpool"
+        },
+        "loadBalancerName": {
+            "type": "string"
+        },
+        "loadBalancerPort": {
+            "type": "int",
+            "defaultValue": 443,
+            "metadata": {
+                "description": "TCP port used in the default probe and LB rule"
+            }
+        },
+        "networkInterfaceConfigurations": {
+            "type": "array"
+        },
+        "scaleInPolicy": {
+            "type": "object"
+        },
+        "diagnosticStorageAccount": {
+            "type": "string"
+        },
+        "diagnosticsStorageAccountKind": {
+            "type": "string"
+        },
+        "diagnosticsStorageAccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS"
+        },
+        "upgradePolicy": {
+            "type": "string",
+            "defaultValue": "Manual"
+        },
+        "platformFaultDomainCount": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "azure"
+        },
+        "adminPassword": {
+            "type": "secureString"
+        }
+    },
+    "variables": {
+        "storageApiVersion": "2019-06-01",
+        "pipApiVersion": "2019-02-01",
+        "albApiVersion": "2019-06-01",
+        "vmssApiVersion": "2019-07-01",
+        "vnetApiVersion": "2019-09-01",
+        "nsgApiVersion": "2019-02-01",
+        "namingInfix": "[toLower(substring(concat(parameters('virtualMachineScaleSetName'), uniqueString(resourceGroup().id)), 0, 9))]",
+        "loadBalancerId": "[resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName'))]",
+        "backendPoolId": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancerName'), parameters('backendPoolName'))]",
+        "inboundNatPoolId": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', parameters('loadBalancerName'), parameters('inboundNatPoolName'))]"
+    },
+    "resources": [
+        {
+            "comments": "Dual stack vnet (IPv4 and IPv6, multiple subnets can be created)",
+            "name": "[parameters('virtualNetworkName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "[variables('vnetApiVersion')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('addressPrefixes')]"
+                },
+                "subnets": "[parameters('subnets')]"
+            }
+        },
+        {
+            "comments": "NSGs that will be assigned to the NICs",
+            "name": "[parameters('networkSecurityGroups')[copyIndex()].name]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "[variables('nsgApiVersion')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": "[parameters('networkSecurityGroups')[copyIndex()].rules]"
+            },
+            "copy": {
+                "name": "networkSecurityGroups",
+                "count": "[length(parameters('networkSecurityGroups'))]"
+            }
+        },
+        {
+            "comments": "Public frontend IP for the Load Balancer",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[parameters('publicIpAddressName')]",
+            "location": "[parameters('location')]",
+            "apiVersion": "[variables('pipApiVersion')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "comments": "Even if not required, it is necessary so that the ILPIPv4 is Standard, otherwise there will be a SKU mismatch when adding the ILPIPv6",
+            "type": "Microsoft.Network/loadBalancers",
+            "name": "[parameters('loadBalancerName')]",
+            "location": "[parameters('location')]",
+            "apiVersion": "[variables('albApiVersion')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIpAddressName'))]"
+            ],
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "LoadBalancerFrontEnd",
+                        "id": "[concat(variables('loadBalancerId'), '/frontendIPConfigurations/loadBalancerFrontEnd')]",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "id": "[variables('backendPoolId')]",
+                        "name": "[parameters('backendPoolName')]"
+                    }
+                ],
+                "inboundNatPools": [
+                    {
+                        "name": "natpool",
+                        "id": "[variables('inboundNatPoolId')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(variables('loadBalancerId'), '/frontendIPConfigurations/loadBalancerFrontEnd')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPortRangeStart": "50000",
+                            "frontendPortRangeEnd": "50119",
+                            "backendPort": "22"
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "tcpProbe",
+                        "properties": {
+                            "protocol": "tcp",
+                            "port": "[parameters('loadBalancerPort')]",
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2,
+                            "loadBalancingRules": []
+                        }
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "LBRule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(variables('loadBalancerId'), '/frontendIPConfigurations/loadBalancerFrontEnd')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[variables('backendPoolId')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPort": "[parameters('loadBalancerPort')]",
+                            "backendPort": "[parameters('loadBalancerPort')]",
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 5,
+                            "loadDistribution": "Default",
+                            "probe": {
+                                "id": "[concat(variables('loadBalancerId'),'/probes/tcpProbe')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('diagnosticStorageAccount')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "[variables('storageApiVersion')]",
+            "location": "[parameters('location')]",
+            "properties": {},
+            "sku": {
+                "name": "[parameters('diagnosticsStorageAccountType')]"
+            },
+            "kind": "[parameters('diagnosticsStorageAccountKind')]"
+        },
+        {
+            "comments": "VMSS with dual-stack. Note that nested copy loops are not supported in ARM (would have been handy for multiple NICs, each with multiple ipConfigs)",
+            "name": "[parameters('virtualMachineScaleSetName')]",
+            "type": "Microsoft.Compute/virtualMachineScaleSets",
+            "apiVersion": "[variables('vmssApiVersion')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "networkSecurityGroups",
+                "[parameters('loadBalancerName')]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('diagnosticStorageAccount'))]"
+            ],
+            "sku": {
+                "name": "[parameters('instanceSize')]",
+                "capacity": "[int(parameters('instanceCount'))]"
+            },
+            "properties": {
+                "overprovision": true,
+                "upgradePolicy": {
+                    "mode": "[parameters('upgradePolicy')]"
+                },
+                "singlePlacementGroup": "[parameters('singlePlacementGroup')]",
+                "virtualMachineProfile": {
+                    "storageProfile": {
+                        "osDisk": {
+                            "createOption": "fromImage",
+                            "caching": "ReadWrite",
+                            "managedDisk": {
+                                "storageAccountType": "[parameters('osDiskType')]"
+                            }
+                        },
+                        "imageReference": {
+                            "publisher": "Canonical",
+                            "offer": "UbuntuServer",
+                            "sku": "18.04-LTS",
+                            "version": "latest"
+                        }
+                    },
+                    "priority": "[parameters('priority')]",
+                    "networkProfile": {
+                        "copy": [
+                            {
+                                "name": "networkInterfaceConfigurations",
+                                "count": "[length(parameters('networkInterfaceConfigurations'))]",
+                                "input": {
+                                    "name": "[parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].name]",
+                                    "properties": {
+                                        "primary": "[parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].primary]",
+                                        "enableAcceleratedNetworking": "[parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].enableAcceleratedNetworking]",
+                                        "networkSecurityGroup": {
+                                            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].nsgName)]"
+                                        },
+                                        "ipConfigurations": [
+                                            {
+                                                "name": "ipv4-config",
+                                                "properties": {
+                                                    "subnet": {
+                                                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].subnetName)]"
+                                                    },
+                                                    "primary": true,
+                                                    "loadBalancerBackendAddressPools": [
+                                                        {
+                                                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancerName'), parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].loadBalancerBackendAddressPool)]"
+                                                        }
+                                                    ],
+                                                    "loadBalancerInboundNatPools": [
+                                                        {
+                                                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', parameters('loadBalancerName'), parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].loadBalancerInboundNatPool)]"
+                                                        }
+                                                    ],
+                                                    "privateIpAddressVersion": "IPv4",
+                                                    "publicIPAddressConfiguration": {
+                                                        "name": "[parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].pipv4Name]",
+                                                        "properties": {
+                                                            "idleTimeoutInMinutes": 15,
+                                                            "publicIpAddressVersion": "IPv4"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "name": "ipv6-config",
+                                                "properties": {
+                                                    "subnet": {
+                                                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].subnetName)]"
+                                                    },
+                                                    "primary": false,
+                                                    "loadBalancerBackendAddressPools": [],
+                                                    "loadBalancerInboundNatPools": [],
+                                                    "privateIpAddressVersion": "IPv6",
+                                                    "publicIPAddressConfiguration": {
+                                                        "name": "[parameters('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].pipv6Name]",
+                                                        "properties": {
+                                                            "idleTimeoutInMinutes": 15,
+                                                            "publicIpAddressVersion": "IPv6"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "extensionProfile": {
+                        "extensions": []
+                    },
+                    "diagnosticsProfile": {
+                        "bootDiagnostics": {
+                            "enabled": true,
+                            "storageUri": "[reference(parameters('diagnosticStorageAccount'), variables('storageApiVersion')).primaryEndpoints.blob]"
+                        }
+                    },
+                    "osProfile": {
+                        "computerNamePrefix": "[variables('namingInfix')]",
+                        "adminUsername": "[parameters('adminUsername')]",
+                        "adminPassword": "[parameters('adminPassword')]"
+                    }
+                },
+                "scaleInPolicy": "[parameters('scaleInPolicy')]",
+                "platformFaultDomainCount": "[parameters('platformFaultDomainCount')]"
+            }
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "string",
+            "value": "[parameters('adminUsername')]"
+        }
+    }
+}
