@@ -15,6 +15,6 @@
 
 
 This template creates an Event Grid custom topic and webhook subscription on Azure.
-Template was first created by John Downs, updated by ![Hamza BOUKRAA](https://github.com/HamzaBoukraa).
+Template was first created by John Downs, updated by [Hamza BOUKRAA](https://github.com/HamzaBoukraa).
 
 `Tags: eventgrid`
