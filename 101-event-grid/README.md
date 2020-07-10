@@ -14,6 +14,7 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-event-grid/CredScanResult.svg)
 
 
-This template creates an Event Grid custom topic and webhook subscription on Azure. Template was created by John Downs, updated by Hamza BOUKRAA.
+This template creates an Event Grid custom topic and webhook subscription on Azure.
+Template was first created by John Downs, updated by ![Hamza BOUKRAA](https://github.com/HamzaBoukraa).
 
 `Tags: eventgrid`
