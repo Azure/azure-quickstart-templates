@@ -1,7 +1,7 @@
 ## ARM Template for Deploying Jenkins Master/Slave Cluster
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmahendra-shinde%2Fjenkins-cluster-arm-template%2Fmaster%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https://raw.githubusercontent.com/mahendra-shinde/jenkins-cluster-arm-template/master/azuredeploy.json)   
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmahendra-shinde%2Fazure-quickstart-templates%2Fmaster%2F101-jenkins-cluster-win-2019-ubuntu-18%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmahendra-shinde%2Fazure-quickstart-templates%2Fmaster%2F101-jenkins-cluster-win-2019-ubuntu-18%2Fazuredeploy.json)   
 
 
 1.  Start the Jenkins Master VM and access the the URL 
