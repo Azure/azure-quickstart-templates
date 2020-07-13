@@ -15,4 +15,12 @@
 
 This template creates a Power BI capacity in Azure, which simplifies how ISVs and developers use Power BI capabilities with embedded analytics.
 
+To use this template, your tenant must be provisioned for Power BI, and the account you specify for the **admin** parameter must be a user in the Power BI tenant. To check whether a user is already in the Power BI tenant, follow these steps:
+
+1. Go to https://powerbi.microsoft.com/en-us/get-started/ and select Try free.
+
+1. Enter a user account.
+
+The licensing web site will either tell you that you already have a license or it will walk you through the sign-up process.
+
 `Tags: Power BI Embedded`
