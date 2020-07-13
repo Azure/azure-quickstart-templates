@@ -1,4 +1,4 @@
-# Create Tabular Dataset from Relative Path in Datastore in AML
+# Create Tabular Dataset from Path in Datastore
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-dataset-create-tabular-from-relative-path/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-dataset-create-tabular-from-relative-path/PublicDeployment.svg)
