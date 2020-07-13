@@ -1,209 +1,188 @@
 {
-    "$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion":"1.0.0.0",
-    "parameters":{
-        "dataFactoryName":{
-            "type":"string",
-            "defaultValue":"GEN-UNIQUE",
-            "metadata":{
-                "description": "Data Factory Name"
-            }
-        },
-        "location":{
-            "type":"string",
-            "defaultValue":"[resourceGroup().location]",
-            "metadata":{  
-                "description":"Location of the data factory. Currently, only East US, East US 2, and West Europe are supported."
-            }
-        },
-        "storageAccountName": {
-            "type": "string",
-            "defaultValue":"GET-PREREQ-storageAccountName",
-            "metadata": {
-                "description": "Name of the Azure storage account that contains the input/output data."
-      }
-    },
-        "storageAccountKey": {
-            "type": "securestring",
-            "defaultValue":null,
-            "metadata": {
-                "description": "Key for the Azure storage account."
-      }
-    },
-        "blobContainer": {
-            "type": "string",
-            "defaultValue":"GET-PREREQ-blobContainer",
-            "metadata": {
-      	        "description": "Name of the blob container in the Azure Storage account."
-      }
-    },
-        "inputBlobFolder": {
-            "type": "string",
-            "defaultValue":"GET-PREREQ-blobFolder",
-            "metadata": {
-      	        "description": "The folder in the blob container that has the input file."
-      }
-    },
-        "inputBlobFileName": {
-            "type": "string",
-            "defaultValue":"GET-PREREQ-blobFileName",
-            "metadata": {
-                "description": "Name of the input file/blob."
-      	    }
-	    }
-    },
-    "variables":{
-        "factoryId":"[concat('Microsoft.DataFactory/factories/', parameters('dataFactoryName'))]"
-    },
-    "resources":[
-        {  
-            "type":"Microsoft.DataFactory/factories",
-            "name":"[parameters('dataFactoryName')]",
-            "apiVersion":"2018-06-01",
-            "location":"[parameters('location')]",
-            "identity":{  
-                "type":"SystemAssigned"
-            },
-            "resources":[  
-                {  
-                    "type":"Microsoft.DataFactory/factories/linkedServices",
-                    "name":"[concat(parameters('dataFactoryName'), '/ArmtemplateStorageLinkedService')]",
-                    "apiVersion":"2018-06-01",
-                    "properties":{  
-                        "annotations":[  
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"dataFactoryName": {
+			"type": "string",
+			"metadata": {
+				"description": "Data Factory Name"
+			}
+		},
+		"location": {
+			"type": "string",
+			"defaultValue": "[resourceGroup().location]",
+			"metadata": {
+				"description": "Location of the data factory. Currently, only East US, East US 2, and West Europe are supported."
+			}
+		},
+		"storageAccountName": {
+			"type": "string",
+			"metadata": {
+				"description": "Name of the Azure storage account that contains the input/output data."
+			}
+		},
+		"blobContainer": {
+			"type": "string",
+			"metadata": {
+				"description": "Name of the blob container in the Azure Storage account."
+			}
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('dataFactoryName'))]",
+		"storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+	},
+	"resources": [{
+			"type": "Microsoft.Storage/storageAccounts",
+			"apiVersion": "2019-06-01",
+			"name": "[parameters('storageAccountName')]",
+			"location": "[parameters('location')]",
+			"sku": {
+				"name": "Standard_LRS"
+			},
+			"kind": "StorageV2",
+			"properties": {},
+			"resources": [
+				{
+				"type": "blobServices/containers",
+				"apiVersion": "2019-06-01",
+				"name": "[concat('default/', parameters('blobContainer'))]",
+				"dependsOn": [
+				"[parameters('storageAccountName')]"
+					]
+				}
+			]
+		},
+		{
+			"type": "Microsoft.DataFactory/factories",
+			"name": "[parameters('dataFactoryName')]",
+			"apiVersion": "2018-06-01",
+			"location": "[parameters('location')]",
+			"identity": {
+				"type": "SystemAssigned"
+			},
+			"resources": [{
+					"type": "Microsoft.DataFactory/factories/linkedServices",
+					"name": "[concat(parameters('dataFactoryName'), '/ArmtemplateStorageLinkedService')]",
+					"apiVersion": "2018-06-01",
+					"properties": {
+						"type": "AzureBlobStorage",
+						"typeProperties": {
+							"connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(variables('storageAccountId'), '2019-06-01').keys[0].value)]"
+						}
+					},
+					"dependsOn": [
+						"[parameters('dataFactoryName')]",
+						"[parameters('storageAccountName')]"
+					]
+				},
+				{
+					"type": "Microsoft.DataFactory/factories/datasets",
+					"name": "[concat(parameters('dataFactoryName'), '/ArmtemplateTestDatasetIn')]",
+					"apiVersion": "2018-06-01",
+					"properties": {
+						"linkedServiceName": {
+							"referenceName": "ArmtemplateStorageLinkedService",
+							"type": "LinkedServiceReference"
+						},
+						"type": "Binary",
+						"typeProperties": {
+							"location": {
+								"type": "AzureBlobStorageLocation",
+								"container": "[parameters('blobContainer')]",
+								"folderPath": "input",
+								"fileName": "emp.txt"
+							}
+						}
+					},
+					"dependsOn": [
+						"[parameters('dataFactoryName')]",
+						"[concat(variables('factoryId'), '/linkedServices/ArmtemplateStorageLinkedService')]"
+					]
+				},
+				{
+					"type": "Microsoft.DataFactory/factories/datasets",
+					"name": "[concat(parameters('dataFactoryName'), '/ArmtemplateTestDatasetOut')]",
+					"apiVersion": "2018-06-01",
+					"properties": {
+						"linkedServiceName": {
+							"referenceName": "ArmtemplateStorageLinkedService",
+							"type": "LinkedServiceReference"
+						},
+						"type": "Binary",
+						"typeProperties": {
+							"location": {
+								"type": "AzureBlobStorageLocation",
+								"container": "[parameters('blobContainer')]",
+								"folderpath": "output"
+							}
+						}
+					},
+					"dependsOn": [
+						"[parameters('dataFactoryName')]",
+						"[concat(variables('factoryId'), '/linkedServices/ArmtemplateStorageLinkedService')]"
+					]
+				},
+				{
+					"type": "Microsoft.DataFactory/factories/pipelines",
+					"name": "[concat(parameters('dataFactoryName'), '/ArmtemplateSampleCopyPipeline')]",
+					"apiVersion": "2018-06-01",
+					"properties": {
+						"activities": [{
+							"name": "MyCopyActivity",
+							"type": "Copy",
+							"dependsOn": [
 
-                        ],
-                        "type":"AzureBlobStorage",
-                        "typeProperties":{  
-                            "connectionString":"[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',parameters('storageAccountKey'))]"
-                        }
-                    },
-                    "dependsOn":[  
-                        "[parameters('dataFactoryName')]"
-                    ]
-                },
-                {  
-                    "type":"Microsoft.DataFactory/factories/datasets",
-                    "name":"[concat(parameters('dataFactoryName'), '/ArmtemplateTestDatasetIn')]",
-                    "apiVersion":"2018-06-01",
-                    "properties":{  
-                        "linkedServiceName":{
-                            "referenceName":"ArmtemplateStorageLinkedService",
-                            "type":"LinkedServiceReference"
-                        },
-                        "annotations":[
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [
 
-                        ],
-                        "type":"Binary",
-                        "typeProperties":{
-                            "location":{
-                                "type":"AzureBlobStorageLocation",
-                                "fileName":"emp.txt",
-                                "folderPath":"input",
-                                "container":"adftestblobmg"
-                            }
-                        }
-                    },
-                    "dependsOn":[
-                        "[parameters('dataFactoryName')]",
-                        "[concat(variables('factoryId'), '/linkedServices/ArmtemplateStorageLinkedService')]"
-                    ]
-                },
-                {  
-                    "type":"Microsoft.DataFactory/factories/datasets",
-                    "name":"[concat(parameters('dataFactoryName'), '/ArmtemplateTestDatasetOut')]",
-                    "apiVersion":"2018-06-01",
-                    "properties":{
-                        "linkedServiceName":{
-                            "referenceName":"ArmtemplateStorageLinkedService",
-                            "type":"LinkedServiceReference"
-                        },
-                        "annotations":[
+							],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobStorageReadSettings",
+										"recursive": true
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [{
+								"referenceName": "ArmtemplateTestDatasetIn",
+								"type": "DatasetReference",
+								"parameters": {
 
-                        ],
-                        "type":"Binary",
-                        "typeProperties":{
-                            "location":{
-                                "type":"AzureBlobStorageLocation",
-                                "folderPath":"output",
-                                "container":"adftestblobmg"
-                            }
-                        }
-                    },
-                    "dependsOn":[
-                        "[parameters('dataFactoryName')]",
-                        "[concat(variables('factoryId'), '/linkedServices/ArmtemplateStorageLinkedService')]"
-                    ]
-                },
-                {  
-                    "type":"Microsoft.DataFactory/factories/pipelines",
-                    "name":"[concat(parameters('dataFactoryName'), '/ArmtemplateSampleCopyPipeline')]",
-                    "apiVersion":"2018-06-01",
-                    "properties":{  
-                        "activities":[  
-                            {  
-                                "name":"MyCopyActivity",
-                                "type":"Copy",
-                                "dependsOn":[  
+								}
+							}],
+							"outputs": [{
+								"referenceName": "ArmtemplateTestDatasetOut",
+								"type": "DatasetReference",
+								"parameters": {
 
-                                ],
-                                "policy":{  
-                                    "timeout":"7.00:00:00",
-                                    "retry":0,
-                                    "retryIntervalInSeconds":30,
-                                    "secureOutput":false,
-                                    "secureInput":false
-                                },
-                                "userProperties":[  
-
-                                ],
-                                "typeProperties":{  
-                                    "source":{  
-                                        "type":"BinarySource",
-                                        "storeSettings":{  
-                                            "type":"AzureBlobStorageReadSettings",
-                                            "recursive":true
-                                        }
-                                    },
-                                    "sink":{  
-                                        "type":"BinarySink",
-                                        "storeSettings":{  
-                                            "type":"AzureBlobStorageWriteSettings"
-                                        }
-                                    },
-                                    "enableStaging":false
-                                },
-                                "inputs":[  
-                                    {  
-                                        "referenceName":"ArmtemplateTestDatasetIn",
-                                        "type":"DatasetReference",
-                                        "parameters":{  
-
-                                        }
-                                    }
-                                ],
-                                "outputs":[  
-                                    {  
-                                        "referenceName":"ArmtemplateTestDatasetOut",
-                                        "type":"DatasetReference",
-                                        "parameters":{  
-
-                                        }
-                                    }
-                                ]
-                            }
-                        ],
-                        "annotations":[  
-
-                        ]
-                    },
-                    "dependsOn":[  
-                        "[parameters('dataFactoryName')]",
-                        "[concat(variables('factoryId'), '/datasets/ArmtemplateTestDatasetIn')]",
-                        "[concat(variables('factoryId'), '/datasets/ArmtemplateTestDatasetOut')]"
-                    ]
-                }
-            ]
-        }
-    ]
+								}
+							}]
+						}]
+					},
+					"dependsOn": [
+						"[parameters('dataFactoryName')]",
+						"[concat(variables('factoryId'), '/datasets/ArmtemplateTestDatasetIn')]",
+						"[concat(variables('factoryId'), '/datasets/ArmtemplateTestDatasetOut')]"
+					]
+				}
+			]
+		}
+	]
 }
