@@ -40,7 +40,7 @@ After you deploy the template, to run and monitor the pipeline, do the following
 3. Run the following command to log in to Azure.
 
     ```powershell
-    Login-AzureRmAccount
+    Connect-AzAccount
     ```
 
 4. Switch to the folder where you copied the script file.
