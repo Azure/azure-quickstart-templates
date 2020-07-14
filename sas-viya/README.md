@@ -101,7 +101,7 @@ For details, see [SAS Viya 3.5 for Linux: Deployment Guide](https://go.documenta
 <a name="Costs"></a>
 ### Costs and Licenses
 You are responsible for the cost of the Azure services used while running this Quickstart deployment. There is no additional cost for using the Quickstart.
-You will need a SAS license to launch this Quickstart. Your SAS account team and the SAS Enterprise Excellence Center can advise on the appropriate software licensing and sizing to meet workload and performance needs.
+You will need a SAS license {emailed from SAS as `SAS_Viya_deployment_data.zip`} in order to launch this Quickstart. Your SAS account team and the SAS Enterprise Excellence Center can advise on the appropriate software licensing and sizing to meet workload and performance needs.
 SAS Viya Quickstart Template for Azure creates three instances, including: 
 * 1 compute virtual machine (VM), the Cloud Analytic Services (CAS) controller
 * 1 VM for administration, the Ansible controller
@@ -131,23 +131,24 @@ Before deploying SAS Viya Quickstart Template for Azure, you must have the follo
  		SAS Visual Analytics 8.5 on Linux
 		SAS Visual Statistics 8.5 on Linux
         SAS Visual Data Mining and Machine Learning 8.5 on Linux
-*  The license file in .zip format from your software order uploaded to an Azure blob
+*  The license file {emailed from SAS as `SAS_Viya_deployment_data.zip`} which describes your SAS Software Order and is uploaded to an Azure Blob (see below)
 *  Verification that your required SAS Viya file upload sizes do not exceed the limits of the Application Gateway. For details about limits, see 
 ["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
 * A resource group that does not already contain a Quickstart deployment. For more information, see [Resource groups](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview#resource-groups).
 
 <a name="License"></a>
 ### Upload the License File to an Azure Blob
-When you run the deployment, you will need the blob Shared Access Signature (SAS) URL as a parameter. 
+The QuickStart deployment requires a parameter `Deployment Data Location`, which is the Shared Access Signature (SAS) URI for the SAS Softwared License. 
 
-Before you run the deployment:
-1. Upload the license file to Azure Blob Storage.  Follow the Microsoft Azure instructions to 
+1. Upload the `SAS_Viya_deployment_data.zip` {emailed from SAS} to Azure Blob Storage.  It's suggested that you create a Blob directory named `license` with a single object `SAS_Viya_deployment_data.zip`.  Follow the Microsoft Azure instructions to 
 ["Create a Container"](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal#create-a-container) and 
 ["Upload a Block Blob."](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal#upload-a-block-blob)
 
-2. Create a Shared Access Signature (SAS) token. Follow these steps to create a Service SAS: 
-    * Navigate to the license file blob and select **Generate SAS**, and then click **Generate blob SAS** token and URL.
-    * Make a note of the blob SAS URL for use during deployment.
+2. Create a Shared Access Signature (SAS) URI token: 
+    * From the Azure Portal | Storage Account | Storage Explorer (preview), navigate to the Blob directory named `license` (assuming you followed the suggestion)
+    * Right click and select **Generate Shared Access Signature**
+    * Review the settings, ensure Read & List are checked, then click **Create** token
+    * Copy the URI and save it to be used as a Parameter in the QuickStart.
     
 For details, see ["Using Shared Access Signatures."](https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1)
 
