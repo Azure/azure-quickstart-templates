@@ -18,3 +18,4 @@
 </a>
 
 This template allows you to create an HDInsight cluster with schedule-based autoscale enabled.
+
