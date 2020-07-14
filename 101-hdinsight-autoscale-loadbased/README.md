@@ -1,16 +1,20 @@
-# Deploy a Spark cluster in Azure HDInsight
+# HDInsight (Spark cluster + autoscale loadbased)
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-spark-linux/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-spark-linux/PublicDeployment.svg)
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-custom-ambari-db/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-custom-ambari-db/PublicDeployment.svg" />&nbsp;
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-spark-linux/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-spark-linux/FairfaxDeployment.svg)
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-custom-ambari-db/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-custom-ambari-db/FairfaxDeployment.svg" />&nbsp;
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-spark-linux/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-spark-linux/CredScanResult.svg)
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-custom-ambari-db/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-custom-ambari-db/CredScanResult.svg" />&nbsp;
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-hdinsight-spark-linux%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-hdinsight-spark-linux%2Fazuredeploy.json)
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-hdinsight-custom-ambari-db%2Fazuredeploy.json" target="_blank">
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png" />
+</a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-hdinsight-custom-ambari-db%2Fazuredeploy.json" target="_blank">
 
-This template allows you to create a Spark cluster in HDInsight load-based autoscale enabled.
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png" />
+</a>
 
-
+This template allows you to create an HDInsight cluster with loadbased autoscale enabled.
