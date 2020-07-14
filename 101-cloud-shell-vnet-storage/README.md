@@ -1,4 +1,4 @@
-# Sample name
+# Deploy Azure Cloud Shell storage to a virtual network
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cloud-shell-vnet-storage/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cloud-shell-vnet-storage/PublicDeployment.svg)
@@ -13,7 +13,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cloud-shell-vnet-storage%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cloud-shell-vnet-storage%2Fazuredeploy.json)
 
-This template deploys the necessary storage to run Azure Cloud Shell inside a customer owned virtual network. Azure Cloud Shell  is a browser-based, authenticated, command-line experience based in the Azure Portal for managing cloud resources. Running Cloud Shell in a customer virtual network allows the customer to manage resources that may be isolated from the public internet in a private virtual network.
+This template deploys the necessary storage to run Azure Cloud Shell inside a customer owned virtual network. Azure Cloud Shell is a browser-based, authenticated, command-line experience based in the Azure Portal for managing cloud resources. Running Cloud Shell in a customer virtual network allows the customer to manage resources that may be isolated from the public internet in a private virtual network.
 
 ## Prerequisites
 
@@ -22,7 +22,7 @@ Important! While this functionality is in preview, only the following locations 
 
 ## Deployment steps
 
-You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
 ## Usage
 
