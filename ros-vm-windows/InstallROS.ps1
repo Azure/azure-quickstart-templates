@@ -70,3 +70,9 @@ New-NetFirewallRule -Name "Allow WinRM HTTPS" -DisplayName "WinRM HTTPS" -Enable
 $thumbprint = (New-SelfSignedCertificate -DnsName $env:COMPUTERNAME -CertStoreLocation Cert:\LocalMachine\My).Thumbprint
 $command = "winrm create winrm/config/Listener?Address=*+Transport=HTTPS @{Hostname=""$env:computername""; CertificateThumbprint=""$thumbprint""}"
 cmd.exe /C $command
+
+# adding telemetry footprint
+$localDeviceIdPath = "HKLM:SOFTWARE\Microsoft\SQMClient"
+$localDeviceIdName = "MachineId"
+$localDeviceIdValue = "{df713376-9b62-46d6-a363-cede5b1bf2c5}"
+New-ItemProperty -Path $localDeviceIdPath -Name $localDeviceIdName -Value $localDeviceIdValue -PropertyType String -Force | Out-Null
