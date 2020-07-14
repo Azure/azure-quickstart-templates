@@ -1,4 +1,4 @@
-# HDInsight (Spark, Autoscale)
+# HDInsight (Spark + Schedule based Autoscale)
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-custom-ambari-db/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-custom-ambari-db/PublicDeployment.svg" />&nbsp;
