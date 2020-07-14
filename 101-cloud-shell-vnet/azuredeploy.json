@@ -22,6 +22,7 @@
         },
         "contributorOID": {
             "type": "string",
+            "defaultValue": "b24988ac-6180-42a0-ab88-20f7382dd24c",
             "metadata": {
                 "description": "Object Id of Contributor Role. To get it - Get-AzRoleDefinition -Name Contributor"
             }
@@ -35,7 +36,6 @@
         },
         "containerSubnetAddressPrefix": {
             "type": "string",
-            "defaultValue": "10.0.1.0",
             "metadata": {
                 "description": "Address space of the subnet to add"
             }
@@ -49,7 +49,6 @@
         },        
         "relaySubnetAddressPrefix": {
             "type": "string",
-            "defaultValue": "10.0.2.0",
             "metadata": {
                 "description": "Address space of the subnet to add for relay subnet"
             }
@@ -63,7 +62,6 @@
         },
         "storageSubnetAddressPrefix": {
             "type": "string",
-            "defaultValue": "10.0.3.0",
             "metadata": {
                 "description": "Address space of the subnet to add for storage subnet"
             }
@@ -84,10 +82,8 @@
         }
     },
     "variables": {
-        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks/', parameters('existingVNETName'))]",
         "containerSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('containerSubnetName'))]",
         "relayNamespaceId": "[resourceId('Microsoft.Relay/namespaces/', parameters('relayNamespaceName'))]",
-        "privateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints/', parameters('privateEndpointName'))]",
         "relaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('relaySubnetName'))]",
         "contributorRoleId": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('contributorOID'))]"
     },
@@ -98,7 +94,7 @@
             "name": "[concat(parameters('existingVNETName'), '/', parameters('containerSubnetName'))]",
             "location": "[parameters('location')]",
             "properties": {
-                "addressPrefix": "[concat(parameters('containerSubnetAddressPrefix'),'/26')]",
+                "addressPrefix": "[parameters('containerSubnetAddressPrefix')]",
                 "serviceEndpoints": [
                     {
                         "service": "Microsoft.Storage",
@@ -153,13 +149,12 @@
             "sku": {
                 "name": "Standard",
                 "tier": "Standard"
-            },
-            "properties": {}
+            }
         },
         {
             "type": "Microsoft.Relay/namespaces/providers/roleAssignments",
             "apiVersion": "2018-09-01-preview",
-            "name": "[concat(parameters('relayNamespaceName'), '/Microsoft.Authorization/', guid(subscription().subscriptionId, parameters('relayNamespaceName')))]",
+            "name": "[concat(parameters('relayNamespaceName'), '/Microsoft.Authorization/', guid(variables('contributorRoleId'), parameters('azureContainerInstanceOID'), parameters('relayNamespaceName')))]",
             "dependsOn": [
                 "[variables('relayNamespaceId')]"
             ],
@@ -178,9 +173,7 @@
                 "[variables('containerSubnetRef')]"
             ],
             "properties": {
-                "addressPrefix": "[concat(parameters('relaySubnetAddressPrefix'),'/26')]",
-                "serviceEndpoints": [],
-                "delegations": [],
+                "addressPrefix": "[parameters('relaySubnetAddressPrefix')]",
                 "privateEndpointNetworkPolicies": "Disabled",
                 "privateLinkServiceNetworkPolicies": "Enabled"
             }            
@@ -206,11 +199,9 @@
                         }
                     }
                 ],
-                "manualPrivateLinkServiceConnections": [],
                 "subnet": {
                     "id": "[variables('relaySubnetRef')]"
-                },
-                "customDnsConfigs": []
+                }
             }
         },
         {
@@ -222,7 +213,7 @@
                 "[variables('relaySubnetRef')]"
             ],
             "properties": {
-                "addressPrefix": "[concat(parameters('storageSubnetAddressPrefix'),'/26')]",
+                "addressPrefix": "[parameters('storageSubnetAddressPrefix')]",
                 "serviceEndpoints": [
                     {
                         "service": "Microsoft.Storage",
@@ -230,10 +221,22 @@
                             "[parameters('location')]"
                         ]
                     }
-                ],
-                "delegations": []
+                ]
             }
         }
     ],
-    "outputs": {}
+    "outputs": {
+        "vnetName": {
+            "type": "string",
+            "value": "[parameters('existingVNETName')]"
+        },
+        "containerSubnetName": {
+            "type": "string",
+            "value": "[parameters('containerSubnetName')]"
+        },
+        "storageSubnetName": {
+            "type": "string",
+            "value": "[parameters('storageSubnetName')]"
+        }
+    }
 }
