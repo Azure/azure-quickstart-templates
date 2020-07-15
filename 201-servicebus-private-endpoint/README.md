@@ -46,7 +46,7 @@ The ARM template uses the [Azure Custom Script Extension](https://docs.microsoft
 
 ## Deployment ##
 
-You can use the template.json ARM template and parameters.json file included in this repository to deploy the sample. Make sure to edit the parameters.json file to customize the installation. You can also use the deploy.sh Bash script under the scripts folder to deploy the ARM template. The following figure shows the resources deployed by the ARM template in the target resource group.
+The following figure shows the resources deployed by the ARM template in the target resource group.
 
 ![Resource Group](images/resourcegroup.png)
 
