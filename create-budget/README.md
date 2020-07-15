@@ -27,20 +27,24 @@ Before running the script, edit *azuredeploy.parameters.json* and replace the sa
 
 - Amount: The total amount of cost or usage to track with the budget. Any decimal value is allowed.
 
+- Budget Category: The category of the budget, whether the budget tracks cost or usage. Allowed values are "Cost" or "Usage".
+
 - Time Grain: The time covered by a budget. Tracking of the amount will be reset based on the time grain. Allowed values are "Monthly", "Quarterly", "Annually".
 
 - Start Date: The start date must be first of the month in YYYY-MM-DD format and should be less than the end date. Budget start date must be on or after June 1, 2017. Future start date should not be more than three months. Past start date should be selected within the timegrain preiod.
 
 - End Date: Any date after the start date in in YYYY-MM-DD format.
 
-- First Threshold: It is the first threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It is always percent and has to be between 0 and 1000.
+- Operator: The comparison operator. Allowed values are "EqualTo", "GreaterThan", "GreaterThanOrEqualTo".
 
-- Second Threshold: It is the second threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It is always percent and has to be between 0 and 1000.
+- Threshold: It is the threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It is always percent and has to be between 0 and 1000.
 
 - Contact Emails: The list of email addresses to send the budget notification to when the threshold is exceeded. It accepts array of strings.
 
+- Contact Roles: The list of contact roles to send the budget notification to when the threshold is exceeded. It accepts array of strings.
+
 - Contact Groups: The list of action groups to send the budget notification to when the threshold is exceeded. It accepts array of strings.
 
-- Resource Groups Filter: The list of filters on resource groups. It accepts array of strings.
+- Resources Filter: The list of filters on resources. It accepts array of strings.
 
-- Meter Categories Filter: The list of filters on meters. It accepts array of strings.
+- Meters Filter: The list of filters on meters, mandatory for budgets of usage category. It accepts array of strings.
