@@ -23,9 +23,9 @@ The following picture shows the architecture and network topology of the sample.
 
 The ARM template deploys the following resources:
 
-- Virtual Network: this virtual network has a single subnet that hosts an Linux (Ubuntu) virtual machine
+- Virtual Network: this virtual network has a single subnet that hosts a Linux (Ubuntu) virtual machine
 - Network Security Group: this resource contains an inbound rule to allow the access to the virtual machine on port 22 (SSH)
-- The virtual machine is created with a managed identity which is assigned the contributor role at the resource group scope level
+- A Linux virtual machine used to test the private endpoint
 - A Public IP for the Linux virtual machine
 - The NIC used by the Linux virtual machine that makes use of the Public IP
 - A Linux virtual machine used for testing the connectivity to the storage account via a private endpoint
@@ -37,50 +37,12 @@ The ARM template deploys the following resources:
 - A Private Endpoint to let the virtual machine access the Blob Storage Account via a private address
 - A Private Endpoint to let the virtual machine access the messaging entities in the Service Bus namespace via a private address
 
-The ARM template uses the [Azure Custom Script Extension](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux) to download and run the following Bash script on the virtual machine. The script performs the following steps:
+The ARM template uses the [Azure Custom Script Extension](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux) to download and run the following [Bash script](scripts/servicebus_nslookup.sh) on the virtual machine. The script performs the following steps:
 
 - Validates the parameters received by the Custom Script extension
 - Updates the system and upgrade packages
 - Runs the nslookup command against the public URL of the Storage Account to verify that this gets resolved to a private address
 - Runs the nslookup command against the public URL of the Service Bus namespace to verify that this gets resolved to a private address
-
-**servicebus_nslookup.sh**
-
-```bash
-#!/bin/bash
-
-# Variables
-serviceBusNamespaceEndpoint=$1
-blobServicePrimaryEndpoint=$2
-
-# Parameters validation
-if [[ -z $serviceBusNamespaceEndpoint ]]; then
-    echo "serviceBusNamespaceEndpoint parameter cannot be null or empty"
-    exit 1
-fi
-
-if [[ -z $blobServicePrimaryEndpoint ]]; then
-    echo "blobServicePrimaryEndpoint parameter cannot be null or empty"
-    exit 1
-fi
-
-# Eliminate debconf warnings
-echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
-
-# Update the system
-sudo apt-get update -y
-
-# Upgrade packages
-sudo apt-get upgrade -y
-
-# Run nslookup to verify that public hostname of the Service Bus namespace
-# is properly mapped to the private address of the provate endpoint
-nslookup $serviceBusNamespaceEndpoint
-
-# Run nslookup to verify that public hostname of the Blob storage account 
-# is properly mapped to the private address of the provate endpoint
-nslookup $blobServicePrimaryEndpoint
-```
 
 ## Deployment ##
 
