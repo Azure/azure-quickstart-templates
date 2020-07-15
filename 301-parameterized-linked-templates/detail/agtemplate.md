@@ -1,100 +1,19 @@
 # Use Linked Template to Limit Main Template Complexity (App Gateway)
 
-The template [paramlb.json](../nested/paramlb.json) is used to limit the complexity of the main template by encapsulating the deployment of an Application Gateway and only exposing parameters for the things that need to be changed for each deployment.  The template is only referenced one time in [azuredeploy.json](../azuredeploy.json).
+The template [paramappgateway.json](../nested/paramappgateway.json) is used to limit the complexity of the main template by encapsulating the deployment of an Application Gateway and only exposing parameters for the things that need to be changed for each deployment.  The template is only referenced one time in [azuredeploy.json#L521](../azuredeploy.json#L521).
 
-The values that need to change for each deployment are listed as parameters:
-```
-"parameters": {
-  "location": {
-    "type": "string",
-    "metadata": {
-      "description": "Azure region for App Gateway"
-    }
-  },
-  "lb_name": {
-    "type": "String"
-  },
-  "public_ip": {
-    "defaultValue": ""
-  },
-  "vnet_name": {
-    "type": "String"
-  },
-  "vnet_resource_group": {
-    "type": "String"
-  },
-  "vnet_subnet_name": {
-    "type": "String"
-  }
-},
-```
+The values that need to change for each deployment are listed as parameters: [paramappgateway.json#L4-L35](../nested/paramappgateway.json#L4-L35).
 
-The purpose of the Application Gateway in this template is to load balance incoming connections on port 80 (http) to all of the back-end nodes.  You can see the `frontendPorts` defined as a single listener on port 80:
+The purpose of the Application Gateway in this template is to load balance incoming connections on port 80 (http) to all of the back-end nodes.  You can see the `frontendPorts` defined as a single listener on port 80: 
 
-```
-"frontendPorts": [
-  {
-    "name": "port_80",
-    "properties": {
-      "port": 80
-    }
-  }
-],
-```
-```
-"httpListeners": [
-  {
-    "name": "http-listener",
-    "properties": {
-      "frontendIPConfiguration": {
-        "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('lb_name')), '/frontendIPConfigurations/appGwPublicFrontendIp')]"
-      },
-      "frontendPort": {
-        "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('lb_name')), '/frontendPorts/port_80')]"
-      },
-      "protocol": "Http",
-      "requireServerNameIndication": false
-    }
-  }
-],
-```
+Frontend Port Definition: [paramappgateway.json#L70-L77](../nested/paramappgateway.json#L70-L77).
 
-A single routing rule is defined:
-```
-"requestRoutingRules": [
-  {
-    "name": "http-rule",
-    "properties": {
-      "ruleType": "Basic",
-      "httpListener": {
-          "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('lb_name')), '/httpListeners/http-listener')]"
-      },
-      "backendAddressPool": {
-          "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('lb_name')), '/backendAddressPools/default-backend')]"
-      },
-      "backendHttpSettings": {
-          "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('lb_name')), '/backendHttpSettingsCollection/http-setting')]"
-        }
-    }
-  }
-],
-```
+HTTP Listener Definition: [paramappgateway.json#L95-L109](../nested/paramappgateway.json#L95-L109).
 
-The `backendAddressPools` properties are empty.  These properties is not writable at creation time.  Instead, we create the Application Gateway first, and then pass a reference to the Application Gateway to the creation of the VMs that will end up being part of the backend pool.
+A single routing rule is defined: [paramappgateway.json#L110-L126](../nested/paramappgateway.json#L110-L126).
 
-```
-"backendAddressPools": [
-  {
-    "name": "default-backend"
-  }
-],
-```
+The `backendAddressPools` properties are empty: [paramappgateway.json#L78-L82](../nested/paramappgateway.json#L78-L82).  These properties is not writable at creation time.  Instead, we create the Application Gateway first, and then pass a reference to the Application Gateway to the creation of the VMs that will end up being part of the backend pool.
 
-When we are creating backend VMs in [azuredeploy.json#L636-L638](../azuredeploy.json#L636-L638) you can see that we are constructing an id for the backend address pool to pass to the VM creation:
-```
-"loadbalancer_id_or_empty": {
-  "value": "[if(equals(parameters('Deploy App Gateway Frontend'),'Yes'),concat(resourceId('Microsoft.Network/applicationGateways','frontend-loadbalancer'),'/backendAddressPools/default-backend'),'')]"
-}
-```
+When we are creating backend VMs you can see that we are constructing an id for the backend address pool to pass to the VM creation only if the Application Gateway has been deployed: in [azuredeploy.json#L600-L602](../azuredeploy.json#L600-L602).
 
 [Home](../README.md)
