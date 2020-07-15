@@ -40,7 +40,7 @@ The ARM template deploys the following resources:
 The ARM template uses the [Azure Custom Script Extension](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux) to download and run the following [Bash script](scripts/servicebus_nslookup.sh) on the virtual machine. The script performs the following steps:
 
 - Validates the parameters received by the Custom Script extension
-- Updates the system and upgrade packages
+- Updates the system and upgrades packages
 - Runs the nslookup command against the public URL of the Storage Account to verify that this gets resolved to a private address
 - Runs the nslookup command against the public URL of the Service Bus namespace to verify that this gets resolved to a private address
 
