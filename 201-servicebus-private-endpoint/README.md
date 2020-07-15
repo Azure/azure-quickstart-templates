@@ -93,3 +93,4 @@ You can use the template.json ARM template and parameters.json file included in 
 if you open an ssh session to the Linux virtual machine and manually run the nslookup command, you should see an output like the following:
 
 ![Architecture](images/nslookup.png)
+
