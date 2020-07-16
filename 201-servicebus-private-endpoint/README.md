@@ -52,6 +52,6 @@ The following figure shows the resources deployed by the ARM template in the tar
 
 ## Testing ##
 
-if you open an ssh session to the Linux virtual machine and manually run the nslookup command, you should see an output like the following:
+If you open an ssh session to the Linux virtual machine and manually run the nslookup command, you should see an output like the one showed by the following picture:
 
 ![Architecture](images/nslookup.png)
