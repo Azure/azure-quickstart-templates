@@ -3,16 +3,38 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "serviceName": {
-            "type": "string",
-        "metadata": {
-            "description": "The name of the service."
-        }
+            "type": "String",
+            "metadata": {
+                "description": "The name of the service."
+            }
+        },
+        "environmentName": {
+            "allowedValues": [
+                "global",
+                "gov"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "The type of environment to deploy the service"
+            }
         },
         "location": {
-            "type": "string",
             "defaultValue": "[resourceGroup().location]",
+            "type": "String",
             "metadata": {
-                "description": "Location of Azure API for FHIR"
+                "description": "Location of Azure API for FHIR®"
+            }
+        }
+    },
+    "variables": {
+        "authenticationConfiguration": {
+            "global": {
+                "audience": ".azurehealthcareapis.com",
+                "authority": "https://login.microsoftonline.com/"
+            },
+            "gov": {
+                "audience": ".azurehealthcareapis.us",
+                "authority": "https://login.microsoftonline.us/"
             }
         }
     },
@@ -20,13 +42,13 @@
         {
             "type": "Microsoft.HealthcareApis/services",
             "apiVersion": "2019-09-16",
-            "kind": "fhir-R4",
             "name": "[parameters('serviceName')]",
             "location": "[resourceGroup().location]",
+            "kind": "fhir-R4",
             "properties": {
                 "authenticationConfiguration": {
-                    "audience": "[concat('https://', parameters('serviceName'), '.azurehealthcareapis.com')]",
-                    "authority": "[concat('https://login.microsoftonline.com/', subscription().tenantId)]"
+                    "audience": "[concat('https://', parameters('serviceName'), variables('authenticationConfiguration')[parameters('environmentName')].audience)]",
+                    "authority": "[concat(variables('authenticationConfiguration')[parameters('environmentName')].authority, subscription().tenantId)]"
                 }
             }
         }
