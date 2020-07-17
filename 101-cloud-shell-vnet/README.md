@@ -13,7 +13,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cloud-shell-vnet%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cloud-shell-vnet%2Fazuredeploy.json)
 
-This template deploys the necessary resources to run Azure Cloud Shell inside a customer owned virtual network. Azure Cloud Shell is a browser-based, authenticated, command-line experience based in the Azure Portal for managing cloud resources. Running Cloud Shell in a customer virtual network allows the customer to manage resources that may be isolated from the public internet in a private virtual network.
+This template deploys the necessary resources to run Azure Cloud Shell inside a customer owned virtual network. Azure Cloud Shell is a browser-based, authenticated, command-line experience based in the Azure Portal for managing cloud resources. Running Cloud Shell in a customer virtual network allows the customer to manage resources that may be isolated from the public internet in a private virtual network. For more information, view our documentation: https://aka.ms/cloudshell/docs/vnet.
 
 ## Prerequisites
 
