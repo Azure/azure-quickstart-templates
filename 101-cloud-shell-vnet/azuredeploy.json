@@ -5,13 +5,13 @@
         "existingVNETName": {
             "type": "string",
             "metadata": {
-                "description": "Name of the existing VNET to inject Cloud Shell into"
+                "description": "Name of the existing VNET to inject Cloud Shell into."
             }
         },
         "relayNamespaceName": {
             "type": "string",
             "metadata": {
-                "description": "Name of Azure Relay Namespace"
+                "description": "Name of Azure Relay Namespace."
             }
         },
         "azureContainerInstanceOID": {
@@ -24,46 +24,46 @@
             "type": "string",
             "defaultValue": "cloudshellsubnet",
             "metadata": {
-                "description": "Name of the subnet to use for cloud shell containers"
+                "description": "Name of the subnet to use for cloud shell containers."
             }
         },
         "containerSubnetAddressPrefix": {
             "type": "string",
             "metadata": {
-                "description": "Address space of the subnet to add"
+                "description": "Address space of the subnet to add for cloud shell. e.g. 10.0.1.0/26"
             }
         },
         "relaySubnetName": {
             "type": "string",
             "defaultValue": "relaysubnet",
             "metadata": {
-                "description": "Name of the subnet to use for private link of relay namespace"
+                "description": "Name of the subnet to use for private link of relay namespace."
             }
         },        
         "relaySubnetAddressPrefix": {
             "type": "string",
             "metadata": {
-                "description": "Address space of the subnet to add for relay subnet"
+                "description": "Address space of the subnet to add for relay. e.g. 10.0.2.0/26"
             }
         },
         "storageSubnetName": {
             "type": "string",
             "defaultValue": "storagesubnet",
             "metadata": {
-                "description": "Name of the subnet to use for storage account"
+                "description": "Name of the subnet to use for storage account."
             }
         },
         "storageSubnetAddressPrefix": {
             "type": "string",
             "metadata": {
-                "description": "Address space of the subnet to add for storage subnet"
+                "description": "Address space of the subnet to add for storage. e.g. 10.0.3.0/26"
             }
         },
         "privateEndpointName": {
             "defaultValue": "cloudshellRelayEndpoint",
             "type": "string",
             "metadata": {
-                "description": "Name of Private Endpoint for Azure Relay"
+                "description": "Name of Private Endpoint for Azure Relay."
             }
         },
         "location": {
@@ -75,10 +75,13 @@
         }
     },
     "variables": {
+        "networkProfileName": "[concat('aci-networkProfile-', parameters('location'))]",
+        "networkProfileRef": "[resourceId('Microsoft.Network/networkProfiles', variables('networkProfileName'))]",
         "containerSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('containerSubnetName'))]",
-        "relayNamespaceId": "[resourceId('Microsoft.Relay/namespaces/', parameters('relayNamespaceName'))]",
+        "relayNamespaceRef": "[resourceId('Microsoft.Relay/namespaces/', parameters('relayNamespaceName'))]",
         "relaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('relaySubnetName'))]",
-        "contributorRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]"
+        "contributorRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "networkRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7')]"
     },
     "resources": [
         {
@@ -108,7 +111,7 @@
         },
         {
             "type": "Microsoft.Network/networkProfiles",
-            "name": "[concat('aci-networkProfile-', parameters('location'))]",
+            "name": "[variables('networkProfileName')]",
             "apiVersion": "2019-11-01",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -135,6 +138,19 @@
             }
         },
         {
+            "type": "Microsoft.Network/networkProfiles/providers/roleAssignments",
+            "apiVersion": "2018-09-01-preview",
+            "name": "[concat(variables('networkProfileName'), '/Microsoft.Authorization/', guid(variables('networkRoleDefinitionId'), parameters('azureContainerInstanceOID'), variables('networkProfileName')))]",
+            "dependsOn": [
+                "[variables('networkProfileRef')]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('networkRoleDefinitionId')]",
+                "principalId": "[parameters('azureContainerInstanceOID')]",
+                "scope": "[variables('networkProfileRef')]"
+            }
+        },
+        {
             "type": "Microsoft.Relay/namespaces",
             "apiVersion": "2018-01-01-preview",
             "name": "[parameters('relayNamespaceName')]",
@@ -149,12 +165,12 @@
             "apiVersion": "2018-09-01-preview",
             "name": "[concat(parameters('relayNamespaceName'), '/Microsoft.Authorization/', guid(variables('contributorRoleDefinitionId'), parameters('azureContainerInstanceOID'), parameters('relayNamespaceName')))]",
             "dependsOn": [
-                "[variables('relayNamespaceId')]"
+                "[variables('relayNamespaceRef')]"
             ],
             "properties": {
                 "roleDefinitionId": "[variables('contributorRoleDefinitionId')]",
                 "principalId": "[parameters('azureContainerInstanceOID')]",
-                "scope": "[variables('relayNamespaceId')]"
+                "scope": "[variables('relayNamespaceRef')]"
             }
         },
         {
@@ -178,14 +194,14 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[variables('relaySubnetRef')]",
-                "[variables('relayNamespaceId')]"
+                "[variables('relayNamespaceRef')]"
             ],
             "properties": {
                 "privateLinkServiceConnections": [
                     {
                         "name": "[parameters('privateEndpointName')]",
                         "properties": {
-                            "privateLinkServiceId": "[variables('relayNamespaceId')]",
+                            "privateLinkServiceId": "[variables('relayNamespaceRef')]",
                             "groupIds": [
                                 "namespace"
                             ]
