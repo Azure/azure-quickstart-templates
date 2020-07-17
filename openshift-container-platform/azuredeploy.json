@@ -352,50 +352,42 @@
 			"apiVersion": "2019-09-01",
 			"properties": {
 				"addressSpace": {
-					"addressPrefixes": [
-						"[parameters('virtualNetworkCIDR')]"
-					]
+					"addressPrefixes": "[parameters('virtualNetworkCIDR')]"
 				},
 				"subnets": [
 					{
 						"name": "[parameters('bastionSubnetName')]",
 						"properties": {
-							"addressPrefix": "[parameters('bastionSubnetPrefix')]"
+							"addressPrefix": "[parameters('bastionSubnetPrefix')]",
+							"networkSecurityGroup": {
+								"id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('bastionSecurityGroupName'))]"
+							}
+						}
+					},
+					{
+						"name": "[parameters('masterSubnetName')]",
+						"properties": {
+							"addressPrefix": "[parameters('masterSubnetPrefix')]",
+							"networkSecurityGroup": {
+								"id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('masterSecurityGroupName'))]"
+							}
+						}
+					},
+					{
+						"name": "[parameters('workerSubnetName')]",
+						"properties": {
+							"addressPrefix": "[parameters('workerSubnetPrefix')]",
+							"networkSecurityGroup": {
+								"id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('workerSecurityGroupName'))]"
+							}
 						}
 					}
 				]
-			}
-		},
-		{
-			"apiVersion": "2019-09-01",
-			"type": "Microsoft.Network/virtualNetworks/subnets",
-			"name": "[concat(parameters('virtualNetworkName'), '/', parameters('masterSubnetName'))]",
-			"location": "[parameters('location')]",
-			"properties": {
-				"addressPrefix": "[parameters('masterSubnetPrefix')]",
-				"networkSecurityGroup": {
-					"id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('masterSecurityGroupName'))]"
-				}
 			},
 			"dependsOn": [
-				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('masterSecurityGroupName'))]"
-			]
-		},
-		{
-			"apiVersion": "2019-09-01",
-			"type": "Microsoft.Network/virtualNetworks/subnets",
-			"name": "[concat(parameters('virtualNetworkName'), '/', parameters('workerSubnetName'))]",
-			"location": "[parameters('location')]",
-			"properties": {
-				"addressPrefix": "[parameters('workerSubnetPrefix')]",
-				"networkSecurityGroup": {
-					"id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('workerSecurityGroupName'))]"
-				}
-			},
-			"dependsOn": [
-				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('workerSecurityGroupName'))]"
+				"[variables('bastionSecurityGroupName')]",
+				"[variables('masterSecurityGroupName')]",
+				"[variables('workerSecurityGroupName')]"
 			]
 		},
 		{
@@ -469,8 +461,7 @@
 			},
 			"dependsOn": [
 				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('workerSecurityGroupName'))]",
-				"[resourceId(variables('networkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('workerSubnetName'))]"
+				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('workerSecurityGroupName'))]"
 			],
 			"properties": {
 				"ipConfigurations": [
@@ -612,20 +603,6 @@
 			"properties": {
 				"securityRules": [
 					{
-						"name": "allowSSHin_all",
-						"properties": {
-							"description": "Allow SSH in from bastion node",
-							"protocol": "Tcp",
-							"sourcePortRange": "*",
-							"destinationPortRange": "22",
-							"sourceAddressPrefix": "[parameters('bastionSubnetPrefix')]",
-							"destinationAddressPrefix": "[parameters('masterSubnetPrefix')]",
-							"access": "Allow",
-							"priority": 100,
-							"direction": "Inbound"
-						}
-					},
-					{
 						"name": "allowHTTPS_all",
 						"properties": {
 							"description": "Allow HTTPS connections from all locations",
@@ -643,25 +620,6 @@
 			}
 		},
 		{
-			"condition": "[equals(parameters('storageOption'), 'nfs')]",
-			"type": "Microsoft.Network/networkSecurityGroups/securityRules",
-			"apiVersion": "2019-04-01",
-			"name": "[concat(variables('workerSecurityGroupName'), '/nfsIn')]",
-			"dependsOn": [
-				"[resourceId('Microsoft.Network/networkSecurityGroups', variables('workerSecurityGroupName'))]"
-			],
-			"properties": {
-				"protocol": "Tcp",
-				"sourcePortRange": "*",
-				"destinationPortRange": "2049",
-				"sourceAddressPrefix": "*",
-				"destinationAddressPrefix": "*",
-				"access": "Allow",
-				"priority": 130,
-				"direction": "Inbound"
-			}
-		},
-		{
 			"apiVersion": "2019-09-01",
 			"type": "Microsoft.Network/networkSecurityGroups",
 			"name": "[variables('workerSecurityGroupName')]",
@@ -674,20 +632,6 @@
 			},
 			"properties": {
 				"securityRules": [
-					{
-						"name": "allowSSHin_all",
-						"properties": {
-							"description": "Allow SSH in from bastion node",
-							"protocol": "Tcp",
-							"sourcePortRange": "*",
-							"destinationPortRange": "22",
-							"sourceAddressPrefix": "[parameters('bastionSubnetPrefix')]",
-							"destinationAddressPrefix": "[parameters('workerSubnetPrefix')]",
-							"access": "Allow",
-							"priority": 100,
-							"direction": "Inbound"
-						}
-					},
 					{
 						"name": "allowHTTPS_all",
 						"properties": {
