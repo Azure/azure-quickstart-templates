@@ -34,7 +34,7 @@ The ARM template deploys the following resources:
 - A Private DNS Zone for a blob storage resource
 - A Private Endpoint for the blob storage account
 
-The ARM template uses the [Azure Custom Script Extension](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux) to download and run the following Bash script on the virtual machine. The script performs the following steps:
+The ARM template uses the [Azure Custom Script Extension](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux) to download and run the following [Bash script](scripts/nslookup.sh) on the virtual machine. The script performs the following steps:
 
 - Validates the parameters received by the Custom Script extension
 - Update the system and upgrade packages
@@ -46,50 +46,14 @@ The ARM template uses the [Azure Custom Script Extension](https://docs.microsoft
 - Creates a directory in the file system
 - Creates a file in the directory with the content passed as a parameter
 
-```bash
-#!/bin/bash
-
-# Variables
-adlsServicePrimaryEndpoint=$1
-blobServicePrimaryEndpoint=$2
-
-# Parameters validation
-if [[ -z $adlsServicePrimaryEndpoint ]]; then
-    echo "adlsServicePrimaryEndpoint parameter cannot be null or empty"
-    exit 1
-fi
-
-if [[ -z $blobServicePrimaryEndpoint ]]; then
-    echo "blobServicePrimaryEndpoint parameter cannot be null or empty"
-    exit 1
-fi
-
-# Eliminate debconf warnings
-echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
-
-# Update the system
-sudo apt-get update -y
-
-# Upgrade packages
-sudo apt-get upgrade -y
-
-# Run nslookup to verify that public hostname of the ADLS Gen 2 storage account 
-# is properly mapped to the private address of the provate endpoint
-nslookup $adlsServicePrimaryEndpoint
-
-# Run nslookup to verify that public hostname of the Blob storage account 
-# is properly mapped to the private address of the provate endpoint
-nslookup $blobServicePrimaryEndpoint
-```
-
 ## Deployment ##
 
-You can use the template.json ARM template and parameters.json file included in this repository to deploy the sample. Make sure to edit the parameters.json file to customize the installation. You can also use the deploy.sh Bash script under the scripts folder to deploy the ARM template. The following figure shows the resources deployed by the ARM template in the target resource group.
+The following figure shows the resources deployed by the ARM template in the target resource group.
 
 ![Resource Group](images/resourcegroup.png)
 
 ## Testing ##
 
-if you open an ssh session to the Linux virtual machine and manually run the nslookup command, you should see an output like the following:
+If you open an ssh session to the Linux virtual machine and manually run the nslookup command, you should see an output like the following:
 
 ![Architecture](images/nslookup.png)
