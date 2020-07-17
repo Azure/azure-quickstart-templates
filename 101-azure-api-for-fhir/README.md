@@ -23,4 +23,4 @@ As a part of this solution, an Azure API for FHIR® resource is created.
 
 You can click the "deploy to Azure" button at the beginning of this document to deploy an instance of the Azure API for FHIR®.
 
-During deployment, you can specify the name and location of the service. All other parameters for deployment are automatically configured for you.
+During deployment, you can specify the service name, environment name and location. All other parameters for deployment are automatically configured for you.
