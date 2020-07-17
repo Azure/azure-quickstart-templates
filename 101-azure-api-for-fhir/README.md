@@ -1,4 +1,4 @@
-# Create an Azure API for FHIR®
+# Deploy an instance of Azure API for FHIR®
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/PublicDeployment.svg)
