@@ -1,0 +1,168 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "satyaType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ]
+    },
+    "satya-ubuntuName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "satya-ubuntuAdminUserName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "satya-ubuntuAdminPassword": {
+      "type": "securestring"
+    },
+    "satya-ubuntuUbuntuOSVersion": {
+      "type": "string",
+      "defaultValue": "14.04.2-LTS",
+      "allowedValues": [
+        "12.04.5-LTS",
+        "14.04.2-LTS"
+      ]
+    }},
+  "variables": {
+    "satyaName": "[concat('satya', uniqueString(resourceGroup().id))]",
+    "satya-vnetPrefix": "10.0.0.0/16",
+    "satya-vnetSubnet1Name": "satya-sub1",
+    "satya-vnetSubnet1Prefix": "10.0.0.0/24",
+    "satya-vnetSubnet2Name": "satya-sub2",
+    "satya-vnetSubnet2Prefix": "10.0.1.0/24",
+    "satya-ubuntuImagePublisher": "Canonical",
+    "satya-ubuntuImageOffer": "UbuntuServer",
+    "satya-ubuntuOSDiskName": "satya-ubuntuOSDisk",
+    "satya-ubuntuVmSize": "Standard_B1s",
+    "satya-ubuntuVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'satya-vnet')]",
+    "satya-ubuntuSubnetRef": "[concat(variables('satya-ubuntuVnetID'), '/subnets/', variables('satya-vnetSubnet1Name'))]",
+    "satya-ubuntuStorageAccountContainerName": "vhds",
+    "satya-ubuntuNicName": "[concat(parameters('satya-ubuntuName'), 'NetworkInterface')]"},
+  "resources": [
+    {
+      "name": "[variables('satyaName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-01-01",
+      "sku": {
+        "name": "[parameters('satyaType')]"
+      },
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "satya"
+      },
+      "kind": "Storage"
+    },
+    {
+      "name": "satya-vnet",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "satya-vnet"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('satya-vnetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('satya-vnetSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('satya-vnetSubnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[variables('satya-vnetSubnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('satya-vnetSubnet2Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('satya-ubuntuNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', 'satya-vnet')]"
+      ],
+      "tags": {
+        "displayName": "satya-ubuntuNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('satya-ubuntuSubnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('satya-ubuntuName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('satyaName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('satya-ubuntuNicName'))]"
+      ],
+      "tags": {
+        "displayName": "satya-ubuntu"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('satya-ubuntuVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('satya-ubuntuName')]",
+          "adminUsername": "[parameters('satya-ubuntuAdminUsername')]",
+          "adminPassword": "[parameters('satya-ubuntuAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('satya-ubuntuImagePublisher')]",
+            "offer": "[variables('satya-ubuntuImageOffer')]",
+            "sku": "[parameters('satya-ubuntuUbuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "satya-ubuntuOSDisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('satyaName')), '2016-01-01').primaryEndpoints.blob, variables('satya-ubuntuStorageAccountContainerName'), '/', variables('satya-ubuntuOSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('satya-ubuntuNicName'))]"
+            }
+          ]
+        }
+      }
+    }],
+  "outputs": {}
+}
