@@ -18,3 +18,10 @@
 
 This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN. This template also configures rules engine UrlSigning action for default and override parameters.
 
+Before using the template, make sure to do the following:
+
+1. Create a key vault in the same subscription or in a different subscription.
+2. Define two secrets and set up secret values manually (at least 32 size)
+3. References the two secrets in urlSigningKeys of the template (change subscriptionId, resourceGroupName, vaultName, secretName, secretVersion)
+4. Make sure the keyvault is given "Get Permissions for Secret" access to "Microsoft.Azure.CDN" Principal.
+
