@@ -23,5 +23,5 @@
 
 This template allows you to create an HDInsight cluster with loadbased Autoscale enabled.
   
-  `Tags: HDInsight, autoscale, load-based`
+  `Tags: HDInsight, Autoscale, load-based`
 
