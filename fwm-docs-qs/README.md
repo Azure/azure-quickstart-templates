@@ -1,16 +1,17 @@
 # Azure Firewall Manager secured virtual hub Quickstart
 
-    ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/PublicLastTestDate.svg)
-    ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/PublicDeployment.svg)
 
-    ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/FairfaxLastTestDate.svg)
-    ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/FairfaxDeployment.svg)
+   
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/CredScanResult.svg)
     
-    ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/BestPracticeResult.svg)
-    ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/CredScanResult.svg)
     
-    
-    [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ffwm-docs-qs%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ffwm-docs-qs%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ffwm-docs-qs%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ffwm-docs-qs%2Fazuredeploy.json)
 
 This template creates a secured virtual hub using Azure Firewall to secure your cloud network traffic destined to the Internet. The firewall has an application rule that allows web traffic to 'www.microsoft.com'.
 
