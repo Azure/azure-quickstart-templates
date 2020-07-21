@@ -1,4 +1,4 @@
-# Create a DBFS Datastore Azure Machine Learning Workspace
+# Create a DBFS Datastore in Azure Machine Learning Workspace
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-machine-learning-datastore-create-dbfs/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-machine-learning-datastore-create-dbfs/PublicDeployment.svg)
