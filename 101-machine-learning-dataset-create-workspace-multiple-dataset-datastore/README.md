@@ -12,7 +12,7 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-dataset-create-workspace-multiple-dataset-datastore%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-dataset-create-workspace-multiple-dataset-datastore%2Fazuredeploy.json)
 
-This template creates Azure Machine Learning workspace with multiple datasets & datastores.
+This template creates Azure Machine Learning workspace with multiple datasets & datastores. The template is only a reference to help customer create his own custom template with desired dataset & datastore parameters.
 
 If you are new to Azure Machine Learning, see:
 
