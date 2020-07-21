@@ -5,7 +5,7 @@
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-azure-api-for-fhir/PublicDeployment.svg)
 
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-azure-api-for-fhir/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-azure-api-for-fhire/FairfaxDeployment.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-azure-api-for-fhir/FairfaxDeployment.svg)
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-azure-api-for-fhir/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-azure-api-for-fhir/CredScanResult.svg)
