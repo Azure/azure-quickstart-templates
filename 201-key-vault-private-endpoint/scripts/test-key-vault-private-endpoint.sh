@@ -4,6 +4,10 @@
 keyVaultServiceEndpoint=$1
 blobServicePrimaryEndpoint=$2
 
+# Formatting
+redPrefix="\033[38;5;1m"
+redPostfix="\033[m"
+
 # Parameter validation
 if [[ -z $keyVaultServiceEndpoint ]]; then
     echo "keyVaultServiceEndpoint cannot be null or empty"
@@ -56,4 +60,15 @@ nslookup $blobServicePrimaryEndpoint
 az login --identity --allow-no-subscriptions
 
 # Retrieve the list of secrets
-az keyvault secret list --vault-name $keyVaultName
+
+# Create Event Hub subscription
+echo "Retrieving secrets from [$keyVaultName] key vault..."
+output=$(az keyvault secret list --vault-name $keyVaultName 2>&1)
+
+if [[ $? == 0 ]]; then
+    echo "Secrets have been successfully retrieved from [$keyVaultName] key vault"
+    echo $output
+else
+    echo "Failed to retrieve secrets from [$keyVaultName] key vault"
+    echo -e "${redPrefix}${output}${redPostfix}"
+fi
