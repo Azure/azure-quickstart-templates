@@ -3,6 +3,7 @@
 # Variables
 keyVaultServiceEndpoint=$1
 blobServicePrimaryEndpoint=$2
+azureEnvironment=$3
 
 # Formatting
 redPrefix="\033[38;5;1m"
@@ -21,6 +22,13 @@ if [[ -z $blobServicePrimaryEndpoint ]]; then
     exit 1
 else
     echo "blobServicePrimaryEndpoint: $blobServicePrimaryEndpoint"
+fi
+
+if [[ -z $azureEnvironment ]]; then
+    echo "azureEnvironment cannot be null or empty"
+    exit 1
+else
+    echo "azureEnvironment: $keyVaultServiceEndpoint"
 fi
 
 # Extract the key vault name from the adls service primary endpoint
@@ -55,6 +63,11 @@ nslookup $keyVaultServiceEndpoint
 # Run nslookup to verify that public hostname of the Blob storage account 
 # is properly mapped to the private address of the provate endpoint
 nslookup $blobServicePrimaryEndpoint
+
+# Set cloud environment
+if [[ ${azureEnvironment,,} == 'azureusgovernment' ]]; then
+    az cloud set --name AzureUSGovernment
+fi
 
 # Login using the virtual machine system-assigned managed identity
 az login --identity --allow-no-subscriptions
