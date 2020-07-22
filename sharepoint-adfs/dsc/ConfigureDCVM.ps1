@@ -280,14 +280,14 @@
             ClaimsProviderName = @("Active Directory")
             WsFederationEndpoint = "https://$SPTrustedSitesName.$DomainFQDN/_trust/"
             AdditionalWSFedEndpoint = @("https://*.$DomainFQDN/")
-            IssuanceAuthorizationRules = '=> issue(Type = "https://schemas.microsoft.com/authorization/claims/permit", value = "true");'
+            IssuanceAuthorizationRules = '=> issue(Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");'
             IssuanceTransformRules = @"
 @RuleTemplate = "LdapClaims"
 @RuleName = "AD"
-c:[Type == "https://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
 => issue(
 store = "Active Directory", 
-types = ("https://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "https://schemas.microsoft.com/ws/2008/06/identity/claims/role"), 
+types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"), 
 query = ";mail,tokenGroups(longDomainQualifiedName);{0}", 
 param = c.Value);
 "@
