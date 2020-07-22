@@ -74,4 +74,4 @@ az login --identity --allow-no-subscriptions
 # Retrieve the list of secrets
 
 # Create Event Hub subscription
-az keyvault secret list --vault-name $keyVaultName 2>&1
+az keyvault secret list --vault-name $keyVaultName
