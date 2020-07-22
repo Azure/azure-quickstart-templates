@@ -143,7 +143,7 @@ configuration ConfigureSQLVM
             DependsOn = "[Computer]DomainJoin"
         }
 
-        SQLServerLogin AddDomainAdminLogin
+        SqlLogin AddDomainAdminLogin
         {
             Name = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
             Ensure = "Present"
@@ -153,7 +153,7 @@ configuration ConfigureSQLVM
             DependsOn = "[Computer]DomainJoin"
         }
 
-        SQLServerLogin AddSPSetupLogin
+        SqlLogin AddSPSetupLogin
         {
             Name = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
             Ensure = "Present"
@@ -163,37 +163,37 @@ configuration ConfigureSQLVM
             DependsOn = "[xADUser]CreateSPSetupAccount"
         }
 
-        SQLServerRole GrantSQLRoleSysadmin
+        SqlRole GrantSQLRoleSysadmin
         {
             ServerRoleName = "sysadmin"
             MembersToInclude = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
             Ensure = "Present"
             ServerName = $ComputerName
             InstanceName = "MSSQLSERVER"
-            DependsOn = "[SQLServerLogin]AddDomainAdminLogin"
+            DependsOn = "[SqlLogin]AddDomainAdminLogin"
         }
 
-        SQLServerRole GrantSQLRoleSecurityAdmin
+        SqlRole GrantSQLRoleSecurityAdmin
         {
             ServerRoleName = "securityadmin"
             MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
             ServerName = $ComputerName
             InstanceName = "MSSQLSERVER"
             Ensure = "Present"
-            DependsOn = "[SQLServerLogin]AddSPSetupLogin"
+            DependsOn = "[SqlLogin]AddSPSetupLogin"
         }
 
-        SQLServerRole GrantSQLRoleDBCreator
+        SqlRole GrantSQLRoleDBCreator
         {
             ServerRoleName = "dbcreator"
             MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
             ServerName = $ComputerName
             InstanceName = "MSSQLSERVER"
             Ensure = "Present"
-            DependsOn = "[SQLServerLogin]AddSPSetupLogin"
+            DependsOn = "[SqlLogin]AddSPSetupLogin"
         }
 
-        SQLServerMaxDop ConfigureMaxDOP
+        SqlMaxDop ConfigureMaxDOP
         {
             ServerName   = $ComputerName
             InstanceName = "MSSQLSERVER"
