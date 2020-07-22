@@ -5,10 +5,6 @@ keyVaultServiceEndpoint=$1
 blobServicePrimaryEndpoint=$2
 azureEnvironment=$3
 
-# Formatting
-redPrefix="\033[38;5;1m"
-redPostfix="\033[m"
-
 # Parameter validation
 if [[ -z $keyVaultServiceEndpoint ]]; then
     echo "keyVaultServiceEndpoint cannot be null or empty"
@@ -50,6 +46,9 @@ sudo apt-get update -y
 # Upgrade packages
 sudo apt-get upgrade -y
 
+# Install jq
+sudo apt-get install -y --fix-missing jq
+
 # Install curl and traceroute
 sudo apt install -y curl traceroute
 
@@ -75,13 +74,4 @@ az login --identity --allow-no-subscriptions
 # Retrieve the list of secrets
 
 # Create Event Hub subscription
-echo "Retrieving secrets from [$keyVaultName] key vault..."
-output=$(az keyvault secret list --vault-name $keyVaultName 2>&1)
-
-if [[ $? == 0 ]]; then
-    echo "Secrets have been successfully retrieved from [$keyVaultName] key vault"
-    echo $output
-else
-    echo "Failed to retrieve secrets from [$keyVaultName] key vault"
-    echo -e "${redPrefix}${output}${redPostfix}"
-fi
+az keyvault secret list --vault-name $keyVaultName 2>&1
