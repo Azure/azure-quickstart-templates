@@ -1,4 +1,4 @@
-# Connecting to a Key Vault via a Private Endpoint #
+# Connect to Key Vault using an Azure Private Endpoint #
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-key-vault-private-endpoint/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-key-vault-private-endpoint/PublicDeployment.svg)
