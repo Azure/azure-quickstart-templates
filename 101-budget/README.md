@@ -27,8 +27,6 @@ This template creates a budget (email notifications for up to three thresholds).
 - Contact Roles: The roles that should receive the threshold alert or notification.
 - Contact Emails: The email addresses that should receive the threshold alert or notification.
 - Contact Groups: The action groups that will process the budget notification.
-- Resource Groups Filter: Filters on resource groups.
-- Meter Categories Filter: Filters on meters.
 
 See also : 
 [Tutorial: Create and manage Azure budgets.](https://docs.microsoft.com/en-us/azure/cost-management-billing/costs/tutorial-acm-create-budgets)
