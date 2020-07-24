@@ -74,6 +74,12 @@
         "description": "Name of the subnet in the virtual network you want to use"
       }
     },
+    "existingStorageAccountForVm": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account for VM"
+      }
+    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -95,7 +101,6 @@
       "_"
     ],
     "prefix": "[split(parameters('IntegrationRuntimeName'), variables('delimiters'))[0]]",
-    "storageAccountName": "[take(concat(toLower(variables('prefix')), uniquestring(resourceGroup().id, parameters('IntegrationRuntimeName'))), 24)]",
     "networkSecurityGroupName": "[concat(parameters('IntegrationRuntimeName'), 'nsg')]",
     "vmTemplateLink": "[concat(parameters('_artifactsLocation'), 'nested/VMtemplate.json',parameters('_artifactsLocationSasToken'))]",
     "IRtemplateLink": "[concat(parameters('_artifactsLocation'), 'nested/', parameters('existingDataFactoryVersion'), 'IRtemplate.json',parameters('_artifactsLocationSasToken'))]",
@@ -148,90 +153,12 @@
       }
     },
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2016-01-01",
-      "location": "[parameters('existingVnetLocation')]",
-      "dependsOn": [
-        "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')]"
-      ],
-      "sku": {
-        "name": "Standard_LRS",
-        "tier": "Standard"
-      },
-      "kind": "StorageV2",
-      "properties": {
-        "largeFileSharesState": "Disabled",
-        "networkAcls": {
-          "bypass": "AzureServices",
-          "virtualNetworkRules": [
-          ],
-          "ipRules": [
-          ],
-          "defaultAction": "Allow"
-        },
-        "supportsHttpsTrafficOnly": true,
-        "encryption": {
-          "services": {
-            "file": {
-              "enabled": "true"
-            },
-            "blob": {
-              "enabled": "true"
-            }
-          },
-          "keySource": "Microsoft.Storage"
-        },
-        "accessTier": "Hot"
-      }
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts/blobServices",
-      "apiVersion": "2019-06-01",
-      "name": "[concat(variables('storageAccountName'), '/default')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-      ],
-      "sku": {
-        "name": "Standard_LRS",
-        "tier": "Standard"
-      },
-      "properties": {
-        "cors": {
-          "corsRules": [
-          ]
-        },
-        "deleteRetentionPolicy": {
-          "enabled": false
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts/fileServices",
-      "apiVersion": "2019-06-01",
-      "name": "[concat(variables('storageAccountName'), '/default')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-      ],
-      "sku": {
-        "name": "Standard_LRS",
-        "tier": "Standard"
-      },
-      "properties": {
-        "cors": {
-          "corsRules": [
-          ]
-        }
-      }
-    },
-    {
       "apiVersion": "2015-01-01",
       "name": "[concat('VMtemplate-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
         "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
       "copy": {
         "name": "vmcopy",
@@ -266,7 +193,7 @@
             "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
           },
           "storageAccountName": {
-            "value": "[variables('storageAccountName')]"
+            "value": "[parameters('existingStorageAccountForVm')]"
           },
           "scriptUrl": {
             "value": "[variables('scriptURL')]"
