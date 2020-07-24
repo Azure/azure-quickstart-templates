@@ -1,0 +1,615 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "companyTla": {
+            "type": "string",
+            "metadata": {
+                "description": "This is a Three Letter Acronym for your company name. 'CON' for Contoso for example."
+            },
+            "maxLength": 3
+        },
+        "userObjectID": {
+            "type": "string",
+            "metadata": {
+                "description": "This is where you give a User permissions to the Data Lake Storage Account. This will give the user Storage Blob Data Contributor to work with the file system."
+            }
+        },
+        "allowAllConnections": {
+            "type": "string",
+            "allowedValues": [
+                "true",
+                "false"
+            ],
+            "defaultValue": "true"
+        },
+        "sparkDeployment": {
+            "type": "string",
+            "defaultValue": "true",
+            "allowedValues": [
+                "true",
+                "false"
+            ],
+            "metadata": {
+                "description": "'True' deploys an Apache Spark pool as well as a SQL pool. 'False' does not deploy an Apache Spark pool."
+            }
+        },
+        "sparkNodeSize": {
+            "type": "string",
+            "metadata": {
+                "description": "This parameter will determine the node size if SparkDeployment is true"
+            },
+            "defaultValue": "Medium",
+            "allowedValues": [
+                "Small",
+                "Medium",
+                "Large"
+            ]
+        },
+        "deploymentType": {
+            "type": "string",
+            "allowedValues": [
+                "devtest",
+                "poc",
+                "prod",
+                "shared"
+            ],
+            "defaultValue": "poc",
+            "metadata": {
+                "description": "Specify deployment type: DevTest, POC, Prod, Shared. This will also be used in the naming convention."
+            }
+        },
+        "sqlAdministratorLogin": {
+            "type": "string",
+            "defaultValue": "sqladminuser",
+            "metadata": {
+                "description": "The username of the SQL Administrator"
+            }
+        },
+        "sqlAdministratorLoginPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password for the SQL Administrator"
+            }
+        },
+        "storageRoleUniqueId": {
+            "type": "string",
+            "defaultValue":"[newGuid()]",
+            "metadata": {
+                "description": "Leave this as default value. Generates a new GUID for role assignment."
+            }
+        },
+        "sku": {
+            "type": "string",
+            "defaultValue": "DW100c",
+            "allowedValues": [
+                "DW100c",
+                "DW200c",
+                "DW300c",
+                "DW400c",
+                "DW500c",
+                "DW1000c",
+                "DW1500c",
+                "DW2000c",
+                "DW2500c",
+                "DW3000c"
+            ],
+            "metadata": {
+                "description": "Select the SKU of the SQL pool."
+            }
+        },
+        "metadataSync": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Choose whether you want to synchronise metadata."
+            }
+        },
+        "pauseGuid": {
+            "type": "string",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "Leave this as the default value. This generates a guid for the Role Assignment deployment."
+            }
+        },
+        "resumeGuid": {
+            "type": "string",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "Leave this as the default value. This generates a guid for the Role Assignment deployment."
+            }
+        },
+        "logicAppPauseName": {
+            "type": "string",
+            "defaultValue": "SynapsePauseSchedule",
+            "metadata": {
+                "description": "The name of the Logic App for the Pause schedule."
+            }
+        },
+        "logicAppResumeName": {
+            "type": "string",
+            "defaultValue": "SynapseResumeSchedule",
+            "metadata": {
+                "description": "The name of the Logic App for the Pause schedule."
+            }
+        },
+        "Frequency": {
+            "type": "string",
+            "metadata": "Choose whether to run schedule every day of the week, or only on weekdays",
+            "defaultValue": "Weekdays",
+            "allowedValues": [
+                "Daily",
+                "Weekdays"
+            ]
+        },
+        "TIME_ZONE": {
+            "type": "string",
+            "metadata": "Timezone for the schedule. Consult https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx for more information",
+            "defaultValue": "Pacific Standard Time",
+            "allowedValues": [
+            "Dateline Standard Time",
+            "Samoa Standard Time",
+            "Hawaiian Standard Time",
+            "Alaskan Standard Time",
+            "Pacific Standard Time",
+            "Mountain Standard Time",
+            "Mexico Standard Time 2",
+            "Central Standard Time",
+            "Canada Central Standard Time",
+            "Mexico Standard Time",
+            "Central America Standard Time",
+            "Eastern Standard Time",
+            "Atlantic Standard Time",
+            "Newfoundland and Labrador Standard Time",
+            "E. South America Standard Time",
+            "S.A. Eastern Standard Time",
+            "Greenland Standard Time",
+            "Mid-Atlantic Standard Time",
+            "Azores Standard Time",
+            "Cape Verde Standard Time",
+            "GMT Standard Time",
+            "Greenwich Standard Time",
+            "Central Europe Standard Time",
+            "Central European Standard Time",
+            "Romance Standard Time",
+            "W. Europe Standard Time",
+            "W. Central Africa Standard Time",
+            "E. Europe Standard Time",
+            "Egypt Standard Time",
+            "FLE Standard Time",
+            "GTB Standard Time",
+            "Israel Standard Time",
+            "South Africa Standard Time",
+            "Russian Standard Time",
+            "Arab Standard Time",
+            "E. Africa Standard Time",
+            "Arabic Standard Time",
+            "Iran Standard Time",
+            "Arabian Standard Time",
+            "Caucasus Standard Time",
+            "Transitional Islamic State of Afghanistan Standard Time",
+            "Ekaterinburg Standard Time",
+            "West Asia Standard Time",
+            "India Standard Time",
+            "Nepal Standard Time",
+            "Central Asia Standard Time",
+            "Sri Lanka Standard Time",
+            "Myanmar Standard Time",
+            "North Asia Standard Time",
+            "China Standard Time",
+            "Singapore Standard Time",
+            "Taipei Standard Time",
+            "North Asia East Standard Time",
+            "Korea Standard Time",
+            "Tokyo Standard Time",
+            "Yakutsk Standard Time",
+            "Tasmania Standard Time",
+            "Vladivostok Standard Time",
+            "West Pacific Standard Time",
+            "Central Pacific Standard Time",
+            "Fiji Islands Standard Time",
+            "New Zealand Standard Time",
+            "Tonga Standard Time"
+            ]
+        },
+        "ResumeTime": {
+            "type": "string",
+            "metadata": "Time of day when the data warehouse will be resumed",
+            "allowedValues": [
+                "12:00 AM (  0:00 )",
+                "01:00 AM (  1:00 )",
+                "02:00 AM (  2:00 )",
+                "03:00 AM (  3:00 )",
+                "04:00 AM (  4:00 )",
+                "05:00 AM (  5:00 )",
+                "06:00 AM (  6:00 )",
+                "07:00 AM (  7:00 )",
+                "08:00 AM (  8:00 )",
+                "09:00 AM (  9:00 )",
+                "10:00 AM ( 10:00 )",
+                "11:00 AM ( 11:00 )",
+                "12:00 PM ( 12:00 )",
+                "01:00 PM ( 13:00 )",
+                "02:00 PM ( 14:00 )",
+                "03:00 PM ( 15:00 )",
+                "04:00 PM ( 16:00 )",
+                "05:00 PM ( 17:00 )",
+                "06:00 PM ( 18:00 )",
+                "07:00 PM ( 19:00 )",
+                "08:00 PM ( 20:00 )",
+                "09:00 PM ( 21:00 )",
+                "10:00 PM ( 22:00 )",
+                "11:00 PM ( 23:00 )"
+            ]
+        },
+        "PauseTime": {
+            "type": "string",
+            "metadata": "Time of day when the data warehouse will be paused",
+            "allowedValues": [
+                "12:00 AM (  0:00 )",
+                "01:00 AM (  1:00 )",
+                "02:00 AM (  2:00 )",
+                "03:00 AM (  3:00 )",
+                "04:00 AM (  4:00 )",
+                "05:00 AM (  5:00 )",
+                "06:00 AM (  6:00 )",
+                "07:00 AM (  7:00 )",
+                "08:00 AM (  8:00 )",
+                "09:00 AM (  9:00 )",
+                "10:00 AM ( 10:00 )",
+                "11:00 AM ( 11:00 )",
+                "12:00 PM ( 12:00 )",
+                "01:00 PM ( 13:00 )",
+                "02:00 PM ( 14:00 )",
+                "03:00 PM ( 15:00 )",
+                "04:00 PM ( 16:00 )",
+                "05:00 PM ( 17:00 )",
+                "06:00 PM ( 18:00 )",
+                "07:00 PM ( 19:00 )",
+                "08:00 PM ( 20:00 )",
+                "09:00 PM ( 21:00 )",
+                "10:00 PM ( 22:00 )",
+                "11:00 PM ( 23:00 )"
+            ]
+        }
+    },
+    "functions": [],
+    "variables": {
+        "defaultDataLakeStorageAccountUrl": "[concat('https://', variables('dlsName'), '.dfs.core.windows.net')]",
+        "storageBlobDataContributorRoleID": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
+        "synapseName": "[toLower(concat(parameters('companyTla'),parameters('deploymentType')))]",
+        "dlsName": "[toLower(concat('dls',parameters('companyTla'),parameters('deploymentType')))]",
+        "dlsFsName": "[toLower(concat(variables('dlsName'),'fs1'))]",
+        "sqlPoolName": "[toLower(concat(variables('workspaceName'),'p1'))]",
+        "workspaceName": "[toLower(concat(variables('synapseName'),'ws1'))]",
+        "sparkPoolName": "[toLower('synasp1')]",
+        "githubUri": "https://raw.githubusercontent.com/JamJarchitect/azure-quickstart-templates/master/101-synapse-workspace-and-pools/nested/"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "logicAppPauseDeployment",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('githubUri'),'pausetemplate.json')]"
+                },
+                "parameters": {
+                    "logicAppName":{"value":"[parameters('logicAppPauseName')]"},
+                    "Frequency":{"value":"[parameters('Frequency')]"},
+                    "synapse WorkspaceName":{"value":"[variables('workspaceName')]"},
+                    "synapse SQLPoolName":{"value":"[variables('sqlPoolName')]"},
+                    "TIME_ZONE":{"value":"[parameters('TIME_ZONE')]"},
+                    "PauseTime":{"value":"[parameters('PauseTime')]"}
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "logicAppResumeDeployment",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('githubUri'),'resumetemplate.json')]"
+                },
+                "parameters": {
+                    "logicAppName":{"value":"[parameters('logicAppResumeName')]"},
+                    "Frequency":{"value":"[parameters('Frequency')]"},
+                    "synapse WorkspaceName":{"value":"[variables('workspaceName')]"},
+                    "synapse SQLPoolName":{"value":"[variables('sqlPoolName')]"},
+                    "TIME_ZONE":{"value":"[parameters('TIME_ZONE')]"},
+                    "ResumeTime":{"value":"[parameters('ResumeTime')]"}
+                }
+            }
+        },
+        {
+            "apiVersion": "2019-06-01-preview",
+            "name": "[variables('workspaceName')]",
+            "location": "[resourceGroup().location]",
+            "type": "Microsoft.Synapse/workspaces",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "defaultDataLakeStorage": {
+                    "accountUrl": "[variables('defaultDataLakeStorageAccountUrl')]",
+                    "filesystem": "[variables('dlsFsName')]"
+                },
+                "sqlAdministratorLogin": "[parameters('sqlAdministratorLogin')]",
+                "sqlAdministratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
+                "adlaResourceId": "",
+                "managedVirtualNetwork": "default"
+            },
+            "resources": [
+                {
+                    "condition": "[equals(parameters('allowAllConnections'),'true')]",
+                    "apiVersion": "2019-06-01-preview",
+                    "dependsOn": [
+                        "[concat('Microsoft.Synapse/workspaces/', variables('workspaceName'))]"
+                    ],
+                    "location": "[resourceGroup().location]",
+                    "name": "allowAll",
+                    "properties": {
+                        "startIpAddress": "0.0.0.0",
+                        "endIpAddress": "255.255.255.255"
+                    },
+                    "type": "firewallrules"
+                },
+                {
+                    "condition": true,
+                    "apiVersion": "2019-06-01-preview",
+                    "dependsOn": [
+                        "[concat('Microsoft.Synapse/workspaces/', variables('workspaceName'))]"
+                    ],
+                    "location": "[resourceGroup().location]",
+                    "name": "AllowAllWindowsAzureIps",
+                    "properties": {
+                        "startIpAddress": "0.0.0.0",
+                        "endIpAddress": "0.0.0.0"
+                    },
+                    "type": "firewallrules"
+                },
+                {
+                    "apiVersion": "2019-06-01-preview",
+                    "dependsOn": [
+                        "[concat('Microsoft.Synapse/workspaces/', variables('workspaceName'))]"
+                    ],
+                    "location": "[resourceGroup().location]",
+                    "name": "default",
+                    "properties": {
+                        "grantSqlControlToManagedIdentity": {
+                            "desiredState": "Enabled"
+                        }
+                    },
+                    "type": "managedIdentitySqlControlSettings"
+                }
+            ],
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('dlsName'))]",
+                "[concat('Microsoft.Resources/deployments/', variables('dlsFsName'))]"
+            ]
+        },
+        {
+            "condition": true,
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('dlsName')]",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "accessTier": "Hot",
+                "supportsHttpsTrafficOnly": true,
+                "isHnsEnabled": true
+            },
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2",
+            "resources": [
+                {
+                    "condition": true,
+                    "name": "[concat('default/', variables('dlsFsName'))]",
+                    "type": "blobServices/containers",
+                    "apiVersion": "2018-02-01",
+                    "properties": {
+                        "publicAccess": "None"
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Storage/storageAccounts/', variables('dlsName'))]"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": true,
+            "apiVersion": "2019-05-01",
+            "name": "storageRoleDeploymentResource",
+            "type": "Microsoft.Resources/deployments",
+            "subscriptionId": "[subscription().subscriptionId]",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+                "[concat('Microsoft.Synapse/workspaces/', variables('workspaceName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+                            "apiVersion": "2018-09-01-preview",
+                            "name": "[concat(variables('dlsName'), '/Microsoft.Authorization/',  guid(concat(resourceGroup().id, '/', variables('storageBlobDataContributorRoleID'), '/', variables('workspaceName'), '/', parameters('storageRoleUniqueId'))))]",
+                            "location": "[resourceGroup().location]",
+                            "properties": {
+                                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleID'))]",
+                                "principalId": "[reference(concat('Microsoft.Synapse/workspaces/', variables('workspaceName')), '2019-06-01-preview', 'Full').identity.principalId]",
+                                "principalType": "ServicePrincipal"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "condition": true,
+            "apiVersion": "2019-05-01",
+            "name": "storageRoleUserDeploymentResource",
+            "type": "Microsoft.Resources/deployments",
+            "subscriptionId": "[subscription().subscriptionId]",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+                "[concat('Microsoft.Synapse/workspaces/', variables('workspaceName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+                            "apiVersion": "2018-09-01-preview",
+                            "name": "[concat(variables('dlsName'), '/Microsoft.Authorization/',  guid(concat(resourceGroup().id, '/', variables('storageBlobDataContributorRoleID'), '/', parameters('userObjectID'), '/', parameters('storageRoleUniqueId'))))]",
+                            "location": "[resourceGroup().location]",
+                            "properties": {
+                                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleID'))]",
+                                "principalId": "[parameters('userObjectID')]",
+                                "principalType": "User"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "condition": false,
+            "apiVersion": "2019-05-01",
+            "name": "[variables('dlsFsName')]",
+            "type": "Microsoft.Resources/deployments",
+            "subscriptionId": "[subscription().subscriptionId]",
+            "resourceGroup": "[resourceGroup().name]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+                            "name": "[concat(variables('dlsName'), '/default/', variables('dlsFsName'))]",
+                            "apiVersion": "2018-02-01",
+                            "properties": {
+                                "publicAccess": "None"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Synapse/workspaces/sqlPools",
+            "apiVersion": "2019-06-01-preview",
+            "location": "[resourceGroup().location]",
+            "name": "[concat(variables('workspaceName'), '/', variables('sqlPoolName'))]",
+            "dependsOn": [
+                "[variables('workspaceName')]"
+            ],
+            "sku": {
+                "name": "[parameters('sku')]"
+            },
+            "properties": {
+                "createMode": "Default",
+                "collation": "SQL_Latin1_General_CP1_CI_AS"
+            },
+            "resources": [
+                {
+                    "condition": "[parameters('metadataSync')]",
+                    "apiVersion": "2019-06-01-preview",
+                    "dependsOn": [
+                        "[concat('Microsoft.Synapse/workspaces/', variables('workspaceName'), '/sqlPools/', variables('sqlPoolName'))]"
+                    ],
+                    "location": "[resourceGroup().location]",
+                    "name": "config",
+                    "properties": {
+                        "Enabled": "[parameters('metadataSync')]"
+                    },
+                    "type": "metadataSync"
+                }
+            ]
+        },
+        {
+            "condition": "[equals(parameters('sparkDeployment'),'true')]",
+            "type": "Microsoft.Synapse/workspaces/bigDataPools",
+            "apiVersion": "2019-06-01-preview",
+            "name": "[concat(variables('workspaceName'), '/', variables('sparkPoolName'))]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('workspaceName')]"
+            ],
+            "properties": {
+                "nodeCount": 5,
+                "nodeSizeFamily": "MemoryOptimized",
+                "nodeSize": "[parameters('sparkNodeSize')]",
+                "autoScale": {
+                    "enabled": true,
+                    "minNodeCount": 3,
+                    "maxNodeCount": 40
+                },
+                "autoPause": {
+                    "enabled": true,
+                    "delayInMinutes": 15
+                },
+                "sparkVersion": "2.4",
+                "libraryRequirements": {
+                    "filename": "",
+                    "content": ""
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "MSIRBACOnResourceGroup",
+            "dependsOn": [
+                "[variables('sqlPoolName')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('githubUri'),'pauseroleassignment.json')]"
+                },
+                "parameters": {
+                    "logicAppName":{"value":"[parameters('logicAppPauseName')]"},
+                    "pauseGuid":{"value":"[parameters('pauseGuid')]"}
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "MSI2RBACOnResourceGroup",
+            "dependsOn": [
+                "[variables('sqlPoolName')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('githubUri'),'resumeroleassignment.json')]"
+                },
+                "parameters": {
+                    "logicAppName":{"value":"[parameters('logicAppResumeName')]"},
+                    "resumeGuid":{"value":"[parameters('resumeGuid')]"}
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
