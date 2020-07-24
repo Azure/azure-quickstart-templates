@@ -4,6 +4,19 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmahendra-shinde%2Fazure-quickstart-templates%2Fmaster%2F101-jenkins-cluster-2-linux-1-win%2Fazuredeploy.json)   
 
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-cluster-2-linux-1-win/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-cluster-2-linux-1-win/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-cluster-2-linux-1-win/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-cluster-2-linux-1-win/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-cluster-2-linux-1-win/BestPracticeResult.svg)
+
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-cluster-2-linux-1-win/CredScanResult.svg)
+
+
+
+
 1.  Start the Jenkins Master VM and access the the URL 
 
     http://jenkins-cluster-mx.southeastasia.azure.com:8080/
