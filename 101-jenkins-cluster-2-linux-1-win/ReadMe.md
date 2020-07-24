@@ -4,11 +4,7 @@
 
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-jenkins-cluster-2-linux-1-win%2Fazuredeploy.json)
 
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-jenkins-cluster-2-linux-1-win%2Fazuredeploy.json
-At D:\a\_temp\ae79bdf9-b18f-41e0-b0c4-a01ede1e8913.ps1:3 char:1
-)   
-
-
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-jenkins-cluster-2-linux-1-win%2Fazuredeploy.json)   
 
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-cluster-2-linux-1-win/PublicLastTestDate.svg)
