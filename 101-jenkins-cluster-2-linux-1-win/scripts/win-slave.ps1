@@ -3,8 +3,10 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 ## Install JDK8. Maven & Git
 choco install -y jdk8 maven git
 choco install microsoft-build-tools -y
-
+## Install dotnet core sdk 3.1
+choco install -y dotnetcore-sdk
 ## Install SonarQube Scanner for Windows
+cd \
 wget -outFile sonar.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.2.0.1873-windows.zip
 Expand-Archive -Path sonar.zip -DestinationPath .
 Ren -path sonar-scanner-cli-4.2.0.1873-windows -NewName sonar
