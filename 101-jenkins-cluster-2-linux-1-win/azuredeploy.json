@@ -4,8 +4,8 @@
     "parameters": {
         "location": {
             "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-                  "metadata": {
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
                 "description": "Location for cluster"
             }
         },
@@ -13,7 +13,7 @@
         "master-vmSize": {
             "type": "string",
             "defaultValue": "Standard_A2_v2",
-            
+
             "metadata": {
                 "description": "Master VM Size"
             }
@@ -21,29 +21,27 @@
         "linux-worker-vmSize": {
             "type": "string",
             "defaultValue": "Standard_A2_v2",
-            
+
             "metadata": {
                 "description": "Linux worker VM Size"
             }
         },
-          "win-worker-vmSize": {
+        "win-worker-vmSize": {
             "type": "string",
             "defaultValue": "Standard_D2s_v3",
-            
+
             "metadata": {
                 "description": "Windows Worker VM Size"
             }
         },
         "master-username": {
             "type": "string",
-            "defaultValue": "mahendra",
             "metadata": {
                 "description": "Admin Username for Jenkins Master"
             }
         },
         "node-username": {
             "type": "string",
-            "defaultValue": "mahendra",
             "metadata": {
                 "description": "Admin username for Slave Instances"
             }
@@ -62,27 +60,41 @@
         },
         "jenkins-dns": {
             "type": "string",
-            "defaultValue": "jenkins-cluster-mx",
+            "defaultValue": "[concat('myjenkins-', uniqueString(resourceGroup().id))]",
             "metadata": {
                 "description": "DNS Prefix for Jenkins Master"
             }
         },
-        "storageName":{
+        "storageName": {
             "type": "string",
-            "defaultValue": "jenkins123456",
-            "metadata":{
+            "metadata": {
                 "description": "storage account prefix"
             },
-            "minLength":3,
-            "maxLength":20
-        }
+            "minLength": 3,
+            "maxLength": 20
+        },
+        "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+          },
+          "defaultValue": "https://raw.githubusercontent.com/mahendra-shinde/azure-quickstart-templates/master/101-jenkins-cluster-2-linux-1-win/"
+      },
+      "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+          },
+          "defaultValue": ""
+      }
     },
-    
-    "functions": [],
+
     "variables": {
         "NetIpRange": "10.0.0.0/16",
         "SubnetRange": "10.0.1.0/24",
-        "scriptUrlPrefix": "https://raw.githubusercontent.com/mahendra-shinde/azure-quickstart-templates/master/101-jenkins-cluster-2-linux-1-win"
+        "scriptUrlMaster": "[uri(parameters('_artifactsLocation'),concat('scripts/install-jenkins.sh',parameters('_artifactsLocationSasToken')))]",
+        "scriptUrlNode1":"[uri(parameters('_artifactsLocation'),concat('scripts/install-slave.sh',parameters('_artifactsLocationSasToken')))]",
+        "scriptUrlNode2":"[uri(parameters('_artifactsLocation'),concat('scripts/win-slave.ps1',parameters('_artifactsLocationSasToken')))]"
     },
     "resources": [
         {
@@ -134,7 +146,7 @@
                             "direction": "Inbound"
                         }
                     },
-                      {
+                    {
                         "name": "nsgRule2",
                         "properties": {
                             "description": "HTTP Access to Master",
@@ -192,9 +204,9 @@
                 "displayName": "Jenkins-Master-NetworkInterface"
             },
             "properties": {
-                 "networkSecurityGroup": {
+                "networkSecurityGroup": {
                     "id": "[resourceId('Microsoft.Network/networkSecurityGroups','master-nsg')]"
-                } ,
+                },
                 "ipConfigurations": [
                     {
                         "name": "ipConfig1",
@@ -271,7 +283,7 @@
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
                 "dnsSettings": {
-                    "domainNameLabel": "[toLower('node-1-jenkins-mx')]"
+                    "domainNameLabel": "[concat('node-1-',parameters('jenkins-dns'))]"
                 }
             }
         },
@@ -315,7 +327,7 @@
             "properties": {
                 "networkSecurityGroup": {
                     "id": "[resourceId('Microsoft.Network/networkSecurityGroups','node-1-nsg')]"
-                } ,
+                },
                 "ipConfigurations": [
                     {
                         "name": "ipConfig1",
@@ -392,7 +404,7 @@
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
                 "dnsSettings": {
-                    "domainNameLabel": "[toLower('node-2')]"
+                    "domainNameLabel": "[concat('node-2-',parameters('jenkins-dns'))]"
                 }
             }
         },
@@ -436,7 +448,7 @@
             "properties": {
                 "networkSecurityGroup": {
                     "id": "[resourceId('Microsoft.Network/networkSecurityGroups','node-2-nsg')]"
-                } ,
+                },
                 "ipConfigurations": [
                     {
                         "name": "ipConfig1",
@@ -503,7 +515,7 @@
                 }
             }
         },
-        
+
         {
             "name": "Jenkins-Master/installJenkins",
             "type": "Microsoft.Compute/virtualMachines/extensions",
@@ -522,7 +534,7 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "[concat(variables('scriptUrlPrefix'), '/scripts/install-jenkins.sh')]"
+                        "[variables('scriptUrlMaster')]"
                     ]
                 },
                 "protectedSettings": {
@@ -548,7 +560,7 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "[concat(variables('scriptUrlPrefix'), '/scripts/win-slave.ps1')]"
+                        "[variables('scriptUrlNode2')]"
                     ]
                 },
                 "protectedSettings": {
@@ -574,7 +586,7 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "[concat(variables('scriptUrlPrefix'), '/scripts/install-slave.sh')]"
+                        "[variables('scriptUrlNode1')]"
                     ]
                 },
                 "protectedSettings": {
@@ -582,15 +594,15 @@
                 }
             }
         }
-        
-        
+
+
     ],
-    
+
     "outputs": {
         "master-public-ip": {
             "type": "string",
-            "value": "[resourceId('Microsoft.Network/publicIPAddresses','Master-PublicIP')]"
+            "value": "[resourceId('Microsoft.Network/publicIPAddresses','Master-PublicIP').properties.dnsSettings.domainNameLabel]"
         }
-        
+
     }
 }
