@@ -1,4 +1,5 @@
 # Hub and Spoke Topology Sandbox
+
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-hub-and-spoke-sandbox/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-hub-and-spoke-sandbox/PublicDeployment.svg)
 
