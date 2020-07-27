@@ -1,6 +1,8 @@
 # Azure Synapse Proof-of-Concept
 ![Synapse Analytics](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-workspace-and-pools/images/synapse1.png)
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-synapse-workspace-and-pools/PublicLastTestDate.svg)
+
 This template deploys necessary resources to run an Azure Synapse Proof-of-Concept
 
 This template deploys the following:
