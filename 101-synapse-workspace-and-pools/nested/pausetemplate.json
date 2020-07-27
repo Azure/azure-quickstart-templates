@@ -2,6 +2,26 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "companyTla": {
+      "type": "string",
+      "metadata": {
+        "description": "This is a Three Letter Acronym for your company name. 'CON' for Contoso for example."
+      },
+      "maxLength": 3
+    },
+    "deploymentType": {
+      "type": "string",
+      "allowedValues": [
+        "devtest",
+        "poc",
+        "prod",
+        "shared"
+      ],
+      "defaultValue": "poc",
+      "metadata": {
+        "description": "Specify deployment type: DevTest, POC, Prod, Shared. This will also be used in the naming convention."
+      }
+    },
     "LogicAppName": {
       "type": "string",
       "metadata": "Name of Azure Logic app"
@@ -14,14 +34,6 @@
         "Daily",
         "Weekdays"
       ]
-    },
-    "synapse WorkspaceName": {
-      "type": "string",
-      "metadata": "The logical server name of the pre-existing SQL Data Warehouse exists. Do not include 'database.windows.net'"
-    },
-    "synapse SQLPoolName": {
-      "type": "string",
-      "metadata": "The name of the pre-existing SQL Data Warehouse instance."
     },
     "TIME_ZONE": {
       "type": "string",
@@ -131,7 +143,11 @@
     "pauseTimeString": "[substring(parameters('PauseTime'), 0, 8)]",
     "dailySchedule": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ],
     "weekdaySchedule": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ],
-    "recurrenceSchedule": "[if(equals(parameters('Frequency'), 'Weekdays'), variables('weekdaySchedule'), variables('dailySchedule'))]"
+    "recurrenceSchedule": "[if(equals(parameters('Frequency'), 'Weekdays'), variables('weekdaySchedule'), variables('dailySchedule'))]",
+    "synapse WorkspaceName": "[toLower(concat(variables('synapseName'),'ws1'))]",
+    "synapseName": "[toLower(concat(parameters('companyTla'),parameters('deploymentType')))]",
+    "synapse SQLPoolName": "[toLower(concat(variables('workspaceName'),'p1'))]",
+    "workspaceName": "[toLower(concat(variables('synapseName'),'ws1'))]"
   },
   "resources": [
     {
@@ -155,8 +171,8 @@
                     "name": "RestAPIVariables",
                     "type": "Object",
                     "value": {
-                      "workspaceName": "[parameters('synapse WorkspaceName')]",
-                      "sqlPoolName": "[parameters('synapse SQLPoolName')]",
+                      "workspaceName": "[variables('synapse WorkspaceName')]",
+                      "sqlPoolName": "[variables('synapse SQLPoolName')]",
                       "ResourceGroupName": "[resourceGroup().name]",
                       "SubscriptionId": "[subscription().subscriptionId]",
                       "TenantId": "[subscription().tenantId]",
