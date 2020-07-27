@@ -1,7 +1,14 @@
 # Azure Synapse Proof-of-Concept
 ![Synapse Analytics](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-workspace-and-pools/images/synapse1.png)
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-synapse-workspace-and-pools/PublicLastTestDate.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-vnet/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-vnet/PublicDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-vnet/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-vnet/CredScanResult.svg)
+
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-synapse-workspace-and-pools%2Fazuredeploy.json)
+
 
 This template deploys necessary resources to run an Azure Synapse Proof-of-Concept
 
