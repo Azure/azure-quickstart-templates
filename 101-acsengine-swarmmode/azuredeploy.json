@@ -173,6 +173,7 @@
   },
   "resources": [
     {
+      "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2020-04-01",
       "location": "[variables('location')]",
       "name": "[variables('agentIPAddressName')]",
@@ -181,8 +182,7 @@
           "domainNameLabel": "[variables('agentEndpointDNSNamePrefix')]"
         },
         "publicIPAllocationMethod": "Dynamic"
-      },
-      "type": "Microsoft.Network/publicIPAddresses"
+      }
     },
     {
       "apiVersion": "2020-04-01",
@@ -304,13 +304,21 @@
     {
       "apiVersion": "2019-07-01",
       "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "location": "[variables('location')]",
+      "name": "[concat(variables('agentVMNamePrefix'), '-vmss')]",
+      "sku": {
+        "capacity": "[variables('agentCount')]",
+        "name": "[variables('agentVMSize')]",
+        "tier": "Standard"
+      },
+      "tags": {
+        "creationSource": "[concat('acsengine-', variables('agentVMNamePrefix'), '-vmss')]"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('masterPublicIPAddressName'))]",
         "[variables('virtualNetworkName')]",
         "[resourceId('Microsoft.Network/loadBalancers', variables('agentLbName'))]"
       ],
-      "location": "[variables('location')]",
-      "name": "[concat(variables('agentVMNamePrefix'), '-vmss')]",
       "properties": {
         "upgradePolicy": {
           "mode": "Automatic"
@@ -373,17 +381,10 @@
             }
           }
         }
-      },
-      "sku": {
-        "capacity": "[variables('agentCount')]",
-        "name": "[variables('agentVMSize')]",
-        "tier": "Standard"
-      },
-      "tags": {
-        "creationSource": "[concat('acsengine-', variables('agentVMNamePrefix'), '-vmss')]"
       }
     },
     {
+      "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2020-04-01",
       "location": "[variables('location')]",
       "name": "[variables('virtualNetworkName')]",
@@ -408,8 +409,7 @@
             }
           }
         ]
-      },
-      "type": "Microsoft.Network/virtualNetworks"
+      }
     },
     {
       "apiVersion": "2019-07-01",
@@ -425,6 +425,7 @@
       }
     },
     {
+      "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2020-04-01",
       "location": "[variables('location')]",
       "name": "[variables('masterPublicIPAddressName')]",
@@ -433,16 +434,16 @@
           "domainNameLabel": "[variables('masterEndpointDNSNamePrefix')]"
         },
         "publicIPAllocationMethod": "Dynamic"
-      },
-      "type": "Microsoft.Network/publicIPAddresses"
+      }
     },
     {
+      "type": "Microsoft.Network/loadBalancers",
       "apiVersion": "2020-04-01",
+      "location": "[variables('location')]",
+      "name": "[variables('masterLbName')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('masterPublicIPAddressName'))]"
       ],
-      "location": "[variables('location')]",
-      "name": "[variables('masterLbName')]",
       "properties": {
         "backendAddressPools": [
           {
@@ -459,11 +460,13 @@
             }
           }
         ]
-      },
-      "type": "Microsoft.Network/loadBalancers"
+      }
     },
     {
+      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
       "apiVersion": "2020-04-01",
+      "location": "[variables('location')]",
+      "name": "[concat(variables('masterLbName'), '/', 'SSH-', variables('masterVMNamePrefix'), copyIndex())]",
       "copy": {
         "count": "[variables('masterCount')]",
         "name": "masterLbLoopNode"
@@ -471,8 +474,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/loadBalancers', variables('masterLbName'))]"
       ],
-      "location": "[variables('location')]",
-      "name": "[concat(variables('masterLbName'), '/', 'SSH-', variables('masterVMNamePrefix'), copyIndex())]",
       "properties": {
         "backendPort": 22,
         "enableFloatingIP": false,
@@ -481,16 +482,16 @@
         },
         "frontendPort": "[copyIndex(2200)]",
         "protocol": "Tcp"
-      },
-      "type": "Microsoft.Network/loadBalancers/inboundNatRules"
+      }
     },
     {
+      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
       "apiVersion": "2020-04-01",
+      "location": "[variables('location')]",
+      "name": "[concat(variables('masterSshPort22InboundNatRuleNamePrefix'), '0')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/loadBalancers', variables('masterLbName'))]"
       ],
-      "location": "[variables('location')]",
-      "name": "[concat(variables('masterSshPort22InboundNatRuleNamePrefix'), '0')]",
       "properties": {
         "backendPort": 2222,
         "enableFloatingIP": false,
@@ -499,11 +500,13 @@
         },
         "frontendPort": 22,
         "protocol": "Tcp"
-      },
-      "type": "Microsoft.Network/loadBalancers/inboundNatRules"
+      }
     },
     {
+      "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2020-04-01",
+      "name": "[concat(variables('masterVMNamePrefix'), 'nic-', copyIndex())]",
+      "location": "[variables('location')]",
       "copy": {
         "count": "[variables('masterCount')]",
         "name": "nicLoopNode"
@@ -514,8 +517,6 @@
         "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('masterLbName'), concat('SSHPort22-',variables('masterVMNamePrefix'), '0'))]",
         "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('masterLbName'), concat('SSH-',variables('masterVMNamePrefix'), copyIndex()))]"
       ],
-      "location": "[variables('location')]",
-      "name": "[concat(variables('masterVMNamePrefix'), 'nic-', copyIndex())]",
       "properties": {
         "ipConfigurations": [
           {
@@ -535,22 +536,24 @@
             }
           }
         ]
-      },
-      "type": "Microsoft.Network/networkInterfaces"
+      }
     },
     {
       "apiVersion": "2019-07-01",
       "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('masterVMNamePrefix'), copyIndex())]",
+      "location": "[variables('location')]",
       "copy": {
         "count": "[variables('masterCount')]",
         "name": "vmLoopNode"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('masterVMNamePrefix'), concat('nic-', copyIndex()))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('masterVMNamePrefix'), 'nic-', copyIndex()))]",
         "[resourceId('Microsoft.Compute/availabilitySets', variables('masterAvailabilitySet'))]"
       ],
-      "location": "[variables('location')]",
-      "name": "[concat(variables('masterVMNamePrefix'), copyIndex())]",
+      "tags": {
+        "creationSource": "[concat('acsengine-', variables('masterVMNamePrefix'), copyIndex())]"
+      },
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('masterAvailabilitySet'))]"
@@ -597,14 +600,13 @@
             }
           }
         }
-      },
-      "tags": {
-        "creationSource": "[concat('acsengine-', variables('masterVMNamePrefix'), copyIndex())]"
       }
     },
     {
       "apiVersion": "2019-07-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('masterVMNamePrefix'), copyIndex(), '/configuremaster')]",
+      "location": "[variables('location')]",
       "copy": {
         "count": "[variables('masterCount')]",
         "name": "vmLoopNode"
@@ -612,8 +614,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('masterVMNamePrefix'), copyIndex()))]"
       ],
-      "location": "[variables('location')]",
-      "name": "[concat(variables('masterVMNamePrefix'), copyIndex(), '/configuremaster')]",
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "autoUpgradeMinorVersion": true,
