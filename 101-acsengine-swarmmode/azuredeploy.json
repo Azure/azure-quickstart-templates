@@ -91,7 +91,6 @@
     "agentEndpointDNSNamePrefix": "[tolower(parameters('agentEndpointDNSNamePrefix'))]",
     "agentIPAddressName": "[concat(variables('orchestratorName'), '-agent-ip-', variables('agentEndpointDNSNamePrefix'), '-', variables('nameSuffix'))]",
     "agentLbBackendPoolName": "[concat(variables('orchestratorName'), '-agent-', variables('nameSuffix'))]",
-    "_agentLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('agentLbName'))]",
     "agentLbIPConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('agentLbName'), variables('agentLbIPConfigName'))]",
     "agentLbIPConfigName": "[concat(variables('orchestratorName'), '-agent-', variables('nameSuffix'))]",
     "agentLbName": "[concat(variables('orchestratorName'), '-agent-', variables('nameSuffix'))]",
@@ -117,43 +116,40 @@
     "masterFirstAddrOctets": "[split(parameters('firstConsecutiveStaticIP'),'.')]",
     "masterFirstAddrPrefix": "[concat(variables('masterFirstAddrOctets')[0],'.',variables('masterFirstAddrOctets')[1],'.',variables('masterFirstAddrOctets')[2],'.')]",
     "masterLbBackendPoolName": "[concat(variables('orchestratorName'), '-master-pool-', variables('nameSuffix'))]",
-    "masterLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('masterLbName'))]",
-    "masterLbIPConfigID": "[concat(variables('masterLbID'),'/frontendIPConfigurations/', variables('masterLbIPConfigName'))]",
+    "masterLbIPConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('masterLbName'), variables('masterLbIPConfigName'))]",
     "masterLbIPConfigName": "[concat(variables('orchestratorName'), '-master-lbFrontEnd-', variables('nameSuffix'))]",
     "masterLbInboundNatRules": [
       [
         {
-          "id": "[concat(variables('masterSshInboundNatRuleIdPrefix'),'0')]"
+          "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('masterLbName'), concat('SSH-',variables('masterVMNamePrefix'), '0'))]"
         },
         {
-          "id": "[concat(variables('masterSshPort22InboundNatRuleIdPrefix'),'0')]"
+          "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('masterLbName'), concat('SSHPort22-',variables('masterVMNamePrefix'), '0'))]"
         }
       ],
       [
         {
-          "id": "[concat(variables('masterSshInboundNatRuleIdPrefix'),'1')]"
+          "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('masterLbName'), concat('SSH-',variables('masterVMNamePrefix'), '1'))]"
         }
       ],
       [
         {
-          "id": "[concat(variables('masterSshInboundNatRuleIdPrefix'),'2')]"
+          "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('masterLbName'), concat('SSH-',variables('masterVMNamePrefix'), '22'))]"
         }
       ],
       [
         {
-          "id": "[concat(variables('masterSshInboundNatRuleIdPrefix'),'3')]"
+          "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('masterLbName'), concat('SSH-',variables('masterVMNamePrefix'), '3'))]"
         }
       ],
       [
         {
-          "id": "[concat(variables('masterSshInboundNatRuleIdPrefix'),'4')]"
+          "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('masterLbName'), concat('SSH-',variables('masterVMNamePrefix'), '4'))]"
         }
       ]
     ],
     "masterLbName": "[concat(variables('orchestratorName'), '-master-lb-', variables('nameSuffix'))]",
     "masterPublicIPAddressName": "[concat(variables('orchestratorName'), '-master-ip-', variables('masterEndpointDNSNamePrefix'), '-', variables('nameSuffix'))]",
-    "masterSshInboundNatRuleIdPrefix": "[concat(variables('masterLbID'),'/inboundNatRules/SSH-',variables('masterVMNamePrefix'))]",
-    "masterSshPort22InboundNatRuleIdPrefix": "[concat(variables('masterLbID'),'/inboundNatRules/SSHPort22-',variables('masterVMNamePrefix'))]",
     "masterSshPort22InboundNatRuleNamePrefix": "[concat(variables('masterLbName'),'/SSHPort22-',variables('masterVMNamePrefix'))]",
     "masterSubnet": "[parameters('masterSubnet')]",
     "masterSubnetName": "[concat(variables('orchestratorName'), '-masterSubnet')]",
@@ -473,7 +469,7 @@
         "name": "masterLbLoopNode"
       },
       "dependsOn": [
-        "[variables('masterLbID')]"
+        "[resourceId('Microsoft.Network/loadBalancers', variables('masterLbName'))]"
       ],
       "location": "[variables('location')]",
       "name": "[concat(variables('masterLbName'), '/', 'SSH-', variables('masterVMNamePrefix'), copyIndex())]",
@@ -491,7 +487,7 @@
     {
       "apiVersion": "2020-04-01",
       "dependsOn": [
-        "[variables('masterLbID')]"
+        "[resourceId('Microsoft.Network/loadBalancers', variables('masterLbName'))]"
       ],
       "location": "[variables('location')]",
       "name": "[concat(variables('masterSshPort22InboundNatRuleNamePrefix'), '0')]",
@@ -514,9 +510,9 @@
       },
       "dependsOn": [
         "[variables('virtualNetworkName')]",
-        "[variables('masterLbID')]",
-        "[concat(variables('masterSshPort22InboundNatRuleIdPrefix'),'0')]",
-        "[concat(variables('masterSshInboundNatRuleIdPrefix'),copyIndex())]"
+        "[resourceId('Microsoft.Network/loadBalancers', variables('masterLbName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('masterLbName'), concat('SSHPort22-',variables('masterVMNamePrefix'), '0'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('masterLbName'), concat('SSH-',variables('masterVMNamePrefix'), copyIndex()))]"
       ],
       "location": "[variables('location')]",
       "name": "[concat(variables('masterVMNamePrefix'), 'nic-', copyIndex())]",
@@ -527,7 +523,7 @@
             "properties": {
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('masterLbID'), '/backendAddressPools/', variables('masterLbBackendPoolName'))]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('masterLbName'), variables('masterLbBackendPoolName'))]"
                 }
               ],
               "loadBalancerInboundNatRules": "[variables('masterLbInboundNatRules')[copyIndex()]]",
@@ -550,8 +546,8 @@
         "name": "vmLoopNode"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('masterVMNamePrefix'), 'nic-', copyIndex())]",
-        "[resourceId('Microsoft.Compute/availabilitySets',variables('masterAvailabilitySet'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('masterVMNamePrefix'), concat('nic-', copyIndex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('masterAvailabilitySet'))]"
       ],
       "location": "[variables('location')]",
       "name": "[concat(variables('masterVMNamePrefix'), copyIndex())]",
