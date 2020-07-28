@@ -14,25 +14,43 @@
             "metadata": {
                 "description": "The URL for the WebHook to receive events. Create your own endpoint for events."
             }
+        },
+        "systemTopicName": {
+            "defaultValue": "systemTopicName",
+            "type": "String"
         }
     },
     "resources": [
         {
-            "type": "Microsoft.EventGrid/eventSubscriptions",
-            "name": "[parameters('eventSubName')]",
-            "apiVersion": "2018-01-01",
+            "type": "Microsoft.EventGrid/systemTopics",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[parameters('systemTopicName')]",
+            "location": "global",
+            "properties": {
+                "source": "/subscriptions/5648d12a-ba49-4789-8793-6f7cc54e1556",
+                "topicType": "Microsoft.Resources.Subscriptions"
+            }
+        },
+        {
+            "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[concat(parameters('systemTopicName'),'/', parameters('eventSubName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventGrid/systemTopics', parameters('systemTopicName'))]"
+            ],
             "properties": {
                 "destination": {
                     "endpointType": "WebHook",
                     "properties": {
+                        "maxEventsPerBatch": 1,
+                        "preferredBatchSizeInKilobytes": 64,
                         "endpointUrl": "[parameters('endpoint')]"
                     }
                 },
-                "filter": {
-                    "subjectBeginsWith": "",
-                    "subjectEndsWith": "",
-                    "isSubjectCaseSensitive": false,
-                    "includedEventTypes": ["All"]
+                "eventDeliverySchema": "EventGridSchema",
+                "retryPolicy": {
+                    "maxDeliveryAttempts": 30,
+                    "eventTimeToLiveInMinutes": 1440
                 }
             }
         }
