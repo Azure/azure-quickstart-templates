@@ -413,10 +413,12 @@
     "blobServicePrimaryEndpoint": "[concat(parameters('blobStorageAccountName'), variables('blobPublicDNSZoneForwarder'))]",
     "keyVaultPrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('keyVaultPrivateEndpointName'))]",
     "blobStorageAccountPrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('blobStorageAccountPrivateEndpointName'))]",
-    "aRecordId": "[resourceId('Microsoft.Network/privateDnsZones/A', variables('keyVaultPrivateDnsZoneName'), parameters('keyVaultName'))]",
-    "keyVaultPrivateEndpointGroup": "vault",
-    "blobStorageAccountPrivateEndpointGroup": "blob",
-    "azureEnvironment": "[environment().name]"
+    "keyVaultPrivateEndpointGroupName": "vault",
+    "blobStorageAccountPrivateEndpointGroupName": "blob",
+    "azureEnvironment": "[environment().name]",
+    "keyVaultPrivateDnsZoneGroupName": "[concat(parameters('keyVaultPrivateEndpointName'),'/', variables('keyVaultPrivateEndpointGroupName'), 'PrivateDnsZoneGroup')]",
+    "blobPrivateDnsZoneGroupName": "[concat(parameters('blobStorageAccountPrivateEndpointName'),'/', variables('blobStorageAccountPrivateEndpointGroupName'), 'PrivateDnsZoneGroup')]",
+    "keyVaultPrivateDnsZoneGroupId": "[resourceId('Microsoft.Network/privateEndpoints/privateDnsZoneGroups', parameters('keyVaultPrivateEndpointName'), concat(variables('keyVaultPrivateEndpointGroupName'), 'PrivateDnsZoneGroup'))]"
   },
   "resources": [
     {
@@ -646,7 +648,7 @@
         "[variables('vmId')]",
         "[variables('keyVaultId')]",
         "[variables('keyVaultPrivateEndpointId')]",
-        "[variables('aRecordId')]"
+        "[variables('keyVaultPrivateDnsZoneGroupId')]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -1045,40 +1047,6 @@
       }
     },
     {
-      "type": "Microsoft.Network/privateDnsZones/A",
-      "apiVersion": "2018-09-01",
-      "name": "[concat(variables('keyVaultPrivateDnsZoneName'), '/', parameters('keyVaultName'))]",
-      "dependsOn": [
-        "[variables('keyVaultPrivateDnsZoneId')]",
-        "[variables('keyVaultPrivateEndpointId')]"
-      ],
-      "properties": {
-        "ttl": 3600,
-        "aRecords": [
-          {
-            "ipv4Address": "[reference(variables('keyVaultPrivateEndpointId'), '2020-04-01').customDnsConfigs[0].ipAddresses[0]]"
-          }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Network/privateDnsZones/A",
-      "apiVersion": "2018-09-01",
-      "name": "[concat(variables('blobPrivateDnsZoneName'), '/', parameters('blobStorageAccountName'))]",
-      "dependsOn": [
-        "[variables('blobPrivateDnsZoneId')]",
-        "[variables('blobStorageAccountPrivateEndpointId')]"
-      ],
-      "properties": {
-        "ttl": 3600,
-        "aRecords": [
-          {
-            "ipv4Address": "[reference(variables('blobStorageAccountPrivateEndpointId'), '2020-04-01').customDnsConfigs[0].ipAddresses[0]]"
-          }
-        ]
-      }
-    },
-    {
       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
       "apiVersion": "2018-09-01",
       "name": "[concat(variables('keyVaultPrivateDnsZoneName'), '/link_to_', toLower(parameters('virtualNetworkName')))]",
@@ -1126,7 +1094,7 @@
             "properties": {
               "privateLinkServiceId": "[variables('keyVaultId')]",
               "groupIds": [
-                "[variables('keyVaultPrivateEndpointGroup')]"
+                "[variables('keyVaultPrivateEndpointGroupName')]"
               ]
             }
           }
@@ -1157,7 +1125,7 @@
             "properties": {
               "privateLinkServiceId": "[variables('blobStorageAccountId')]",
               "groupIds": [
-                "[variables('blobStorageAccountPrivateEndpointGroup')]"
+                "[variables('blobStorageAccountPrivateEndpointGroupName')]"
               ]
             }
           }
@@ -1168,6 +1136,47 @@
         "customDnsConfigs": [
           {
             "fqdn": "[concat(parameters('blobStorageAccountName'), variables('blobPublicDNSZoneForwarder'))]"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2020-03-01",
+      "name": "[variables('keyVaultPrivateDnsZoneGroupName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('keyVaultId')]",
+        "[variables('keyVaultPrivateDnsZoneId')]",
+        "[variables('keyVaultPrivateEndpointId')]"
+      ],
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "dnsConfig",
+            "properties": {
+              "privateDnsZoneId": "[variables('keyVaultPrivateDnsZoneId')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2020-03-01",
+      "name": "[variables('blobPrivateDnsZoneGroupName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('blobPrivateDnsZoneId')]",
+        "[variables('blobStorageAccountPrivateEndpointId')]"
+      ],
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "dnsConfig",
+            "properties": {
+              "privateDnsZoneId": "[variables('blobPrivateDnsZoneId')]"
+            }
           }
         ]
       }
