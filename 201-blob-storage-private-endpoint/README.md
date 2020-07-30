@@ -33,6 +33,13 @@ The ARM template deploys the following resources:
 - An Azure Data Lake Storage (ADLS) Gen 2 storage account
 - A Private DNS Zone for a blob storage resource
 - A Private Endpoint for the blob storage account
+- A Private DNS Zone Group for the ADLS Gen2 private endpoint
+- A Private DNS Zone Group for the Blob Storage Account private endpoint
+
+The [PrivateDnsZoneGroup](https://docs.microsoft.com/en-us/azure/templates/microsoft.network/privateendpoints/privateDnsZoneGroups) resource type establishes a relationship between the Private Endpoint and the Private the privatelink.* DNS zone for the name resolution of the fully qualified name of the resource referenced by the Private Endpoint.
+
+- When creating a Private Endpoint, the related A record will automatically be created in the target Private DNS Zone with the private IP address of the network interface associated to the Private Endpoint and the name of the Azure resource referenced by the Private Endpoint
+- When deleting a Private Endpoint, the related A record gets automatically deleted from the corresponding Private DNS Zone.
 
 The ARM template uses the [Azure Custom Script Extension](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux) to download and run the following Bash script on the virtual machine. The script performs the following steps:
 
