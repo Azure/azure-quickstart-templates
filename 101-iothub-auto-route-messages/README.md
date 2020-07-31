@@ -1,13 +1,3 @@
----
-title: Use an ARM template to create an Azure IoT Hub then send messages to the hub, routing them automatically to Azure Storage
-description: Use an ARM template to create an Azure IoT Hub then send messages to the hub, routing them automatically to Azure Storage
-author: robinsh
-ms.service: iot-hub
-services: iot-hub
-ms.author: robinsh
-ms.topic: conceptual
-ms.date: 07/31/2020
----
 # Quickstart: Deploy an Azure IoT Hub and a storage account using an ARM template
 
 In this quickstart, you use an Azure Resource Manager template (ARM template) to create an IoT Hub that will route messages to Azure Storage, and a storage account to hold them. After manually adding a virtual IoT device to the hub to submit the messages, you configure that connection information in the arm-read-write application to submit messages to the hub using that device. The hub has the routing configured, so the messages sent to the hub are automatically routed by the hub to the storage account. At the end of this quickstart, you can open the storage account and see the messages sent.
