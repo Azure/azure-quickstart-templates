@@ -41,9 +41,10 @@ Two Azure resources are defined in the template:
 
 1. Create the resources by deploying the ARM template.
 
-<!-- how to make this right? -->
+-- how to make this right? -->
+<!--
 [![Deploy to Azure](../media/template-deployments/deploy-to-azure.svg)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-iothub-auto-route-messages%2Fazuredeploy.json)
-
+-->
 
 While the template is being deployed, you can set up the arm-read-write-hub application to run. 
 
