@@ -30,3 +30,14 @@ If you are new to the template development, see:
 Tags: Azure Iot Hub, Iot Hub, Resource Manager, Resource Manager templates, ARM templates
 
 
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-iothub-auto-route-messages%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-auto-route-messages%2Fazuredeploy.json)
+
+This template creates an IoT Hub and storage account on Azure. Then you run an included app to send messages to the hub, and they are automatically routed to the storage account.
+
+## Next steps
+
+```markdown
+> [!div class="nextstepaction"]
+> [Tutorial: Create and deploy your first ARM template](/azure/azure-resource-manager/templates/template-tutorial-create-first-template)
+```
