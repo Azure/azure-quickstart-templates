@@ -68,19 +68,19 @@ Using the Getting Started wizard inside of the workspace is recommended to use s
 - Sign into the Azure Portal (https://portal.azure.com/)
 - Either search for Azure Active Directory at the top, or used the sidebar if you have it. Screenshot below shows the sidebar:
 
-![AAD Sidebar](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc/images/1.png)
+![AAD Sidebar](images/1.png)
 
 - Select 'Users' underneath the 'Manage' heading in the Azure Active Directory blade:
 
-![Users View](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc/images/2.png)
+![Users View](images/2.png)
 
 - Search for your User Principal Name or your Display Name to load information about your account. Once you have clicked through into your account, you will see your Object ID:
 
-![Find User](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc/images/3.png)
+![Find User](images/3.png)
 
 - Then copy the ID underneath 'Object ID' with the copy to clipboard button on the right hand side:
 
-![Object ID](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc/images/4.png)
+![Object ID](images/4.png)
 
 # Deploy to Azure
 
