@@ -1,159 +1,214 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-      "settingName": {
-          "type": "string"
-      },        
-      "storageAccountName": {
-          "type": "string"
-      },
-      "storageSinkName": {
-          "type": "string"
-      },
-      "workspaceId": {
-          "type": "string"
-      },
-      "providerResourceGroup": {
-          "type": "string"
-      }
-  },
-  "resources": [
-      {
-          "type": "Microsoft.Storage/storageAccounts/providers/diagnosticsettings",
-          "apiVersion": "2017-05-01-preview",
-          "name": "[concat(parameters('storageAccountName'),'/Microsoft.Insights/', parameters('settingName'))]",
-          "properties":
-          {
-              "workspaceId": "[concat('/providers/', parameters('providerResourceGroup'), '/workspaces/', parameters('workspaceId'))]",
-              "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSinkName'))]",
-              "metrics": [
-                  {
-                      "category": "Transaction",
-                      "enabled": true
-                  }
-              ]
-          }
-      },
-      {
-          "type": "Microsoft.Storage/storageAccounts/blobServices/providers/diagnosticsettings",
-          "apiVersion": "2017-05-01-preview",
-          "name": "[concat(parameters('storageAccountName'), '/default/Microsoft.Insights/', parameters('settingName'))]",
-          "properties":
-          {
-            "workspaceId": "[concat('/providers/', parameters('providerResourceGroup'), '/workspaces/', parameters('workspaceId'))]",
-              "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSinkName'))]",
-              "logs": [
-                  {
-                      "category": "StorageRead",
-                      "enabled": true
-                  },
-                  {
-                      "category": "StorageWrite",
-                      "enabled": true
-                  },
-                  {
-                      "category": "StorageDelete",
-                      "enabled": true
-                  }
-                  ],
-                  "metrics": [
-                  {
-                      "category": "Transaction",
-                      "enabled": true
-                  }
-              ]
-          }
-      },
-      {
-          "type": "Microsoft.Storage/storageAccounts/tableServices/providers/diagnosticsettings",
-          "apiVersion": "2017-05-01-preview",
-          "name": "[concat(parameters('storageAccountName'),'/default/Microsoft.Insights/', parameters('settingName'))]",
-          "properties":
-          {
-            "workspaceId": "[concat('/providers/', parameters('providerResourceGroup'), '/workspaces/', parameters('workspaceId'))]",
-              "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSinkName'))]",
-              "logs": [
-                  {
-                      "category": "StorageRead",
-                      "enabled": true
-                  },
-                  {
-                      "category": "StorageWrite",
-                      "enabled": true
-                  },
-                  {
-                      "category": "StorageDelete",
-                      "enabled": true
-                  }
-                  ],
-                  "metrics": [
-                  {
-                      "category": "Transaction",
-                      "enabled": true
-                  }
-              ]
-          }
-      },
-      {
-          "type": "Microsoft.Storage/storageAccounts/fileServices/providers/diagnosticsettings",
-          "apiVersion": "2017-05-01-preview",
-          "name": "[concat(parameters('storageAccountName'),'/default/Microsoft.Insights/', parameters('settingName'))]",
-          "properties":
-          {
-            "workspaceId": "[concat('/providers/', parameters('providerResourceGroup'), '/workspaces/', parameters('workspaceId'))]",
-              "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSinkName'))]",
-              "logs": [
-                  {
-                      "category": "StorageRead",
-                      "enabled": true
-                  },
-                  {
-                      "category": "StorageWrite",
-                      "enabled": true
-                  },
-                  {
-                      "category": "StorageDelete",
-                      "enabled": true
-                  }
-                  ],
-                  "metrics": [
-                  {
-                      "category": "Transaction",
-                      "enabled": true
-                  }
-              ]
-          }
-      },
-      {
-          "type": "Microsoft.Storage/storageAccounts/queueServices/providers/diagnosticsettings",
-          "apiVersion": "2017-05-01-preview",
-          "name": "[concat(parameters('storageAccountName'),'/default/Microsoft.Insights/', parameters('settingName'))]",
-          "properties":
-          {
-            "workspaceId": "[concat('/providers/', parameters('providerResourceGroup'), '/workspaces/', parameters('workspaceId'))]",
-              "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSinkName'))]",
-              "logs": [
-                  {
-                      "category": "StorageRead",
-                      "enabled": true
-                  },
-                  {
-                      "category": "StorageWrite",
-                      "enabled": true
-                  },
-                  {
-                      "category": "StorageDelete",
-                      "enabled": true
-                  }
-                  ],
-                  "metrics": [
-                  {
-                      "category": "Transaction",
-                      "enabled": true
-                  }
-              ]
-          }
-      }
-  ]
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountName": {
+            "type": "string"
+        },
+        "settingName": {
+            "type": "string"
+        },
+        "storageSinkName": {
+            "type": "string"
+        },
+        "workspaceId": {
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-10-01",
+            "name": "nested",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "endpoints": {
+                        "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01', 'Full').properties.primaryEndpoints]"
+                    },
+                    "settingName": {
+                        "value": "[parameters('settingName')]"
+                    },
+                    "storageAccountName": {
+                        "value": "[parameters('storageAccountName')]"
+                    },
+                    "storageSinkName": {
+                        "value": "[parameters('storageSinkName')]"
+                    },
+                    "workspaceId": {
+                        "value": "[concat('/providers/', 'Microsoft.OperationalInsights/workspaces/', parameters('workspaceId'))]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "endpoints": {
+                            "type": "object"
+                        },
+                        "settingName": {
+                            "type": "String"
+                        },
+                        "storageAccountName": {
+                            "type": "String"
+                        },
+                        "storageSinkName": {
+                            "type": "String"
+                        },
+                        "workspaceId": {
+                            "type": "String"
+                        }
+                    },
+                    "variables": {
+                        "hasblob": "[contains(parameters('endpoints'),'blob')]",
+                        "hastable": "[contains(parameters('endpoints'),'table')]",
+                        "hasfile": "[contains(parameters('endpoints'),'file')]",
+                        "hasqueue": "[contains(parameters('endpoints'),'queue')]"
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.Storage/storageAccounts/providers/diagnosticsettings",
+                            "apiVersion": "2017-05-01-preview",
+                            "name": "[concat(parameters('storageAccountName'),'/Microsoft.Insights/', parameters('settingName'))]",
+
+                            "properties": {
+                                "workspaceId": "[concat('/providers/', 'Microsoft.OperationalInsights/workspaces/', parameters('workspaceId'))]",
+                                "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSinkName'))]",
+                                "metrics": [
+                                    {
+                                        "category": "Transaction",
+                                        "enabled": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "condition": "[variables('hasblob')]",
+                            "type": "Microsoft.Storage/storageAccounts/blobServices/providers/diagnosticsettings",
+                            "apiVersion": "2017-05-01-preview",
+                            "name": "[concat(parameters('storageAccountName'),'/default/Microsoft.Insights/', parameters('settingName'))]",
+                            "properties": {
+                                "workspaceId": "[concat('/providers/', 'Microsoft.OperationalInsights/workspaces/', parameters('workspaceId'))]",
+                                "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSinkName'))]",
+                                "logs": [
+                                    {
+                                        "category": "StorageRead",
+                                        "enabled": true
+                                    },
+                                    {
+                                        "category": "StorageWrite",
+                                        "enabled": true
+                                    },
+                                    {
+                                        "category": "StorageDelete",
+                                        "enabled": true
+                                    }
+                                ],
+                                "metrics": [
+                                    {
+                                        "category": "Transaction",
+                                        "enabled": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "condition": "[variables('hastable')]",
+                            "type": "Microsoft.Storage/storageAccounts/tableServices/providers/diagnosticsettings",
+                            "apiVersion": "2017-05-01-preview",
+                            "name": "[concat(parameters('storageAccountName'),'/default/Microsoft.Insights/', parameters('settingName'))]",
+
+                            "properties": {
+                                "workspaceId": "[concat('/providers/', 'Microsoft.OperationalInsights/workspaces/', parameters('workspaceId'))]",
+                                "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSinkName'))]",
+                                "logs": [
+                                    {
+                                        "category": "StorageRead",
+                                        "enabled": true
+                                    },
+                                    {
+                                        "category": "StorageWrite",
+                                        "enabled": true
+                                    },
+                                    {
+                                        "category": "StorageDelete",
+                                        "enabled": true
+                                    }
+                                ],
+                                "metrics": [
+                                    {
+                                        "category": "Transaction",
+                                        "enabled": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "condition": "[variables('hasfile')]",
+                            "type": "Microsoft.Storage/storageAccounts/fileServices/providers/diagnosticsettings",
+                            "apiVersion": "2017-05-01-preview",
+                            "name": "[concat(parameters('storageAccountName'),'/default/Microsoft.Insights/', parameters('settingName'))]",
+                            "properties": {
+                                "workspaceId": "[concat('/providers/', 'Microsoft.OperationalInsights/workspaces/', parameters('workspaceId'))]",
+                                "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSinkName'))]",
+                                "logs": [
+                                    {
+                                        "category": "StorageRead",
+                                        "enabled": true
+                                    },
+                                    {
+                                        "category": "StorageWrite",
+                                        "enabled": true
+                                    },
+                                    {
+                                        "category": "StorageDelete",
+                                        "enabled": true
+                                    }
+                                ],
+                                "metrics": [
+                                    {
+                                        "category": "Transaction",
+                                        "enabled": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "condition": "[variables('hasqueue')]",
+                            "type": "Microsoft.Storage/storageAccounts/queueServices/providers/diagnosticsettings",
+                            "apiVersion": "2017-05-01-preview",
+                            "name": "[concat(parameters('storageAccountName'),'/default/Microsoft.Insights/', parameters('settingName'))]",
+                            "properties": {
+                                "workspaceId": "[concat('/providers/', 'Microsoft.OperationalInsights/workspaces/', parameters('workspaceId'))]",
+                                "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageSinkName'))]",
+                                "logs": [
+                                    {
+                                        "category": "StorageRead",
+                                        "enabled": true
+                                    },
+                                    {
+                                        "category": "StorageWrite",
+                                        "enabled": true
+                                    },
+                                    {
+                                        "category": "StorageDelete",
+                                        "enabled": true
+                                    }
+                                ],
+                                "metrics": [
+                                    {
+                                        "category": "Transaction",
+                                        "enabled": true
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
 }
