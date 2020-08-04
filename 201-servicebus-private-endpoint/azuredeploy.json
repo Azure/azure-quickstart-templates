@@ -275,8 +275,10 @@
     "blobServicePrimaryEndpoint": "[concat(parameters('blobStorageAccountName'), variables('blobPublicDNSZoneForwarder'))]",
     "serviceBusNamespacePrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('serviceBusNamespacePrivateEndpointName'))]",
     "blobStorageAccountPrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('blobStorageAccountPrivateEndpointName'))]",
-    "serviceBusNamespacePrivateEndpointSubResource": "namespace",
-    "blobStorageAccountPrivateEndpointSubResource": "blob"
+    "serviceBusNamespacePrivateEndpointGroupName": "namespace",
+    "blobStorageAccountPrivateEndpointGroupName": "blob",
+    "serviceBusNamespacePrivateDnsZoneGroup": "[concat(parameters('serviceBusNamespacePrivateEndpointName'),'/', variables('serviceBusNamespacePrivateEndpointGroupName'), 'PrivateDnsZoneGroup')]",
+    "blobPrivateDnsZoneGroup": "[concat(parameters('blobStorageAccountPrivateEndpointName'),'/', variables('blobStorageAccountPrivateEndpointGroupName'), 'PrivateDnsZoneGroup')]"
   },
   "resources": [
     {
@@ -864,40 +866,6 @@
       }
     },
     {
-      "type": "Microsoft.Network/privateDnsZones/A",
-      "apiVersion": "2018-09-01",
-      "name": "[concat(variables('serviceBusNamespacePrivateDnsZoneName'), '/', parameters('serviceBusNamespaceName'))]",
-      "dependsOn": [
-        "[variables('serviceBusNamespacePrivateDnsZoneId')]",
-        "[variables('serviceBusNamespacePrivateEndpointId')]"
-      ],
-      "properties": {
-        "ttl": 3600,
-        "aRecords": [
-          {
-            "ipv4Address": "[reference(variables('serviceBusNamespacePrivateEndpointId'), '2020-04-01').customDnsConfigs[0].ipAddresses[0]]"
-          }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Network/privateDnsZones/A",
-      "apiVersion": "2018-09-01",
-      "name": "[concat(variables('blobPrivateDnsZoneName'), '/', parameters('blobStorageAccountName'))]",
-      "dependsOn": [
-        "[variables('blobPrivateDnsZoneId')]",
-        "[variables('blobStorageAccountPrivateEndpointId')]"
-      ],
-      "properties": {
-        "ttl": 3600,
-        "aRecords": [
-          {
-            "ipv4Address": "[reference(variables('blobStorageAccountPrivateEndpointId'), '2020-04-01').customDnsConfigs[0].ipAddresses[0]]"
-          }
-        ]
-      }
-    },
-    {
       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
       "apiVersion": "2018-09-01",
       "name": "[concat(variables('serviceBusNamespacePrivateDnsZoneName'), '/link_to_', toLower(parameters('virtualNetworkName')))]",
@@ -945,7 +913,7 @@
             "properties": {
               "privateLinkServiceId": "[variables('serviceBusNamespaceId')]",
               "groupIds": [
-                "[variables('serviceBusNamespacePrivateEndpointSubResource')]"
+                "[variables('serviceBusNamespacePrivateEndpointGroupName')]"
               ]
             }
           }
@@ -976,7 +944,7 @@
             "properties": {
               "privateLinkServiceId": "[variables('blobStorageAccountId')]",
               "groupIds": [
-                "[variables('blobStorageAccountPrivateEndpointSubResource')]"
+                "[variables('blobStorageAccountPrivateEndpointGroupName')]"
               ]
             }
           }
@@ -987,6 +955,46 @@
         "customDnsConfigs": [
           {
             "fqdn": "[concat(parameters('blobStorageAccountName'), variables('blobPublicDNSZoneForwarder'))]"
+          }
+        ]
+      }
+    },
+        {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2020-03-01",
+      "name": "[variables('serviceBusNamespacePrivateDnsZoneGroup')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('serviceBusNamespacePrivateDnsZoneId')]",
+        "[variables('serviceBusNamespacePrivateEndpointId')]"
+      ],
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "dnsConfig",
+            "properties": {
+              "privateDnsZoneId": "[variables('serviceBusNamespacePrivateDnsZoneId')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2020-03-01",
+      "name": "[variables('blobPrivateDnsZoneGroup')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('blobPrivateDnsZoneId')]",
+        "[variables('blobStorageAccountPrivateEndpointId')]"
+      ],
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "dnsConfig",
+            "properties": {
+              "privateDnsZoneId": "[variables('blobPrivateDnsZoneId')]"
+            }
           }
         ]
       }
