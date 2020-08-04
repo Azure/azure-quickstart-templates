@@ -164,6 +164,9 @@ configure_helix() {
     chmod +x reset_sdp.sh
     ./reset_sdp.sh -fast -no_sd > reset_sdp.log 2>&1
 
+    cp /p4/common/bin/p4 /usr/local/bin/
+    chmod +x /usr/local/bin/p4
+
     # Make sure p4d is enabled but broker and p4p are not
     systemctl enable p4d_1
     systemctl disable p4broker_1
@@ -192,6 +195,7 @@ echo -e "$PASSWORD\n$PASSWORD" | p4 passwd
 /p4/common/bin/p4login -v 1
 /p4/sdp/Server/setup/configure_new_server.sh 1
 crontab /p4/p4.crontab
+echo "source /p4/common/bin/p4_vars 1" >> ~/.bashrc
 EOF
 
     chmod +x $init_script
