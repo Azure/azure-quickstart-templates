@@ -23,11 +23,10 @@ The parameters which can be user configured in the parameters file include:
 
 * `OS` (default "CentOS 7.x") - one of: "CentOS 7.x" (7.8+), "RHEL 7.x" (7.8+), "Ubuntu 18.04 LTS"
 * `adminUsername` (default "p4admin") - username to use with ssh to access the VM.
-* `adminSSHPubKey` (default None) - For access to VM via ssh. This is required.
-* `helix_admin_username` (default "perforce") - pre-configured P4d superuser account.
+* `adminSSHPubKey` (default None) - For access to VM via ssh for account `adminUsername`. This is required.
 * `helix_admin_password` (default None) - p4d password for above user. This is required.
 * `source_CIDR` (default "0.0.0.0/0") - Source IP access list - for security we *strongly recommend* you consider only allowing specific whitelisted IP addresses to access the server
-* `VMSize` (default "Standard_B2s" - suitable for testing only) - Select one of the [Azure Linux Instance types](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-general) with appropriate vCPUs and RAM for your needs. We recommend Compute optimized instances, e.g. Fsv2 series options such as "Standard_F4s_v2". See KB link in More Details section below for further discussion.
+* `VMSize` (default "Standard_B2s" - suitable for testing only) - Select one of the [Azure Linux Instance types](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-general) with appropriate vCPUs and RAM for your needs. We recommend Compute optimized instances for production use, e.g. Fsv2 series options such as "Standard_F4s_v2". See KB link in More Details section below for further discussion.
 * `dataDiskSize` (default 50) - Size in GB of data volume where all metadata/logs/depot files are stored. Upto 2TB (2048GB) is supported.
 * `p4Port` (default 1666) - P4PORT value to access p4d service. Note SSL is not optional.
 
@@ -37,7 +36,13 @@ You will be able to connect to the provisioned instance with a P4PORT of format 
 
 You can ssh to the instance for more detailed configuration if you wish: `ssh <adminUsername>@<IP address>` 
 
-# More Details
+Please see KB link below.
+
+# P4D License Installation
+
+The instance is unlicensed, so initially will be limited to 5 users and 20 workspaces. You can buy a license by following the instructions at the KB link below.
+
+# More Details (KB Link)
 
 For more details on:
 
@@ -48,11 +53,7 @@ For more details on:
 
 Please see:
 
-* [The ARM Template Knowledebase Article](https://community.perforce.com/s/article/17334) 
-* or [Search the knowledge base](https://community.perforce.com/s/global-search/azure%20arm%20template)
-
-# P4D License Installation
-
-The instance is unlicensed so initially will be limited to 5 users and 20 workspaces. You can buy a license by following the instructions at the link in the section above.
+* [The ARM Template Knowledgebase (KB) Article](https://community.perforce.com/s/article/17334) 
+* or [Search the knowledgebase](https://community.perforce.com/s/global-search/azure%20arm%20template)
 
 Tags: Perforce Helix Core, Version Control, Resource Manager, Resource Manager templates, ARM templates
