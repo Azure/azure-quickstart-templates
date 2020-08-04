@@ -24,7 +24,7 @@ When you deploy this Azure Resource Template, you will create a logical selfhost
 - Azure Storage (for VM system image and boot diagnostic)
 - Public IP Address
 - Network Interface
-- Network Sercurity Group
+- Network Security Group
 
 This template can help you create selfhost IR and make it workable in azure VMs. The VM must join in an exsiting VNET. 
 
