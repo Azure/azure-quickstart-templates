@@ -26,7 +26,7 @@ When you deploy this Azure Resource Template, you will create a logical selfhost
 - Network Interface
 - Network Security Group
 
-This template can help you create selfhost IR and make it workable in azure VMs. The VM must join in an exsiting VNET. 
+This template can help you create self-hosted IR and make it workable in azure VMs. The VM must join in an existing VNET. 
 
 The below picture can help you find how to get vnet and subnet information.
 ![](images/vnet.png)
