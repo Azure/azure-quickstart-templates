@@ -344,4 +344,4 @@ EOF"
 runuser -l $SUDOUSER -c "oc apply -f $INSTALLERHOME/openshiftfourx/auth.yaml"
 runuser -l $SUDOUSER -c "oc adm policy add-cluster-role-to-user cluster-admin '$OPENSHIFTUSER'"
 
-echo $(date) " - #################### Script Complete ####################"
+echo $(date) " - #################### Script Complete #####################"
