@@ -15,9 +15,9 @@
 
 ### Prerequisites
 
-* Create an App Service Domain to get the DNSZone and DNSZoneRG for this deployment:
+* Create an App Service Domain to get the DNSZone and DNSZoneRG for this deployment using the `az-group-deploy.sh` script at the root of this repo:
   ```bash
-  scripts/az-group-deploy.sh -a prereqs -f prereqs/prereq.azuredeploy.json -e prereqs/prereq.azuredeploy.parameters.json -l eastus
+  az-group-deploy.sh -a prereqs -f prereqs/prereq.azuredeploy.json -e prereqs/prereq.azuredeploy.parameters.json -l eastus
   ```
   * Get the outputs. Both values will be used in the main deployment
   ```bash
