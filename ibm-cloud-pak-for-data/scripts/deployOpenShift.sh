@@ -37,6 +37,7 @@ export WORKERSUBNETNAME=${30}
 export PULLSECRET=${31}
 export FIPS=${32}
 export PUBLISH=${33}
+export OPENSHIFTUSER=${34}
 
 #Var
 export INSTALLERHOME=/home/$SUDOUSER/.openshift
@@ -94,6 +95,13 @@ echo $(date) " - Setup Azure Credentials for OCP - Complete"
 echo $(date) " - Setup Install config"
 runuser -l $SUDOUSER -c "mkdir -p $INSTALLERHOME/openshiftfourx"
 runuser -l $SUDOUSER -c "touch $INSTALLERHOME/openshiftfourx/install-config.yaml"
+zones=""
+if [[ $SINGLEORMULTI == "az" ]]; then
+zones="zones:
+      - '1'
+      - '2'
+      - '3'"
+fi
 cat > $INSTALLERHOME/openshiftfourx/install-config.yaml <<EOF
 apiVersion: v1
 baseDomain: $BASEDOMAIN
@@ -105,10 +113,7 @@ compute:
       type: $WORKERINSTANCETYPE
       osDisk:
         diskSizeGB: 256
-      zones: 
-      - "1"
-      - "2"
-      - "3"
+      $zones
   replicas: $WORKERCOUNT
 controlPlane:
   hyperthreading: Enabled
@@ -118,10 +123,7 @@ controlPlane:
       type: $MASTERINSTANCETYPE
       osDisk:
         diskSizeGB: 256
-      zones: 
-      - "1"
-      - "2"
-      - "3"
+      $zones
   replicas: $MASTERCOUNT
 metadata:
   creationTimestamp: null
@@ -316,5 +318,30 @@ if [[ $STORAGEOPTION == "nfs" ]]; then
   runuser -l $SUDOUSER -c "oc process -f $INSTALLERHOME/openshiftfourx/nfs-template.yaml -p NFS_SERVER=$(getent hosts $NFSHOSTNAME | awk '{ print $1 }') -p NFS_PATH=/exports/home | oc create -n kube-system -f -"
 fi
 echo $(date) " - Setting up $STORAGEOPTION - Done"
+
+echo $(date) " - Creating $OPENSHIFTUSER user"
+runuser -l $SUDOUSER -c "htpasswd -c -B -b /tmp/.htpasswd '$OPENSHIFTUSER' '$OPENSHIFTPASSWORD'"
+runuser -l $SUDOUSER -c "sleep 3"
+runuser -l $SUDOUSER -c "oc create secret generic htpass-secret --from-file=htpasswd=/tmp/.htpasswd -n openshift-config"
+runuser -l $SUDOUSER -c "cat >  $INSTALLERHOME/openshiftfourx/auth.yaml <<EOF
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: cluster
+spec:
+  tokenConfig:
+    accessTokenMaxAgeSeconds: 172800
+  identityProviders:
+  - name: htpasswdProvider 
+    challenge: true 
+    login: true 
+    mappingMethod: claim 
+    type: HTPasswd
+    htpasswd:
+      fileData:
+        name: htpass-secret
+EOF"
+runuser -l $SUDOUSER -c "oc apply -f $INSTALLERHOME/openshiftfourx/auth.yaml"
+runuser -l $SUDOUSER -c "oc adm policy add-cluster-role-to-user cluster-admin '$OPENSHIFTUSER'"
 
 echo $(date) " - ############## Script Complete ####################"

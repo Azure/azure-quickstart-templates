@@ -7,7 +7,7 @@
 			"metadata": {
 				"description": "The base URL where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
 			},
-			"defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ibm-cloud-pak-for-data/"
+			"defaultValue": "[deployment().properties.templateLink.uri]"
 		},
 		"_artifactsLocationSasToken": {
 			"type": "securestring",
@@ -23,44 +23,81 @@
 			},
 			"defaultValue": "[resourceGroup().location]"
 		},
-		"clusterName": {
+		"aadClientId": {
 			"type": "string",
+			"defaultValue": "",
 			"metadata": {
-				"description": "Cluster resources prefix"
+				"description": "Azure AD Client ID"
 			}
 		},
-		"dnsZone": {
-			"type": "string",
+		"aadClientSecret": {
+			"type": "securestring",
+			"defaultValue": "",
 			"metadata": {
-				"description": "Domain name created with the App Service"
+				"description": "Azure AD Client Secret"
 			}
 		},
-		"dnsZoneRG": {
+		"adminUsername": {
 			"type": "string",
+			"minLength": 4,
 			"metadata": {
-				"description": "Resource Group that contains the domain name"
+				"description": "Administrator username on Bastion VM"
 			}
 		},
-		"fipsEnabled": {
-			"type": "bool",
-			"defaultValue": true,
+		"bastionVmSize": {
+			"type": "string",
+			"defaultValue": "Standard_F8s",
+			"metadata": {
+				"description": "Bastion Host VM size. Use VMs with Premium Storage support only."
+			}
+		},
+		"sshPublicKey": {
+			"type": "string",
+			"metadata": {
+				"description": "SSH public key for all VMs"
+			}
+		},
+		"masterInstanceCount": {
+			"type": "int",
+			"defaultValue": 3,
 			"allowedValues": [
-				true,
-				false
+				1,
+				3,
+				5
 			],
 			"metadata": {
-				"description": "Enable FIPS encryption"
+				"description": "Number of OpenShift masters."
 			}
 		},
-		"privateOrPublicEndpoints": {
-			"type": "string",
-			"defaultValue": "public",
+		"workerInstanceCount": {
+			"type": "int",
+			"defaultValue": 3,
 			"allowedValues": [
-				"public",
-				"private"
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10
 			],
 			"metadata": {
-				"description": "Public or private facing endpoints"
+				"description": "Number of OpenShift nodes"
+			}
+		},
+		"masterVmSize": {
+			"type": "string",
+			"defaultValue": "Standard_F8s",
+			"metadata": {
+				"description": "OpenShift Master VM size. Use VMs with Premium Storage support only."
+			}
+		},
+		"workerVmSize": {
+			"type": "string",
+			"defaultValue": "Standard_F16s",
+			"metadata": {
+				"description": "OpenShift Node VM(s) size. Use VMs with Premium Storage support only."
 			}
 		},
 		"newOrExistingNetwork": {
@@ -89,10 +126,10 @@
 			}
 		},
 		"virtualNetworkCIDR": {
-			"type": "string",
-			"defaultValue": "10.0.0.0/16",
+			"type": "array",
+			"defaultValue": ["10.0.0.0/16"],
 			"metadata": {
-				"description": "VNet Address Prefix. Minimum address prefix is /16"
+				"description": "VNet Address Prefix. Minimum address prefix is /24"
 			}
 		},
 		"masterSubnetName": {
@@ -139,75 +176,63 @@
 		},
 		"singleZoneOrMultiZone": {
 			"type": "string",
-			"defaultValue": "single",
+			"defaultValue": "az",
 			"allowedValues": [
-				"single",
-				"multi"
+				"az",
+				"noha"
 			],
 			"metadata": {
 				"description": "Deploy to a Single AZ or multiple AZs"
 			}
 		},
-		"zone": {
-			"type": "int",
-			"defaultValue": 1,
+		"dnsZone": {
+			"type": "string",
+			"metadata": {
+				"description": "Domain name created with the App Service"
+			}
+		},
+		"dnsZoneRG": {
+			"type": "string",
+			"metadata": {
+				"description": "Resource Group that contains the domain name"
+			}
+		},
+		"pullSecret": {
+			"type": "securestring",
+			"minLength": 1,
+			"metadata": {
+				"description": "Openshift PullSecret JSON Blob"
+			}
+		},
+		"clusterName": {
+			"type": "string",
+			"defaultValue": "myocp",
+			"metadata": {
+				"description": "Cluster resources prefix"
+			}
+		},
+		"openshiftUsername": {
+			"type": "string",
+			"metadata": {
+				"description": "OpenShift login username"
+			}
+		},
+		"openshiftPassword": {
+			"type": "securestring",
+			"minLength": 8,
+			"metadata": {
+				"description": "OpenShift login password"
+			}
+		},
+		"enableFips": {
+			"type": "bool",
+			"defaultValue": true,
 			"allowedValues": [
-				1,
-				2,
-				3
+				true,
+				false
 			],
 			"metadata": {
-				"description": "Zone to deploy resources (if single zone selected)"
-			}
-		},
-		"bastionVmSize": {
-			"type": "string",
-			"defaultValue": "Standard_F8s",
-			"metadata": {
-				"description": "Bastion Host VM size. Use VMs with Premium Storage support only."
-			}
-		},
-		"masterVmSize": {
-			"type": "string",
-			"defaultValue": "Standard_F8s",
-			"metadata": {
-				"description": "OpenShift Master VM size. Use VMs with Premium Storage support only."
-			}
-		},
-		"workerVmSize": {
-			"type": "string",
-			"defaultValue": "Standard_F16s",
-			"metadata": {
-				"description": "OpenShift Node VM(s) size. Use VMs with Premium Storage support only."
-			}
-		},
-		"masterInstanceCount": {
-			"type": "int",
-			"defaultValue": 3,
-			"allowedValues": [
-				1,
-				3,
-				5
-			],
-			"metadata": {
-				"description": "Number of OpenShift masters."
-			}
-		},
-		"workerInstanceCount": {
-			"type": "int",
-			"defaultValue": 3,
-			"allowedValues": [
-				3,
-				4,
-				5,
-				6,
-				7,
-				8,
-				9,
-				10
-			],
-			"metadata": {
-				"description": "Number of OpenShift nodes"
+				"description": "Enable FIPS encryption"
 			}
 		},
 		"storageOption": {
@@ -215,13 +240,26 @@
 			"defaultValue": "portworx",
 			"allowedValues": [
 				"portworx",
-				"nfs"
+				"nfs",
+				"none"
 			]
 		},
 		"pxSpecUrl": {
 			"type": "string",
 			"metadata": {
 				"description": "Portworx Spec URL. See README on how to generate the URL"
+			},
+			"defaultValue": ""
+		},
+		"enableNfsBackup": {
+			"type": "bool",
+			"defaultValue": false,
+			"allowedValues": [
+				true,
+				false
+			],
+			"metadata": {
+				"description": "Enable Backup on NFS node"
 			}
 		},
 		"dataDiskSize": {
@@ -236,29 +274,15 @@
 				"description": "Size of Datadisk in GB for NFS storage"
 			}
 		},
-		"enableNfsBackup": {
-			"type": "bool",
-			"defaultValue": false,
+		"privateOrPublicEndpoints": {
+			"type": "string",
+			"defaultValue": "public",
 			"allowedValues": [
-				true,
-				false
+				"public",
+				"private"
 			],
 			"metadata": {
-				"description": "Enable Backup on NFS node"
-			}
-		},
-		"adminUsername": {
-			"type": "string",
-			"minLength": 4,
-			"metadata": {
-				"description": "Administrator username on all VMs and first user created for OpenShift login"
-			}
-		},
-		"openshiftPassword": {
-			"type": "string",
-			"minLength": 8,
-			"metadata": {
-				"description": "Administrator username on all VMs and first user created for OpenShift login"
+				"description": "Public or private facing endpoints"
 			}
 		},
 		"projectName": {
@@ -266,39 +290,6 @@
 			"defaultValue": "zen",
 			"metadata": {
 				"description": "Openshift Namespace to deploy project"
-			}
-		},
-		"apiKey": {
-			"type": "string",
-			"metadata": {
-				"description": "IBM Container Registry API Key. See README on how to obtain this"
-			}
-		},
-		"sshPublicKey": {
-			"type": "string",
-			"metadata": {
-				"description": "SSH public key for all VMs"
-			}
-		},
-		"keyVaultSecretNamePullSecret": {
-			"type": "securestring",
-			"minLength": 1,
-			"metadata": {
-				"description": "Pull Secret json or reference to keyvault pull secret is stored"
-			}
-		},
-		"aadClientId": {
-			"type": "string",
-			"defaultValue": "",
-			"metadata": {
-				"description": "Azure AD Client ID"
-			}
-		},
-		"aadClientSecret": {
-			"type": "securestring",
-			"defaultValue": "",
-			"metadata": {
-				"description": "Azure AD Client Secret"
 			}
 		},
 		"installWatsonStudioLibrary": {
@@ -345,6 +336,17 @@
 				"description": "Install Data Virtualization"
 			}
 		},
+		"installCognosDashboard": {
+			"type": "string",
+			"defaultValue": "no",
+			"allowedValues": [
+				"yes",
+				"no"
+			],
+			"metadata": {
+				"description": "Install Cognos Dashboard"
+			}
+		},
 		"installWatsonOpenscaleAndWatsonMachineLearning": {
 			"type": "string",
 			"defaultValue": "no",
@@ -356,7 +358,7 @@
 				"description": "Install Watson OpenScale and Watson Machine Learning"
 			}
 		},
-		"installCognosDashboard": {
+		"installApacheSpark": {
 			"type": "string",
 			"defaultValue": "no",
 			"allowedValues": [
@@ -365,6 +367,12 @@
 			],
 			"metadata": {
 				"description": "Install Cognos Dashboard"
+			}
+		},
+		"apiKey": {
+			"type": "securestring",
+			"metadata": {
+				"description": "IBM Container Registry API Key. See README on how to obtain this"
 			}
 		},
 		"cloudPakLicenseAgreement": {
@@ -416,10 +424,23 @@
 		"backupFabric": "Azure",
 		"backupPolicyName": "DefaultPolicy",
 		"protectionContainer": "[concat('iaasvmcontainer;iaasvmcontainerv2;', resourceGroup().name, ';', variables('nfsHostname'))]",
-		"protectedItem": "[concat('vm;iaasvmcontainerv2;', resourceGroup().name, ';', variables('nfsHostname'))]",
-		"deployOpenshiftExt" : "[concat('Microsoft.Compute/virtualMachines/', variables('bastionHostname'), '/extensions/deployOpenshift')]"
+		"protectedItem": "[concat('vm;iaasvmcontainerv2;', resourceGroup().name, ';', variables('nfsHostname'))]"
 	},
 	"resources": [
+		{
+			"apiVersion": "2019-05-01",
+			"name": "pid-06f07fff-296b-5beb-9092-deab0c6bb8ea",
+			"type": "Microsoft.Resources/deployments",
+			"properties": {
+				"mode": "Incremental",
+				"template": {
+					"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+					"contentVersion": "1.0.0.0",
+					"resources": [
+					]
+				}
+			}
+		},
 		{
 			"condition": "[equals(parameters('newOrExistingNetwork'), 'new')]",
 			"type": "Microsoft.Network/virtualNetworks",
@@ -434,50 +455,42 @@
 			"apiVersion": "2019-09-01",
 			"properties": {
 				"addressSpace": {
-					"addressPrefixes": [
-						"[parameters('virtualNetworkCIDR')]"
-					]
+					"addressPrefixes": "[parameters('virtualNetworkCIDR')]"
 				},
 				"subnets": [
 					{
 						"name": "[parameters('bastionSubnetName')]",
 						"properties": {
-							"addressPrefix": "[parameters('bastionSubnetPrefix')]"
+							"addressPrefix": "[parameters('bastionSubnetPrefix')]",
+							"networkSecurityGroup": {
+								"id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('bastionSecurityGroupName'))]"
+							}
+						}
+					},
+					{
+						"name": "[parameters('masterSubnetName')]",
+						"properties": {
+							"addressPrefix": "[parameters('masterSubnetPrefix')]",
+							"networkSecurityGroup": {
+								"id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('masterSecurityGroupName'))]"
+							}
+						}
+					},
+					{
+						"name": "[parameters('workerSubnetName')]",
+						"properties": {
+							"addressPrefix": "[parameters('workerSubnetPrefix')]",
+							"networkSecurityGroup": {
+								"id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('workerSecurityGroupName'))]"
+							}
 						}
 					}
 				]
-			}
-		},
-		{
-			"apiVersion": "2019-09-01",
-			"type": "Microsoft.Network/virtualNetworks/subnets",
-			"name": "[concat(parameters('virtualNetworkName'), '/', parameters('masterSubnetName'))]",
-			"location": "[parameters('location')]",
-			"properties": {
-				"addressPrefix": "[parameters('masterSubnetPrefix')]",
-				"networkSecurityGroup": {
-					"id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('masterSecurityGroupName'))]"
-				}
 			},
 			"dependsOn": [
-				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('masterSecurityGroupName'))]"
-			]
-		},
-		{
-			"apiVersion": "2019-09-01",
-			"type": "Microsoft.Network/virtualNetworks/subnets",
-			"name": "[concat(parameters('virtualNetworkName'), '/', parameters('workerSubnetName'))]",
-			"location": "[parameters('location')]",
-			"properties": {
-				"addressPrefix": "[parameters('workerSubnetPrefix')]",
-				"networkSecurityGroup": {
-					"id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('workerSecurityGroupName'))]"
-				}
-			},
-			"dependsOn": [
-				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('workerSecurityGroupName'))]"
+				"[variables('bastionSecurityGroupName')]",
+				"[variables('masterSecurityGroupName')]",
+				"[variables('workerSecurityGroupName')]"
 			]
 		},
 		{
@@ -668,12 +681,6 @@
 					},
 					"redHatTags": {
 						"value": "[variables('redHatTags')]"
-					},
-					"singleZoneOrMultiZone": {
-						"value": "[parameters('singleZoneOrMultiZone')]"
-					},
-					"zone": {
-						"value": "[parameters('zone')]"
 					}
 				}
 			}
@@ -693,20 +700,6 @@
 			"properties": {
 				"securityRules": [
 					{
-						"name": "allowSSHin_all",
-						"properties": {
-							"description": "Allow SSH in from bastion node",
-							"protocol": "Tcp",
-							"sourcePortRange": "*",
-							"destinationPortRange": "22",
-							"sourceAddressPrefix": "[parameters('bastionSubnetPrefix')]",
-							"destinationAddressPrefix": "[parameters('masterSubnetPrefix')]",
-							"access": "Allow",
-							"priority": 100,
-							"direction": "Inbound"
-						}
-					},
-					{
 						"name": "allowHTTPS_all",
 						"properties": {
 							"description": "Allow HTTPS connections from all locations",
@@ -724,25 +717,6 @@
 			}
 		},
 		{
-			"condition": "[equals(parameters('storageOption'), 'nfs')]",
-			"type": "Microsoft.Network/networkSecurityGroups/securityRules",
-			"apiVersion": "2019-04-01",
-			"name": "[concat(variables('workerSecurityGroupName'), '/nfsIn')]",
-			"dependsOn": [
-				"[resourceId('Microsoft.Network/networkSecurityGroups', variables('workerSecurityGroupName'))]"
-			],
-			"properties": {
-				"protocol": "Tcp",
-				"sourcePortRange": "*",
-				"destinationPortRange": "2049",
-				"sourceAddressPrefix": "*",
-				"destinationAddressPrefix": "*",
-				"access": "Allow",
-				"priority": 130,
-				"direction": "Inbound"
-			}
-		},
-		{
 			"apiVersion": "2019-09-01",
 			"type": "Microsoft.Network/networkSecurityGroups",
 			"name": "[variables('workerSecurityGroupName')]",
@@ -755,20 +729,6 @@
 			},
 			"properties": {
 				"securityRules": [
-					{
-						"name": "allowSSHin_all",
-						"properties": {
-							"description": "Allow SSH in from bastion node",
-							"protocol": "Tcp",
-							"sourcePortRange": "*",
-							"destinationPortRange": "22",
-							"sourceAddressPrefix": "[parameters('bastionSubnetPrefix')]",
-							"destinationAddressPrefix": "[parameters('workerSubnetPrefix')]",
-							"access": "Allow",
-							"priority": 100,
-							"direction": "Inbound"
-						}
-					},
 					{
 						"name": "allowHTTPS_all",
 						"properties": {
@@ -838,6 +798,9 @@
 					"adminUsername": {
 						"value": "[parameters('adminUsername')]"
 					},
+					"openshiftUsername": {
+						"value": "[parameters('openshiftUsername')]"
+					},
 					"openshiftPassword": {
 						"value": "[parameters('openshiftPassword')]"
 					},
@@ -854,13 +817,13 @@
 						"value": "[parameters('sshPublicKey')]"
 					},
 					"pullSecret": {
-						"value": "[parameters('keyVaultSecretNamePullSecret')]"
+						"value": "[parameters('pullSecret')]"
 					},
 					"virtualNetworkName": {
 						"value": "[parameters('virtualNetworkName')]"
 					},
 					"virtualNetworkCIDR": {
-						"value": "[parameters('virtualNetworkCIDR')]"
+						"value": "[parameters('virtualNetworkCIDR')[0]]"
 					},
 					"pxSpecUrl": {
 						"value": "[parameters('pxSpecUrl')]"
@@ -901,8 +864,8 @@
 					"workerSubnetName": {
 						"value": "[parameters('workerSubnetName')]"
 					},
-					"fipsEnabled": {
-						"value": "[parameters('fipsEnabled')]"
+					"enableFips": {
+						"value": "[parameters('enableFips')]"
 					},
 					"privateOrPublic": {
 						"value": "[if(equals(parameters('privateOrPublicEndpoints'), 'private'), 'Internal', 'External')]"
@@ -960,12 +923,6 @@
 					},
 					"redHatTags": {
 						"value": "[variables('redHatTags')]"
-					},
-					"singleZoneOrMultiZone": {
-						"value": "[parameters('singleZoneOrMultiZone')]"
-					},
-					"zone": {
-						"value": "[parameters('zone')]"
 					}
 				}
 			}
@@ -1054,7 +1011,7 @@
 					]
 				},
 				"protectedSettings": {
-					"commandToExecute": "[concat('bash ', variables('cloudPakConfigScriptFileName'), ' \"', uri(parameters('_artifactsLocation'), '.'), '\"', ' \"', parameters('_artifactsLocationSasToken'), '\"', ' \"', parameters('adminUsername'), '\"', ' \"', parameters('workerInstanceCount'), '\"', ' \"', parameters('projectName'), '\"', ' \"', parameters('apiKey'), '\"', ' \"', parameters('fipsEnabled'), '\"')]"
+					"commandToExecute": "[concat('bash ', variables('cloudPakConfigScriptFileName'), ' \"', uri(parameters('_artifactsLocation'), '.'), '\"', ' \"', parameters('_artifactsLocationSasToken'), '\"', ' \"', parameters('adminUsername'), '\"', ' \"', parameters('workerInstanceCount'), '\"', ' \"', parameters('projectName'), '\"', ' \"', parameters('apiKey'), '\"', ' \"', parameters('enableFips'), '\"')]"
 				}
 			}
 		},
@@ -1066,7 +1023,7 @@
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
-				"[variables('deployOpenshiftExt')]"
+				"[concat('Microsoft.Compute/virtualMachines/', variables('bastionHostname'), '/extensions/deployOpenshift')]"
 			],
 			"properties": {
 				"mode": "Incremental",
@@ -1087,8 +1044,11 @@
 					"redHatTags": {
 						"value": "[variables('redHatTags')]"
 					},
-					"ocuser": {
+					"adminUsername":{
 						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
 					},
 					"ocpassword": {
 						"value": "[parameters('openshiftPassword')]"
@@ -1122,7 +1082,7 @@
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
-				"[variables('deployOpenshiftExt')]",
+				"[concat('Microsoft.Compute/virtualMachines/', variables('bastionHostname'), '/extensions/deployOpenshift')]",
 				"CloudPakLiteDeployment"
 			],
 			"properties": {
@@ -1144,8 +1104,11 @@
 					"redHatTags": {
 						"value": "[variables('redHatTags')]"
 					},
-					"ocuser": {
+					"adminUsername":{
 						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
 					},
 					"ocpassword": {
 						"value": "[parameters('openshiftPassword')]"
@@ -1179,7 +1142,7 @@
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
-				"[variables('deployOpenshiftExt')]",
+				"[concat('Microsoft.Compute/virtualMachines/', variables('bastionHostname'), '/extensions/deployOpenshift')]",
 				"CloudPakDVDeployment"
 			],
 			"properties": {
@@ -1201,8 +1164,11 @@
 					"redHatTags": {
 						"value": "[variables('redHatTags')]"
 					},
-					"ocuser": {
+					"adminUsername":{
 						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
 					},
 					"ocpassword": {
 						"value": "[parameters('openshiftPassword')]"
@@ -1236,7 +1202,7 @@
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
-				"[variables('deployOpenshiftExt')]",
+				"[concat('Microsoft.Compute/virtualMachines/', variables('bastionHostname'), '/extensions/deployOpenshift')]",
 				"CloudPakCDEDeployment"
 			],
 			"properties": {
@@ -1258,8 +1224,11 @@
 					"redHatTags": {
 						"value": "[variables('redHatTags')]"
 					},
-					"ocuser": {
+					"adminUsername":{
 						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
 					},
 					"ocpassword": {
 						"value": "[parameters('openshiftPassword')]"
@@ -1293,7 +1262,7 @@
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
-				"[variables('deployOpenshiftExt')]",
+				"[concat('Microsoft.Compute/virtualMachines/', variables('bastionHostname'), '/extensions/deployOpenshift')]",
 				"CloudPakWSLDeployment"
 			],
 			"properties": {
@@ -1315,8 +1284,11 @@
 					"redHatTags": {
 						"value": "[variables('redHatTags')]"
 					},
-					"ocuser": {
+					"adminUsername":{
 						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
 					},
 					"ocpassword": {
 						"value": "[parameters('openshiftPassword')]"
@@ -1350,7 +1322,7 @@
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
-				"[variables('deployOpenshiftExt')]",
+				"[concat('Microsoft.Compute/virtualMachines/', variables('bastionHostname'), '/extensions/deployOpenshift')]",
 				"CloudPakWMLDeployment"
 			],
 			"properties": {
@@ -1372,8 +1344,11 @@
 					"redHatTags": {
 						"value": "[variables('redHatTags')]"
 					},
-					"ocuser": {
+					"adminUsername":{
 						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
 					},
 					"ocpassword": {
 						"value": "[parameters('openshiftPassword')]"
@@ -1407,7 +1382,7 @@
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
-				"[variables('deployOpenshiftExt')]",
+				"[concat('Microsoft.Compute/virtualMachines/', variables('bastionHostname'), '/extensions/deployOpenshift')]",
 				"CloudPakWKCDeployment"
 			],
 			"properties": {
@@ -1429,8 +1404,71 @@
 					"redHatTags": {
 						"value": "[variables('redHatTags')]"
 					},
-					"ocuser": {
+					"adminUsername":{
 						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
+					},
+					"ocpassword": {
+						"value": "[parameters('openshiftPassword')]"
+					},
+					"storageOption": {
+						"value": "[parameters('storageOption')]"
+					},
+					"bastionHostname": {
+						"value": "[variables('bastionHostname')]"
+					},
+					"projectName": {
+						"value": "[parameters('projectName')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"clusterName": {
+						"value": "[parameters('clusterName')]"
+					},
+					"domainName": {
+						"value": "[parameters('dnsZone')]"
+					}
+				}
+			}
+		},
+		{
+			"name": "CloudPakSparkDeployment",
+			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installApacheSpark'), 'yes'))]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-05-01",
+			"dependsOn": [
+				"nfsVmDeployment",
+				"OpenShiftDeployment",
+				"[concat('Microsoft.Compute/virtualMachines/', variables('bastionHostname'), '/extensions/deployOpenshift')]",
+				"CloudPakWOSDeployment"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('cloudPakDeploymentTemplateUrl')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"assembly": {
+						"value": "spark"
+					},
+					"cloudPakDeploymentScriptUrl": {
+						"value": "[variables('cloudPakDeploymentScriptUrl')]"
+					},
+					"cloudPakDeploymentScriptFileName": {
+						"value": "[variables('cloudPakDeploymentScriptFileName')]"
+					},
+					"redHatTags": {
+						"value": "[variables('redHatTags')]"
+					},
+					"adminUsername":{
+						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
 					},
 					"ocpassword": {
 						"value": "[parameters('openshiftPassword')]"
