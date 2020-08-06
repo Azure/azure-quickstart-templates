@@ -15,13 +15,6 @@
                 "description": "This is a Three Letter Acronym for your company name. 'CON' for Contoso for example."
             }
         },
-
-        "userObjectID": {
-            "type": "string",
-            "metadata": {
-                "description": "This is where you give a User permissions to the Data Lake Storage Account. This will give the user Storage Blob Data Contributor to work with the file system."
-            }
-        },
         "allowAllConnections": {
             "type": "string",
             "allowedValues": [
@@ -68,7 +61,6 @@
         },
         "sqlAdministratorLogin": {
             "type": "string",
-            "defaultValue": "sqladminuser",
             "metadata": {
                 "description": "The username of the SQL Administrator"
             }
@@ -103,16 +95,6 @@
             ],
             "metadata": {
                 "description": "Select the SKU of the SQL pool."
-            }
-        },
-        "storageBlobDataContributorID": {
-            "type": "string",
-            "defaultValue": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
-            "allowedValues": [
-                "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
-            ],
-            "metadata": {
-                "description": "Leave this as default value. Role ID for Storage Blob Data Contributor"
             }
         },
         "metadataSync": {
@@ -299,7 +281,8 @@
         "dlsFsName": "[toLower(concat(variables('dlsName'),'fs1'))]",
         "sqlPoolName": "[toLower(concat(variables('workspaceName'),'p1'))]",
         "workspaceName": "[toLower(concat(variables('synapseName'),'ws1'))]",
-        "sparkPoolName": "[toLower('synasp1')]"
+        "sparkPoolName": "[toLower('synasp1')]",
+        "storageBlobDataContributorID": "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
     },
     "resources": [
         {
@@ -457,68 +440,12 @@
                         {
                             "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
                             "apiVersion": "2018-09-01-preview",
-                            "name": "[concat(variables('dlsName'), '/Microsoft.Authorization/',  guid(concat(resourceGroup().id, '/', parameters('storageBlobDataContributorID'), '/', variables('workspaceName'), '/', parameters('storageRoleUniqueId'))))]",
+                            "name": "[concat(variables('dlsName'), '/Microsoft.Authorization/',  guid(concat(resourceGroup().id, '/', variables('storageBlobDataContributorID'), '/', variables('workspaceName'), '/', parameters('storageRoleUniqueId'))))]",
                             "location": "[parameters('location')]",
                             "properties": {
-                                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('storageBlobDataContributorID'))]",
+                                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorID'))]",
                                 "principalId": "[reference(resourceId('Microsoft.Synapse/workspaces/', variables('workspaceName')), '2019-06-01-preview', 'Full').identity.principalId]",
                                 "principalType": "ServicePrincipal"
-                            }
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "condition": true,
-            "apiVersion": "2019-05-01",
-            "name": "storageRoleUserDeploymentResource",
-            "type": "Microsoft.Resources/deployments",
-            "subscriptionId": "[subscription().subscriptionId]",
-            "resourceGroup": "[resourceGroup().name]",
-            "dependsOn": [
-                "[variables('workspaceName')]"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "resources": [
-                        {
-                            "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
-                            "apiVersion": "2018-09-01-preview",
-                            "name": "[concat(variables('dlsName'), '/Microsoft.Authorization/',  guid(concat(resourceGroup().id, '/', parameters('storageBlobDataContributorID'), '/', parameters('userObjectID'), '/', parameters('storageRoleUniqueId'))))]",
-                            "location": "[parameters('location')]",
-                            "properties": {
-                                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('storageBlobDataContributorID'))]",
-                                "principalId": "[parameters('userObjectID')]",
-                                "principalType": "User"
-                            }
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "condition": false,
-            "apiVersion": "2019-05-01",
-            "name": "[variables('dlsFsName')]",
-            "type": "Microsoft.Resources/deployments",
-            "subscriptionId": "[subscription().subscriptionId]",
-            "resourceGroup": "[resourceGroup().name]",
-            "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "resources": [
-                        {
-                            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-                            "name": "[concat(variables('dlsName'), '/default/', variables('dlsFsName'))]",
-                            "apiVersion": "2019-09-01",
-                            "properties": {
-                                "publicAccess": "None"
                             }
                         }
                     ]
@@ -591,29 +518,13 @@
             "properties": {
                 "mode": "Incremental",
                 "templatelink": {
-                    "uri": "https://raw.githubusercontent.com/JamJarchitect/azure-quickstart-templates/master/101-synapse-poc/nestedtemplates/pauseroleassignment.json"
+                    "uri": "https://raw.githubusercontent.com/JamJarchitect/azure-quickstart-templates/master/101-synapse-poc/nestedtemplates/logicapproleassignments.json"
                 },
                 "parameters": {
-                    "logicAppName": { "value": "[parameters('logicAppPauseName')]" },
+                    "logicAppResumeName": { "value": "[parameters('logicAppResumeName')]" },
+                    "logicAppPauseName": { "value": "[parameters('logicAppPauseName')]" },
+                    "resumeGuid": { "value": "[parameters('resumeGuid')]" },
                     "pauseGuid": { "value": "[parameters('pauseGuid')]" }
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "name": "MSI2RBACOnResourceGroup",
-            "dependsOn": [
-                "[variables('sqlPoolName')]"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templatelink": {
-                    "uri": "https://raw.githubusercontent.com/JamJarchitect/azure-quickstart-templates/master/101-synapse-poc/nestedtemplates/resumeroleassignment.json"
-                },
-                "parameters": {
-                    "logicAppName": { "value": "[parameters('logicAppResumeName')]" },
-                    "resumeGuid": { "value": "[parameters('resumeGuid')]" }
                 }
             }
         }

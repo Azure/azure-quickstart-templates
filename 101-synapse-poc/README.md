@@ -16,6 +16,8 @@
 
 This template deploys necessary resources to run an Azure Synapse Proof-of-Concept
 
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-synapse-poc%2Fazuredeploy.json)
+
 This template deploys the following:
 - An Azure Synapse Workspace
     - (OPTIONAL) Allows All connections in by default (Firewall IP Addresses)
@@ -83,7 +85,3 @@ Using the Getting Started wizard inside of the workspace is recommended to use s
 ![Object ID](images/4.png)
 
 # Deploy to Azure
-
-With all the pre-requisites in place and information at hand, you can now use the below to deploy into Azure. This will take you to the custom template deployment blade in Azure. Fill in the Parameters with the necessary information to deploy the Proof of Concept.
-
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-synapse-poc%2Fazuredeploy.json)
