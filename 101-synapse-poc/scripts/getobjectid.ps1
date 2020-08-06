@@ -1,16 +1,7 @@
-try {
-    Import-Module AzureAD
-    Write-Host "Azure Active Directory Module exists"
-} 
-catch {
-    Write-Host "Module does not exist - installing Azure Active Directory Module"
-    Install-Module AzureAD -AllowClobber
-    Import-Module AzureAD
-}
+Connect-AzAccount
+$userUPN = Read-Host -Prompt 'Enter your User Principal Name'
 
-$user = Connect-AzureAD
+$userOID = (Get-AzADUser -UserPrincipalName $userUPN).Id
 
-$userObjectID = (Get-AzureADUser -ObjectId $user.account.id).ObjectId
-
-Write-Host "Your User Object ID for the ARM Template is $userObjectID"
+Write-Host "Your User Object ID for the ARM Template is $userOID"
 pause
