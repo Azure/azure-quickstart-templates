@@ -41,6 +41,10 @@ ansible-playbook -i ${INVENTORY_FILE} \
 	-e "PLANFILE_DOWNLOAD_LOCATION=$planfile_uri" \
 	-vvv step04_download_mirror_and_licenses.yaml
 
+# Get the path to the sid file in the depot
+SID_FILE=$(ls /sasshare/depot/sid_files)
+echo "sid_file_name: $SID_FILE" >/tmp/ansible_vars.yaml
+
 ansible-playbook -i ${INVENTORY_FILE} -vvv step05_preinstall_sas.yaml
 
 ansible-playbook -i ${INVENTORY_FILE} -vvv step06_install_sas.yaml
