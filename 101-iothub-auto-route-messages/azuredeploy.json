@@ -2,12 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "IoTHubNamePrefix": {
+        "projectName": {
             "type": "string",
-            "defaultValue": "ContosoTestHub",
-            "maxLength": 37,
+            "minLength": 1,
+            "maxLength": 11,
+            "defaultValue": "contoso",
             "metadata": {
-                "description": "The name prefix of the IoT Hub to create."
+                "description": "Define the project name or prefix for all objects."
             }
         },
         "location": {
@@ -37,33 +38,13 @@
             "metadata": {
                 "description": "Partitions used for the event stream."
             }
-        },
-        "storageAccountNamePrefix": {
-            "type": "string",
-            "defaultValue": "demostorage",
-            "maxLength": 11,
-            "metadata": {
-                "description": "Name prefix of storage account to be created."
-            }
-        },
-        "storageContainerName": {
-            "type": "string",
-            "defaultValue": "contosoresults",
-            "metadata": {
-                "description": "Name of the container in which to place the routed data."
-            }
-        },
-        "storageEndpoint": {
-            "type": "string",
-            "defaultValue": "ContosoStorageEndpoint",
-            "metadata": {
-                "description": "Name of the endpoint for the storage account."
-            }
         }
     },
     "variables": {
-        "iotHubName": "[concat(parameters('IotHubNamePrefix'), uniqueString(resourceGroup().id))]",
-        "storageAccountName": "[concat(parameters('storageAccountNamePrefix'), uniqueString(resourceGroup().id))]"
+        "iotHubName": "[concat(parameters('projectName'), 'Hub', uniqueString(resourceGroup().id))]",
+        "storageAccountName": "[concat(toLower(parameters('projectName')), uniqueString(resourceGroup().id))]",
+        "storageEndpoint": "[concat(parameters('projectName'), 'StorageEndpont')]",
+        "storageContainerName": "[concat(toLower(parameters('projectName')), 'results')]"
     },
     "resources": [
         {
@@ -81,7 +62,7 @@
                 {
                     "type": "blobServices/containers",
                     "apiVersion": "2019-06-01",
-                    "name": "[concat('default/', parameters('storageContainerName'))]",
+                    "name": "[concat('default/', variables('storageContainerName'))]",
                     "properties": {
                         "publicAccess": "None"
                     },
@@ -110,15 +91,13 @@
                     "endpoints": {
                         "storageContainers": [
                             {
-                                "connectionString": "[Concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]",
-                                "containerName": "[parameters('storageContainerName')]",
+                                "connectionString": "[Concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';EndpointSuffix=',environment().suffixes.storage,';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]",
+                                "containerName": "[variables('storageContainerName')]",
                                 "fileNameFormat": "{iothub}/{partition}/{YYYY}/{MM}/{DD}/{HH}/{mm}",
                                 "batchFrequencyInSeconds": 100,
                                 "maxChunkSizeInBytes": 104857600,
                                 "encoding": "json",
-                                "name": "[parameters('storageEndpoint')]",
-                                "subscriptionId": "[subscription().subscriptionId]",
-                                "resourceGroup": "[resourceGroup().Name]"
+                                "name": "[variables('storageEndpoint')]"
                             }
                         ]
                     },
@@ -128,7 +107,7 @@
                             "source": "DeviceMessages",
                             "condition": "level=\"storage\"",
                             "endpointNames": [
-                                "[parameters('storageEndpoint')]"
+                                "[variables('storageEndpoint')]"
                             ],
                             "isEnabled": true
                         }
