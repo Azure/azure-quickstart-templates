@@ -1,231 +1,226 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "appName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name for the Azure Web App (.azurewebsites.net)"
-      }
-    },
-    "dbAdministratorLogin": {
-      "type": "string",
-      "metadata": {
-        "description": "Make sure your login name meets the following requirements - It's a SQL Identifier, and not a typical system name (like admin, administrator, sa, root, dbmanager, loginmanager, etc.), or a built-in database user or role (like dbo, guest, public, etc.). Make sure your name doesn't contain whitespaces, unicode characters, or nonalphabetic characters, and that it doesn't begin with numbers or symbols."
-      }
-    },
-    "dbAdministratorLoginPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Database admin user password"
-      }
-    },
-    "nonAdminDatabaseUserName": {
-      "type": "string",
-      "metadata": {
-        "description": "Non-admin database user. Make sure your login name meets the following requirements - It's a SQL Identifier, and not a typical system name (like admin, administrator, sa, root, dbmanager, loginmanager, etc.), or a built-in database user or role (like dbo, guest, public, etc.). Make sure your name doesn't contain whitespaces, unicode characters, or nonalphabetic characters, and that it doesn't begin with numbers or symbols."
-      }
-    },
-    "nonAdminDatabasePassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Non-admin Database User password"
-      }
-    },
-    "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Location for all resources."
-      }
-    }
-  },
-  "variables": {
-    "appServicePlanName": "[concat('serviceplan', uniqueString(resourceGroup().id))]",
-    "appServiceTier": "Basic",
-    "appServiceWorkerSize": "0",
-    "dbServerName": "[concat('sqlserver', uniqueString(resourceGroup().id))]",
-    "dbName": "[concat('sqldatabase', uniqueString(resourceGroup().id))]",
-    "mediaServicesAccountName": "[concat('media', uniqueString(resourceGroup().id))]",
-    "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
-    "storageAccountType": "Standard_LRS"
-  },
-  "resources": [
-    {
-      "name": "[variables('dbServerName')]",
-      "type": "Microsoft.Sql/servers",
-      "location": "[parameters('location')]",
-      "apiVersion": "2020-02-02-preview",
-      "properties": {
-        "administratorLogin": "[parameters('dbAdministratorLogin')]",
-        "administratorLoginPassword": "[parameters('dbAdministratorLoginPassword')]",
-        "version": "12.0"
-      },
-      "resources": [
-        {
-          "apiVersion": "2020-02-02-preview",
-          "name": "[variables('dbName')]",
-          "type": "databases",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers', variables('dbServerName'))]"
-          ],
-          "properties": {
-            "collation": "[string('SQL_Latin1_General_CP1_CI_AS')]",
-            "requestedServiceObjectiveName": "S0"
-          },
-          "sku": {
-            "name": "Standard",
-            "tier": "Standard"
-          }
-        },
-        {
-          "apiVersion": "2020-02-02-preview",
-          "name": "AllowAllWindowsAzureIps",
-          "type": "firewallrules",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers/', variables('dbServerName'))]"
-          ],
-          "properties": {
-            "endIpAddress": "0.0.0.0",
-            "startIpAddress": "0.0.0.0"
-          }
-        }
-      ]
-    },
-    {
-      "apiVersion": "2019-08-01",
-      "name": "[variables('appServicePlanName')]",
-      "type": "Microsoft.Web/serverfarms",
-      "location": "[parameters('location')]",
-      "properties": {
-        "name": "[variables('appServicePlanName')]",
-        "appServiceTier": "[variables('appServiceTier')]",
-        "workerSize": "[variables('appServiceWorkerSize')]",
-        "numberOfWorkers": 1
-      }
-    },
-    {
-      "type": "Microsoft.Media/mediaServices",
-      "name": "[variables('mediaServicesAccountName')]",
-      "apiVersion": "2018-07-01",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
-      ],
-      "properties": {
-        "storageAccounts": [
-          {
-            "id": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-            "type": "Primary"
-          }
-        ]
-      },
-      "resources": []
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2019-06-01",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "[variables('storageAccountType')]"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
-    {
-      "apiVersion": "2018-11-01",
-      "name": "[parameters('appName')]",
-      "type": "Microsoft.Web/Sites",
-      "location": "[parameters('location')]",
-      "tags": {
-        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "empty"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverFarms/', variables('appServicePlanName'))]"
-      ],
-      "properties": {
-        "name": "[parameters('appName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
-      },
-      "resources": [
-        {
-          "apiVersion": "2018-11-01",
-          "name": "MSDeploy",
-          "type": "Extensions",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites/', parameters('appName'))]",
-            "[resourceId('Microsoft.SQL/servers/databases', variables('dbServerName'), variables('dbName'))]",
-            "[resourceId('Microsoft.Media/mediaservices/', variables('mediaServicesAccountName'))]"
-          ],
-          "properties": {
-            "packageUri": "https://auxmktplceprod.blob.core.windows.net/packages/Orchard.Web.1.10.x-AMS.zip",
-            "dbType": "SQL",
-            "connectionString": "[concat('Data Source=tcp:', reference('Microsoft.Sql/servers/', variables('dbServerName')).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', variables('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
-            "setParameters": {
-              "Application Path": "[parameters('appName')]",
-              "Database Server": "[reference('Microsoft.Sql/servers/', variables('dbServerName')).fullyQualifiedDomainName]",
-              "Database Name": "[variables('dbName')]",
-              "Database Username": "[parameters('nonAdminDatabaseUserName')]",
-              "Database Password": "[parameters('nonAdminDatabasePassword')]",
-              "Database Administrator": "[parameters('dbAdministratorLogin')]",
-              "Database Administrator Password": "[parameters('dbAdministratorLoginPassword')]"
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appName": {
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Azure Web App (.azurewebsites.net)"
             }
-          }
         },
-        {
-          "apiVersion": "2018-11-01",
-          "name": "connectionstrings",
-          "type": "config",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
-            "[resourceId('Microsoft.SQL/servers/databases', variables('dbServerName'), variables('dbName'))]",
-            "[resourceId('Microsoft.Web/Sites/Extensions/MSDeploy', parameters('appName'))]"
-          ],
-          "properties": {
-            "defaultConnection": {
-              "value": "[concat('Data Source=tcp:', reference('Microsoft.SQL/servers/', variables('dbServerName')).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', variables('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
-              "type": "SQLAzure"
+        "dbAdministratorLogin": {
+            "type": "String",
+            "metadata": {
+                "description": "Make sure your login name meets the following requirements - It's a SQL Identifier, and not a typical system name (like admin, administrator, sa, root, dbmanager, loginmanager, etc.), or a built-in database user or role (like dbo, guest, public, etc.). Make sure your name doesn't contain whitespaces, unicode characters, or nonalphabetic characters, and that it doesn't begin with numbers or symbols."
             }
-          }
         },
-        {
-          "apiVersion": "2018-11-01",
-          "name": "appsettings",
-          "type": "config",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
-            "[resourceId('Microsoft.Media/mediaservices/', variables('mediaServicesAccountName'))]",
-            "[resourceId('Microsoft.Web/Sites/Extensions/MSDeploy', parameters('appName'))]"
-          ],
-          "properties": {
-            "defaultRecipe": "Video Portal",
-            "Azure.MediaServices.AccountName": "[variables('mediaServicesAccountName')]",
-            "Azure.MediaServices.AccountKey": "[listKeys(resourceId('Microsoft.Media/mediaservices', variables('mediaServicesAccountName')), '2015-10-01').primaryKey]",
-            "Azure.MediaServices.StorageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value]"
-          }
+        "dbAdministratorLoginPassword": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Database admin user password"
+            }
         },
-        {
-          "apiVersion": "2018-11-01",
-          "name": "web",
-          "type": "config",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites/', parameters('appName'))]",
-            "[resourceId('Microsoft.Web/Sites/Extensions/MSDeploy', parameters('appName'))]"
-          ],
-          "properties": {
-            "phpVersion": "off",
-            "netFrameworkVersion": "v4.5",
-            "use32BitWorkerProcess": "true",
-            "webSocketsEnabled": false,
-            "alwaysOn": "true",
-            "httpLoggingEnabled": true,
-            "logsDirectorySizeLimit": 40
-          }
+        "nonAdminDatabaseUserName": {
+            "type": "String",
+            "metadata": {
+                "description": "Non-admin database user. Make sure your login name meets the following requirements - It's a SQL Identifier, and not a typical system name (like admin, administrator, sa, root, dbmanager, loginmanager, etc.), or a built-in database user or role (like dbo, guest, public, etc.). Make sure your name doesn't contain whitespaces, unicode characters, or nonalphabetic characters, and that it doesn't begin with numbers or symbols."
+            }
+        },
+        "nonAdminDatabasePassword": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Non-admin Database User password"
+            }
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "String",
+            "metadata": {
+                "description": "Location for all resources."
+            }
         }
-      ]
-    }
-  ]
+    },
+    "variables": {
+        "appServicePlanName": "[concat('serviceplan', uniqueString(resourceGroup().id))]",
+        "dbServerName": "[concat('sqlserver', uniqueString(resourceGroup().id))]",
+        "dbName": "[concat('sqldatabase', uniqueString(resourceGroup().id))]",
+        "mediaServicesAccountName": "[concat('media', uniqueString(resourceGroup().id))]",
+        "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
+        "storageAccountType": "Standard_LRS"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Sql/servers",
+            "apiVersion": "2020-02-02-preview",
+            "name": "[variables('dbServerName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "administratorLogin": "[parameters('dbAdministratorLogin')]",
+                "administratorLoginPassword": "[parameters('dbAdministratorLoginPassword')]",
+                "version": "12.0"
+            },
+            "resources": [
+                {
+                    "type": "databases",
+                    "apiVersion": "2020-02-02-preview",
+                    "name": "[variables('dbName')]",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers', variables('dbServerName'))]"
+                    ],
+                    "sku": {
+                        "name": "Standard",
+                        "tier": "Standard"
+                    },
+                    "properties": {
+                        "collation": "[string('SQL_Latin1_General_CP1_CI_AS')]",
+                        "requestedServiceObjectiveName": "S0"
+                    }
+                },
+                {
+                    "type": "firewallrules",
+                    "apiVersion": "2020-02-02-preview",
+                    "name": "AllowAllWindowsAzureIps",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers', variables('dbServerName'))]"
+                    ],
+                    "properties": {
+                        "endIpAddress": "0.0.0.0",
+                        "startIpAddress": "0.0.0.0"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2019-08-01",
+            "name": "[variables('appServicePlanName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "F1"
+            }
+        },
+        {
+            "type": "Microsoft.Media/mediaServices",
+            "apiVersion": "2018-07-01",
+            "name": "[variables('mediaServicesAccountName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+            ],
+            "properties": {
+                "storageAccounts": [
+                    {
+                        "id": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                        "type": "Primary"
+                    }
+                ]
+            },
+            "resources": []
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[variables('storageAccountType')]"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Web/Sites",
+            "apiVersion": "2018-11-01",
+            "name": "[parameters('appName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverFarms', variables('appServicePlanName'))]"
+            ],
+            "tags": {
+                "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "empty"
+            },
+            "properties": {
+                "name": "[parameters('appName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+            },
+            "resources": [
+                {
+                    "type": "Extensions",
+                    "apiVersion": "2018-11-01",
+                    "name": "MSDeploy",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
+                        "[resourceId('Microsoft.Sql/servers/databases', variables('dbServerName'), variables('dbName'))]",
+                        "[resourceId('Microsoft.Media/mediaservices', variables('mediaServicesAccountName'))]"
+                    ],
+                    "properties": {
+                        "packageUri": "https://auxmktplceprod.blob.core.windows.net/packages/Orchard.Web.1.10.x-AMS.zip",
+                        "dbType": "SQL",
+                        "connectionString": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('dbServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', variables('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
+                        "setParameters": {
+                            "Application Path": "[parameters('appName')]",
+                            "Database Server": "[reference(concat('Microsoft.Sql/servers/', variables('dbServerName'))).fullyQualifiedDomainName]",
+                            "Database Name": "[variables('dbName')]",
+                            "Database Username": "[parameters('nonAdminDatabaseUserName')]",
+                            "Database Password": "[parameters('nonAdminDatabasePassword')]",
+                            "Database Administrator": "[parameters('dbAdministratorLogin')]",
+                            "Database Administrator Password": "[parameters('dbAdministratorLoginPassword')]"
+                        }
+                    }
+                },
+                {
+                    "type": "config",
+                    "apiVersion": "2018-11-01",
+                    "name": "connectionstrings",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
+                        "[resourceId('Microsoft.SQL/servers/databases', variables('dbServerName'), variables('dbName'))]",
+                        "[resourceId('Microsoft.Web/Sites/Extensions', parameters('appName'), 'MSDeploy')]"
+                    ],
+                    "properties": {
+                        "defaultConnection": {
+                            "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('dbServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', variables('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
+                            "type": "SQLAzure"
+                        }
+                    }
+                },
+                {
+                    "type": "config",
+                    "apiVersion": "2018-11-01",
+                    "name": "appsettings",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
+                        "[resourceId('Microsoft.Media/mediaservices', variables('mediaServicesAccountName'))]",
+                        "[resourceId('Microsoft.Web/Sites/Extensions', parameters('appName'), 'MSDeploy')]"
+                    ],
+                    "properties": {
+                        "defaultRecipe": "Video Portal",
+                        "Azure.MediaServices.AccountName": "[variables('mediaServicesAccountName')]",
+                        "Azure.MediaServices.AccountKey": "[listKeys(resourceId('Microsoft.Media/mediaservices', variables('mediaServicesAccountName')), '2015-10-01').primaryKey]",
+                        "Azure.MediaServices.StorageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value]"
+                    }
+                },
+                {
+                    "type": "config",
+                    "apiVersion": "2018-11-01",
+                    "name": "web",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
+                        "[resourceId('Microsoft.Web/Sites/Extensions', parameters('appName'),'MSDeploy')]"
+                    ],
+                    "properties": {
+                        "phpVersion": "off",
+                        "netFrameworkVersion": "v4.5",
+                        "use32BitWorkerProcess": "true",
+                        "webSocketsEnabled": false,
+                        "alwaysOn": "true",
+                        "httpLoggingEnabled": true,
+                        "logsDirectorySizeLimit": 40
+                    }
+                }
+            ]
+        }
+    ]
 }
