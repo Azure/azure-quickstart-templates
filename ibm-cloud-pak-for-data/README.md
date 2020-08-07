@@ -55,32 +55,29 @@ The template sets up the following:
 
 * Install [az-cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
-* The following information from your Azure account needs to be handy to start your deployment
-- Azure Client Id
-- Azure Client secret
-- Resource Group
-- Secure Key vault
+* You would need to create the following resources on your Azure account to use this deployment template:
+- Service Principal, with Contributor and User Access Administrator.
+- App Service Domain.
 
-This can be obtained by running the azure CLI commands from any host where azure CLI is installed.
+These can be done by running the azure CLI commands from any host where azure CLI is installed.
 
 
 * Create [App Service Domain](https://portal.azure.com/#create/Microsoft.Domain)
   * This will also create a DNS Zone needed for this deployment.
   * Note the DNS Zone name.
-* Create Azure Service Principal with `Owner`, `Contributor` and `User Access Administrator` roles.
+* Create Azure Service Principal with `Contributor` and `User Access Administrator` roles.
   * Create Service Principal, using your Azure Subscription ID, and save the returned json:
     ```bash
     az login
-    az ad sp create-for-rbac --role="Owner" --scopes="/subscriptions/<subscription_id>"
+    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<subscription_id>"
     ```
   * Get `Object ID`, using the AppId from the Service Principal just created:
     ```bash
     az ad sp list --filter "appId eq '<app_id>'"
     ```
-  * Assign `Contributor` and `User Access Administrator` roles, using the `Object Id`.
+  * Assign `User Access Administrator` roles, using the `Object Id`.
     ```bash
     az role assignment create --role "User Access Administrator" --assignee-object-id "<object_id>"
-    az role assignment create --role "Contributor" --assignee-object-id "<object_id>"
     ```
 * [Download](https://cloud.redhat.com/openshift/install/pull-secret) a pull secret. Create a Red Hat account if you do not have one.
 
