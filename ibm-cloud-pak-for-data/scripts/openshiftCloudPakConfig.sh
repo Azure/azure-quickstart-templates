@@ -1,6 +1,6 @@
 #!/bin/sh
 export ARTIFACTSLOCATION=${1::-1}
-export ARTIFACTSTOKEN='$2'
+export ARTIFACTSTOKEN=\"$2\"
 export SUDOUSER=$3
 export WORKERNODECOUNT=$4
 export NAMESPACE=$5
