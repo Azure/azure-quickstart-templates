@@ -67,6 +67,7 @@
     "publicIPAddressName": "myPublicIP",
     "vmName": "MyUbuntuVM",
     "virtualNetworkName": "MyVNET",
+    "networkSecurityGroupName": "MyNSG",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), variables('subnetName'))]",
     "linuxImage": {
       "publisher": "Canonical",
@@ -93,7 +94,7 @@
       "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
       "zones": "[split(string(add(mod(copyIndex(),3),1)), ',')]",
       "sku": {
-        "name": "Basic"
+        "name": "Standard"
       },
       "copy": {
         "name": "ipLoop",
@@ -101,7 +102,7 @@
       },
       "location": "[parameters('location')]",
       "properties": {
-        "publicIPAllocationMethod": "Dynamic",
+        "publicIPAllocationMethod": "Static",
         "dnsSettings": {
           "domainNameLabel": "[concat(parameters('publicIpDnsName'), copyindex())]"
         }
@@ -139,7 +140,8 @@
       "location": "[parameters('location')]",
       "dependsOn": [
         "ipLoop",
-        "[variables('virtualNetworkName')]"
+        "[variables('virtualNetworkName')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -155,7 +157,10 @@
               }
             }
           }
-        ]
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+        }
       }
     },
     {
@@ -210,7 +215,7 @@
             "typeHandlerVersion": "2.0",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "commandToExecute": "sudo bash -c 'sudo apt-get -y update && sudo apt-get -y install apache2' "
+              "commandToExecute": "sudo bash -c 'sudo apt-get update && sudo apt-get -yu dist-upgrade && sudo apt-get -y install apache2' "
             }
           }
         }
@@ -251,6 +256,55 @@
             }
           }
         ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Port_80",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+      "apiVersion": "2020-05-01",
+      "name": "[concat(variables('networkSecurityGroupName'), '/Port_80')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "protocol": "*",
+        "sourcePortRange": "*",
+        "destinationPortRange": "80",
+        "sourceAddressPrefix": "*",
+        "destinationAddressPrefix": "*",
+        "access": "Allow",
+        "priority": 100,
+        "direction": "Inbound",
+        "sourcePortRanges": [],
+        "destinationPortRanges": [],
+        "sourceAddressPrefixes": [],
+        "destinationAddressPrefixes": []
       }
     }
   ],
