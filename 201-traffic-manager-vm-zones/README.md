@@ -2,6 +2,8 @@
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-traffic-manager-vm-zones/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-traffic-manager-vm-zones/PublicDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-traffic-manager-vm-zones/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-traffic-manager-vm-zones/FairfaxDeployment.svg)
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-traffic-manager-vm-zones/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-traffic-manager-vm-zones/CredScanResult.svg)
@@ -18,6 +20,3 @@ See also:
 
 - <a href="https://azure.microsoft.com/en-us/documentation/articles/traffic-manager-routing-methods/">Traffic Manager routing methods for details of the different routing methods available.
 - <a href="https://msdn.microsoft.com/en-us/library/azure/mt163581.aspx">Create or update a Traffic Manager profile for details of the JSON elements relating to a Traffic Manager profile.
-
-
-
