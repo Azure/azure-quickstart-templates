@@ -36,7 +36,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2",
+      "defaultValue": "Standard_D2_v2",
       "metadata": {
         "description": "Size of the VM"
       }
@@ -75,7 +75,7 @@
       "type": "int",
       "defaultValue": 2,
       "metadata": {
-        "description": "Number of instances of the Appication Gateway"
+        "description": "Number of instances of the Application Gateway"
       }
     },
     "multitierILB": {
@@ -87,14 +87,16 @@
     },
     "windowsOSVersion": {
       "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
+      "defaultValue": "2019-Datacenter",
       "allowedValues": [
         "2008-R2-SP1",
         "2012-Datacenter",
-        "2012-R2-Datacenter"
+        "2012-R2-Datacenter",
+        "2016-Datacenter",
+        "2019-Datacenter"
       ],
       "metadata": {
-        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter, 2016-Datacenter, 2019-Datacenter."
       }
     },
     "location": {
@@ -145,14 +147,15 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newDBStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind":"StorageV2"
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('appGatewayPubIPName')]",
       "location": "[parameters('location')]",
@@ -161,7 +164,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('appServersPublicIPPrefix'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -174,14 +177,14 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('VNetName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('FeNsgname'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('AppNsgname'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('BeNsgname'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('FeNsgname'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('AppNsgname'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('BeNsgname'))]"
       ],
       "properties": {
         "addressSpace": {
@@ -221,7 +224,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('FeNsgname')]",
       "location": "[parameters('location')]",
@@ -287,7 +290,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('AppNsgname')]",
       "location": "[parameters('location')]",
@@ -367,7 +370,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('BeNsgname')]",
       "location": "[parameters('location')]",
@@ -419,13 +422,13 @@
       }
     },
     {
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2020-05-01",
       "name": "[variables('appGatewayName')]",
       "type": "Microsoft.Network/applicationGateways",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('appGatewayPubIPName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('VNetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('appGatewayPubIPName'))]"
       ],
       "properties": {
         "sku": {
@@ -521,12 +524,12 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-05-01",
       "name": "[parameters('multitierILB')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -581,7 +584,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('appNicName'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -590,8 +593,8 @@
         "count": "[variables('appScaleCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('appServersPublicIPPrefix'), copyIndex())]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(parameters('appServersPublicIPPrefix'), copyIndex()))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -612,7 +615,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('dbNicName'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -621,8 +624,8 @@
         "count": "[variables('dbSclaeCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', parameters('multitierILB'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('VNetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', parameters('multitierILB'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -647,7 +650,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('appAvailabilitySetName')]",
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": 2,
@@ -656,7 +659,7 @@
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('appVmNamePrefix'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -665,8 +668,8 @@
         "count": "[variables('appScaleCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('appNicName'), copyIndex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('appAvailabilitySetName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('appNicName'), copyIndex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('appAvailabilitySetName'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -704,7 +707,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('dbAvailabilitySetName')]",
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": 2,
@@ -713,7 +716,7 @@
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('dbVmNamePrefix'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -722,8 +725,8 @@
         "count": "[variables('dbSclaeCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('dbNicName'), copyIndex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('dbAvailabilitySetName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('dbNicName'), copyIndex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('dbAvailabilitySetName'))]"
       ],
       "properties": {
         "availabilitySet": {
