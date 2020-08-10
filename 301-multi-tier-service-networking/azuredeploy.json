@@ -115,9 +115,6 @@
     "FESubnetName": "FrontendSubnet",
     "AppSubnetName": "AppSubnet",
     "BESubnetName": "BackendSubnet",
-    "FESubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('VNetName'), variables('FESubnetName'))]",
-    "AppSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('VNetName'), variables('AppSubnetName'))]",
-    "BESubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('VNetName'), variables('BESubnetName'))]",
     "VNetAddressPrefix": "10.1.0.0/16",
     "FrontendPrefix": "10.1.0.0/24",
     "AppPrefix": "10.1.1.0/24",
@@ -130,13 +127,7 @@
     "BeNsgname": "BackendNSG",
     "appGatewayName": "multitierAppGateway",
     "appGatewayPubIPName": "multitierAppGatewayIP",
-    "appGatewayPubPRef": "[resourceId('Microsoft.Network/publicIPAddresses', variables('appGatewayPubIPName'))]",
-    "applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways',variables('appGatewayName'))]",
     "ILBIP": "10.1.2.100",
-    "IlbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('multitierILB'))]",
-    "privateIPConfigID": "[concat(variables('IlbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
-    "IlbPoolID": "[concat(variables('IlbID'),'/backendAddressPools/BackendPool1')]",
-    "IlbProbeID": "[concat(variables('IlbID'),'/probes/tcpProbe')]",
     "appNicName": "appNic",
     "dbNicName": "dbNic",
     "appScaleCount": 2,
@@ -152,7 +143,7 @@
       "sku": {
         "name": "[variables('storageAccountType')]"
       },
-      "kind":"StorageV2"
+      "kind": "StorageV2"
     },
     {
       "apiVersion": "2020-05-01",
@@ -441,7 +432,7 @@
             "name": "appGatewayIpConfig",
             "properties": {
               "subnet": {
-                "id": "[variables('FESubnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('VNetName'), variables('FESubnetName'))]"
               }
             }
           }
@@ -451,7 +442,7 @@
             "name": "appGatewayFrontendIP",
             "properties": {
               "PublicIPAddress": {
-                "id": "[variables('appGatewayPubPRef')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('appGatewayPubIPName'))]"
               }
             }
           }
@@ -494,13 +485,12 @@
             "name": "appGatewayHttpListener",
             "properties": {
               "FrontendIPConfiguration": {
-                "Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations/',variables('appGatewayName'), 'appGatewayFrontendIP')]"
               },
               "FrontendPort": {
-                "Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts/',variables('appGatewayName'), 'appGatewayFrontendPort')]"
               },
-              "Protocol": "Http",
-              "SslCertificate": null
+              "Protocol": "Http"
             }
           }
         ],
@@ -510,13 +500,13 @@
             "properties": {
               "RuleType": "Basic",
               "httpListener": {
-                "id": "[concat(variables('applicationGatewayID'), '/httpListeners/appGatewayHttpListener')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners/',variables('appGatewayName'), 'appGatewayHttpListener')]"
               },
               "backendAddressPool": {
-                "id": "[concat(variables('applicationGatewayID'), '/backendAddressPools/appGatewayBackendPool')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools/',variables('appGatewayName'), 'appGatewayBackendPool')]"
               },
               "backendHttpSettings": {
-                "id": "[concat(variables('applicationGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection/',variables('appGatewayName'), 'appGatewayBackendHttpSettings')]"
               }
             }
           }
@@ -537,7 +527,7 @@
             "name": "LoadBalancerFrontEnd",
             "properties": {
               "subnet": {
-                "id": "[variables('BESubnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('VNetName'), variables('BESubnetName'))]"
               },
               "privateIPAddress": "[variables('ILBIP')]",
               "privateIPAllocationMethod": "Static"
@@ -554,10 +544,10 @@
             "name": "LBRule",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('privateIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', parameters('multitierILB'), 'LoadBalancerFrontEnd')]"
               },
               "backendAddressPool": {
-                "id": "[variables('IlbPoolID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('multitierILB'), 'BackendPool1')]"
               },
               "protocol": "Tcp",
               "frontendPort": 1433,
@@ -565,7 +555,7 @@
               "enableFloatingIP": true,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                "id": "[variables('IlbProbeID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', parameters('multitierILB'), 'tcpProbe')]"
               }
             }
           }
@@ -607,7 +597,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('appServersPublicIPPrefix'), copyIndex()))]"
               },
               "subnet": {
-                "id": "[variables('AppSubnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('VNetName'), variables('AppSubnetName'))]"
               }
             }
           }
@@ -635,11 +625,12 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[concat('10.1.2.', copyIndex(4))]",
               "subnet": {
-                "id": "[variables('BESubnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('VNetName'), variables('BESubnetName'))]"
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('IlbID'), '/backendAddressPools/BackendPool1')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('multitierILB'), 'BackendPool1')]"
+
                 }
               ]
             }
@@ -654,8 +645,7 @@
       "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": 2,
-        "platformUpdateDomainCount": 2,
-        "managed": true
+        "platformUpdateDomainCount": 2
       }
     },
     {
@@ -711,8 +701,7 @@
       "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": 2,
-        "platformUpdateDomainCount": 2,
-        "managed": true
+        "platformUpdateDomainCount": 2
       }
     },
     {
