@@ -18,7 +18,3 @@
 When you deploy this Azure Resource Manager template, a data share invitation is created. For more details you can refer to this link: https://docs.microsoft.com/en-us/azure/data-share/concepts-roles-permissions#roles-and-requirements
 
 `Tags: data share, invitation`
-	```
-
-
-
