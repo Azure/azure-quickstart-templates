@@ -21,5 +21,3 @@ This template creates a new VM with two NICs which connect to two different subn
 2. Customize parameters in **azuredeploy.parameters** as you see appropriate, at the very least the **adminPassword**.
 
 Feel free to post questions and enjoy!
-
-
