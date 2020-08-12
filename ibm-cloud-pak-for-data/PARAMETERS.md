@@ -1,4 +1,5 @@
-| Variables             | Default       | Description          |
+### Description of all the parameters used in the AzureDeploy.json
+| Parameters             | Default       | Description          |
 | --------------------- | :-----------: | -------------------- |
 | `azure-client-id` | - | Follow steps [here](https://github.ibm.com/IIG/cpd_terraform/tree/master/azure#steps-to-deploy). The `appId` in the json after the `az ad sp create-for-rbac` command goes here. |
 | `azure-client-secret` | - | Follow steps [here](https://github.ibm.com/IIG/cpd_terraform/tree/master/azure#steps-to-deploy). The `password` in the json after the `az ad sp create-for-rbac` command goes here. |
