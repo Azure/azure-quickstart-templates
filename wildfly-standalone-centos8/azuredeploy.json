@@ -89,8 +89,6 @@
     "subnetPrefix": "10.0.0.0/24",
     "vmName": "centos-vm",
     "virtualNetworkName": "centosvm-vnet",
-    "scriptFolder": "scripts",
-    "scriptFileName": "wildfly-setup.sh",
     "bootStorageAccountName": "[concat('bootstrg', uniqueString(resourceGroup().id))]",
     "storageAccountType": "Standard_LRS",
     "linuxConfiguration": {
@@ -108,9 +106,9 @@
   },
   "resources": [
     {
+      "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-05-01",
       "name": "pid-2c0c0514-a608-492e-b64e-bc4ace59035b",
-      "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
         "template": {
@@ -122,20 +120,20 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('bootStorageAccountName')]",
       "apiVersion": "2019-06-01",
+      "name": "[variables('bootStorageAccountName')]",
       "location": "[parameters('location')]",
-      "tags": {
-                "QuickstartName": "WildFly 18 on CentOS 8 (stand-alone VM)"
-            },
       "sku": {
           "name": "[variables('storageAccountType')]"
       },
-      "kind": "Storage"
+      "kind": "Storage",
+      "tags": {
+                "QuickstartName": "WildFly 18 on CentOS 8 (stand-alone VM)"
+            }
     },
     {
-      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2019-11-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -158,12 +156,12 @@
       }
     },
     {
-      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-11-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[variables('virtualNetworkName')]"
       ],
       "tags": {
                 "QuickstartName": "WildFly 18 on CentOS 8 (stand-alone VM)"
@@ -183,13 +181,13 @@
       }
     },
     {
-      "apiVersion":  "2019-12-01", 
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion":  "2019-12-01",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('bootStorageAccountName'))]"
+        "[variables('nicName')]",
+        "[variables('bootStorageAccountName')]"
       ],
       "tags": {
                 "QuickstartName": "WildFly 18 on CentOS 8 (stand-alone VM)"
@@ -227,18 +225,18 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[concat('https://', variables('bootStorageAccountName'), '.blob.core.windows.net')]"
+            "storageUri": "[reference(variables('bootStorageAccountName'), '2017-10-01').primaryEndpoints['blob']]"
           }
         }
       }
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/wildfly-setup')]",
       "apiVersion": "2019-12-01",
+      "name": "[concat(variables('vmName'),'/wildfly-setup')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[variables('vmName')]"
       ],
       "tags": {
                 "QuickstartName": "WildFly 18 on CentOS 8 (stand-alone VM)"
@@ -250,7 +248,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), variables('scriptFolder'), '/', variables('scriptFileName'), parameters('_artifactsLocationSasToken'))]"
+            "[uri(parameters('_artifactsLocation'), concat('scripts/wildfly-setup.sh', parameters('_artifactsLocationSasToken')))]"
           ],
           "commandToExecute": "[concat('sh wildfly-setup.sh',' ',parameters('wildflyUserName'),' ',variables('singlequote'),parameters('wildflyPassword'),variables('singlequote'))]"
         }
@@ -259,8 +257,8 @@
   ],
   "outputs": {
     "vm Private IP Address": {
-        "type": "string",
-        "value": "[reference(variables('nicName')).ipConfigurations[0].properties.privateIPAddress]"
+      "type": "string",
+      "value": "[reference(variables('nicName')).ipConfigurations[0].properties.privateIPAddress]"
     },
     "appURL": {
       "type": "string",
