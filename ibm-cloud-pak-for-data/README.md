@@ -66,19 +66,26 @@ These can be done by running the azure CLI commands from any host where azure CL
   * This will also create a DNS Zone needed for this deployment.
   * Note the DNS Zone name.
 * Create Azure Service Principal with `Contributor` and `User Access Administrator` roles.
-  * Create Service Principal, using your Azure Subscription ID, and save the returned json:
+  * Option 1, using a script:
     ```bash
     az login
-    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<subscription_id>"
+    scripts/createServicePrincipal.sh -r "Contributor,User Access Administrator"
     ```
-  * Get `Object ID`, using the AppId from the Service Principal just created:
-    ```bash
-    az ad sp list --filter "appId eq '<app_id>'"
-    ```
-  * Assign `User Access Administrator` roles, using the `Object Id`.
-    ```bash
-    az role assignment create --role "User Access Administrator" --assignee-object-id "<object_id>"
-    ```
+  * Option 2, running the commands manually:
+    * Create Service Principal, using your Azure Subscription ID, and save the returned json:
+      ```bash
+      az login
+      az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<subscription_id>"
+      ```
+    * Get `Object ID`, using the AppId from the Service Principal just created:
+      ```bash
+      az ad sp list --filter "appId eq '<app_id>'"
+      ```
+    * Assign `User Access Administrator` roles, using the `Object Id`.
+      ```bash
+      az role assignment create --role "User Access Administrator" --assignee-object-id "<object_id>"
+      ```
+  * Save the `ClientID` and `ClientSecret` from either option.
 * [Download](https://cloud.redhat.com/openshift/install/pull-secret) a pull secret. Create a Red Hat account if you do not have one.
 
 * [Sign up](https://www.ibm.com/account/reg/us-en/signup?formid=urx-42212) for Cloud Pak for Data Trial Key if you don't have the entitlement api key
