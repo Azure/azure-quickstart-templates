@@ -28,7 +28,6 @@ This template deploys the following:
     - Auto-paused set to 15 minutes of idling 
 - Azure Data Lake Storage Gen2 account
     - Azure Synapse Workspace identity given Storage Blob Data Contributor to the Storage Account
-    - User Object ID specified in parameters during deploying given Storage Blob Data Contributor to the Storage Account
     - A new File System inside the Storage Account to be used by Azure Synapse
 - A Logic App to Pause the SQL Pool at defined schedule
     - The Logic App will check for Active Queries. If there are active queries, it will wait 5 minutes and check again until there are none before pausing
@@ -40,9 +39,6 @@ This template deploys the following:
 
 - [Purpose](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#purpose)
 - [Prerequisites](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#prerequisites)
-    - [Getting your Object ID](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#getting-your-object-id)
-        - [Option A - PowerShell](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#option-a---powershell)
-        - [Option B - Azure Portal](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#option-b---azure-portal)
 - [Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#deploy-to-azure)
 
 ## Purpose
@@ -52,36 +48,5 @@ Using the Getting Started wizard inside of the workspace is recommended to use s
 
 ## Prerequisites
 - Owner to the Azure Subscription being deployed. This is for creation of a separate Proof-of-Concept Resource Group and to delegate roles necessary for this proof of concept
-- Your **User Object ID**
-    - This is used to give you access to the Storage Account so you can utilise the proof of concept
-    - Follow the guide below to get your User Object ID
-
-## Getting your Object ID
-
-### Option A - PowerShell
-- Download the PowerShell script from **[HERE](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc/scripts)**
-    - This script will:
-        - Check if the Azure Active Directory PowerShell module is installed
-            - If the Azure Active Directory PowerShell module is **NOT** installed, then the script will attempt to install it
-        - Connect to Azure Active Directory using the account the template is being deployed into Azure with, and to run the Proof-of-Concept
-    - If the Azure Active Directory PowerShell module is not installed on your machine, **run PowerShell as Administrator to install the module**
-
-### Option B - Azure Portal
-- Sign into the Azure Portal (https://portal.azure.com/)
-- Either search for Azure Active Directory at the top, or used the sidebar if you have it. Screenshot below shows the sidebar:
-
-![AAD Sidebar](images/1.png)
-
-- Select 'Users' underneath the 'Manage' heading in the Azure Active Directory blade:
-
-![Users View](images/2.png)
-
-- Search for your User Principal Name or your Display Name to load information about your account. Once you have clicked through into your account, you will see your Object ID:
-
-![Find User](images/3.png)
-
-- Then copy the ID underneath 'Object ID' with the copy to clipboard button on the right hand side:
-
-![Object ID](images/4.png)
 
 # Deploy to Azure
