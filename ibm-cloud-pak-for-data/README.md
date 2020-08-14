@@ -28,7 +28,7 @@ Instructions to use your trial license/key are provided in the section - [IBM Cl
 Beyond the 60 day period, you will need to purchase the Cloud Pak for Data by following the instructions in the 'Purchase' section below.
 
 **PURCHASE:**<br/>
-To get pricing information, or to use your existing Cloud Pak for Data entitlements, contact your IBM sales representative at 1-877-426-3774. If you already have the Cloud Pak for Data license file, you can follow the instructions in [Activating your IBM Cloud Pak for Data License to activate the license](#activating-your-ibm-cloud-pak-for-data-license).
+To get pricing information, or to use your existing Cloud Pak for Data entitlements, contact your IBM sales representative at 1-877-426-3774. 
 Note: Cloud Pak for Data license will include entitlements to RHEL and Openshift.
 
 ## Deployment Topology
@@ -85,6 +85,7 @@ These can be done by running the azure CLI commands from any host where azure CL
       az role assignment create --role "User Access Administrator" --assignee-object-id "<object_id>"
       ```
   * Save the `ClientID` and `ClientSecret` from either option.
+
 * [Download](https://cloud.redhat.com/openshift/install/pull-secret) a pull secret. Create a Red Hat account if you do not have one.
 
 * [Sign up](https://www.ibm.com/account/reg/us-en/signup?formid=urx-42212) for Cloud Pak for Data Trial Key if you don't have the entitlement api key
@@ -140,13 +141,15 @@ eg: for "apiKey", use the trial key that is generated (or sent to your email) af
 
 * Use the default values for artifacts location, SAS token and Location.
 
-* Specify the cluster name
+* Specify the Aad Client ID and Aad Client Secret. (See [Pre-requisites](#prerequisites))
 
-* Specify the DNS Zone and DNS Zone Resource Group
+* Specify the VM admin username
 
-* Specify Fips (true to enable)
+* Specify the VM sizes for Bastion, Master and Worker nodes
 
-* Specify if the cluster should Private or Public endpoints
+* Specify the number of instances (VMs) for Master and Worker in the cluster
+
+* Specify ssh public key
 
 <br/><br/>
 ![Alt text](images/template2.png?raw=true "parameters2")
@@ -166,45 +169,43 @@ eg: for "apiKey", use the trial key that is generated (or sent to your email) af
 
     * Bastion Subnet Name and Subnet Prefix
 
-* Specify the zone - single or multi. If multi zone is selected, select the zone count
+* Specify the availability zone - single or multiple.
 
-* Specify the VM sizes for Bastion, Master and Worker nodes
+* Specify the DNS Zone and DNS Zone Resource Group
 
-* Specify the number of instances (VMs) for Master and Worker in the cluster
+* Specify the OCP pull secret. (See [Pre-requisites](#prerequisites))
+
+* Specify the cluster name
+
+* Specify Openshift cluster admin username and password
+
+* Specify Fips (true to enable)
 
 * Specify the Storage - Portworx or NFS
 
 * For Portworx, specify the Px spec Url (See [Pre-requisites](#prerequisites))
 
-* Specify disk size
-
 * Specify Enable Backup to enable backup for the NFS storage disk.
-
-* Specify Openshift cluster admin username and password
 
 <br/><br/>
 ![Alt text](images/template3.png?raw=true "parameters3")
 <br/><br/>
 
+* Specify disk size
+
+* Specify if the cluster should Private or Public endpoints
+
 * Specify Project Name 
+
+* Specify the add-ons needed- Watson Studio Library, Watson Machine Learning, Watson Knowledge Catalog, Data Virtualization, Cognos Dashboard,Watson Openscale, Apache Spark (select 'yes' to install)
 
 * Specify Api Key (See [Pre-requisites](#prerequisites))
 
-* Specify ssh public key
-
-* Specify the key vault resource group, key vault name, and key vault secret. (See [Pre-requisites](#prerequisites))
-
-* Specify the Aad Client ID and Aad Client Secret. (See [Pre-requisites](#prerequisites))
-
-* Specify the add-ons needed- Watson Studio Library, Watson Machine Learning, Watson Knowledge Catalog, Data Virtualization, Watson Openscale, Cognos Dashboard, Streams, Streams Flows, Datastage and DB Warehouse (select 'yes' to install)
-
 * Cloud Pak License Agreement (select 'yes' to agree)
 
-* Finally, go through and agree on the [Cloud Pak for Data terms and conditions](https://ibm.biz/xyz) and click on Purchase to deploy
-<br/><br/>
+* Finally, go through the [Cloud Pak for Data terms and conditions](https://ibm.biz/BdqyB2) and click on Purchase to deploy
 
-![Alt text](images/template4.png?raw=true "parameters4")
-<br/><br/>
+<br/>
 
 * The webconsole URL can be found in the `ResourceGroup`>`Deployments`>`azuredeploy`>`Outputs`.
 
@@ -212,19 +213,10 @@ eg: for "apiKey", use the trial key that is generated (or sent to your email) af
 * example:
 
 ![Alt text](images/Output.png?raw=true "output")
-<br/><br/>
+
+<br/>
 
 Use the default credentials for Cloud Pak for Data admin / password to log in to CPD console. Ensure to change the password after your first login.
-
-## Activating your IBM Cloud Pak for Data License
-
-To activate your license, follow these steps
- - Copy the license file to your boot node at `/ibm/lite` location
- - Run this command from the `/ibm/lite` location:
-
- ```
-./lutil-linux <cpd-url> <admin user> <admin password> <license file name>
- ```
 
 ## Cloud Pak for Data Services
 You can browse the various services that are available for use by navigating to the services catalog page in Cloud Pak for Data
