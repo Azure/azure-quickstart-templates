@@ -213,7 +213,8 @@ eg: for "apiKey", use the trial key that is generated (or sent to your email) af
 * example:
 
 ![Alt text](images/Output.png?raw=true "output")
-<br/><br/>
+
+<br/>
 
 Use the default credentials for Cloud Pak for Data admin / password to log in to CPD console. Ensure to change the password after your first login.
 
