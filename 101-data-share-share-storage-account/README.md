@@ -15,6 +15,6 @@
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-share-share-storage-account%2Fazuredeploy.json)
 
-When you deploy this Azure Resource Manager template, it create a storage account, and a data share from the storage account.  For more details you can refer to this link: https://docs.microsoft.com/en-us/azure/data-share/concepts-roles-permissions#roles-and-requirements
+When you deploy this Azure Resource Manager template, it creates a storage account, and a data share from the storage account.  For more details you can refer to this link: https://docs.microsoft.com/en-us/azure/data-share/concepts-roles-permissions#roles-and-requirements
 
 `Tags: data share, share, storage account`
