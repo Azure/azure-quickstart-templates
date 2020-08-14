@@ -9,15 +9,18 @@
         [Parameter(Mandatory)]
         [String]$DPMPName,
         [Parameter(Mandatory)]
-        [String]$ClientName,
+        [String]$CSName,
         [Parameter(Mandatory)]
         [String]$PSName,
+        [Parameter(Mandatory)]
+        [String]$ClientName,
+        [Parameter(Mandatory)]
+        [String]$Configuration,
         [Parameter(Mandatory)]
         [String]$DNSIPAddress,
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds
     )
-
     Import-DscResource -ModuleName TemplateHelpDSC
     
     $LogFolder = "TempLog"
@@ -25,6 +28,11 @@
     $LogPath = "c:\$LogFolder"
     $DName = $DomainName.Split(".")[0]
     $DCComputerAccount = "$DName\$DCName$"
+    $CurrentRole = "PS"
+    if($Configuration -ne "Standalone")
+    {
+        $CSComputerAccount = "$DName\$CSName$"
+    }
     $DPMPComputerAccount = "$DName\$DPMPName$"
     
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
@@ -42,7 +50,7 @@
             InitialSize = '8192'
             MaximumSize = '8192'
         }
-        
+
         AddBuiltinPermission AddSQLPermission
         {
             Ensure = "Present"
@@ -63,20 +71,84 @@
             Ensure = "Present"
             DependsOn = "[InstallFeatureForSCCM]InstallFeature"
         }
-
-        DownloadSCCM DownLoadSCCM
+        if($Configuration -eq "Standalone")
         {
-            CM = $CM
-            ExtPath = $LogPath
-            Ensure = "Present"
-            DependsOn = "[InstallADK]ADKInstall"
+            DownloadSCCM DownLoadSCCM
+            {
+                CM = $CM
+                Ensure = "Present"
+                DependsOn = "[InstallADK]ADKInstall"
+            }
+
+            SetDNS DnsServerAddress
+            {
+                DNSIPAddress = $DNSIPAddress
+                Ensure = "Present"
+                DependsOn = "[DownloadSCCM]DownLoadSCCM"
+            }
+
+            FileReadAccessShare DomainSMBShare
+            {
+                Name   = $LogFolder
+                Path =  $LogPath
+                Account = $DCComputerAccount
+                DependsOn = "[File]ShareFolder"
+            }
+
+            FileReadAccessShare CMSourceSMBShare
+            {
+                Name   = $CM
+                Path =  "c:\$CM"
+                Account = $DCComputerAccount
+                DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
+            }
+
+            RegisterTaskScheduler InstallAndUpdateSCCM
+            {
+                TaskName = "ScriptWorkFlow"
+                ScriptName = "ScriptWorkFlow.ps1"
+                ScriptPath = $PSScriptRoot
+                ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $ClientName $Configuration $CurrentRole $LogFolder $CSName $PSName"
+                Ensure = "Present"
+                DependsOn = "[FileReadAccessShare]CMSourceSMBShare"
+            }
         }
-
-        SetDNS DnsServerAddress
+        else 
         {
-            DNSIPAddress = $DNSIPAddress
-            Ensure = "Present"
-            DependsOn = "[DownloadSCCM]DownLoadSCCM"
+            SetDNS DnsServerAddress
+            {
+                DNSIPAddress = $DNSIPAddress
+                Ensure = "Present"
+                DependsOn = "[InstallADK]ADKInstall"
+            }
+
+            WaitForConfigurationFile WaitCSJoinDomain
+            {
+                Role = "DC"
+                MachineName = $DCName
+                LogFolder = $LogFolder
+                ReadNode = "CSJoinDomain"
+                Ensure = "Present"
+                DependsOn = "[File]ShareFolder"
+            }
+
+            FileReadAccessShare DomainSMBShare
+            {
+                Name   = $LogFolder
+                Path =  $LogPath
+                Account = $DCComputerAccount,$CSComputerAccount
+                DependsOn = "[WaitForConfigurationFile]WaitCSJoinDomain"
+            }
+
+            RegisterTaskScheduler InstallAndUpdateSCCM
+            {
+                TaskName = "ScriptWorkFlow"
+                ScriptName = "ScriptWorkFlow.ps1"
+                ScriptPath = $PSScriptRoot
+                ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $ClientName $Configuration $CurrentRole $LogFolder $CSName $PSName"
+                Ensure = "Present"
+                DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
+            }
         }
 
         WaitForDomainReady WaitForDomain
@@ -101,14 +173,6 @@
             Ensure = 'Present'
             DependsOn = "[JoinDomain]JoinDomain"
         }
-
-        FileReadAccessShare DomainSMBShare
-        {
-            Name   = $LogFolder
-            Path =  $LogPath
-            Account = $DCComputerAccount
-            DependsOn = "[File]ShareFolder"
-        }
         
         OpenFirewallPortForSCCM OpenFirewall
         {
@@ -132,24 +196,6 @@
             SQLInstanceName = "MSSQLSERVER"
             Ensure = "Present"
             DependsOn = "[WaitForConfigurationFile]DelegateControl"
-        }
-
-        FileReadAccessShare CMSourceSMBShare
-        {
-            Name   = $CM
-            Path =  "c:\$CM"
-            Account = $DCComputerAccount
-            DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
-        }
-
-        RegisterTaskScheduler InstallAndUpdateSCCM
-        {
-            TaskName = "ScriptWorkFlow"
-            ScriptName = "ScriptWorkFlow.ps1"
-            ScriptPath = $PSScriptRoot
-            ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $ClientName"
-            Ensure = "Present"
-            DependsOn = "[FileReadAccessShare]CMSourceSMBShare"
         }
     }
 }
