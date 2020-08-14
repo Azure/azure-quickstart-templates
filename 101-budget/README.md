@@ -30,3 +30,6 @@ This template creates a budget (email notifications for up to three thresholds).
 
 See also : 
 [Tutorial: Create and manage Azure budgets.](https://docs.microsoft.com/en-us/azure/cost-management-billing/costs/tutorial-acm-create-budgets)
+
+
+> PS : The contributor role is required at the Subscription Level when deploying this template.
