@@ -25,26 +25,24 @@ This template deploys SharePoint 2019, 2016 or 2013 with the following configura
 * Latest version of claims provider [LDAPCP](https://ldapcp.com/) is installed and configured.
 * A 2nd SharePoint server can optionally be added to the farm.
 
-You can connect to virtual machines using:
+All subnets are protected by a Network Security Group with rules that restrict network access. You can connect to virtual machines using:
 
 * [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion/) if you set parameter addAzureBastion to 'Yes'.
 * RDP protocol if you set parameter addPublicIPToVMs to 'Yes'. Each machine will have a public IP, a DNS name, and the TCP port 3389 will be allowed from Internet.
 
-In any case, all subnets connected to a virtual machine are protected by a Network Security Group that allows only RDP port from Internet.
+By default, virtual machines use standard storage and are sized with a good balance between cost and performance:
 
-By default, virtual machines use standard storage and have enough CPU and memory to be used comfortably:
+* Virtual machine size for DC: [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series): 2 CPU / 7 GiB RAM with HDD ($183.96/month in West US as of 2020-08-12)
+* Virtual machine size for SQL Server: [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series): 2 CPU / 16 GiB RAM with HDD ($185.42/month in West US as of 2020-08-12)
+* Virtual machine size for SharePoint: [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series): 2 CPU / 16 GiB RAM with HDD ($185.42/month in West US as of 2020-08-12)
 
-* Virtual machine running the Domain Controller: [Standard_F4](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-compute#fsv2-series-sup1sup) / Standard_LRS
-* Virtual machine running SQL Server: [Standard_D2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general#dv2-series) / Standard_LRS
-* Virtual machine(s) running SharePoint: [Standard_D11_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-memory#dv2-series-11-15) / Standard_LRS
+If you need a boost in performance, you may consider the following sizes / storage account types:
 
-If you wish to get better performance, I recommended the following sizes / storage account types:
-
-* Virtual machine running the Domain Controller: [Standard_F4](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-compute#fsv2-series-sup1sup) / Standard_LRS
-* Virtual machine running SQL Server: [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general#dsv2-series) / Premium_LRS
-* Virtual machine(s) running SharePoint: [Standard_DS3_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general#dsv2-series) / Premium_LRS
+* Virtual machine size for DC: [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series): 2 CPU / 7 GiB RAM with HDD ($183.96/month in West US as of 2020-08-12)
+* Virtual machine size for SQL Server: [Standard_E2as_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/eav4-easv4-series): 2 CPU / 16 GiB RAM with SSD ($169.36/month in West US as of 2020-08-12)
+* Virtual machine size for SharePoint: [Standard_E4as_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/eav4-easv4-series): 4 CPU / 32 GiB RAM with SSD ($338.72/month in West US as of 2020-08-12)
 
 > **Notes:**  
 > I strongly recommend to update SharePoint to a recent build just after the provisioning is complete.  
-> With the default setting for virtual machines, provisioning of the template takes about 1h15 to complete.  
+> With the default setting for virtual machines, provisioning of the template takes about 1h to complete.  
 > The password complexity check in the form is not accurate and may validate a password that will be rejected by Azure when it provisions the VMs. Make sure to **use at least 2 special characters for the passwords**.
