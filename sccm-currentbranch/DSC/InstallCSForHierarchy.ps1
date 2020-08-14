@@ -1,5 +1,7 @@
-Param($DomainFullName,$CM,$CMUser,$Role,$ProvisionToolPath)
+Param($DomainFullName,$CM,$CMUser,$Role,$ProvisionToolPath,$LogFolder,$PSName,$PSRole)
 
+$DName = $DomainFullName.Split(".")[0]
+$PSComputerAccount = "$DName\$PSName$"
 $SMSInstallDir="C:\Program Files\Microsoft Configuration Manager"
 
 $logpath = $ProvisionToolPath+"\InstallSCCMlog.txt"
@@ -22,12 +24,12 @@ if(!(Test-Path $cmpath))
         Start-Process -Filepath ($cmpath) -ArgumentList ('/Auto "' + $cmsourcepath + '"') -wait
     }
 }
-$CMINIPath = "c:\$CM\Standalone.ini"
+$CMINIPath = "c:\$CM\HierarchyCS.ini"
 "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Check ini file." | Out-File -Append $logpath
 
 $cmini = @'
 [Identification]
-Action=InstallPrimarySite
+Action=InstallCAS
 
 [Options]
 ProductID=EVAL
@@ -35,8 +37,6 @@ SiteCode=%Role%
 SiteName=%Role%
 SMSInstallDir=%InstallDir%
 SDKServer=%MachineFQDN%
-RoleCommunicationProtocol=HTTPorHTTPS
-ClientsUsePKICertificate=0
 PrerequisiteComp=0
 PrerequisitePath=C:\%CM%\REdist
 MobileDeviceLanguage=0
@@ -108,7 +108,7 @@ $Configuration.UpgradeSCCM.Status = 'Running'
 $Configuration.UpgradeSCCM.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 
-Start-Sleep -Seconds 120
+Start-Sleep -econds 120
 $logpath = $ProvisionToolPath+"\UpgradeCMlog.txt"
 $SiteCode =  Get-ItemPropertyValue -Path 'HKLM:\SOFTWARE\Microsoft\SMS\Identification' -Name 'Site Code'
 
@@ -141,9 +141,14 @@ while((Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyConti
 Set-Location "$($SiteCode):\" @initParams
 
 #Add domain user as CM administrative user
-"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Setting $CMUser as CM administrative user." | Out-File -Append $logpath
+"Setting $CMUser as CM administrative user." | Out-File -Append $logpath
 New-CMAdministrativeUser -Name $CMUser -RoleName "Full Administrator" -SecurityScopeName "All","All Systems","All Users and User Groups"
-"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Done" | Out-File -Append $logpath
+"Done" | Out-File -Append $logpath
+
+#Add PS computer account as CM administrative user
+"Setting $PSComputerAccount as CM administrative user." | Out-File -Append $logpath
+New-CMAdministrativeUser -Name $PSComputerAccount  -RoleName "Full Administrator" -SecurityScopeName "All","All Systems","All Users and User Groups"
+"Done" | Out-File -Append $logpath
 
 $upgradingfailed = $false
 $originalbuildnumber = ""
@@ -154,12 +159,12 @@ $subKey =  $key.OpenSubKey("SOFTWARE\Microsoft\SMS\Components\SMS_Executive\Thre
 $DMPState = $subKey.GetValue("Current State")
 while($DMPState -ne "Running")
 {
-    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Current SMS_DMP_DOWNLOADER state is : $DMPState , will try again 30 seconds later..." | Out-File -Append $logpath
+    "Current SMS_DMP_DOWNLOADER state is : $DMPState , will try again 30 seconds later..." | Out-File -Append $logpath
     Start-Sleep -Seconds 30
     $DMPState = $subKey.GetValue("Current State")
 }
 
-"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Current SMS_DMP_DOWNLOADER state is : $DMPState " | Out-File -Append $logpath
+"Current SMS_DMP_DOWNLOADER state is : $DMPState " | Out-File -Append $logpath
 
 #get the available update
 function getupdate()
@@ -266,7 +271,6 @@ if($originalbuildnumber -eq "")
 
 #----------------------------------------------------
 $retrytimes = 0
-$downloadretrycount = 0
 $updatepack = getupdate
 if($updatepack -ne "")
 {
@@ -295,7 +299,6 @@ while($updatepack -ne "")
             $downloadstarttime = get-date
             while($updatepack.State -eq 327682)
             {
-                
                 "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Waiting SCCM Upgrade package start to download, sleep 2 min..." | Out-File -Append $logpath
                 Start-Sleep 120
                 $updatepack = Get-CMSiteUpdate -Name $updatepack.Name -Fast
@@ -303,23 +306,11 @@ while($updatepack -ne "")
                 if($downloadspan.Hours -ge 1)
                 {
                     Restart-Service -DisplayName "SMS_Executive"
-                    $downloadretrycount++
                     Start-Sleep 120
                     $downloadstarttime = get-date
                 }
-                if($downloadretrycount -ge 2)
-                {
-                    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Update package " + $updatepack.Name + " failed to start downloading in 2 hours."| Out-File -Append $logpath
-                    break
-                }
             }
         }
-        
-        if($downloadretrycount -ge 2)
-        {
-            break
-        }
-        
         #waiting package downloaded
         $downloadstarttime = get-date
         while($updatepack.State -eq 262145)
@@ -344,12 +335,6 @@ while($updatepack -ne "")
             continue
         }
     }
-    
-    if($downloadretrycount -ge 2)
-    {
-        break
-    }
-    
     #trigger prerequisites check after the package downloaded
     Invoke-CMSiteUpdatePrerequisiteCheck -Name $updatepack.Name
     while($updatepack.State -ne 196607 -and $updatepack.State -ne 131074 -and $updatepack.State -ne 131075)
@@ -392,51 +377,64 @@ while($updatepack -ne "")
         }
         #Get if there are any other updates need to be installed
         $updatepack = getupdate 
-        if($updatepack -ne "")
-        {
-            "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Found another update package : " + $updatepack.Name | Out-File -Append $logpath
-        }
     }
     if($updatepack.State -eq 196607 -or $updatepack.State -eq 262143 )
     {
         if($retrytimes -le 3)
         {
-            $retrytimes++
+            $upgradingfailed = $true
             Start-Sleep 300
             continue
         }
+        $retrytimes = $retrytimes + 1
     }
 }
 
 if($upgradingfailed -eq $true)
 {
     ("[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Upgrade " + $updatepack.Name + " failed") | Out-File -Append $logpath
-    if($($updatepack.Name).ToLower().Contains("hotfix"))
-    {
-        ("[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] This is a hotfix, skip it and continue...") | Out-File -Append $logpath
-        $Configuration.UpgradeSCCM.Status = 'CompletedWithHotfixInstallFailed'
-    }
-    else
-    {
-        $Configuration.UpgradeSCCM.Status = 'Error'
-        $Configuration.UpgradeSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
-        $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
-        throw
-    }
-}
-else
-{
-    $Configuration.UpgradeSCCM.Status = 'Completed'
-}
-
-if($downloadretrycount -ge 2)
-{
-    ("[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Upgrade " + $updatepack.Name + " failed to start downloading") | Out-File -Append $logpath
-    $Configuration.UpgradeSCCM.Status = 'CompletedWithDownloadFailed'
-    $Configuration.UpgradeSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
-    $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
     throw
 }
 
+#Set permission
+$Acl = Get-Acl $SMSInstallDir
+$NewAccessRule = New-Object system.security.accesscontrol.filesystemaccessrule($PSComputerAccount,"FullControl","ContainerInherit,ObjectInherit","None","Allow")
+$Acl.SetAccessRule($NewAccessRule)
+Set-Acl $SMSInstallDir $Acl
+
+$Configuration.UpgradeSCCM.Status = 'Completed'
 $Configuration.UpgradeSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
+
+Copy-Item $ConfigurationFile -Destination "c:\$LogFolder" -Force
+
+#Waiting for PS ready to use
+$Configuration.PSReadyToUse.Status = 'Running'
+$Configuration.PSReadyToUse.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+$Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
+
+$PSSystemServer = Get-CMSiteSystemServer -SiteCode $PSRole
+while(!$PSSystemServer)
+{
+    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] 111" | Out-File -Append $logpath
+    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Wait for PS finished installing, will try 60 seconds later..." | Out-File -Append $logpath
+    Start-Sleep -Seconds 60
+    $PSSystemServer = Get-CMSiteSystemServer -SiteCode $PSRole
+}
+
+#Wait for replication ready
+$replicationStatus = Get-CMDatabaseReplicationStatus
+
+while($replicationStatus.LinkStatus -ne 2 -or $replicationStatus.Site1ToSite2GlobalState -ne 2 -or $replicationStatus.Site2ToSite1GlobalState -ne 2 -or $replicationStatus.Site2ToSite1SiteState -ne 2 )
+{
+    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Wait for PS ready for use, will try 60 seconds later..." | Out-File -Append $logpath
+    Start-Sleep -Seconds 60
+    $replicationStatus = Get-CMDatabaseReplicationStatus
+}
+
+$Configuration.PSReadyToUse.Status = 'Completed'
+$Configuration.PSReadyToUse.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+$Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
+
+Copy-Item $ConfigurationFile -Destination "c:\$LogFolder" -Force
+

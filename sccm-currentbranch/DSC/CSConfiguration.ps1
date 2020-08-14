@@ -28,12 +28,10 @@
     $LogPath = "c:\$LogFolder"
     $DName = $DomainName.Split(".")[0]
     $DCComputerAccount = "$DName\$DCName$"
-    $CurrentRole = "PS"
-    if($Configuration -ne "Standalone")
-    {
-        $CSComputerAccount = "$DName\$CSName$"
-    }
+    $PSComputerAccount = "$DName\$PSName$"
     $DPMPComputerAccount = "$DName\$DPMPName$"
+    $CurrentRole = "CS"
+    $PrimarySiteName = $PSName.split(".")[0] + "$"
     
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
 
@@ -59,7 +57,7 @@
 
         InstallFeatureForSCCM InstallFeature
         {
-            NAME = "PS"
+            NAME = "CS"
             Role = "Site Server"
             DependsOn = "[AddBuiltinPermission]AddSQLPermission"
         }
@@ -71,84 +69,19 @@
             Ensure = "Present"
             DependsOn = "[InstallFeatureForSCCM]InstallFeature"
         }
-        if($Configuration -eq "Standalone")
+
+        DownloadSCCM DownLoadSCCM
         {
-            DownloadSCCM DownLoadSCCM
-            {
-                CM = $CM
-                Ensure = "Present"
-                DependsOn = "[InstallADK]ADKInstall"
-            }
-
-            SetDNS DnsServerAddress
-            {
-                DNSIPAddress = $DNSIPAddress
-                Ensure = "Present"
-                DependsOn = "[DownloadSCCM]DownLoadSCCM"
-            }
-
-            FileReadAccessShare DomainSMBShare
-            {
-                Name   = $LogFolder
-                Path =  $LogPath
-                Account = $DCComputerAccount
-                DependsOn = "[File]ShareFolder"
-            }
-
-            FileReadAccessShare CMSourceSMBShare
-            {
-                Name   = $CM
-                Path =  "c:\$CM"
-                Account = $DCComputerAccount
-                DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
-            }
-
-            RegisterTaskScheduler InstallAndUpdateSCCM
-            {
-                TaskName = "ScriptWorkFlow"
-                ScriptName = "ScriptWorkFlow.ps1"
-                ScriptPath = $PSScriptRoot
-                ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $ClientName $Configuration $CurrentRole $LogFolder $CSName $PSName"
-                Ensure = "Present"
-                DependsOn = "[FileReadAccessShare]CMSourceSMBShare"
-            }
+            CM = $CM
+            Ensure = "Present"
+            DependsOn = "[InstallADK]ADKInstall"
         }
-        else 
+
+        SetDNS DnsServerAddress
         {
-            SetDNS DnsServerAddress
-            {
-                DNSIPAddress = $DNSIPAddress
-                Ensure = "Present"
-                DependsOn = "[InstallADK]ADKInstall"
-            }
-
-            WaitForConfigurationFile WaitCSJoinDomain
-            {
-                Role = "DC"
-                MachineName = $DCName
-                LogFolder = $LogFolder
-                ReadNode = "CSJoinDomain"
-                Ensure = "Present"
-                DependsOn = "[File]ShareFolder"
-            }
-
-            FileReadAccessShare DomainSMBShare
-            {
-                Name   = $LogFolder
-                Path =  $LogPath
-                Account = $DCComputerAccount,$CSComputerAccount
-                DependsOn = "[WaitForConfigurationFile]WaitCSJoinDomain"
-            }
-
-            RegisterTaskScheduler InstallAndUpdateSCCM
-            {
-                TaskName = "ScriptWorkFlow"
-                ScriptName = "ScriptWorkFlow.ps1"
-                ScriptPath = $PSScriptRoot
-                ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $ClientName $Configuration $CurrentRole $LogFolder $CSName $PSName"
-                Ensure = "Present"
-                DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
-            }
+            DNSIPAddress = $DNSIPAddress
+            Ensure = "Present"
+            DependsOn = "[DownloadSCCM]DownLoadSCCM"
         }
 
         WaitForDomainReady WaitForDomain
@@ -173,10 +106,28 @@
             Ensure = 'Present'
             DependsOn = "[JoinDomain]JoinDomain"
         }
+
+        WaitForConfigurationFile WaitPSJoinDomain
+        {
+            Role = "DC"
+            MachineName = $DCName
+            LogFolder = $LogFolder
+            ReadNode = "PSJoinDomain"
+            Ensure = "Present"
+            DependsOn = "[File]ShareFolder"
+        }
+
+        FileReadAccessShare DomainSMBShare
+        {
+            Name   = $LogFolder
+            Path =  $LogPath
+            Account = $DCComputerAccount,$PSComputerAccount
+            DependsOn = "[WaitForConfigurationFile]WaitPSJoinDomain"
+        }
         
         OpenFirewallPortForSCCM OpenFirewall
         {
-            Name = "PS"
+            Name = "CS"
             Role = "Site Server"
             DependsOn = "[JoinDomain]JoinDomain"
         }
@@ -196,6 +147,30 @@
             SQLInstanceName = "MSSQLSERVER"
             Ensure = "Present"
             DependsOn = "[WaitForConfigurationFile]DelegateControl"
+        }
+
+        FileReadAccessShare CMSourceSMBShare
+        {
+            Name   = $CM
+            Path =  "c:\$CM"
+            Account = $DCComputerAccount
+            DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
+        }
+
+        AddUserToLocalAdminGroup AddADComputerToLocalAdminGroup {
+            Name = "$PrimarySiteName"
+            DomainName = $DomainName
+            DependsOn = "[FileReadAccessShare]CMSourceSMBShare"
+        }
+
+        RegisterTaskScheduler InstallAndUpdateSCCM
+        {
+            TaskName = "ScriptWorkFlow"
+            ScriptName = "ScriptWorkFlow.ps1"
+            ScriptPath = $PSScriptRoot
+            ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $ClientName $Configuration $CurrentRole $LogFolder $CSName $PSName"
+            Ensure = "Present"
+            DependsOn = "[AddUserToLocalAdminGroup]AddADComputerToLocalAdminGroup"
         }
     }
 }
