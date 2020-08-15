@@ -6,7 +6,7 @@
       "type": "string"
     },
     "_artifactsLocationSasToken": {
-      "type": "string"
+      "type": "secureString"
     },
     "automationAccountName": {
       "type": "string"
@@ -18,10 +18,7 @@
       "type": "string"
     },
     "adminPassword": {
-      "type": "securestring"
-    },
-    "safeModePassword": {
-      "type": "securestring"
+      "type": "secureString"
     },
     "domainName": {
       "type": "string"
@@ -36,17 +33,21 @@
       "DomainControllerConfig": {
         "name": "DomainControllerConfig",
         "description": "minimum viable configuration for a domain controller role",
-        "script": "dscConfigurations/DomainControllerConfig.ps1"
+        "script": "nested/DomainControllerConfig.ps1"
       }
     },
     "dscResources": {
       "xActiveDirectory": {
         "name": "xActiveDirectory",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/xactivedirectory.2.16.0.nupkg"
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/xactivedirectory.2.17.0.nupkg"
       },
       "xStorage": {
         "name": "xStorage",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/xstorage.3.2.0.nupkg"
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/xstorage.3.4.0.nupkg"
+      },
+      "xPendingReboot": {
+        "name": "xPendingReboot",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/xpendingreboot.0.3.0.nupkg"
       }
     }
   },
@@ -54,7 +55,7 @@
     {
       "name": "[parameters('automationAccountName')]",
       "type": "Microsoft.Automation/automationAccounts",
-      "apiversion": "2018-01-15",
+      "apiversion": "2020-01-13-preview",
       "location": "[parameters('location')]",
       "comments": "Automation account for OMS",
       "properties": {
@@ -66,7 +67,7 @@
         {
           "name": "[variables('dscResources').xActiveDirectory.name]",
           "type": "modules",
-          "apiVersion": "2018-01-15",
+          "apiVersion": "2020-01-13-preview",
           "location": "[parameters('location')]",
           "dependsOn": [
             "[parameters('AutomationAccountName')]"
@@ -80,7 +81,7 @@
         {
           "name": "[variables('dscResources').xStorage.name]",
           "type": "modules",
-          "apiVersion": "2018-01-15",
+          "apiVersion": "2020-01-13-preview",
           "location": "[parameters('location')]",
           "dependsOn": [
             "[parameters('AutomationAccountName')]"
@@ -92,9 +93,23 @@
           }
         },
         {
-          "name": "domainCredential",
+          "name": "[variables('dscResources').xPendingReboot.name]",
+          "type": "modules",
+          "apiVersion": "2020-01-13-preview",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[parameters('AutomationAccountName')]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('dscResources').xPendingReboot.url]"
+            }
+          }
+        },
+        {
+          "name": "Credential",
           "type": "credentials",
-          "apiVersion": "2018-01-15",
+          "apiVersion": "2020-01-13-preview",
           "location": "[parameters('location')]",
           "dependsOn": [
             "[parameters('AutomationAccountName')]"
@@ -105,44 +120,31 @@
           }
         },
         {
-          "name": "safeModeCredential",
-          "type": "credentials",
-          "apiVersion": "2018-01-15",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[parameters('AutomationAccountName')]"
-          ],
-          "properties": {
-            "userName": "[parameters('adminUsername')]",
-            "password": "[parameters('safeModePassword')]"
-          }
-        },
-        {
           "name": "[variables('dscConfigurations').DomainControllerConfig.name]",
           "type": "configurations",
-          "apiVersion": "2018-01-15",
+          "apiVersion": "2018-06-30",
           "location": "[parameters('location')]",
           "dependsOn": [
             "[parameters('AutomationAccountName')]",
             "[variables('dscResources').xActiveDirectory.name]",
             "[variables('dscResources').xStorage.name]",
-            "domainCredential",
-            "safeModeCredential"            
+            "[variables('dscResources').xPendingReboot.name]",
+            "Credential"
           ],
           "properties": {
-            "state": "Published",
-            "overwrite": "true",
+            "overwrite": true,
             "source": {
               "type": "uri",
-              "value": "[concat(parameters('_artifactsLocation'), variables('dscConfigurations').DomainControllerConfig.script, parameters('_artifactsLocationSasToken'))]"
+              "value": "[uri(parameters('_artifactsLocation'), concat(variables('dscConfigurations').DomainControllerConfig.script, parameters('_artifactsLocationSasToken')))]"
             }
           }
         },
+
         {
           "name": "[parameters('compileName')]",
           "type": "compilationjobs",
-          "apiVersion": "2018-01-15",
-          "tags": {},
+          "apiVersion": "2020-01-13-preview",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[parameters('AutomationAccountName')]",
             "[variables('dscConfigurations').DomainControllerConfig.name]"
@@ -158,6 +160,5 @@
         }
       ]
     }
-  ],
-  "outputs": {}
+  ]
 }
