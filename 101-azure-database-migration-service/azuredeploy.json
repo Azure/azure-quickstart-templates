@@ -34,6 +34,13 @@
                 "description": "Sql Authentication password for the source server (User name will be same as Windows Auth)"
             }
         },
+        "vmSize": {
+            "type": "string",
+            "metadata": {
+                "description": "Source VM size"
+            },
+            "defaultValue": "Standard_D2_v2"
+        },
         "targetSqlDbAdministratorLogin": {
             "type": "string",
             "metadata": {
@@ -95,7 +102,7 @@
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "Standard_D2_v2"
+                    "vmSize": "[parameters('vmSize')]"
                 },
                 "storageProfile": {
                     "imageReference": {
@@ -156,7 +163,7 @@
                     "name": "SqlIaasExtension",
                     "location": "[parameters('location')]",
                     "dependsOn": [
-                        "[concat('Microsoft.Compute/virtualMachines/', variables('sourceServerName'))]"
+                        "[resourceId('Microsoft.Compute/virtualMachines/', variables('sourceServerName'))]"
                     ],
                     "properties": {
                         "type": "SqlIaaSAgent",
@@ -175,8 +182,7 @@
                                 "MaintenanceWindowDuration": "60"
                             },
                             "KeyVaultCredentialSettings": {
-                                "Enable": false,
-                                "CredentialName": ""
+                                "Enable": false
                             },
                             "ServerConfigurationsManagementSettings": {
                                 "SQLConnectivityUpdateSettings": {
@@ -209,8 +215,8 @@
                     "name": "CustomScriptExtension",
                     "location": "[parameters('location')]",
                     "dependsOn": [
-                        "[concat('Microsoft.Compute/virtualMachines/', variables('sourceServerName'))]",
-                        "[concat('Microsoft.Compute/virtualMachines/', concat(variables('sourceServerName'),'/extensions/SqlIaasExtension'))]"
+                        "[resourceId('Microsoft.Compute/virtualMachines/', variables('sourceServerName'))]",
+                        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('sourceServerName'),'SqlIaasExtension'))]"
                     ],
                     "properties": {
                         "publisher": "Microsoft.Compute",
@@ -235,7 +241,7 @@
                 "size": "1 vCores"
             },
             "name": "[variables('DMSServiceName')]",
-            "apiVersion": "2018-04-19",
+            "apiVersion": "2018-07-15-preview",
             "location": "[parameters('location')]",
             "properties": {
                 "virtualSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
@@ -244,7 +250,7 @@
                 {
                     "type": "projects",
                     "name": "SqlToSqlDbMigrationProject",
-                    "apiVersion": "2018-04-19",
+                    "apiVersion": "2018-07-15-preview",
                     "location": "[parameters('location')]",
                     "properties": {
                         "sourcePlatform": "SQL",
@@ -423,7 +429,7 @@
                 {
                     "type": "subnets",
                     "name": "[variables('defaultSubnetName')]",
-                    "apiVersion": "2018-02-01",
+                    "apiVersion": "2020-05-01",
                     "dependsOn": [
                         "[resourceId('Microsoft.Network/virtualNetworks', variables('adVNet'))]"
                     ],
@@ -465,7 +471,7 @@
         {
             "type": "Microsoft.Sql/servers",
             "name": "[concat(variables('targetServerName'))]",
-            "apiVersion": "2019-06-01-preview",
+            "apiVersion": "2020-02-02-preview",
             "location": "[parameters('location')]",
             "properties": {
                 "administratorLogin": "[parameters('targetSqlDbAdministratorLogin')]",
@@ -480,7 +486,7 @@
                         "tier": "Basic"
                     },
                     "name": "[variables('databaseName')]",
-                    "apiVersion": "2019-06-01-preview",
+                    "apiVersion": "2020-02-02-preview",
                     "location": "[parameters('location')]",
                     "dependsOn": [
                         "[resourceId('Microsoft.Sql/servers', concat(variables('targetServerName')))]"
@@ -512,7 +518,7 @@
                 {
                     "type": "firewallrules",
                     "name": "AllowAllWindowsAzureIps",
-                    "apiVersion": "2015-05-01-preview",
+                    "apiVersion": "2020-02-02-preview",
                     "location": "[parameters('location')]",
                     "dependsOn": [
                         "[resourceId('Microsoft.Sql/servers', concat(variables('targetServerName')))]"
