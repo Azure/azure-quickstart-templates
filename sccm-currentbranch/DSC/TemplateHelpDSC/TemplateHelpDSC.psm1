@@ -31,16 +31,16 @@ class InstallADK
         $_adkpath = $this.ADKPath
         if(!(Test-Path $_adkpath))
         {
-            #ADK 1809 (17763)
-            $adkurl = "https://go.microsoft.com/fwlink/?linkid=2026036"
+            #ADK 2004 (19041)
+            $adkurl = "https://go.microsoft.com/fwlink/?linkid=2120254"
             Invoke-WebRequest -Uri $adkurl -OutFile $_adkpath
         }
 
         $_adkWinPEpath = $this.ADKWinPEPath
         if(!(Test-Path $_adkWinPEpath))
         {
-            #ADK add-on (17763)
-            $adkurl = "https://go.microsoft.com/fwlink/?linkid=2022233"
+            #ADK add-on (19041)
+            $adkurl = "https://go.microsoft.com/fwlink/?linkid=2120253"
             Invoke-WebRequest -Uri $adkurl -OutFile $_adkWinPEpath
         }
         #Install DeploymentTools
@@ -210,7 +210,6 @@ class WriteConfigurationFile
         $_Role = $this.Role
         $_Node = $this.WriteNode
         $_Status = $this.Status
-        $_NoChildNode = $this.NoChildNode
         $_LogPath = $this.LogPath
         $ConfigurationFile = Join-Path -Path $_LogPath -ChildPath "$_Role.json"
         $Configuration = Get-Content -Path $ConfigurationFile | ConvertFrom-Json
@@ -234,6 +233,11 @@ class WriteConfigurationFile
         else 
         {
             [hashtable]$Actions = @{
+                CSJoinDomain = @{
+                    Status = 'NotStart'
+                    StartTime = ''
+                    EndTime = ''
+                }
                 PSJoinDomain = @{
                     Status = 'NotStart'
                     StartTime = ''
@@ -512,9 +516,6 @@ class DownloadSCCM
     [string] $CM
 
     [DscProperty(Mandatory)]
-    [string] $ExtPath
-
-    [DscProperty(Mandatory)]
     [Ensure] $Ensure
 
     [DscProperty(NotConfigurable)]
@@ -523,7 +524,6 @@ class DownloadSCCM
     [void] Set()
     {
         $_CM = $this.CM
-        $_ExtPath = $this.ExtPath
         $cmpath = "c:\$_CM.exe"
         $cmsourcepath = "c:\$_CM"
 

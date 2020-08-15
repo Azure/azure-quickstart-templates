@@ -24,5 +24,3 @@ Microsoft.Attestation/attestationProvider is the resource that users should crea
 <br>SGX Attestation
 <br>VSM Attestation
 </ul>
-
-
