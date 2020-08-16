@@ -12,5 +12,6 @@ Set-AzContext [SubscriptionID/SubscriptionName]
 
 Deploy
 ```powershell
-
+$templateURI ="https://raw.githubusercontent.com/prsadhu-ms-idc/azure-quickstart-templates/AzMigrateDeploymentTemplate/migrate-project-deployment/azuredeploy.json"
+New-AzResourceGroupDeployment -Name template -ResourceGroupName myResourceGroup -TemplateUri  $templateURI
 ```
