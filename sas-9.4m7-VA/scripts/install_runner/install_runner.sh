@@ -23,6 +23,9 @@ ScriptDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . "/tmp/sasinstall.env"
 FORKS=5
 
+echo "AdminPassword: {sas001}${sasPassword}" >/tmp/ansible_vars.yaml
+echo "ExternalPassword: ${azurePassword}" >>/tmp/ansible_vars.yaml
+
 INVENTORY_FILE="inventory.ini"
 cd $ANSIBLE_DIR
 ansible-playbook -i ${INVENTORY_FILE} -v step02_install_os_updates.yaml
@@ -43,7 +46,7 @@ ansible-playbook -i ${INVENTORY_FILE} \
 
 # Get the path to the sid file in the depot
 SID_FILE=$(ls /sasshare/depot/sid_files)
-echo "sid_file_name: $SID_FILE" >/tmp/ansible_vars.yaml
+echo "sid_file_name: $SID_FILE" >>/tmp/ansible_vars.yaml
 
 ansible-playbook -i ${INVENTORY_FILE} -vvv step05_preinstall_sas.yaml
 
