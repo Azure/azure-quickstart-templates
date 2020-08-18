@@ -11,6 +11,7 @@
         },
         "SAS Depot Location": {
             "type": "String",
+            "defaultValue": "https://azureviya.blob.core.windows.net/94-deployment-data/vavs97/nondist/depot?sp=rl&st=2020-07-28T13:17:43Z&se=2025-07-28T13:17:00Z&sv=2019-12-12&sr=c&sig=01%2B%2BoiLLo4RYhNRlj9kozsS5oVkT9LiUyeCkCIiP%2FwE%3D",
             "metadata": {
                 "description": "The uri to download the depot from as currently stored in Azure Blob Store"
             }
@@ -45,10 +46,6 @@
                 "SUSE Enterprise Linux 12 SP5 +Patching"
             ]
         },
-        "Mid-Tier VM Name Base": {
-            "defaultValue": "midtier",
-            "type": "String"
-        },
         "Mid-Tier VM Count": {
             "defaultValue": 1,
             "type": "Int",
@@ -70,10 +67,6 @@
                 "Standard_D32s_v3"
             ]
         },
-        "Metadata VM Name Base": {
-            "defaultValue": "metadata",
-            "type": "String"
-        },
         "Metadata VM Count": {
             "defaultValue": 1,
             "type": "Int",
@@ -93,10 +86,6 @@
                 "Standard_D16s_v3",
                 "Standard_D32s_v3"
             ]
-        },
-        "Visual Analytics VM Name Base": {
-            "defaultValue": "visual-analytics",
-            "type": "String"
         },
         "Visual Analytics Worker Count": {
             "defaultValue": 2,
@@ -132,15 +121,15 @@
             ]
         },
         "Mid-tier Network Security Group Name": {
-            "defaultValue": "midtierNSG",
+            "defaultValue": "midtier_sg",
             "type": "String"
         },
         "Metadata Network Security Group Name": {
-            "defaultValue": "metadataNSG",
+            "defaultValue": "metadata_sg",
             "type": "String"
         },
         "Visual Analytics Network Security Group Name": {
-            "defaultValue": "vaNSG",
+            "defaultValue": "va_sg",
             "type": "String"
         },
         "Proximity PlacementGroup Name": {
@@ -148,11 +137,17 @@
             "type": "String"
         },
         "ssh Key for VM Access": {
-            "defaultValue": "",
+            "defaultValue": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDmj4OjEV/fQQRB4w1X/CbJz55FVHWtWJJ8mrOTM9xCEevza4xhB0YXKn64IZtVLvTK+pN+p2LWlIN4BIEjG6gB1q3Kr2xoZQ5kFlR2bZwirYDxYwM0UyQWBodHVDjJHZZREKj/c9zM+KMePpPAb5P6/KQE13Y74ZN4FkQXUSX5GQM6hb778TuSaIKb4k7cSQ1MJoOcF3ED+QVSraqip8d4ZDpJV9r1/UVwTvKRAP9WH8ByVeHW15RVJASdU+vLX9zODksxCrGNMATqOow8/n8p9auoYPuRfZn7T5DZATx3q9Rh4yOD/MRNnQ+8cVRGw9fDDsQoic59dOY204Cro2wj a3scas",
             "type": "String"
         },
+        "SAS Administration Password": {
+            "type": "securestring"
+        },
+        "Azure Administration Password": {
+            "type": "securestring"
+        },
         "Allow management from IP or CIDR block": {
-            "defaultValue": "0.0.0.0/0",
+            "defaultValue": "136.56.6.201/32",
             "type": "string",
             "metadata": {
                 "description": "Default value of 0.0.0.0/0 allows management from the entire Internet"
@@ -175,14 +170,14 @@
         },
         "_artifactsLocation": {
             "type": "string",
-            "defaultValue": "[deployment().properties.templateLink.uri]",
+            "defaultValue": "https://raw.githubusercontent.com/sassoftware/azure-quickstart-templates/develop-sas94m7-refactor/sas-9.4m7-VA/",
             "metadata": {
                 "description": "For a standard deployment, keep the default.  The https URL to the base of the deployment files in Microsoft Azure. If a SAS key is needed, please do not include the SAS key in the URL. Instead, add the part after and include the question mark to the _artifactsLocationSasToken variable. ex. https://(STORAGE_ACCOUNT).file.core.windows.net/(SHARE_NAME)/(SUBDIRECTORY_NAME)/"
             }
         }
     },
     "variables": {
-        "vnet_resource_group_name": "[if(equals(parameters('Use a New or Existing Virtual Network?'),'New'),resourceGroup().name,parameters('Existing Virtual Network Resource Group'))]",
+        "vnetResourceGroup": "[if(equals(parameters('Use a New or Existing Virtual Network?'),'New'),resourceGroup().name,parameters('Existing Virtual Network Resource Group'))]",
         "storageProfile": {
             "Standard_B1ms": 2,
             "Standard_D2s_v3": 2,
@@ -273,21 +268,41 @@
                 "diskscript": "scripts/SLES_raid_azure_data.sh"
             }
         },
-        "Visual Analytics VM Name Base - Controller": "[concat(parameters('Visual Analytics VM Name Base'),'-controller')]",
-        "Visual Analytics VM Name Base - Worker": "[concat(parameters('Visual Analytics VM Name Base'),'-worker')]",
         "resourceGroupUniqueString": "[uniqueString(resourceGroup().id)]",
-        "StorageGroupName": "[toLower(concat('storage0group0', substring(variables('resourceGroupUniqueString'),0,10)))]",
-        "AzureFilesViyaShare": "sasshare",
-        "PrimaryUserName": "AzureUser"
+        "storageGroupName": "[toLower(concat('storage0group0', substring(variables('resourceGroupUniqueString'),0,10)))]",
+        "azureFilesViyaShare": "sasshare",
+        "primaryUserName": "AzureUser",
+        "location": "[parameters('location')]",
+        "proximity": "[parameters('Proximity PlacementGroup Name')]",
+        "useNewNetwork": "[equals(parameters('Use a New or Existing Virtual Network?'), 'New')]",
+        "metadata_sg": "[parameters('Metadata Network Security Group Name')]",
+        "midtier_sg": "[parameters('Mid-tier Network Security Group Name')]",
+        "va_sg": "[parameters('Visual Analytics Network Security Group Name')]",
+        "adminIngressLocation": "[parameters('Allow management from IP or CIDR block')]",
+        "vnetName": "[parameters('Virtual Network Name')]",
+        "artifactsLocation": "[parameters('_artifactsLocation')]",
+        "sasToken": "[parameters('_artifactsLocationSasToken')]",
+        "metadataSize": "[parameters('Metadata VM Size')]",
+        "metadataCount": "[parameters('Metadata VM Count')]",
+        "sshKey": "[parameters('ssh Key for VM Access')]",
+        "vaControllerSize": "[parameters('Visual Analytics Controller Size')]",
+        "vaWorkerSize": "[parameters('Visual Analytics Worker Size')]",
+        "vaWorkerCount": "[parameters('Visual Analytics Worker Count')]",
+        "midtierSize": "[parameters('Mid-tier VM Size')]",
+        "midtierCount": "[parameters('Mid-Tier VM Count')]",
+        "sasDepot": "[parameters('SAS Depot Location')]",
+        "hasBastion": "[equals(parameters('Deploy Azure Bastion'), 'Yes')]",
+        "sasPassword": "[base64(parameters['SAS Administration Password'])]",
+        "azurePassword": "[base64(parameters['Azure Administration Password'])]"
     },
     "resources": [
         {
             "apiVersion": "2019-07-01",
             "type": "Microsoft.Compute/proximityPlacementGroups",
-            "name": "[parameters('Proximity PlacementGroup Name')]",
+            "name": "[variables('proximity')]",
             "properties": {
             },
-            "location": "[parameters('location')]"
+            "location": "[variables('location')]"
         },
         {
             "comments": "Diagnostic storage group for the SAS Viya stack",
@@ -297,9 +312,9 @@
                 "tier": "Standard"
             },
             "kind": "StorageV2",
-            "name": "[variables('StorageGroupName')]",
+            "name": "[variables('storageGroup')]",
             "apiVersion": "2019-04-01",
-            "location": "[parameters('location')]",
+            "location": "[variables('location')]",
             "properties": {
                 "networkAcls": {
                 "bypass": "AzureServices",
@@ -321,13 +336,13 @@
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
-            "condition": "[equals(parameters('Use a New or Existing Virtual Network?'), 'New')]",
+            "condition": "[variables('useNewNetwork')]",
             "apiVersion": "2019-12-01",
-            "name": "[parameters('Metadata Network Security Group Name')]",
+            "name": "[variables('metadata_sg')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
             ],
-            "location": "[parameters('location')]",
+            "location": "[variables('location')]",
             "properties": {
                 "securityRules": [
                 ]
@@ -336,12 +351,12 @@
         {
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-12-01",
-            "name": "[parameters('Mid-tier Network Security Group Name')]",
-            "condition": "[equals(parameters('Use a New or Existing Virtual Network?'), 'New')]",
+            "name": "[variables('midtier_sg')]",
+            "condition": "[variables('useNewNetwork')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
             ],
-            "location": "[parameters('location')]",
+            "location": "[variables('location')]",
             "properties": {
                 "securityRules": [
                 ]
@@ -350,12 +365,12 @@
         {
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-12-01",
-            "name": "[parameters('Visual Analytics Network Security Group Name')]",
-            "condition": "[equals(parameters('Use a New or Existing Virtual Network?'), 'New')]",
+            "name": "[variables('va_sg')]",
+            "condition": "[variables('useNewNetwork')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
             ],
-            "location": "[parameters('location')]",
+            "location": "[variables('location')]",
             "properties": {
                 "securityRules": [
                 ]
@@ -364,12 +379,12 @@
         {
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-12-01",
-            "name": "jumpNSG",
-            "condition": "[equals(parameters('Use a New or Existing Virtual Network?'), 'New')]",
+            "name": "jump_sg",
+            "condition": "[variables('useNewNetwork')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
             ],
-            "location": "[parameters('location')]",
+            "location": "[variables('location')]",
             "properties": {
                 "securityRules": [
                     {
@@ -379,7 +394,7 @@
                             "protocol": "*",
                             "sourcePortRange": "*",
                             "destinationPortRange": "22",
-                            "sourceAddressPrefix": "[parameters('Allow management from IP or CIDR block')]",
+                            "sourceAddressPrefix": "[variables('adminIngressLocation')]",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
                             "priority": 500,
@@ -392,12 +407,12 @@
         {
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-12-01",
-            "name": "appgatewayNSG",
-            "condition": "[equals(parameters('Use a New or Existing Virtual Network?'), 'New')]",
+            "name": "appgateway_sg",
+            "condition": "[variables('useNewNetwork')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
             ],
-            "location": "[parameters('location')]",
+            "location": "[variables('location')]",
             "properties": {
                 "securityRules": [
                     {
@@ -407,7 +422,7 @@
                             "protocol": "*",
                             "sourcePortRange": "*",
                             "destinationPortRange": "80",
-                            "sourceAddressPrefix": "[parameters('Allow management from IP or CIDR block')]",
+                            "sourceAddressPrefix": "[variables('adminIngressLocation')]",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
                             "priority": 500,
@@ -435,12 +450,12 @@
         {
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-12-01",
-            "name": "bastionNSG",
-            "condition": "[equals(parameters('Use a New or Existing Virtual Network?'), 'New')]",
+            "name": "bastion_sg",
+            "condition": "[variables('useNewNetwork')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
             ],
-            "location": "[parameters('location')]",
+            "location": "[variables('location')]",
             "properties": {
                 "securityRules": [
                     {
@@ -450,7 +465,7 @@
                             "protocol": "*",
                             "sourcePortRange": "*",
                             "destinationPortRange": "443",
-                            "sourceAddressPrefix": "[parameters('Allow management from IP or CIDR block')]",
+                            "sourceAddressPrefix": "[variables('adminIngressLocation')]",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
                             "priority": 500,
@@ -522,30 +537,30 @@
             "apiVersion": "2019-10-01",
             "name": "ParameterizedAppGateway",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('Virtual Network Name'),'-ip-loadbalancer'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('Virtual Network Name'))]",
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
+                "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vnetName'),'-ip-loadbalancer'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(uri(parameters('_artifactsLocation'), 'subtemplates/paramlb.json'), parameters('_artifactsLocationSasToken'))]"
+                    "uri": "[concat(uri(variables('artifactsLocation'), 'subtemplates/paramlb.json'), variables('sasToken'))]"
                 },
                 "parameters": {
                     "location": {
-                        "value": "[parameters('location')]"
+                        "value": "[variables('location')]"
                     },
                     "lb_name": {
-                        "value": "[concat(parameters('Mid-Tier VM Name Base'),'-loadbalancer')]"
+                        "value": "midtier-loadbalancer"
                     },
                     "public_ip": {
-                        "value": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('Virtual Network Name'),'-ip-loadbalancer'))]"
+                        "value": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vnetName'),'-ip-loadbalancer'))]"
                     },
                     "vnet_name": {
-                        "value": "[parameters('Virtual Network Name')]"
+                        "value": "[variables('vnetName')]"
                     },
                     "vnet_resource_group": {
-                        "value": "[variables('vnet_resource_group_name')]"
+                        "value": "[variables('vnetResourceGroup')]"
                     },
                     "vnet_subnet_name": {
                         "value": "AppGatewaySubnet"
@@ -558,41 +573,41 @@
             "apiVersion": "2019-10-01",
             "name": "[concat('ParameterizedMetadataVM-', copyIndex())]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('Virtual Network Name'))]",
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(uri(parameters('_artifactsLocation'), 'subtemplates/paramvm.json'), parameters('_artifactsLocationSasToken'))]"
+                    "uri": "[concat(uri(variables('artifactsLocation'), 'subtemplates/paramvm.json'), variables('sasToken'))]"
                 },
                 "parameters": {
                     "location": {
-                        "value": "[parameters('location')]"
+                        "value": "[variables('location')]"
                     },
                     "vm_name": {
-                        "value": "[concat(parameters('Metadata VM Name Base'),'-', copyIndex())]"
+                        "value": "[concat('metadata-', copyIndex())]"
                     },
                     "vm_size": {
-                        "value": "[parameters('Metadata VM Size')]"
+                        "value": "[variables('metadataSize')]"
                     },
                     "datadisk_size": {
                         "value": 128
                     },
                     "datadisk_count": {
-                        "value": "[variables('storageProfile')[parameters('Metadata VM Size')]]"
+                        "value": "[variables('storageProfile')[variables('metadataSize')]]"
                     },
                     "proximity_group_name": {
-                        "value": "[parameters('Proximity PlacementGroup Name')]"
+                        "value": "[variables('proximity')]"
                     },
                     "ssh_pub_key": {
-                        "value": "[parameters('ssh Key for VM Access')]"
+                        "value": "[variables('sshKey')]"
                     },
                     "vnet_name": {
-                        "value": "[parameters('Virtual Network Name')]"
+                        "value": "[variables('vnetName')]"
                     },
                     "vnet_resource_group": {
-                        "value": "[variables('vnet_resource_group_name')]"
+                        "value": "[variables('vnetResourceGroup')]"
                     },
                     "vnet_subnet_name": {
                         "value": "metadataSubnet"
@@ -602,9 +617,9 @@
                     },
                     "post_install_actions": {
                         "value":  {
-                            "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"', variables('PrimaryUserName'), '\" \"', variables('StorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('StorageGroupName'),'2019-06-01').keys[0].value, '\"  2>&1 | tee /tmp/prerequisites.log')]",
+                            "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"', variables('primaryUserName'), '\" \"', variables('storageGroup'), '\" \"', variables('azureFilesViyaShare'), '\" \"', listKeys(variables('storageGroup'),'2019-06-01').keys[0].value, '\"  2>&1 | tee /tmp/prerequisites.log')]",
                             "fileUris": [
-                                "[concat(uri(parameters('_artifactsLocation'), 'scripts/SetupNonJump.sh'), parameters('_artifactsLocationSasToken'))]"
+                                "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
                             ]
                         }
                     },
@@ -621,7 +636,7 @@
             },
             "copy": {
                 "name": "ParameterizedMetadataVM-Copy",
-                "count": "[parameters('Metadata VM Count')]"
+                "count": "[variables('metadataCount')]"
             }
         },
         {
@@ -629,42 +644,42 @@
             "apiVersion": "2019-10-01",
             "name": "ParameterizedVaControllerVM",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('Virtual Network Name'))]",
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageGroupName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageGroup'))]"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(uri(parameters('_artifactsLocation'), 'subtemplates/paramvm.json'), parameters('_artifactsLocationSasToken'))]"
+                    "uri": "[concat(uri(variables('artifactsLocation'), 'subtemplates/paramvm.json'), variables('sasToken'))]"
                 },
                 "parameters": {
                     "location": {
-                        "value": "[parameters('location')]"
+                        "value": "[variables('location')]"
                     },
                     "vm_name": {
-                        "value": "[variables('Visual Analytics VM Name Base - Controller')]"
+                        "value": "visual-analytics-controller"
                     },
                     "vm_size": {
-                        "value": "[parameters('Visual Analytics Controller Size')]"
+                        "value": "[variables('vaControllerSize')]"
                     },
                     "datadisk_size": {
                         "value": 128
                     },
                     "datadisk_count": {
-                        "value": "[variables('storageProfile')[parameters('Visual Analytics Controller Size')]]"
+                        "value": "[variables('storageProfile')[variables('vaControllerSize')]]"
                     },
                     "proximity_group_name": {
-                        "value": "[parameters('Proximity PlacementGroup Name')]"
+                        "value": "[variables('proximity')]"
                     },
                     "ssh_pub_key": {
-                        "value": "[parameters('ssh Key for VM Access')]"
+                        "value": "[variables('sshKey')]"
                     },
                     "vnet_name": {
-                        "value": "[parameters('Virtual Network Name')]"
+                        "value": "[variables('vnetName')]"
                     },
                     "vnet_resource_group": {
-                        "value": "[variables('vnet_resource_group_name')]"
+                        "value": "[variables('vnetResourceGroup')]"
                     },
                     "vnet_subnet_name": {
                         "value": "vaSubnet"
@@ -674,9 +689,9 @@
                     },
                     "post_install_actions": {
                         "value":  {
-                            "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"', variables('PrimaryUserName'), '\" \"', variables('StorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('StorageGroupName'),'2019-06-01').keys[0].value, '\"  2>&1 | tee /tmp/prerequisites.log')]",
+                            "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"', variables('primaryUserName'), '\" \"', variables('storageGroup'), '\" \"', variables('azureFilesViyaShare'), '\" \"', listKeys(variables('storageGroup'),'2019-06-01').keys[0].value, '\"  2>&1 | tee /tmp/prerequisites.log')]",
                             "fileUris": [
-                                "[concat(uri(parameters('_artifactsLocation'), 'scripts/SetupNonJump.sh'), parameters('_artifactsLocationSasToken'))]"
+                                "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
                             ]
                         }
                     },
@@ -697,42 +712,42 @@
             "apiVersion": "2019-10-01",
             "name": "[concat('ParameterizedVaWorkerVM-', copyIndex())]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('Virtual Network Name'))]",
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageGroupName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageGroup'))]"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(uri(parameters('_artifactsLocation'), 'subtemplates/paramvm.json'), parameters('_artifactsLocationSasToken'))]"
+                    "uri": "[concat(uri(variables('artifactsLocation'), 'subtemplates/paramvm.json'), variables('sasToken'))]"
                 },
                 "parameters": {
                     "location": {
-                        "value": "[parameters('location')]"
+                        "value": "[variables('location')]"
                     },
                     "vm_name": {
-                        "value": "[concat(variables('Visual Analytics VM Name Base - Worker'),'-', copyIndex())]"
+                        "value": "[concat('visual-analytics-worker-', copyIndex())]"
                     },
                     "vm_size": {
-                        "value": "[parameters('Visual Analytics Worker Size')]"
+                        "value": "[variables('vaWorkerSize')]"
                     },
                     "datadisk_size": {
                         "value": 128
                     },
                     "datadisk_count": {
-                        "value": "[variables('storageProfile')[parameters('Visual Analytics Worker Size')]]"
+                        "value": "[variables('storageProfile')[variables('vaWorkerSize')]]"
                     },
                     "proximity_group_name": {
-                        "value": "[parameters('Proximity PlacementGroup Name')]"
+                        "value": "[variables('proximity')]"
                     },
                     "ssh_pub_key": {
-                        "value": "[parameters('ssh Key for VM Access')]"
+                        "value": "[variables('sshKey')]"
                     },
                     "vnet_name": {
-                        "value": "[parameters('Virtual Network Name')]"
+                        "value": "[variables('vnetName')]"
                     },
                     "vnet_resource_group": {
-                        "value": "[variables('vnet_resource_group_name')]"
+                        "value": "[variables('vnetResourceGroup')]"
                     },
                     "vnet_subnet_name": {
                         "value": "vaSubnet"
@@ -742,9 +757,9 @@
                     },
                     "post_install_actions": {
                         "value":  {
-                            "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"', variables('PrimaryUserName'), '\" \"', variables('StorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('StorageGroupName'),'2019-06-01').keys[0].value, '\"  2>&1 | tee /tmp/prerequisites.log')]",
+                            "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"', variables('primaryUserName'), '\" \"', variables('storageGroup'), '\" \"', variables('azureFilesViyaShare'), '\" \"', listKeys(variables('storageGroup'),'2019-06-01').keys[0].value, '\"  2>&1 | tee /tmp/prerequisites.log')]",
                             "fileUris": [
-                                "[concat(uri(parameters('_artifactsLocation'), 'scripts/SetupNonJump.sh'), parameters('_artifactsLocationSasToken'))]"
+                                "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
                             ]
                         }
                     },
@@ -761,7 +776,7 @@
             },
             "copy": {
                 "name": "ParameterizedVAWorkerVM-Copy",
-                "count": "[parameters('Visual Analytics Worker Count')]"
+                "count": "[variables('vaWorkerCount')]"
             }
         },
         {
@@ -769,42 +784,42 @@
             "apiVersion": "2019-10-01",
             "name": "[concat('ParameterizedMidtierVM-', copyIndex())]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('Virtual Network Name'))]",
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageGroupName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageGroup'))]"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(uri(parameters('_artifactsLocation'), 'subtemplates/paramvm.json'), parameters('_artifactsLocationSasToken'))]"
+                    "uri": "[concat(uri(variables('artifactsLocation'), 'subtemplates/paramvm.json'), variables('sasToken'))]"
                 },
                 "parameters": {
                     "location": {
-                        "value": "[parameters('location')]"
+                        "value": "[variables('location')]"
                     },
                     "vm_name": {
-                        "value": "[concat(parameters('Mid-Tier VM Name Base'),'-', copyIndex())]"
+                        "value": "['midtier-', copyIndex())]"
                     },
                     "vm_size": {
-                        "value": "[parameters('Mid-tier VM Size')]"
+                        "value": "[variables('midtierSize')]"
                     },
                     "datadisk_size": {
                         "value": 128
                     },
                     "datadisk_count": {
-                        "value": "[variables('storageProfile')[parameters('Mid-tier VM Size')]]"
+                        "value": "[variables('storageProfile')[variables('midtierSize')]]"
                     },
                     "proximity_group_name": {
-                        "value": "[parameters('Proximity PlacementGroup Name')]"
+                        "value": "[variables('proximity')]"
                     },
                     "ssh_pub_key": {
-                        "value": "[parameters('ssh Key for VM Access')]"
+                        "value": "[variables('sshKey')]"
                     },
                     "vnet_name": {
-                        "value": "[parameters('Virtual Network Name')]"
+                        "value": "[variables('vnetName')]"
                     },
                     "vnet_resource_group": {
-                        "value": "[variables('vnet_resource_group_name')]"
+                        "value": "[variables('vnetResourceGroup')]"
                     },
                     "vnet_subnet_name": {
                         "value": "midtierSubnet"
@@ -814,9 +829,9 @@
                     },
                     "post_install_actions": {
                         "value":  {
-                            "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"', variables('PrimaryUserName'), '\" \"', variables('StorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('StorageGroupName'),'2019-06-01').keys[0].value, '\"  2>&1 | tee /tmp/prerequisites.log')]",
+                            "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"', variables('primaryUserName'), '\" \"', variables('storageGroup'), '\" \"', variables('azureFilesViyaShare'), '\" \"', listKeys(variables('storageGroup'),'2019-06-01').keys[0].value, '\"  2>&1 | tee /tmp/prerequisites.log')]",
                             "fileUris": [
-                                "[concat(uri(parameters('_artifactsLocation'), 'scripts/SetupNonJump.sh'), parameters('_artifactsLocationSasToken'))]"
+                                "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
                             ]
                         }
                     },
@@ -833,7 +848,7 @@
             },
             "copy": {
                 "name": "ParameterizedMidtierVM-Copy",
-                "count": "[parameters('Mid-Tier VM Count')]"
+                "count": "[variables('midtierCount')]"
             }
         },
         {
@@ -841,19 +856,19 @@
             "apiVersion": "2019-10-01",
             "name": "ParameterizedJumpVM",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('Virtual Network Name'))]",
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]",
-                "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('Virtual Network Name'),'-ip-jump'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageGroupName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vnetName'),'-ip-jump'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageGroup'))]"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(uri(parameters('_artifactsLocation'), 'subtemplates/paramvm.json'), parameters('_artifactsLocationSasToken'))]"
+                    "uri": "[concat(uri(variables('artifactsLocation'), 'subtemplates/paramvm.json'), variables('sasToken'))]"
                 },
                 "parameters": {
                     "location": {
-                        "value": "[parameters('location')]"
+                        "value": "[variables('location')]"
                     },
                     "vm_name": {
                         "value": "jumpvm"
@@ -868,16 +883,16 @@
                         "value": 1
                     },
                     "proximity_group_name": {
-                        "value": "[parameters('Proximity PlacementGroup Name')]"
+                        "value": "[variables('proximity')]"
                     },
                     "ssh_pub_key": {
-                        "value": "[parameters('ssh Key for VM Access')]"
+                        "value": "[variables('sshKey')]"
                     },
                     "vnet_name": {
-                        "value": "[parameters('Virtual Network Name')]"
+                        "value": "[variables('vnetName')]"
                     },
                     "vnet_resource_group": {
-                        "value": "[variables('vnet_resource_group_name')]"
+                        "value": "[variables('vnetResourceGroup')]"
                     },
                     "vnet_subnet_name": {
                         "value": "jumpSubnet"
@@ -887,9 +902,9 @@
                     },
                     "post_install_actions": {
                         "value":  {
-                            "commandToExecute": "[ concat('set -o pipefail; ./SetupJump.sh \"', variables('PrimaryUserName'), '\" \"', variables('StorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('StorageGroupName'),'2019-06-01').keys[0].value, '\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('SAS Depot Location'), '\" \"', parameters('Mid-Tier VM Count'), '\" \"', parameters('Metadata VM Count'), '\" \"', parameters('Visual Analytics Worker Count'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
+                            "commandToExecute": "[ concat('set -o pipefail; ./SetupJump.sh \"', variables('primaryUserName'), '\" \"', variables('storageGroup'), '\" \"', variables('azureFilesViyaShare'), '\" \"', listKeys(variables('storageGroup'),'2019-06-01').keys[0].value, '\" \"', variables('artifactsLocation'), '\" \"', variables('sasToken'), '\" \"', variables('sasDepot'), '\" \"', variables('midtierCount'), '\" \"', variables('metadataCount'), '\" \"', variables('vaWorkerCount'), '\" \"', variables('sasPassword'), '\" \"', variables('azurePassword'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
                             "fileUris": [
-                                "[concat(uri(parameters('_artifactsLocation'), 'scripts/SetupJump.sh'), parameters('_artifactsLocationSasToken'))]"
+                                "[concat(uri(variables('artifactsLocation'), 'scripts/SetupJump.sh'), variables('sasToken'))]"
                             ]
                         }
                     },
@@ -897,7 +912,7 @@
                         "value": false
                     },
                     "public_ip_or_empty": {
-                        "value": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('Virtual Network Name'),'-ip-jump'))]"
+                        "value": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vnetName'),'-ip-jump'))]"
                     },
                     "loadbalancer_id_or_empty": {
                         "value": ""
@@ -915,11 +930,11 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(uri(parameters('_artifactsLocation'), 'subtemplates/installextension.json'), parameters('_artifactsLocationSasToken'))]"
+                    "uri": "[concat(uri(variables('artifactsLocation'), 'subtemplates/installextension.json'), variables('sasToken'))]"
                 },
                 "parameters": {
                     "location": {
-                        "value": "[parameters('location')]"
+                        "value": "[variables('location')]"
                     },
                     "vm_name": {
                         "value": "jumpvm"
@@ -940,11 +955,11 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(uri(parameters('_artifactsLocation'), 'subtemplates/installextension.json'), parameters('_artifactsLocationSasToken'))]"
+                    "uri": "[concat(uri(variables('artifactsLocation'), 'subtemplates/installextension.json'), variables('sasToken'))]"
                 },
                 "parameters": {
                     "location": {
-                        "value": "[parameters('location')]"
+                        "value": "[variables('location')]"
                     },
                     "vm_name": {
                         "value": "jumpvm"
@@ -965,11 +980,11 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(uri(parameters('_artifactsLocation'), 'subtemplates/installextension.json'), parameters('_artifactsLocationSasToken'))]"
+                    "uri": "[concat(uri(variables('artifactsLocation'), 'subtemplates/installextension.json'), variables('sasToken'))]"
                 },
                 "parameters": {
                     "location": {
-                        "value": "[parameters('location')]"
+                        "value": "[variables('location')]"
                     },
                     "vm_name": {
                         "value": "jumpvm"
@@ -990,11 +1005,11 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(uri(parameters('_artifactsLocation'), 'subtemplates/installextension.json'), parameters('_artifactsLocationSasToken'))]"
+                    "uri": "[concat(uri(variables('artifactsLocation'), 'subtemplates/installextension.json'), variables('sasToken'))]"
                 },
                 "parameters": {
                     "location": {
-                        "value": "[parameters('location')]"
+                        "value": "[variables('location')]"
                     },
                     "vm_name": {
                         "value": "jumpvm"
@@ -1007,15 +1022,15 @@
         },
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "condition": "[equals(parameters('Use a New or Existing Virtual Network?'), 'New')]",
+            "condition": "[variables('useNewNetwork')]",
             "apiVersion": "2019-12-01",
-            "name": "[parameters('Virtual Network Name')]",
-            "location": "[parameters('location')]",
+            "name": "[variables('vnetName')]",
+            "location": "[variables('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('Mid-tier Network Security Group Name'))]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('Metadata Network Security Group Name'))]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('Visual Analytics Network Security Group Name'))]",
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('midtier_sg'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('metadata_sg'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('va_sg'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
             ],
             "properties": {
                 "addressSpace": {
@@ -1035,7 +1050,7 @@
                         "properties": {
                             "addressPrefix": "10.2.0.192/27",
                             "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'bastionNSG')]"
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'bastion_sg')]"
                             }
                         }
                     },
@@ -1044,7 +1059,7 @@
                         "properties": {
                             "addressPrefix": "10.2.0.160/27",
                             "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'jumpNSG')]"
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'jump_sg')]"
                             }
                         }
                     },
@@ -1053,7 +1068,7 @@
                         "properties": {
                             "addressPrefix": "10.2.0.128/27",
                             "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'appgatewayNSG')]"
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'appgateway_sg')]"
                             }
                         }
                     },
@@ -1062,7 +1077,7 @@
                         "properties": {
                             "addressPrefix": "10.2.0.16/28",
                             "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('Metadata Network Security Group Name'))]"
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('metadata_sg'))]"
                             }
                         }
                     },
@@ -1071,7 +1086,7 @@
                         "properties": {
                             "addressPrefix": "10.2.0.0/28",
                             "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('Mid-tier Network Security Group Name'))]"
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('midtier_sg'))]"
                             }
                         }
                     },
@@ -1080,7 +1095,7 @@
                         "properties": {
                             "addressPrefix": "10.2.2.0/24",
                             "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('Visual Analytics Network Security Group Name'))]"
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('va_sg'))]"
                             }
                         }
                     }
@@ -1090,10 +1105,10 @@
         {
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2019-12-01",
-            "name": "[concat(parameters('Virtual Network Name'),'-ip-bastion')]",
-            "location": "[parameters('location')]",
+            "name": "[concat(variables('vnetName'),'-ip-bastion')]",
+            "location": "[variables('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
             ],
             "sku": {
                 "name": "Standard"
@@ -1105,10 +1120,10 @@
         {
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2019-12-01",
-            "name": "[concat(parameters('Virtual Network Name'),'-ip-jump')]",
-            "location": "[parameters('location')]",
+            "name": "[concat(variables('vnetName'),'-ip-jump')]",
+            "location": "[variables('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
             ],
             "sku": {
                 "name": "Standard"
@@ -1120,10 +1135,10 @@
         {
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2019-12-01",
-            "name": "[concat(parameters('Virtual Network Name'),'-ip-loadbalancer')]",
-            "location": "[parameters('location')]",
+            "name": "[concat(variables('vnetName'),'-ip-loadbalancer')]",
+            "location": "[variables('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
             ],
             "sku": {
                 "name": "Standard"
@@ -1136,11 +1151,11 @@
             "type": "Microsoft.Network/bastionHosts",
             "apiVersion": "2019-12-01",
             "name": "bastion",
-            "condition": "[equals(parameters('Deploy Azure Bastion'), 'Yes')]",
-            "location": "[parameters('location')]",
+            "condition": "[variables('hasBastion')]",
+            "location": "[variables('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('Virtual Network Name'))]",
-                "[resourceId('Microsoft.Compute/proximityPlacementGroups', parameters('Proximity PlacementGroup Name'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -1149,28 +1164,28 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('Virtual Network Name'),'-ip-bastion'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vnetName'),'-ip-bastion'))]"
                             },
                             "subnet": {
-                                "id": "[resourceId(variables('vnet_resource_group_name'), 'Microsoft.Network/virtualNetworks/subnets', parameters('Virtual Network Name'), 'AzureBastionSubnet')]"
+                                "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'AzureBastionSubnet')]"
                             }
                         }
                     }
                 ]
             }
         },
-	{
-	    "apiVersion": "2019-10-01",
-	    "name": "pid-a04b9960-695b-556c-9e3d-2c5752ffbdd7",
-	    "type": "Microsoft.Resources/deployments",
-	    "properties": {
-		"mode": "Incremental",
-		"template": {
-		    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-		    "contentVersion": "1.0.0.0",
-		    "resources": []
-		}
-	    }
-	}
-     ]
+	      {
+            "apiVersion": "2019-10-01",
+            "name": "pid-a04b9960-695b-556c-9e3d-2c5752ffbdd7",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": []
+                }
+            }
+        }
+    ]
 }

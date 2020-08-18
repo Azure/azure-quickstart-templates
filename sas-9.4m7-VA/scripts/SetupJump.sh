@@ -14,6 +14,8 @@ export depot_uri="${7}"
 export count_of_midtier="${8}"
 export count_of_metadata="${9}"
 export count_of_va_worker="${10}"
+export sasPassword="${11}"
+export azurePassword="${12}"
 
 
 export DIRECTORY_NFS_SHARE="/sasshare"
