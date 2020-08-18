@@ -1,0 +1,235 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Azure region for VM"
+            }
+        },
+        "vm_name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for VM"
+            }
+        },
+        "vm_size": {
+            "type": "string",
+            "metadata": {
+                "description": "VM Size"
+            }
+        },
+        "datadisk_size": {
+            "type": "int",
+            "metadata": {
+                "description": "Size in GB for each Data Disk"
+            }
+        },
+        "datadisk_count": {
+            "type": "int",
+            "metadata": {
+                "description": "Count of Data Disks"
+            }
+        },
+        "admin_user": {
+            "type": "string",
+            "metadata": {
+                "description": "Admin User for VM"
+            }
+        },
+        "ssh_pub_key": {
+            "type": "string",
+            "metadata": {
+                "description": "ssh Public Key used to access VM"
+            }
+        },
+        "vnet_name": {
+            "type": "string",
+            "metadata": {
+                "description": "Virtual Network for VM"
+            }
+        },
+        "vnet_subnet_name": {
+            "type": "string",
+            "metadata": {
+                "description": "Subnet for VM"
+            }
+        },
+        "proximity_group_name": {
+            "type": "string",
+            "metadata": {
+                "description": "Proximity Placement Group for VM"
+            }
+        },
+        "os_image": {
+            "type": "object",
+            "metadata": {
+                "description": "Object containing VM Image definition"
+            }
+        },
+        "post_install_actions": {
+            "type": "object",
+            "metadata": {
+                "description": "Object containing post install actions for Custom Script Extension"
+            }
+        },
+        "publicip_id_or_empty": {
+            "type": "string",
+            "metadata": {
+                "description": "Resource ID for Public IP or an empty string if not used"
+            }
+        },
+        "appgatewaybackend_id_or_empty": {
+            "type": "string",
+            "metadata": {
+                "description": "Resource ID for App Gateway Backend Address Pool or an empty string if not used"
+            }
+        },
+        "availabilityset_id_or_empty": {
+            "type": "string",
+            "metadata": {
+                "description": "Resource ID for Availability Set or an empty string if not used"
+            }
+        },
+        "enable_enhanced_networking": {
+            "type": "bool",
+            "metadata": {
+                "description": "Enable Enhanced Networking (Depends on VM Size)"
+            }
+        }
+    },
+    "variables": {
+        "public_ip_if_not_empty": {
+            "id": "[parameters('publicip_id_or_empty')]"
+        },
+        "appgatewaybackend_if_not_empty": [
+            {
+                "id": "[parameters('appgatewaybackend_id_or_empty')]"
+            }
+        ],
+        "availabilityset_if_not_empty": {
+            "id": "[parameters('availabilityset_id_or_empty')]"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[parameters('vm_name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vm_name'), '_nic'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vm_size')]"
+                },
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',parameters('proximity_group_name'))]"
+                },
+                "availabilitySet": "[if(empty(parameters('availabilityset_id_or_empty')), json('null'), variables('availabilityset_if_not_empty'))]",
+                "storageProfile": {
+                    "imageReference": "[parameters('os_image')]",
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('vm_name'), '_OsDisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    },
+                    "copy": [
+                        {
+                            "name": "datadisks",
+                            "count": "[parameters('datadisk_count')]",
+                            "input": {
+                                "lun": "[copyIndex('datadisks')]",
+                                "name": "[concat(parameters('vm_name'), '_data_', copyIndex('datadisks'))]",
+                                "managedDisk": {
+                                    "storageAccountType": "Premium_LRS"
+                                },
+                                "diskSizeGB": "[parameters('datadisk_size')]",
+                                "caching": "None",
+                                "createOption": "Empty"
+                            }
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vm_name'), '_nic'))]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vm_name')]",
+                    "adminUsername": "[parameters('admin_user')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('admin_user'), '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('ssh_pub_key')]"
+                                }
+                            ]
+                        },
+                        "provisionVMAgent": true
+                    }
+                }
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "apiVersion": "2019-07-01",
+                    "name": "[concat(parameters('vm_name'), '/post_install_actions')]",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Compute/virtualMachines',parameters('vm_name'))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Extensions",
+                        "type": "CustomScript",
+                        "typeHandlerVersion": "2.0",
+                        "autoUpgradeMinorVersion": true,
+                        "protectedSettings": "[parameters('post_install_actions')]"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('vm_name'), '_nic')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'),  parameters('vnet_subnet_name'))]"
+                            },
+                            "applicationGatewayBackendAddressPools": "[if(empty(parameters('appgatewaybackend_id_or_empty')),json('[]'),variables('appgatewaybackend_if_not_empty'))]",
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4",
+                            "publicIPAddress": "[if(empty(parameters('publicip_id_or_empty')),json('null'),variables('public_ip_if_not_empty'))]"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": "[parameters('enable_enhanced_networking')]",
+                "enableIPForwarding": false
+            }
+        }
+    ],
+    "outputs": {
+        "privateIp": {
+            "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vm_name'), '_nic'))).ipConfigurations[0].properties.privateIPAddress]",
+            "type": "string"
+        }
+    }
+}
