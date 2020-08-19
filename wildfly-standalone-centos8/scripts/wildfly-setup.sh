@@ -9,8 +9,27 @@ adddate() {
 echo "WILDFLY 18.0.1.Final Standalone Intallation Start..." | adddate >> wildfly.install.log
 /bin/date +%H:%M:%S  >> wildfly.install.log
 
-WILDFLY_USER=$1
-WILDFLY_PASSWORD=$2
+while getopts "a:t:p:f:" opt; do
+    case $opt in
+        a)
+            artifactsLocation=$OPTARG #base uri of the file including the container
+        ;;
+        t)
+            token=$OPTARG #saToken for the uri - use "?" if the artifact is not secured via sasToken
+        ;;
+        p)
+            pathToFile=$OPTARG #path to the file relative to artifactsLocation
+        ;;
+        f)
+            fileToDownload=$OPTARG #filename of the file to download from storage
+        ;;
+    esac
+done
+
+fileUrl="$artifactsLocation/$pathToFile/$fileToDownload$token"
+
+WILDFLY_USER=$9
+WILDFLY_PASSWORD=${10}
 IP_ADDR=$(hostname -I)
 
 echo "WILDFLY_USER: " ${WILDFLY_USER} | adddate >> wildfly.install.log
@@ -33,8 +52,8 @@ echo "systemctl restart sshd" | adddate >> wildfly.install.log
 systemctl restart sshd | adddate >> wildfly.install.log 2>&1
 
 echo "Sample app deploy..." | adddate >> wildfly.install.log
-echo "wget https://github.com/Azure/azure-quickstart-templates/raw/master/wildfly-standalone-centos8/scripts/JBoss-EAP_on_Azure.war" | adddate >> wildfly.install.log
-wget https://github.com/Azure/azure-quickstart-templates/raw/master/wildfly-standalone-centos8/scripts/JBoss-EAP_on_Azure.war >> wildfly.install.log 2>&1
+echo "wget $fileUrl" | adddate >> wildfly.install.log
+wget $fileUrl >> wildfly.install.log 2>&1
 flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Sample Application Download Failed" | adddate >> wildfly.install.log; exit $flag;  fi
 echo "/bin/cp -rf ./JBoss-EAP_on_Azure.war ./wildfly-$WILDFLY_RELEASE.Final/standalone/deployments/" | adddate >> wildfly.install.log
 /bin/cp -rf ./JBoss-EAP_on_Azure.war ./wildfly-$WILDFLY_RELEASE.Final/standalone/deployments/ | adddate >> wildfly.install.log 2>&1
