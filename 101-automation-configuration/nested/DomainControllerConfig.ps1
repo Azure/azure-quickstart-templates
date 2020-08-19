@@ -34,7 +34,7 @@ https://github.com/Microsoft/DomainControllerConfig/blob/master/README.md#versio
 
 #Requires -module @{ModuleName = 'xActiveDirectory';ModuleVersion = '2.17.0.0'}
 #Requires -module @{ModuleName = 'xStorage'; ModuleVersion = '3.4.0.0'}
-#Requires -module @{ModuleName = 'xPendingReboot'; ModuleVersion = '0.3.0.0'}
+#Requires -module @{ModuleName = 'ComputerManagementDsc'; ModuleVersion = '8.4.0'}
 
 <#
 
@@ -52,7 +52,7 @@ and set their names in lines 11 and 12 of the configuration script.
 Required modules in Automation service:
   - xActiveDirectory
   - xStorage
-  - xPendingReboot
+  - ComputerManagementDsc
 
 #>
 
@@ -61,7 +61,7 @@ configuration DomainControllerConfig
 
 Import-DscResource -ModuleName @{ModuleName = 'xActiveDirectory'; ModuleVersion = '2.17.0.0'}
 Import-DscResource -ModuleName @{ModuleName = 'xStorage'; ModuleVersion = '3.4.0.0'}
-Import-DscResource -ModuleName @{ModuleName = 'xPendingReboot'; ModuleVersion = '0.3.0.0'}
+Import-DscResource -ModuleName @{ModuleName = 'ComputerManagementDsc'; ModuleVersion = '8.4.0'}
 Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
 
 # When using with Azure Automation, modify these values to match your stored credential names
@@ -90,7 +90,7 @@ $safeModeCredential = Get-AutomationPSCredential 'Credential'
         DependsOn = '[xWaitforDisk]Disk2'
     }
     
-    xPendingReboot BeforeDC
+    PendingReboot BeforeDC
     {
         Name = 'BeforeDC'
         SkipCcmClientSDK = $true
@@ -106,7 +106,7 @@ $safeModeCredential = Get-AutomationPSCredential 'Credential'
         DatabasePath = 'F:\NTDS'
         LogPath = 'F:\NTDS'
         SysvolPath = 'F:\SYSVOL'
-        DependsOn = '[WindowsFeature]ADDSInstall','[xDisk]DiskF','[xPendingReboot]BeforeDC'
+        DependsOn = '[WindowsFeature]ADDSInstall','[xDisk]DiskF','[PendingReboot]BeforeDC'
     }
     
     Registry DisableRDPNLA

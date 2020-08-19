@@ -399,7 +399,7 @@ function Get-SPDSCInstalledProductVersion
 # Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
 # Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
 
-Install-Module -Name xPendingReboot
+Install-Module -Name ComputerManagementDsc
 help ConfigureFEVM
 
 $DomainAdminCreds = Get-Credential -Credential "yvand"

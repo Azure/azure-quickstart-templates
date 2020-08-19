@@ -12,7 +12,7 @@
         [Int]$RetryIntervalSec=30
     )
 
-    Import-DscResource -ModuleName xActiveDirectory, xPendingReboot
+    Import-DscResource -ModuleName xActiveDirectory, ComputerManagementDsc
 
     [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
 
@@ -59,7 +59,7 @@
             DependsOn = "[xADDomainController]BDC"
         }
 #>
-        xPendingReboot RebootAfterPromotion {
+        PendingReboot RebootAfterPromotion {
             Name = "RebootAfterDCPromotion"
             DependsOn = "[xADDomainController]BDC"
         }
