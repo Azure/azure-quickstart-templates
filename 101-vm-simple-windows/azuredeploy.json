@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -36,6 +36,13 @@
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
       }
     },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Size of the virtual machine."
+      }
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -53,7 +60,8 @@
     "publicIPAddressName": "myPublicIP",
     "vmName": "SimpleWinVM",
     "virtualNetworkName": "MyVNET",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+    "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
     {
@@ -80,10 +88,37 @@
       }
     },
     {
+      "comments":  "Default Network Security Group for template",
+      "type":  "Microsoft.Network/networkSecurityGroups",
+      "apiVersion":  "2019-08-01",
+      "name":  "[variables('networkSecurityGroupName')]",
+      "location":  "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name":  "default-allow-3389",
+            "properties": {
+              "priority":  1000,
+              "access":  "Allow",
+              "direction":  "Inbound",
+              "destinationPortRange":  "3389",
+              "protocol":  "Tcp",
+              "sourcePortRange":  "*",
+              "sourceAddressPrefix":  "*",
+              "destinationAddressPrefix":  "*"
+            }
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2018-11-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -94,7 +129,10 @@
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
@@ -137,7 +175,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_A2"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",

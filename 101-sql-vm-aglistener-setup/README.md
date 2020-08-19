@@ -1,5 +1,14 @@
 # Configure ILB and create listener for an existing Always On availability group on SQL Server VMs in Azure
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/CredScanResult.svg)
+
 Before deploying the template you must have the following
 
 1. **AlwaysON setup** Always ON setup must exist as created by azure-quickstart-templates/101-sql-vm-ag-setup. This will include the VMs over which the setup was done.
@@ -7,12 +16,7 @@ Before deploying the template you must have the following
 3. **LoadBalancer** Internal load balancer in same location as VMs.
 4. **CNO permissions** The CNO (COmputer object for Cluster name) should have Create Computer object permissions in the OU it is placed in.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-sql-vm-aglistener-setup%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-sql-vm-aglistener-setup%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-sql-vm-aglistener-setup%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-sql-vm-aglistener-setup%2Fazuredeploy.json)
 
 `Tags: Azure, SQL, VirtualMachine, AlwaysON, Listener`
 
@@ -24,4 +28,6 @@ This deployment will create an AG listener for a SQL Availability Group. This wi
  - Load balancer rules that will enable Listner to work in Azure.
  - Resource of type "AvailabilityGroupListener" in Microsoft.SqlVirtualMachine resource provider.
  
+
+
 

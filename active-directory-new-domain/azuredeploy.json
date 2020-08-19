@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "adminUsername": {
@@ -26,17 +26,24 @@
                 "description": "The DNS prefix for the public IP address used by the Load Balancer"
             }
         },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D2s_v3",
+            "metadata": {
+                "description": "Size of the VM for the controller"
+            }
+        },
         "_artifactsLocation": {
             "type": "string",
             "metadata": {
                 "description": "The location of resources, such as templates and DSC modules, that the template depends on"
             },
-            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain"
+            "defaultValue": "[deployment().properties.templateLink.uri]"
         },
         "_artifactsLocationSasToken": {
             "type": "securestring",
             "metadata": {
-                "description": "Auto-generated token to access _artifactsLocation"
+                "description": "Auto-generated token to access _artifactsLocation. Leave it blank unless you need to provide your own value."
             },
             "defaultValue": ""
         },
@@ -46,41 +53,117 @@
             "metadata": {
                 "description": "Location for all resources."
             }
+        },
+        "virtualMachineName": {
+            "type": "string",
+            "defaultValue": "adVM",
+            "metadata": {
+                "description": "Virtual machine name."
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "defaultValue": "adVNET",
+            "metadata": {
+                "description": "Virtual network name."
+            }
+        },
+        "virtualNetworkAddressRange": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "Virtual network address range."
+            }
+        },
+        "loadBalancerFrontEndIPName": {
+            "type": "string",
+            "defaultValue": "LBFE",
+            "metadata": {
+                "description": "Load balancer front end IP address name."
+            }
+        },
+        "backendAddressPoolName": {
+            "type": "string",
+            "defaultValue": "LBBE",
+            "metadata": {
+                "description": "Backend address pool name."
+            }
+        },
+        "inboundNatRulesName": {
+            "type": "string",
+            "defaultValue": "adRDP",
+            "metadata": {
+                "description": "Inbound NAT rules name."
+            }
+        },
+        "networkInterfaceName": {
+            "type": "string",
+            "defaultValue": "adNic",
+            "metadata": {
+                "description": "Network interface name."
+            }
+        },
+        "privateIPAddress": {
+            "type": "string",
+            "defaultValue": "10.0.0.4",
+            "metadata": {
+                "description": "Private IP address."
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "adSubnet",
+            "metadata": {
+                "description": "Subnet name."
+            }
+        },
+        "subnetRange": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "description": "Subnet IP range."
+            }
+        },
+        "publicIPAddressName": {
+            "type": "string",
+            "defaultValue": "adPublicIP",
+            "metadata": {
+                "description": "Subnet IP range."
+            }
+        },
+        "availabilitySetName": {
+            "type": "string",
+            "defaultValue": "adAvailabiltySet",
+            "metadata": {
+                "description": "Availability set name."
+            }
+        },
+        "loadBalancerName": {
+            "type": "string",
+            "defaultValue": "adLoadBalancer",
+            "metadata": {
+                "description": "Load balancer name."
+            }
         }
-    },
-    "variables": {
-        "virtualNetworkName": "adVNET",
-        "virtualNetworkAddressRange": "10.0.0.0/16",
-        "adLBFE": "LBFE",
-        "adLBBE": "LBBE",
-        "adRDPNAT": "adRDP",
-        "adNicName": "adNic",
-        "adNicIPAddress": "10.0.0.4",
-        "adVMName": "adVM",
-        "adSubnetName": "adSubnet",
-        "adSubnetAddressPrefix": "10.0.0.0/24",
-        "publicIPAddressName": "adPublicIP",
-        "adAvailabilitySetName": "adAvailabiltySet",
-        "adLBName": "adLoadBalancer"
     },
     "resources": [
         {
             "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[variables('publicIPAddressName')]",
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2019-02-01",
+            "name": "[parameters('publicIPAddressName')]",
             "location": "[parameters('location')]",
             "properties": {
-                "publicIPAllocationMethod": "Dynamic",
+                "publicIPAllocationMethod": "Static",
                 "dnsSettings": {
                     "domainNameLabel": "[parameters('dnsPrefix')]"
                 }
             }
         },
         {
-            "apiVersion": "2017-03-30",
             "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2019-03-01",
             "location": "[parameters('location')]",
-            "name": "[variables('adAvailabilitySetName')]",
+            "name": "[parameters('availabilitySetName')]",
             "properties": {
                 "PlatformUpdateDomainCount": 20,
                 "PlatformFaultDomainCount": 2
@@ -91,60 +174,63 @@
         },
         {
             "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-11-01",
             "name": "VNet",
-            "apiVersion": "2016-02-01",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken'))]",
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken')))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
                     "virtualNetworkName": {
-                        "value": "[variables('virtualNetworkName')]"
+                        "value": "[parameters('virtualNetworkName')]"
                     },
                     "virtualNetworkAddressRange": {
-                        "value": "[variables('virtualNetworkAddressRange')]"
+                        "value": "[parameters('virtualNetworkAddressRange')]"
                     },
                     "subnetName": {
-                        "value": "[variables('adSubnetName')]"
+                        "value": "[parameters('subnetName')]"
                     },
                     "subnetRange": {
-                        "value": "[variables('adSubnetAddressPrefix')]"
+                        "value": "[parameters('subnetRange')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
                     }
                 }
             }
         },
         {
             "type": "Microsoft.Network/loadBalancers",
-            "name": "[variables('adLBName')]",
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2019-02-01",
+            "name": "[parameters('loadBalancerName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+                "[parameters('publicIPAddressName')]"
             ],
             "properties": {
                 "frontendIPConfigurations": [
                     {
-                        "name": "[variables('adLBFE')]",
+                        "name": "[parameters('loadBalancerFrontEndIPName')]",
                         "properties": {
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressName'))]"
                             }
                         }
                     }
                 ],
                 "backendAddressPools": [
                     {
-                        "name": "[variables('adLBBE')]"
+                        "name": "[parameters('backendAddressPoolName')]"
                     }
                 ],
                 "inboundNatRules": [
                     {
-                        "name": "[variables('adRDPNAT')]",
+                        "name": "[parameters('inboundNatRulesName')]",
                         "properties": {
                             "frontendIPConfiguration": {
-                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('adLBName'), variables('adLBFE'))]"
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', parameters('loadBalancerName'), parameters('loadBalancerFrontEndIPName'))]"
                             },
                             "protocol": "Tcp",
                             "frontendPort": 3389,
@@ -157,12 +243,12 @@
         },
         {
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[variables('adNicName')]",
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2019-02-01",
+            "name": "[parameters('networkInterfaceName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "Microsoft.Resources/deployments/VNet",
-                "[resourceId('Microsoft.Network/loadBalancers', variables('adLBName'))]"
+                "VNet",
+                "[parameters('loadBalancerName')]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -170,18 +256,18 @@
                         "name": "ipconfig1",
                         "properties": {
                             "privateIPAllocationMethod": "Static",
-                            "privateIPAddress": "[variables('adNicIPAddress')]",
+                            "privateIPAddress": "[parameters('privateIPAddress')]",
                             "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('adSubnetName'))]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
                             },
                             "loadBalancerBackendAddressPools": [
                                 {
-                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('adLBName'), variables('adLBBE'))]"
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancerName'), parameters('backendAddressPoolName'))]"
                                 }
                             ],
                             "loadBalancerInboundNatRules": [
                                 {
-                                    "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('adLBName'), variables('adRDPNAT'))]"
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', parameters('loadBalancerName'), parameters('inboundNatRulesName'))]"
                                 }
                             ]
                         }
@@ -191,23 +277,23 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[variables('adVMName')]",
-            "apiVersion": "2017-03-30",
+            "apiVersion": "2019-03-01",
+            "name": "[parameters('virtualMachineName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', variables('adNicName'))]",
-                "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetName'))]",
-                "[resourceId('Microsoft.Network/loadBalancers', variables('adLBName'))]"
+                "[parameters('networkInterfaceName')]",
+                "[parameters('availabilitySetName')]",
+                "[parameters('loadBalancerName')]"
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "Standard_D2_v2"
+                    "vmSize": "[parameters('vmSize')]"
                 },
                 "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetName'))]"
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
                 },
                 "osProfile": {
-                    "computerName": "[variables('adVMName')]",
+                    "computerName": "[parameters('virtualMachineName')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
@@ -219,21 +305,21 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "[concat(variables('adVMName'),'_OSDisk')]",
-                        "caching": "ReadWrite",
+                        "name": "[concat(parameters('virtualMachineName'),'_OSDisk')]",
+                        "caching": "ReadOnly",
                         "createOption": "FromImage",
                         "managedDisk": {
-                            "storageAccountType": "Standard_LRS"
+                            "storageAccountType": "StandardSSD_LRS"
                         }
                     },
                     "dataDisks": [
                         {
-                            "name": "[concat(variables('adVMName'), '_DataDisk')]",
-                            "caching": "None",
+                            "name": "[concat(parameters('virtualMachineName'), '_DataDisk')]",
+                            "caching": "ReadWrite",
                             "createOption": "Empty",
                             "diskSizeGB": 20,
                             "managedDisk": {
-                                "storageAccountType": "Standard_LRS"
+                                "storageAccountType": "StandardSSD_LRS"
                             },
                             "lun": 0
                         }
@@ -242,7 +328,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('adNicName'))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
                         }
                     ]
                 }
@@ -250,11 +336,11 @@
             "resources": [
                 {
                     "type": "extensions",
+                    "apiVersion": "2019-03-01",
                     "name": "CreateADForest",
-                    "apiVersion": "2017-03-30",
                     "location": "[parameters('location')]",
                     "dependsOn": [
-                        "[resourceId('Microsoft.Compute/virtualMachines', variables('adVMName'))]"
+                        "[parameters('virtualMachineName')]"
                     ],
                     "properties": {
                         "publisher": "Microsoft.Powershell",
@@ -262,7 +348,7 @@
                         "typeHandlerVersion": "2.19",
                         "autoUpgradeMinorVersion": true,
                         "settings": {
-                            "ModulesUrl": "[concat(parameters('_artifactsLocation'), '/DSC/CreateADPDC.zip', parameters('_artifactsLocationSasToken'))]",
+                            "ModulesUrl": "[uri(parameters('_artifactsLocation'), concat('DSC/CreateADPDC.zip', parameters('_artifactsLocationSasToken')))]",
                             "ConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
                             "Properties": {
                                 "DomainName": "[parameters('domainName')]",
@@ -283,34 +369,37 @@
         },
         {
             "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-11-01",
             "name": "UpdateVNetDNS",
-            "apiVersion": "2016-02-01",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('adVMName'), 'CreateADForest')]"
+                "CreateADForest"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/vnet-with-dns-server.json', parameters('_artifactsLocationSasToken'))]",
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet-with-dns-server.json', parameters('_artifactsLocationSasToken')))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
                     "virtualNetworkName": {
-                        "value": "[variables('virtualNetworkName')]"
+                        "value": "[parameters('virtualNetworkName')]"
                     },
                     "virtualNetworkAddressRange": {
-                        "value": "[variables('virtualNetworkAddressRange')]"
+                        "value": "[parameters('virtualNetworkAddressRange')]"
                     },
                     "subnetName": {
-                        "value": "[variables('adSubnetName')]"
+                        "value": "[parameters('subnetName')]"
                     },
                     "subnetRange": {
-                        "value": "[variables('adSubnetAddressPrefix')]"
+                        "value": "[parameters('subnetRange')]"
                     },
                     "DNSServerAddress": {
                         "value": [
-                            "[variables('adNicIPAddress')]"
+                            "[parameters('privateIPAddress')]"
                         ]
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
                     }
                 }
             }

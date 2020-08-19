@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -44,7 +44,7 @@ apt-get -y  update
 apt-get -y  install $1
 # Backup for original configuration file
 cp -p /etc/neo4j/neo4j.conf /etc/neo4j/neo4j.conf.bak
-# Manually setting Neo4j configuration by manipulating values in neo4j.conf 
+# Manually setting Neo4j configuration by manipulating values in neo4j.conf
 # First, we allow incoming connections from outside of localhost. By default neo4j rejects connections from non-local clients
 sed -i -e 's@#dbms.connectors.default_listen_address=0.0.0.0@dbms.connectors.default_listen_address=0.0.0.0@g' /etc/neo4j/neo4j.conf
 # enabling Neo4j to start when the Ubuntu starts

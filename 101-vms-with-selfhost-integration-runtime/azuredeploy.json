@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "existingDataFactoryName": {
@@ -37,6 +37,10 @@
       "metadata": {
         "description": "the node count is between 1 and 4."
       }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A4_v2"
     },
     "adminUserName": {
       "type": "string",
@@ -79,7 +83,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vms-with-selfhost-integration-runtime/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -97,17 +101,17 @@
     "prefix": "[split(parameters('IntegrationRuntimeName'), variables('delimiters'))[0]]",
     "storageAccountName": "[take(concat(toLower(variables('prefix')), uniquestring(resourceGroup().id, parameters('IntegrationRuntimeName'))), 24)]",
     "networkSecurityGroupName": "[concat(parameters('IntegrationRuntimeName'), 'nsg')]",
-    "vmTemplateLink": "[concat(parameters('_artifactsLocation'), 'nested/VMtemplate.json',parameters('_artifactsLocationSasToken'))]",
-    "irInstallTemplateLink": "[concat(parameters('_artifactsLocation'), 'nested/IRInstall.json',parameters('_artifactsLocationSasToken'))]",
-    "IRtemplateLink": "[concat(parameters('_artifactsLocation'), 'nested/', parameters('existingDataFactoryVersion'), 'IRtemplate.json',parameters('_artifactsLocationSasToken'))]",
+    "vmTemplateLink": "[uri(parameters('_artifactsLocation'), concat('nested/VMtemplate.json', parameters('_artifactsLocationSasToken')))]",
+    "irInstallTemplateLink": "[uri(parameters('_artifactsLocation'), concat('nested/IRInstall.json', parameters('_artifactsLocationSasToken')))]",
+    "IRtemplateLink": "[uri(parameters('_artifactsLocation'), concat('nested/IRtemplate.json', parameters('_artifactsLocationSasToken')))]",
     "subnetId": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSubnetInYourVnet'))]",
-    "scriptURL": "[concat(parameters('_artifactsLocation'), 'scripts/gatewayInstall.ps1',parameters('_artifactsLocationSasToken'))]"
+    "scriptURL": "[uri(parameters('_artifactsLocation'), concat('gatewayInstall.ps1', parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
     {
-      "apiVersion": "2017-05-10",
-      "name": "nestedTemplate",
       "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-09-01",
+      "name": "nestedTemplate",
       "resourceGroup": "[parameters('existingDataFactoryResourceGroup')]",
       "properties": {
         "mode": "Incremental",
@@ -119,6 +123,9 @@
           "existingDataFactoryName": {
             "value": "[parameters('existingDataFactoryName')]"
           },
+          "existingDataFactoryVersion": {
+            "value": "[parameters('existingDataFactoryVersion')]"
+          },
           "IntegrationRuntimeName": {
             "value": "[parameters('IntegrationRuntimeName')]"
           }
@@ -128,7 +135,7 @@
     {
       "name": "[variables('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2019-09-01",
       "location": "[parameters('existingVnetLocation')]",
       "properties": {
         "securityRules": [
@@ -150,8 +157,8 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2016-01-01",
       "location": "[parameters('existingVnetLocation')]",
       "dependsOn": [
         "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')]"
@@ -163,9 +170,9 @@
       "properties": {}
     },
     {
-      "apiVersion": "2015-01-01",
-      "name": "[concat('VMtemplate-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-09-01",
+      "name": "[concat('VMtemplate-', copyIndex())]",
       "dependsOn": [
         "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
@@ -184,6 +191,9 @@
         "parameters": {
           "virtualMachineName": {
             "value": "[take(concat('vm',copyIndex(),'-', variables('prefix')), 15)]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
           },
           "adminUserName": {
             "value": "[parameters('adminUserName')]"
@@ -207,9 +217,9 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
-      "name": "[concat('IRInstalltemplate-', copyIndex())]",
+      "apiVersion": "2019-09-01",
       "type": "Microsoft.Resources/deployments",
+      "name": "[concat('IRInstalltemplate-', copyIndex())]",
       "dependsOn": [
         "vmcopy"
       ],
@@ -225,8 +235,11 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "IRkey": {
-            "value": "[reference(resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')).outputs.IRkey.value]"
+          "existingDataFactoryVersion": {
+            "value": "[parameters('existingDataFactoryVersion')]"
+          },
+          "datafactoryId": {
+            "value": "[reference(resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')).outputs.irId.value]"
           },
           "virtualMachineName": {
             "value": "[take(concat('vm',copyIndex(),'-', variables('prefix')), 15)]"

@@ -38,7 +38,7 @@ function getdevicepath()
 	local lun=$1
 	local scsiOutput=$(lsscsi)
 	if [[ $scsiOutput =~ \[5:0:0:$lun\][^\[]*(/dev/sd[a-zA-Z]{1,2}) ]];
-	then 
+	then
 		getdevicepathresult=${BASH_REMATCH[1]};
 	else
 		log "lsscsi output not as expected for $lun"
@@ -50,8 +50,8 @@ function getdevicepath()
 function createlvm()
 {
 	log "createlvm"
-	
-	lunsA=(${1//,/ })	
+
+	lunsA=(${1//,/ })
 	vgName=$2
 	lvName=$3
 	mountPath=$4
@@ -61,7 +61,7 @@ function createlvm()
 	if [[ $arraynum -gt 1 ]]
 	then
 		log "createlvm - creating lvm"
-		
+
 		numRaidDevices=0
 		raidDevices=""
 		num=${#lunsA[@]}
@@ -76,7 +76,7 @@ function createlvm()
 			then
 				log " Device Path is $devicePath"
 				numRaidDevices=$((numRaidDevices + 1))
-				raidDevices="$raidDevices $devicePath "				
+				raidDevices="$raidDevices $devicePath "
 			else
 				log "no device path for LUN $lun"
 				exit -1;
@@ -89,10 +89,10 @@ function createlvm()
 		$(mkfs -t xfs /dev/$vgName/$lvName)
 
 		$(mkdir $mountPath)
-		addtofstab /dev/$vgName/$lvName		
+		addtofstab /dev/$vgName/$lvName
 	else
 		log "createlvm - creating single disk"
-		
+
 		lun=${lunsA[0]}
 		getdevicepath $lun;
 		devicePath=$getdevicepathresult;
@@ -103,7 +103,7 @@ function createlvm()
 			$(echo -e "n\np\n1\n\n\nw" | fdisk $devicePath)
 			partPath="$devicePath""1"
 			$(mkfs -t xfs $partPath)
-			$(mkdir $mountPath)	
+			$(mkdir $mountPath)
 
 			addtofstab $partPath
 		else

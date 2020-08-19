@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmName": {
@@ -16,9 +16,10 @@
     },
     "sqlImageOffer": {
       "type": "string",
-      "defaultValue": "SQL2016-WS2012R2",
+      "defaultValue": "sql2019-ws2019",
       "allowedValues": [
-        "SQL2016-WS2012R2"
+        "sql2019-ws2019",
+        "sql2019-ws2016"
       ],
       "metadata": {
         "description": "SQL Server Gallery Image Offer"
@@ -116,7 +117,8 @@
   "variables": {
     "vmnic": "[concat(parameters('vmName'), 'devnic')]",
     "vmosdisk": "[concat(parameters('vmName'), 'osdisk')]",
-    "vnetSubNetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+    "vnetSubNetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]",
+    "networkSecurityGroupName": "[concat(parameters('subnetName'), '-nsg')]"
   },
   "resources": [
     {
@@ -141,10 +143,37 @@
       }
     },
     {
+      "comments": "Simple Network Security Group for subnet [parameters('subnetName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2015-05-01-preview",
       "name": "[parameters('vnetName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -155,7 +184,10 @@
           {
             "name": "[parameters('subnetName')]",
             "properties": {
-              "addressPrefix": "[parameters('subnetAddressPrefix')]"
+              "addressPrefix": "[parameters('subnetAddressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
