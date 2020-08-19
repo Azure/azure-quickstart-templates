@@ -45,3 +45,5 @@ Use browser to access the site FQDN from deployment output. WordPress will guide
 
 ## Notes
 Azure Container Instance is available in selected [locations](https://docs.microsoft.com/en-us/azure/container-instances/container-instances-quotas#region-availability). Please use one of the available location for Azure Container Instance resource.
+
+

@@ -1,11 +1,15 @@
 # Create an Azure storage account with multiple blob containers
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-storage-multi-blob-container%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-storage-multi-blob-container%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-storage-multi-blob-container/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-storage-multi-blob-container/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-storage-multi-blob-container/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-storage-multi-blob-container/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-storage-multi-blob-container/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-storage-multi-blob-container/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-storage-multi-blob-container%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-storage-multi-blob-container%2Fazuredeploy.json)
 
 This template creates an Azure Storage account with multiple blob containers.
 
@@ -22,3 +26,5 @@ If you are new to template development, see:
 - [Deploy more than one instance of a resource or property in Azure Resource Manager Templates](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-create-multiple)
 
 Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates
+
+

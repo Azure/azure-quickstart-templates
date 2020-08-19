@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "dnsPrefix": {
@@ -15,12 +15,6 @@
         "description": "User name for the Virtual Machine. Pick a valid username otherwise there will be a BadRequest error."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Admin password. Pick a complex password with uppercase letters, lowercase letters, digits, and symbols. The password should not be longer than 16. Otherwise you'll get a BadRequest error."
-      }
-    },
     "hpcUserName": {
       "type": "string",
       "defaultValue": "hpc",
@@ -30,77 +24,14 @@
     },
     "headNodeSize": {
       "type": "string",
-      "defaultValue": "Standard_A8",
-      "allowedValues": [
-        "Standard_A4",
-        "Standard_A7",
-        "Standard_A8",
-        "Standard_A9",
-        "Standard_A10",
-        "Standard_A11",
-        "Standard_D4",
-        "Standard_D13",
-        "Standard_D14",
-        "Standard_DS4",
-        "Standard_DS13",
-        "Standard_DS14",
-        "Standard_G3",
-        "Standard_G4",
-        "Standard_G5",
-        "Standard_GS3",
-        "Standard_GS4",
-        "Standard_GS5"
-      ],
+      "defaultValue": "Standard_A4_v2",
       "metadata": {
         "description": "Size of the head node."
       }
     },
     "workerNodeSize": {
       "type": "string",
-      "defaultValue": "Standard_A9",
-      "allowedValues": [
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_A5",
-        "Standard_A6",
-        "Standard_A7",
-        "Standard_A8",
-        "Standard_A9",
-        "Standard_A10",
-        "Standard_A11",
-        "Standard_D1",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4",
-        "Standard_D11",
-        "Standard_D12",
-        "Standard_D13",
-        "Standard_D14",
-        "Standard_DS1",
-        "Standard_DS2",
-        "Standard_DS3",
-        "Standard_DS4",
-        "Standard_D11",
-        "Standard_D12",
-        "Standard_D13",
-        "Standard_D14",
-        "Standard_DS11",
-        "Standard_DS12",
-        "Standard_DS13",
-        "Standard_DS14",
-        "Standard_G1",
-        "Standard_G2",
-        "Standard_G3",
-        "Standard_G4",
-        "Standard_G5",
-        "Standard_GS1",
-        "Standard_GS2",
-        "Standard_GS3",
-        "Standard_GS4",
-        "Standard_GS5"
-      ],
+      "defaultValue": "Standard_A8_v2",
       "metadata": {
         "description": "Size of the worker nodes."
       }
@@ -124,6 +55,23 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -156,10 +104,21 @@
     },
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, variables('networkSettings').subnet.dse.name)]",
     "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/slurm-on-sles12-hpc/",
-    "installationCLI": "[concat('bash azuredeploy.sh ', variables('masterVMName'), ' ', variables('workerVMName'), ' ', parameters('workerNodeCount'), ' ', parameters('hpcUserName'), ' ', variables('templateBaseUrl'))]"
+    "installationCLI": "[concat('bash azuredeploy.sh ', variables('masterVMName'), ' ', variables('workerVMName'), ' ', parameters('workerNodeCount'), ' ', parameters('hpcUserName'), ' ', variables('templateBaseUrl'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
-        {
+    {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('networkSettings').virtualNetworkName]",
@@ -234,7 +193,8 @@
         "osProfile": {
           "computerName": "[variables('masterVMName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -285,7 +245,7 @@
               "createOption": "Empty"
             },
             {
-              "name":"[concat(variables('masterVMName'),'_DataDisk6')]",
+              "name": "[concat(variables('masterVMName'),'_DataDisk6')]",
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 5,
               "caching": "None",
@@ -341,7 +301,7 @@
               "createOption": "Empty"
             },
             {
-              "name":"[concat(variables('masterVMName'),'_DataDisk14')]",
+              "name": "[concat(variables('masterVMName'),'_DataDisk14')]",
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 13,
               "caching": "None",
@@ -373,7 +333,7 @@
       }
     },
     {
-      "apiVersion":"2017-03-30",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('masterVMName'), '/Installation')]",
       "location": "[parameters('location')]",
@@ -447,7 +407,7 @@
       }
     },
     {
-      "apiVersion":  "2017-03-30",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('workerVMName'), copyindex())]",
       "location": "[parameters('location')]",
@@ -465,7 +425,8 @@
         "osProfile": {
           "computerName": "[concat(variables('workerVMName'), copyindex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {

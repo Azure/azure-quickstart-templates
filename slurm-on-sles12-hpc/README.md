@@ -1,13 +1,18 @@
 # Azure SLES 12 HPC ARM Template
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/slurm-on-sles12-hpc/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/slurm-on-sles12-hpc/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/slurm-on-sles12-hpc/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/slurm-on-sles12-hpc/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/slurm-on-sles12-hpc/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/slurm-on-sles12-hpc/CredScanResult.svg)
+
 Deploys a SLURM cluster with head node and n worker nodes.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fslurm-on-sles12-hpc%2Fazuredeploy.json" target="_blank">
-   <img alt="Deploy to Azure" src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fslurm-on-sles12-hpc%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fslurm-on-sles12-hpc%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fslurm-on-sles12-hpc%2Fazuredeploy.json)
+   <img alt="Deploy to Azure" src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
 
 1. Fill in the 3 mandatory parameters - public DNS name, a storage account to hold VM image, and admin user password.
 
@@ -85,3 +90,6 @@ Worker nodes support any VM size.
 To run MPI applications you'll need to use the A8/A9 instances which include InfiniBand and RDMA support.  We suggest using A8 for the head node and A9 instances for worker nodes.
 
 Currently RDMA only supports Intel MPI.  You can download the Intel pieces and get an evaluation license from https://software.intel.com/en-us/intel-mpi-library.
+
+
+

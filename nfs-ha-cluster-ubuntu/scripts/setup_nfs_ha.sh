@@ -146,7 +146,7 @@ function setup_corosync_and_pacemaker_for_nfs
     local nfs_client_spec=$7        # E.g., * or 10.11.22.0/24
 
     mv /etc/corosync/corosync.conf /etc/corosync/corosync.conf.orig || true
-    
+
     local cluster_name=azmdl-cluster
 
     cat <<EOF > /etc/corosync/corosync.conf

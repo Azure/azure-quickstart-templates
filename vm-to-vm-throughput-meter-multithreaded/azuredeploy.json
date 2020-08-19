@@ -1,51 +1,17 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "probeVmSize": {
       "type": "string",
-      "allowedValues": [
-        "Basic_A0",
-        "Basic_A4",
-        "Standard_A1",
-        "Standard_A7",
-        "Standard_A11",
-        "Standard_D4",
-        "Standard_D14",
-        "Standard_D1_v2",
-        "Standard_D15_v2",
-        "Standard_F1",
-        "Standard_F16",
-        "Standard_G1",
-        "Standard_G5",
-        "Standard_NV6",
-        "Standard_NC6"
-      ],
-      "defaultValue": "Standard_A7",
+      "defaultValue": "Standard_A8m_v2",
       "metadata": {
         "description": "Size of the VM that runs the test."
       }
     },
     "targetVmSize": {
       "type": "string",
-      "allowedValues": [
-        "Basic_A0",
-        "Basic_A4",
-        "Standard_A1",
-        "Standard_A7",
-        "Standard_A11",
-        "Standard_D4",
-        "Standard_D14",
-        "Standard_D1_v2",
-        "Standard_D15_v2",
-        "Standard_F1",
-        "Standard_F16",
-        "Standard_G1",
-        "Standard_G5",
-        "Standard_NV6",
-        "Standard_NC6"
-      ],
-      "defaultValue": "Standard_A7",
+      "defaultValue": "Standard_A8m_v2",
       "metadata": {
         "description": "Size of the target VM."
       }
@@ -205,7 +171,8 @@
       "[parameters('probeVmSize')]",
       "[parameters('targetVmSize')]"
     ],
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+    "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
     {
@@ -236,10 +203,37 @@
       }
     },
     {
+      "comments": "Default Network Security Group for template",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -250,7 +244,10 @@
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
@@ -345,7 +342,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+                "[uri(parameters('_artifactsLocation'), concat(variables('ScriptFolder'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken')))]"
               ],
               "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('ScriptFileName'), ' -ReceiverIP ', reference(concat(variables('nicName'), '2')).ipConfigurations[0].properties.privateIPAddress, ' -Mode ', variables('testMode')[copyIndex(0)], ' -BufferSize ', variables('testBufferSize')[copyIndex(0)], ' -OverlappedBuffers ', variables('testOverlappedBuffers')[copyIndex(0)], ' -DataTransferMode ', parameters('testDataTransferMode'), ' -ThreadNumber ', variables('testThreadNumber')[copyIndex(0)], ' -Duration ', parameters('testDurationSeconds'))]"
             }

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
@@ -11,9 +11,6 @@
     },
     "adminUsername": {
       "type": "string"
-    },
-    "adminPassword": {
-      "type": "securestring"
     },
     "nodeCount": {
       "type": "int"
@@ -32,12 +29,29 @@
     },
     "namespace": {
       "type": "string"
+    },
+    "authenticationType": {
+      "type": "string"
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring"
     }
   },
   "variables": {
     "vmName": "[concat(parameters('namespace'), 'vm')]",
     "storageAccountName": "[concat(parameters('namespace'), parameters('uniqueString'))]",
-    "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+    "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -47,12 +61,12 @@
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-          },
-        "properties": { 
-            "platformFaultDomainCount": 3,
-            "platformUpdateDomainCount": 18
-            }
       },
+      "properties": {
+        "platformFaultDomainCount": 3,
+        "platformUpdateDomainCount": 18
+      }
+    },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
@@ -108,7 +122,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('namespace'), 'vm', copyindex())]",
       "location": "[parameters('location')]",
@@ -131,12 +145,13 @@
         "osProfile": {
           "computerName": "[concat(parameters('namespace'), 'vm', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",
           "osDisk": {
-            "name": "[concat(parameters('namespace'), 'vm', copyindex(),'_OSDisk')]",  
+            "name": "[concat(parameters('namespace'), 'vm', copyindex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }

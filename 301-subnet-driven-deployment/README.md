@@ -1,4 +1,13 @@
-﻿# Subnet-driven test lab 
+# Subnet-driven test lab 
+
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/CredScanResult.svg)
 
 This template creates an environment with multiple subnets and the servers (one DC and two members) associated with. If the number of subnets varies, the servers are adjusted automatically.
  
@@ -19,8 +28,6 @@ The purpose of this template is to illustrate:
 
 * BGinfo extension is installed on both domain controllers and member servers.
 
-
-
 ## Changelog summary
 
 **2016-02-28:** 
@@ -36,8 +43,6 @@ The purpose of this template is to illustrate:
   
 * Premium storage option, for thoses who are in a hurry.
 
-
-
 ## Notes
 
 * A minimum of two subnets is needed for this template to work
@@ -48,18 +53,12 @@ The purpose of this template is to illustrate:
 
 * Created subnets are C class (==> 172.16.X.0/24) 
 
-
-
 ## Deploying the template
 
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-subnet-driven-deployment%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-subnet-driven-deployment%2Fazuredeploy.json)
+    
 
-
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-subnet-driven-deployment%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fgithub.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-subnet-driven-deployment%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
 
 ## Parameters
 
@@ -76,4 +75,6 @@ wercase, should start with a letter: must conform to &#39;^[a-z][a-z0-9-]{1,61}[
 <tr><td>memberServersPerSubnet</td><td>Member servers for each subnet. Must be between 1 and 20</td><td>1</td></tr>
 <tr><td>storageCategory</td><td>Storage type. Can be either Standard (HDD) or Premium (SSD)</td><td>Standard</td></tr>
 </table>
+
+
 

@@ -1,5 +1,17 @@
 # chef-automate-ha
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fchef-automate-ha%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fchef-automate-ha%2Fazuredeploy.json) 
+
 This Azure Quickstart provides an 'unmanaged' full installation of Chef Server configured for high availability mode and a separate instance of Chef Automate.
 
 Whilst the template is fully functional, it is expected that some customization may be required for your particular environment.  It is aimed at experienced administrators of Chef.
@@ -104,3 +116,4 @@ New users may try the features of this template (including Chef Automate and Che
 Contact the [Partner Engineering team at Chef](mailto:partnereng@chef.io) for queries relating to thie template.
 
 (c) 2017 Chef Software, Inc.
+
