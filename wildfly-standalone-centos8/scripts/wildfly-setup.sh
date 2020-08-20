@@ -26,7 +26,7 @@ while getopts "a:t:p:f:" opt; do
     esac
 done
 
-fileUrl="$artifactsLocation/$pathToFile/$fileToDownload$token"
+fileUrl="$artifactsLocation$pathToFile/$fileToDownload$token"
 
 WILDFLY_USER=$9
 WILDFLY_PASSWORD=${10}
