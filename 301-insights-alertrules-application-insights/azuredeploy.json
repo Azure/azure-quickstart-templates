@@ -6,8 +6,23 @@
       "type": "int",
       "defaultValue": 3,
       "minValue": 1,
+      "maxValue": 10000,
       "metadata": {
         "description": "Enter response time threshold in seconds."
+      }
+    },
+    "workspaceName": {
+      "defaultValue": "myWorkspace",
+      "type": "string",
+      "metadata": {
+        "description": "Name of the workspace where the data will be stored."
+      }
+    },
+    "applicationInsightsName": {
+      "defaultValue": "myApplicationInsights",
+      "type": "string",
+      "metadata": {
+        "description": "Name of the application insights resource."
       }
     },
     "location": {
@@ -19,12 +34,11 @@
     }
   },
   "variables": {
-    "appInsName": "appIniCheck",
-    "responseAlertName": "[concat('ResponseTime-', toLower(variables('appInsName')))]"
+    "responseAlertName": "[concat('ResponseTime-', toLower(parameters('applicationInsightsName')))]"
   },
   "resources": [
     {
-      "name": "appIniCheckWorkspace",
+      "name": "[parameters('workspaceName')]",
       "type": "Microsoft.OperationalInsights/workspaces",
       "apiVersion": "2020-03-01-preview",
       "location": "[parameters('location')]",
@@ -35,17 +49,17 @@
       }
     },
     {
-      "name": "[variables('appInsName')]",
+      "name": "[parameters('applicationInsightsName')]",
       "type": "Microsoft.Insights/components",
       "apiVersion": "2020-02-02-preview",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.OperationalInsights/workspaces', 'appIniCheckWorkspace')]"
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
       ],
       "kind": "web",
       "properties": {
         "Application_Type": "web",
-        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', 'appIniCheckWorkspace')]"
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
       }
     },
     {
@@ -54,7 +68,7 @@
       "location": "global",
       "apiVersion": "2018-03-01",
       "dependson": [
-        "[resourceId('Microsoft.Insights/components', variables('appInsName'))]",
+        "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]",
         "[resourceId('microsoft.insights/actionGroups','emailActionGroup')]"
       ],
       "properties": {
@@ -62,7 +76,7 @@
         "severity": 0,
         "enabled": true,
         "scopes": [
-          "[resourceId('Microsoft.Insights/components', variables('appInsName'))]"
+          "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
         ],
         "evaluationFrequency": "PT1M",
         "windowSize": "PT5M",
