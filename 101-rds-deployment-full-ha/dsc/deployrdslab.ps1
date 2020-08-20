@@ -16,7 +16,7 @@
     $IntWebGWLBIP = $RDSParameters[0].IntWebGWLBIP
     $WebGWDNS = $RDSParameters[0].WebGWDNS
     
-    Import-DscResource -ModuleName PSDesiredStateConfiguration,xActiveDirectory,xNetworking,ComputerManagementDSC,xComputerManagement,xDnsServer,NetworkingDsc
+    Import-DscResource -ModuleName PSDesiredStateConfiguration, ActiveDirectoryDsc, xNetworking, ComputerManagementDSC, xComputerManagement, xDnsServer, NetworkingDsc
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)",$Admincreds.Password)
     $Interface = Get-NetAdapter | Where-Object Name -Like "Ethernet*" | Select-Object -First 1
     $MyIP = ($Interface | Get-NetIPAddress -AddressFamily IPv4 | Select-Object -First 1).IPAddress
@@ -94,11 +94,11 @@
         }
 
         If ($MyIP -eq $DNSServer) {
-            xADDomain RootDomain
+            ADDomain RootDomain
             {
                 DomainName = $DomainName
-                DomainAdministratorCredential = $DomainCreds
-                SafemodeAdministratorPassword = $DomainCreds
+                Credential = $DomainCreds
+                SafeModeAdministratorPassword = $DomainCreds
                 DatabasePath = "$Env:windir\NTDS"
                 LogPath = "$Env:windir\NTDS"
                 SysvolPath = "$Env:windir\SYSVOL"
@@ -110,7 +110,7 @@
                 IsSingleInstance = 'Yes'
                 IPAddresses      = @('8.8.8.8', '8.8.4.4')
                 UseRootHint      = $false
-                DependsOn = @("[WindowsFeature]DNS", "[xADDomain]RootDomain")
+                DependsOn = @("[WindowsFeature]DNS", "[ADDomain]RootDomain")
             }
     
             Script AddExternalZone
@@ -161,27 +161,26 @@
             PendingReboot RebootAfterInstallingAD
             {
                 Name = 'RebootAfterInstallingAD'
-                DependsOn = @("[xADDomain]RootDomain","[xDnsServerForwarder]SetForwarders")
+                DependsOn = @("[ADDomain]RootDomain","[xDnsServerForwarder]SetForwarders")
             }                       
         } Else {            
-            xWaitForADDomain DscForestWait
+            WaitForADDomain DscForestWait
             {
                 DomainName = $DomainName
-                DomainUserCredential= $DomainCreds
-                RetryCount = 30
-                RetryIntervalSec = 2400
+                Credential = $DomainCreds
+                WaitTimeout = 3600
                 DependsOn = @("[WindowsFeature]AD-Domain-Services", "[xDnsServerAddress]DnsServerAddress")
             }
             
-            xADDomainController NextDC
+            ADDomainController NextDC
             {
                 DomainName = $DomainName
-                DomainAdministratorCredential = $DomainCreds
+                Credential = $DomainCreds
                 SafemodeAdministratorPassword = $DomainCreds
                 DatabasePath = "$Env:windir\NTDS"
                 LogPath = "$Env:windir\NTDS"
                 SysvolPath = "$Env:windir\SYSVOL"
-                DependsOn = @("[xWaitForADDomain]DscForestWait","[WindowsFeature]AD-Domain-Services", "[xDnsServerAddress]DnsServerAddress")
+                DependsOn = @("[WaitForADDomain]DscForestWait","[WindowsFeature]AD-Domain-Services", "[xDnsServerAddress]DnsServerAddress")
             }
 
             xDnsServerForwarder SetForwarders
@@ -189,13 +188,13 @@
                 IsSingleInstance = 'Yes'
                 IPAddresses      = @('8.8.8.8', '8.8.4.4')
                 UseRootHint      = $false
-                DependsOn = @("[WindowsFeature]DNS", "[xADDomainController]NextDC")
+                DependsOn = @("[WindowsFeature]DNS", "[ADDomainController]NextDC")
             }            
 
             PendingReboot RebootAfterInstallingAD
             {
                 Name = 'RebootAfterInstallingAD'
-                DependsOn = @("[xADDomainController]NextDC","[xDnsServerForwarder]SetForwarders")
+                DependsOn = @("[ADDomainController]NextDC","[xDnsServerForwarder]SetForwarders")
             }            
         }        
     }

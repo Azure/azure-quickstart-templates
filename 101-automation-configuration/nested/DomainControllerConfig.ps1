@@ -32,7 +32,7 @@ https://github.com/Microsoft/DomainControllerConfig/blob/master/README.md#versio
 
 #>
 
-#Requires -module @{ModuleName = 'xActiveDirectory';ModuleVersion = '2.17.0.0'}
+#Requires -module @{ModuleName = 'ActiveDirectoryDsc';ModuleVersion = '6.0.1'}
 #Requires -module @{ModuleName = 'xStorage'; ModuleVersion = '3.4.0.0'}
 #Requires -module @{ModuleName = 'ComputerManagementDsc'; ModuleVersion = '8.4.0'}
 
@@ -50,7 +50,7 @@ Create these credential assets in Azure Automation,
 and set their names in lines 11 and 12 of the configuration script.
 
 Required modules in Automation service:
-  - xActiveDirectory
+  - ActiveDirectoryDsc
   - xStorage
   - ComputerManagementDsc
 
@@ -59,7 +59,7 @@ Required modules in Automation service:
 configuration DomainControllerConfig
 {
 
-Import-DscResource -ModuleName @{ModuleName = 'xActiveDirectory'; ModuleVersion = '2.17.0.0'}
+Import-DscResource -ModuleName @{ModuleName = 'ActiveDirectoryDsc'; ModuleVersion = '6.0.1'}
 Import-DscResource -ModuleName @{ModuleName = 'xStorage'; ModuleVersion = '3.4.0.0'}
 Import-DscResource -ModuleName @{ModuleName = 'ComputerManagementDsc'; ModuleVersion = '8.4.0'}
 Import-DscResource -ModuleName 'PSDesiredStateConfiguration'
@@ -98,11 +98,11 @@ $safeModeCredential = Get-AutomationPSCredential 'Credential'
     }
     
     # Configure domain values here
-    xADDomain Domain
+    ADDomain Domain
     {
         DomainName = 'contoso.local'
-        DomainAdministratorCredential = $domainCredential
-        SafemodeAdministratorPassword = $safeModeCredential
+        Credential = $domainCredential
+        SafeModeAdministratorPassword = $safeModeCredential
         DatabasePath = 'F:\NTDS'
         LogPath = 'F:\NTDS'
         SysvolPath = 'F:\SYSVOL'
@@ -116,7 +116,7 @@ $safeModeCredential = Get-AutomationPSCredential 'Credential'
         ValueData = 0
         ValueType = 'Dword'
         Ensure = 'Present'
-        DependsOn = '[xADDomain]Domain'
+        DependsOn = '[ADDomain]Domain'
     }
   }
 }

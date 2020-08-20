@@ -8,11 +8,10 @@
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds,
 
-        [Int]$RetryCount=20,
-        [Int]$RetryIntervalSec=30
+        [Int]$WaitTimeoutSeconds = 900
     )
 
-    Import-DscResource -ModuleName xActiveDirectory, ComputerManagementDsc
+    Import-DscResource -ModuleName ActiveDirectoryDsc, ComputerManagementDsc
 
     [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
 
@@ -23,17 +22,17 @@
             RebootNodeIfNeeded = $true
         }
         
-        xWaitForADDomain DscForestWait
+        WaitForADDomain DscForestWait
         {
             DomainName = $DomainName
-            DomainUserCredential= $DomainCreds
-            RetryCount = $RetryCount
-            RetryIntervalSec = $RetryIntervalSec
+            Credential = $DomainCreds
+            WaitTimeout = $WaitTimeoutSeconds
         }
-        xADDomainController BDC
+
+        ADDomainController BDC
         {
             DomainName = $DomainName
-            DomainAdministratorCredential = $DomainCreds
+            Credential = $DomainCreds
             SafemodeAdministratorPassword = $DomainCreds
             DatabasePath = "F:\NTDS"
             LogPath = "F:\NTDS"
@@ -56,12 +55,12 @@
             }
             GetScript =  { @{} }
             TestScript = { $false}
-            DependsOn = "[xADDomainController]BDC"
+            DependsOn = "[ADDomainController]BDC"
         }
 #>
         PendingReboot RebootAfterPromotion {
             Name = "RebootAfterDCPromotion"
-            DependsOn = "[xADDomainController]BDC"
+            DependsOn = "[ADDomainController]BDC"
         }
 
     }

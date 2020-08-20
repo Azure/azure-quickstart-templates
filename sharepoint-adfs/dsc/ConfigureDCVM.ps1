@@ -8,15 +8,14 @@
         [Parameter(Mandatory)] [String]$PrivateIP
     )
 
-    Import-DscResource -ModuleName xActiveDirectory, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, cADFS, xDnsServer, ComputerManagementDsc
+    Import-DscResource -ModuleName ActiveDirectoryDsc, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, cADFS, xDnsServer, ComputerManagementDsc
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     $ComputerName = Get-Content env:computername
-    [Int] $RetryCount = 20
-    [Int] $RetryIntervalSec = 30
+    [Int] $WaitTimeout = 900
     [String] $SPTrustedSitesName = "SPSites"
     [String] $ADFSSiteName = "ADFS"
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
@@ -54,11 +53,11 @@
             DependsOn = "[WindowsFeature]DNS"
         }
 
-        xADDomain FirstDS
+        ADDomain FirstDS
         {
             DomainName = $DomainFQDN
-            DomainAdministratorCredential = $DomainCredsNetbios
-            SafemodeAdministratorPassword = $DomainCredsNetbios
+            Credential = $DomainCredsNetbios
+            SafeModeAdministratorPassword = $DomainCredsNetbios
             DatabasePath = "C:\NTDS"
             LogPath = "C:\NTDS"
             SysvolPath = "C:\SYSVOL"
@@ -68,7 +67,7 @@
         PendingReboot Reboot1
         {
             Name = "RebootServer"
-            DependsOn = "[xADDomain]FirstDS"
+            DependsOn = "[ADDomain]FirstDS"
         }
 
         xDnsServerPrimaryZone CreateAppsDnsZone
@@ -88,9 +87,9 @@
         #**********************************************************
         # Misc: Set email of AD domain admin and add remote AD tools
         #**********************************************************
-        xADUser SetEmailOfDomainAdmin
+        ADUser SetEmailOfDomainAdmin
         {
-            DomainAdministratorCredential = $DomainCredsNetbios
+            Credential = $DomainCredsNetbios
             DomainName = $DomainFQDN
             UserName = $Admincreds.UserName
             Password = $Admincreds
@@ -181,9 +180,9 @@
             DependsOn = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
         }
 
-        xADUser CreateAdfsSvcAccount
+        ADUser CreateAdfsSvcAccount
         {
-            DomainAdministratorCredential = $DomainCredsNetbios
+            Credential = $DomainCredsNetbios
             DomainName = $DomainFQDN
             UserName = $AdfsSvcCreds.UserName
             Password = $AdfsSvcCreds
@@ -200,7 +199,7 @@
             MembersToInclude= $AdfsSvcCredsQualified.UserName
             Credential = $DomainCredsNetbios    
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[xADUser]CreateAdfsSvcAccount"
+            DependsOn = "[ADUser]CreateAdfsSvcAccount"
         }
 
         WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }

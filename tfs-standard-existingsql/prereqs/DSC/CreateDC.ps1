@@ -12,7 +12,7 @@ configuration CreateDC
         [Int]$RetryIntervalSec = 30
     ) 
     
-    Import-DscResource -ModuleName xActiveDirectory, xNetworking
+    Import-DscResource -ModuleName ActiveDirectoryDsc, xNetworking
     [System.Management.Automation.PSCredential] $DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     $Interface = Get-NetAdapter | Where Name -Like "Ethernet*"|Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
@@ -69,10 +69,10 @@ configuration CreateDC
             DependsOn = "[WindowsFeature]ADDSInstall"
         }
          
-        xADDomain FirstDS {
+        ADDomain FirstDS {
             DomainName                    = $DomainName
-            DomainAdministratorCredential = $DomainCreds
-            SafemodeAdministratorPassword = $DomainCreds
+            Credential                    = $DomainCreds
+            SafeModeAdministratorPassword = $DomainCreds
             DependsOn                     = @("[WindowsFeature]ADDSInstall")
         } 
     }

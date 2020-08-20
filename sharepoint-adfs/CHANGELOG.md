@@ -1,5 +1,9 @@
 # Change log for Azure template for SharePoint 2019 / 2016 / 2013
 
+## August 2020 update
+
+* Discontinue use of deprecated xActiveDirectory 3.0 and rebaseline to ActiveDirectoryDsc 6.0.1
+
 ## February 2020 update
 
 * Fix deployment error caused by the new values of the SKU of SharePoint images, which changed from '2013' / '2016' / '2019' to 'sp2013' / 'sp2016' / 'sp2019'
