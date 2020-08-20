@@ -1,4 +1,4 @@
-# Azure SQL Database
+# Web App with Application Insights sending to Log Analytics
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-loganalytics/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-loganalytics/PublicDeployment.svg)
