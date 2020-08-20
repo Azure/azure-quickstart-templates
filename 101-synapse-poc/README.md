@@ -40,6 +40,7 @@ This template deploys the following:
 - [Purpose](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#purpose)
 - [Prerequisites](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#prerequisites)
 - [Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#deploy-to-azure)
+- [Post Deployment](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#post-deployment)
 
 ## Purpose
 This template allows the Administrator to deploy a Proof-of-Concept environment of Azure Synapse Analytics with some pre-set parameters. This allows more time to focus on the Proof-of-Concept at hand and test the service.
@@ -49,4 +50,32 @@ Using the Getting Started wizard inside of the workspace is recommended to use s
 ## Prerequisites
 - Owner to the Azure Subscription being deployed. This is for creation of a separate Proof-of-Concept Resource Group and to delegate roles necessary for this proof of concept
 
-# Deploy to Azure
+## Post Deployment
+Because the Synapse Workspace is using a Managed Virtual Network, the Storage Account requires a Managed Private Endpoint to be created into the Managed Virtual Network.
+
+You can create a Managed private endpoint to your data source from Azure Synapse Studio. Select the Overview tab in Azure portal and select Launch Synapse Studio.
+
+![Step 1](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-workspace-and-pools/images/9.png)
+
+In Azure Synapse Studio, select the Manage tab from the left navigation. Select Managed Virtual Networks and then select + New.
+
+![Step 2](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-workspace-and-pools/images/10.png)
+
+Select the data source type. In this case, the target data source is an ADLS Gen2 account. Select Continue.
+
+![Step 3](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-workspace-and-pools/images/11.png)
+
+In the next window, enter information about the data source. In this example, we're creating a Managed private endpoint to an ADLS Gen2 account. Enter a Name for the Managed private endpoint. Provide an Azure subscription and a Storage account name. Select Create.
+
+![Step 4](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-workspace-and-pools/images/12.png)
+
+After submitting the request, you'll see its status. To verify the successful creation of your Managed private endpoint was created, check its Provisioning State. You may need to wait 1 minute and select Refresh to update the provisioning state. You can see that the Managed private endpoint to the ADLS Gen2 account was successfully created.
+
+You can also see that the Approval State is Pending. The owner of the target resource can approve or deny the private endpoint connection request. If the owner approves the private endpoint connection request, then a private link is established. If denied, then a private link isn't established.
+
+![Step 5](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-workspace-and-pools/images/13.png)
+
+Further information can be found:
+
+[Create a Managed private endpoint to your data source](https://docs.microsoft.com/en-us/azure/synapse-analytics/security/how-to-create-managed-private-endpoints)
+
