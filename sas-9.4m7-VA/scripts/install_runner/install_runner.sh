@@ -50,4 +50,4 @@ echo "sid_file_name: $SID_FILE" >>/tmp/ansible_vars.yaml
 
 ansible-playbook -i ${INVENTORY_FILE} -vvv step05_preinstall_sas.yaml
 
-#ansible-playbook -i ${INVENTORY_FILE} -vvv step06_install_sas.yaml
+ansible-playbook -i ${INVENTORY_FILE} -vvv step06_install_sas.yaml
