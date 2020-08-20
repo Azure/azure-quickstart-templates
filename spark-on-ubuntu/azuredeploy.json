@@ -30,7 +30,7 @@
     },
     "imageSKU": {
       "type": "string",
-      "defaultValue": "14.04.5-LTS",
+      "defaultValue": "18.04-LTS",
       "metadata": {
         "description": "Image SKU"
       }
@@ -121,29 +121,41 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+       "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spark-on-ubuntu/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
     "computerNamePrefix": "sparknode",
-    "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spark-on-ubuntu/",
-    "templateUrl": "[variables('scriptUrl')]",
     "sharedTemplateName": "shared-resources",
     "jumpboxTemplateName": "jumpbox-resources-",
     "tshirtSizeS": {
       "numberOfMasterInstances": 1,
       "numberOfSlavesInstances": 1,
-      "vmSize": "Standard_A2_v2"
+      "vmSize": "Standard_D2_v2"
     },
     "tshirtSizeM": {
       "numberOfMasterInstances": 1,
       "numberOfSlavesInstances": 4,
-      "vmSize": "Standard_A4_v2"
+      "vmSize": "Standard_D4_v2"
     },
     "tshirtSizeL": {
       "numberOfMasterInstances": 1,
       "numberOfSlavesInstances": 6,
-      "vmSize": "Standard_A7_v2"
+      "vmSize": "Standard_D7_v2"
     },
     "numberOfMasterInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfMasterInstances]",
     "numberOfSlavesInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfSlavesInstances]",
@@ -157,7 +169,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('templateUrl'), variables('sharedTemplateName'), '.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('sharedTemplateName'), '.json', parameters('_artifactsLocationSasToken')))]",         
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -172,6 +184,9 @@
           },
           "subnetPrefix": {
             "value": "[parameters('subnetPrefix')]"
+          },
+          "location":{
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -186,7 +201,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('templateUrl'), variables('jumpboxTemplateName'), parameters('jumpbox'), '.json')]",
+        "uri": "[uri(parameters('_artifactsLocation'), concat(variables('jumpboxTemplateName'), parameters('jumpbox'), '.json', parameters('_artifactsLocationSasToken')))]",                        
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -204,6 +219,9 @@
           },
           "computerNamePrefix": {
             "value": "[variables('computerNamePrefix')]"
+          },
+          "location":{
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -384,7 +402,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('scriptUrl'), 'spark-cluster-install.sh')]"
+            "[uri(parameters('_artifactsLocation'), concat('spark-cluster-install.sh', parameters('_artifactsLocationSasToken')))]"   
           ],
           "commandToExecute": "[concat('bash spark-cluster-install.sh -k ',parameters('sparkVersion'),' -d ', reference('nic0').ipConfigurations[0].properties.privateIPAddress,' -s ',variables('numberOfSlavesInstances'),' -m ', ' 1 ')]"
         }
@@ -410,7 +428,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('scriptUrl'), 'spark-cluster-install.sh')]"
+            "[uri(parameters('_artifactsLocation'), concat('spark-cluster-install.sh', parameters('_artifactsLocationSasToken')))]" 
           ],
           "commandToExecute": "[concat('bash spark-cluster-install.sh -k ',parameters('sparkVersion'),' -m ', ' 0 ')]"
         }
