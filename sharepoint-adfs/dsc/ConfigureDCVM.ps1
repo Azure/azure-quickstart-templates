@@ -280,7 +280,7 @@
             ClaimsProviderName = @("Active Directory")
             WsFederationEndpoint = "https://$SPTrustedSitesName.$DomainFQDN/_trust/"
             AdditionalWSFedEndpoint = @("https://*.$DomainFQDN/")
-            IssuanceAuthorizationRules = '=> issue(Type = "https://schemas.microsoft.com/authorization/claims/permit", value = "true");'
+            IssuanceAuthorizationRules = '=> issue(Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");'
             IssuanceTransformRules = @"
 @RuleTemplate = "LdapClaims"
 @RuleName = "AD"
