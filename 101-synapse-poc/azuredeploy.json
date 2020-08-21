@@ -75,13 +75,6 @@
                 "description": "The password for the SQL Administrator"
             }
         },
-        "storageRoleUniqueId": {
-            "type": "string",
-            "defaultValue": "[newGuid()]",
-            "metadata": {
-                "description": "Leave this as default value. Generates a new GUID for role assignment."
-            }
-        },
         "sku": {
             "type": "string",
             "defaultValue": "DW100c",
@@ -314,10 +307,10 @@
             }
         },
         {
+            "type": "Microsoft.Synapse/workspaces",
             "apiVersion": "2019-06-01-preview",
             "name": "[variables('workspaceName')]",
             "location": "[parameters('location')]",
-            "type": "Microsoft.Synapse/workspaces",
             "identity": {
                 "type": "SystemAssigned"
             },
@@ -333,45 +326,45 @@
             "resources": [
                 {
                     "condition": "[equals(parameters('allowAllConnections'),'true')]",
+                    "type": "firewallrules",
                     "apiVersion": "2019-06-01-preview",
+                    "name": "allowAll",
+                    "location": "[parameters('location')]",
                     "dependsOn": [
                         "[variables('workspaceName')]"
                     ],
-                    "location": "[parameters('location')]",
-                    "name": "allowAll",
                     "properties": {
                         "startIpAddress": "0.0.0.0",
                         "endIpAddress": "255.255.255.255"
-                    },
-                    "type": "firewallrules"
+                    }
                 },
                 {
                     "condition": true,
+                    "type": "firewallrules",
                     "apiVersion": "2019-06-01-preview",
+                    "name": "AllowAllWindowsAzureIps",
+                    "location": "[parameters('location')]",
                     "dependsOn": [
                         "[variables('workspaceName')]"
                     ],
-                    "location": "[parameters('location')]",
-                    "name": "AllowAllWindowsAzureIps",
                     "properties": {
                         "startIpAddress": "0.0.0.0",
                         "endIpAddress": "0.0.0.0"
-                    },
-                    "type": "firewallrules"
+                    }
                 },
                 {
+                    "type": "managedIdentitySqlControlSettings",
                     "apiVersion": "2019-06-01-preview",
+                    "name": "default",
+                    "location": "[parameters('location')]",
                     "dependsOn": [
                         "[variables('workspaceName')]"
                     ],
-                    "location": "[parameters('location')]",
-                    "name": "default",
                     "properties": {
                         "grantSqlControlToManagedIdentity": {
                             "desiredState": "Enabled"
                         }
-                    },
-                    "type": "managedIdentitySqlControlSettings"
+                    }
                 }
             ],
             "dependsOn": [
@@ -382,14 +375,9 @@
         {
             "condition": true,
             "type": "Microsoft.Storage/storageAccounts",
-            "name": "[variables('dlsName')]",
             "apiVersion": "2019-06-01",
+            "name": "[variables('dlsName')]",
             "location": "[parameters('location')]",
-            "properties": {
-                "accessTier": "Hot",
-                "supportsHttpsTrafficOnly": true,
-                "isHnsEnabled": true
-            },
             "sku": {
                 "name": "Standard_LRS"
             },
@@ -407,14 +395,18 @@
                         "[variables('dlsName')]"
                     ]
                 }
-            ]
+            ],
+            "properties": {
+                "accessTier": "Hot",
+                "supportsHttpsTrafficOnly": true,
+                "isHnsEnabled": true
+            }
         },
         {
             "condition": true,
+            "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-05-01",
             "name": "storageRoleDeploymentResource",
-            "type": "Microsoft.Resources/deployments",
-            "subscriptionId": "[subscription().subscriptionId]",
             "resourceGroup": "[resourceGroup().name]",
             "dependsOn": [
                 "[variables('workspaceName')]"
@@ -428,7 +420,7 @@
                         {
                             "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
                             "apiVersion": "2018-09-01-preview",
-                            "name": "[concat(variables('dlsName'), '/Microsoft.Authorization/',  guid(concat(resourceGroup().id, '/ba92f5b4-2d11-453d-a403-e96b0029c9fe/', variables('workspaceName'), '/', parameters('storageRoleUniqueId'))))]",
+                            "name": "[concat(variables('dlsName'), '/Microsoft.Authorization/',  guid(concat(resourceGroup().id, '/ba92f5b4-2d11-453d-a403-e96b0029c9fe/', variables('workspaceName'), '/', newGuid())))]",
                             "location": "[parameters('location')]",
                             "properties": {
                                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
@@ -443,18 +435,14 @@
         {
             "type": "Microsoft.Synapse/workspaces/sqlPools",
             "apiVersion": "2019-06-01-preview",
-            "location": "[parameters('location')]",
             "name": "[concat(variables('workspaceName'), '/', variables('sqlPoolName'))]",
-            "dependsOn": [
-                "[variables('workspaceName')]"
-            ],
+            "location": "[parameters('location')]",
             "sku": {
                 "name": "[parameters('sku')]"
             },
-            "properties": {
-                "createMode": "Default",
-                "collation": "SQL_Latin1_General_CP1_CI_AS"
-            },
+            "dependsOn": [
+                "[variables('workspaceName')]"
+            ],
             "resources": [
                 {
                     "condition": "[parameters('metadataSync')]",
@@ -469,7 +457,11 @@
                     },
                     "type": "metadataSync"
                 }
-            ]
+            ],
+            "properties": {
+                "createMode": "Default",
+                "collation": "SQL_Latin1_General_CP1_CI_AS"
+            }
         },
         {
             "condition": "[equals(parameters('sparkDeployment'),'true')]",
