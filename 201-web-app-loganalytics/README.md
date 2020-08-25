@@ -16,6 +16,6 @@
 This template will is to help support the new API versions of microsoft.insights/components.  Starting with 2020-02-02-preview an [Workspace Resource ID](https://docs.microsoft.com/en-us/azure/templates/microsoft.insights/2020-02-02-preview/components) will be required.
 This template will deploy the App Service Plan, App Service, Application Insights, Log Analytics Workspace and hook it all together.
 
-`Tags: Azure, App Service Plan, App Service, Log Analytics, Application Insights`
+`Tags: Azure, App Service Plan, App Service, Log Analytics, Application Insights` 
 
 
