@@ -221,6 +221,13 @@
       "type": "string",
       "defaultValue": "[resourceGroup().name]"
     },
+    "vnetLocation": {
+      "type": "string",
+      "defaultValue": "[parameters('location')]",
+      "metadata": {
+        "description": "Required if existing VNET location differs from workspace location"
+      }
+    },
     "addressPrefixes": {
       "type": "array",
       "defaultValue": [
@@ -318,12 +325,7 @@
     "vnet": "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
     "subnet": "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]",
     "privateEndpointName": "[concat(parameters('workspaceName'), '-PrivateEndpoint')]",
-    "locationsPEAvailable": [
-      "southcentralus",
-      "eastus",
-      "westus2"
-    ],
-    "enablePE": "[or(equals(parameters('privateEndpointType'), 'none'), contains(variables('locationsPEAvailable'), parameters('location')))]",
+    "enablePE": "[not(equals(parameters('privateEndpointType'), 'none'))]",
     "networkRuleSetBehindVNet": {
       "defaultAction": "deny",
       "virtualNetworkRules": [
@@ -537,7 +539,7 @@
       "name": "[concat(parameters('workspaceName'), '-PrivateEndpoint')]",
       "type": "Microsoft.Network/privateEndpoints",
       "tags": "[parameters('tagValues')]",
-      "location": "[parameters('location')]",
+      "location": "[parameters('vnetLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]",
         "[variables('subnet')]"
@@ -615,7 +617,7 @@
       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
       "apiVersion": "2020-03-01",
       "name": "[concat(variables('privateEndpointName'), '/', 'default')]",
-      "location": "[parameters('location')]",
+      "location": "[parameters('vnetLocation')]",
       "dependsOn": [
         "[resourceid('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]",
         "privatelink.notebooks.azure.net",
@@ -638,12 +640,5 @@
         ]
       }
     }
-  ],
-  "outputs": {
-    "PrivateEndPointNotSupport": {
-      "condition": "[and(not(variables('enablePE')), not(equals(parameters('privateEndpointType'), 'none')))]",
-      "type": "string",
-      "value": "Private endpoint is not supported in the specified location."
-    }
-  }
+  ]
 }
