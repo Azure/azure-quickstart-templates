@@ -2,19 +2,19 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "netAppAccount_name": {
+    "netAppAccountName": {
       "defaultValue": "test-anf-acc",
       "type": "String"
     },
-    "netAppPool_name": {
+    "netAppPoolName": {
       "defaultValue": "anfpool01",
       "type": "String"
     },
     "poolSizeBytes": {
-      "type": "string",      
+      "type": "string",
       "defaultValue": "4398046511104"
     },
-    "netAppVolume_name": {
+    "netAppVolumeName": {
       "defaultValue": "anfvol01",
       "type": "String"
     },
@@ -22,17 +22,23 @@
       "type": "string",
       "defaultValue": "107374182400"
     },
-    "virtualNetwork_name": {
+    "virtualNetworkName": {
       "defaultValue": "anftest-vnet",
       "type": "String"
     },
-    "networkInterface_name": {
+    "vnetAddressPrefix": {
+      "type": "String"
+    },
+    "networkInterfaceName": {
       "defaultValue": "anftest-vnet-nic",
       "type": "String"
     },
-    "subnet_Name": {
+    "subnetName": {
       "type": "string",
       "defaultValue": "anf-sn"
+    },
+    "subnetAddressPrefix": {
+      "type": "String"
     },
     "serviceLevel": {
       "type": "string",
@@ -53,26 +59,26 @@
     }
   },
   "variables": {
-    "capacityPoolName": "[concat(parameters('netAppAccount_name'), '/',parameters('netAppPool_name'))]",
-    "volumeName": "[concat(parameters('netAppAccount_name'), '/',parameters('netAppPool_name'),'/', parameters('netAppVolume_name'))]"
+    "capacityPoolName": "[concat(parameters('netAppAccountName'), '/',parameters('netAppPoolName'))]",
+    "volumeName": "[concat(parameters('netAppAccountName'), '/',parameters('netAppPoolName'),'/', parameters('netAppVolumeName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2020-05-01",
-      "name": "[parameters('virtualNetwork_name')]",
+      "name": "[parameters('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "10.8.6.0/24"
+            "[parameters('vnetAddressPrefix')]"
           ]
         },
         "subnets": [
           {
-            "name": "[parameters('subnet_Name')]",
+            "name": "[parameters('subnetName')]",
             "properties": {
-              "addressPrefix": "10.8.6.0/28",
+              "addressPrefix": "[parameters('subnetAddressPrefix')]",
               "delegations": [
                 {
                   "name": "NetAppDelegation",
@@ -94,12 +100,12 @@
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "apiVersion": "2020-05-01",
-      "name": "[concat(parameters('virtualNetwork_name'), '/',parameters('subnet_Name'))]",
+      "name": "[concat(parameters('virtualNetworkName'), '/',parameters('subnetName'))]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork_name'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
       ],
       "properties": {
-        "addressPrefix": "10.8.6.0/28",
+        "addressPrefix": "[parameters('subnetAddressPrefix')]",
         "delegations": [
           {
             "name": "NetAppDelegation",
@@ -115,7 +121,7 @@
     {
       "type": "Microsoft.NetApp/netAppAccounts",
       "apiVersion": "2019-05-01",
-      "name": "[parameters('netAppAccount_name')]",
+      "name": "[parameters('netAppAccountName')]",
       "location": "[resourceGroup().location]",
       "properties": {}
     },
@@ -125,7 +131,7 @@
       "name": "[variables('capacityPoolName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.NetApp/netAppAccounts', parameters('netAppAccount_name'))]"
+        "[resourceId('Microsoft.NetApp/netAppAccounts', parameters('netAppAccountName'))]"
       ],
       "properties": {
         "serviceLevel": "[parameters('serviceLevel')]",
@@ -138,9 +144,9 @@
       "name": "[variables('volumeName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('netAppAccount_name'), parameters('netAppPool_name'))]",
-        "[resourceId('Microsoft.NetApp/netAppAccounts', parameters('netAppAccount_name'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork_name'), parameters('subnet_Name'))]"
+        "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('netAppAccountName'), parameters('netAppPoolName'))]",
+        "[resourceId('Microsoft.NetApp/netAppAccounts', parameters('netAppAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
       ],
       "properties": {
         "mountTargets": [
@@ -149,7 +155,7 @@
           }
         ],
         "serviceLevel": "[parameters('serviceLevel')]",
-        "creationToken": "[parameters('netAppVolume_name')]",
+        "creationToken": "[parameters('netAppVolumeName')]",
         "usageThreshold": "[parameters('volSizeBytes')]",
         "exportPolicy": {
           "rules": [
@@ -165,9 +171,9 @@
           ]
         },
         "protocolTypes": [
-          "[parameters('allowedValues')]"
+          "[parameters('protocolTypes')]"
         ],
-        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork_name'), parameters('subnet_Name'))]",
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
         "snapshotDirectoryVisible": true
       }
     }
