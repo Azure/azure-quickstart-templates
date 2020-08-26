@@ -2,6 +2,10 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
     "netAppAccountName": {
       "defaultValue": "test-anf-acc",
       "type": "String"
@@ -11,34 +15,40 @@
       "type": "String"
     },
     "poolSizeBytes": {
-      "type": "string",
-      "defaultValue": "4398046511104"
+      "type": "int",
+      "defaultValue": "4398046511104",
+      "minValue": 4398046511104,
+      "maxValue": 549755813888000
     },
     "netAppVolumeName": {
       "defaultValue": "anfvol01",
       "type": "String"
     },
     "volSizeBytes": {
-      "type": "string",
-      "defaultValue": "107374182400"
+      "type": "int",
+      "defaultValue": "107374182400",
+      "minValue": 107374182400,
+      "maxValue": 109951162777600
     },
     "virtualNetworkName": {
       "defaultValue": "anftest-vnet",
       "type": "String"
     },
     "vnetAddressPrefix": {
-      "type": "String"
+      "type": "String",
+      "defaultValue": "10.0.0.0/16"
     },
-    "networkInterfaceName": {
-      "defaultValue": "anftest-vnet-nic",
-      "type": "String"
+    "allowedClientsIp": {
+      "type": "string",
+      "defaultValue": "0.0.0.0/0"
     },
     "subnetName": {
       "type": "string",
       "defaultValue": "anf-sn"
     },
     "subnetAddressPrefix": {
-      "type": "String"
+      "type": "String",
+      "defaultValue": "10.0.0.0/24"
     },
     "serviceLevel": {
       "type": "string",
@@ -56,6 +66,30 @@
         "NFSv4.1"
       ],
       "defaultValue": "NFSv3"
+    },
+    "unixReadOnly": {
+      "type": "bool",
+      "defaultValue": false,
+      "allowedValues": [
+        false,
+        true
+      ]
+    },
+    "unixReadWrite": {
+      "type": "bool",
+      "defaultValue": true,
+      "allowedValues": [
+        false,
+        true
+      ]
+    },
+    "snapshotDirectoryVisible": {
+      "type": "bool",
+      "defaultValue": false,
+      "allowedValues": [
+        false,
+        true
+      ]
     }
   },
   "variables": {
@@ -65,9 +99,9 @@
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2019-12-01",
       "name": "[parameters('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -91,45 +125,21 @@
               "privateLinkServiceNetworkPolicies": "Enabled"
             }
           }
-        ],
-        "virtualNetworkPeerings": [],
-        "enableDdosProtection": false,
-        "enableVmProtection": false
-      }
-    },
-    {
-      "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2020-05-01",
-      "name": "[concat(parameters('virtualNetworkName'), '/',parameters('subnetName'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-      ],
-      "properties": {
-        "addressPrefix": "[parameters('subnetAddressPrefix')]",
-        "delegations": [
-          {
-            "name": "NetAppDelegation",
-            "properties": {
-              "serviceName": "Microsoft.NetApp/volumes"
-            }
-          }
-        ],
-        "privateEndpointNetworkPolicies": "Enabled",
-        "privateLinkServiceNetworkPolicies": "Enabled"
+        ]
       }
     },
     {
       "type": "Microsoft.NetApp/netAppAccounts",
       "apiVersion": "2019-05-01",
       "name": "[parameters('netAppAccountName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {}
     },
     {
       "type": "Microsoft.NetApp/netAppAccounts/capacityPools",
       "apiVersion": "2019-05-01",
       "name": "[variables('capacityPoolName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.NetApp/netAppAccounts', parameters('netAppAccountName'))]"
       ],
@@ -142,18 +152,12 @@
       "type": "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
       "apiVersion": "2019-05-01",
       "name": "[variables('volumeName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('netAppAccountName'), parameters('netAppPoolName'))]",
-        "[resourceId('Microsoft.NetApp/netAppAccounts', parameters('netAppAccountName'))]",
         "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
       ],
       "properties": {
-        "mountTargets": [
-          {
-            "fileSystemId": "663a5046-71d1-ea66-8650-f59ee89609ea"
-          }
-        ],
         "serviceLevel": "[parameters('serviceLevel')]",
         "creationToken": "[parameters('netAppVolumeName')]",
         "usageThreshold": "[parameters('volSizeBytes')]",
@@ -161,11 +165,11 @@
           "rules": [
             {
               "ruleIndex": 1,
-              "unixReadOnly": false,
-              "unixReadWrite": true,
+              "unixReadOnly": "[parameters('unixReadOnly')]",
+              "unixReadWrite": "[parameters('unixReadWrite')]",
               "cifs": false,
-              "nfsv3": true,
-              "nfsv41": false,
+              "nfsv3": "[if(equals('protocolTypes', 'NFSv3'),'true','false')]",
+              "nfsv41": "[if(equals('protocolTypes', 'NFSv4.1'),'true','false')]",
               "allowedClients": "0.0.0.0/0"
             }
           ]
@@ -174,7 +178,7 @@
           "[parameters('protocolTypes')]"
         ],
         "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
-        "snapshotDirectoryVisible": true
+        "snapshotDirectoryVisible": "[parameters('snapshotDirectoryVisible')]"
       }
     }
   ]
