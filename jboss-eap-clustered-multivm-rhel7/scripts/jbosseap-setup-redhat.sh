@@ -39,10 +39,10 @@ RHEL_OS_LICENSE_TYPE=${11}
 RHSM_USER=${12}
 RHSM_PASSWORD=${13}
 RHSM_POOL=${14}
-IP_ADDR=${15}
-STORAGE_ACCOUNT_NAME=${16}
-CONTAINER_NAME=${17}
-STORAGE_ACCESS_KEY=$(echo "${18}" | openssl enc -d -base64)
+IP_ADDR=$(hostname -I)
+STORAGE_ACCOUNT_NAME=${15}
+CONTAINER_NAME=${16}
+STORAGE_ACCESS_KEY=$(echo "${17}" | openssl enc -d -base64)
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | adddate >> jbosseap.install.log
 echo "Storage Account Name: " ${STORAGE_ACCOUNT_NAME} | adddate >> jbosseap.install.log
@@ -75,7 +75,7 @@ if [ $RHEL_OS_LICENSE_TYPE == "BYOS" ]
 then
     echo "Attaching Pool ID for RHEL OS" | adddate >> jbosseap.install.log
     echo "subscription-manager attach --pool=RHEL_POOL" | adddate >> jbosseap.install.log
-    subscription-manager attach --pool=${19} >> jbosseap.install.log 2>&1
+    subscription-manager attach --pool=${18} >> jbosseap.install.log 2>&1
 fi
 echo "Subscribing the system to get access to JBoss EAP 7.2 repos" | adddate >> jbosseap.install.log
 
