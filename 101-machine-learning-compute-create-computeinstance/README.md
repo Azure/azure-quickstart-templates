@@ -1,4 +1,4 @@
-# Create an Azure Machine Learning Workspace
+# Create an Azure Machine Learning Compute Instance
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-machine-learning-compute-create-computeinstance/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-machine-learning-compute-create-computeinstance/PublicDeployment.svg)
