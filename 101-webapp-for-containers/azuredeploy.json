@@ -1,0 +1,129 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appServicePlanName": {
+      "type": "string",
+      "defaultValue": "[concat('plan-', uniqueString(resourceGroup().id))]",
+	  "metadata": {
+        "description": "The name of the app service plan."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+	  "metadata": {
+        "description": "The location of all resources."
+      }
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "B1",
+	  "metadata": {
+        "description": "The pricing tier of the app service plan."
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+	  "metadata": {
+        "description": "The number of instances assigned to the app service plan resource."
+      }
+    },
+    "webAppName": {
+      "type": "string",
+	  "metadata": {
+        "description": "The name of the web app."
+      }
+    },
+    "webSocketsEnabled": {
+      "type": "bool",
+      "defaultValue": false,
+	  "metadata": {
+        "description": "Whether to enable or disable web sockets."
+      }
+    },
+    "alwaysOn": {
+      "type": "bool",
+      "defaultValue": true,
+	  "metadata": {
+        "description": "Whether to ensure the web app gets loaded all the time, rather than being unloaded after been idle. Recommended when you have continuous web jobs running."
+      }
+    },
+    "existingContainerRegistryName": {
+      "type": "string",
+	  "metadata": {
+        "description": "The name of the container registry."
+      }
+    },
+    "dockerImageName": {
+      "type": "string",
+	  "metadata": {
+        "description": "The container image name from the container registry."
+      }
+    },
+    "dockerTag": {
+      "type": "string",
+	  "defaultValue": "latest",
+	  "metadata": {
+        "description": "The container image tag."
+      }
+    },
+    "containerRegistryUsername": {
+      "type": "string",
+	  "metadata": {
+        "description": "The container registry server username."
+      }
+    },
+    "containerRegistryPassword": {
+      "type": "string",
+	  "metadata": {
+        "description": "The container registry server password."
+      }
+    },
+    "appSettings": {
+      "type": "array",
+      "defaultValue": [],
+	  "metadata": {
+        "description": "The web app settings."
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('appServicePlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-06-01",
+      "kind": "linux",
+      "location": "[parameters('location')]",
+      "properties": {
+        "reserved": true
+      },
+      "sku": {
+        "name": "[parameters('sku')]",
+        "capacity": "[parameters('skuCapacity')]"
+      }
+    },
+    {
+      "name": "[parameters('webAppName')]",
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-06-01",
+      "kind": "app,linux,container",
+      "location": "[parameters('location')]",
+      "properties": {
+        "name": "[parameters('webAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+        "siteConfig": {
+          "linuxFxVersion": "[concat('DOCKER|', parameters('existingContainerRegistryName'), '.azurecr.io/', parameters('dockerImageName'), ':', parameters('dockerTag'))]",
+          "webSocketsEnabled": "[parameters('webSocketsEnabled')]",
+          "alwaysOn": "[parameters('alwaysOn')]",
+          "appSettings": "[union(parameters('appSettings'), createArray(json('{\"name\": \"WEBSITES_ENABLE_APP_SERVICE_STORAGE\", \"value\": false }'), json(concat('{\"name\": \"DOCKER_REGISTRY_SERVER_URL\", \"value\": \"', concat('https://', parameters('existingContainerRegistryName'), '.azurecr.io/', parameters('dockerImageName')),'\"}')), json(concat('{\"name\": \"DOCKER_REGISTRY_SERVER_USERNAME\", \"value\": \"', parameters('containerRegistryUsername'), '\"}')), json(concat('{\"name\": \"DOCKER_REGISTRY_SERVER_PASSWORD\", \"value\": \"', parameters('containerRegistryPassword'), '\"}'))))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]"
+      ]
+    }
+  ]
+}

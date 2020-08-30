@@ -1,0 +1,74 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+    "parameters": {
+    "name": {
+      "type": "string",
+	  "metadata": {
+        "description": "The name of the container registry."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+	  "metadata": {
+        "description": "The location of the container registry."
+      }
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Classic",
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+	  "metadata": {
+        "description": "The SKU of the container registry."
+      }
+    },
+    "servicePrincipalObjectId": {
+      "type": "string",
+	  "metadata": {
+        "description": "The object id of the service principal that will be allowed to pull images from the container registry."
+      }
+    }
+  },
+  "variables": {
+    "AcrPull": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+    "roleAssignmentName": "[concat(parameters('name'), '/Microsoft.Authorization/', guid(concat(resourceGroup().id), variables('AcrPull')))]"
+  },
+  "resources": [
+    {
+      "name": "[parameters('name')]",
+      "type": "Microsoft.ContainerRegistry/registries",
+      "apiVersion": "2019-05-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('sku')]"
+      },
+      "properties": {
+        "adminUserEnabled": false
+      }
+    },
+    {
+      "type": "Microsoft.ContainerRegistry/registries/providers/roleAssignments",
+      "apiVersion": "2017-09-01",
+      "name": "[variables('roleAssignmentName')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries', parameters('name'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables('AcrPull')]",
+        "principalId": "[parameters('servicePrincipalObjectId')]"
+      }
+    }
+  ],
+  "outputs": {
+    "existingContainerRegistryName": {
+      "type": "string",
+      "value": "[parameters('name')]"
+    }
+  }
+}
