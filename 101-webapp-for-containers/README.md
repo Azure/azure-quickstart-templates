@@ -2,6 +2,9 @@
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-for-containers/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-for-containers/PublicDeployment.svg)
 
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-for-containers/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-for-containers/FairfaxDeployment.svg)
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-for-containers/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-for-containers/CredScanResult.svg)
 
