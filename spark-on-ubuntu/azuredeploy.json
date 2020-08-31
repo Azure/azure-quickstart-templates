@@ -30,7 +30,7 @@
     },
     "imageSKU": {
       "type": "string",
-      "defaultValue": "14.04.5-LTS",
+      "defaultValue": "18.04-LTS",
       "metadata": {
         "description": "Image SKU"
       }
@@ -65,20 +65,17 @@
     },
     "sparkVersion": {
       "type": "string",
-      "defaultValue": "1.2.1",
+      "defaultValue": "3.0.0",
       "allowedValues": [
-        "1.2.1",
-        "3.0.0",
-        "1.3.0"
+        "2.0.2",
+        "2.1.3",
+        "2.2.3",
+        "2.3.4",
+        "2.4.6",
+        "3.0.0"
       ],
       "metadata": {
         "description": "The version of the Spark package to be deployed on the cluster (or use 'stable' to pull in the latest and greatest)"
-      }
-    },
-    "sparkClusterName": {
-      "type": "string",
-      "metadata": {
-        "description": "The arbitrary name of the Spark cluster (maps to cluster's configuration file name)"
       }
     },
     "sparkNodeIPAddressPrefix": {
@@ -124,29 +121,41 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+       "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spark-on-ubuntu/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
     "computerNamePrefix": "sparknode",
-    "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spark-on-ubuntu/",
-    "templateUrl": "[variables('scriptUrl')]",
     "sharedTemplateName": "shared-resources",
     "jumpboxTemplateName": "jumpbox-resources-",
     "tshirtSizeS": {
       "numberOfMasterInstances": 1,
       "numberOfSlavesInstances": 1,
-      "vmSize": "Standard_A2"
+      "vmSize": "Standard_D2_v2"
     },
     "tshirtSizeM": {
       "numberOfMasterInstances": 1,
       "numberOfSlavesInstances": 4,
-      "vmSize": "Standard_A4"
+      "vmSize": "Standard_D4_v2"
     },
     "tshirtSizeL": {
       "numberOfMasterInstances": 1,
       "numberOfSlavesInstances": 6,
-      "vmSize": "Standard_A7"
+      "vmSize": "Standard_D7_v2"
     },
     "numberOfMasterInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfMasterInstances]",
     "numberOfSlavesInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfSlavesInstances]",
@@ -156,11 +165,11 @@
     {
       "name": "shared-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-06-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('templateUrl'), variables('sharedTemplateName'), '.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('sharedTemplateName'), '.json', parameters('_artifactsLocationSasToken')))]",         
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -175,6 +184,9 @@
           },
           "subnetPrefix": {
             "value": "[parameters('subnetPrefix')]"
+          },
+          "location":{
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -182,14 +194,14 @@
     {
       "name": "jumpbox-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-06-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('templateUrl'), variables('jumpboxTemplateName'), parameters('jumpbox'), '.json')]",
+        "uri": "[uri(parameters('_artifactsLocation'), concat(variables('jumpboxTemplateName'), parameters('jumpbox'), '.json', parameters('_artifactsLocationSasToken')))]",                        
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -207,12 +219,15 @@
           },
           "computerNamePrefix": {
             "value": "[variables('computerNamePrefix')]"
+          },
+          "location":{
+            "value": "[parameters('location')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('nic', copyindex())]",
       "location": "[parameters('location')]",
@@ -221,7 +236,7 @@
         "count": "[variables('numberOfMasterInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -239,7 +254,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('nicsl', copyindex())]",
       "location": "[parameters('location')]",
@@ -248,7 +263,7 @@
         "count": "[variables('numberOfSlavesInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -266,8 +281,7 @@
       }
     },
     {
-      "apiVersion":  "2017-03-30", 
-
+      "apiVersion":  "2019-12-01", 
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('mastervm', copyindex())]",
       "location": "[parameters('location')]",
@@ -276,8 +290,8 @@
         "count": "[variables('numberOfMasterInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]",
-        "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic', copyindex()))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -291,7 +305,7 @@
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
+            "disablePasswordAuthentication": false
           }
         },
         "storageProfile": {
@@ -317,7 +331,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30", 
+      "apiVersion": "2019-12-01", 
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('slavevm', copyindex())]",
       "location": "[parameters('location')]",
@@ -326,8 +340,8 @@
         "count": "[variables('numberOfSlavesInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]",
-        "[concat('Microsoft.Network/networkInterfaces/', 'nicsl', copyindex())]",
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('nicsl', copyindex()))]",
         "virtualMachineLoopMaster"
       ],
       "properties": {
@@ -342,7 +356,7 @@
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
+            "disablePasswordAuthentication": false
           }
         },
         "storageProfile": {
@@ -371,15 +385,15 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat('mastervm', copyindex(), '/installsparkmaster')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineExtensionsLoopMaster",
         "count": "[variables('numberOfMasterInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', 'mastervm', copyindex())]",
-        "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat('mastervm', copyindex()))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic', copyindex()))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -388,7 +402,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('scriptUrl'), 'spark-cluster-install.sh')]"
+            "[uri(parameters('_artifactsLocation'), concat('spark-cluster-install.sh', parameters('_artifactsLocationSasToken')))]"   
           ],
           "commandToExecute": "[concat('bash spark-cluster-install.sh -k ',parameters('sparkVersion'),' -d ', reference('nic0').ipConfigurations[0].properties.privateIPAddress,' -s ',variables('numberOfSlavesInstances'),' -m ', ' 1 ')]"
         }
@@ -397,15 +411,15 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat('slavevm', copyindex(), '/installsparkslave')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineExtensionsLoopSlave",
         "count": "[variables('numberOfSlavesInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', 'slavevm', copyindex())]",
-        "[concat('Microsoft.Network/networkInterfaces/', 'nicsl', copyindex())]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat('slavevm', copyindex()))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('nicsl', copyindex()))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -414,7 +428,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('scriptUrl'), 'spark-cluster-install.sh')]"
+            "[uri(parameters('_artifactsLocation'), concat('spark-cluster-install.sh', parameters('_artifactsLocationSasToken')))]" 
           ],
           "commandToExecute": "[concat('bash spark-cluster-install.sh -k ',parameters('sparkVersion'),' -m ', ' 0 ')]"
         }
