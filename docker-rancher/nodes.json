@@ -20,7 +20,7 @@
         "description": "The api link to your RancherHost. Example : http://myrancherhost.kvaes.be:8080/v1/scripts/AA12A123A1A1234A12A1:1234567890000:aAaaaaA1AaAaAlaAAaaaaAAAaaA"
       }
     },
-    "rancherNodeName": {
+    "rancherName": {
       "type": "string",
       "metadata": {
         "description": "The prefix you want to use as hostname"
@@ -49,15 +49,15 @@
     }
   },
   "variables": {
-    "availabilitySet": "[parameters('rancherNodeName')]",
+    "availabilitySet": "[parameters('rancherName')]",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'ranchernode')]",
-    "networkSecurityGroupName": "[parameters('rancherNodeName')]",
+    "networkSecurityGroupName": "[parameters('rancherName')]",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "ubuntuOSVersion": "18.04-LTS",
-    "virtualNetworkName": "[parameters('rancherNodeName')]",
+    "virtualNetworkName": "[parameters('rancherName')]",
     "addressPrefix": "192.168.253.0/24",
-    "subnetName": "[parameters('rancherNodeName')]",
+    "subnetName": "[parameters('rancherName')]",
     "subnetPrefix": "192.168.253.0/24",
     "publicIPAddressType": "Dynamic",
     "storageAccountType": "Standard_LRS",
@@ -78,15 +78,15 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySet')]",
-      "apiVersion":  "2020-06-01", 
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-          },
-        "properties": { 
-            "platformFaultDomainCount": 2,
-            "platformUpdateDomainCount": 5
-        }
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
@@ -184,7 +184,7 @@
     {
       "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(parameters('rancherNodeName'), copyIndex())]",
+      "name": "[concat(parameters('rancherName'), copyIndex())]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "pipLoopNode",
@@ -193,21 +193,21 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[concat(parameters('rancherNodeName'), copyIndex())]"
+          "domainNameLabel": "[concat(parameters('rancherName'), copyIndex())]"
         }
       }
     },
     {
       "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(parameters('rancherNodeName'), copyIndex(), '-nic')]",
+      "name": "[concat(parameters('rancherName'), copyIndex(), '-nic')]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoopNode",
         "count": "[parameters('rancherCount')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(parameters('rancherNodeName'), copyIndex()))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(parameters('rancherName'), copyIndex()))]",
         "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
@@ -217,7 +217,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('rancherNodeName'), copyIndex()))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('rancherName'), copyIndex()))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -230,7 +230,7 @@
     {
       "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('rancherNodeName'), copyIndex())]",
+      "name": "[concat(parameters('rancherName'), copyIndex())]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "vmLoopNode",
@@ -238,14 +238,14 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('rancherNodeName'), copyIndex(), '-nic'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('rancherName'), copyIndex(), '-nic'))]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('rancherNodeName'), copyIndex())]",
+          "computerName": "[concat(parameters('rancherName'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -257,7 +257,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(parameters('rancherNodeName'), copyIndex(),'_OSDisk')]",  
+            "name": "[concat(parameters('rancherName'), copyIndex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -265,7 +265,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('rancherNodeName'), copyIndex(), '-nic'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('rancherName'), copyIndex(), '-nic'))]"
             }
           ]
         }
@@ -273,7 +273,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('rancherNodeName'), copyIndex(),'/', variables('extensionName'))]",
+      "name": "[concat(parameters('rancherName'), copyIndex(),'/', variables('extensionName'))]",
       "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "copy": {
@@ -281,7 +281,7 @@
         "count": "[parameters('rancherCount')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('rancherNodeName'), copyIndex()))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('rancherName'), copyIndex()))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
