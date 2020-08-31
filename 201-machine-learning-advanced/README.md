@@ -15,13 +15,24 @@
 
 This template is an advanced Azure Machine Learning workspace creation templates which support:
 
-- Create workspace with auto-approval or manual approval private endpoint.
+- Create workspace with existing dependent resources like storage account, application insights, key vault or container registry.
+- Create workspace with auto-approval or manual approval private endpoint, both new VNET and existing vnet is supported.
 - Create workspace with customer managed key.
 - Create workspace with link to Azure Databricks workspace.
 - Create workspace with dependent resources(new resources only) behind virtual network. 
 
 ### Supported Scenarios
 The following commands shows the advanced scenarios for workspace creation
+
+#### Create machine learning workspace with existing dependent resources
+This command creates a workspace with private endpoint
+
+```PowerShell
+# For deployment with existing resources, use "existing" for the option and resource group name is required.
+
+# Create a workspace with existing storage account, key vault and appinsights
+New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -storageAccountOption "existing" -storageAccountResourceGroupName "existing-storage-rg" -storageAccountName "existing-storage-name" -keyVaultOption "existing" -keyVaultResourceGroupName "existing-kv-rg" -keyVaultName "existing-kv-name" -applicationInsightsOption "existing" -applicationInsightsResourceGroupName "existing-ai-rg" - applicationInsightsName "existing-ai-name"
+```
 
 #### Create machine learning workspace with private endpoint
 This command creates a workspace with private endpoint
