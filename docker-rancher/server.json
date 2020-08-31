@@ -16,7 +16,13 @@
         "description": "Password for the Virtual Machine."
       }
     },
-    "rancherServerName": {
+    "rancherApi": {
+      "type": "string",
+      "metadata": {
+        "description": "The api link to your RancherHost. Example : http://myrancherhost.kvaes.be:8080/v1/scripts/AA12A123A1A1234A12A1:1234567890000:aAaaaaA1AaAaAlaAAaaaaAAAaaA"
+      }
+    },
+    "rancherName": {
       "type": "string",
       "metadata": {
         "description": "The prefix you want to use as hostname"
@@ -27,6 +33,20 @@
       "type": "String",
       "metadata": {
         "description": "The size of the virtual machine for the Server"
+      }
+    },
+    "rancherCount": {
+      "type": "int",
+      "metadata": {
+        "description": "The amount of nodes to be provisioned"
+      },
+      "minValue": 1,
+      "maxValue": 250
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources, ex eastus2, westus2..."
       }
     },
     "osImageSKU": {
@@ -43,7 +63,7 @@
     "storageAccountType": {
       "defaultValue": "Standard_LRS",
       "allowedValues": [
-        "Standard_LRS", 
+        "Standard_LRS",
         "StandardSSD_LRS",
         "Premium_LRS"
       ],
@@ -51,28 +71,22 @@
       "metadata": {
         "description": "Set the Virtual Machine OS Disk type"
       }
-    },
-    "location": {
-      "type": "string",
-      "metadata": {
-        "description": "Location for all resources, ex eastus2, westus2..."
-      }
     }
   },
   "variables": {
-    "availabilitySetName": "[toLower(concat(parameters('rancherServerName'), '-avset'))]",
+    "availabilitySetName": "[toLower(concat(parameters('rancherName'), '-avset'))]",
     "vmSize": "[parameters('rancherVmSize')]",
     "osImagePublisher": "Canonical",
     "osImageOffer": "UbuntuServer",
     "osImageVersion": "latest",
-    "virtualNetworkName": "[toLower(concat(parameters('rancherServerName'), '-vnet'))]",
+    "virtualNetworkName": "[toLower(concat(parameters('rancherName'), '-vnet'))]",
     "addressPrefix": "192.168.254.0/24",
-    "subnetName": "[toLower(concat(parameters('rancherServerName'), '-subnet'))]",
+    "subnetName": "[toLower(concat(parameters('rancherName'), '-subnet'))]",
     "subnetPrefix": "192.168.254.0/24",
     "NICPrefix": "-nic",
     "publicIPAddressType": "Dynamic",
-    "publicIPAddressName1": "[toLower(concat(parameters('rancherServerName'), '-pip1'))]",
-    "networkSecurityGroupName": "[toLower(concat(parameters('rancherServerName'), '-nsg'))]",
+    "publicIPAddressName1": "[toLower(concat(parameters('rancherName'), '-pip1'))]",
+    "networkSecurityGroupName": "[toLower(concat(parameters('rancherName'), '-nsg'))]",
     "extensionName": "DockerExtension"
   },
   "resources": [
@@ -176,14 +190,14 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[concat(parameters('rancherServerName'))]"
+          "domainNameLabel": "[concat(parameters('rancherName'))]"
         }
       }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2020-05-01",
-      "name": "[concat(parameters('rancherServerName'), variables('NICPrefix'))]",
+      "name": "[concat(parameters('rancherName'), variables('NICPrefix'))]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName1'))]",
@@ -209,17 +223,17 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2019-12-01",
-      "name": "[concat(parameters('rancherServerName'))]",
+      "name": "[concat(parameters('rancherName'))]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('rancherServerName'), variables('NICPrefix')))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('rancherName'), variables('NICPrefix')))]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('rancherServerName'))]",
+          "computerName": "[concat(parameters('rancherName'))]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -231,7 +245,7 @@
             "version": "[variables('osImageVersion')]"
           },
           "osDisk": {
-            "name": "[concat(parameters('rancherServerName'),'_Os_Disk_1')]",
+            "name": "[concat(parameters('rancherName'),'_Os_Disk_1')]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
@@ -242,7 +256,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('rancherServerName'), variables('NICPrefix')))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('rancherName'), variables('NICPrefix')))]"
             }
           ]
         },
@@ -254,10 +268,10 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2019-12-01",
-      "name": "[concat(parameters('rancherServerName'),'/', variables('extensionName'))]",
+      "name": "[concat(parameters('rancherName'),'/', variables('extensionName'))]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('rancherServerName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('rancherName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
