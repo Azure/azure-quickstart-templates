@@ -20,4 +20,3 @@ Use this as a demo / development / source of inspiration. Do not use this as pro
 # Tutorial
 * Server : https://kvaes.wordpress.com/2016/01/22/deploying-rancher-server-via-an-azure-resource-manager-template/
 * Nodes : https://kvaes.wordpress.com/2016/01/18/deploying-rancher-hosts-via-an-azure-resource-manager-template/
-
