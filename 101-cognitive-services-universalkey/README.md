@@ -21,8 +21,7 @@ If you are new to Azure Cognitive Services, see:
 
 If you are new to template deployment, see:
 
-[Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Cognitive Services quickstart article](https://docs.microsoft.com/azure/cognitive-services/resource-manager-template)
 
 `Tags: Azure4Student, appServices , coginitiveServices, beginner`
-
-
