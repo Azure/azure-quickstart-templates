@@ -4,7 +4,7 @@ apt-get update
 apt-get install -y openvpn
 apt-get install -y ruby
 
-curl https://s3.amazonaws.com/cohesive-networks/dnld/VNS3_4x_API_TOOL_20171114.tar.gz | tar xvz
+curl https://cohesive-networks.s3.amazonaws.com/dnld/vnscubed-ruby-cli-20200827.tar.gz | tar xvz
 mv  VNS3_434API_TOOL_20171114 api
 
 chmod 700 api/vnscubed.rb
@@ -26,11 +26,11 @@ wait_for_api () {
 
 wait_for_api
 
-NAME=$(api/vnscubed.rb -K api -S vnscubed -H 10.10.10.10 get_next_available_clientpack | grep 'name')
+NAME=$(api/vnscubed.rb -K api -S VNS3Controller-10.10.10.10 -H 10.10.10.10 get_next_available_clientpack | grep 'name')
 
 IP=${NAME:7:15}
 
-api/vnscubed.rb -K api -S vnscubed -H 10.10.10.10 fetch_clientpack --name "$IP" --format "conf" -o "clientpack.conf"
+api/vnscubed.rb -K api -S VNS3Controller-10.10.10.10 -H 10.10.10.10 fetch_clientpack --name "$IP" --fileformat "conf" -o "clientpack.conf"
 
 mv clientpack.conf /etc/openvpn
 
