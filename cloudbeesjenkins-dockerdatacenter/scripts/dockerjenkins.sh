@@ -15,7 +15,7 @@ cd /tmp
 BaseURL=https://raw.githubusercontent.com/SattaRavi/example-voting-app/master
 FileName="job-config.xml"
 for i in job-config.xml result/job-config.xml vote/job-config.xml worker/job-config.xml
-do 
+do
 echo $BaseURL/$i
 wget $BaseURL/$i
 j=`echo $i | awk -F"/" '{print $1}'`

@@ -1,22 +1,17 @@
 # VNS3 cloud networking appliance for security, connectivity and federation in the clouds
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcohesive-vns3-free-multiclient-overlay-linux%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcohesive-vns3-free-multiclient-overlay-linux%2Fazuredeploy.json)
 
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/CredScanResult.svg" />&nbsp;
-
-
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcohesive-vns3-free-multiclient-overlay-linux%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcohesive-vns3-free-multiclient-overlay-linux%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
 
 ### Introduction
 This Quickstart automates the process of deploying a Cohesive Networks VNS3 overlay network in Azure.
@@ -62,7 +57,6 @@ The template expects the following parameters:
 | adminUsernameUbuntu | Administrator username for Ubuntu VM | {No Default} |
 | adminPasswordUbuntu | Administrator password for Ubuntu VM | {No Default} |
 | numberOfInstances| VMs to deploy, max 5 as free edition only supports 5 clientpacks | 3 |
-
 
 ### This is an overview of the solution
 

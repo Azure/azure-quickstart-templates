@@ -84,16 +84,16 @@ done
 # Install Logstash
 
 
-if [ -z $SKIP_COMMON_INSTALL ] 
+if [ -z $SKIP_COMMON_INSTALL ]
 then
 
     # Install Utilities
-    log "Installing utilities." 
+    log "Installing utilities."
     sudo apt-get update
     sudo apt-get -y --force-yes install python-software-properties debconf-utils
 
     # Install Java
-    log "Installing Java." 
+    log "Installing Java."
     sudo add-apt-repository -y ppa:webupd8team/java
     sudo apt-get update
     echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | sudo debconf-set-selections

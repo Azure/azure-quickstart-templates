@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "createChildDomain": {
@@ -49,26 +49,8 @@
     },
     "VMSize": {
       "type": "string",
-      "allowedValues": [
-        "Basic_A1",
-        "Basic_A2",
-        "Basic_A3",
-        "Standard_A1_v2",
-        "Standard_A2_v2",
-        "Standard_A3",
-        "Standard_B1ms",
-        "Standard_B2s",
-        "Standard_B2ms",
-        "Standard_B4ms",
-        "Standard_D1_v2",
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_DS1_v2",
-        "Standard_DS2_v2",
-        "Standard_DS3_v2"
-      ],
       "metadata": {
-        "description": "The size and type of the VM. *_DS* or *s types support Premium Disks."
+        "description": "The size and type of the VM. *_DS* or *s types support Premium Disks. Hint: the DS* series seem most reliable for this complex template."
       },
       "defaultValue": "Standard_DS1_v2"
     },
@@ -76,8 +58,6 @@
       "type": "string",
       "defaultValue": "2019-Datacenter",
       "allowedValues": [
-        "2012-Datacenter",
-        "2012-R2-Datacenter",
         "2016-Datacenter",
         "2019-Datacenter"
       ],
@@ -87,7 +67,7 @@
     },
     "diskType": {
       "type": "string",
-      "defaultValue": "StandardSSD_LRS",
+      "defaultValue": "Premium_LRS",
       "allowedValues": [
         "StandardSSD_LRS",
         "Standard_LRS",
@@ -212,7 +192,7 @@
       "metadata": {
         "description": "The location of resources such as templates and DSC modules that the script depends on. No need to change unless you copy or fork this template."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-create-ad-forest-with-subdomain"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-create-ad-forest-with-subdomain/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -226,21 +206,22 @@
     "adNSGName": "[concat(parameters('adSubnetName'),'NSG')]",
     "adAvailabilitySetNameRoot": "AvailSetRoot",
     "adAvailabilitySetNameChild": "AvailSetChild",
-    "firstVMTemplateUri": "[concat(parameters('_artifactsLocation'),'/nested/CreateAndPrepnewVM.json',parameters('_artifactsLocationSasToken'))]",
-    "nextVMTemplateUri": "[concat(parameters('_artifactsLocation'),'/nested/CreateAndPrepnewVM.json',parameters('_artifactsLocationSasToken'))]",
-    "vnetTemplateUri": "[concat(parameters('_artifactsLocation'),'/nested/vnet.json',parameters('_artifactsLocationSasToken'))]",
-    "vnetwithDNSTemplateUri": "[concat(parameters('_artifactsLocation'),'/nested/vnet-with-dns-server.json',parameters('_artifactsLocationSasToken'))]",
-    "configureADNextDCTemplateUri": "[concat(parameters('_artifactsLocation'),'/nested/configureADNextDC.json',parameters('_artifactsLocationSasToken'))]",
-    "createForestTemplateUri": "[concat(parameters('_artifactsLocation'),'/nested/createForest.json',parameters('_artifactsLocationSasToken'))]",
-    "createChildDomainTemplateUri": "[concat(parameters('_artifactsLocation'),'/nested/createChildDomain.json',parameters('_artifactsLocationSasToken'))]",
-    "nextDCConfigurationModulesURL": "[concat(parameters('_artifactsLocation'),'/DSC/ConfigureADNextDC.ps1.zip',parameters('_artifactsLocationSasToken'))]",
+
+    "firstVMTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/CreateAndPrepnewVM.json',parameters('_artifactsLocationSasToken')))]",
+    "nextVMTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/CreateAndPrepnewVM.json',parameters('_artifactsLocationSasToken')))]",
+    "vnetTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/vnet.json',parameters('_artifactsLocationSasToken')))]",
+    "vnetwithDNSTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/vnet-with-dns-server.json',parameters('_artifactsLocationSasToken')))]",
+    "configureADNextDCTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/configureADNextDC.json',parameters('_artifactsLocationSasToken')))]",
+    "createForestTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/createForest.json',parameters('_artifactsLocationSasToken')))]",
+    "createChildDomainTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/createChildDomain.json',parameters('_artifactsLocationSasToken')))]",
+    "nextDCConfigurationModulesURL": "[uri(parameters('_artifactsLocation'), concat('DSC/ConfigureADNextDC.ps1.zip',parameters('_artifactsLocationSasToken')))]",
     "nextDCConfigurationFunction": "ConfigureADNextDC.ps1\\ConfigureADNextDC"
   },
   "resources": [
     {
       "name": "[variables('adAvailabilitySetNameRoot')]",
       "type": "Microsoft.Compute/availabilitySets",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
@@ -253,7 +234,7 @@
     {
       "name": "[variables('adAvailabilitySetNameChild')]",
       "type": "Microsoft.Compute/availabilitySets",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-12-01",
       "condition": "[parameters('createChildDomain')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -267,7 +248,7 @@
     {
       "name": "CreateVNET",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-06-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -296,7 +277,7 @@
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('adNSGName')]",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -322,7 +303,7 @@
     {
       "name": "CreateADVM1",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-06-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments','CreateVNET')]",
         "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetNameRoot'))]"
@@ -366,6 +347,12 @@
           },
           "location": {
             "value": "[parameters('location')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           }
         }
       }
@@ -373,7 +360,7 @@
     {
       "name": "CreateForest",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-06-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/CreateADVM1"
       ],
@@ -415,7 +402,7 @@
       "name": "CreateADVM3",
       "type": "Microsoft.Resources/deployments",
       "condition": "[parameters('createChildDomain')]",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-06-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments','CreateVNET')]",
         "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetNameChild'))]"
@@ -459,6 +446,12 @@
           },
           "location": {
             "value": "[parameters('location')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           }
         }
       }
@@ -466,7 +459,7 @@
     {
       "name": "CreateChildDomain",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-06-01",
       "condition": "[parameters('createChildDomain')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/CreateADVM3",
@@ -512,7 +505,7 @@
     {
       "name": "CreateADVM2",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-06-01",
       "condition": "[parameters('createSecondDc')]",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments','CreateVNET')]",
@@ -557,6 +550,12 @@
           },
           "location": {
             "value": "[parameters('location')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           }
         }
       }
@@ -564,7 +563,7 @@
     {
       "name": "ConfiguringRootDC2",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-06-01",
       "condition": "[parameters('createSecondDc')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/CreateADVM2",
@@ -607,7 +606,7 @@
     {
       "name": "CreateADVM4",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-06-01",
       "condition": "[and(parameters('createSecondDc'), parameters('createChildDomain'))]",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments','CreateVNET')]",
@@ -652,6 +651,12 @@
           },
           "location": {
             "value": "[parameters('location')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           }
         }
       }
@@ -660,7 +665,7 @@
       "name": "ConfiguringChildDC4",
       "type": "Microsoft.Resources/deployments",
       "condition": "[and(parameters('createSecondDc'), parameters('createChildDomain'))]",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-06-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/CreateADVM4",
         "Microsoft.Resources/deployments/CreateChildDomain"
@@ -702,7 +707,7 @@
     {
       "name": "UpdateVNet",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-06-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/CreateChildDomain"
       ],

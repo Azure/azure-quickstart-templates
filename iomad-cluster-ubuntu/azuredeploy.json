@@ -1,17 +1,11 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "User name for the Virtual Machine administrator. Do not use simple names such as 'admin'."
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machine administrator."
       }
     },
     "mySqlPassword": {
@@ -72,58 +66,14 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2",
-      "allowedValues": [
-        "Standard_A0",
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_A5",
-        "Standard_A6",
-        "Standard_A7",
-        "Standard_A8",
-        "Standard_A9",
-        "Standard_A10",
-        "Standard_A11",
-        "Standard_D1",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4",
-        "Standard_D11",
-        "Standard_D12",
-        "Standard_D13",
-        "Standard_D14"
-      ],
+      "defaultValue": "Standard_D2_v2",
       "metadata": {
         "description": "The size of each web front end VM."
       }
     },
     "vmSizeDB": {
       "type": "string",
-      "defaultValue": "Standard_D2",
-      "allowedValues": [
-        "Standard_A0",
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_A5",
-        "Standard_A6",
-        "Standard_A7",
-        "Standard_A8",
-        "Standard_A9",
-        "Standard_A10",
-        "Standard_A11",
-        "Standard_D1",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4",
-        "Standard_D11",
-        "Standard_D12",
-        "Standard_D13",
-        "Standard_D14"
-      ],
+      "defaultValue": "Standard_D2_v2",
       "metadata": {
         "description": "The size of the database backend VM."
       }
@@ -134,6 +84,37 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/iomad-cluster-ubuntu/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
@@ -141,7 +122,6 @@
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "ubuntuOSVersion": "14.04.5-LTS",
-    "OSDiskName": "[concat(parameters('uniqueNamePrefix'),'Disk')]",
     "nicName": "[concat(parameters('uniqueNamePrefix'),'Nic')]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -151,53 +131,56 @@
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(parameters('uniqueNamePrefix'),'IP')]",
     "publicDBIPAddressName": "[concat(parameters('uniqueNamePrefix'),'DBIP')]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
-    "publicDBIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicDBIPAddressName'))]",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
     "vmName": "[concat(parameters('uniqueNamePrefix'),'VM')]",
     "virtualNetworkName": "[concat(parameters('uniqueNamePrefix'),'VNet')]",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "subnetRefDB": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetNameDB'))]",
     "availabilitySetName": "[concat(parameters('uniqueNamePrefix'),'AvSet')]",
     "lbName": "[concat(parameters('uniqueNamePrefix'),'LB')]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
-    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontend')]",
-    "lbProbeID": "[concat(variables('lbID'),'/probes/tcpProbe')]",
-    "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]",
     "SharedAzureFileName": "iomadfileshare",
     "installFrontendScriptName": "install_frontend.sh",
-    "installFrontendScriptUri": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/iomad-cluster-ubuntu/', variables('installFrontendScriptName'))]",
+    "installFrontendScriptUri": "[uri(parameters('_artifactsLocation'), concat(variables('installFrontendScriptName'), parameters('_artifactsLocationSasToken')))]",
     "installFrontendCommand": "[concat('sh ', variables('installFrontendScriptName'), ' ', parameters('mySqlPassword'), ' ', variables('newStorageAccountName'), ' ', variables('SharedAzureFileName'))]",
     "installBackendScriptName": "install_backend.sh",
-    "installBackendScriptUri": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/iomad-cluster-ubuntu/', variables('installBackendScriptName'))]",
-    "installBackendCommand": "[concat('sh ', variables('installBackendScriptName'), ' ', parameters('mySqlPassword'), ' ', variables('newStorageAccountName'), ' ', variables('SharedAzureFileName'))]"
+    "installBackendScriptUri": "[uri(parameters('_artifactsLocation'), concat(variables('installBackendScriptName'), parameters('_artifactsLocationSasToken')))]",
+    "installBackendCommand": "[concat('sh ', variables('installBackendScriptName'), ' ', parameters('mySqlPassword'), ' ', variables('newStorageAccountName'), ' ', variables('SharedAzureFileName'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-06-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "StorageV2"
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-          },
-        "properties": { 
-            "platformFaultDomainCount": 2,
-            "platformUpdateDomainCount": 5
-            }
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -209,7 +192,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -236,13 +219,13 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'),copyIndex())]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/loadBalancers/',variables('lbName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/',variables('lbName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -251,19 +234,19 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'), 'LoadBalancerBackend')]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/Web-VM',copyindex())]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('lbName'), concat('Web-VM', copyindex()))]"
                 },
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/SSH-VM',copyindex())]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('lbName'), concat('SSH-VM', copyindex()))]"
                 }
               ]
             }
@@ -276,12 +259,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -289,7 +272,7 @@
             "name": "LoadBalancerFrontend",
             "properties": {
               "publicIPAddress": {
-                "id": "[variables('publicIPAddressID')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
               }
             }
           }
@@ -304,7 +287,7 @@
             "name": "Web-VM0",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'), 'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 8080,
@@ -316,7 +299,7 @@
             "name": "SSH-VM0",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'), 'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 2200,
@@ -328,7 +311,7 @@
             "name": "Web-VM1",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'), 'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 8081,
@@ -340,7 +323,7 @@
             "name": "SSH-VM1",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'), 'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 2201,
@@ -352,7 +335,7 @@
             "name": "Web-VM2",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'), 'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 8082,
@@ -364,7 +347,7 @@
             "name": "SSH-VM2",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'), 'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 2202,
@@ -376,7 +359,7 @@
             "name": "Web-VM3",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'), 'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 8083,
@@ -388,7 +371,7 @@
             "name": "SSH-VM3",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'), 'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 2203,
@@ -400,7 +383,7 @@
             "name": "Web-VM4",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'), 'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 8084,
@@ -412,7 +395,7 @@
             "name": "SSH-VM4",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'), 'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 2204,
@@ -426,10 +409,10 @@
             "name": "LBRule",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'), 'loadBalancerFrontend')]"
               },
               "backendAddressPool": {
-                "id": "[variables('lbPoolID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'), 'LoadBalancerBackend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
@@ -438,7 +421,7 @@
               "idleTimeoutInMinutes": 5,
               "loadDistribution": "SourceIP",
               "probe": {
-                "id": "[variables('lbProbeID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'), 'tcpProbe')]"
               }
             }
           }
@@ -457,15 +440,15 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'),copyIndex())]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/',concat(variables('nicName'),copyIndex()))]",
-        "[concat('Microsoft.Compute/availabilitySets/',variables('availabilitySetName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'),'db','/extensions/newuserscript')]"
+        "[resourceId('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), copyIndex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/',variables('availabilitySetName'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('vmName'),'db'),'newuserscript')]"
       ],
       "properties": {
         "availabilitySet": {
@@ -477,7 +460,8 @@
         "osProfile": {
           "computerName": "[concat(variables('vmName'),copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -487,7 +471,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),copyIndex(),'_OSDisk')]", 
+            "name": "[concat(variables('vmName'),copyIndex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -508,10 +492,10 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),copyIndex(),'/newuserscript')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',concat(variables('vmName'),copyIndex()))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vmName'), copyIndex()))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -524,7 +508,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat(variables('installFrontendCommand'), ' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountName')), '2016-01-01').keys[0].value, ' ',reference(variables('publicIPAddressID'),'2015-06-15').dnsSettings.fqdn, ' ',reference(variables('publicDBIPAddressID'),'2015-06-15').dnsSettings.fqdn, ' ',parameters('fullNameOfSite'), ' ',parameters('shortNameOfSite'), ' ',parameters('iomadAdminUsername'), ' ',parameters('iomadAdminPassword'), ' ',parameters('iomadAdminEmail'))]"
+          "commandToExecute": "[concat(variables('installFrontendCommand'), ' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountName')), '2016-01-01').keys[0].value, ' ',reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2015-06-15').dnsSettings.fqdn, ' ',reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicDBIPAddressName')),'2015-06-15').dnsSettings.fqdn, ' ',parameters('fullNameOfSite'), ' ',parameters('shortNameOfSite'), ' ',parameters('iomadAdminUsername'), ' ',parameters('iomadAdminPassword'), ' ',parameters('iomadAdminEmail'))]"
         }
       },
       "copy": {
@@ -535,19 +519,18 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[concat(variables('availabilitySetName'),'db')]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-          },
-        "properties": { 
-            "platformFaultDomainCount": 2,
-            "platformUpdateDomainCount": 5
-            }
-        
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicDBIPAddressName')]",
       "location": "[parameters('location')]",
@@ -559,13 +542,13 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'),'db')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/',variables('publicDBIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicDBIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -577,7 +560,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicDBIPAddressName'))]"
               },
               "subnet": {
-                "id": "[variables('subnetRefDB')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetNameDB'))]"
               }
             }
           }
@@ -585,14 +568,14 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'),'db')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/',variables('nicName'),'db')]",
-        "[concat('Microsoft.Compute/availabilitySets/',variables('availabilitySetName'),'db')]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('nicName'),'db'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', concat(variables('availabilitySetName'),'db'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -604,7 +587,8 @@
         "osProfile": {
           "computerName": "[concat(variables('vmName'),'db')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -614,7 +598,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),'db','_OSDisk')]", 
+            "name": "[concat(variables('vmName'),'db','_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -631,10 +615,10 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'db','/newuserscript')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',concat(variables('vmName'),'db'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vmName'),'db'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",

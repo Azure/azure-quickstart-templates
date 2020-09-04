@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "replSetName": {
@@ -7,9 +7,6 @@
     },
     "adminUsername": {
       "type": "string"
-    },
-    "adminPassword": {
-      "type": "securestring"
     },
     "mongoAdminUsername": {
       "type": "string"
@@ -41,9 +38,6 @@
     "sizeOfDataDiskInGB": {
       "type": "int"
     },
-    "templateBaseUrl": {
-      "type": "string"
-    },
     "subnet": {
       "type": "object"
     },
@@ -59,12 +53,29 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string"
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring"
     }
   },
   "variables": {
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
-    "securityGroupName": "[concat(parameters('namespace'), parameters('vmbasename'), 'nsg')]"
+    "securityGroupName": "[concat(parameters('namespace'), parameters('vmbasename'), 'nsg')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -189,46 +200,43 @@
         "osProfile": {
           "computerName": "[concat(parameters('dnsname'), '-', concat(parameters('vmbasename'), 'vm'))]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",
           "dataDisks": [
             {
-              
               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
               "lun": 0,
-              "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_DataDisk1')]",   
+              "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_DataDisk1')]",
               "createOption": "Empty",
               "caching": "ReadWrite"
             },
             {
-              
               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
               "lun": 1,
-              "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_DataDisk2')]",  
+              "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_DataDisk2')]",
               "caching": "ReadWrite",
               "createOption": "Empty"
             },
             {
-              
               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
               "lun": 2,
-              "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_DataDisk3')]",  
+              "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_DataDisk3')]",
               "caching": "ReadWrite",
               "createOption": "Empty"
             },
             {
-              
               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
               "lun": 3,
-              "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_DataDisk4')]",  
+              "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_DataDisk4')]",
               "caching": "ReadWrite",
               "createOption": "Empty"
             }
           ],
           "osDisk": {
-            "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_OSDisk')]",  
+            "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }

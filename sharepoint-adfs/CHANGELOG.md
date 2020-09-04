@@ -1,5 +1,10 @@
 # Change log for Azure template for SharePoint 2019 / 2016 / 2013
 
+## February 2020 update
+
+* Fix deployment error caused by the new values of the SKU of SharePoint images, which changed from '2013' / '2016' / '2019' to 'sp2013' / 'sp2016' / 'sp2019'
+* Update the schema of deploymentTemplate.json to latest version
+
 ## October 2019 update
 
 * Add optional service Azure Bastion

@@ -36,7 +36,7 @@
 #  4 - s: cluster secret (optional)
 #  5 - i: index of node (optional)
 #  6 - h: Help
-# Note : 
+# Note :
 # This script has only been tested on Ubuntu 12.04 LTS & 14.04 LTS and must be root
 
 set -e

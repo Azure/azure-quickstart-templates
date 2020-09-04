@@ -113,7 +113,7 @@ A valid metadata.json must adhere to the following structure
 
 ```json
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/...",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/...",
   "itemDisplayName": "60 char limit",
   "description": "1000 char limit",
   "summary": "200 char limit",
@@ -153,6 +153,39 @@ A valid metadata.json must adhere to the following structure
 
 + Type of template; in this case, QuickStart
 
+### environments
+
++ An array of the clouds supported by the sample, if omitted all clouds should be supported and will be tested.  See the schema for the allowed values.
+
+## Cloud Support
+
+If the sample does not support all clouds add the environments property to metadata.json indicating the clouds that are supported.  If omitted, the following is the default value of the environments property.
+
+```json
+{
+  ...
+  "environments": [
+    "AzureCloud",
+    "AzureUSGovernment"
+  ]
+}
+```
+
+## Validation Type
+
+If the sample cannot be automatically tested (e.g. tenant level deployments) set the validation type to "Manual", the default is "Automatic".
+
+### Cloud Specific Parameter Files
+
+If the sample needs separate parameter files for each cloud you can add each to the sample:
+
+| Cloud       | Parameter Filename |
+|:---------------------------------------- |:---------------------------------------- |
+| Azure Public Cloud  | azuredeploy.parameters.json |  
+| Azure US Government Cloud | azuredeploy.parameters.us.json |  
+
+If only one is provided it will be used for testing in all clouds.
+
 ## Azure DevOps CI
 
 We have automated template validation through Azure DevOps CI. These builds can be accessed by clicking the 'Details' link at the bottom of the pull-request dialog. This process will ensure that your template conforms to all the rules mentioned above and will also deploy your template to our test subscription.
@@ -173,6 +206,7 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-VNET-NAME** - the name of the virtual network
 + **GEN-VNET-RESOURCEGROUP-NAME** - the name of the resource group for the virtual network
 + **GEN-VNET-SUBNET1-NAME** - the name of subnet-1
++ **GEN-VNET-SUBNET2-NAME** - the name of subnet-2
 
 **Key Vault Related placeholders:**
 
@@ -180,6 +214,7 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-KEYVAULT-RESOURCEGROUP-NAME** - the name of the resource group for the keyvault
 + **GEN-KEYVAULT-FQDN-URI** - the FQDN URI of the keyvault
 + **GEN-KEYVAULT-RESOURCE-ID** - the resource ID of the keyvault
++ **GEN-KEYVAULT-PASSWORD-SECRET-NAME** - the secret name for a password reference
 + **GEN-KEYVAULT-PASSWORD-REFERENCE** - the reference parameter used to retrieve a KeyVault Secret (use "reference" for the property name, not "value")
 + **GEN-KEYVAULT-SSL-SECRET-NAME** - the name of the secret where the sample SSL cert is stored in the keyvault
 + **GEN-KEYVAULT-SSL-SECRET-URI** - the URI of the sample SSL cert stored in the test keyvault
@@ -213,14 +248,28 @@ Quickstart CI engine provides few pre-created azure components which can be used
 **Custom Domain & SSL Cert related placeholders:**
 
 + **GEN-FRONTDOOR-NAME** - placeholder for the frontdoor name reserved for CI/CD
-+ **GEN-FRONTDOOR-CUSTOM-HOSTNAME** - custom hostname with CNAME record mapped for the GEN-FRONTDOOR-NAME value 
++ **GEN-FRONTDOOR-CUSTOM-HOSTNAME** - custom hostname with CNAME record mapped for the GEN-FRONTDOOR-NAME value
+
+**AppConfiguration Store related placeholders:**
+
++ **GEN-APPCONFIGSTORE-NAME** - placeholder for the Microsoft.AppConfiguration/configurationStores
++ **GEN-APPCONFIGSTORE-RESOURCEGROUP-NAME** - resource group name for the AppConfig store
++ **GEN-APPCONFIGSTORE-KEY1** - sample key/value stored in the AppConfig store, label is "template"
++ **GEN-APPCONFIGSTORE-WINDOWSOSVERSION** - sample key/value with a SKU Name for a windows server image, label is "template"
++ **GEN-APPCONFIGSTORE-DISKSIZEGB** - sample key/value with a disk size, in GB for a VM disk, label is "template"
+
++ **GEN-USER-ASSIGNED-IDENTITY-NAME** - name of a userAssigned MSI that has permission to the keyvault secrets
++ **GEN-USER-ASSIGNED-IDENTITY-RESOURCEGROUP-NAME** - resource group of the userAssigned identity for retrieving the resourceId
+
++ **GEN-MACHINE-LEARNING-SP-OBJECTID** - objectId of the Azure ML Service Principal in the tenant
++ **GEN-COSMOS-DB-SP-OBJECTID** - objectId of the Cosmos DB Service Principal in the tenant
 
 Here's an example in an `azuredeploy.parameters.json` file:
 
 ```json
 
 {
-"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
 "contentVersion": "1.0.0.0",
 "parameters": {
  "newStorageAccountName":{

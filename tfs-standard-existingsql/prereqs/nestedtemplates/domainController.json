@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmName": {
@@ -83,20 +83,17 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
       }
     }
   },
   "variables": {
-    "networkInterfaceName": "[concat(parameters('vmName'), 'nic')]",
-    "loadBalancerID": "[resourceId('Microsoft.Network/loadBalancers',parameters('existingLoadBalancerName'))]",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubnetName'))]"
+    "networkInterfaceName": "[concat(parameters('vmName'), 'nic')]"
   },
   "resources": [
     {
-      "apiVersion": "2017-09-01",
+      "apiVersion": "2019-09-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('networkInterfaceName')]",
       "location": "[parameters('location')]",
@@ -109,16 +106,16 @@
               "privateIPAddress": "[parameters('ipAddress')]",
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('loadBalancerID'), '/backendAddressPools/', parameters('existingLoadBalancerBackendName'))]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('existingLoadBalancerName'), parameters('existingLoadBalancerBackendName'))]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('loadBalancerID'),'/inboundNatRules/dc-rdp')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', parameters('existingLoadBalancerName'), 'dc-rdp')]"
                 }
               ],
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubnetName'))]"
               }
             }
           }
@@ -126,12 +123,12 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-03-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -170,7 +167,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/CreateDC')]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-03-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
@@ -181,9 +178,9 @@
         "typeHandlerVersion": "2.19",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "ModulesUrl": "[concat(parameters('_artifactsLocation'), 'prereqs/DSC/CreateDC.ps1.zip', parameters('_artifactsLocationSasToken'))]",
+          "ModulesUrl": "[uri(parameters('_artifactsLocation'), concat('DSC/CreateDC.ps1.zip', parameters('_artifactsLocationSasToken')))]",
           "ConfigurationFunction": "CreateDC.ps1\\CreateDC",
-          "Properties": {
+          "properties": {
             "DomainName": "[parameters('domainName')]",
             "AdminCreds": {
               "UserName": "[parameters('adminUsername')]",

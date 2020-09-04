@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
 
   "parameters": {
@@ -77,11 +77,20 @@
       }
     },
     "location": {
+      "type": "string"
+    },
+    "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for all resources."
+        "description": "The location of resources such as templates and DSC modules that the script depends on. No need to change unless you copy or fork this template."
       }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SAS storage token to access _artifactsLocation. No need to change unless you copy or fork this template."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
@@ -92,14 +101,19 @@
     "vmOSDisk": "[concat(parameters('vmName'),'-managed-OSDisk')]",
     "vmDataDiskSize": 10,
     "imagePublisher": "MicrosoftWindowsServer",
-    "imageOffer": "WindowsServer"
+    "imageOffer": "WindowsServer",
+
+    "scriptName": "Configure-DSC.ps1",
+    "scriptDownLoad": "[uri(parameters('_artifactsLocation'), concat(variables('scriptName'), parameters('_artifactsLocationSasToken')))]",
+    
+    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File ./',variables('scriptName'),' -SkipNetworkProfileCheck $true')]"
   },
   "resources": [
     {
       "name": "[variables('vmPublicIPName')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-05-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -111,10 +125,10 @@
     {
       "name": "[variables('vmNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('vmPublicIPName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('vmPublicIPName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -137,7 +151,7 @@
     {
       "name": "[parameters('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces',variables('vmNicName'))]"
@@ -192,9 +206,9 @@
       },
       "resources": [
         {
-          "apiVersion": "2018-06-01",
+          "apiVersion": "2019-12-01",
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(parameters('vmName'),'/vmEnablePSScript')]",
+          "name": "[concat(parameters('vmName'),'/vmDownloadScriptDSCModules')]",
           "location": "[parameters('location')]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
@@ -202,10 +216,13 @@
           "properties": {
             "publisher": "Microsoft.Compute",
             "type": "CustomScriptExtension",
-            "typeHandlerVersion": "1.8",
+            "typeHandlerVersion": "1.9",
             "autoUpgradeMinorVersion": true,
-            "protectedSettings": {
-              "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -encodedcommand cwBlAHQALQBlAHgAZQBjAHUAdABpAG8AbgBwAG8AbABpAGMAeQAgAHUAbgByAGUAcwB0AHIAaQBjAHQAZQBkAA=="
+            "settings": {
+              "fileUris": [
+                "[variables('scriptDownload')]"
+              ],
+              "commandToExecute": "[variables('commandToExecute')]"
             }
           }
         }

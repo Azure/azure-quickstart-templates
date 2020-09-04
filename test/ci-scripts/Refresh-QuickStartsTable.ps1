@@ -3,9 +3,7 @@ param(
     $StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
     $StorageAccountName = "azurequickstartsservice",
     $TableName = "QuickStartsMetadataService",
-    [Parameter(mandatory = $true)]$StorageAccountKey, 
-    $ResultDeploymentLastTestDateParameter = "$ENV:RESULT_DEPLOYMENT_LAST_TEST_DATE_PARAMETER", # sort based on the cloud we're testing FF or Public
-    $ResultDeploymentParameter = "$ENV:RESULT_DEPLOYMENT_PARAMETER" #also cloud specific
+    [Parameter(mandatory = $true)]$StorageAccountKey
 )
 <#
 
@@ -39,7 +37,7 @@ $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
 
 # Dump table rows before the update
 $t = Get-AzTableRow -table $cloudTable
-$t | ft
+#$t | fl *
 
 #For each sample, make sure it's in the table before we check for the oldest
 Write-Host "Checking table to see if this is a new sample (does the row exist?)"
@@ -68,7 +66,7 @@ foreach ($SourcePath in $ArtifactFilePaths) {
         # if the row isn't found in the table, it could be a new sample, add it with the data found in metadata.json
         Write-Host "Updating: $Rowkey"
 
-        $p = New-Object -TypeName hashtable
+        $p = @{ }
         
         $p.Add("itemDisplayName", $MetadataJson.itemDisplayName)
         $p.Add("description", $MetadataJson.description)
@@ -77,16 +75,18 @@ foreach ($SourcePath in $ArtifactFilePaths) {
         $p.Add("dateUpdated", $MetadataJson.dateUpdated)
 
         $p.Add("status", "Live") # if it's in master, it's live
+        # $p.Add($($ResultDeploymentParameter + "BuildNumber"), "0)
 
         #add status from badges
 
         $badges.GetEnumerator() | ForEach-Object {
             $uri = $($_.Value).replace("%sample.folder%", $RowKey.Replace("@", "/"))
             #Write-Host $uri
+            $svg = $null
             try { $svg = (Invoke-WebRequest -Uri $uri -ErrorAction SilentlyContinue) } catch { }
             if ($svg) {
                 $xml = $svg.content.replace('xmlns="http://www.w3.org/2000/svg"', '')
-                Write-Host $xml
+                # Write-Host $xml
                 $t = Select-XML -Content $xml -XPath "//text"
                 $v = $($t[$t.length - 1])
                 Write-Host "$($_.Key) = $v"
@@ -96,30 +96,53 @@ foreach ($SourcePath in $ArtifactFilePaths) {
                 # set the value in the table based on the value in the badge
                 switch ($v) {
                     "PASS" {
-                        $v = $true
+                        $v = "PASS"
                     }
                     "FAIL" {
-                        $v = $false
+                        $v = "FAIL"
+                    }
+                    "Not Supported" {
+                        $v = "Not Supported"
                     }
                     "Not Tested" {
+                        $v = $null
                     }
                     default {
                         # must be a date
                         $v = $v.Replace(".", "-")
                     }
                 }
-                if ($_.Key -like "*Date") { $v = $MetadataJson.dateUpdated }
-                Write-Host "$($_.Key) = $v"
-                $p.Add($_.Key, $v)
+                if ($_.Key -like "*Date") { 
+                    # $v = $MetadataJson.dateUpdated
+                }
+                if ($v -ne $null) {
+                    Write-Host "$($_.Key) = $v"
+                    $p.Add($_.Key, $v)
+                }
             }
         }
     }
 
+    # if we didn't get the date from the badge, then add it from metadata.json
     if ([string]::IsNullOrWhiteSpace($p.FairfaxLastTestDate)) { 
         $p.Add("FairfaxLastTestDate", $MetadataJson.dateUpdated) 
     }
     if ([string]::IsNullOrWhiteSpace($p.PublicLastTestDate)) { 
         $p.Add("PublicLastTestDate", $MetadataJson.dateUpdated) 
+    }
+
+    # preserve the build number if possible
+    if ([string]::IsNullOrWhiteSpace($r.FairfaxDeploymentBuildNumber)) { 
+        $p.Add("FairfaxDeploymentBuildNumber", "0") 
+    }
+    else {
+        $p.Add("FairfaxDeploymentBuildNumber", $r.FairfaxDeploymentBuildNumber) 
+    }
+    if ([string]::IsNullOrWhiteSpace($r.PublicDeploymentBuildNumber)) { 
+        $p.Add("PublicDeploymentBuildNumber", "0") 
+    }
+    else {
+        $p.Add("PublicDeploymentBuildNumber", $r.PublicDeploymentBuildNumber) 
     }
     
     Write-Host "Removing... $($r.RowKey)"
@@ -133,5 +156,5 @@ foreach ($SourcePath in $ArtifactFilePaths) {
 } #foreach
 
 #Get the updated table
-$t = Get-AzTableRow -table $cloudTable
-$t | ft
+# $t = Get-AzTableRow -table $cloudTable
+# $t | fl *

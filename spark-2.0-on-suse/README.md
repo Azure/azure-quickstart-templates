@@ -2,14 +2,14 @@
 
 # Provision a Spark 2.0 Cluster on Suse Linux Enterprise Server
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/CredScanResult.svg)
 
 This template creates a Spark 2.0 Cluster on SUSE Linux Enterprise Server.  This is a starting point for learning Spark and in-memory computation on SUSE’s enterprise linux distribution.
 
@@ -17,13 +17,7 @@ In Memory Cluster Computing to solve query optimization, slow Machine Learning a
 
 To master this template and Spark 2.0 on SUSE Linux Enterprise Server you can leverage hands on workshop from [Value Amplify](http://www.valueamplify.com) 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-2.0-on-suse%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-2.0-on-suse%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-2.0-on-suse%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-2.0-on-suse%2Fazuredeploy.json)
 
 ### To deploy this sample using a script in the root of this repo
 
@@ -35,7 +29,6 @@ azure-group-deploy.sh -a 'spark-2.0-on-suse' -l eastus -u
 ```
 This template deploys a **spark-2.0-on-suse** infrastructure. The **spark-2.0-on-suse** template is a Spark 2.0 environment based on Spark Standalone Cluster Manager; the template setup one master node and N worker nodes installing and configuring Spark 2.0.
 Details about installation are available on all the nodes under /tmp/ director
-
 
 ## Solution overview and deployed resources
 
@@ -138,4 +131,6 @@ You can see on VM Spark 2.0 processes running
 <pre>
 sudo jps -l -m
 <pre>
+
+
 

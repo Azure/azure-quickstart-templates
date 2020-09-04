@@ -1,11 +1,12 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "siteName": {
             "type": "string",
+            "defaultValue": "[concat('MySQL-', uniqueString(resourceGroup().name))]",
             "metadata": {
-                "description": "Name of azure web app"
+                "description": "The unique name of your Web Site."
             }
         },
         "administratorLogin": {
@@ -22,7 +23,7 @@
                 "description": "Database administrator password"
             }
         },
-        "databaseSkucapacity": {
+        "dbSkucapacity": {
             "type": "int",
             "defaultValue": 2,
             "allowedValues": [
@@ -33,10 +34,10 @@
                 32
             ],
             "metadata": {
-                "description": "Azure database for PostgreSQL compute capacity in vCores (2,4,8,16,32)"
+                "description": "Azure database for mySQL compute capacity in vCores (2,4,8,16,32)"
             }
         },
-        "databaseSkuName": {
+        "dbSkuName": {
             "type": "string",
             "defaultValue": "GP_Gen5_2",
             "allowedValues": [
@@ -52,10 +53,10 @@
                 "MO_Gen5_32"
             ],
             "metadata": {
-                "description": "Azure database for PostgreSQL sku name "
+                "description": "Azure database for mySQL sku name "
             }
         },
-        "databaseSkuSizeMB": {
+        "dbSkuSizeMB": {
             "type": "int",
             "allowedValues": [
                 102400,
@@ -63,10 +64,10 @@
             ],
             "defaultValue": 51200,
             "metadata": {
-                "description": "Azure database for PostgreSQL Sku Size "
+                "description": "Azure database for mySQL Sku Size "
             }
         },
-        "databaseSkuTier": {
+        "dbSkuTier": {
             "type": "string",
             "defaultValue": "GeneralPurpose",
             "allowedValues": [
@@ -74,7 +75,7 @@
                 "MemoryOptimized"
             ],
             "metadata": {
-                "description": "Azure database for PostgreSQL pricing tier"
+                "description": "Azure database for mySQL pricing tier"
             }
         },
         "mysqlVersion": {
@@ -99,19 +100,41 @@
             "type": "string",
             "defaultValue": "Gen5",
             "metadata": {
-                "description": "Azure database for PostgreSQL sku family"
+                "description": "Azure database for mySQL sku family"
             }
         }
     },
     "variables": {
-        "databaseName": "[concat(parameters('siteName'), 'database')]",
-        "serverName": "[concat(parameters('siteName'), 'mysqlserver')]",
-        "hostingPlanName": "[concat(parameters('siteName'), 'serviceplan')]"
+        "databaseName": "[concat('database', uniqueString(resourceGroup().id))]",
+        "serverName": "[concat('mysql-',  uniqueString(resourceGroup().id))]",
+        "hostingPlanName": "[concat('hpn-',  uniqueString(resourceGroup().id))]"
     },
     "resources": [
         {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "name": "[variables('hostingPlanName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "name": "[variables('hostingPlanName')]",
+                "workerSizeId": "1",
+                "reserved": true,
+                "numberOfWorkers": "1"
+            },
+            "sku": {
+                "Tier": "Standard",
+                "Name": "S1"
+            },
+            "kind": "linux"
+        },
+        {
             "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
             "name": "[parameters('siteName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('hostingPlanName')]"
+            ],
             "properties": {
                 "siteConfig": {
                     "linuxFxVersion": "php|7.0",
@@ -124,43 +147,19 @@
                     ]
                 },
                 "name": "[parameters('siteName')]",
-                "serverFarmId": "[variables('hostingPlanName')]",
-                "hostingEnvironment": ""
-            },
-            "apiVersion": "2016-08-01",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[variables('hostingPlanName')]"
-            ]
+                "serverFarmId": "[variables('hostingPlanName')]"
+            }
         },
         {
-            "apiVersion": "2016-09-01",
-            "name": "[variables('hostingPlanName')]",
-            "type": "Microsoft.Web/serverfarms",
-            "location": "[parameters('location')]",
-            "properties": {
-                "name": "[variables('hostingPlanName')]",
-                "workerSizeId": "1",
-                "reserved": true,
-                "numberOfWorkers": "1",
-                "hostingEnvironment": ""
-            },
-            "sku": {
-                "Tier": "Standard",
-                "Name": "S1"
-            },
-            "kind": "linux"
-        },
-        {
+            "type": "Microsoft.DBforMySQL/servers",
             "apiVersion": "2017-12-01",
             "location": "[parameters('location')]",
             "name": "[variables('serverName')]",
-            "type": "Microsoft.DBforMySQL/servers",
             "sku": {
-                "name": "[parameters('databaseSkuName')]",
-                "tier": "[parameters('databaseSkuTier')]",
-                "capacity": "[parameters('databaseSkucapacity')]",
-                "size": "[parameters('databaseSkuSizeMB')]",
+                "name": "[parameters('dbSkuName')]",
+                "tier": "[parameters('dbSkuTier')]",
+                "capacity": "[parameters('dbSkucapacity')]",
+                "size": "[parameters('dbSkuSizeMB')]",
                 "family": "[parameters('databaseSkuFamily')]"
             },
             "properties": {
@@ -168,7 +167,7 @@
                 "administratorLogin": "[parameters('administratorLogin')]",
                 "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
                 "storageProfile": {
-                    "storageMB": "[parameters('databaseSkuSizeMB')]",
+                    "storageMB": "[parameters('dbSkuSizeMB')]",
                     "backupRetentionDays": "7",
                     "geoRedundantBackup": "Disabled"
                 },
