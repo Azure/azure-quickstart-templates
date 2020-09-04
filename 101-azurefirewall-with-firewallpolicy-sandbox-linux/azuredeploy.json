@@ -37,7 +37,7 @@
       "type": "string",
       "defaultValue": "Standard_DS1_v2",
       "metadata": {
-        "description": "Zone numbers e.g. 1,2,3."
+        "description": "Size of the virtual machine."
       }
     },
     "numberOfFirewallPublicIPAddresses": {
@@ -121,7 +121,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -132,7 +132,7 @@
     {
       "type": "Microsoft.Network/routeTables",
       "name": "[variables('azfwRouteTableName')]",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "properties": {
         "disableBgpRoutePropagation": false,
@@ -151,14 +151,14 @@
     {
       "comments": "Simple Network Security Group for subnet [variables('serversSubnetName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-05-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {}
     },
     {
       "name": "[parameters('virtualNetworkName')]",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -205,7 +205,7 @@
     {
       "name": "[concat(variables('publicIPNamePrefix'), add(copyIndex(), 1))]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
@@ -222,7 +222,7 @@
     {
       "name": "[variables('jumpBoxPublicIPAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
@@ -231,7 +231,7 @@
     {
       "name": "[variables('jumpBoxNsgName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -252,7 +252,7 @@
       }
     },
     {
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('JumpBoxNicName')]",
       "location": "[parameters('location')]",
@@ -282,7 +282,7 @@
       }
     },
     {
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('ServerNicName')]",
       "location": "[parameters('location')]",
@@ -306,7 +306,7 @@
     {
       "name": "JumpBox",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
@@ -351,7 +351,7 @@
     {
       "name": "Server",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
@@ -394,21 +394,21 @@
       }
     },
     {
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2020-04-01",
       "type": "Microsoft.Network/firewallPolicies",
       "name": "[variables('firewallPolicyName')]",
       "location": "[parameters('location')]",
       "properties": {
         "threatIntelMode": "Alert"
       },
-      "resources":[
+      "resources": [
         {
-          "apiVersion": "2019-09-01",
+          "apiVersion": "2020-04-01",
           "type": "ruleGroups",
           "name": "NetworkRG",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[resourceId('Microsoft.Network/firewallPolicies',variables('firewallPolicyName'))]"
+            "[resourceId('Microsoft.Network/firewallPolicies', variables('firewallPolicyName'))]"
           ],
           "properties": {
             "priority": 100,
@@ -444,18 +444,17 @@
           }
         },
         {
-          "apiVersion": "2019-06-01",
+          "apiVersion": "2020-04-01",
           "type": "ruleGroups",
           "name": "AppRG",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[resourceId('Microsoft.Network/firewallPolicies/ruleGroups', variables('firewallPolicyName'), 'NetworkRG')]",
             "[resourceId('Microsoft.Network/firewallPolicies',variables('firewallPolicyName'))]"
           ],
           "properties": {
             "priority": 200,
             "rules": [
-                {
+              {
                 "name": "AppRule1",
                 "priority": 4444,
                 "ruleType": "FirewallPolicyFilterRule",
@@ -487,7 +486,7 @@
       ]
     },
     {
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2020-04-01",
       "type": "Microsoft.Network/azureFirewalls",
       "name": "[variables('firewallName')]",
       "location": "[parameters('location')]",
@@ -495,12 +494,14 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
         "[resourceId('Microsoft.Network/firewallPolicies', variables('firewallPolicyName'))]",
+        "[resourceId('Microsoft.Network/firewallPolicies/ruleGroups', variables('firewallPolicyName'), 'AppRG')]",
+        "[resourceId('Microsoft.Network/firewallPolicies/ruleGroups', variables('firewallPolicyName'), 'NetworkRG')]",
         "publicIpCopy"
       ],
       "properties": {
         "ipConfigurations": "[variables('azureFirewallIpConfigurations')]",
-        "firewallPolicy":{
-              "id": "[resourceId('Microsoft.Network/firewallPolicies', variables('firewallPolicyName'))]"
+        "firewallPolicy": {
+          "id": "[resourceId('Microsoft.Network/firewallPolicies', variables('firewallPolicyName'))]"
         }
       }
     }
