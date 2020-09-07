@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Create file mongodb.repo and configure it for installation
 touch /etc/yum.repos.d/mongodb.repo
 echo "[mongodb-org-4.4]" >> /etc/yum.repos.d/mongodb.repo
