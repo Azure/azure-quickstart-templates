@@ -16,8 +16,6 @@
 
 This template deploys necessary resources to run an Azure Synapse Proof-of-Concept
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-synapse-poc%2Fazuredeploy.json)
-
 This template deploys the following:
 - An Azure Synapse Workspace
     - (OPTIONAL) Allows All connections in by default (Firewall IP Addresses)
