@@ -1,10 +1,4 @@
-
-#Modify Sudoers file to not require tty for shell script execution on CentOS
-# sudo sed -i '/Defaults[[:space:]]\+requiretty/s/^/#/' /etc/sudoers
-
-# Enable write access to the mongodb.repo and configure it for installation
-
-#sudo chmod 777 /etc/yum.repos.d/mongodb.repo
+# Create file mongodb.repo and configure it for installation
 touch /etc/yum.repos.d/mongodb.repo
 echo "[mongodb-org-4.4]" >> /etc/yum.repos.d/mongodb.repo
 echo "name=MongoDB Repository" >> /etc/yum.repos.d/mongodb.repo
@@ -16,10 +10,7 @@ echo "gpgkey=https://www.mongodb.org/static/pgp/server-4.4.asc" >> /etc/yum.repo
 # Install updates
 yum -y update
 
-# Install SELinux management tools and add rule for default port for mongod service
-yum install -y policycoreutils-python
-semanage port -a -t mongod_port_t -p tcp 27017
-
 # Install Mongo DB and start service
 yum install -y mongodb-org
-service mongod start
+systemctl start mongod.service
+systemctl enable mongod.service
