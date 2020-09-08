@@ -120,7 +120,7 @@ setupSasShareMountSUSE() {
     sudo zypper install -y curl
     sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
     sudo zypper addrepo --name 'Azure CLI' --check https://packages.microsoft.com/yumrepos/azure-cli azure-cli
-    sudo zypper install -y --from azure-cli azure-cli
+    sudo zypper install -y --from azure-cli azure-cli=2.10.1-1.el7
     echo "Creating the share on the storage account."
     az storage share create --name ${azure_storage_files_share} --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=${azure_storage_account};AccountKey=${azure_storage_files_password}"
 
