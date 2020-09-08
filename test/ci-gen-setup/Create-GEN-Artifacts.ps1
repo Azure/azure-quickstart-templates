@@ -188,6 +188,12 @@ $json.Add("COSMOS-DB-SP-OBJECTID", $cosmossp.id)
 $webapp = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd" # Web App SP for certificate scenarios - not available in Fairfax?
 Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $webapp.id -PermissionsToSecrets get 
 
+# for the Microsoft.Azure.CDN service principal - it first must be registered in the sub
+$cdn = New-AzureRmADServicePrincipal -ApplicationId 205478c0-bd83-4e1b-a9d6-db63a3e1e1c8
+# if the RP autoregisters at some point in the future the above call will fail and will need to simply GET the SP
+# $cdn = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd" 
+Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $cdn.id -PermissionsToSecrets get 
+
 # 1) Create a sample password for the vault
 $SecretValue = ConvertTo-SecureString -String $CertPass -AsPlainText -Force
 Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $KeyVaultNotSecretName -SecretValue $SecretValue -Verbose
@@ -306,6 +312,18 @@ $json.Add("SELFSIGNED-CERT-CERDATA", [System.Convert]::ToBase64String([System.IO
 $json.Add("SELFSIGNED-CERT-PASSWORD", $CertPass)
 $json.Add("SELFSIGNED-CERT-THUMBPRINT", $kvCert.Thumbprint)
 $json.Add("SELFSIGNED-CERT-DNSNAME", $CertDNSName)
+
+#6) Create 2 url signing keys for a specific quickstart
+$SecretValue = ConvertTo-SecureString -String $(new-guid) -AsPlainText -Force
+$s1 = Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name 'url-sign-secret-1' -SecretValue $SecretValue -Verbose
+$SecretValue = ConvertTo-SecureString -String $(new-guid) -AsPlainText -Force
+$s2 = Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name 'url-sign-secret-2' -SecretValue $SecretValue -Verbose
+ 
+$json.Add("KEYVAULT-URLSIGN-SECRET1-NAME", 'url-sign-secret-1')
+$json.Add("KEYVAULT-URLSIGN-SECRET2-NAME", 'url-sign-secret-2')
+
+$json.Add("KEYVAULT-URLSIGN-SECRET1-VERSION", $s1.Version)
+$json.Add("KEYVAULT-URLSIGN-SECRET2-VERSION", $s2.Version)
 
 # Create the Microsoft.appConfiguration/configurationStores
 # There are no PS cmdlets for app config store yet - use context must be set with "az account set ..."
