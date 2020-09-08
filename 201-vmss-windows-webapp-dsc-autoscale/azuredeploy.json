@@ -4,7 +4,7 @@
   "parameters": {
     "vmSku": {
       "type": "string",
-      "defaultValue": "Standard_A1",
+      "defaultValue": "Standard_A1_v2",
       "metadata": {
         "description": "Size of VMs in the VM Scale Set."
       }
@@ -16,10 +16,11 @@
         "2008-R2-SP1",
         "2012-Datacenter",
         "2012-R2-Datacenter",
-        "2016-Datacenter"
+        "2016-Datacenter",
+        "2019-Datacenter"
       ],
       "metadata": {
-        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter & 2016-Datacenter."
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter & 2016-Datacenter, 2019-Datacenter."
       }
     },
     "vmssName": {
@@ -36,6 +37,7 @@
       "metadata": {
         "description": "Number of VM instances (100 or less)."
       },
+      "minValue": 1,
       "maxValue": 100
     },
     "adminUsername": {
@@ -54,9 +56,9 @@
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
-        "description": "The base URI where artifacts required by this template are located. For example, if stored on a public GitHub repo, you'd use the following URI: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale."
+        "description": "The base URI where artifacts required by this template are located. For example, if stored on a public GitHub repo, you'd use the following URI: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale/."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -67,16 +69,16 @@
     },
     "powershelldscZip": {
       "type": "string",
-      "defaultValue": "/DSC/IISInstall.ps1.zip",
+      "defaultValue": "DSC/IISInstall.ps1.zip",
       "metadata": {
-        "description": "Location of the PowerShell DSC zip file relative to the URI specified in the _artifactsLocation, i.e. /DSC/IISInstall.ps1.zip"
+        "description": "Location of the PowerShell DSC zip file relative to the URI specified in the _artifactsLocation, i.e. DSC/IISInstall.ps1.zip"
       }
     },
     "webDeployPackage": {
       "type": "string",
-      "defaultValue": "/WebDeploy/DefaultASPWebApp.v1.0.zip",
+      "defaultValue": "WebDeploy/DefaultASPWebApp.v1.0.zip",
       "metadata": {
-        "description": "Location of the  of the WebDeploy package zip file relative to the URI specified in _artifactsLocation, i.e. /WebDeploy/DefaultASPWebApp.v1.0.zip"
+        "description": "Location of the  of the WebDeploy package zip file relative to the URI specified in _artifactsLocation, i.e. WebDeploy/DefaultASPWebApp.v1.0.zip"
       }
     },
     "powershelldscUpdateTagVersion": {
@@ -122,52 +124,17 @@
       "version": "latest"
     },
     "imageReference": "[variables('osType')]",
-    "webDeployPackageFullPath": "[concat(parameters('_artifactsLocation'), parameters('webDeployPackage'))]",
-    "powershelldscZipFullPath": "[concat(parameters('_artifactsLocation'), parameters('powershelldscZip'))]",
-    "powershelldscArchiveFolder": "DSC",
-    "powershelldscArchiveFileName": "IISInstall.ps1.zip"
+    "webDeployPackageFullPath": "[uri(parameters('_artifactsLocation'), concat(parameters('webDeployPackage'), parameters('_artifactsLocationSasToken')))]",
+    "powershelldscZipFullPath": "[uri(parameters('_artifactsLocation'), concat(parameters('powershelldscZip'), parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
-    {
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetworkName')]",
-      "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('addressPrefix')]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressName')]",
-      "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
-      "properties": {
-        "publicIPAllocationMethod": "Static",
-        "dnsSettings": {
-          "domainNameLabel": "[variables('longNamingInfix')]"
-        }
-      }
-    },
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-05-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -237,10 +204,10 @@
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('namingInfix')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2019-12-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "sku": {
         "name": "[parameters('vmSku')]",
@@ -248,7 +215,7 @@
         "capacity": "[parameters('instanceCount')]"
       },
       "properties": {
-        "overprovision": "true",
+        "overprovision": true,
         "upgradePolicy": {
           "mode": "Automatic"
         },
@@ -324,12 +291,45 @@
       }
     },
     {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-05-01",
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('longNamingInfix')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-05-01",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.Insights/autoscaleSettings",
       "apiVersion": "2015-04-01",
       "name": "autoscalehost",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]"
+        "[resourceId('Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]"
       ],
       "properties": {
         "name": "autoscalehost",
@@ -347,7 +347,6 @@
               {
                 "metricTrigger": {
                   "metricName": "Percentage CPU",
-                  "metricNamespace": "",
                   "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
@@ -366,7 +365,6 @@
               {
                 "metricTrigger": {
                   "metricName": "Percentage CPU",
-                  "metricNamespace": "",
                   "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
