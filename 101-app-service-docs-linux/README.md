@@ -1,5 +1,7 @@
 # Deploy an App Service Plan and a basic Linux web app
 
+This template is to be used with: https://docs.microsoft.com/azure/app-service/quickstart-arm-template
+
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-docs-linux/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-docs-linux/PublicDeployment.svg)
 
