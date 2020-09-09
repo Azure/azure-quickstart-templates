@@ -20,10 +20,14 @@
   },
   "resources": [
     {
-      "apiVersion": "2018-02-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
       "name": "[variables('vnetName')]",
+      "dependsOn": [
+        "nsg-public",
+        "nsg-private"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -34,17 +38,53 @@
           {
             "name": "[variables('publicSubnetName')]",
             "properties": {
-              "addressPrefix": "[variables('publicSubnetCidr')]"
+              "addressPrefix": "[variables('publicSubnetCidr')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-public')]"
+              },
+              "delegations": [
+                {
+                  "name": "databricks-del-public",
+                  "properties": {
+                    "serviceName": "Microsoft.Databricks/workspaces"
+                  }
+                }
+              ]
             }
           },
           {
             "name": "[variables('privateSubnetName')]",
             "properties": {
-              "addressPrefix": "[variables('privateSubnetCidr')]"
+              "addressPrefix": "[variables('privateSubnetCidr')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-private')]"
+              },
+              "delegations": [
+                {
+                  "name": "databricks-del-private",
+                  "properties": {
+                    "serviceName": "Microsoft.Databricks/workspaces"
+                  }
+                }
+              ]
             }
           }
         ]
       }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "nsg-public",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "nsg-private",
+      "location": "[parameters('location')]",
+      "properties": {}
     }
   ],
   "outputs": {
