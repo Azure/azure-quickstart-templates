@@ -1,0 +1,317 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "companyTla": {
+      "type": "string",
+      "metadata": {
+        "description": "This is a Three Letter Acronym for your company name. 'CON' for Contoso for example."
+      },
+      "maxLength": 3
+    },
+    "deploymentType": {
+      "type": "string",
+      "allowedValues": [
+        "devtest",
+        "poc",
+        "prod",
+        "shared"
+      ],
+      "defaultValue": "poc",
+      "metadata": {
+        "description": "Specify deployment type: DevTest, POC, Prod, Shared. This will also be used in the naming convention."
+      }
+    },
+    "LogicAppName": {
+      "type": "string",
+      "metadata": "Name of Azure Logic app"
+    },
+    "Frequency": {
+      "type": "string",
+      "metadata": "Choose whether to run schedule every day of the week, or only on weekdays",
+      "defaultValue": "Weekdays",
+      "allowedValues": [
+        "Daily",
+        "Weekdays"
+      ]
+    },
+    "TIME_ZONE": {
+      "type": "string",
+      "metadata": "Timezone for the schedule. Consult https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx for more information",
+      "defaultValue": "Pacific Standard Time",
+      "allowedValues": [
+        "Dateline Standard Time",
+        "Samoa Standard Time",
+        "Hawaiian Standard Time",
+        "Alaskan Standard Time",
+        "Pacific Standard Time",
+        "Mountain Standard Time",
+        "Mexico Standard Time 2",
+        "Central Standard Time",
+        "Canada Central Standard Time",
+        "Mexico Standard Time",
+        "Central America Standard Time",
+        "Eastern Standard Time",
+        "Atlantic Standard Time",
+        "Newfoundland and Labrador Standard Time",
+        "E. South America Standard Time",
+        "S.A. Eastern Standard Time",
+        "Greenland Standard Time",
+        "Mid-Atlantic Standard Time",
+        "Azores Standard Time",
+        "Cape Verde Standard Time",
+        "GMT Standard Time",
+        "Greenwich Standard Time",
+        "Central Europe Standard Time",
+        "Central European Standard Time",
+        "Romance Standard Time",
+        "W. Europe Standard Time",
+        "W. Central Africa Standard Time",
+        "E. Europe Standard Time",
+        "Egypt Standard Time",
+        "FLE Standard Time",
+        "GTB Standard Time",
+        "Israel Standard Time",
+        "South Africa Standard Time",
+        "Russian Standard Time",
+        "Arab Standard Time",
+        "E. Africa Standard Time",
+        "Arabic Standard Time",
+        "Iran Standard Time",
+        "Arabian Standard Time",
+        "Caucasus Standard Time",
+        "Transitional Islamic State of Afghanistan Standard Time",
+        "Ekaterinburg Standard Time",
+        "West Asia Standard Time",
+        "India Standard Time",
+        "Nepal Standard Time",
+        "Central Asia Standard Time",
+        "Sri Lanka Standard Time",
+        "Myanmar Standard Time",
+        "North Asia Standard Time",
+        "China Standard Time",
+        "Singapore Standard Time",
+        "Taipei Standard Time",
+        "North Asia East Standard Time",
+        "Korea Standard Time",
+        "Tokyo Standard Time",
+        "Yakutsk Standard Time",
+        "Tasmania Standard Time",
+        "Vladivostok Standard Time",
+        "West Pacific Standard Time",
+        "Central Pacific Standard Time",
+        "Fiji Islands Standard Time",
+        "New Zealand Standard Time",
+        "Tonga Standard Time"
+      ]
+    },
+    "ResumeTime": {
+      "type": "string",
+      "metadata": "Time of day when the data warehouse will be resumed",
+      "allowedValues": [
+        "12:00 AM (  0:00 )",
+        "01:00 AM (  1:00 )",
+        "02:00 AM (  2:00 )",
+        "03:00 AM (  3:00 )",
+        "04:00 AM (  4:00 )",
+        "05:00 AM (  5:00 )",
+        "06:00 AM (  6:00 )",
+        "07:00 AM (  7:00 )",
+        "08:00 AM (  8:00 )",
+        "09:00 AM (  9:00 )",
+        "10:00 AM ( 10:00 )",
+        "11:00 AM ( 11:00 )",
+        "12:00 PM ( 12:00 )",
+        "01:00 PM ( 13:00 )",
+        "02:00 PM ( 14:00 )",
+        "03:00 PM ( 15:00 )",
+        "04:00 PM ( 16:00 )",
+        "05:00 PM ( 17:00 )",
+        "06:00 PM ( 18:00 )",
+        "07:00 PM ( 19:00 )",
+        "08:00 PM ( 20:00 )",
+        "09:00 PM ( 21:00 )",
+        "10:00 PM ( 22:00 )",
+        "11:00 PM ( 23:00 )"
+      ]
+    }
+  },
+  "variables": {
+    "resumeTimeHour": "[split(substring(parameters('resumeTime'), 11, 5), ':')[0]]",
+    "recurrenceHours": [ "[variables('resumeTimeHour')]" ],
+    "recurrenceMinutes": [ 0 ],
+    "dailySchedule": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ],
+    "weekdaySchedule": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ],
+    "recurrenceSchedule": "[if(equals(parameters('Frequency'), 'Weekdays'), variables('weekdaySchedule'), variables('dailySchedule'))]",
+    "resumeTimeString": "[substring(parameters('ResumeTime'), 0, 8)]",
+    "synapseWorkspaceName": "[toLower(concat(variables('synapseName'),'ws1'))]",
+    "synapseName": "[toLower(concat(parameters('companyTla'),parameters('deploymentType')))]",
+    "synapseSQLPoolName": "[toLower(concat(variables('workspaceName'),'p1'))]",
+    "workspaceName": "[toLower(concat(variables('synapseName'),'ws1'))]",
+    "managementEndpoint": "[environment().resourceManager]",
+    "getRESTAPI": "subscriptions/@{variables('RestAPIVariables')['SubscriptionId']}/resourceGroups/@{variables('RestAPIVariables')['ResourceGroupName']}/providers/Microsoft.Synapse/workspaces/@{variables('RestAPIVariables')['workspaceName']}/sqlPools/@{variables('RestAPIVariables')['sqlPoolName']}?api-version=2019-06-01-preview",
+    "resumeRESTAPI": "subscriptions/@{variables('RestAPIVariables')['SubscriptionId']}/resourceGroups/@{variables('RestAPIVariables')['ResourceGroupName']}/providers/Microsoft.Synapse/workspaces/@{variables('RestAPIVariables')['workspaceName']}/sqlPools/@{variables('RestAPIVariables')['sqlPoolName']}/resume?api-version=2019-06-01-preview"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2019-05-01",
+      "name": "[parameters('LogicAppName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Initialize_API_variables": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "RestAPIVariables",
+                    "type": "Object",
+                    "value": {
+                      "workspaceName": "[variables('synapseWorkspaceName')]",
+                      "sqlPoolName": "[variables('synapseSQLPoolName')]",
+                      "ResourceGroupName": "[resourceGroup().name]",
+                      "SubscriptionId": "[subscription().subscriptionId]",
+                      "TenantId": "[subscription().tenantId]",
+                      "ScheduleTimeZone": "[parameters('TIME_ZONE')]",
+                      "ResumeTime": "[variables('resumeTimeString')]"
+                    }
+                  }
+                ]
+              }
+            },
+            "Get_Synapse_state": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "[concat(variables('managementEndpoint'),variables('getRESTAPI'))]",
+                "authentication": { "type": "ManagedServiceIdentity" }
+              },
+              "runAfter": {
+                "Initialize_API_Variables": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Parse_JSON": {
+              "inputs": {
+                "content": "@body('Get_Synapse_state')",
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "location": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "properties": {
+                      "properties": {
+                        "collation": {
+                          "type": "string"
+                        },
+                        "creationDate": {
+                          "type": "string"
+                        },
+                        "maxSizeBytes": {
+                          "type": "integer"
+                        },
+                        "provisioningState": {
+                          "type": "string"
+                        },
+                        "restorePointInTime": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "sku": {
+                      "properties": {
+                        "capacity": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "runAfter": {
+                "Get_Synapse_state": [
+                  "Succeeded"
+                ]
+              },
+              "type": "ParseJson"
+            },
+            "ResumeSynapseIfOnline": {
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@body('Get_Synapse_state')['properties']['status']",
+                      "Paused"
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Resume_SQL_Pool": {
+                  "type": "Http",
+                  "inputs": {
+                    "method": "POST",
+                    "uri": "[concat(variables('managementEndpoint'),variables('resumeRESTAPI'))]",
+                    "authentication": { "type": "ManagedServiceIdentity" }
+                  }
+                }
+              },
+              "runAfter": {
+                "Parse_JSON": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "triggers": {
+            "Recurrence": {
+              "type": "Recurrence",
+              "recurrence": {
+                "frequency": "Week",
+                "interval": 1,
+                "timeZone": "[parameters('TIME_ZONE')]",
+                "startTime": "2019-01-01T00:00:00Z",
+                "schedule": {
+                  "weekDays": "[variables('recurrenceSchedule')]",
+                  "hours": "[variables('recurrenceHours')]",
+                  "minutes": "[variables('recurrenceMinutes')]"
+                }
+              }
+            }
+          },
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    }
+  ]
+}
