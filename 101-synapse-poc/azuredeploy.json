@@ -231,7 +231,6 @@
     }
   },
   "variables": {
-    "guidDeploymentName": "myGuid",
     "synapseName": "[toLower(concat(parameters('companyTla'),parameters('deploymentType')))]",
     "dlsName": "[toLower(concat('dls',parameters('companyTla'),parameters('deploymentType')))]",
     "dlsFsName": "[toLower(concat(variables('dlsName'),'fs1'))]",
@@ -249,13 +248,9 @@
   },
   "resources": [
     {
-      "apiVersion": "2020-06-01",
-      "name": "[concat(variables('guidDeploymentName'),copyIndex())]",
       "type": "Microsoft.Resources/deployments",
-      "copy": {
-        "name": "guidCopy",
-        "count": "[length(variables('logicApps'))]"
-      },
+      "apiVersion": "2015-01-01",
+      "name": "Guid0",
       "properties": {
         "mode": "incremental",
         "templateLink": {
@@ -263,7 +258,26 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "seed": { "value": "[string(copyIndex())]" }
+          "seed": {
+            "value": "0"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "name": "Guid1",
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'),'nestedtemplates/guidgenerator.json',parameters('_artifactsLocationSASToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "seed": {
+            "value": "1"
+          }
         }
       }
     },
@@ -454,14 +468,12 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-10-01",
-      "name": "[concat('MSIRBACOnResourceGroup',copyIndex())]",
+      "name": "MSIRBACOnResourceGroup0",
       "dependsOn": [
-        "[variables('sqlPoolName')]"
+        "logicAppResumeDeployment",
+        "logicAppPauseDeployment",
+        "Guid0"
       ],
-      "copy": {
-        "count": "[length(variables('logicApps'))]",
-        "name": "logicAppCount"
-      },
       "properties": {
         "mode": "Incremental",
         "templatelink": {
@@ -469,10 +481,34 @@
         },
         "parameters": {
           "logicAppName": {
-            "value": "[variables('logicApps')[copyIndex()].name]"
+            "value": "[variables('logicApps')[0].name]"
           },
           "roleAssignmentNameId": {
-            "value": "[reference(concat(variables('guidDeploymentName'),copyIndex())).outputs.guid.value]"
+            "value": "[reference('Guid0').outputs.guid.value]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "MSIRBACOnResourceGroup1",
+      "dependsOn": [
+        "logicAppResumeDeployment",
+        "logicAppPauseDeployment",
+        "Guid1"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templatelink": {
+          "uri": "[concat(parameters('_artifactsLocation'),'nestedtemplates/logicapproleassignments.json',parameters('_artifactsLocationSASToken'))]"
+        },
+        "parameters": {
+          "logicAppName": {
+            "value": "[variables('logicApps')[1].name]"
+          },
+          "roleAssignmentNameId": {
+            "value": "[reference('Guid1').outputs.guid.value]"
           }
         }
       }
