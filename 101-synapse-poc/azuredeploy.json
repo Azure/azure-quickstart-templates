@@ -231,6 +231,7 @@
     }
   },
   "variables": {
+    "guidDeploymentName": "myGuid",
     "synapseName": "[toLower(concat(parameters('companyTla'),parameters('deploymentType')))]",
     "dlsName": "[toLower(concat('dls',parameters('companyTla'),parameters('deploymentType')))]",
     "dlsFsName": "[toLower(concat(variables('dlsName'),'fs1'))]",
@@ -247,6 +248,25 @@
     ]
   },
   "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat(variables('guidDeploymentName'),copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "guidCopy",
+        "count": "[length(variables('logicApps'))]"
+      },
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'),'guidgenerator.json',parameters('_artifactsLocationSASToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "seed": { "value": "[string(copyIndex())]" }
+        }
+      }
+    },
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-10-01",
@@ -435,9 +455,9 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-10-01",
       "name": "[concat('MSIRBACOnResourceGroup',copyIndex())]",
-      "dependsOn": [ 
+      "dependsOn": [
         "[variables('sqlPoolName')]"
-       ],
+      ],
       "copy": {
         "count": "[length(variables('logicApps'))]",
         "name": "logicAppCount"
@@ -450,6 +470,9 @@
         "parameters": {
           "logicAppName": {
             "value": "[variables('logicApps')[copyIndex()].name]"
+          },
+          "roleAssignmentNameId": {
+            "value": "[reference(concat(variables('guidDeploymentName'),copyIndex())).outputs.guid.value]"
           }
         }
       }
