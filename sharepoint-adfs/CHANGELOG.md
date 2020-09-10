@@ -2,6 +2,7 @@
 
 ## September 2020 update
 
+* Many modifications made to DSC scripts to improve their reliability, readability and consistency
 * Ensure compliance with policy CASG-DenyNSGRule100Allow
 
 ## August 2020 update
