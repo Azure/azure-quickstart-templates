@@ -37,10 +37,10 @@ This template deploys the following:
 
 ## Index
 
-- [Purpose](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#purpose)
-- [Prerequisites](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#prerequisites)
-- [Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#deploy-to-azure)
-- [Post Deployment](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#post-deployment)
+- [Purpose](https://github.com/Azure/azure-quickstart-templates/tree/master/101-synapse-poc#purpose)
+- [Prerequisites](https://github.com/Azure/azure-quickstart-templates/tree/master/101-synapse-poc#prerequisites)
+- [Deploy to Azure](https://github.com/Azure/azure-quickstart-templates/tree/master/101-synapse-poc#deploy-to-azure)
+- [Post Deployment](https://github.com/Azure/azure-quickstart-templates/tree/master/101-synapse-poc#post-deployment)
 
 ## Purpose
 
