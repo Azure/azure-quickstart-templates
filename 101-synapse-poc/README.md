@@ -1,4 +1,5 @@
 # Azure Synapse Proof-of-Concept
+
 ![Synapse Analytics](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc/images/synapse1.png)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-synapse-poc/PublicLastTestDate.svg)
