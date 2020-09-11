@@ -360,7 +360,7 @@
       {
           "type": "Microsoft.Network/publicIPAddresses",
           "apiVersion": "2019-12-01",
-          "name": "[concat(variables('vnetName'),'-ip-jump')]",
+          "name": "jumpvmPublicIP]",
           "location": "[variables('location')]",
           "dependsOn": [
               "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
@@ -1133,80 +1133,144 @@
           }
       },
       {
-          "type": "Microsoft.Resources/deployments",
-          "apiVersion": "2019-10-01",
-          "name": "ParameterizedJumpVM",
+          "type": "Microsoft.Network/networkInterfaces",
+          "apiVersion": "2019-12-01",
+          "name": "jumpvmNIC",
           "dependsOn": [
               "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+              "[resourceId('Microsoft.Network/publicIPAddresses', 'jumpvmPublicIP')]"
+          ],
+          "location": "[variables('location')]",
+          "properties": {
+              "ipConfigurations": [
+                  {
+                      "name": "ipconfig1",
+                      "properties": {
+                          "privateIPAllocationMethod": "Dynamic",
+                          "subnet": {
+                              "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetwork/subnets', variables('vnetName'), 'jumpSubnet')]"
+                          },
+                          "applicationGatewayBackendAddressPools": [],
+                          "primary": true,
+                          "privateIPAddressVersion": "IPv4",
+                          "publicIPAddress": {
+                              "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'jumpPublicIP')]"
+                          }
+                      }
+                  }
+              ],
+              "dnsSettings": {
+                  "dnsServers": []
+              },
+              "enableAcceleratedNetworking": false,
+              "enableIPForwarding": false
+          }
+      },
+      {
+          "type": "Microsoft.Compute/virtualMachines",
+          "apiVersion": "2019-07-01",
+          "name": "jumpvm",
+          "location": "[variables('location')]",
+          "dependsOn": [
               "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
-              "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vnetName'),'-ip-jump'))]",
-              "[resourceId('Microsoft.Storage/storageAccounts', variables('storageGroup'))]"
+              "[resourceId('Microsoft.Network/networkInterfaces', 'jumpvmNIC')]"
+          ],
+          "zones": [
+              "1"
           ],
           "properties": {
-              "mode": "Incremental",
-              "templateLink": {
-                  "uri": "[concat(uri(variables('artifactsLocation'), 'subtemplates/paramvm.json'), variables('sasToken'))]"
+              "hardwareProfile": {
+                  "vmSize": "Standard_B2ms"
               },
-              "parameters": {
-                  "location": {
-                      "value": "[variables('location')]"
+              "proximityPlacementGroup": {
+                  "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups'), variables('proximity')]"
+              },
+              "storageProfile": {
+                  "imageReference": "[variables('osProfile')['RH7x']['image']]",
+                  "osDisk": {
+                      "osType": "Linux",
+                      "name": "jumpvm_OsDisk",
+                      "createOption": "FromImage",
+                      "caching": "ReadWrite",
+                      "manageDisk": {
+                          "storageAccountType": "Premium_LRS"
+                      },
+                      "diskSizeGB": 64
                   },
-                  "vm_name": {
-                      "value": "jumpvm"
-                  },
-                  "vm_size": {
-                      "value": "Standard_B2ms"
-                  },
-                  "datadisk_size": {
-                      "value": 128
-                  },
-                  "datadisk_count": {
-                      "value": 1
-                  },
-                  "proximity_group_name": {
-                      "value": "[variables('proximity')]"
-                  },
-                  "ssh_pub_key": {
-                      "value": "[variables('sshKey')]"
-                  },
-                  "vnet_name": {
-                      "value": "[variables('vnetName')]"
-                  },
-                  "vnet_resource_group": {
-                      "value": "[variables('vnetResourceGroup')]"
-                  },
-                  "vnet_subnet_name": {
-                      "value": "jumpSubnet"
-                  },
-                  "os_image": {
-                      "value": "[variables('osProfile')[variables('ostag')]['image']]"
-                  },
-                  "post_install_actions": {
-                      "value":  {
+                  "copy": [
+                      {
+                          "name": "datadisks",
+                          "count": 1,
+                          "input": {
+                              "lun": "[copyIndex('datadisks')]",
+                              "name": "[concat('jumpvm_data_', copyIndex('datadisks'))]",
+                              "managedDisk": {
+                                  "storageAccountType": "Premium_LRS"
+                              },
+                              "diskSizeGB": 128,
+                              "caching": "None",
+                              "createOption": "Empty"
+                          }
+                      }
+                  ]
+              },
+              "networkProfile": {
+                  "networkInterfaces": [
+                      {
+                          "id": "[resourceId('Microsoft.Network/networkInterfaces', 'jumpvmNIC')]"
+                      }
+                  ]
+              },
+              "osProfile": {
+                  "computerName": "jumpvm",
+                  "adminUserName": "[variables('primaryUserName')]",
+                  "linuxConfiguration": {
+                      "disablePasswordAuthentication": true,
+                      "ssh": {
+                          "publicKeys": [
+                              {
+                                  "path": "/home/AzureUser/.ssh/authorized_keys",
+                                  "keyData": "[variables('sshKey')]"
+                              }
+                          ]
+                      },
+                      "provisionVMAgent": true
+                  }
+              }
+          },
+          "resources": [
+              {
+                  "type": "Microsoft.Compute/virtualMachines/extensions",
+                  "apiVersion": "2019-07-01",
+                  "name": "jumpvm/post_install_actions",
+                  "location": "[variables('location')]",
+                  "dependsOn": [
+                      "[resourceId('Microsoft.Compute/virtualMachines', 'jumpvm')]"
+                  ],
+                  "properties": {
+                      "publisher": "Microsoft.Azure.Extensions",
+                      "type": "CustomScript",
+                      "typeHandlerVersion": "2.1",
+                      "autoUpgradeMinorVersion": true,
+                      "settings": {
+                          "skipDos2Unix": false
+                      },
+                      "protectedSettings": {
                           "commandToExecute": "[ concat('set -o pipefail; ./SetupJump.sh \"', variables('primaryUserName'), '\" \"', variables('storageGroup'), '\" \"', variables('azureFilesViyaShare'), '\" \"', listKeys(variables('storageGroup'),'2019-06-01').keys[0].value, '\" \"', variables('artifactsLocation'), '\" \"', variables('sasToken'), '\" \"', variables('sasDepot'), '\" \"', variables('midtierCount'), '\" \"', variables('metadataCount'), '\" \"', variables('vaWorkerCount'), '\" \"', variables('sasPassword'), '\" \"', variables('azurePassword'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
                           "fileUris": [
                               "[concat(uri(variables('artifactsLocation'), 'scripts/SetupJump.sh'), variables('sasToken'))]"
                           ]
                       }
-                  },
-                  "enable_enhanced_networking": {
-                      "value": false
-                  },
-                  "public_ip_or_empty": {
-                      "value": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vnetName'),'-ip-jump'))]"
-                  },
-                  "loadbalancer_id_or_empty": {
-                      "value": ""
                   }
               }
-          }
+          ]
       },
       {
           "type": "Microsoft.Resources/deployments",
           "apiVersion": "2019-10-01",
           "name": "SASInstallPhase01of04",
           "dependsOn": [
-              "[resourceId('Microsoft.Resources/deployments', 'ParameterizedJumpVM')]"
+              "[resourceId('Microsoft.Resources/deployments', 'jumpvm')]"
           ],
           "properties": {
               "mode": "Incremental",

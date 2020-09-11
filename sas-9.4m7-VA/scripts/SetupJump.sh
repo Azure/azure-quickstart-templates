@@ -47,10 +47,12 @@ main() {
     downloadAllFiles
     if [[ "$OS_TYPE" == "SUSE" ]]; then
         installAnsibleSUSE
+    else
+        installAnsibleRHEL
     fi
     makeAnsibleInventory
-    waitForSasServers
-    handoverToInstallRunner
+    #waitForSasServers
+    #handoverToInstallRunner
 }
 
 mountSASRaidSUSE() {
@@ -201,6 +203,10 @@ installAnsibleSUSE() {
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
     python get-pip.py
     /usr/local/bin/pip install ansible==2.9.2
+}
+
+installAnsibleRHEL() {
+    sudo yum install -y ansible
 }
 
 makeAnsibleInventory() {
