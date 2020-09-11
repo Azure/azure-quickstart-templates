@@ -35,10 +35,10 @@ This template deploys the following:
 
 # Index
 
-- [Purpose](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#purpose)
-- [Prerequisites](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#prerequisites)
-- [Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#deploy-to-azure)
-- [Post Deployment](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc#post-deployment)
+- [Purpose](https://github.com/Azure/azure-quickstart-templates/tree/master/101-synapse-poc#purpose)
+- [Prerequisites](https://github.com/Azure/azure-quickstart-templates/tree/master/101-synapse-poc#prerequisites)
+- [Deploy to Azure](https://github.com/Azure/azure-quickstart-templates/tree/master/101-synapse-poc#deploy-to-azure)
+- [Post Deployment](https://github.com/Azure/azure-quickstart-templates/tree/master/101-synapse-poc#post-deployment)
 
 ## Purpose
 This template allows the Administrator to deploy a Proof-of-Concept environment of Azure Synapse Analytics with some pre-set parameters. This allows more time to focus on the Proof-of-Concept at hand and test the service.
