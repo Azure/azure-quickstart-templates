@@ -4,7 +4,7 @@
   "parameters": {
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-synapse-poc/"
+      "defaultValue": "[deployment().properties.templatelink.uri]"
     },
     "_artifactsLocationSASToken": {
       "type": "securestring",
@@ -12,10 +12,10 @@
     },
     "location": {
       "type": "string",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for your deployment."
-      },
-      "defaultValue": "[resourceGroup().location]"
+      }
     },
     "companyTla": {
       "type": "string",
@@ -25,29 +25,44 @@
     },
     "allowAllConnections": {
       "type": "string",
-      "allowedValues": [ "true", "false" ],
+      "allowedValues": [
+        "true",
+        "false"
+      ],
       "defaultValue": "true"
     },
     "sparkDeployment": {
       "type": "string",
       "defaultValue": "true",
-      "allowedValues": [ "true", "false" ],
+      "allowedValues": [
+        "true",
+        "false"
+      ],
       "metadata": {
         "description": "'True' deploys an Apache Spark pool as well as a SQL pool. 'False' does not deploy an Apache Spark pool."
       }
     },
     "sparkNodeSize": {
       "type": "string",
+      "defaultValue": "Medium",
+      "allowedValues": [
+        "Small",
+        "Medium",
+        "Large"
+      ],
       "metadata": {
         "description": "This parameter will determine the node size if SparkDeployment is true"
-      },
-      "defaultValue": "Medium",
-      "allowedValues": [ "Small", "Medium", "Large" ]
+      }
     },
     "deploymentType": {
       "type": "string",
-      "allowedValues": [ "devtest", "poc", "prod", "shared" ],
       "defaultValue": "poc",
+      "allowedValues": [
+        "devtest",
+        "poc",
+        "prod",
+        "shared"
+      ],
       "metadata": {
         "description": "Specify deployment type: DevTest, POC, Prod, Shared. This will also be used in the naming convention."
       }
@@ -90,16 +105,19 @@
         "description": "Choose whether you want to synchronise metadata."
       }
     },
-
     "Frequency": {
       "type": "string",
-      "metadata": "Choose whether to run schedule every day of the week, or only on weekdays",
       "defaultValue": "Weekdays",
-      "allowedValues": [ "Daily", "Weekdays" ]
+      "allowedValues": [
+        "Daily",
+        "Weekdays"
+      ],
+      "metadata": {
+        "description": "Choose whether to run schedule every day of the week, or only on weekdays"
+      }
     },
     "TIME_ZONE": {
       "type": "string",
-      "metadata": "Timezone for the schedule. Consult https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx for more information",
       "defaultValue": "Eastern Standard Time",
       "allowedValues": [
         "Dateline Standard Time",
@@ -165,11 +183,14 @@
         "Fiji Islands Standard Time",
         "New Zealand Standard Time",
         "Tonga Standard Time"
-      ]
+      ],
+      "metadata": {
+        "description": "Timezone for the schedule. Consult https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx for more information"
+      }
     },
     "ResumeTime": {
       "type": "string",
-      "metadata": "Time of day when the data warehouse will be resumed",
+      "defaultValue": "09:00 PM ( 21:00 )",
       "allowedValues": [
         "12:00 AM (  0:00 )",
         "01:00 AM (  1:00 )",
@@ -196,11 +217,13 @@
         "10:00 PM ( 22:00 )",
         "11:00 PM ( 23:00 )"
       ],
-      "defaultValue": "09:00 PM ( 21:00 )"
+      "metadata": {
+        "description": "Time of Day when the data warehouse will be resumed"
+      }
     },
     "PauseTime": {
       "type": "string",
-      "metadata": "Time of day when the data warehouse will be paused",
+      "defaultValue": "05:00 PM ( 17:00 )",
       "allowedValues": [
         "12:00 AM (  0:00 )",
         "01:00 AM (  1:00 )",
@@ -227,7 +250,9 @@
         "10:00 PM ( 22:00 )",
         "11:00 PM ( 23:00 )"
       ],
-      "defaultValue": "05:00 PM ( 17:00 )"
+      "metadata": {
+        "description": "Time of day when the data warehouse will be paused"
+      }
     }
   },
   "variables": {
@@ -238,54 +263,106 @@
     "workspaceName": "[toLower(concat(variables('synapseName'),'ws1'))]",
     "sparkPoolName": "[toLower('synasp1')]",
     "logicApps": [
-      {
-        "name": "SynapsePauseSchedule"
-      },
-      {
-        "name": "SynapseResumeSchedule"
-      }
+      "SynapsePauseSchedule",
+      "SynapseResumeSchedule"
     ]
   },
   "resources": [
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-10-01",
+      "apiVersion": "2020-06-01",
       "name": "logicAppPauseDeployment",
       "properties": {
         "mode": "Incremental",
         "templatelink": {
-          "uri": "[concat(parameters('_artifactsLocation'),'nestedtemplates/pausetemplate.json',parameters('_artifactsLocationSASToken'))]"
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/pausetemplate.json', parameters('_artifactsLocationSASToken')))]"
         },
         "parameters": {
-          "logicAppName": { "value": "[variables('logicApps')[0].name]" },
-          "Frequency": { "value": "[parameters('Frequency')]" },
-          "companyTla": { "value": "[parameters('companyTla')]" },
-          "deploymentType": { "value": "[parameters('deploymentType')]" },
-          "TIME_ZONE": { "value": "[parameters('TIME_ZONE')]" },
-          "PauseTime": { "value": "[parameters('PauseTime')]" },
-          "location": { "value": "[parameters('location')]" }
+          "logicAppName": {
+            "value": "[variables('logicApps')[0]]"
+          },
+          "Frequency": {
+            "value": "[parameters('Frequency')]"
+          },
+          "companyTla": {
+            "value": "[parameters('companyTla')]"
+          },
+          "deploymentType": {
+            "value": "[parameters('deploymentType')]"
+          },
+          "TIME_ZONE": {
+            "value": "[parameters('TIME_ZONE')]"
+          },
+          "PauseTime": {
+            "value": "[parameters('PauseTime')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
         }
       }
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-10-01",
+      "apiVersion": "2020-06-01",
       "name": "logicAppResumeDeployment",
       "properties": {
         "mode": "Incremental",
         "templatelink": {
-          "uri": "[concat(parameters('_artifactsLocation'),'nestedtemplates/resumetemplate.json',parameters('_artifactsLocationSASToken'))]"
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/resumetemplate.json', parameters('_artifactsLocationSASToken')))]"
         },
         "parameters": {
-          "logicAppName": { "value": "[variables('logicApps')[1].name]" },
-          "Frequency": { "value": "[parameters('Frequency')]" },
-          "companyTla": { "value": "[parameters('companyTla')]" },
-          "deploymentType": { "value": "[parameters('deploymentType')]" },
-          "TIME_ZONE": { "value": "[parameters('TIME_ZONE')]" },
-          "ResumeTime": { "value": "[parameters('ResumeTime')]" },
-          "location": { "value": "[parameters('location')]" }
+          "logicAppName": {
+            "value": "[variables('logicApps')[1]]"
+          },
+          "Frequency": {
+            "value": "[parameters('Frequency')]"
+          },
+          "companyTla": {
+            "value": "[parameters('companyTla')]"
+          },
+          "deploymentType": {
+            "value": "[parameters('deploymentType')]"
+          },
+          "TIME_ZONE": {
+            "value": "[parameters('TIME_ZONE')]"
+          },
+          "ResumeTime": {
+            "value": "[parameters('ResumeTime')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
         }
       }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('dlsName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "accessTier": "Hot",
+        "supportsHttpsTrafficOnly": true,
+        "isHnsEnabled": true
+      },
+      "resources": [
+        {
+          "name": "[concat('default/', variables('dlsFsName'))]",
+          "type": "blobServices/containers",
+          "apiVersion": "2019-06-01",
+          "dependsOn": [
+            "[variables('dlsName')]"
+          ],
+          "properties": {
+            "publicAccess": "None"
+          }
+        }
+      ]
     },
     {
       "type": "Microsoft.Synapse/workspaces",
@@ -295,6 +372,10 @@
       "identity": {
         "type": "SystemAssigned"
       },
+      "dependsOn": [
+        "[variables('dlsName')]",
+        "[variables('dlsFsName')]"
+      ],
       "properties": {
         "defaultDataLakeStorage": {
           "accountUrl": "[reference(variables('dlsName')).primaryEndpoints.dfs]",
@@ -340,46 +421,7 @@
             }
           }
         }
-      ],
-      "dependsOn": [ "[variables('dlsName')]", "[variables('dlsFsName')]" ]
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
-      "name": "[variables('dlsName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "StorageV2",
-      "resources": [
-        {
-          "name": "[concat('default/', variables('dlsFsName'))]",
-          "type": "blobServices/containers",
-          "apiVersion": "2019-06-01",
-          "properties": {
-            "publicAccess": "None"
-          },
-          "dependsOn": [ "[variables('dlsName')]" ]
-        }
-      ],
-      "properties": {
-        "accessTier": "Hot",
-        "supportsHttpsTrafficOnly": true,
-        "isHnsEnabled": true
-      }
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
-      "apiVersion": "2018-09-01-preview",
-      "name": "[concat(variables('dlsName'), '/Microsoft.Authorization/',  guid(uniqueString(variables('dlsName'))))]",
-      "location": "[parameters('location')]",
-      "dependsOn": [ "[variables('workspaceName')]" ],
-      "properties": {
-        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
-        "principalId": "[reference(resourceId('Microsoft.Synapse/workspaces/', variables('workspaceName')), '2019-06-01-preview', 'Full').identity.principalId]",
-        "principalType": "ServicePrincipal"
-      }
+      ]
     },
     {
       "type": "Microsoft.Synapse/workspaces/sqlPools",
@@ -389,24 +431,28 @@
       "sku": {
         "name": "[parameters('sku')]"
       },
-      "dependsOn": [ "[variables('workspaceName')]" ],
-      "resources": [
-        {
-          "condition": "[parameters('metadataSync')]",
-          "apiVersion": "2019-06-01-preview",
-          "dependsOn": [ "[variables('sqlPoolName')]" ],
-          "location": "[parameters('location')]",
-          "name": "config",
-          "properties": {
-            "Enabled": "[parameters('metadataSync')]"
-          },
-          "type": "metadataSync"
-        }
+      "dependsOn": [
+        "[variables('workspaceName')]"
       ],
       "properties": {
         "createMode": "Default",
         "collation": "SQL_Latin1_General_CP1_CI_AS"
-      }
+      },
+      "resources": [
+        {
+          "condition": "[parameters('metadataSync')]",
+          "type": "metadataSync",
+          "apiVersion": "2019-06-01-preview",
+          "name": "config",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[variables('sqlPoolName')]"
+          ],
+          "properties": {
+            "Enabled": "[parameters('metadataSync')]"
+          }
+        }
+      ]
     },
     {
       "condition": "[equals(parameters('sparkDeployment'),'true')]",
@@ -414,7 +460,9 @@
       "apiVersion": "2019-06-01-preview",
       "name": "[concat(variables('workspaceName'), '/', variables('sparkPoolName'))]",
       "location": "[parameters('location')]",
-      "dependsOn": [ "[variables('workspaceName')]" ],
+      "dependsOn": [
+        "[variables('workspaceName')]"
+      ],
       "properties": {
         "nodeCount": 5,
         "nodeSizeFamily": "MemoryOptimized",
@@ -432,24 +480,57 @@
       }
     },
     {
+      "scope": "[concat('Microsoft.Storage/storageAccounts/', variables('dlsName'))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[guid(uniqueString(variables('dlsName')))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('workspaceName')]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+        "principalId": "[reference(resourceId('Microsoft.Synapse/workspaces', variables('workspaceName')), '2019-06-01-preview', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-10-01",
-      "name": "[concat('MSIRBACOnResourceGroup',copyIndex())]",
-      "dependsOn": [ "[variables('sqlPoolName')]" ],
-      "copy": {
-        "count": "[length(variables('logicApps'))]",
-        "name": "logicAppCount"
-      },
+      "apiVersion": "2020-06-01",
+      "name": "MSIRBACOnResourceGroup0",
+      "dependsOn": [
+        "logicAppResumeDeployment",
+        "logicAppPauseDeployment"
+      ],
       "properties": {
         "mode": "Incremental",
         "templatelink": {
-          "uri": "[concat(parameters('_artifactsLocation'),'nestedtemplates/logicapproleassignments.json',parameters('_artifactsLocationSASToken'))]"
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/logicapproleassignments.json', parameters('_artifactsLocationSASToken')))]"
         },
         "parameters": {
           "logicAppName": {
-            "value": "[variables('logicApps')[copyIndex()].name]"
-          },
-          "logicAppPrincipalId": { "value": "[reference(resourceId('Microsoft.Logic/workflows', variables('logicApps')[copyIndex()].name), '2019-05-01', 'full').identity.principalId]" }
+            "value": "[variables('logicApps')[0]]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "MSIRBACOnResourceGroup1",
+      "dependsOn": [
+        "logicAppResumeDeployment",
+        "logicAppPauseDeployment"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templatelink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/logicapproleassignments.json', parameters('_artifactsLocationSASToken')))]"
+        },
+        "parameters": {
+          "logicAppName": {
+            "value": "[variables('logicApps')[1]]"
+          }
         }
       }
     }

@@ -37,26 +37,18 @@
         "description": "Database administrator password"
       }
     },
-    "databaseDTU": {
-      "type": "int",
-      "allowedValues": [
-        50,
-        100
-      ],
-      "defaultValue": 50,
-      "metadata": {
-        "description": "Azure database for MySQL pricing tier"
-      }
-    },
     "databaseSkuName": {
       "type": "string",
-      "allowedValues": [
-        "MYSQLB100",
-        "MYSQLB50"
-      ],
-      "defaultValue": "MYSQLB100",
+      "defaultValue": "GP_Gen5_8",
       "metadata": {
-        "description": "Azure database for MySQL sku name: MySQL Basic 50 DTU (MYSQLB50)or 100 DTU (MYSQLB100)"
+        "description": "Azure database for MySQL sku name"
+      }
+    },
+    "databaseSkuFamily": {
+      "type": "string",
+      "defaultValue": "Gen5",
+      "metadata": {
+        "description": "Azure database for MySQL sku family"
       }
     },
     "databaseSkuSizeMB": {
@@ -67,15 +59,12 @@
       ],
       "defaultValue": 51200,
       "metadata": {
-        "description": "Azure database for MySQL Sku Size "
+        "description": "Azure database for MySQL Sku Size"
       }
     },
     "databaseSkuTier": {
       "type": "string",
-      "allowedValues": [
-        "Basic"
-      ],
-      "defaultValue": "Basic",
+      "defaultValue": "GeneralPurpose",
       "metadata": {
         "description": "Azure database for MySQL pricing tier"
       }
@@ -120,23 +109,25 @@
     "subnetName": "appGatewaySubnet",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
-    "applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways',variables('applicationGatewayName'))]",
     "databaseName": "[concat(parameters('siteName'), 'db')]",
     "serverName": "[concat(parameters('siteName'), 'mysqlserver')]",
     "hostingPlanName": "[concat(parameters('siteName'), 'serviceplan')]"
   },
   "resources": [
     {
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "publicIPAllocationMethod": "Dynamic"
+        "publicIPAllocationMethod": "Static"
+      },
+      "sku": {
+        "name": "Standard"
       }
     },
     {
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -157,20 +148,20 @@
       }
     },
     {
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2020-05-01",
       "name": "[variables('applicationGatewayName')]",
       "type": "Microsoft.Network/applicationGateways",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Web/sites/', parameters('siteName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Web/sites/', parameters('siteName'))]"
       ],
       "properties": {
         "sku": {
-          "name": "Standard_Medium",
-          "tier": "Standard",
-          "capacity": "2"
+          "name": "Standard_v2",
+          "tier": "Standard_v2",
+          "capacity": 2
         },
         "gatewayIPConfigurations": [
           {
@@ -222,7 +213,7 @@
               "PickHostNameFromBackendAddress": true,
               "ProbeEnabled": true,
               "Probe": {
-                "id": "[concat(variables('applicationGatewayID'), '/probes/Probe1')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/probes/',variables('applicationGatewayName'), 'Probe1')]"
               }
             }
           }
@@ -232,13 +223,12 @@
             "name": "appGatewayHttpListener",
             "properties": {
               "FrontendIPConfiguration": {
-                "Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations/',variables('applicationGatewayName'), 'appGatewayFrontendIP')]"
               },
               "FrontendPort": {
-                "Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts/',variables('applicationGatewayName'), 'appGatewayFrontendPort')]"
               },
-              "Protocol": "Http",
-              "SslCertificate": null
+              "Protocol": "Http"
             }
           }
         ],
@@ -248,13 +238,13 @@
             "properties": {
               "RuleType": "Basic",
               "httpListener": {
-                "id": "[concat(variables('applicationGatewayID'), '/httpListeners/appGatewayHttpListener')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners/',variables('applicationGatewayName'), 'appGatewayHttpListener')]"
               },
               "backendAddressPool": {
-                "id": "[concat(variables('applicationGatewayID'), '/backendAddressPools/appGatewayBackendPool')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools/',variables('applicationGatewayName'), 'appGatewayBackendPool')]"
               },
               "backendHttpSettings": {
-                "id": "[concat(variables('applicationGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection/',variables('applicationGatewayName'), 'appGatewayBackendHttpSettings')]"
               }
             }
           }
@@ -276,7 +266,7 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2020-06-01",
       "name": "fetchIpAddress",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
@@ -296,7 +286,7 @@
       }
     },
     {
-      "apiVersion": "2016-03-01",
+      "apiVersion": "2019-08-01",
       "name": "[variables('hostingPlanName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[parameters('location')]",
@@ -312,7 +302,7 @@
       }
     },
     {
-      "apiVersion": "2016-08-01",
+      "apiVersion": "2019-08-01",
       "name": "[parameters('siteName')]",
       "type": "Microsoft.Web/sites",
       "location": "[parameters('location')]",
@@ -325,7 +315,7 @@
       },
       "resources": [
         {
-          "apiVersion": "2016-08-01",
+          "apiVersion": "2019-08-01",
           "type": "config",
           "name": "connectionstrings",
           "dependsOn": [
@@ -339,7 +329,7 @@
           }
         },
         {
-          "apiVersion": "2016-08-01",
+          "apiVersion": "2019-08-01",
           "type": "config",
           "name": "web",
           "dependsOn": [
@@ -349,8 +339,7 @@
           "properties": {
             "ipSecurityRestrictions": [
               {
-                "ipAddress": "[reference('fetchIpAddress').outputs.ipAddress.value]",
-                "subnetMask": "255.255.255.255"
+                "ipAddress": "[concat(reference('fetchIpAddress').outputs.ipAddress.value,'/32')]"
               }
             ]
           }
@@ -358,10 +347,11 @@
       ]
     },
     {
-      "apiVersion": "2017-04-30-preview",
+      "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
       "name": "[variables('serverName')]",
       "properties": {
+        "createMode": "Default",
         "version": "[parameters('mysqlVersion')]",
         "administratorLogin": "[parameters('administratorLogin')]",
         "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
@@ -370,17 +360,16 @@
       "sku": {
         "name": "[parameters('databaseSkuName')]",
         "tier": "[parameters('databaseSkuTier')]",
-        "capacity": "[parameters('databaseDTU')]",
         "size": "[parameters('databaseSkuSizeMB')]",
-        "family": "SkuFamily"
+        "family": "[parameters('databaseSkuFamily')]"
       },
       "type": "Microsoft.DBforMySQL/servers",
       "resources": [
         {
           "type": "firewallrules",
-          "apiVersion": "2017-04-30-preview",
+          "apiVersion": "2017-12-01",
           "dependsOn": [
-            "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
+            "[resourceId('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
           ],
           "location": "[parameters('location')]",
           "name": "[concat(variables('serverName'),'firewall')]",
@@ -392,13 +381,13 @@
         {
           "name": "[variables('databaseName')]",
           "type": "databases",
-          "apiVersion": "2017-04-30-preview",
+          "apiVersion": "2017-12-01",
           "properties": {
             "charset": "utf8",
             "collation": "utf8_general_ci"
           },
           "dependsOn": [
-            "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
+            "[resourceId('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
           ]
         }
       ]
