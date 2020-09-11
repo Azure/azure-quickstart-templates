@@ -114,6 +114,12 @@
     }
   },
   "variables": {
+    "deployOmsName": "deploy-oms",
+    "deployVNetName": "deploy-vnet",
+    "deployNsgName": "deploy-nsg",
+    "deployPipName": "deploy-pip",
+    "deployNicName": "deploy-nic",
+    "deployVmName": "deploy-vm",
     "omsWorkspaceName": "[concat('DDOS-Attack','-',uniqueString(resourceGroup().id))]",
     "omsSolutions": [
       "Security",
@@ -173,7 +179,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-06-01",
-      "name": "deploy-ddos-attack-oms-resource",
+      "name": "[variables('deployOmsName')]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -201,7 +207,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-06-01",
-      "name": "[concat(parameters('vnetName'),'-','-resource')]",
+      "name": "[variables('deployVnetName')]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -229,7 +235,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-06-01",
-      "name": "[concat(variables('nsgName'),'-','-resource')]",
+      "name": "[variables('deployNsgName')]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -254,7 +260,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-06-01",
-      "name": "[concat(variables('vmName'),'-pip','-resource')]",
+      "name": "[variables('deployPipName')]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -282,11 +288,11 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-06-01",
-      "name": "[concat(variables('vmName'),'-nic','-resource')]",
+      "name": "[variables('deployNicName')]",
       "dependsOn": [
-        "[concat(variables('vmName'),'-pip','-resource')]",
-        "[concat(variables('nsgName'),'-','-resource')]",
-        "[concat(parameters('vnetName'),'-','-resource')]"
+        "[variables('deployPipName')]",
+        "[variables('deployNsgName')]",
+        "[variables('deployVnetName')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -318,9 +324,9 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-06-01",
-      "name": "[concat('deploy-',variables('vmName'),'-resource')]",
+      "name": "[variables('deployVmName')]",
       "dependsOn": [
-        "[concat(variables('vmName'),'-nic','-resource')]"
+        "[variables('deployNicName')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -355,8 +361,8 @@
       "name": "[concat(concat(variables('vmName')),'/OMSExtension')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('deploy-',variables('vmName'),'-resource')]",
-        "deploy-ddos-attack-oms-resource"
+        "[variables('deployVmName')]",
+        "[variables('deployOmsName')]"
       ],
       "properties": {
         "publisher": "Microsoft.EnterpriseCloud.Monitoring",
@@ -377,8 +383,8 @@
       "name": "[concat(variables('vmName'),'/DSCExtension')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('deploy-',variables('vmName'),'-resource')]",
-        "deploy-ddos-attack-oms-resource"
+        "[variables('deployVmName')]",
+        "[variables('deployOmsName')]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -394,8 +400,7 @@
           "configurationArguments": {
             "MachineName": "[variables('vmName')]"
           }
-        },
-        "protectedSettings": {}
+        }
       }
     },
     {
@@ -404,7 +409,7 @@
       "name": "DDoS-attack-metric-alert-rule",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat(variables('vmName'),'-pip','-resource')]"
+        "[variables('deployPipName')]"
       ],
       "properties": {
         "name": "DDoS attack alert",
