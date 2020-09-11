@@ -21,10 +21,9 @@ The following scenarios are examples of when you can use Azure Stream Analytics:
 - Remote monitoring and predictive maintenance of high value assets
 - Real-time analytics on Point of Sale data for inventory control and anomaly detection
 
-see here:
+For more information, see the following article:
 
 - [Introduction to Stream Analytics](https://docs.microsoft.com/azure/stream-analytics/stream-analytics-introduction)
-- [Microsoft Stream Analytics](https://docs.microsoft.com/azure/stream-analytics/stream-analytics-create-a-job)
 - [Microsoft Learn Stream Analytics Modules](https://docs.microsoft.com/learn/browse/?term=Stream%20Analytics)
-
-
+- [Quickstart: Create a Stream Analytics job by using the Azure portal](https://docs.microsoft.com/azure/stream-analytics/stream-analytics-create-a-job)
+- [Quickstart: Create an Azure Stream Analytics job by using an ARM template](https://docs.microsoft.com/azure/stream-analytics/quick-create-azure-resource-manager)
