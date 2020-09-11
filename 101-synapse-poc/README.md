@@ -76,4 +76,3 @@ You can also see that the Approval State is Pending. The owner of the target res
 Further information can be found:
 
 [Create a Managed private endpoint to your data source](https://docs.microsoft.com/en-us/azure/synapse-analytics/security/how-to-create-managed-private-endpoints)
-
