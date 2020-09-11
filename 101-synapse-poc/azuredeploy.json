@@ -93,13 +93,17 @@
 
     "Frequency": {
       "type": "string",
-      "metadata": "Choose whether to run schedule every day of the week, or only on weekdays",
+      "metadata": {
+        "description": "Choose whether to run schedule every day of the week, or only on weekdays"
+      },
       "defaultValue": "Weekdays",
       "allowedValues": [ "Daily", "Weekdays" ]
     },
     "TIME_ZONE": {
       "type": "string",
-      "metadata": "Timezone for the schedule. Consult https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx for more information",
+      "metadata": {
+        "description": "Timezone for the schedule. Consult https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx for more information"
+      },
       "defaultValue": "Eastern Standard Time",
       "allowedValues": [
         "Dateline Standard Time",
@@ -169,7 +173,9 @@
     },
     "ResumeTime": {
       "type": "string",
-      "metadata": "Time of day when the data warehouse will be resumed",
+      "metadata": {
+        "description": "Time of Day when the data warehouse will be resumed"
+      },
       "allowedValues": [
         "12:00 AM (  0:00 )",
         "01:00 AM (  1:00 )",
@@ -200,7 +206,9 @@
     },
     "PauseTime": {
       "type": "string",
-      "metadata": "Time of day when the data warehouse will be paused",
+      "metadata": {
+        "description": "Time of day when the data warehouse will be paused"
+      },
       "allowedValues": [
         "12:00 AM (  0:00 )",
         "01:00 AM (  1:00 )",
@@ -434,12 +442,11 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-10-01",
-      "name": "[concat('MSIRBACOnResourceGroup',copyIndex())]",
-      "dependsOn": [ "[variables('sqlPoolName')]" ],
-      "copy": {
-        "count": "[length(variables('logicApps'))]",
-        "name": "logicAppCount"
-      },
+      "name": "MSIRBACOnResourceGroup0",
+      "dependsOn": [
+        "logicAppResumeDeployment",
+        "logicAppPauseDeployment"
+      ],
       "properties": {
         "mode": "Incremental",
         "templatelink": {
@@ -447,9 +454,28 @@
         },
         "parameters": {
           "logicAppName": {
-            "value": "[variables('logicApps')[copyIndex()].name]"
-          },
-          "logicAppPrincipalId": { "value": "[reference(resourceId('Microsoft.Logic/workflows', variables('logicApps')[copyIndex()].name), '2019-05-01', 'full').identity.principalId]" }
+            "value": "[variables('logicApps')[0].name]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "MSIRBACOnResourceGroup1",
+      "dependsOn": [
+        "logicAppResumeDeployment",
+        "logicAppPauseDeployment"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templatelink": {
+          "uri": "[concat(parameters('_artifactsLocation'),'nestedtemplates/logicapproleassignments.json',parameters('_artifactsLocationSASToken'))]"
+        },
+        "parameters": {
+          "logicAppName": {
+            "value": "[variables('logicApps')[1].name]"
+          }
         }
       }
     }
