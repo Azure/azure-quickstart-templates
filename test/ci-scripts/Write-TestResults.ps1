@@ -74,8 +74,12 @@ $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("true"), "PASS"
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("false"), "FAIL"
 
 if($ValidationType -eq "Manual"){
-    $FairfaxDeployment = "Manual Test"
-    $PublicDeployment = "Manual Test"
+    if($FairfaxDeployment -ne "Not Supported"){
+        $FairfaxDeployment = "Manual Test"
+    }
+    if($PublicDeployment -ne "Not Supported"){
+        $PublicDeployment = "Manual Test"
+    }
 }
 
 # if the record doesn't exist, this is probably a new sample and needs to be added (or we just cleaned the table)
