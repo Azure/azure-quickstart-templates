@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2020-05-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "virtualNetworkName": {
@@ -47,6 +47,20 @@
       "metadata": {
         "description": "Number of public IP addresses for the Azure Firewall"
       }
+    },
+    "jumpBoxSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS1_v2",
+      "metadata": {
+        "description": "Size of the virtual machine."
+      }
+    },
+    "serverSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS1_v2",
+      "metadata": {
+        "description": "Size of the virtual machine."
+      }
     }
   },
   "variables": {
@@ -69,7 +83,6 @@
     "firewallName": "firewall1",
     "publicIPNamePrefix": "publicIP",
     "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
-    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPNamePrefix'))]",
     "azureFirewallSubnetJSON": "[json(format('{{\"id\": \"{0}\"}}', variables('azureFirewallSubnetId')))]",
     "copy": [
       {
@@ -80,7 +93,7 @@
           "properties": {
             "subnet": "[if(equals(copyIndex('azureFirewallIpConfigurations'), 0), variables('azureFirewallSubnetJSON'), json('null'))]",
             "publicIPAddress": {
-              "id": "[concat(variables('azureFirewallPublicIpId'), add(copyIndex('azureFirewallIpConfigurations'), 1))]"
+              "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPNamePrefix'), add(copyIndex('azureFirewallIpConfigurations'), 1)))]"
             }
           }
         }
@@ -285,7 +298,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_DS1_v2"
+          "vmSize": "[parameters('jumpBoxSize')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -331,7 +344,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_DS1_v2"
+          "vmSize": "[parameters('serverSize')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -391,11 +404,11 @@
                   "name": "appRule1",
                   "protocols": [
                     {
-                      "port": "80",
+                      "port": 80,
                       "protocolType": "http"
                     },
                     {
-                      "port": "443",
+                      "port": 443,
                       "protocolType": "https"
                     }
                   ],
