@@ -1,0 +1,373 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logStorageName": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of the Log Storage Account"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+              "description": "Target Location for deployment"
+            }
+        },
+        "migrateProjectName": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of the Migrate Project."
+            }
+        },
+        "serviceBusNameSpace": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of the Service Bus Namespace"
+            }
+        },
+        "gatewayStorageName": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of the Gateway Storage Account"
+            }
+        },
+        "keyVaultName": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of the Key Vault"
+            }
+        },
+        "lockName": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of the Lock being applied"
+            }
+        },
+        "tenantId": {
+            "type": "string",
+            "defaultValue": "[subscription().tenantId]",
+            "metadata": {
+              "description": "Tenant ID of the Azure Account"
+            }
+        },
+        "subscriptionId": {
+            "type": "string",
+            "defaultValue": "[subscription().subscriptionId]",
+            "metadata": {
+              "description": "Subscription Id of the Azure Account"
+            }
+        },
+        "hypervObjectId": {
+            "type": "string",
+            "metadata": {
+              "description": "Object Id of the Hyper V Manager App"
+            }
+        },
+        "userObjectId": {
+            "type": "string",
+            "metadata": {
+              "description": "Object Id of the user"
+            }
+        },
+        "projectObjectId": {
+            "type": "string",
+            "metadata": {
+              "description": "Object Id of the Migrate Project"
+            }
+        },
+        "resourceGroupName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+              "description": "Name of the Resource Group"
+            }
+        }
+    },
+    "variables": {
+        "lsaLockName": "[concat(parameters('logStorageName'), '/Microsoft.Authorization/', parameters('lockName'))]",
+        "gwaLockName": "[concat(parameters('gatewayStorageName'), '/Microsoft.Authorization/', parameters('lockName'))]",
+        "kvLockName": "[concat(parameters('keyVaultName'), '/Microsoft.Authorization/', parameters('lockName'))]",
+        "sbLockName": "[concat(parameters('serviceBusNameSpace'), '/Microsoft.Authorization/', parameters('lockName'))]",
+        "lsaLockDependsOnId": "[concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('resourceGroupName'), '/providers/Microsoft.Storage/storageAccounts/', parameters('logStorageName'))]",
+        "gwaLockDependsOnId": "[concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('resourceGroupName'), '/providers/Microsoft.Storage/storageAccounts/', parameters('gatewayStorageName'))]",
+        "kvLockDependsOnId": "[concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('resourceGroupName'), '/providers/Microsoft.Storage/storageAccounts/', parameters('keyVaultName'))]",
+        "sbLockDependsOnId": "[concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('resourceGroupName'), '/providers/Microsoft.Storage/storageAccounts/', parameters('serviceBusNameSpace'))]"
+    },
+    "functions": [  ],
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2017-10-01",
+            "name": "[parameters('logStorageName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "tags": {
+                "Migrate Project": "[parameters('migrateProjectName')]"
+            },
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {
+                "encryption": {
+                    "services": {
+                        "blob": {
+                            "enabled": true
+                        },
+                        "file": {
+                            "enabled": true
+                        },
+                        "table": {
+                            "enabled": true
+                        },
+                        "queue": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "supportsHttpsTrafficOnly": true
+            }
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces",
+            "apiVersion": "2017-04-01",
+            "name": "[parameters('serviceBusNameSpace')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "tags": {
+                "Migrate Project": "[parameters('migrateProjectName')]"
+            },
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard"
+            },
+            "kind": "ServiceBusNameSpace",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2017-10-01",
+            "name": "[parameters('gatewayStorageName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "tags": {
+                "Migrate Project": "[parameters('migrateProjectName')]"
+            },
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {
+                "encryption": {
+                    "services": {
+                        "blob": {
+                            "enabled": true
+                        },
+                        "file": {
+                            "enabled": true
+                        },
+                        "table": {
+                            "enabled": true
+                        },
+                        "queue": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "supportsHttpsTrafficOnly": true
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2016-10-01",
+            "name": "[parameters('keyVaultName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "tags": {
+                "Migrate Project": "[parameters('migrateProjectName')]"
+            },
+            "kind": "KeyVault",
+            "properties": {
+                "sku": {
+                    "family": "A",
+                    "name": "standard"
+                },
+                "tenantId": "[parameters('tenantId')]",
+                "enabledForDeployment": true,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": true,
+                "accessPolicies": [
+                    {
+                        "tenantId": "[parameters('tenantId')]",
+                        "objectId": "[parameters('hypervObjectId')]",
+                        "permissions": {
+                            "keys": [
+                                "Get",
+                                "List",
+                                "Create",
+                                "Update",
+                                "Delete"
+                            ],
+                            "secrets": [
+                                "Get",
+                                "Set",
+                                "List",
+                                "Delete"
+                            ],
+                            "certificates": [
+                                "Get",
+                                "List"
+                            ],
+                            "storage": [
+                                "get",
+                                "list",
+                                "delete",
+                                "set",
+                                "update",
+                                "regeneratekey",
+                                "getsas",
+                                "listsas",
+                                "deletesas",
+                                "setsas",
+                                "recover",
+                                "backup",
+                                "restore",
+                                "purge"
+                            ]
+                        }
+                    },
+                    {
+                        "tenantId": "[parameters('tenantId')]",
+                        "objectId": "[parameters('userObjectId')]",
+                        "permissions": {
+                            "keys": [
+                                "Get",
+                                "List",
+                                "Create",
+                                "Update",
+                                "Delete"
+                            ],
+                            "secrets": [
+                                "Get",
+                                "Set",
+                                "List",
+                                "Delete"
+                            ],
+                            "certificates": [
+                                "Get",
+                                "List"
+                            ],
+                            "storage": [
+                                "get",
+                                "list",
+                                "delete",
+                                "set",
+                                "update",
+                                "regeneratekey",
+                                "getsas",
+                                "listsas",
+                                "deletesas",
+                                "setsas",
+                                "recover",
+                                "backup",
+                                "restore",
+                                "purge"
+                            ]
+                        }
+                    },
+                    {
+                        "tenantId": "[parameters('tenantId')]",
+                        "objectId": "[parameters('projectObjectId')]",
+                        "permissions": {
+                            "keys": [
+                                "Get",
+                                "List",
+                                "Create",
+                                "Update",
+                                "Delete"
+                            ],
+                            "secrets": [
+                                "Get",
+                                "Set",
+                                "List",
+                                "Delete"
+                            ],
+                            "certificates": [
+                                "Get",
+                                "List"
+                            ],
+                            "storage": [
+                                "get",
+                                "list",
+                                "delete",
+                                "set",
+                                "update",
+                                "regeneratekey",
+                                "getsas",
+                                "listsas",
+                                "deletesas",
+                                "setsas",
+                                "recover",
+                                "backup",
+                                "restore",
+                                "purge"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/providers/locks",
+            "apiVersion": "2016-09-01",
+            "name": "[variables('lsaLockName')]",
+            "dependsOn": [
+                "[variables('lsaLockDependsOnId')]"
+            ],
+            "properties": {
+                "level": "CanNotDelete",
+                "notes": "This is in use by Azure Migrate project"
+            }
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces/providers/locks",
+            "apiVersion": "2016-09-01",
+            "name": "[variables('sbLockName')]",
+            "dependsOn": [
+                "[variables('sbLockDependsOnId')]"
+            ],
+            "properties": {
+                "level": "CanNotDelete",
+                "notes": "This is in use by Azure Migrate project"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/providers/locks",
+            "apiVersion": "2016-09-01",
+            "name": "[variables('gwaLockName')]",
+            "dependsOn": [
+                "[variables('gwaLockDependsOnId')]"
+            ],
+            "properties": {
+                "level": "CanNotDelete",
+                "notes": "This is in use by Azure Migrate project"
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/providers/locks",
+            "apiVersion": "2016-09-01",
+            "name": "[variables('kvLockName')]",
+            "dependsOn": [
+                "[variables('kvLockDependsOnId')]"
+            ],
+            "properties": {
+                "level": "CanNotDelete",
+                "notes": "This is in use by Azure Migrate project"
+            }
+        }   
+    ]
+  }
