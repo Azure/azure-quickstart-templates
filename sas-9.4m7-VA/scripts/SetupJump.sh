@@ -3,28 +3,38 @@ set -e
 set -v
 set -x
 
-cat << EOF > /tmp/sasinstall.env
-export INSTALL_USER="${1}"
-export azure_storage_account="${2}"
-export azure_storage_files_share="${3}"
-export azure_storage_files_password="${4}"
-export https_location="${5}"
-export https_sas_key="${6}"
-export depot_uri="${7}"
-export count_of_midtier="${8}"
-export count_of_metadata="${9}"
-export count_of_va_worker="${10}"
-export sasPassword="${11}"
-export azurePassword="${12}"
+if [[ -z "$SCRIPT_PHASE" ]]; then
+  SCRIPT_PHASE="$1"
+fi
 
+if [[ "$SCRIPT_PHASE" -eq "1" ]]; then
+cat << EOF > /tmp/sasinstall.env
+export INSTALL_USER="${2}"
+export azure_storage_account="${3}"
+export azure_storage_files_share="${4}"
+export azure_storage_files_password="${5}"
+export https_location="${6}"
+export https_sas_key="${7}"
+export depot_uri="${8}"
+export count_of_midtier="${9}"
+export count_of_metadata="${10}"
+export count_of_va_worker="${11}"
+export sasPassword="${12}"
+export azurePassword="${13}"
+export PUBLIC_DNS_NAME="${14}"
 
 export DIRECTORY_NFS_SHARE="/sasshare"
 export INSTALL_DIR="/sas/install"
 export ANSIBLE_DIR="\${INSTALL_DIR}/ansible"
 export INVENTORY_FILE="\${ANSIBLE_DIR}/inventory.ini"
 export DEPOT_DUMMY_FOR_QUICK_EXIT_VALUE=""
-EOF
 
+export DIRECTORY_SSL_JSON_FILE="\${INSTALL_DIR}/setup/ssl"
+export FILE_SSL_JSON_FILE="\${DIRECTORY_SSL_JSON_FILE}/loadbalancer.pfx.json"
+EOF
+else
+  . /tmp/sasinstall.env
+fi
 
 main() {
     echo "NON JUMP RUN"
@@ -51,8 +61,7 @@ main() {
         installAnsibleRHEL
     fi
     makeAnsibleInventory
-    #waitForSasServers
-    #handoverToInstallRunner
+    createCertificates
 }
 
 mountSASRaidSUSE() {
@@ -206,7 +215,9 @@ installAnsibleSUSE() {
 }
 
 installAnsibleRHEL() {
-    sudo yum install -y ansible
+  curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+  sudo python get-pip.py
+  sudo pip install 'ansible==2.7.10'
 }
 
 makeAnsibleInventory() {
@@ -218,9 +229,9 @@ makeAnsibleInventory() {
         echo "metadata-${i} ansible_connection=ssh" >> $INVENTORY_FILE
     done
     for (( i=0; i<$count_of_va_worker; i++)); do
-        echo "visual-analytics-worker-${i} ansible_connection=ssh" >> $INVENTORY_FILE
+        echo "vaworker-${i} ansible_connection=ssh" >> $INVENTORY_FILE
     done
-    echo "visual-analytics-controller ansible_connection=ssh" >> $INVENTORY_FILE
+    echo "vacontroller ansible_connection=ssh" >> $INVENTORY_FILE
     cat  <<END >>$INVENTORY_FILE
 [sas_servers:children]
 midtier_servers
@@ -238,15 +249,24 @@ END
     done
     echo "[va_workers]" >> $INVENTORY_FILE
     for (( i=0; i<$count_of_va_worker; i++)); do
-        echo "visual-analytics-worker-${i}" >> $INVENTORY_FILE
+        echo "vaworker-${i}" >> $INVENTORY_FILE
     done
     echo "[va_controllers]" >> $INVENTORY_FILE
-    echo "visual-analytics-controller" >> $INVENTORY_FILE
+    echo "vacontroller" >> $INVENTORY_FILE
+}
+
+createCertificates() {
+  echo "Create loadbalancer certificate files"
+  pushd ${ANSIBLE_DIR}
+  export ANSIBLE_LOG_PATH=/tmp/create_load_balancer_cert.log
+  time ansible-playbook -v create_load_balancer_cert.yaml -i ${INVENTORY_FILE} -e "SSL_HOSTNAME=${PUBLIC_DNS_NAME}" -e "SSL_WORKING_FOLDER=${DIRECTORY_SSL_JSON_FILE}" -e "ARM_CERTIFICATE_FILE=${FILE_SSL_JSON_FILE}"
+  popd
 }
 
 waitForSasServers() {
     su - ${INSTALL_USER}<<END
     cd ${ANSIBLE_DIR}
+    export ANSIBLE_LOG_PATH=/tmp/step01_wait_for_servers.log
     ansible-playbook -i ${INVENTORY_FILE} -v step01_wait_for_servers.yaml
 END
 }
@@ -261,5 +281,13 @@ END
 
 ## First things first, we are going to map all the inputs to variables
 #createEnvironmentFile $@
-
-main
+if [[ "$SCRIPT_PHASE" -eq "1" ]]; then
+  main
+elif [[ "$SCRIPT_PHASE" -eq "2" ]]; then
+  cat "${FILE_SSL_JSON_FILE}.1" | tr -d '\n'
+elif [[ "$SCRIPT_PHASE" -eq "3" ]]; then
+  cat "${FILE_SSL_JSON_FILE}.2" | tr -d '\n'
+elif [[ "$SCRIPT_PHASE" -eq "4" ]]; then
+  waitForSasServers
+  handoverToInstallRunner
+fi

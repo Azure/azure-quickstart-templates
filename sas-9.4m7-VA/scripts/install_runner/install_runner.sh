@@ -28,6 +28,7 @@ echo "ExternalPassword: '${azurePassword}'" >>/tmp/ansible_vars.yaml
 
 INVENTORY_FILE="inventory.ini"
 cd $ANSIBLE_DIR
+export ANSIBLE_LOG_PATH=/tmp/step02_install_os_updates.log
 ansible-playbook -i ${INVENTORY_FILE} -v step02_install_os_updates.yaml
 
 # in order to get around the azure ci testing, we need
@@ -36,8 +37,10 @@ if [[ "$depot_uri" == "$DEPOT_DUMMY_FOR_QUICK_EXIT_VALUE" ]]; then
 	exit 0
 fi
 
+export ANSIBLE_LOG_PATH=/tmp/step03_prereqs.log
 ansible-playbook -i ${INVENTORY_FILE} -vvv step03_prereqs.yaml
 
+export ANSIBLE_LOG_PATH=/tmp/step04_download_mirror_and_licenses.log
 ansible-playbook -i ${INVENTORY_FILE} \
 	-e "DEPOT_DOWNLOAD_LOCATION=$depot_uri" \
 	-e "LICENCE_DOWNLOAD_LOCATION=$license_file_uri" \
@@ -48,6 +51,20 @@ ansible-playbook -i ${INVENTORY_FILE} \
 SID_FILE=$(ls /sasshare/depot/sid_files)
 echo "sid_file_name: $SID_FILE" >>/tmp/ansible_vars.yaml
 
+cp /sas/install/plan.xml /sasshare/plan.xml
+
+export ANSIBLE_LOG_PATH=/tmp/step05_preinstall_sas.log
 ansible-playbook -i ${INVENTORY_FILE} -vvv step05_preinstall_sas.yaml
 
-ansible-playbook -i ${INVENTORY_FILE} -vvv step06_install_sas.yaml
+mkdir /sasshare/responsefiles
+mkdir /sasshare/scripts
+cp /sas/install/scripts/run_install_as_user.sh /sasshare/scripts/
+mkdir /tmp/responsefiles
+
+export ANSIBLE_LOG_PATH=/tmp/step06_update_responsefiles.log
+ansible-playbook -i ${INVENTORY_FILE} -vvv step06_update_responsefiles.yaml
+
+cp /tmp/responsefiles/* /sasshare/responsefiles
+
+export ANSIBLE_LOG_PATH=/tmp/step07_install_sas.log
+ansible-playbook -i ${INVENTORY_FILE} -vvv step07_install_sas.yaml
