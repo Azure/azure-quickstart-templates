@@ -1,0 +1,98 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "metadata": {
+        "comment1": "Deploys 1 HSM to an existing VNet with subnets for ERGW and HSMs", 
+        "comment2": "ERGW subnet must be of type 'GatewaySubnet'",
+        "comment3": "HSM subnet must have delegation set for 'Microsoft.HardwareSecurityModules/dedicatedHSMs'",
+        "comment4": "Single HSM deployment set to stamp2 - 1 HSM is not HA, testing only"
+    },
+	"parameters": {
+		"ResourcePrefix": {
+			"type": "string"
+		},
+		"ExistingVNetName": {
+			"type": "string"
+		},
+		"ExistingHSMSubnetName": {
+			"type": "string"
+		},
+		"HSMResourceName": {
+			"type": "string"
+		}
+	},
+	"variables": {
+		"namingPrefix": "[concat(parameters('ResourcePrefix'),'-')]",
+		"networkApiVersion": "2018-07-01",
+		"ERGatewayName": "[concat(variables('namingPrefix'), 'ergw')]",
+		"ERGatewayPublicIPAddressName": "[concat(variables('namingPrefix'), 'ergwpip')]",
+		"vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('ExistingVNetName'))]",
+		"ERGatewaySubnetID": "[concat(variables('vnetID'),'/subnets/GatewaySubnet')]",
+		"hsmSubnetID": "[concat(variables('vnetID'),'/subnets/', parameters('ExistingHSMSubnetName'))]"
+	},
+	"resources": [
+		{
+			"apiVersion": "[variables('networkApiVersion')]",
+			"type": "Microsoft.Network/publicIPAddresses",
+			"name": "[variables('ERGatewayPublicIPAddressName')]",
+			"location": "[resourceGroup().location]",
+			"properties": {
+				"publicIPAllocationMethod": "Dynamic"
+			}
+		}, 
+		{
+			"apiVersion": "[variables('networkApiVersion')]",
+			"type": "Microsoft.Network/virtualNetworkGateways",
+			"name": "[variables('ERGatewayName')]",
+			"location": "[resourceGroup().location]",
+			"dependsOn": [
+				"[concat('Microsoft.Network/publicIPAddresses/', variables('ERGatewayPublicIPAddressName'))]"
+			],
+			"properties": {
+				"ipConfigurations": [{
+						"properties": {
+							"privateIPAllocationMethod": "Dynamic",
+							"subnet": {
+								"id": "[variables('ERGatewaySubnetID')]"
+							},
+							"publicIPAddress": {
+								"id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('ERGatewayPublicIPAddressName'))]"
+							}
+						},
+						"name": "[concat(variables('ERGatewayName'),'-ipconfig', '0')]"
+					}
+				],
+				"sku": {
+					"name": "Standard",
+					"tier": "Standard",
+					"capacity": 2
+				},
+				"gatewayType": "ExpressRoute"
+			}
+		}, 
+		{
+			"type": "Microsoft.HardwareSecurityModules/dedicatedHSMs",
+			"name": "[parameters('HSMResourceName')]",
+			"location": "[resourceGroup().location]",
+			"dependsOn": [
+				"[concat('Microsoft.Network/virtualNetworkGateways/', variables('ERGatewayName'))]"
+			],
+			"apiVersion": "2018-10-31-preview",
+			"tags": {
+				"resourceType": "Hsm",
+				"Environment": "prod"
+			},
+			"Sku": {
+				"Name": "SafeNet Luna Network HSM A790"
+			},
+			"properties": {
+				"NetworkProfile": {
+					"Subnet": {
+						"id": "[variables('hsmSubnetID')]"
+					}
+				},
+				"StampId": "stamp2"
+			}
+		}
+	]
+}
