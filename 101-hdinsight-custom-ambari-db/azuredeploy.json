@@ -140,40 +140,24 @@
       }
    },
    "variables": {
-      "sqldbname": "[concat(parameters('existingSQLServerName'), '/', parameters('newMetastoreDBName'))]",
-      "nestedtemplate_name": "sqlDbDeployment"
+      "sqldbname": "[concat(parameters('existingSQLServerName'), '/', parameters('newMetastoreDBName'))]"
    },
    "resources": [
       {
-         "apiVersion": "2020-06-01",
-         "name": "[variables('nestedtemplate_name')]",
-         "type": "Microsoft.Resources/deployments",
-         "resourceGroup": "[parameters('existingSQLServerResourceGroup')]",
+         "type": "Microsoft.Sql/servers/databases",
+         "apiVersion": "2018-06-01-preview",
+         "location": "[parameters('location')]",
+         "name": "[variables('sqldbname')]",
          "properties": {
-            "mode": "Incremental",
-            "template": {
-               "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-               "contentVersion": "1.0.0.0",
-               "resources": [
-                  {
-                     "type": "Microsoft.Sql/servers/databases",
-                     "apiVersion": "2019-06-01-preview",
-                     "location": "[parameters('location')]",
-                     "name": "[variables('sqldbname')]",
-                     "properties": {
-                        "collation": "SQL_Latin1_General_CP1_CI_AS",
-                        "maxSizeBytes": "268435456000",
-                        "zoneRedundant": false,
-                        "readScale": "Disabled",
-                        "readReplicaCount": 0
-                     },
-                     "sku": {
-                        "name": "S2",
-                        "tier": "Standard"
-                     }
-                  }
-               ]
-            }
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "maxSizeBytes": "268435456000",
+            "zoneRedundant": false,
+            "readScale": "Disabled",
+            "readReplicaCount": 0
+         },
+         "sku": {
+            "name": "S2",
+            "tier": "Standard"
          }
       },
       {
@@ -182,7 +166,7 @@
          "location": "[parameters('location')]",
          "apiVersion": "2018-06-01-preview",
          "dependsOn": [
-            "[resourceId('Microsoft.Resources/deployments/', variables('nestedtemplate_name'))]"
+            "[variables('sqldbname')]"
          ],
          "properties": {
             "clusterVersion": "[parameters('clusterVersion')]",
@@ -197,7 +181,7 @@
                   },
                   "hive-site": {
                      "javax.jdo.option.ConnectionDriverName": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
-                     "javax.jdo.option.ConnectionURL": "[concat('jdbc:sqlserver://', reference(resourceId(parameters('existingSQLServerResourceGroup'), 'Microsoft.Sql/servers', parameters('existingSQLServerName')), '2019-06-01-preview').fullyQualifiedDomainName, ';database=',parameters('newMetastoreDBName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
+                     "javax.jdo.option.ConnectionURL": "[concat('jdbc:sqlserver://', reference(resourceId(parameters('existingSQLServerResourceGroup'), 'Microsoft.Sql/servers', parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName, ';database=',parameters('newMetastoreDBName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
                      "javax.jdo.option.ConnectionUserName": "[parameters('existingSQLServerUsername')]",
                      "javax.jdo.option.ConnectionPassword": "[parameters('existingSQLServerPassword')]"
                   },
@@ -206,11 +190,11 @@
                      "hive_database_name": "[parameters('newMetastoreDBName')]",
                      "hive_database_type": "mssql",
                      "hive_existing_mssql_server_database": "[parameters('newMetastoreDBName')]",
-                     "hive_existing_mssql_server_host": "[reference(resourceId(parameters('existingSQLServerResourceGroup'),'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2019-06-01-preview').fullyQualifiedDomainName]",
-                     "hive_hostname": "[reference(resourceId(parameters('existingSQLServerResourceGroup'),'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2019-06-01-preview').fullyQualifiedDomainName]"
+                     "hive_existing_mssql_server_host": "[reference(resourceId(parameters('existingSQLServerResourceGroup'),'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName]",
+                     "hive_hostname": "[reference(resourceId(parameters('existingSQLServerResourceGroup'),'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName]"
                   },
                   "ambari-conf": {
-                     "database-server": "[reference(resourceId(parameters('existingSQLServerResourceGroup'),'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2019-06-01-preview').fullyQualifiedDomainName]",
+                     "database-server": "[reference(resourceId(parameters('existingSQLServerResourceGroup'),'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName]",
                      "database-name": "[parameters('newMetastoreDBName')]",
                      "database-user-name": "[parameters('existingSQLServerUsername')]",
                      "database-user-password": "[parameters('existingSQLServerPassword')]"
@@ -220,10 +204,10 @@
             "storageProfile": {
                "storageaccounts": [
                   {
-                     "name": "[replace(replace(reference(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts/', parameters('existingClusterStorageAccountName')), '2019-06-01').primaryEndpoints.blob,'https:',''),'/','')]",
+                     "name": "[replace(replace(reference(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts/', parameters('existingClusterStorageAccountName')), '2018-02-01').primaryEndpoints.blob,'https:',''),'/','')]",
                      "isDefault": true,
                      "container": "[parameters('newOrExistingClusterStorageContainerName')]",
-                     "key": "[listKeys(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('existingClusterStorageAccountName')), '2019-06-01').keys[0].value]"
+                     "key": "[listKeys(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('existingClusterStorageAccountName')), '2018-02-01').keys[0].value]"
                   }
                ]
             },
