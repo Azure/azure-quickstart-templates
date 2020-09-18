@@ -1,4 +1,4 @@
-# Jenkins on Azure (SSH key) [![Build Status](http://devops-ci.westcentralus.cloudapp.azure.com/job/qs/job/101-jenkins-with-SSH-public-key/badge/icon)](http://devops-ci.westcentralus.cloudapp.azure.com/blue/organizations/jenkins/qs%2F101-jenkins-with-SSH-public-key/activity)
+# Jenkins on Azure (SSH key)
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/PublicDeployment.svg" />&nbsp;
