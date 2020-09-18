@@ -7,6 +7,7 @@
 * Disable the first run wizard of IE on SharePoint VMs
 * Set new tabs to open "about:blank" in IE on SharePoint VMs
 * Move resources to avoid error on ExtendMainWebApp
+* Remove customization of SPDiagnosticLoggingSettings
 
 ## September 2020 update
 
