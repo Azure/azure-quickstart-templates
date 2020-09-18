@@ -8,6 +8,13 @@
                 "description": "Specifies the name of the App Configuration store."
             }
         },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the Azure location where the app configuration store should be created."
+            }
+        },
         "keyValueNames": {
             "type": "array",
             "defaultValue": [ "myKey", "myKey$myLabel" ],
@@ -42,18 +49,22 @@
     },
     "resources": [
         {
-            "name": "[parameters('configStoreName')]",
             "type": "Microsoft.AppConfiguration/configurationStores",
             "apiVersion": "2020-07-01-preview",
-            "location": "[resourceGroup().location]",
+            "name": "[parameters('configStoreName')]",
+            "location": "[parameters('location')]",
             "sku": {
                 "name": "standard"
             }
         },
         {
-            "name": "[concat(parameters('configStoreName'), '/', parameters('keyValueNames')[copyIndex()])]",
             "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
             "apiVersion": "2020-07-01-preview",
+            "name": "[concat(parameters('configStoreName'), '/', parameters('keyValueNames')[copyIndex()])]",
+            "copy": {
+                "name": "keyValueCopy",
+                "count": "[length(parameters('keyValueNames'))]"
+            },
             "dependsOn": [
                 "[parameters('configStoreName')]"
             ],
@@ -61,10 +72,6 @@
                 "value": "[parameters('keyValueValues')[copyIndex()]]",
                 "contentType": "[parameters('contentType')]",
                 "tags": "[parameters('tags')]"
-            },
-            "copy": {
-                "name": "keyValueCopy",
-                "count": "[length(parameters('keyValueNames'))]"
             }
         }
     ],
