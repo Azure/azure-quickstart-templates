@@ -18,6 +18,7 @@ If you are new to Azure Machine Learning, see:
 
 - [Azure Machine Learning service](https://azure.microsoft.com/services/machine-learning-service/)
 - [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
+- [Azure Machine Learning compute instance documentation](https://docs.microsoft.com/en-us/azure/machine-learning/concept-compute-instance)
 - [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
 
