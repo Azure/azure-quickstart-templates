@@ -262,7 +262,7 @@
         "description": "Azure Databrick workspace to be linked to the workspace"
       }
     },
-    "confidential_data":{
+    "confidential_data": {
       "type": "string",
       "defaultValue": "false",
       "allowedValues": [
@@ -273,7 +273,7 @@
         "description": "Specifies that the Azure Machine Learning workspace holds highly confidential data."
       }
     },
-    "encryption_status":{
+    "encryption_status": {
       "type": "string",
       "defaultValue": "Disabled",
       "allowedValues": [
@@ -284,14 +284,14 @@
         "description": "Specifies if the Azure Machine Learning workspace should be encrypted with customer managed key."
       }
     },
-    "cmk_keyvault":{
+    "cmk_keyvault": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
         "description": "Specifies the customer managed keyVault arm id. Required when encryption is enabled"
       }
     },
-    "resource_cmk_uri":{
+    "resource_cmk_uri": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
@@ -346,10 +346,10 @@
     {
       "condition": "[equals(parameters('vnetOption'), 'new')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2020-06-01",
       "name": "[parameters('vnetName')]",
-      "tags": "[parameters('tagValues')]",
       "location": "[parameters('location')]",
+      "tags": "[parameters('tagValues')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": "[parameters('addressPrefixes')]"
@@ -361,7 +361,7 @@
     {
       "condition": "[equals(parameters('subnetOption'), 'new')]",
       "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2020-06-01",
       "name": "[concat(parameters('vnetName'), '/', parameters('subnetName'))]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
@@ -386,7 +386,7 @@
     {
       "condition": "[and(equals(parameters('subnetOption'), 'existing'), not(equals(parameters('privateEndpointType'), 'none')))]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-10-01",
+      "apiVersion": "2020-06-01",
       "name": "UpdateSubnetPolicy",
       "resourceGroup": "[parameters('vnetResourceGroupName')]",
       "properties": {
@@ -397,9 +397,9 @@
           "resources": [
             {
               "type": "Microsoft.Network/virtualNetworks/subnets",
-              "apiVersion": "2019-09-01",
+              "apiVersion": "2020-06-01",
               "name": "[concat(parameters('vnetName'), '/', parameters('subnetName'))]",
-              "properties": "[if(and(equals(parameters('subnetOption'), 'existing'), not(equals(parameters('privateEndpointType'), 'none'))), union(reference(variables('subnet'), '2019-09-01'), variables('subnetPolicyForPE')), json('null'))]"
+              "properties": "[if(and(equals(parameters('subnetOption'), 'existing'), not(equals(parameters('privateEndpointType'), 'none'))), union(reference(variables('subnet'), '2020-06-01'), variables('subnetPolicyForPE')), json('null'))]"
             }
           ]
         }
@@ -408,17 +408,17 @@
     {
       "condition": "[equals(parameters('storageAccountOption'), 'new')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2019-06-01",
       "name": "[parameters('storageAccountName')]",
-      "tags": "[parameters('tagValues')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
-      ],
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('storageAccountType')]"
       },
       "kind": "StorageV2",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+      ],
+      "tags": "[parameters('tagValues')]",
       "properties": {
         "encryption": {
           "services": {
@@ -439,12 +439,12 @@
       "condition": "[equals(parameters('keyVaultOption'), 'new')]",
       "type": "Microsoft.KeyVault/vaults",
       "apiVersion": "2019-09-01",
+      "name": "[parameters('keyVaultName')]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
       ],
-      "name": "[parameters('keyVaultName')]",
       "tags": "[parameters('tagValues')]",
-      "location": "[parameters('location')]",
       "properties": {
         "tenantId": "[variables('tenantId')]",
         "sku": {
@@ -458,16 +458,16 @@
     {
       "condition": "[equals(parameters('containerRegistryOption'), 'new')]",
       "type": "Microsoft.ContainerRegistry/registries",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2019-12-01-preview",
       "name": "[parameters('containerRegistryName')]",
-      "tags": "[parameters('tagValues')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
-      ],
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('containerRegistrySku')]"
       },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+      ],
+      "tags": "[parameters('tagValues')]",
       "properties": {
         "adminUserEnabled": true,
         "networkRuleSet": "[if(equals(parameters('containerRegistryBehindVNet'), 'true'), variables('networkRuleSetBehindVNet'), json('null'))]"
@@ -476,34 +476,34 @@
     {
       "condition": "[equals(parameters('applicationInsightsOption'), 'new')]",
       "type": "Microsoft.Insights/components",
-      "apiVersion": "2018-05-01-preview",
+      "apiVersion": "2020-02-02-preview",
       "name": "[parameters('applicationInsightsName')]",
-      "tags": "[parameters('tagValues')]",
       "location": "[if(equals(parameters('location'),'westcentralus'),'southcentralus',parameters('location'))]",
       "kind": "web",
+      "tags": "[parameters('tagValues')]",
       "properties": {
         "Application_Type": "web"
       }
     },
     {
       "type": "Microsoft.MachineLearningServices/workspaces",
-      "apiVersion": "2020-04-01",
+      "apiVersion": "2020-09-01-preview",
       "name": "[parameters('workspaceName')]",
-      "tags": "[parameters('tagValues')]",
       "location": "[parameters('location')]",
+      "sku": {
+        "tier": "[parameters('sku')]",
+        "name": "[parameters('sku')]"
+      },
+      "identity": {
+        "type": "systemAssigned"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
         "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]",
         "[resourceId('Microsoft.ContainerRegistry/registries', parameters('containerRegistryName'))]"
       ],
-      "identity": {
-        "type": "systemAssigned"
-      },
-      "sku": {
-        "tier": "[parameters('sku')]",
-        "name": "[parameters('sku')]"
-      },
+      "tags": "[parameters('tagValues')]",
       "properties": {
         "friendlyName": "[parameters('workspaceName')]",
         "storageAccount": "[variables('storageAccount')]",
@@ -523,7 +523,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-10-01",
+      "apiVersion": "2020-06-01",
       "name": "DeployPrivateEndpoints",
       "resourceGroup": "[parameters('vnetResourceGroupName')]",
       "dependsOn": [
@@ -538,11 +538,11 @@
           "resources": [
             {
               "condition": "[variables('enablePE')]",
-              "apiVersion": "2020-04-01",
-              "name": "[concat(parameters('workspaceName'), '-PrivateEndpoint')]",
               "type": "Microsoft.Network/privateEndpoints",
-              "tags": "[parameters('tagValues')]",
+              "apiVersion": "2020-06-01",
+              "name": "[concat(parameters('workspaceName'), '-PrivateEndpoint')]",
               "location": "[parameters('vnetLocation')]",
+              "tags": "[parameters('tagValues')]",
               "properties": {
                 "privateLinkServiceConnections": "[if(equals(parameters('privateEndpointType'), 'AutoApproval'), variables('defaultPEConnections'), json('null'))]",
                 "manualPrivateLinkServiceConnections": "[if(equals(parameters('privateEndpointType'), 'ManualApproval'), variables('defaultPEConnections'), json('null'))]",
@@ -554,38 +554,38 @@
             {
               "condition": "[equals(parameters('privateEndpointType'), 'AutoApproval')]",
               "type": "Microsoft.Network/privateDnsZones",
-              "apiVersion": "2018-09-01",
+              "apiVersion": "2020-01-01",
               "name": "privatelink.api.azureml.ms",
-              "tags": "[parameters('tagValues')]",
+              "location": "global",
               "dependsOn": [
                 "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
               ],
-              "location": "global",
+              "tags": "[parameters('tagValues')]",
               "properties": {}
             },
             {
               "condition": "[equals(parameters('privateEndpointType'), 'AutoApproval')]",
               "type": "Microsoft.Network/privateDnsZones",
-              "apiVersion": "2018-09-01",
+              "apiVersion": "2020-01-01",
               "name": "privatelink.notebooks.azure.net",
-              "tags": "[parameters('tagValues')]",
+              "location": "global",
               "dependsOn": [
                 "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
               ],
-              "location": "global",
+              "tags": "[parameters('tagValues')]",
               "properties": {}
             },
             {
               "condition": "[equals(parameters('privateEndpointType'), 'AutoApproval')]",
               "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-              "apiVersion": "2018-09-01",
+              "apiVersion": "2020-01-01",
               "name": "[concat('privatelink.api.azureml.ms', '/', uniqueString(variables('vnet')))]",
-              "tags": "[parameters('tagValues')]",
               "location": "global",
               "dependsOn": [
                 "[resourceid(parameters('vnetResourceGroupName'), 'Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]",
                 "privatelink.api.azureml.ms"
               ],
+              "tags": "[parameters('tagValues')]",
               "properties": {
                 "virtualNetwork": {
                   "id": "[variables('vnet')]"
@@ -596,14 +596,14 @@
             {
               "condition": "[equals(parameters('privateEndpointType'), 'AutoApproval')]",
               "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-              "apiVersion": "2018-09-01",
+              "apiVersion": "2020-01-01",
               "name": "[concat('privatelink.notebooks.azure.net', '/', uniqueString(variables('vnet')))]",
-              "tags": "[parameters('tagValues')]",
               "location": "global",
               "dependsOn": [
                 "[resourceid(parameters('vnetResourceGroupName'), 'Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]",
                 "privatelink.notebooks.azure.net"
               ],
+              "tags": "[parameters('tagValues')]",
               "properties": {
                 "virtualNetwork": {
                   "id": "[variables('vnet')]"
@@ -614,7 +614,7 @@
             {
               "condition": "[equals(parameters('privateEndpointType'), 'AutoApproval')]",
               "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-              "apiVersion": "2020-03-01",
+              "apiVersion": "2020-06-01",
               "name": "[concat(variables('privateEndpointName'), '/', 'default')]",
               "location": "[parameters('vnetLocation')]",
               "dependsOn": [
