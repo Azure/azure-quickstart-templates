@@ -19,7 +19,9 @@ This template creates Azure NetApp Files account along with setting up a capacit
 
 Active Directory infrastructure setup with one or more DNS servers from the AD domain (usually the Domain Controllers) available in the same virtual network where you're setting up Azure NetApp Files. If you want to setup an Active Directory test environment, please refer to [Create a new Windows VM and create a new AD Forest, Domain and DC for a quick setup](https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain#create-a-new-windows-vm-and-create-a-new-ad-forest-domain-and-dc), then you can work on the vnet that gets created to setup the subnet requirements for ANF.
 
-**Notes**: Use the same admin username and password you choose in this deployment for next step.
+**Notes**: 
+1.Due to QuickStart template CI requirements, we must provide a prereqs folder which can be ignored or deleted after cloning this repository.
+1.Use the same admin username and password you choose in this deployment for next step.
 
 ## Sample overview and deployed resources
 
