@@ -4,41 +4,41 @@ $logpath = $ProvisionToolPath+"\InstallClientLog.txt"
 $ConfigurationFile = Join-Path -Path $ProvisionToolPath -ChildPath "$Role.json"
 $Configuration = Get-Content -Path $ConfigurationFile | ConvertFrom-Json
 
+#Install Client
 $Configuration.InstallClient.Status = 'Running'
 $Configuration.InstallClient.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 
-$DomainUserName = $CMUser
-$SiteCode = $Role
-
-$ProviderMachineName = $env:COMPUTERNAME+"."+$DomainFullName # SMS Provider machine name
-$DPMPMachineName = $DPMPName +"." + $DomainFullName
-
-# Customizations
-$initParams = @{}
-if($ENV:SMS_ADMIN_UI_PATH -eq $null)
-{
-    $ENV:SMS_ADMIN_UI_PATH = "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\i386"
-}
-
+"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Start running install client script." | Out-File -Append $logpath
+$key = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
+$subKey =  $key.OpenSubKey("SOFTWARE\Microsoft\ConfigMgr10\Setup")
+$uiInstallPath = $subKey.GetValue("UI Installation Directory")
+$modulePath = $uiInstallPath+"bin\ConfigurationManager.psd1"
 # Import the ConfigurationManager.psd1 module 
 if((Get-Module ConfigurationManager) -eq $null) {
-    Import-Module "$($ENV:SMS_ADMIN_UI_PATH)\..\ConfigurationManager.psd1" @initParams
+    Import-Module $modulePath
 }
+$key = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry64)
+$subKey =  $key.OpenSubKey("SOFTWARE\Microsoft\SMS\Identification")
+$SiteCode =  $subKey.GetValue("Site Code")
+$DPMPMachineName = $DPMPName +"." + $DomainFullName
+$initParams = @{}
 
+$ProviderMachineName = $env:COMPUTERNAME+"."+$DomainFullName # SMS Provider machine name
 # Connect to the site's drive if it is not already present
 "[$(Get-Date -format HH:mm:ss)] Setting PS Drive..." | Out-File -Append $logpath
-
 New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
+
 while((Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyContinue) -eq $null) 
 {
-    "[$(Get-Date -format HH:mm:ss)] Failed ,retry in 10s. Please wait." | Out-File -Append $logpath
+    "[$(Get-Date -format HH:mm:ss)] Retry in 10s to set PS Drive. Please wait." | Out-File -Append $logpath
     Start-Sleep -Seconds 10
     New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
 }
 
-# Set the current location to be the site code.
 Set-Location "$($SiteCode):\" @initParams
+
+Get-CMManagementPoint -SiteSystemServerName $DPMPMachineName
 
 "[$(Get-Date -format HH:mm:ss)] Setting system descovery..." | Out-File -Append $logpath
 $DomainName = $DomainFullName.split('.')[0]
@@ -68,6 +68,7 @@ Add-CMBoundaryToGroup -BoundaryName Client -BoundaryGroupName $SiteCode
 $machinelist = (get-cmdevice -CollectionName "all systems").Name
 while($machinelist -notcontains $ClientName)
 {
+    Invoke-CMDeviceCollectionUpdate -Name "all systems"
     "[$(Get-Date -format HH:mm:ss)] Waiting for client appear in all systems collection." | Out-File -Append $logpath
     Start-Sleep -Seconds 20
     $machinelist = (get-cmdevice -CollectionName "all systems").Name
