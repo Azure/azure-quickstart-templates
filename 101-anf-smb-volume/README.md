@@ -26,7 +26,7 @@ Active Directory infrastructure setup with one or more DNS servers from the AD d
 ## Sample overview and deployed resources
 
 The following resources are deployed as part of the solution:
-1. Add delegated subnet to the existing VNET (created in the previous prerequisites section)
+1. Add delegated subnet to the existing VNET (created in the previous prerequisites section).
 1. Azure NetApp Files account is deployed.
 1. Active Directory connection is created.
 1. A Capacity Pool is created into the ANF account.
