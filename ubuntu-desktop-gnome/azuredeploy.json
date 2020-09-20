@@ -66,7 +66,6 @@
     "wgetCommandPostfix": " > /var/log/azure/firstinstall.log 2>&1 &'",
     "commandPrefix": "/bin/bash -c '",
     "virtualNetworkName": "VNET",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "subnetName": "Subnet",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
@@ -74,9 +73,6 @@
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
     "storageAccountType": "Standard_LRS",
     "nodesLbName": "nodeslb",
-    "nodesLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('nodesLbName'))]",
-    "nodesLbIPConfigName": "NodesLBFrontEnd",
-    "nodesLbIPConfigID": "[concat(variables('nodesLbID'),'/frontendIPConfigurations/', variables('nodesLbIPConfigName'))]",
     "nodesLbBackendPoolName": "node-pool",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
@@ -194,16 +190,16 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[concat(split(variables('subnetPrefix'),'0/24')[0], '100')]",
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('nodesLbID'), '/backendAddressPools/', variables('nodesLbBackendPoolName'))]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('nodesLbName'), variables('nodesLbBackendPoolName'))]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('nodesLbID'),'/inboundNatRules/SSH-',variables('vmName'))]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('nodesLbName'), concat('SSH-',variables('vmName')) )]"
                 }
               ]
             }
@@ -222,10 +218,10 @@
       "properties": {
         "frontendIPConfigurations": [
           {
-            "name": "[variables('nodesLbIPConfigName')]",
+            "name": "NodesLBFrontEnd",
             "properties": {
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               }
             }
           }
@@ -240,7 +236,7 @@
             "name": "[concat('SSH-',variables('vmName'))]",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('nodesLbIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('nodesLbName'), 'NodesLBFrontEnd')]"
               },
               "protocol": "Tcp",
               "frontendPort": 22,
@@ -258,7 +254,7 @@
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('vmName'), '-nic')]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('vmName'), '-nic'))]",
         "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetNodes'))]"
       ],
       "properties": {
