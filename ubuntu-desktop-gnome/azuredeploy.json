@@ -24,17 +24,6 @@
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_D2s_v3",
-      "allowedValues": [
-        "Standard_B1ms",
-        "Standard_B1s",
-        "Standard_B2ms",
-        "Standard_B4ms",
-        "Standard_D2s_v3",
-        "Standard_D4s_v3",
-        "Standard_DS1_v2",
-        "Standard_DS2_v2",
-        "Standard_DS3_v2"
-      ],
       "metadata": {
         "description": "The VM role size of the jump box"
       }
@@ -69,7 +58,7 @@
     "availabilitySetNodes": "avail-set",
     "osImagePublisher": "Canonical",
     "osImageOffer": "UbuntuServer",
-    "osImageSKU": "14.04.5-LTS",
+    "osImageSKU": "18.04-LTS",
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
     "customScriptLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop-gnome/",
@@ -84,7 +73,6 @@
     "nsgName": "node-nsg",
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
     "storageAccountType": "Standard_LRS",
-    "vhdBlobContainer": "vhds",
     "nodesLbName": "nodeslb",
     "nodesLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('nodesLbName'))]",
     "nodesLbIPConfigName": "NodesLBFrontEnd",
@@ -106,14 +94,15 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "StorageV2"
     },
     {
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetNodes')]",
       "location": "[parameters('location')]",
@@ -126,7 +115,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -138,7 +127,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -165,7 +154,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgName')]",
       "location": "[parameters('location')]",
@@ -189,13 +178,13 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmName'), '-nic')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('nodesLbName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('nodesLbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -223,12 +212,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "name": "[variables('nodesLbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -246,8 +235,6 @@
             "name": "[variables('nodesLbBackendPoolName')]"
           }
         ],
-        "probes": [],
-        "loadBalancingRules": [],
         "inboundNatRules": [
           {
             "name": "[concat('SSH-',variables('vmName'))]",
@@ -265,14 +252,14 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('vmName'), '-nic')]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetNodes'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('vmName'), '-nic')]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetNodes'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -312,10 +299,10 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'), '/configuremaster')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
