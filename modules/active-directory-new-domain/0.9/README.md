@@ -30,6 +30,8 @@ This is an experimental module at the moment...
 | _artifactsLocationSasToken | securestring | No | The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated.|
 | location | string | No | Specifies the Azure location where the resources will be created. |
 | virtualMachineName | string | No | The name of the AD Virtual Machine.|
+| virtualNetworkName | string | No | The name of the virtualNetwork.|
+| subnetName | string | No | The name of the subnet.|
 | virtualNetworkAddressRange | string | No | Virtual network address range.|
 | privateIPAddress  | string | No | Private IP Address.|
 | subnetRange  | string | No | Subnet IP range.|
@@ -38,7 +40,13 @@ This is an experimental module at the moment...
 
 | Name | Type | Description |
 | :------------- | :----------: | :------------- |
-| vaultName | string | The name of the KeyVault. |
-| location | string | The resource location of the gallery. |
+| dnsIpAddress | string | The IP address of the DNS server. The value of the privateIpAddress parameter. |
+| domainName | string | The FQDN of the domain. The value of the domainName parameter. |
+| virtualNetworkSubscriptionId | string | SubscriptionId of the virtualNetwork. The value of subscription().subscriptionId. |
+| virtualNetworkResourceGroupName | string | Name of the resourceGroup for the virtualNetwork.  The value of resourceGroup().name |
+| virtualNetworkName | string | Name of the virtualNetwork.  The value of the virtualNetworkName parameter. |
+| virtualNetworkAddressPrefixes | array | Address ranges for the virtualNetwork. The value of the virtualNetworkAddressRanges parameter. |
+| ... | string | ... |
+
 
 ```apiVersion: n/a```
