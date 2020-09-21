@@ -8,6 +8,7 @@
 * Set new tabs to open "about:blank" in IE on SharePoint VMs
 * Move resources to avoid error on ExtendMainWebApp
 * Remove customization of SPDiagnosticLoggingSettings
+* Update apiVersion of Microsoft.DevTestLab/schedules to 2018-10-15-preview
 
 ## September 2020 update
 
