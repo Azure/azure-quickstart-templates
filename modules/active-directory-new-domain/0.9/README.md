@@ -1,4 +1,4 @@
-# Create a new Windows VM and create a new AD Forest, Domain and DC
+# Create an AD Forest, Domain and DC on an Azure VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/modules/active-directory-new-domain/0.9/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/modules/active-directory-new-domain/0.9/PublicDeployment.svg)
@@ -46,7 +46,6 @@ This is an experimental module at the moment...
 | virtualNetworkResourceGroupName | string | Name of the resourceGroup for the virtualNetwork.  The value of resourceGroup().name |
 | virtualNetworkName | string | Name of the virtualNetwork.  The value of the virtualNetworkName parameter. |
 | virtualNetworkAddressPrefixes | array | Address ranges for the virtualNetwork. The value of the virtualNetworkAddressRanges parameter. |
-| ... | string | ... |
 
 
 ```apiVersion: n/a```
