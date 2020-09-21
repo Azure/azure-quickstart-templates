@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "location": {
@@ -54,15 +54,15 @@
     "resources": [
         {
             "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2018-08-01",
+            "apiVersion": "2019-11-01",
             "location": "[parameters('location')]",
             "name": "[parameters('managedInstanceNsgName')]",
             "properties": {
                 "securityRules": [
                     {
-                        "name": "allow-management-outbound-80",
+                        "name": "allow-management-outbound",
                         "properties": {
-                            "description": "Allow outbound TCP traffic on port 80",
+                            "description": "Allow outbound management TCP traffic",
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
                             "sourceAddressPrefix": "*",
@@ -71,7 +71,6 @@
                             "priority": 110,
                             "direction": "Outbound",
                             "destinationPortRanges": [
-                                "80",
                                 "443",
                                 "12000"
                             ]
@@ -83,8 +82,8 @@
                             "description": "Management ports for the Managed Instance",
                             "protocol": "TCP",
                             "sourcePortRange": "*",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
+                            "sourceAddressPrefix": "SqlManagement",
+                            "destinationAddressPrefix": "[parameters('managedInstanceSubnetAddressRange')]",
                             "access": "Allow",
                             "priority": 100,
                             "direction": "Inbound",
@@ -133,7 +132,7 @@
                             "sourceAddressPrefix": "AzureLoadBalancer",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 120,
+                            "priority": 140,
                             "direction": "Inbound"
                         }
                     }
@@ -142,7 +141,7 @@
         },
         {
             "type": "Microsoft.Network/routeTables",
-            "apiVersion": "2018-11-01",
+            "apiVersion": "2019-11-01",
             "name": "[parameters('managedInstanceRouteTableName')]",
             "location": "[parameters('location')]",
             "tags": {
@@ -166,7 +165,7 @@
         },
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2018-11-01",
+            "apiVersion": "2019-11-01",
             "name": "[parameters('vnetResourceName')]",
             "location": "[parameters('location')]",
             "tags": {
@@ -192,7 +191,15 @@
                             },
                             "networkSecurityGroup": {
                                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('managedInstanceNSGName'))]"
-                            }
+                            },
+                            "delegations": [
+                                {
+                                    "properties": {
+                                    "serviceName": "Microsoft.Sql/managedInstances"
+                                    },
+                                    "name": "[concat(parameters('managedInstanceSubnetName'),'-delegation')]"
+                                }
+                            ]
                         }
                     }
                 ]

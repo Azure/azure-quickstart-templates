@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "skuName": {
@@ -27,6 +27,7 @@
       "type": "int",
       "defaultValue": 1,
       "minValue": 1,
+      "maxValue": 3,
       "metadata": {
         "description": "Describes plan's instance count"
       }
@@ -65,7 +66,7 @@
       "tags": {
         "displayName": "SqlServer"
       },
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2020-02-02-preview",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
@@ -79,7 +80,7 @@
           "tags": {
             "displayName": "Database"
           },
-          "apiVersion": "2015-01-01",
+          "apiVersion": "2020-02-02-preview",
           "dependsOn": [
             "[variables('sqlserverName')]"
           ],
@@ -92,7 +93,7 @@
         },
         {
           "type": "firewallrules",
-          "apiVersion": "2014-04-01",
+          "apiVersion": "2020-02-02-preview",
           "dependsOn": [
             "[variables('sqlserverName')]"
           ],
@@ -106,7 +107,7 @@
       ]
     },
     {
-      "apiVersion": "2016-03-01",
+      "apiVersion": "2019-08-01",
       "name": "[variables('hostingPlanName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[parameters('location')]",
@@ -122,7 +123,7 @@
       }
     },
     {
-      "apiVersion": "2016-03-01",
+      "apiVersion": "2019-08-01",
       "name": "[variables('webSiteName')]",
       "type": "Microsoft.Web/sites",
       "location": "[parameters('location')]",
@@ -139,7 +140,7 @@
       },
       "resources": [
         {
-          "apiVersion": "2016-03-01",
+          "apiVersion": "2019-08-01",
           "type": "config",
           "name": "connectionstrings",
           "dependsOn": [
@@ -147,7 +148,7 @@
           ],
           "properties": {
             "DefaultConnection": {
-              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('databaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ';Password=', parameters('sqlAdministratorLoginPassword'), ';')]",
+              "value": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('databaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', reference(resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ';Password=', parameters('sqlAdministratorLoginPassword'), ';')]",
               "type": "SQLAzure"
             }
           }
@@ -155,212 +156,10 @@
       ]
     },
     {
-      "apiVersion": "2015-04-01",
-      "name": "[concat(variables('hostingPlanName'), '-', resourceGroup().name)]",
-      "type": "Microsoft.Insights/autoscalesettings",
-      "location": "[parameters('location')]",
-      "tags": {
-        "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName')))]": "Resource",
-        "displayName": "AutoScaleSettings"
-      },
-      "dependsOn": [
-        "[variables('hostingPlanName')]"
-      ],
-      "properties": {
-        "profiles": [
-          {
-            "name": "Default",
-            "capacity": {
-              "minimum": 1,
-              "maximum": 2,
-              "default": 1
-            },
-            "rules": [
-              {
-                "metricTrigger": {
-                  "metricName": "CpuPercentage",
-                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-                  "timeGrain": "PT1M",
-                  "statistic": "Average",
-                  "timeWindow": "PT10M",
-                  "timeAggregation": "Average",
-                  "operator": "GreaterThan",
-                  "threshold": 80.0
-                },
-                "scaleAction": {
-                  "direction": "Increase",
-                  "type": "ChangeCount",
-                  "value": 1,
-                  "cooldown": "PT10M"
-                }
-              },
-              {
-                "metricTrigger": {
-                  "metricName": "CpuPercentage",
-                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-                  "timeGrain": "PT1M",
-                  "statistic": "Average",
-                  "timeWindow": "PT1H",
-                  "timeAggregation": "Average",
-                  "operator": "LessThan",
-                  "threshold": 60.0
-                },
-                "scaleAction": {
-                  "direction": "Decrease",
-                  "type": "ChangeCount",
-                  "value": 1,
-                  "cooldown": "PT1H"
-                }
-              }
-            ]
-          }
-        ],
-        "enabled": false,
-        "name": "[concat(variables('hostingPlanName'), '-', resourceGroup().name)]",
-        "targetResourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
-      }
-    },
-    {
-      "apiVersion": "2015-04-01",
-      "name": "[concat('ServerErrors ', variables('webSiteName'))]",
-      "type": "Microsoft.Insights/alertrules",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[variables('webSiteName')]"
-      ],
-      "tags": {
-        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', variables('webSiteName')))]": "Resource",
-        "displayName": "ServerErrorsAlertRule"
-      },
-      "properties": {
-        "name": "[concat('ServerErrors ', variables('webSiteName'))]",
-        "description": "[concat(variables('webSiteName'), ' has some server errors, status code 5xx.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-            "resourceUri": "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]",
-            "metricName": "Http5xx"
-          },
-          "operator": "GreaterThan",
-          "threshold": 0.0,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-04-01",
-      "name": "[concat('ForbiddenRequests ', variables('webSiteName'))]",
-      "type": "Microsoft.Insights/alertrules",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[variables('webSiteName')]"
-      ],
-      "tags": {
-        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', variables('webSiteName')))]": "Resource",
-        "displayName": "ForbiddenRequestsAlertRule"
-      },
-      "properties": {
-        "name": "[concat('ForbiddenRequests ', variables('webSiteName'))]",
-        "description": "[concat(variables('webSiteName'), ' has some requests that are forbidden, status code 403.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-            "resourceUri": "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]",
-            "metricName": "Http403"
-          },
-          "operator": "GreaterThan",
-          "threshold": 0,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-04-01",
-      "name": "[concat('CPUHigh ', variables('hostingPlanName'))]",
-      "type": "Microsoft.Insights/alertrules",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[variables('hostingPlanName')]"
-      ],
-      "tags": {
-        "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName')))]": "Resource",
-        "displayName": "CPUHighAlertRule"
-      },
-      "properties": {
-        "name": "[concat('CPUHigh ', variables('hostingPlanName'))]",
-        "description": "[concat('The average CPU is high across all the instances of ', variables('hostingPlanName'))]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-            "resourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-            "metricName": "CpuPercentage"
-          },
-          "operator": "GreaterThan",
-          "threshold": 90,
-          "windowSize": "PT15M"
-        },
-        "action": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-04-01",
-      "name": "[concat('LongHttpQueue ', variables('hostingPlanName'))]",
-      "type": "Microsoft.Insights/alertrules",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[variables('hostingPlanName')]"
-      ],
-      "tags": {
-        "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName')))]": "Resource",
-        "displayName": "AutoScaleSettings"
-      },
-      "properties": {
-        "name": "[concat('LongHttpQueue ', variables('hostingPlanName'))]",
-        "description": "[concat('The HTTP queue for the instances of ', variables('hostingPlanName'), ' has a large number of pending requests.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
-            "metricName": "HttpQueueLength"
-          },
-          "operator": "GreaterThan",
-          "threshold": 100.0,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-05-01",
+      "apiVersion": "2020-02-02-preview",
       "name": "[concat('AppInsights', variables('webSiteName'))]",
       "type": "Microsoft.Insights/components",
-      "location": "southcentralus",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('webSiteName')]"
       ],
@@ -369,18 +168,9 @@
         "displayName": "AppInsightsComponent"
       },
       "properties": {
-        "ApplicationId": "[variables('webSiteName')]"
+        "ApplicationId": "[variables('webSiteName')]",
+        "Application_Type": "web"
       }
     }
-  ],
-  "outputs": {
-    "siteUri": {
-      "type": "string",
-      "value": "[reference(concat('Microsoft.Web/sites/', variables('webSiteName'))).hostnames[0]]"
-    },
-    "sqlSvrFqdn": {
-      "type": "string",
-      "value": "[reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName]"
-    }
-  }
+  ]
 }

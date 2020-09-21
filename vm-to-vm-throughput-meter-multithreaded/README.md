@@ -1,21 +1,15 @@
 # Azure VM-to-VM multithreaded throughput meter
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vm-to-vm-throughput-meter-multithreaded/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vm-to-vm-throughput-meter-multithreaded/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/vm-to-vm-throughput-meter-multithreaded/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/vm-to-vm-throughput-meter-multithreaded/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vm-to-vm-throughput-meter-multithreaded/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vm-to-vm-throughput-meter-multithreaded/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/vm-to-vm-throughput-meter-multithreaded/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/vm-to-vm-throughput-meter-multithreaded/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vm-to-vm-throughput-meter-multithreaded/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vm-to-vm-throughput-meter-multithreaded/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/vm-to-vm-throughput-meter-multithreaded/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/vm-to-vm-throughput-meter-multithreaded/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvm-to-vm-throughput-meter-multithreaded%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvm-to-vm-throughput-meter-multithreaded%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
-
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvm-to-vm-throughput-meter-multithreaded%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvm-to-vm-throughput-meter-multithreaded%2Fazuredeploy.json)
 
 This template allows you to run a VM-to-VM network throughput test for the same VNet/subnet using NTttcp utility. [See licence agreement](https://gallery.technet.microsoft.com/NTttcp-Version-528-Now-f8b12769).
 
@@ -38,4 +32,6 @@ OutputsString           :
 To re-measure the throughput you can login to the probe and target VMs with credentials you provided during deployment.
 
 In case you don't need to re-measure, it is safe to delete the created resource group.
+
+
 

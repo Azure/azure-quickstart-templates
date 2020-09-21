@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "vnet-name": {
@@ -50,12 +50,11 @@
     },
     "variables": {
         "public-ip-address-name": "[concat(parameters('bastion-host-name'),'-pip')]",
-        "bastion-subnet-name": "AzureBastionSubnet",
-        "nsg-name": "[concat(parameters('bastion-host-name'),'-nsg')]"
+        "bastion-subnet-name": "AzureBastionSubnet"
     },
     "resources": [
         {
-            "apiVersion": "2019-02-01",
+            "apiVersion": "2020-05-01",
             "type": "Microsoft.Network/publicIpAddresses",
             "name": "[variables('public-ip-address-name')]",
             "location": "[parameters('location')]",
@@ -67,108 +66,11 @@
             }
         },
         {
-            "apiVersion": "2019-02-01",
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "name": "[variables('nsg-name')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "securityRules": [
-                    {
-                        "name": "bastion-in-allow",
-                        "properties": {
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "sourceAddressPrefix": "*",
-                            "destinationPortRange": "443",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 100,
-                            "direction": "Inbound"
-                        }
-                    },
-                    {
-                        "name": "bastion-control-in-allow",
-                        "properties": {
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "sourceAddressPrefix": "GatewayManager",
-                            "destinationPortRanges": [
-                                "443",
-                                "4443"
-                            ],
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 120,
-                            "direction": "Inbound"
-                        }
-                    },
-                    {
-                        "name": "bastion-in-deny",
-                        "properties": {
-                            "protocol": "*",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "*",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Deny",
-                            "priority": 900,
-                            "direction": "Inbound"
-                        }
-                    },
-                    {
-                        "name": "bastion-vnet-out-allow",
-                        "properties": {
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "sourceAddressPrefix": "*",
-                            "destinationPortRanges": [
-                                "22",
-                                "3389"
-                            ],
-                            "destinationAddressPrefix": "VirtualNetwork",
-                            "access": "Allow",
-                            "priority": 100,
-                            "direction": "Outbound"
-                        }
-                    },
-                    {
-                        "name": "bastion-azure-out-allow",
-                        "properties": {
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "sourceAddressPrefix": "*",
-                            "destinationPortRange": "443",
-                            "destinationAddressPrefix": "AzureCloud",
-                            "access": "Allow",
-                            "priority": 120,
-                            "direction": "Outbound"
-                        }
-                    },
-                    {
-                        "name": "bastion-out-deny",
-                        "properties": {
-                            "protocol": "*",
-                            "sourcePortRange": "*",
-                            "sourceAddressPrefix": "*",
-                            "destinationPortRange": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Deny",
-                            "priority": 900,
-                            "direction": "Outbound"
-                        }
-                    }
-                ]
-            }
-        },
-        {
             "condition": "[equals(parameters('vnet-new-or-existing'), 'new')]",
-            "apiVersion": "2019-02-01",
+            "apiVersion": "2020-05-01",
             "name": "[parameters('vnet-name')]",
             "type": "Microsoft.Network/virtualNetworks",
             "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-name'))]"
-            ],
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -179,10 +81,7 @@
                     {
                         "name": "[variables('bastion-subnet-name')]",
                         "properties": {
-                            "addressPrefix": "[parameters('bastion-subnet-ip-prefix')]",
-                            "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-name'))]"
-                            }
+                            "addressPrefix": "[parameters('bastion-subnet-ip-prefix')]"
                         }
                     }
                 ]
@@ -190,22 +89,16 @@
         },
         {
             "condition": "[equals(parameters('vnet-new-or-existing'), 'existing')]",
-            "apiVersion": "2019-02-01",
+            "apiVersion": "2020-05-01",
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "name": "[concat(parameters('vnet-name'), '/', variables('bastion-subnet-name'))]",
             "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-name'))]"
-            ],
             "properties": {
-                "addressPrefix": "[parameters('bastion-subnet-ip-prefix')]",
-                "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-name'))]"
-                }
+                "addressPrefix": "[parameters('bastion-subnet-ip-prefix')]"
             }
         },
         {
-            "apiVersion": "2018-10-01",
+            "apiVersion": "2020-05-01",
             "type": "Microsoft.Network/bastionHosts",
             "name": "[parameters('bastion-host-name')]",
             "location": "[parameters('location')]",
@@ -232,4 +125,3 @@
         }
     ]
 }
-

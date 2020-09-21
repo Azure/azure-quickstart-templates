@@ -1,11 +1,17 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "balPassword": {
       "type": "securestring",
       "metadata": {
         "description": "Password for bal account"
+      }
+    },
+    "balUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for bal account"
       }
     },
     "existingvirtualNetworkResourceGroup": {
@@ -38,13 +44,18 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A2_V2",
+      "metadata": {
+        "description": "Size of the VM."
+      }
     }
   },
   "variables": {
     "publicIPAddressType": "Dynamic",
     "vmName": "VLM-MultiNIC",
-    "vmSize": "Standard_A3",
-    "adminUsername": "bal",
     "subnetRef1": "[resourceId(parameters('existingvirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingvirtualNetworkName'), parameters('existingsubnetName1'))]",
     "subnetRef2": "[resourceId(parameters('existingvirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingvirtualNetworkName'), parameters('existingsubnetName2'))]",
     "nicName1": "NIC1",
@@ -54,38 +65,14 @@
     "imagePublisher": "kemptech",
     "imageVersion": "latest",
     "imageSKU": "basic-byol",
-    "storageAccountName": "[concat('vhds', uniqueString(resourceGroup().id))]",
-    "publicIPAddressName": "[variables('vmName')]",
-    "imageReference": {
-      "publisher": "[variables('imagePublisher')]",
-      "offer": "[variables('imageOffer')]",
-      "sku": "[variables('imageSku')]",
-      "version": "[variables('imageVersion')]"
-    },
-    "imagePlan": {
-      "name": "[variables('imageSku')]",
-      "product": "[variables('imageOffer')]",
-      "publisher": "[variables('imagePublisher')]"
-    }
+    "publicIPAddressName": "[variables('vmName')]"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "comments": "This storage account is used to store the VM disk.",
-      "apiVersion": "2016-01-01",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
-    {
-      "apiVersion": "2015-06-15",
+      "comments": "This is the public IP assigned to the NIC on Existing Subnet 1.",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "comments": "This is the public IP assigned to the NIC on Existing Subnet 1.",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "PublicIPAddress"
@@ -98,13 +85,13 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "comments": "This creates the NIC on Existing Subnet 1.",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName1')]",
-      "comments": "This creates the NIC on Existing Subnet 1.",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
       ],
       "tags": {
         "displayName": "NetworkInterface"
@@ -127,10 +114,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "comments": "This creates the NIC on Existing Subnet 2.",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName2')]",
-      "comments": "This creates the NIC on Existing Subnet 2.",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "NetworkInterface2"
@@ -150,27 +137,30 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "comments": "This creates the KEMP LoadMaster with multiple interfaces.",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "comments": "This creates the KEMP LoadMaster with multiple interfaces.",
-      "plan": "[variables('imagePlan')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "VirtualMachine"
       },
+      "plan": {
+        "name": "[variables('imageSku')]",
+        "product": "[variables('imageOffer')]",
+        "publisher": "[variables('imagePublisher')]"
+      },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName1'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName2'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName1'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName2'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
-          "adminUsername": "[variables('adminUsername')]",
+          "adminUsername": "[parameters('balUsername')]",
           "adminPassword": "[parameters('balPassword')]"
         },
         "storageProfile": {
@@ -181,7 +171,7 @@
             "version": "[variables('imageVersion')]"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),'_OSDisk')]", 
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -208,7 +198,7 @@
   "outputs": {
     "FQDN": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2015-06-15').dnsSettings.fqdn]"
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2019-11-01').dnsSettings.fqdn]"
     }
   }
 }

@@ -1,21 +1,17 @@
 # XSS-Attack-Prevention
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-XSS-Attack-Prevention%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/> 
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-XSS-Attack-Prevention%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/> 
-</a>
-
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-XSS-Attack-Prevention%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-XSS-Attack-Prevention%2Fazuredeploy.json)
+ 
+ 
 # Table of Contents
 1. [Objectives](#objectives)
 2. [Overview](#overview)
@@ -26,11 +22,11 @@
 7. [Configuration validation](#config)
 8. [Teardown Deployment](#teardown)
 
-<a name="objectives"></a>
+<a name="objectives">
 # Objective of the POC
 This playbook demonstrates a Cross-site scripting (XSS) attack against an unprotected sample web application.  After simulating an attack, hardening the resource by applying protection to the network layer.  Re-attempt the attack against the protected web application to see the defense in action. 
 
-<a name="overview"></a>
+<a name="overview">
 # Overview
 It showcases following use cases
 1. Perform XSS (Cross Site Scripting) attack on Web App with following configuration --> Application detects attack using application gateway
@@ -41,10 +37,10 @@ It showcases following use cases
     * Application Gateway (WAF enabled-Prevention mode)
   
 
-# Important Notes <a name="notes"></a>
+# Important Notes <a name="notes">
 First time it takes few hours for OMS to pull logs for detection and prevention events. For subsequent requests it takes 10-15 mins to reflect in OMS.
 
-<a name="prerequisites"></a>
+<a name="prerequisites">
 # Prerequisites
 Access to Azure subscription to deploy following resources 
 1. Application gateway (WAF enabled)
@@ -52,7 +48,7 @@ Access to Azure subscription to deploy following resources
 3. SQL Database 
 4. OMS (Monitoring)
 
-<a name="attack"></a>
+<a name="attack">
 # Perform Attack 
 Attack on web app with
 * Application gateway - WAF - Detection mode 
@@ -63,7 +59,6 @@ Attack on web app with
 2. Select Application Gateway with name 'appgw-detection-' as prefix.
 
     ![](images/xss-appgateway-det-location.png)
-
 
 3. Application Gateway WAF enabled and Firewall in Detection mode as shown below.
 
@@ -86,7 +81,7 @@ Attack on web app with
 
     ![](images/xss-attack-dashboard.png)    
     
-<a name="detect"></a>    
+<a name="detect">    
 # Detect
 To detect the attack, execute following query in Azure Log Analytics
 1. Go to Azure Portal --> navigate to Log Analytics in same resource group  
@@ -103,7 +98,7 @@ To detect the attack, execute following query in Azure Log Analytics
 
     ![](images/xss-log-analytics-det.png) 
     
-<a name="mitigate"></a>
+<a name="mitigate">
 # Mitigate 
 
   * Update Web application firewall mode to Prevention for application gateway. This will take 5-10 mins. Hence, we will connect the application using Application Gateway (WAF- Prevention mode) 
@@ -127,13 +122,13 @@ To detect the attack, execute following query in Azure Log Analytics
 
 You will notice events related to detection and prevention items. First time it takes few hours for OMS to pull logs for detection and prevention events. For subsequent requests it takes 10-15 mins to reflect in OMS, so if you don't get any search results, please try again after sometime.
 
-<a name="config"></a>
+<a name="config">
 ## Configuration Validation
 * Cross site scripting (XSS) is a common attack vector that injects malicious code into a vulnerable web application. A successful cross site scripting attack can have devastating consequences for an online business’s reputation and its relationship with its clients. Detection and remediation can be easily done using advanced controls along with Audit and Remediation procedure in Cloudneeti.
 
 * Cloudneeti is available on the Azure marketplace. Try out the free test drive here https://aka.ms/Cloudneeti 
 
-<a name="teardown"></a>
+<a name="teardown">
 ## Teardown Deployment 
 
 Run following powershell command after login to subscription to clear all the resources deployed during the demo. Specify resource group name given during deployment
@@ -162,4 +157,5 @@ AVYAN MAKE NO WARRANTIES, EXPRESS, IMPLIED, OR STATUTORY, AS TO THE INFORMATION 
 *	Certain recommendations in this solution may result in increased data, network, or compute resource usage in Azure. The solution may increase a customer’s Azure license or subscription costs.
 *	The solution in this document is intended as reference samples and must not be used as-is for production purposes. Recommending that the customer’s consult with their internal SOC / Operations teams for using specific or all parts of the solutions.
 *	All customer names, transaction records, and any related data on this page are fictitious, created for the purpose of this architecture, and provided for illustration only. No real association or connection is intended, and none should be inferred. 
+
 
