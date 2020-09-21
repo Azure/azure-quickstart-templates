@@ -68,8 +68,11 @@ resourceGroup="<name of the AKS resource group>"
 # Install Azure CLI on Ubuntu
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
+# Login with your Azure account
+az login
+
 # Install Kubectl
-az aks install-cli
+sudo az aks install-cli
 
 # Use the following command to configure kubectl to connect to the new Kubernetes cluster
 echo "Getting access credentials configure kubectl to connect to the ["$aksName"] AKS cluster..."
