@@ -61,21 +61,21 @@ $eventHubs = Get-AzEventHubNamespace -ResourceGroupName $ResourceGroupName -Verb
 
 #first look at the primary namespaces and break pairing
 foreach($eventHub in $eventHubs){
-    $drConfig = Get-AzEventHubGeoDRConfiguration -ResourceGroupName $eventHub.ResourceGroup -Namespace $eventHub.Name -Verbose
+    $drConfig = Get-AzEventHubGeoDRConfiguration -ResourceGroupName $ResourceGroupName -Namespace $eventHub.Name -Verbose
     $drConfig
     if ($drConfig) {
         if ($drConfig.Role.ToString() -eq "Primary") { #there is a partner namespace, break the pair before removing
-            Set-AzEventHubGeoDRConfigurationBreakPair -ResourceGroupName $eventHub.ResourceGroup -Namespace $eventHub.Name -Name $drConfig.Name
+            Set-AzEventHubGeoDRConfigurationBreakPair -ResourceGroupName $ResourceGroupName -Namespace $eventHub.Name -Name $drConfig.Name
         }
     }
 }
 
 #now that pairing is removed we can remove primary and secondary configs
 foreach($eventHub in $eventHubs){
-    $drConfig = Get-AzEventHubGeoDRConfiguration -ResourceGroupName $eventHub.ResourceGroup -Namespace $eventHub.Name -Verbose
+    $drConfig = Get-AzEventHubGeoDRConfiguration -ResourceGroupName $ResourceGroupName -Namespace $eventHub.Name -Verbose
 
     #### DEBUG THIS: I think this can only be done on primary?  So need to handle the error - once config is removed resource can be deleted by job
-    Remove-AzEventHubGeoDRConfiguration -ResourceGroupName $eventHub.ResourceGroup -Namespace $eventHub.Name $drConfig.Name -Verbose
+    Remove-AzEventHubGeoDRConfiguration -ResourceGroupName $ResourceGroupName -Namespace $eventHub.Name $drConfig.Name -Verbose
 }
 
 
@@ -85,11 +85,11 @@ $serviceBusNamespaces = Get-AzServiceBusNamespace -ResourceGroupName $ResourceGr
 #first look at the primary namespaces and break pairing
 foreach($s in $serviceBusNamespaces){
 
-    $drConfig = Get-AzServiceBusGeoDRConfiguration -ResourceGroupName $s.ResourceGroup -Namespace $s.Name
+    $drConfig = Get-AzServiceBusGeoDRConfiguration -ResourceGroupName $ResourceGroupName -Namespace $s.Name
     $drConfig
     if ($drConfig) {
         if ($drConfig.Role.ToString() -eq "Primary") { #there is a partner namespace, break the pair before removing
-            Set-AzServiceBusGeoDRConfigurationBreakPair -ResourceGroupName $s.ResourceGroup -Namespace $s.Name -Name $drConfig.Name
+            Set-AzServiceBusGeoDRConfigurationBreakPair -ResourceGroupName $ResourceGroupName -Namespace $s.Name -Name $drConfig.Name
         }
     }
 }
@@ -97,13 +97,20 @@ foreach($s in $serviceBusNamespaces){
 #now that pairing is removed we can remove primary and secondary configs
 foreach($s in $serviceBusNamespaces){
 
-    $drConfig = Get-AzServiceBusGeoDRConfiguration -ResourceGroupName $s.ResourceGroup -Namespace $s.Name
+    $drConfig = Get-AzServiceBusGeoDRConfiguration -ResourceGroupName $ResourceGroupName -Namespace $s.Name
     if ($drConfig){
-        Remove-AzServiceBusGeoDRConfiguration -ResourceGroupName $s.ResourceGroup -Namespace $s.Name -Name $drConfig.Name -Verbose
+        Remove-AzServiceBusGeoDRConfiguration -ResourceGroupName $ResourceGroupName -Namespace $s.Name -Name $drConfig.Name -Verbose
     }
-    # ??? Remove-AzureRmServiceBusNamespace -ResourceGroupName $s.ResourceGroup -Name $s.Name -Verbose
+    # ??? Remove-AzureRmServiceBusNamespace -ResourceGroupName $ResourceGroupName -Name $s.Name -Verbose
 }
 
+foreach($s in $serviceBusNamespaces){
+    # set ErrorAction on this since it throws if there is no config (unlike the other cmdlets)
+    $migrationConfig = Get-AzServiceBusMigration -ResourceGroupName $ResourceGroupName -Name $s.Name -ErrorAction SilentlyContinue
+    if ($migrationConfig){
+        Remove-AzServiceBusMigration -ResourceGroupName $ResourceGroupName -Name $s.Name -Verbose
+    }
+}
 
 <#
 $vnet = Get-AzureRmVirtualNetwork -ResourceGroupName $rg -Name $vnetName
@@ -121,6 +128,19 @@ foreach($r in $redisCaches){
     $link = Get-AzRedisCacheLink -Name $r.Name
     if ($link){
         $link | Remove-AzRedisCacheLink -Verbose
+    }
+}
+
+#ACI create a subnet delegation that must be removed before the vnet can be deleted
+$vnets = Get-AzVirtualNetwork -ResourceGroupName $ResourceGroupName -Verbose
+
+foreach($vnet in $vnets){
+    foreach($subnet in $vnets.Subnets){
+        $delegations = Get-AzDelegation -Subnet $subnet -Verbose
+        foreach($d in $delegations){
+            Write-Output "Removing VNet Delegation: $($d.name)"
+            Remove-AzDelegation -Name $d.Name -Subnet $subnet -Verbose
+        }
     }
 }
 

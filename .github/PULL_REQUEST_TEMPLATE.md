@@ -1,23 +1,16 @@
-### Best Practice Checklist
-Check these items before submitting a PR... See the Contribution Guide for the full detail: https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md 
+# PR Checklist
 
-1. uri's compatible with all clouds (Stack, China, Government)
-1. Staged artifacts use _artifactsLocation & _artifactsLocationSasToken
-1. Use a parameter for resource locations with the defaultValue set to resourceGroup().location
-1. Folder names for artifacts (nestedtemplates, scripts, DSC)
-1. Use literal values for apiVersion (no variables)
-1. Parameter files (GEN-UNIQUE for value generation and no "changemeplease" values)
-1. $schema and other uris use https
-1. Use uniqueString() whenever possible to generate names for resources.  While this is not required, it's one of the most common failure points in a deployment. 
-1. Update the metadata.json with the current date
+Check these items before submitting a PR... 
 
-For details: https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/best-practices.md
+[Contribution Guide](https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md)
+
+[Best Practice Guide](https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/best-practices.md)
+
 
 - [ ] - Please check this box once you've submitted the PR if you've read through the Contribution Guide and best practices checklist.
 
-### Changelog
+## Changelog
 
 *
 *
 *
-

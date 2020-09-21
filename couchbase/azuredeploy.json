@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "_artifactsLocation": {
@@ -46,6 +46,12 @@
         "description": "Admin Username"
       }
     },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin Password"
+      }
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -59,39 +65,10 @@
       "metadata": {
         "description": "License can be hourly_pricing or byol"
       }
-    },
-    "authenticationType": {
-      "type": "string",
-      "defaultValue": "sshPublicKey",
-      "allowedValues": [
-        "sshPublicKey",
-        "password"
-      ],
-      "metadata": {
-        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
-      }
-    },
-    "adminPasswordOrKey": {
-      "type": "securestring",
-      "metadata": {
-        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
-      }
     }
   },
   "variables": {
-    "extensionUrl": "[concat(parameters('_artifactsLocation'), 'scripts/')]",
-    "uniqueString": "[uniquestring(resourceGroup().id, deployment().name)]",
-    "linuxConfiguration": {
-      "disablePasswordAuthentication": true,
-      "ssh": {
-        "publicKeys": [
-          {
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-            "keyData": "[parameters('adminPasswordOrKey')]"
-          }
-        ]
-      }
-    }
+    "uniqueString": "[uniquestring(resourceGroup().id, deployment().name)]"
   },
   "resources": [
     {
@@ -306,8 +283,7 @@
           "osProfile": {
             "computerNamePrefix": "server",
             "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[parameters('adminPasswordOrKey')]",
-            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+            "adminPassword": "[parameters('adminPassword')]"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [
@@ -349,8 +325,8 @@
                   "autoUpgradeMinorVersion": true,
                   "settings": {
                     "fileUris": [
-                      "[concat(variables('extensionUrl'), 'server.sh')]",
-                      "[concat(variables('extensionUrl'), 'util.sh')]"
+                      "[uri(parameters('_artifactsLocation'), concat('scripts/server.sh', parameters('_artifactsLocationSasToken')))]",
+                      "[uri(parameters('_artifactsLocation'), concat('scripts/util.sh', parameters('_artifactsLocationSasToken')))]"
                     ],
                     "commandToExecute": "[concat('bash server.sh ', parameters('adminUsername'), ' ', parameters('adminPassword'), ' ', variables('uniqueString'), ' ', parameters('location'))]"
                   }
@@ -399,8 +375,7 @@
           "osProfile": {
             "computerNamePrefix": "syncgateway",
             "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[parameters('adminPasswordOrKey')]",
-            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+            "adminPassword": "[parameters('adminPassword')]"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [
@@ -442,8 +417,8 @@
                   "autoUpgradeMinorVersion": true,
                   "settings": {
                     "fileUris": [
-                      "[concat(variables('extensionUrl'), 'syncGateway.sh')]",
-                      "[concat(variables('extensionUrl'), 'util.sh')]"
+                      "[uri(parameters('_artifactsLocation'), concat('scripts/syncGateway.sh', parameters('_artifactsLocationSasToken')))]",
+                      "[uri(parameters('_artifactsLocation'), concat('scripts/util.sh', parameters('_artifactsLocationSasToken')))]"
                     ],
                     "commandToExecute": "[concat('bash syncGateway.sh ', variables('uniqueString'), ' ', parameters('location'))]"
                   }

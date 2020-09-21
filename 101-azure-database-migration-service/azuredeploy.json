@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "location": {
@@ -65,10 +65,12 @@
         "DMSServiceName": "[concat('DMS', uniqueString(resourceGroup().id))]",
         "sourceServerName": "[take(concat('Source', uniqueString(resourceGroup().id)), 15)]",
         "targetServerName": "[concat('targetservername', uniqueString(resourceGroup().id))]",
-        "scriptLocation": "AddDatabaseToSqlServer.ps1 ",
+        "scriptLocation": "AddDatabaseToSqlServer.ps1",
         "bakFileLocation": "AdventureWorks2016.bak",
-        "bacpacFileLocation": "AdventureWorks2016.bacpac",
-        "scriptFiles": "[createarray(concat(parameters('_artifactsLocation'), variables('scriptLocation')), concat(parameters('_artifactsLocation'), variables('bakFileLocation')))]",
+        "scriptFiles": [
+            "[uri(parameters('_artifactsLocation'), concat(variables('scriptLocation'), parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat(variables('bakFileLocation'), parameters('_artifactsLocationSasToken')))]"
+            ],
         "scriptParameters": "[concat('-userName ', parameters('sourceWindowsAdminUserName'), ' -password \"', parameters('sourceWindowsAdminPassword'))]",
         "storageAccountNamePrefix": "storage",
         "storageAccountName": "[toLower(concat(variables('storageAccountNamePrefix'), uniqueString(resourceGroup().id)))]",
@@ -78,7 +80,6 @@
         "adVNet": "AzureDataMigrationServiceTemplateRG-vnet",
         "defaultSubnetName": "default",
         "databaseName": "TargetDatabaseName1",
-        "storageKeyType": "SharedAccessKey",
         "publicIpAddressId": {
             "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPSourceServer'))]"
         }
@@ -229,9 +230,9 @@
         {
             "type": "Microsoft.DataMigration/services",
             "sku": {
-                "name": "GeneralPurpose_4vCores",
-                "tier": "General Purpose",
-                "size": "4 vCores"
+                "name": "Standard_1vCores",
+                "tier": "Standard",
+                "size": "1 vCores"
             },
             "name": "[variables('DMSServiceName')]",
             "apiVersion": "2017-11-15-privatepreview",
@@ -264,7 +265,8 @@
             "apiVersion": "2018-02-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]",
+                "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPSourceServer'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -481,7 +483,7 @@
                     "apiVersion": "2017-10-01-preview",
                     "location": "[parameters('location')]",
                     "dependsOn": [
-                        "[concat('Microsoft.Sql/servers/', concat(variables('targetServerName')))]"
+                        "[resourceId('Microsoft.Sql/servers', concat(variables('targetServerName')))]"
                     ],
                     "properties": {
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -494,12 +496,12 @@
                             "type": "extensions",
                             "apiVersion": "2014-04-01-preview",
                             "dependsOn": [
-                                "[concat('Microsoft.Sql/servers/', concat(variables('targetServerName')), '/databases/', variables('databaseName'))]"
+                                "[resourceId('Microsoft.Sql/servers/databases', variables('targetServerName'), variables('databaseName'))]"
                             ],
                             "properties": {
-                                "storageKey": "?",
-                                "storageKeyType": "[variables('storageKeyType')]",
-                                "storageUri": "https://templatebotstorage.blob.core.windows.net/bacpacs/AdventureWorks2016.bacpac",
+                                "storageKey": "[parameters('_artifactsLocationSasToken')]",
+                                "storageKeyType": "SharedAccessKey",
+                                "storageUri": "[uri(parameters('_artifactsLocation'), 'templatefiles/AdventureWorks2016.bacpac')]",
                                 "administratorLogin": "[parameters('targetSqlDbAdministratorLogin')]",
                                 "administratorLoginPassword": "[parameters('targetSqlDbAdministratorPassword')]",
                                 "operationMode": "Import"
@@ -513,7 +515,7 @@
                     "apiVersion": "2014-04-01-preview",
                     "location": "[parameters('location')]",
                     "dependsOn": [
-                        "[concat('Microsoft.Sql/servers/', concat(variables('targetServerName')))]"
+                        "[resourceId('Microsoft.Sql/servers', concat(variables('targetServerName')))]"
                     ],
                     "properties": {
                         "endIpAddress": "0.0.0.0",

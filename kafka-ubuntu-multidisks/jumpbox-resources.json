@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "commonSettings": {
@@ -11,8 +11,11 @@
     "storageSettings": {
       "type": "object"
     },
-    "adminPassword": {
+    "adminPasswordOrKey": {
       "type": "securestring"
+    },
+    "authenticationType": {
+      "type": "string"
     },
     "subnet": {
       "type": "object"
@@ -33,7 +36,18 @@
     "nicName": "[concat(parameters('commonSettings').namespace, 'nic')]",
     "vmName": "[concat(parameters('commonSettings').namespace, 'vm')]",
     "publicIpName": "[concat(parameters('commonSettings').namespace, 'publicIp')]",
-    "vmSize": "Standard_A0"
+    "vmSize": "Standard_A0",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('commonSettings').adminUsername, '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -88,7 +102,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('commonSettings').adminUsername]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",

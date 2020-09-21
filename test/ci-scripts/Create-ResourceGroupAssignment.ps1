@@ -13,6 +13,11 @@ if ((Get-AzResourceGroup -Name $ResourceGroupName -Location $Location -Verbose -
     New-AzResourceGroup -Name $ResourceGroupName -Location $Location -Verbose -Force
 }
 
+# Replication may take a second or two
+if ((Get-AzResourceGroup -Name $ResourceGroupName -Location $Location -Verbose -ErrorAction SilentlyContinue) -eq $null) {
+    Start-Sleep 10
+}
+
 # Note that the service principal assigning the role must have AAD perms to query AD for the objectId
 # Owner is used on the ResourceGroup in order to delegate permissions to that group
 New-AzRoleAssignment -ObjectId $(Get-AzADServicePrincipal -ApplicationId $appId).Id -RoleDefinitionName Owner -ResourceGroupName $ResourceGroupName -Verbose

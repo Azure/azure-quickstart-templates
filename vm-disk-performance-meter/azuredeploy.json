@@ -1,34 +1,22 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmSize": {
       "type": "string",
-      "allowedValues": [
-        "Standard_A5",
-        "Standard_A8",
-        "Standard_D4",
-        "Standard_D14",
-        "Standard_DS3",
-        "Standard_DS14",
-        "Standard_D3_v2",
-        "Standard_D15_v2",
-        "Standard_DS3_v2",
-        "Standard_DS15_v2"
-      ],
-      "defaultValue": "Standard_A5",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Size of the VM that runs the test."
       }
     },
     "dataDiskStorageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "StandardSSD_LRS",
       "allowedValues": [
         "Standard_LRS",
-        "Standard_GRS",
-        "Standard_ZRS",
-        "Premium_LRS"
+        "Premium_LRS",
+        "StandardSSD_LRS",
+        "UltraSSD_LRS"
       ],
       "metadata": {
         "description": "Storage Account type for the test disk"
@@ -38,7 +26,7 @@
       "type": "string",
       "defaultValue": "ReadOnly",
       "allowedValues": [
-        "",
+        "None",
         "ReadOnly",
         "ReadWrite"
       ],
@@ -122,7 +110,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/vm-disk-performance-meter"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/vm-disk-performance-meter/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -140,7 +128,7 @@
     },
     "authenticationType": {
       "type": "string",
-      "defaultValue": "sshPublicKey",
+      "defaultValue": "password",
       "allowedValues": [
         "sshPublicKey",
         "password"
@@ -157,21 +145,16 @@
     }
   },
   "variables": {
-    "osVersion": "14.04.5-LTS",
+    "osVersion": "18.04-LTS",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "OSDiskName": "osdiskforwindowssimple",
     "nicName": "testVMNic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-    "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "publicIP",
-    "vmStorageAccountContainerName": "vhds",
     "virtualNetworkName": "testVNET",
     "scriptFolder": "scripts",
-    "vhdStorageAccountName": "[concat(uniqueString(resourceGroup().id), 'storage')]",
-    "dataStorageAccountName": "[concat(uniqueString(resourceGroup().id), 'datastorage')]",
     "frontEndNSGName": "[concat('webtestnsg-', uniqueString(resourceGroup().id))]",
     "vmName": "testVM",
     "testScriptFileName": "disktest.sh",
@@ -189,27 +172,7 @@
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('vhdStorageAccountName')]",
-      "apiVersion": "2016-01-01",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "[variables('storageAccountType')]"
-      },
-      "kind": "Storage"
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('dataStorageAccountName')]",
-      "apiVersion": "2016-01-01",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "[parameters('dataDiskStorageAccountType')]"
-      },
-      "kind": "Storage"
-    },
-    {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -218,7 +181,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -239,7 +202,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
@@ -265,7 +228,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('frontEndNSGName')]",
       "location": "[parameters('location')]",
@@ -295,12 +258,11 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[variables('vhdStorageAccountName')]",
         "[variables('nicName')]"
       ],
       "properties": {
@@ -331,7 +293,10 @@
               "diskSizeGB": 1023,
               "lun": 0,
               "caching": "[parameters('dataDiskHostCaching')]",
-              "createOption": "Empty"
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "[parameters('dataDiskStorageAccountType')]"
+              }
             }
           ]
         },
@@ -347,7 +312,7 @@
         {
           "type": "extensions",
           "name": "CustomScriptExtension",
-          "apiVersion": "2015-06-15",
+          "apiVersion": "2019-12-01",
           "dependsOn": [
             "[variables('vmName')]"
           ],
@@ -359,7 +324,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(parameters('_artifactsLocation'), '/', variables('scriptFolder'), '/', variables('testScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+                "[uri(parameters('_artifactsLocation'), concat(variables('scriptFolder'), '/', variables('testScriptFileName'), parameters('_artifactsLocationSasToken')))]"
               ],
               "commandToExecute": "[concat('sudo bash ', variables('testScriptFileName'), ' ', parameters('testSize'), ' ', parameters('testType'), ' ', parameters('secondsToRunTest'), ' ', parameters('threadsToRunTest'), ' ', parameters('testBlockSize'))]"
             }

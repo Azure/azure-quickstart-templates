@@ -1,21 +1,17 @@
 # Virus attack on Virtual Machines Scenario
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-VM-Virus-Attack-Prevention%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/> 
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-VM-Virus-Attack-Prevention%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/> 
-</a>
-
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-VM-Virus-Attack-Prevention%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-VM-Virus-Attack-Prevention%2Fazuredeploy.json)
+ 
+ 
 
 # Table of Contents
 1. [Objectives](#objectives)
@@ -27,11 +23,11 @@
 7. [Configuration validation](#config)
 8. [References](#references)
 
-<a name="objectives"></a>
+<a name="objectives">
 # Objective of the POC 
 This playbook demonstrates a mock virus attack against an unprotected VM resource using a benign test virus file designed to trigger antimalware tools.  After enabling the configuration to protect the VM, the attack will be reattempted to show the protection against virus attack.
 
-<a name="overview"></a>
+<a name="overview">
 # Overview
 
 It showcases the following use cases:
@@ -44,13 +40,13 @@ It showcases the following use cases:
 
     * VM with Endpoint Protection
 
-# Important Notes <a name="notes"></a>
+# Important Notes <a name="notes">
 Although the deployment takes 10-15mins, the log aggregation by Log Analytics take a few hours to get configured in the backend. You may not see attack/mitigation logs for detection and prevention events during the aggregation time window.   
 Subsequently logs will take 10-15 mins to reflect in Log Analtyics.
 
 Also note, the PowerShell experience in Azure Cloud Shell now runs PowerShell Core 6 in a Linux environment. With this change, there may be some differences in the [PowerShell experience in Cloud Shell](https://docs.microsoft.com/en-us/azure/cloud-shell/cloud-shell-windows-users) compared to what is expected in a Windows PowerShell experience.
 
-<a name="prerequisites"></a>
+<a name="prerequisites">
 # Prerequisites
 
 Access to an Azure subscription to deploy following resources 
@@ -58,7 +54,7 @@ Access to an Azure subscription to deploy following resources
 1. Virtual Machine
 2. Log Analytics workspace (Monitoring)
 
-<a name="attack"></a>
+<a name="attack">
 # Perform Attack 
 
 ## Attack on VM without an Endpoint Protection
@@ -86,7 +82,7 @@ Access to an Azure subscription to deploy following resources
 
 8. You will notice that Virus file gets downloads successfully on VM indicating attack was successful.
 
-<a name="mitigate"></a>
+<a name="mitigate">
 # Mitigate
 
 Azure Security Center gives you recommendations and also allows you to perform remediation steps from the console itself.
@@ -98,7 +94,7 @@ Azure Security Center gives you recommendations and also allows you to perform r
 3. Select your VM with name "vm-without-ep" and Click on Install on VM. This will install endpoint protection on the VM
 ![](images/install-endpoint-protection.png)
 
-<a name="detect"></a>
+<a name="detect">
 # Attack & Detection
 
 The Anti-malware Extension (Endpoint Protection) might take 5-10 mins to get installed on a VM. Hence, you will use another VM with name "vm-with-ep" which already has the Anti-malware extension installed further for our Demo using loginid and pwd (The VM login username and password is in deployment powershell output)
@@ -147,14 +143,14 @@ To access the endpoint protection client, you need to clean SCEP Policy on the W
 
 You will notice events related to Quarantined items. It might take few minutes for Log Analytics to display logs from your virtual machine, so if you don't get any search results, please try again after a few minutes.
 
-<a name="config"></a>
+<a name="config">
 ## Configuration Validation
 
 * You can validate the specific configurations like Enabling Antivirus, Adding Antimalware Extension , Auto-updates on your VM. These are covered as various controls along with Audit and Remediation procedure in Cloudneeti
 
 * Cloudneeti is available on the Azure marketplace. Try out the free test drive at https://aka.ms/Cloudneeti.
 
-<a name="references"></a>
+<a name="references">
 # References
 
 * http://www.eicar.org/
@@ -171,4 +167,5 @@ AVYAN MAKE NO WARRANTIES, EXPRESS, IMPLIED, OR STATUTORY, AS TO THE INFORMATION 
 *	Certain recommendations in this solution may result in increased data, network, or compute resource usage in Azure. The solution may increase a customer’s Azure license or subscription costs.
 *	The solution in this document is intended as reference samples and must not be used as-is for production purposes. Recommending that the customer’s consult with their internal SOC / Operations teams for using specific or all parts of the solutions.
 *	All customer names, transaction records, and any related data on this page are fictitious, created for the purpose of this architecture, and provided for illustration only. No real association or connection is intended, and none should be inferred. 
+
 

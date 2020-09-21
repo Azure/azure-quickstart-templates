@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
@@ -26,7 +26,7 @@
       "type": "string",
       "defaultValue": ""
     },
-    "adminPasswordDSAgent": {
+    "adminPasswordOrPublicKeyDSAgent": {
       "type": "securestring",
       "defaultValue": ""
     },
@@ -129,13 +129,27 @@
     },
     "quickstartTags": {
       "type": "object"
+    },
+    "authenticationType": {
+      "type": "string"
     }
   },
   "variables": {
     "publicIPAddressNameDSAWindows": "publicipdsawindows",
     "networkInterfaceNameDSAWindows": "[concat(parameters('vmNameDSAWindows'),'-nic')]",
     "publicIPAddressNameDSAgent": "publicipdsalinux",
-    "networkInterfaceNameDSAgent": "[concat(parameters('vmNameDSAgent'),'-nic')]"
+    "networkInterfaceNameDSAgent": "[concat(parameters('vmNameDSAgent'),'-nic')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsernameDSAgent'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrPublicKeyDSAgent')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -360,7 +374,8 @@
         "osProfile": {
           "computerName": "[parameters('vmNameDSAgent')]",
           "adminUsername": "[parameters('adminUsernameDSAgent')]",
-          "adminPassword": "[parameters('adminPasswordDSAgent')]"
+          "adminPassword": "[parameters('adminPasswordOrPublicKeyDSAgent')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {

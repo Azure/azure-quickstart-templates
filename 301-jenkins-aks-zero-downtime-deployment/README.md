@@ -1,20 +1,15 @@
 # Zero-downtime Deployment to AKS with Jenkins
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-jenkins-aks-zero-downtime-deployment%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-jenkins-aks-zero-downtime-deployment%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-jenkins-aks-zero-downtime-deployment%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-jenkins-aks-zero-downtime-deployment%2Fazuredeploy.json)
 
 This template provisions a Jenkins master running in a VM on Azure; configures a DevOps pipeline based on
 two public Tomcat Docker images and deploys to [AKS (Azure Container Service)](https://azure.microsoft.com/en-us/services/container-service/).
@@ -152,4 +147,5 @@ for more details.
 1. If you run the build more than once, it will cycle through BLUE and GREEN deployments. i.e., if the current
    environment is **Green**, the job will deploy/test the **Blue** environment and then update the application
    public endpoint to route traffic to the **Blue** environment if all is good with testing.
+
 

@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -46,7 +46,7 @@ help()
 	echo "-n Cluster name"
 	echo "-v Redis package version"
 	echo "-c Number of instances"
-	echo "-s Number of master nodes"	
+	echo "-s Number of master nodes"
 	echo "-s Number of slave nodes"
 	echo "-i Sequential node index (starting from 0)"
 	echo "-p Private IP address prefix"
@@ -57,7 +57,7 @@ help()
 #############################################################################
 log()
 {
-	# If you want to enable this logging, uncomment the line below and specify your logging key 
+	# If you want to enable this logging, uncomment the line below and specify your logging key
 	#curl -X POST -H "content-type:text/plain" --data-binary "$(date) | ${HOSTNAME} | $1" https://logs-01.loggly.com/inputs/${LOGGING_KEY}/tag/redis-extension,${HOSTNAME}
 	echo "$1"
 }
@@ -74,7 +74,7 @@ fi
 # Parse script parameters
 while getopts :n:v:c:m:s:i:p:lh optname; do
   log "Option $optname set with value ${OPTARG}"
-  
+
   case $optname in
     n)  # Cluster name
 		CLUSTER_NAME=${OPTARG}
@@ -88,19 +88,19 @@ while getopts :n:v:c:m:s:i:p:lh optname; do
 		;;
 	m) # Number of master nodes
 		MASTER_NODE_COUNT=${OPTARG}
-		;;			
+		;;
 	s) # Number of slave nodes
 		SLAVE_NODE_COUNT=${OPTARG}
-		;;		
+		;;
 	i) # Sequential node index
 		NODE_INDEX=${OPTARG}
-		;;				
+		;;
 	p) # Private IP address prefix
 		IP_PREFIX=${OPTARG}
-		;;			
+		;;
     l)  # Indicator of the last node
 		IS_LAST_NODE=1
-		;;		
+		;;
     h)  # Helpful hints
 		help
 		exit 2
@@ -117,7 +117,7 @@ done
 tune_system()
 {
 	log "Tuning the system configuration"
-	
+
 	# Ensure the source list is up-to-date
 	apt-get -y update
 
@@ -130,14 +130,14 @@ tune_system()
 	  # Append it to the hsots file if not there
 	  echo "127.0.0.1 $(hostname)" >> /etc/hosts
 	  log "Hostname ${HOSTNAME} added to /etc/hosts"
-	fi	
+	fi
 }
 
 #############################################################################
 tune_memory()
 {
 	log "Tuning the memory configuration"
-	
+
 	# Get the supporting utilities
 	apt-get -y install hugepages
 
@@ -152,8 +152,8 @@ tune_memory()
 tune_network()
 {
 	log "Tuning the network configuration"
-	
->/etc/sysctl.conf cat << EOF 
+
+>/etc/sysctl.conf cat << EOF
 
 	# Disable syncookies (syncookies are not RFC compliant and can use too muche resources)
 	net.ipv4.tcp_syncookies = 0
@@ -252,10 +252,10 @@ configure_redis()
 	sed -i "s/^daemonize no$/daemonize yes/g" redis.conf
 	sed -i 's/^logfile ""/logfile \/var\/log\/redis.log/g' redis.conf
 	sed -i "s/^loglevel verbose$/loglevel notice/g" redis.conf
-	sed -i "s/^dir \.\//dir \/var\/redis\//g" redis.conf 
-	sed -i "s/\${REDISPORT}.conf/redis.conf/g" utils/redis_init_script 
-	sed -i "s/_\${REDISPORT}.pid/.pid/g" utils/redis_init_script 
-	
+	sed -i "s/^dir \.\//dir \/var\/redis\//g" redis.conf
+	sed -i "s/\${REDISPORT}.conf/redis.conf/g" utils/redis_init_script
+	sed -i "s/_\${REDISPORT}.pid/.pid/g" utils/redis_init_script
+
 	# Configure the sentinel bits
 	echo "daemonize yes" >> sentinel.conf
 	echo "logfile /var/log/redis-sentinel.log" >> sentinel.conf
@@ -265,12 +265,12 @@ configure_redis()
 	# Create all essentials directories and copy files to the correct locations
 	mkdir /etc/redis
 	mkdir /var/redis
-	
+
 	cp redis.conf /etc/redis/redis.conf
 	cp sentinel.conf /etc/redis/sentinel.conf
 	cp utils/redis_init_script /etc/init.d/redis-server
 	cp ${CURRENT_DIRECTORY}/redis-sentinel-startup.sh /etc/init.d/redis-sentinel
-	
+
 	# Copy the cluster configuration utility (if exists)
 	if [ -f src/redis-trib.rb ]; then
 		cp src/redis-trib.rb /usr/local/bin/
@@ -282,7 +282,7 @@ configure_redis()
 	rm redis-$VERSION.tar.gz
 
 	log "Redis configuration was applied successfully"
-	
+
 	# Create service user and configure for permissions
 	useradd -r -s /bin/false redis
 	chown redis:redis /var/run/redis.pid
@@ -291,8 +291,8 @@ configure_redis()
 
 	# Start the script automatically at boot time
 	update-rc.d redis-server defaults
-	
-	log "Redis service was created successfully"	
+
+	log "Redis service was created successfully"
 }
 
 #############################################################################
@@ -325,15 +325,15 @@ initialize_redis_cluster()
 configure_redis_replication()
 {
 	log "Configuring master-slave replication"
-	
+
 	if [ "$NODE_INDEX" -lt "$MASTER_NODE_COUNT" ]; then
 		log "Redis node ${HOSTNAME} is considered a MASTER, no further configuration changes are required"
 	else
 		log "Redis node ${HOSTNAME} is considered a SLAVE, additional configuration changes will be made"
-		
+
 		let MASTER_NODE_INDEX=$NODE_INDEX%$MASTER_NODE_COUNT
 		MASTER_NODE_IP="${IP_PREFIX}${MASTER_NODE_INDEX}"
-		
+
 		echo "slaveof ${MASTER_NODE_IP} ${REDIS_PORT}" >> /etc/redis/redis.conf
 		log "Redis node ${HOSTNAME} is configured as a SLAVE of ${MASTER_NODE_IP}:${REDIS_PORT}"
 	fi
@@ -352,7 +352,7 @@ configure_sentinel()
 	touch /var/log/redis-sentinel.log
 	chown redis:redis /var/log/redis-sentinel.log
 	chmod u+w /var/log/redis-sentinel.log
-	
+
 	# Change owner for /etc/redis/ to allow sentinel change the configuration files
 	chown -R redis.redis /etc/redis/
 
@@ -400,6 +400,6 @@ start_redis
 # Step 6
 if [ "$IS_CLUSTER_AWARE" -eq 1 ]; then
 	initialize_redis_cluster
-else	
+else
 	start_sentinel
 fi

@@ -1,20 +1,15 @@
 # Custom Images at Scale
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-custom-images-at-scale%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-custom-images-at-scale%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-custom-images-at-scale%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-custom-images-at-scale%2Fazuredeploy.json)
 
 This template deploys custom images at scale with options to use VM Scale Sets, regular VMs, or regular VMs in an availability set.  It is designed so that it can be called from other templates, and you can build on top of it.  The individual VMs that get created do not have public IPs, but a machine that can be used as a jump box is available.  (You can delete the extra machine after deployment, but it is required as part of the process.)
 
@@ -29,4 +24,5 @@ For the final VM deployments, the intial option you pass the template determines
 - VMSS - This will create the VMs as a series of VM scale sets.  (final_VMSS.json)
 - Single - This will create the VMs as a series of individual VMs.  You can further customize them in the template if needed.  (final_Single.json, vm_baseSingle.json)
 - SingleAV - This will create the VMs as a series of individual VMs that are all within an availability set.  You cannot exceed 100 total VMs if using this method.  (final_SingleAV.json, vm_baseSingleAV.json)
+
 

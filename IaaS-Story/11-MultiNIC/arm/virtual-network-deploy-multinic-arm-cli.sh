@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 alias azure=azure.cmd
 
 # Set variables for existing resource group
@@ -42,7 +42,7 @@ azure group create $backendRGName $location
 
 azure storage account create $prmStorageAccountName \
     --resource-group $backendRGName \
-    --location $location --type PLRS 
+    --location $location --type PLRS
 
 azure availset create --resource-group $backendRGName \
     --location $location \
@@ -60,7 +60,7 @@ do
         --location $location \
         --private-ip-address $ipAddress1 \
         --subnet-id $subnetId
-    
+
     # Create NIC for remote access
     nic2Name=$nicNamePrefix$suffixNumber-RA
     x=$((suffixNumber+53))

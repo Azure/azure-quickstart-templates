@@ -71,7 +71,7 @@ sudo echo "<user username=\"tomcat\" password=\"tomcat\" roles=\"tomcat\"/>" >> 
 sudo echo "<user username=\"$2\" password=\"$3\" roles=\"tomcat,manager-script,manager-gui,admin-gui\"/>" >> /tmp/tomcat-users.xml
 sudo echo "</tomcat-users>" >> /tmp/tomcat-users.xml
 sudo mv /tmp/tomcat-users.xml /etc/tomcat7
-sudo chown root.tomcat7 /etc/tomcat7/tomcat-users.xml 
+sudo chown root.tomcat7 /etc/tomcat7/tomcat-users.xml
 sudo chmod 0640 /etc/tomcat7/tomcat-users.xml
 
 # Restart the tomcat7 and apache2 services

@@ -24,7 +24,7 @@ echo "---Enable silent installation---"	>> $LOG
 echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
 echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
 
-# Repository Updates 
+# Repository Updates
 echo "---Repository Updates---"	>> $LOG
 sudo apt-get update
 
@@ -37,7 +37,7 @@ echo "---Configuring Elasticsearch---" >> $LOG
 sed -i 's/#network.host: 192.168.0.1/network.host: localhost/g' /etc/elasticsearch/elasticsearch.yml >> $LOG
 sudo systemctl restart elasticsearch >> $LOG
 sudo systemctl daemon-reload >> $LOG
-sudo systemctl enable elasticsearch >> $LOG 
+sudo systemctl enable elasticsearch >> $LOG
 
 #Configuring Kibana
 echo "---Configuring Kibana---" >> $LOG

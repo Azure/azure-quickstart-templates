@@ -113,7 +113,8 @@ workflow ASR-AddSingleNSGPublicIp {
                              
                 $azurevm = Get-AzureRMVM -ResourceGroupName $Using:VM.ResourceGroupName -Name $Using:VM.RoleName 
                 write-output "Azure VM Id", $azurevm.Id 
-                $NicArmObject = Get-AzureRmResource -ResourceId $azurevm.NetworkInterfaceIDs[0] 
+                $NicArmObject = Get-AzureRmResource -ResourceId $azurevm.NetworkProfile.NetworkInterfaces[0].Id
+                
                 write-output "Nic Arm Object Id = ", $NicArmObject.Id 
                 $VMNetworkInterfaceObject = Get-AzureRmNetworkInterface -Name $NicArmObject.Name -ResourceGroupName $NicArmObject.ResourceGroupName 
                 write-output "Nic Interface Id", $VMNetworkInterfaceObject.Id  

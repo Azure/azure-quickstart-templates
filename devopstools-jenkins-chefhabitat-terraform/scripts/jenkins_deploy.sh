@@ -16,7 +16,7 @@ echo "---Configure Repos for Azure Cli 2.0---" >> $LOG
 echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | sudo tee /etc/apt/sources.list.d/azure-cli.list >> $LOG
 sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893 >> $LOG
 
-# Repository Updates 
+# Repository Updates
 echo "---Repository Updates---"	>> $LOG
 sudo apt-get update
 
@@ -85,7 +85,7 @@ storageAccType = &quot;${10}&quot;
 vmSize = &quot;${11}&quot;
 vmName = &quot;${17}&quot;
 userName = &quot;${13}&quot;
-password = &quot;${14}&quot; 
+password = &quot;${14}&quot;
 sharedStorage = &quot;${15}&quot;
 imageUri = &quot;UpdateUrl&quot;" $srcdir/MongoDBTerraformjob.xml | sed "s/&amp;quot;/\"/g" > $srcdir/MongoDBTerraformjob-newconfig.xml
 fi
@@ -118,7 +118,7 @@ then
     xmlstarlet ed -u '//publishers/biz.neustar.jenkins.plugins.packer.PackerPublisher/params' -v "-var &apos;client_id=$2&apos; -var &apos;client_secret=$3&apos; -var &apos;resource_group=$5&apos; -var &apos;storage_account=${15}&apos; -var &apos;subscription_id=$1&apos; -var &apos;tenant_id=$4&apos; -var &apos;Hartfile=UpdateHartFile&apos; -var &apos;artifacts_location=${22}&apos; -var &apos;azure_region=$6&apos;" $srcdir/AppPackerjob.xml | sed "s/amp;//g" > $srcdir/AppPackerjob-newconfig.xml
 
 fi
-	
+
 wget -P $jenkinsdir ${22}/scripts/biz.neustar.jenkins.plugins.packer.PackerPublisher.xml
 wget -P $jenkinsdir ${22}/scripts/org.jenkinsci.plugins.terraform.TerraformBuildWrapper.xml
 sleep 30 && java -jar $srcdir/jenkins-cli.jar -s  http://$url restart --username $user --password $passwd && sleep 30

@@ -1,9 +1,10 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "LogicAppName": {
       "type": "string",
+      "defaultValue": "[concat('logic-app-', uniqueString(resourceGroup().id))]",
       "minLength": 1,
       "maxLength": 80,
       "metadata": {
@@ -12,6 +13,7 @@
     },
     "functionAppName": {
       "type": "string",
+      "defaultValue": "[concat('fn-app-', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the function app to create. Must be globally unique."
       }
@@ -29,8 +31,7 @@
     "branch": "master",
     "functionName": "Echo",
     "hostingPlanName": "[parameters('functionAppName')]",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
-    "storageACcountid": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+    "storageAccountName": "[concat('azfunctions', uniquestring(resourceGroup().id))]",
     "LogicAppLocation": "[parameters('location')]",
     "storageAccountType": "Standard_LRS"
   },
@@ -39,7 +40,7 @@
       "name": "[parameters('LogicAppName')]",
       "type": "Microsoft.Logic/workflows",
       "location": "[variables('LogicAppLocation')]",
-      "apiVersion": "2016-06-01",
+      "apiVersion": "2019-05-01",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites/sourcecontrols', parameters('functionAppName'), 'web')]"
       ],
@@ -92,25 +93,29 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
+      "kind": "StorageV2",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
       }
     },
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2015-04-01",
+      "apiVersion": "2019-08-01",
       "name": "[variables('hostingPlanName')]",
       "location": "[parameters('location')]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic"
+      },
       "properties": {
         "name": "[variables('hostingPlanName')]",
-        "computeMode": "Dynamic",
-        "sku": "Dynamic"
+        "computeMode": "Dynamic"
       }
     },
     {
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2019-08-01",
       "type": "Microsoft.Web/sites",
       "name": "[parameters('functionAppName')]",
       "location": "[parameters('location')]",
@@ -125,15 +130,15 @@
           "appSettings": [
             {
               "name": "AzureWebJobsDashboard",
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
             },
             {
               "name": "AzureWebJobsStorage",
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
             },
             {
               "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
             },
             {
               "name": "WEBSITE_CONTENTSHARE",
@@ -152,14 +157,14 @@
       },
       "resources": [
         {
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2019-08-01",
           "name": "web",
           "type": "sourcecontrols",
           "dependsOn": [
             "[resourceId('Microsoft.Web/Sites', parameters('functionAppName'))]"
           ],
           "properties": {
-            "RepoUrl": "[variables('repoURL')]",
+            "RepoUrl": "[variables('repoUrl')]",
             "branch": "[variables('branch')]",
             "IsManualIntegration": true
           }
@@ -168,9 +173,5 @@
     }
   ],
   "outputs": {
-    "LogicAppTriggerURL": {
-      "type": "string",
-      "value": "[listCallbackURL(resourceId('Microsoft.Logic/workflows/triggers', parameters('logicAppName'), 'Request'), '2016-06-01').value]"
-    }
   }
 }

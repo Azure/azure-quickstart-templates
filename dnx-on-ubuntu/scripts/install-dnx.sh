@@ -14,7 +14,7 @@ cat > /home/${admin_username}/sampleConsoleApp/main.cs <<EOL
 namespace DnxApp
 {
     using System;
-    
+
     public class Program
     {
         public static void Main(string[] args)

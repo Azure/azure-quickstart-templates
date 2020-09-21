@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -44,7 +44,7 @@ help()
 
 log()
 {
-	# If you want to enable this logging add a un-comment the line below and add your account key 
+	# If you want to enable this logging add a un-comment the line below and add your account key
 	#curl -X POST -H "content-type:text/plain" --data-binary "$(date) | ${HOSTNAME} | $1" https://logs-01.loggly.com/inputs/${LOGGING_KEY}/tag/redis-extension,${HOSTNAME}
 	echo "$1"
 }
@@ -61,17 +61,17 @@ fi
 # Parse script parameters
 while getopts ":u:p:v:h" optname; do
   log "Option $optname set with value ${OPTARG}"
-  
+
   case "$optname" in
 	u) # Admin user name
 		ADMIN_USERNAME=${OPTARG}
 		;;
 	p) # Admin user name
 		ADMIN_PASSWORD=${OPTARG}
-		;;		
+		;;
 	v) # Core package version
 		CORE_VERSION=${OPTARG}
-		;;	
+		;;
     h)  # Helpful hints
 		help
 		exit 2

@@ -116,7 +116,7 @@ echo "<user username=\"tomcat\" password=\"tomcat\" roles=\"tomcat\"/>" >> /tmp/
 echo "<user username=\"$2\" password=\"$3\" roles=\"tomcat,manager-script,manager-gui,admin-gui\"/>" >> /tmp/tomcat-users.xml
 echo "</tomcat-users>" >> /tmp/tomcat-users.xml
 mv /tmp/tomcat-users.xml /etc/tomcat
-chown root.tomcat /etc/tomcat/tomcat-users.xml 
+chown root.tomcat /etc/tomcat/tomcat-users.xml
 chmod 0640 /etc/tomcat/tomcat-users.xml
 
 # Restart httpd and tomcat servers

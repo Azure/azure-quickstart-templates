@@ -37,39 +37,39 @@ download_extra_libraries()
 {
 	wget -O /tmp/azure-storage-2.0.0.jar https://valueamplifypublic.blob.core.windows.net/public/azure-storage-2.0.0.jar
 	wget -O /tmp/hadoop-azure-2.7.2.jar https://valueamplifypublic.blob.core.windows.net/public/hadoop-azure-2.7.2.jar
-	
+
 	mv /tmp/*.jar /srv/spark/lib
 }
 
 install_prerequisites()
-{	
+{
 	echo "Working as user $USER"
-	
+
 	echo "Updating Suse"
 	JAVAC=$(which javac)
 	if [[ -z $JAVAC ]]; then
 		echo "Installing OpenJDK"
 		sudo zypper install -y java-1_8_0-openjdk java-1_8_0-openjdk-devel
 	fi
-	
+
 	echo "Downloading external libraries"
 	download_extra_libraries
 }
 
 setup_spark_env_and_defaults()
-{	
+{
 	echo "Setting up spark-env.sh and spark-defaults.sh"
 	cd /usr/local/spark/conf/
-	
+
 	cp -p spark-env.sh.template spark-env.sh
 	touch spark-env.sh
-	
+
 	# Main Parameters
 	echo "export SPARK_MASTER_IP=\"$MASTERIP\"" >> spark-env.sh
 	echo "export SPARK_MASTER_PORT=7077" >> spark-env.sh
 	echo "export SPARK_PUBLIC_DNS=\"$MASTERIP\"" >> spark-env.sh
 	#echo "export SPARK_EXECUTOR_INSTANCES=\"1\"" >> spark-env.sh
-	
+
 	# Other Paramters
 	echo 'export SPARK_WORKER_MEMORY="1g"' >> spark-env.sh
 	echo 'export SPARK_DRIVER_MEMORY="1g"' >> spark-env.sh
@@ -89,13 +89,13 @@ setup_spark_env_and_defaults()
 	echo 'export SPARK_REPL_OPTS=" -Djava.io.tmpdir=/srv/spark/tmp/repl/\$USER "' >> spark-env.sh
 	echo 'export SPARK_APP_OPTS=" -Djava.io.tmpdir=/srv/spark/tmp/app/\$USER "' >> spark-env.sh
 	echo 'export PYSPARK_PYTHON="/usr/bin/python"' >> spark-env.sh
-	
+
 	# Hadoop Related Configs
 	echo 'export HADOOP_CONF_DIR="/usr/local/spark/conf"' >> spark-env.sh
-	
+
 	## Cnofigure Azure Blob storage / Wasb access
 	touch core-site.xml
-	
+
 	echo '<?xml version="1.0" encoding="UTF-8"?>' >> core-site.xml
 	echo '<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>' >> core-site.xml
 	echo '<configuration>' >> core-site.xml
@@ -104,17 +104,17 @@ setup_spark_env_and_defaults()
 	echo "<value>$STORAGEACCOUNTKEY</value>" >> core-site.xml
 	echo '</property>' >> core-site.xml
 	echo '</configuration>' >> core-site.xml
-	
+
 	# Spark DEFAULTS
 	cp -p spark-defaults.conf.template spark-defaults.conf
 	touch spark-defaults.conf
-	
+
 	echo "spark.master            spark://$MASTERIP:7077" >> spark-defaults.conf
 	echo 'spark.serializer        org.apache.spark.serializer.KryoSerializer' >> spark-defaults.conf
-	
+
 	echo 'spark.driver.extraClassPath	/srv/spark/lib/*' >> spark-defaults.conf
 	echo 'spark.executor.extraClassPath	/srv/spark/lib/*' >> spark-defaults.conf
-	
+
 	cd ~
 }
 
@@ -123,44 +123,44 @@ install_spark()
 	cd ~
 	mkdir /usr/local/sparkforsuse
 	cd /usr/local/sparkforsuse
-	
+
 	wget http://mirrors.advancedhosters.com/apache/spark/spark-2.0.1/spark-2.0.1-bin-hadoop2.7.tgz
-	
+
 	tar xvzf spark-2.0.1-bin-hadoop2.7.tgz > /tmp/spark_unzip.log
 	rm spark-2.0.1-bin-hadoop2.7.tgz
 	mv spark-2.0.1-bin-hadoop2.7 ../
 	cd ..
 	cd /usr/local/
-	
+
 	rm -rf sparkforsuse
-	
+
 	sudo ln -s spark-2.0.1-bin-hadoop2.7 spark
-	
+
 	# Adding "spark" user for launching master and slave processes
-	
+
 	sudo groupadd spark
 	sudo useradd -g spark spark
 	#sudo adduser spark sudo
 	sudo mkdir /home/spark
 	sudo chown spark:spark /home/spark
-	
-	echo "spark ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/90-cloud-init-users	 
+
+	echo "spark ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/90-cloud-init-users
 	sudo chown -R spark:spark /usr/local/spark/
-	
+
 	rm -f ~/.ssh/id_rsa
 	ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
-	
+
 	sudo mkdir -p /srv/spark/{logs,work,tmp,pids,lib}
 	sudo chown -R spark:spark /srv/spark
 	sudo chmod 4755 /srv/spark/tmp
-	
+
 	download_extra_libraries
-	
+
 	setup_spark_env_and_defaults
-	
+
 	sudo su spark
-	rm -f ~/.ssh/id_rsa 
-	ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys	
+	rm -f ~/.ssh/id_rsa
+	ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 }
 
 launch_spark()
@@ -168,9 +168,9 @@ launch_spark()
 	sudo su spark
 	# need to say yes to every question
 	ssh localhost
-	
+
 	cd /usr/local/spark
-	
+
 	if [ ${ISMASTER} -eq "1" ];
 	    then
 		./sbin/start-master.sh
@@ -182,13 +182,13 @@ launch_spark()
 setup_environment_for_all_users()
 {
 	echo "Configuring SPARK_HOME, JAVA_HOME and PATH"
-	
+
 	echo 'export SPARK_HOME="/usr/local/spark"' >> /etc/profile
 	echo 'export SPARK_HOME="/usr/local/spark"' >> /etc/profile.local
 
 	echo 'export JAVA_HOME=/usr/lib64/jvm/java-1.8.0-openjdk-1.8.0/jre' >> /etc/profile.local
 	echo 'export JAVA_HOME=/usr/lib64/jvm/java-1.8.0-openjdk-1.8.0/jre' >> /etc/profile
-	
+
 	echo 'export PATH=$PATH:$JAVA_HOME/bin:$SPARK_HOME/bin' >> /etc/profile.local
 	echo 'export PATH=$PATH:$JAVA_HOME/bin:$SPARK_HOME/bin' >> /etc/profile
 }

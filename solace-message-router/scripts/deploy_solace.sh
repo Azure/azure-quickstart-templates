@@ -39,8 +39,6 @@ disk_size=""
 workspace_id=""
 is_primary="false"
 
-verbose=0
-
 while getopts "c:d:n:p:s:w:u:" opt; do
   case "$opt" in
   c)  current_index=$OPTARG
@@ -63,7 +61,6 @@ done
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 
-verbose=1
 echo "`date` current_index=$current_index , dns_prefix=$dns_prefix , number_of_instances=$number_of_instances , \
       password_file=$admin_password_file , disk_size=$disk_size , workspace_id=$workspace_id , solace_uri=$solace_uri , \
       Leftovers: $@"
@@ -142,6 +139,8 @@ if [ -z "`docker pull ${solace_uri}`" ] ; then
   if [ ${LOOP_COUNT} == 3 ]; then
     echo "`date` ERROR: Failed to download the Solace load, exiting" | tee /dev/stderr
     exit 1
+  else
+    echo "`date` INFO: Successfully downloaded ${SolOS_LOAD}"
   fi
   ## Load the image tarball
   docker load -i ${solace_directory}/${SolOS_LOAD}
@@ -158,32 +157,32 @@ echo "`date` INFO: Solace message broker image and tag: `docker images | grep so
 # Decide which scaling tier applies based on system memory
 # and set maxconnectioncount, ulimit, devshm and swap accordingly
 MEM_SIZE=`cat /proc/meminfo | grep MemTotal | tr -dc '0-9'`
-if [ ${MEM_SIZE} -lt 4000000 ]; then
-  # 100 if mem<4GiB
+if [ ${MEM_SIZE} -lt 6600000 ]; then
+  # 100 if mem<6,325MiB
   maxconnectioncount="100"
   shmsize="1g"
   ulimit_nofile="2448:6592"
   SWAP_SIZE="1024"
-elif [ ${MEM_SIZE} -lt 12000000 ]; then
-  # 1000 if 4GiB<=mem<12GiB
+elif [ ${MEM_SIZE} -lt 14500000 ]; then
+  # 1000 if 6,325MiB<=mem<13,916MiB
   maxconnectioncount="1000"
   shmsize="2g"
   ulimit_nofile="2448:10192"
   SWAP_SIZE="2048"
-elif [ ${MEM_SIZE} -lt 29000000 ]; then
-  # 10000 if 12GiB<=mem<28GiB
+elif [ ${MEM_SIZE} -lt 30600000 ]; then
+  # 10000 if 13,916MiB<=mem<29,215MiB
   maxconnectioncount="10000"
   shmsize="2g"
   ulimit_nofile="2448:42192"
   SWAP_SIZE="2048"
-elif [ ${MEM_SIZE} -lt 58000000 ]; then
-  # 100000 if 28GiB<=mem<56GiB
+elif [ ${MEM_SIZE} -lt 57500000 ]; then
+  # 100000 if 29,215MiB<=mem<54,840MiB
   maxconnectioncount="100000"
   shmsize="3380m"
   ulimit_nofile="2448:222192"
   SWAP_SIZE="2048"
 else
-  # 200000 if 56GiB<=mem
+  # 200000 if 54,840MiB<=mem
   maxconnectioncount="200000"
   shmsize="3380m"
   ulimit_nofile="2448:422192"
@@ -198,6 +197,15 @@ mkswap -f /var/lib/solace/swap
 chmod 0600 /var/lib/solace/swap
 swapon -f /var/lib/solace/swap
 grep -q 'solace\/swap' /etc/fstab || sudo sh -c 'echo "/var/lib/solace/swap none swap sw 0 0" >> /etc/fstab'
+
+echo "`date` INFO: Applying TCP for WAN optimizations" &>> ${LOG_FILE}
+echo '
+  net.core.rmem_max = 134217728
+  net.core.wmem_max = 134217728
+  net.ipv4.tcp_rmem = 4096 25165824 67108864
+  net.ipv4.tcp_wmem = 4096 25165824 67108864
+  net.ipv4.tcp_mtu_probing=1' | sudo tee /etc/sysctl.d/98-solace-sysctl.conf
+sudo sysctl -p /etc/sysctl.d/98-solace-sysctl.conf
 
 if [ ${number_of_instances} -gt 1 ]; then
   echo "`date` INFO: Configuring HA tuple"
@@ -254,16 +262,18 @@ else
   redundancy_config=""
 fi
 
-#Create new volumes that the PubSub+ Message Broker container can use to consume and store data.
-docker volume create --name=jail
-docker volume create --name=var
-docker volume create --name=softAdb
-docker volume create --name=adbBackup
+# Setup password file permissions
+chown -R 1000001 $(dirname ${admin_password_file})
+chmod 700 $(dirname ${admin_password_file})
 
 if [[ ${disk_size} == "0" ]]; then
+  #Create new volumes that the PubSub+ Message Broker container can use to consume and store data.
+  docker volume create --name=jail
+  docker volume create --name=var
+  docker volume create --name=softAdb
   docker volume create --name=diagnostics
   docker volume create --name=internalSpool
-  SPOOL_MOUNT="-v diagnostics:/var/lib/solace/diags -v internalSpool:/usr/sw/internalSpool"
+  SPOOL_MOUNT="-v jail:/usr/sw/jail -v var:/usr/sw/var -v softAdb:/usr/sw/internalSpool/softAdb -v diagnostics:/var/lib/solace/diags -v internalSpool:/usr/sw/internalSpool"
 else
   # Look for unpartitioned disks
   disk_volume=""
@@ -285,19 +295,23 @@ else
   (
     echo n # Add a new partition
     echo p # Primary partition
-    echo 1  # Partition number
+    echo 1 # Partition number
     echo   # First sector (Accept default: 1)
     echo   # Last sector (Accept default: varies)
     echo w # Write changes
   ) | sudo fdisk $disk_volume
   mkfs.xfs  ${disk_volume}1 -m crc=0
   UUID=`blkid -s UUID -o value ${disk_volume}1`
-  echo "UUID=${UUID} /opt/vmr xfs defaults 0 0" >> /etc/fstab
-  mkdir /opt/vmr
-  mkdir /opt/vmr/diagnostics
-  mkdir /opt/vmr/internalSpool
+  echo "UUID=${UUID} /opt/pubsubplus xfs defaults,uid=1000001 0 0" >> /etc/fstab
+  mkdir /opt/pubsubplus
+  mkdir /opt/pubsubplus/jail
+  mkdir /opt/pubsubplus/var
+  mkdir /opt/pubsubplus/softAdb
+  mkdir /opt/pubsubplus/diagnostics
+  mkdir /opt/pubsubplus/internalSpool
   mount -a
-  SPOOL_MOUNT="-v /opt/vmr/diagnostics:/var/lib/solace/diags -v /opt/vmr/internalSpool:/usr/sw/internalSpool"
+  chown 1000001 -R /opt/pubsubplus/
+  SPOOL_MOUNT="-v /opt/pubsubplus/jail:/usr/sw/jail -v /opt/pubsubplus/var:/usr/sw/var -v /opt/pubsubplus/softAdb:/usr/sw/internalSpool/softAdb -v /opt/pubsubplus/diagnostics:/var/lib/solace/diags -v /opt/pubsubplus/internalSpool:/usr/sw/internalSpool"
 fi
 
 LOG_OPT=""
@@ -332,7 +346,7 @@ fi
 tee /root/docker-create <<-EOF
 #!/bin/bash
 docker create \
- --privileged=true \
+ --privileged=false \
  --net=host \
  --uts=host \
  --shm-size=${shmsize} \
@@ -341,13 +355,13 @@ docker create \
  --ulimit nofile=${ulimit_nofile} \
  ${LOG_OPT} \
  -v $(dirname ${admin_password_file}):/run/secrets \
- -v jail:/usr/sw/jail \
- -v var:/usr/sw/var \
- -v softAdb:/usr/sw/internalSpool/softAdb \
- -v adbBackup:/usr/sw/adb \
  ${SPOOL_MOUNT} \
  --env username_admin_globalaccesslevel=admin \
  --env username_admin_passwordfilepath=$(basename ${admin_password_file}) \
+ --env "service_ssh_port=2222" \
+ --env "service_webtransport_port=8008" \
+ --env "service_webtransport_tlsport=1443" \
+ --env "service_semp_tlsport=1943" \
  --env system_scaling_maxconnectioncount=${maxconnectioncount} \
  ${logging_config} \
  ${redundancy_config} \

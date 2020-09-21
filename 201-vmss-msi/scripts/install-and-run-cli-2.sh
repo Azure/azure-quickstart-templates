@@ -33,7 +33,7 @@ do
     if [ -z ${!var} ]; then
         echo "Argument $var is not set" >&2
         exit 1
-    fi 
+    fi
 
 done
 
@@ -52,4 +52,4 @@ sudo docker run -v `pwd`:/scripts --network='host' \
 -e CONTAINER_NAME=${container_name} \
 -e RESOURCE_GROUP=${resource_group} \
 -e PORT=${PORT} \
-${docker_image} "./scripts/${script_file}" 
+${docker_image} "./scripts/${script_file}"

@@ -1,20 +1,17 @@
 # Pivotal Apigee Azure Quickstart
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpivotalcloudfoundry-apigee%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpivotalcloudfoundry-apigee%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpivotalcloudfoundry-apigee%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpivotalcloudfoundry-apigee%2Fazuredeploy.json)
+
+
 
 #### IMPORTANT: Before you deploy the template make sure you have accepted Pivotal End User License Agreement:
 
@@ -43,8 +40,6 @@ Pivotal Cloud Foundry’s service broker API is used to create the Apigee servic
 The Apigee service broker supports Apigee Edge, including Trial, SMB, Startup, and Enterprise.
 
 ![Pivotal Cloud Foundry Integration with Apigee Edge Gateway](https://github.com/sysgain/azurequickstarts/blob/vcherukuri-patch-1/PivtoalCloudFoundry-Concourse-Apigee-AzureMetaService/pivotal-P2P/Images/Solution%20Integration.png?raw=true)
-
-
 
 ## Product Architecture
 ![Product Architecture](https://raw.githubusercontent.com/sysgain/pivotal/master/pivotal-P2P-Architecture.jpg)
@@ -125,5 +120,6 @@ Please refer to parameter descriptions if you need more information on what need
 The deployment takes about 5 Hours. 
 
 To work with Pivotal Cloud Foundry Hands on Lab click [here](http://pcf-ignite.pcfazure.com/Labs/)
+
 
 

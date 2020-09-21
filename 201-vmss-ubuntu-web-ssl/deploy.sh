@@ -1,8 +1,8 @@
 #!/bin/bash
 
-usage() 
-{ 
-    echo "Usage: $0 -g <resourceGroupName> -l <resourceGroupLocation> -s <scriptstorageaccount> " 1>&2; exit 1; 
+usage()
+{
+    echo "Usage: $0 -g <resourceGroupName> -l <resourceGroupLocation> -s <scriptstorageaccount> " 1>&2; exit 1;
 }
 
 stagecustomscript()
@@ -22,9 +22,9 @@ stagecustomscript()
     azure storage container show -a $scriptstorageaccount -k $key $containername
     if [ $? -eq 1 ]
     then
-        echo Creating Container $containername 
+        echo Creating Container $containername
         azure storage container create --container $containername -p Blob -a $scriptstorageaccount -k $key
-    fi 
+    fi
     azure storage blob upload -f ./configuressl.sh -a $scriptstorageaccount -k $key --container $containername -q
 }
 
@@ -82,11 +82,11 @@ fi
 azure config mode arm
 
 #Check for existing resource group
-if [ -z "$resourceGroupLocation" ] ; 
+if [ -z "$resourceGroupLocation" ] ;
 then
 	echo "Using existing resource group..."
-else 
-	echo "Creating a new resource group..." 
+else
+	echo "Creating a new resource group..."
 	azure group create --name $resourceGroupName --location $resourceGroupLocation
 fi
 

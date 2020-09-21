@@ -32,21 +32,21 @@ while getopts A:p:S:T:i:s:r:c:k:l:t::h optname; do
     p) #port number for local grafana server
       GRAFANA_PORT="${OPTARG}"
       ;;
-    S) 
+    S)
       SUBSCRIPTION_ID="${OPTARG}"
       ;;
     T)
       TENANT_ID="${OPTARG}"
-      ;;    
+      ;;
     i)
       CLIENT_ID="${OPTARG}"
-      ;;    
+      ;;
     s)
       CLIENT_SECRET="${OPTARG}"
       ;;
     r)
       RESOURCE_GROUP="${OPTARG}"
-      ;;   
+      ;;
     c)
       COMSOSDB_NAME="${OPTARG}"
       ;;

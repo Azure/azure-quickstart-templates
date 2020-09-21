@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo apt-get update 
+sudo apt-get update
 sudo apt-get install -y apache2
 if [ "$1" = "True" ]; then
 	if [ "$4" = "16.04.0-LTS" ]; then

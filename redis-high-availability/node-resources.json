@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "commonSettings": {
@@ -20,11 +20,14 @@
         "Description": "Machine settings object"
       }
     },
-    "adminPassword": {
+    "adminPasswordOrKey": {
       "type": "securestring",
       "metadata": {
         "Description": "Administrator password used when provisioning virtual machines"
       }
+    },
+    "authenticationType": {
+      "type": "string"
     },
     "location": {
       "type": "string",
@@ -34,7 +37,18 @@
       }
     }
   },
-  "variables": {},
+  "variables": {
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('machineSettings').adminUsername, '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }},
   "resources": [
     {
       "type": "Microsoft.Network/networkInterfaces",
@@ -74,7 +88,8 @@
         "osProfile": {
           "computerName": "[concat(parameters('machineSettings').machineNamePrefix, 'member', parameters('machineSettings').machineIndex)]",
           "adminUsername": "[parameters('machineSettings').adminUsername]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[parameters('machineSettings').osImageReference]",

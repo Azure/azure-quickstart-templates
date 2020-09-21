@@ -16,7 +16,7 @@ curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.
 yum update powershell
 # Install PowerShell
 yum install -y powershell
-if [ -f "installAzureRM.ps1" ]; then 
+if [ -f "installAzureRM.ps1" ]; then
 	pwsh ./installAzureRM.ps1 -linux
 fi
 echo "starting CA helper service"

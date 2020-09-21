@@ -5,7 +5,7 @@ mysqlPassword=$1
 zabbixServer=$2
 
 
-	
+
 install_mysql() {
 
 	#get repo
@@ -45,10 +45,10 @@ install_mysql() {
 
 	#configure my.cnf
 	sed -i '/\[mysqld\]/a server-id = 1\nlog_bin = /var/lib/mysql/mysql-bin.log' /etc/my.cnf
-	
+
 	#auto-start
 	chkconfig mysqld on
-	
+
 
 }
 
@@ -58,7 +58,7 @@ disk_format() {
 	yum install wget -y
 	for ((j=1;j<=3;j++))
 	do
-		wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh 
+		wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh
 		if [[ -f /tmp/vm-disk-utils-0.1.sh ]]; then
 			bash /tmp/vm-disk-utils-0.1.sh -b /var/lib/mysql -s
 			if [[ $? -eq 0 ]]; then
@@ -73,7 +73,7 @@ disk_format() {
 			continue
 		fi
 	done
-		
+
 }
 
 

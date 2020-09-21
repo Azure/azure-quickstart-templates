@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -16,16 +16,22 @@
     },
     "suseOSVersion": {
       "type": "string",
-      "defaultValue": "12-SP3",
+      "defaultValue": "sles-15-sp2",
       "allowedValues": [
-        "12",
-        "12-SP1",
-        "12-SP2",
-        "12-SP3"
+        "sles-15-sp2",
+        "sles-15-sp1",
+        "sles-12-sp5"
       ],
       "metadata": {
         "description": "The SLES version for the VM. This will pick the latest available image of this given SLES version."
       }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of the virtual machine"
+      },
+      "defaultValue": "Standard_D2_v3"
     },
     "location": {
       "type": "string",
@@ -72,12 +78,13 @@
           }
         ]
       }
-    }
+    },
+    "networkSecurityGroupName": "[concat(variables('subnetName'), '-nsg')]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2019-06-01",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -87,7 +94,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2017-09-01",
+      "apiVersion": "2020-05-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -98,10 +105,37 @@
       }
     },
     {
+      "comments": "Simple Network Security Group for subnet [variables('subnetName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-22",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "22",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2017-09-01",
+      "apiVersion": "2020-05-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -112,7 +146,10 @@
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
@@ -120,7 +157,7 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2017-09-01",
+      "apiVersion": "2020-05-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -146,7 +183,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-12-01",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -155,7 +192,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_D1"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -166,8 +203,8 @@
         "storageProfile": {
           "imageReference": {
             "publisher": "SUSE",
-            "offer": "SLES",
-            "sku": "[parameters('suseOSVersion')]",
+            "offer": "[parameters('suseOSVersion')]",
+            "sku": "gen1",
             "version": "latest"
           },
           "osDisk": {
@@ -194,7 +231,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2017-06-01').primaryEndpoints.blob]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2019-06-01').primaryEndpoints.blob]"
           }
         }
       }

@@ -6,7 +6,7 @@ install_postgresql_service() {
 	if [ $? == 0 ];then
 		echo 'postgresql_enable="YES"' >> /etc/rc.conf
 		echo 'postgresql_data="/stripe/postgres/data"' >> /etc/rc.conf
-		chown -R pgsql:pgsql /stripe/	
+		chown -R pgsql:pgsql /stripe/
 		su pgsql -c '/usr/local/bin/initdb -D /stripe/postgres/data/'
 		echo 'host    all             all             0.0.0.0/0               md5' >> /stripe/postgres/data/pg_hba.conf
 		cp ./postgresql.conf /stripe/postgres/data/postgresql.conf
@@ -30,7 +30,7 @@ install_pgbouncer_service() {
 		echo 'kern.ipc.soacceptqueue=4096' >> /etc/sysctl.conf
 		echo 'net.inet.tcp.msl=1000' >> /etc/sysctl.conf
 
-		cp ./pgbouncer.ini /usr/local/etc/pgbouncer.ini		
+		cp ./pgbouncer.ini /usr/local/etc/pgbouncer.ini
 	fi
 	echo "Done installing pgbouncer..."
 }
@@ -44,7 +44,7 @@ setup_datadisks(){
 	done
 
 	kldload geom_stripe
-	gstripe label -v st0 $datadisks 
+	gstripe label -v st0 $datadisks
 	bsdlabel -wB /dev/stripe/st0
 	newfs -U /dev/stripe/st0a
 	mkdir /stripe

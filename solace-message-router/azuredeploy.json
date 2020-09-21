@@ -1,24 +1,30 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "adminUsername": {
+    "vmAdminUsername": {
       "type": "string",
       "metadata": {
-        "description": "Username for the virtual Machine(s) hosting the Solace message router instance(s). Do not use special characters."
+        "description": "Username for the Virtual Machine(s) hosting the Solace event router instance(s). Do not use special characters."
       }
     },
-    "adminPassword": {
+    "vmAdminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Password for the Virtual Machine(s) and for the 'admin' SolOS CLI user."
+        "description": "Password for the Virtual Machine(s)."
+      }
+    },
+    "solaceAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the PubSub+ event broker management 'admin' user. For password rules refer to https://docs.solace.com/Configuring-and-Managing/Configuring-Internal-CLI-User-Accounts.htm#Changing-CLI-User-Passwords "
       }
     },
     "securityGroupName": {
       "type": "string",
       "defaultValue": "solace-security",
       "metadata": {
-        "description": "Security group defined to support PubSub+ message broker system level and default message vpn ports."
+        "description": "Security group defined to support PubSub+ event broker system level and default message vpn ports."
       }
     },
     "workspaceName": {
@@ -48,7 +54,7 @@
     "dnsLabelForLbIp": {
       "type": "string",
       "metadata": {
-        "description": "Unique DNS Label for the Public IP used to access the Load Balancer."
+        "description": "Unique DNS Label for the Public IP used to access the Load Balancer. Name must satisfy regular expression ^[a-z][a-z0-9-]{1,61}[a-z0-9]$"
       }
     },
     "dnsLabelForVmIp": {
@@ -126,11 +132,11 @@
         "160"
       ]
     },
-    "solaceMessageBrokerDockerImageReference": {
+    "solaceEventBrokerDockerImageReference": {
       "type": "string",
       "defaultValue": "solace/solace-pubsub-standard:latest",
       "metadata": {
-          "description": "Solace PubSub+ message broker docker image reference: a docker registry name with optional tag or a download URL. The download URL can be obtained from http://dev.solace.com/downloads/ or it can be a url to a remotely hosted load version. Default will use the latest image available from Docker Hub."
+          "description": "Solace PubSub+ event broker docker image reference: a docker registry name with optional tag or a download URL. The download URL can be obtained from http://dev.solace.com/downloads/ or it can be a url to a remotely hosted load version. Default will use the latest image available from Docker Hub."
       }
     },
     "deploymentModel": {
@@ -161,14 +167,14 @@
       "type": "string",
       "defaultValue": "10.0.0.0/16",
       "metadata": {
-        "description": "The virtual network's address range in CIDR notation where the Solace message broker will be deployed."
+        "description": "The virtual network's address range in CIDR notation where the PubSub+ event broker will be deployed."
       }
     },
     "subnetPrefix": {
       "type": "string",
       "defaultValue": "10.0.0.0/24",
       "metadata": {
-        "description": "The subnet's address range in CIDR notation where the Solace message broker will be deployed. It must be contained by the address space of the virtual network. The address range of a subnet which is in use can't be edited."
+        "description": "The subnet's address range in CIDR notation where the PubSub+ event broker will be deployed. It must be contained by the address space of the virtual network. The address range of a subnet which is in use can't be edited."
       }
     },
     "location": {
@@ -203,7 +209,7 @@
   "variables": {
     "availabilitySetName": "solace-ha-cluster",
     "platformFaultDomainCount": "[parameters('numberOfFaultDomains')]",
-    "platformUpdateDomainCount": 3,
+    "platformUpdateDomainCount": "[if(equals(parameters('numberOfFaultDomains'), 1), 1, 3)]",
     "imagePublisher": "OpenLogic",
     "imageOffer": "Centos",
     "OSDiskName": "osdiskfordockersimple",
@@ -268,7 +274,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2019-10-01",
       "type": "Microsoft.Resources/deployments",
       "name": "[variables('solaceSecurityName')]",
       "properties": {
@@ -291,7 +297,7 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2019-10-01",
       "type": "Microsoft.Resources/deployments",
       "name": "[variables('solaceLoadBalancerName')]",
       "properties": {
@@ -324,7 +330,7 @@
     },
     {
       "condition": "[not(empty(parameters('workspaceName')))]",
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2019-10-01",
       "type": "Microsoft.Resources/deployments",
       "name": "[variables('solaceWorkspaceName')]",
       "properties": {
@@ -344,7 +350,7 @@
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-04-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('publicIPAddressName'), copyindex())]",
       "location": "[parameters('location')]",
@@ -361,7 +367,7 @@
     },
     {
       "condition": "[empty(parameters('existingSubnetName'))]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-04-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -382,7 +388,7 @@
       }
     },
     {
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2019-10-01",
       "name": "[variables('solaceUpdateSubnetName')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
@@ -414,7 +420,7 @@
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-04-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyindex())]",
       "location": "[parameters('location')]",
@@ -453,7 +459,7 @@
       }
     },
     {
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
       "location": "[parameters('location')]",
@@ -466,7 +472,7 @@
       }
     },
     {
-      "apiVersion":"2017-03-30",
+      "apiVersion":"2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('dnsLabelForVmIp'), copyindex())]",
       "location": "[parameters('location')]",
@@ -487,8 +493,8 @@
         },
         "osProfile": {
           "computerName": "[concat(parameters('dnsLabelForVmIp'), copyindex())]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminUsername": "[parameters('vmAdminUsername')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -514,7 +520,7 @@
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('dnsLabelForVmIp'), copyindex(), '/DockerExtension')]",
       "location": "[parameters('location')]",
@@ -535,7 +541,7 @@
     },
     {
       "condition": "[not(empty(parameters('workspaceName')))]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('dnsLabelForVmIp'), copyindex(), '/OmsAgentExtension')]",
       "location": "[parameters('location')]",
@@ -560,7 +566,7 @@
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('dnsLabelForVmIp'), copyindex(), '/configureSolaceContainer')]",
       "location": "[parameters('location')]",
@@ -583,7 +589,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('mkdir -p -m 600 ', variables('adminPasswordDir'), '; echo ', parameters('adminPassword'), ' > ', variables('adminPasswordFile'), '; bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -d ', parameters('dnsLabelForVmIp'), ' -n ', variables('numberOfInstances'), ' -p ', variables('adminPasswordFile'), ' -s ', if(equals(copyindex(), variables('monitorNodeIndex')), '0', parameters('dataDiskSize')), if(empty(parameters('workspaceName')), '', concat(' -w ', reference(variables('solaceWorkspaceName')).outputs.workspaceId.value)), ' -u ', parameters('solaceMessageBrokerDockerImageReference'))]"
+          "commandToExecute": "[concat('mkdir -p -m 770 ', variables('adminPasswordDir'), '; echo ', parameters('solaceAdminPassword'), ' > ', variables('adminPasswordFile'), '; bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -d ', parameters('dnsLabelForVmIp'), ' -n ', variables('numberOfInstances'), ' -p ', variables('adminPasswordFile'), ' -s ', if(equals(copyindex(), variables('monitorNodeIndex')), '0', parameters('dataDiskSize')), if(empty(parameters('workspaceName')), '', concat(' -w ', reference(variables('solaceWorkspaceName')).outputs.workspaceId.value)), ' -u ', parameters('solaceEventBrokerDockerImageReference'))]"
          }
       }
     }

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmName": {
@@ -34,10 +34,23 @@
         "description": "The FQDN of the existing Active Directory Domain"
       }
     },
+    "OUPath": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specifies an organizational unit (OU) for the domain account. Enter the full distinguished name of the OU in quotation marks. Example: 'OU=testOU; DC=domain; DC=Domain; DC=com'"
+      }
+    },
     "existingVnetName": {
       "type": "string",
       "metadata": {
         "description": "The name of the Virtual Network to connect to"
+      }
+    },
+    "existingVnetResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource Group Name for the Virtual Network to connect to"
       }
     },
     "existingSubnetName": {
@@ -57,7 +70,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/tfs-standard-existingsql"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/tfs-standard-existingsql/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -76,15 +89,14 @@
   },
   "variables": {
     "networkInterfaceName": "[concat(parameters('vmName'), 'nic')]",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'),  parameters('existingSubnetName'))]"
+    "subnetRef": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'),  parameters('existingSubnetName'))]"
   },
   "resources": [
     {
-      "apiVersion": "2017-09-01",
+      "apiVersion": "2019-09-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('networkInterfaceName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [],
       "properties": {
         "ipConfigurations": [
           {
@@ -100,7 +112,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-03-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
@@ -139,12 +151,12 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-03-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/JoinDomain')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -153,7 +165,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "Name": "[parameters('existingDomainName')]",
-          "OUPath": "",
+          "OUPath": "[parameters('OUPath')]",
           "User": "[concat(parameters('existingDomainName'), '\\', parameters('adminUsername'))]",
           "Restart": "true",
           "Options": "3"
@@ -164,7 +176,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-03-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/ConfigureTfs')]",
       "location": "[parameters('location')]",
@@ -181,7 +193,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), '/scripts/ConfigureTfsRemoteSql.ps1', parameters('_artifactsLocationSasToken'))]"
+            "[uri(parameters('_artifactsLocation'), concat('ConfigureTfsRemoteSql.ps1', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {

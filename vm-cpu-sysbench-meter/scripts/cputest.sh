@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #install sysbench
-apt-get update > /dev/null 
+apt-get update > /dev/null
 apt-get -y install sysbench > /dev/null
 
 #run test

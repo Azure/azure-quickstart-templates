@@ -69,9 +69,9 @@ wait
 # retry on fail
 if [ "$OS" == "Ubuntu 16.04 LTS" ]
 then
-  wget --tries=3 --output-document=tableau-installer.deb https://downloads.tableau.com/esdalt/2019.2.1/tableau-server-2019-2-1_amd64.deb
+  wget --tries=3 --output-document=tableau-installer.deb https://downloads.tableau.com/esdalt/2020.1.1/tableau-server-2020-1-1_amd64.deb
 else
-  wget --tries=3 --output-document=tableau-installer.rpm https://downloads.tableau.com/esdalt/2019.2.1/tableau-server-2019-2-1.x86_64.rpm
+  wget --tries=3 --output-document=tableau-installer.rpm https://downloads.tableau.com/esdalt/2020.1.1/tableau-server-2020-1-1.x86_64.rpm
 fi
 
 if [ $? -ne 0 ]
@@ -82,7 +82,7 @@ fi
 
 # download automated-installer
 wget --remote-encoding=UTF-8 --output-document=automated-installer.sh $INSTALL_SCRIPT_URL
-                                                              
+
 wait
 chmod +x automated-installer.sh
 
@@ -98,7 +98,7 @@ then
   then
     sudo ./automated-installer.sh -s secrets -f config.json -r registration.json -a "$USER" --accepteula tableau-installer.deb --force
   else
-    sudo ./automated-installer.sh -s secrets -f config.json -r registration.json -a "$USER" --accepteula tableau-installer.rpm --force    
+    sudo ./automated-installer.sh -s secrets -f config.json -r registration.json -a "$USER" --accepteula tableau-installer.rpm --force
   fi
 else
   if [ "$OS" == "Ubuntu 16.04 LTS" ]

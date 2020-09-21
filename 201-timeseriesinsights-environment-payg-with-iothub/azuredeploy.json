@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
       "iotHubNewOrExisting": {
@@ -92,8 +92,9 @@
       },
       "environmentTimeSeriesIdProperties": {
           "type": "array",
+          "maxLength": 3,
           "metadata": {
-            "description": "Time Series ID acts as a partition key for your data and as a primary key for your time series model. It is important that you specify the appropriate Time Series Property ID during environment creation, since you can’t change it later. Note that the Property ID is case sensitive. You can use 1-3 keys: one is required, but up to three can be used to create a composite."
+            "description": "Time Series ID acts as a partition key for your data and as a primary key for your time series model. It is important that you specify the appropriate Time Series Property ID during environment creation, since you can't change it later. Note that the Property ID is case sensitive. You can use 1-3 keys: one is required, but up to three can be used to create a composite."
           }
       },
       "eventSourceName": {
@@ -159,19 +160,26 @@
         "metadata": {
           "description": "Storage Account type for L1 TSI environments."
         }
+      },
+      "warmStoreDataRetention": {
+        "type": "string",
+        "defaultValue": "P7D",
+        "metadata": { 
+          "description": "ISO duration between 7 and 31 days. Remove the 'warmStoreConfiguration' property from the envrionment to delete the warm store."
+        }
       }
     },
     "variables": {
       "environmentTagsValue": { "displayName": "[parameters('environmentDisplayName')]" },
       "eventSourceTagsValue": { "displayName": "[parameters('eventSourceDisplayName')]" },
       "eventSourceResourceId": "[resourceId(parameters('iotHubResourceGroup'), 'Microsoft.Devices/IotHubs', parameters('iotHubName'))]",
-      "storageAccountName": "[concat('tsi', uniquestring(resourceGroup().id))]"  
+      "storageAccountName": "[concat('tsi', uniquestring(resourceGroup().id))]"
     },
     "resources": [
       {
         "condition": "[equals(parameters('iotHubNewOrExisting'), 'new')]",
-        "apiVersion": "2018-04-01",
         "type": "Microsoft.Devices/IotHubs",
+        "apiVersion": "2020-03-01",
         "name": "[parameters('iotHubName')]",
         "location": "[parameters('location')]",
         "sku": {
@@ -182,26 +190,29 @@
       },
       {
         "condition": "[equals(parameters('iotHubNewOrExisting'), 'new')]",
-        "apiVersion": "2018-04-01",
-        "name": "[concat(parameters('iotHubName'), '/events/', parameters('consumerGroupName'))]",
         "type": "Microsoft.Devices/iotHubs/eventhubEndpoints/ConsumerGroups",
+        "apiVersion": "2020-03-01",
+        "name": "[concat(parameters('iotHubName'), '/events/', parameters('consumerGroupName'))]",
         "dependsOn": [
-          "[concat('Microsoft.Devices/iothubs/', parameters('iotHubName'))]"
+          "[resourceId('Microsoft.Devices/iothubs', parameters('iotHubName'))]"
         ]
       },
       {
         "type": "Microsoft.TimeSeriesInsights/environments",
-        "name": "[parameters('environmentName')]",
         "apiVersion": "2018-08-15-preview",
+        "name": "[parameters('environmentName')]",
         "location": "[parameters('location')]",
         "kind": "[parameters('environmentKind')]",
         "tags": "[variables('environmentTagsValue')]",
         "properties": {
             "storageConfiguration": {
                 "accountName": "[variables('storageAccountName')]",
-                "managementKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2018-07-01').keys[0].value]"
+                "managementKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value]"
             },
-            "timeSeriesIdProperties": "[parameters('environmentTimeSeriesIdProperties')]"
+            "timeSeriesIdProperties": "[parameters('environmentTimeSeriesIdProperties')]",
+            "warmStoreConfiguration": {
+              "dataRetention": "[parameters('warmStoreDataRetention')]"
+            }
         },
         "sku": {
           "name": "[parameters('environmentSkuName')]",
@@ -210,14 +221,14 @@
         "resources": [
           {
             "type": "eventsources",
-            "name": "[parameters('eventSourceName')]",
             "apiVersion": "2018-08-15-preview",
+            "name": "[parameters('eventSourceName')]",
             "location": "[parameters('location')]",
             "kind": "Microsoft.IoTHub",
             "dependsOn": [
-              "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]",
-              "[concat('Microsoft.Devices/IotHubs/', parameters('iotHubName'))]",
-              "[concat('Microsoft.Devices/IotHubs/', parameters('iotHubName'), '/eventHubEndpoints/events/ConsumerGroups/', parameters('consumerGroupName'))]"
+              "[resourceId('Microsoft.TimeSeriesInsights/environments', parameters('environmentName'))]",
+              "[resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName'))]",
+              "[resourceId('Microsoft.Devices/IotHubs/eventHubEndpoints/ConsumerGroups', parameters('iotHubName'), 'events', parameters('consumerGroupName'))]"
             ],
             "tags": "[variables('eventSourceTagsValue')]",
             "properties": {
@@ -225,7 +236,7 @@
               "iotHubName": "[parameters('iotHubName')]",
               "consumerGroupName": "[parameters('consumerGroupName')]",
               "keyName": "[parameters('eventSourceKeyName')]",
-              "sharedAccessKey": "[listkeys(resourceId('Microsoft.Devices/IoTHubs/IotHubKeys', parameters('iotHubName'), parameters('eventSourceKeyName')), '2018-04-01').primaryKey]",
+              "sharedAccessKey": "[listkeys(resourceId('Microsoft.Devices/IoTHubs/IotHubKeys', parameters('iotHubName'), parameters('eventSourceKeyName')), '2020-03-01').primaryKey]",
               "timestampPropertyName": "[parameters('eventSourceTimestampPropertyName')]"
             }
           }
@@ -234,15 +245,15 @@
       {
         "condition": "[not(empty(parameters('accessPolicyReaderObjectIds')))]",
         "type": "Microsoft.TimeSeriesInsights/environments/accesspolicies",
+        "apiVersion": "2018-08-15-preview",
         "name": "[concat(parameters('environmentName'), '/', 'readerAccessPolicy', copyIndex())]",
+        "dependsOn": [
+          "[resourceId('Microsoft.TimeSeriesInsights/environments', parameters('environmentName'))]"
+        ],
         "copy": {
           "name": "accessPolicyReaderCopy",
           "count": "[if(empty(parameters('accessPolicyReaderObjectIds')), 1, length(parameters('accessPolicyReaderObjectIds')))]"
         },
-        "apiVersion": "2018-08-15-preview",
-        "dependsOn": [
-          "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
-        ],
         "properties": {
           "principalObjectId": "[parameters('accessPolicyReaderObjectIds')[copyIndex()]]",
           "roles": [
@@ -253,15 +264,15 @@
       {
         "condition": "[not(empty(parameters('accessPolicyContributorObjectIds')))]",
         "type": "Microsoft.TimeSeriesInsights/environments/accesspolicies",
+        "apiVersion": "2018-08-15-preview",
         "name": "[concat(parameters('environmentName'), '/', 'contributorAccessPolicy', copyIndex())]",
+        "dependsOn": [
+          "[resourceId('Microsoft.TimeSeriesInsights/environments', parameters('environmentName'))]"
+        ],
         "copy": {
           "name": "accessPolicyContributorCopy",
           "count": "[if(empty(parameters('accessPolicyContributorObjectIds')), 1, length(parameters('accessPolicyContributorObjectIds')))]"
         },
-        "apiVersion": "2018-08-15-preview",
-        "dependsOn": [
-          "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
-        ],
         "properties": {
           "principalObjectId": "[parameters('accessPolicyContributorObjectIds')[copyIndex()]]",
           "roles": [
@@ -272,9 +283,9 @@
       {
         "condition": "[equals(parameters('environmentKind'), 'LongTerm')]",
         "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "2018-11-01",
         "name": "[variables('storageAccountName')]",
         "location": "[parameters('location')]",
-        "apiVersion": "2018-11-01",
         "sku": {
           "name": "[parameters('storageAccountType')]"
         },

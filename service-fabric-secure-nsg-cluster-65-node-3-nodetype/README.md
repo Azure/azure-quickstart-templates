@@ -1,20 +1,15 @@
 # Deployment of a 3 Nodetype Service Fabric secure Cluster with NSG enabled.
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fservice-fabric-secure-nsg-cluster-65-node-3-nodetype%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fservice-fabric-secure-nsg-cluster-65-node-3-nodetype%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fservice-fabric-secure-nsg-cluster-65-node-3-nodetype%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fservice-fabric-secure-nsg-cluster-65-node-3-nodetype%2Fazuredeploy.json)
 
 Use this template as a sample for setting up a three nodetype secure cluster and to  control the inbound and outbound network traffic using Network Security Groups. 
 
@@ -32,9 +27,9 @@ This template assumes that you already have certificates uploaded to your keyvau
 
 Refer to [Deploying ARM templates using ARM PS ](https://azure.microsoft.com/documentation/articles/service-fabric-cluster-creation-via-arm/) for detailed guidance on how to. There is detailed guidance on how to set up your certificates and Azure Active Directory for clients as well. For a successful setup of a secure cluster, make sure to read that document thoroughly. 
 
-
 <!--Image references-->
 [DownloadTemplate]: ./DownloadTemplate.png
 [NSG]: ./NSG1.PNG
+
 
 

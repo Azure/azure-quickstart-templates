@@ -1,22 +1,18 @@
 # Azure Active Directory Domain Service (AADDS) template
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-AAD-DomainServices%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/> 
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-AAD-DomainServices%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-AAD-DomainServices%2Fazuredeploy.json)
+ 
 
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-AAD-DomainServices%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/> 
-</a>
-
+ 
 ## Table of Contents
 
 1. [Overview](#overview)
@@ -27,12 +23,12 @@
 6. [Teardown Deployment](#teardown)
 7. [References](#references)
 
-<a name="overview"></a>
+<a name="overview">
 
 ## Overview
 This template provisions an Azure Active Directory Domain Service (AADDS) with required VNET and NSG groups.
 
-<a name="importantnotes"></a>
+<a name="importantnotes">
 
 ### Important Notes
 
@@ -44,7 +40,7 @@ This template provisions an Azure Active Directory Domain Service (AADDS) with r
 * It is recommended you use a clean Windows 10 (or similar) VM to perform the solution to ensure that the correct PowerShell modules get loaded.
 * Deployment takes around **40-45 minutes** to complete.
 
-<a name="predeployment"></a>
+<a name="predeployment">
 
 ### Pre Deployment Step
 
@@ -102,14 +98,14 @@ Before proceeding to the deployment of the AADDS template, we need to perform th
     # Register the resource provider for Azure AD Domain Services with Resource Manager.
     Register-AzureRmResourceProvider -ProviderNamespace Microsoft.AAD
 
-<a name="deployment"></a>
+<a name="deployment">
 
 <p></p>
 
 **Note:** 
 * Deployment takes around 40-50 minutes.
 
-<a name="postdeployment"></a>
+<a name="postdeployment">
 
 ### Post Deployment Steps
 
@@ -135,16 +131,17 @@ Users cannot bind using secure LDAP or sign in to the managed domain until you e
 
 You need to change the active directory administrator [AADGlobalAdminUser] password. Azure requires 20 minutes to sync the password hashes from Azure AD to manage AADDS.
 
-<a name="teardown"></a>
+<a name="teardown">
 
 ### Teardown Deployment
 To remove this deployment simply remove the resource group that contains this sample. 
     
-<a name="references"></a>
+<a name="references">
 
 ### References
 1. Pre-requisites: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-enable-using-powershell
 2. Networking Considerations: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-networking
 3. Password Synchronization: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-getting-started-password-sync
 4. Troubleshooting Guide: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-troubleshooting
+
 

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "uniquePrefix": {
@@ -122,22 +122,25 @@
         "description": "Admin username for the VMs in the deployment."
       }
     },
-    "authenticationType": {
-      "type": "string",
-      "defaultValue": "sshPublicKey",
-      "allowedValues": [
-        "sshPublicKey",
-        "password"
-      ],
-      "metadata": {
-        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
-      }
-    },
-    "adminPasswordOrKey": {
+    "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+        "description": "Admin password for the VMs in the deployment."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-custom-images-at-scale/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
@@ -147,27 +150,15 @@
     "subnetPrefix": "10.0.0.0/21",
     "transferImagePublisher": "Canonical",
     "transferImageOffer": "UbuntuServer",
-    "ubuntuOSVersion": "15.10",
+    "ubuntuOSVersion": "16.04-LTS",
     "imagePieces": "[split(parameters('imageLocation'),'/')]",
     "blobName": "[variables('imagePieces')[sub(length(variables('imagePieces')),1)]]",
-    "templateLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-custom-images-at-scale/",
-    "sharedResourcesTemplateUri ": "[concat(variables('templateLocation'), 'shared-resources.json')]",
-    "finalTemplateUri": "[concat(variables('templateLocation'), 'final_')]",
-    "downloadTemplateURI": "[concat(variables('templateLocation'), 'download.json')]",
-    "downloadScriptURI": "[concat(variables('templateLocation'), 'download.sh')]",
-    "uploadTemplateURI": "[concat(variables('templateLocation'), 'upload.json')]",
-    "uploadScriptURI": "[concat(variables('templateLocation'), 'upload.sh')]",
-    "linuxConfiguration": {
-      "disablePasswordAuthentication": true,
-      "ssh": {
-        "publicKeys": [
-          {
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-            "keyData": "[parameters('adminPasswordOrKey')]"
-          }
-        ]
-      }
-    }
+    "sharedResourcesTemplateUri ": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "finalTemplateUri": "[uri(parameters('_artifactsLocation'), concat('final_', parameters('deploymentType'), '.json', parameters('_artifactsLocationSasToken')))]",
+    "downloadTemplateURI": "[uri(parameters('_artifactsLocation'), concat('download.json', parameters('_artifactsLocationSasToken')))]",
+    "downloadScriptURI": "[uri(parameters('_artifactsLocation'), concat('download.sh', parameters('_artifactsLocationSasToken')))]",
+    "uploadTemplateURI": "[uri(parameters('_artifactsLocation'), concat('upload.json', parameters('_artifactsLocationSasToken')))]",
+    "uploadScriptURI": "[uri(parameters('_artifactsLocation'), concat('upload.sh', parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
     {
@@ -262,8 +253,7 @@
         "osProfile": {
           "computerName": "[concat('transfer', parameters('uniquePrefix'), 'vm')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -365,7 +355,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('finalTemplateUri'), parameters('deploymentType'), '.json')]",
+          "uri": "[variables('finalTemplateUri')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -399,8 +389,11 @@
           "subnetPrefix": {
             "value": "[variables('subnetPrefix')]"
           },
-          "templateLocation": {
-            "value": "[variables('templateLocation')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"

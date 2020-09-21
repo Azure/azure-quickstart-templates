@@ -1,9 +1,10 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "appName": {
       "type": "string",
+      "defaultValue": "[concat('fnapp', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the function app that you wish to create."
       }
@@ -11,7 +12,11 @@
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
-      "allowedValues": ["Standard_LRS", "Standard_GRS", "Standard_RAGRS"],
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS"
+      ],
       "metadata": {
         "description": "Storage Account type"
       }
@@ -26,7 +31,11 @@
     "runtime": {
       "type": "string",
       "defaultValue": "node",
-      "allowedValues": ["node", "dotnet", "java"],
+      "allowedValues": [
+        "node",
+        "dotnet",
+        "java"
+      ],
       "metadata": {
         "description": "The language worker runtime to load in the function app."
       }
@@ -37,23 +46,26 @@
     "hostingPlanName": "[parameters('appName')]",
     "applicationInsightsName": "[parameters('appName')]",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
-    "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-    "functionWorkerRuntime": "[parameters('runtime')]"
+    "functionWorkerRuntime": "[parameters('runtime')]",
+    "insightsLocation": {
+      "AzureCloud": "eastus",
+      "AzureUSGovernment": "usgovvirginia"
+    }
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2016-12-01",
       "location": "[parameters('location')]",
-      "kind": "Storage",
       "sku": {
         "name": "[parameters('storageAccountType')]"
-      }
+      },
+      "kind": "Storage"
     },
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2018-02-01",
+      "apiVersion": "2020-06-01",
       "name": "[variables('hostingPlanName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -66,8 +78,8 @@
       }
     },
     {
-      "apiVersion": "2015-08-01",
       "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-06-01",
       "name": "[variables('functionAppName')]",
       "location": "[parameters('location')]",
       "kind": "functionapp",
@@ -80,16 +92,12 @@
         "siteConfig": {
           "appSettings": [
             {
-              "name": "AzureWebJobsDashboard",
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
-            },
-            {
               "name": "AzureWebJobsStorage",
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
             },
             {
               "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
             },
             {
               "name": "WEBSITE_CONTENTSHARE",
@@ -101,11 +109,11 @@
             },
             {
               "name": "WEBSITE_NODE_DEFAULT_VERSION",
-              "value": "8.11.1"
+              "value": "~10"
             },
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-              "value": "[reference(resourceId('microsoft.insights/components/', variables('applicationInsightsName')), '2015-05-01').InstrumentationKey]"
+              "value": "[reference(resourceId('microsoft.insights/components', variables('applicationInsightsName')), '2020-02-02-preview').InstrumentationKey]"
             },
             {
               "name": "FUNCTIONS_WORKER_RUNTIME",
@@ -116,12 +124,12 @@
       }
     },
     {
-      "apiVersion": "2018-05-01-preview",
-      "name": "[variables('applicationInsightsName')]",
       "type": "microsoft.insights/components",
-      "location": "East US",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[variables('applicationInsightsName')]",
+      "location": "[variables('insightsLocation')[environment().name]]",
       "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('applicationInsightsName'))]": "Resource"
+        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', variables('applicationInsightsName')))]": "Resource"
       },
       "properties": {
         "ApplicationId": "[variables('applicationInsightsName')]",

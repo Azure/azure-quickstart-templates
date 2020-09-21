@@ -11,12 +11,14 @@ param(
     [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
     [string]$StorageAccountName = "azurequickstartsservice",
     [string]$TableName = "QuickStartsMetadataService",
-    [Parameter(mandatory=$true)]$StorageAccountKey
+    [string]$TableNamePRs = "QuickStartsMetadataServicePRs",
+    [Parameter(mandatory = $true)]$StorageAccountKey
 )
 
-if([string]::IsNullOrWhiteSpace($SampleName)){
+if ([string]::IsNullOrWhiteSpace($SampleName)) {
     Write-Error "SampleName is empty"
-} else {
+}
+else {
     Write-Host "SampleName: $SampleName"
 }
 
@@ -27,10 +29,19 @@ Write-Host "RowKey: $RowKey"
 # Get the storage table that contains the "status" for the deployment/test results
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
 $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
+$cloudTablePRs = (Get-AzStorageTable –Name $tableNamePRs –Context $ctx).CloudTable
 
-#Get the row to update - can't search by rowkey only since we don't know the partition key, but row key is guaranteed unique
-$r = Get-AzTableRow -table $cloudTable -ColumnName "RowKey" -Value $RowKey -Operator Equal
+#Get All Files from "prs" container and copy to the "badges" container
+$blobs = Get-AzStorageBlob -Context $ctx -Container "prs" -Prefix $storageFolder.Replace("@", "/") 
+$blobs | Start-AzStorageBlobCopy -DestContainer "badges" -Verbose -Force
+$blobs | Remove-AzStorageBlob -Verbose -Force
 
+# Get the row to update - can't search by rowkey only since we don't know the partition key, but row key is guaranteed unique in our scenario
+# TODO if there is no row in the PR table, this won't end well...
+Write-Host "Fetching row for: $RowKey"
+$r = Get-AzTableRow -table $cloudTablePRs -ColumnName "RowKey" -Value $RowKey -Operator Equal
+
+# change the status before copying the row/data to the "Live" table
 if ($r.status -eq $null) {
     Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
 }
@@ -38,11 +49,36 @@ else {
     $r.status = "Live"
 }
 
-Write-Host "Updating to new results: $($r.status)"
+Write-Host "Updating LIVE table with..."
+$r | fl *
 
-$r | Update-AzTableRow -table $cloudTable
+$p = @{ }
+foreach ($i in $r.PSObject.Properties) {
+    if ($i.Name -ne "Etag") {
+        if ($i.value -eq "true") {
+            $newValue = "PASS"
+        }
+        elseif ($i.value -eq "false") {
+            $newValue = "FAIL"
+        }
+        else { 
+            $newValue = $i.Value
+        }
+        $p.Add($i.Name, $newValue)
+    }
+}
 
-#Get All Files from "prs" container and copy to the "badges" container
-$blobs = Get-AzStorageBlob -Context $ctx -Container "prs" -Prefix $storageFolder 
-$blobs | Start-AzStorageBlobCopy -DestContainer "badges" -Verbose -Force
-$blobs | Remove-AzStorageBlob -Verbose -Force
+Write-Host "New properties..."
+$p | out-string
+
+# TODO if there is no row in the PR table, this won't end well...
+Write-Host "Add/Update Row in live table..."
+Add-AzTableRow -table $cloudTable `
+    -partitionKey $r.partitionKey `
+    -rowKey $r.rowKey `
+    -property $p `
+    -UpdateExisting
+               
+Write-Host "Removing row from PR table..."
+$r | Remove-AzTableRow -Table $cloudTablePRs
+

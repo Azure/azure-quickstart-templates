@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -211,7 +211,7 @@ install_java()
 # Install Elasticsearch
 install_es()
 {
-	
+
 	# Elasticsearch 2.x uses a different download path
     if [[ "${ES_VERSION}" == \2* ]]; then
         DOWNLOAD_URL="https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/$ES_VERSION/elasticsearch-$ES_VERSION.deb"
@@ -231,11 +231,11 @@ install_jmeter_server()
     apt-get -y install unzip
     wget -O agent.zip http://jmeter-plugins.org/downloads/file/ServerAgent-2.2.1.zip
     mkdir /opt/jmeter-server-agent
-    unzip agent.zip -d /opt/jmeter-server-agent 
-    
+    unzip agent.zip -d /opt/jmeter-server-agent
+
     log "updating iptables"
     sudo iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 4444 -j ACCEPT
-    
+
     log "setup agent service"
     cat << EOF > /etc/init/jmeter-server-agent.conf
     description "JMeter Server Agent"
@@ -256,10 +256,10 @@ EOF
 #      Future enhancement - (export the functions and use background/wait to run in parallel)
 
 
-if [ ${USE_AFS} -ne 0 ]; 
+if [ ${USE_AFS} -ne 0 ];
 then
     log "setting up afs"
-    
+
     # install cachefilesd
     # disabled for more extensive testing
     ##apt-get install cachefilesd
@@ -270,9 +270,9 @@ then
     bash afs-utils-0.1.sh -cp -a ${STORAGE_ACCOUNT} -k ${ACCESS_KEY}
 else
     log "setting up disks"
-    
+
     #Format data disks (Find data disks then partition, format, and mount them as separate drives)
-    bash vm-disk-utils-0.1.sh    
+    bash vm-disk-utils-0.1.sh
 fi
 
 #Install Oracle Java
@@ -285,7 +285,7 @@ install_java
 install_es
 
 #install jmeter server agent
-if [ $JMETER_AGENT ]; 
+if [ $JMETER_AGENT ];
 then
     install_jmeter_server
 fi
@@ -333,11 +333,11 @@ if [ -n "$DATAPATH_CONFIG" ]; then
 fi
 
 # if we are using AFS, then add that path
-if [ ${USE_AFS} -ne 0 ]; 
+if [ ${USE_AFS} -ne 0 ];
 then
     echo "node.enable_custom_paths: true" >> /etc/elasticsearch/elasticsearch.yml
     echo "node.add_id_to_custom_path: false" >> /etc/elasticsearch/elasticsearch.yml
-    echo "path.shared_data: /sharedfs" >> /etc/elasticsearch/elasticsearch.yml        
+    echo "path.shared_data: /sharedfs" >> /etc/elasticsearch/elasticsearch.yml
 fi
 
 # Configure discovery
@@ -376,7 +376,7 @@ if [[ "${MARVEL_ENDPOINTS}" ]]; then
   # non-Marvel node
   mep=$(expand_ip_range "$MARVEL_ENDPOINTS")
   expanded_marvel_endpoints="[\"${mep// /\",\"}\"]"
-  
+
   if [[ "${ES_VERSION}" == \2* ]]; then
     # 2.x non-Marvel node
     echo "marvel.agent.exporters:" >> /etc/elasticsearch/elasticsearch.yml

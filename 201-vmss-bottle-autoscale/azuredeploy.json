@@ -1,7 +1,14 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources"
+      },
+      "defaultValue": "[resourceGroup().location]"
+    },
     "vmSku": {
       "type": "string",
       "defaultValue": "Standard_D1_v2",
@@ -13,14 +20,15 @@
       "type": "string",
       "metadata": {
         "description": "String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended."
-      },
-      "maxLength": 9
+      }
     },
     "instanceCount": {
       "type": "int",
       "metadata": {
         "description": "Number of VM instances (100 or less)."
       },
+      "defaultValue": 1,
+      "minValue": 1,
       "maxValue": 100
     },
     "adminUsername": {
@@ -29,15 +37,39 @@
         "description": "Admin username on all VMs."
       }
     },
-    "adminPassword": {
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
       "type": "securestring",
       "metadata": {
-        "description": "Admin password on all VMs."
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
-    }
+    },
+    "_artifactsLocation": {
+         "type": "string",
+         "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-bottle-autoscale/",
+         "metadata": {
+            "description": "The base URI where artifacts required by this template are located"
+         }
+      },
+      "_artifactsLocationSasToken": {
+         "type": "securestring",
+         "defaultValue": "",
+         "metadata": {
+            "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated"
+         }
+      }
   },
   "variables": {
-    "location": "[resourceGroup().location]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
     "virtualNetworkName": "[concat(parameters('vmssName'), 'vnet')]",
@@ -61,16 +93,24 @@
       "version": "latest"
     },
     "imageReference": "[variables('osType')]",
-    "computeApiVersion": "2017-03-30",
-    "networkApiVersion": "2017-04-01",
-    "insightsApiVersion": "2015-04-01"
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[variables('location')]",
-      "apiVersion": "2017-04-01",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-05-01",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -90,8 +130,8 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[variables('location')]",
-      "apiVersion": "2017-04-01",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-05-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -102,10 +142,10 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
-      "location": "[variables('location')]",
-      "apiVersion": "2017-04-01",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-05-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -143,9 +183,9 @@
                 "id": "[variables('frontEndIPConfigID')]"
               },
               "protocol": "Tcp",
-              "frontendPortRangeStart": "9000",
-              "frontendPortRangeEnd": "9120",
-              "backendPort": "9000"
+              "frontendPortRangeStart": 9000,
+              "frontendPortRangeEnd": 9120,
+              "backendPort": 9000
             }
           }
         ]
@@ -154,11 +194,11 @@
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[parameters('vmssName')]",
-      "location": "[variables('location')]",
-      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-12-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "sku": {
         "name": "[parameters('vmSku')]",
@@ -181,7 +221,8 @@
           "osProfile": {
             "computerNamePrefix": "[parameters('vmssName')]",
             "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[parameters('adminPassword')]"
+            "adminPassword": "[parameters('adminPasswordOrKey')]",
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [
@@ -227,8 +268,8 @@
                   "autoUpgradeMinorVersion": true,
                   "settings": {
                     "fileUris": [
-                      "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-bottle-autoscale/installserver.sh",
-                      "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-bottle-autoscale/workserver.py"
+                      "[uri(parameters('_artifactsLocation'), concat('installserver.sh', parameters('_artifactsLocationSasToken')))]",
+                      "[uri(parameters('_artifactsLocation'), concat('workserver.py', parameters('_artifactsLocationSasToken')))]"
                     ],
                     "commandToExecute": "bash installserver.sh"
                   }
@@ -243,9 +284,9 @@
       "type": "Microsoft.Insights/autoscaleSettings",
       "apiVersion": "2015-04-01",
       "name": "autoscalehost",
-      "location": "[variables('location')]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachineScaleSets/', parameters('vmSSName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachineScaleSets/', parameters('vmSSName'))]"
       ],
       "properties": {
         "name": "autoscalehost",
