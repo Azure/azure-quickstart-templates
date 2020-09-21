@@ -126,6 +126,13 @@
         "description": "Specifies the SSH RSA public key string for the Linux nodes."
       }
     },
+    "aadEnabled": {
+      "defaultValue": false,
+      "type": "bool",
+      "metadata": {
+        "description": "Specifies whether enabling AAD integration."
+      }
+    },
     "aadProfileTenantId": {
       "defaultValue": "[subscription().tenantId]",
       "type": "string",
@@ -521,7 +528,16 @@
     "bastionPublicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIpAddressName'))]",
     "bastionSubnetName": "AzureBastionSubnet",
     "bastionSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('bastionSubnetName'))]",
-    "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('logAnalyticsWorkspaceName'))]"
+    "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('logAnalyticsWorkspaceName'))]",
+    "aadProfileConfiguration": {
+      "clientAppId": null,
+      "serverAppId": null,
+      "serverAppSecret": null,
+      "managed": "[parameters('aadProfileManaged')]",
+      "enableAzureRBAC": "[parameters('aadProfileEnableAzureRBAC')]",
+      "adminGroupObjectIDs": "[parameters('aadProfileAdminGroupObjectIDs')]",
+      "tenantID": "[parameters('aadProfileTenantId')]"
+    }
   },
   "resources": [
     {
@@ -918,12 +934,7 @@
           "dockerBridgeCidr": "[parameters('aksClusterDockerBridgeCidr')]",
           "loadBalancerSku": "[parameters('aksClusterLoadBalancerSku')]"
         },
-        "aadProfile": {
-          "managed": "[parameters('aadProfileManaged')]",
-          "enableAzureRBAC": "[parameters('aadProfileEnableAzureRBAC')]",
-          "adminGroupObjectIDs": "[parameters('aadProfileAdminGroupObjectIDs')]",
-          "tenantID": "[parameters('aadProfileTenantId')]"
-        },
+        "aadProfile": "[if(parameters('aadEnabled'), variables('aadProfileConfiguration'), json('null'))]",
         "apiServerAccessProfile": {
           "enablePrivateCluster": "[parameters('aksClusterEnablePrivateCluster')]"
         }
@@ -931,7 +942,7 @@
     },
     {
       "type": "Microsoft.OperationalInsights/workspaces",
-      "apiVersion": "2015-11-01-preview",
+      "apiVersion": "2020-03-01-preview",
       "name": "[parameters('logAnalyticsWorkspaceName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -943,7 +954,7 @@
     },
     {
       "type": "Microsoft.OperationsManagement/solutions",
-      "apiVersion": "2015-11-01-preview",
+      "apiVersion": "2020-03-01-preview",
       "name": "[concat('ContainerInsights(', parameters('logAnalyticsWorkspaceName'), ')')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -961,7 +972,7 @@
     },
     {
       "type": "Microsoft.Network/privateDnsZones",
-      "apiVersion": "2018-09-01",
+      "apiVersion": "2020-01-01",
       "name": "[variables('blobPrivateDnsZoneName')]",
       "location": "global",
       "properties": {
@@ -972,7 +983,7 @@
     },
     {
       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-      "apiVersion": "2018-09-01",
+      "apiVersion": "2020-01-01",
       "name": "[concat(variables('blobPrivateDnsZoneName'), '/link_to_', toLower(parameters('virtualNetworkName')))]",
       "location": "global",
       "dependsOn": [
