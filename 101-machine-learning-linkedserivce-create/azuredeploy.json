@@ -5,11 +5,12 @@
         "amlWorkspaceName": {
             "type": "string",
             "metadata": {
-                "description": "Name of the AML workspace"
+                "description": "Name of the existing AML workspace to create the linked service."
             }
         },
         "linkName": {
             "type": "string",
+            "defaultValue": "link1",
             "metadata": {
                 "description": "Name of the LinkedService"
             }
@@ -17,28 +18,17 @@
         "synapseWorkspaceResourceId": {
             "type": "string",
             "metadata": {
-                "description": "ResourceId of the Synapse workspace which you want to link to the aml workspace."
+                "description": "ResourceId of the existing Synapse workspace which you want to link to the aml workspace by linked service."
             }
         },
         "sparkPools": {
             "type": "array",
-            "defaultValue": [
-                {
-                    "computeName": "compute1",
-                    "poolName": "sparkPool1"
-                },
-                {
-                    "computeName": "compute2",
-                    "poolName": "sparkPool2"
-                }
-            ],
             "metadata": {
-                "description": "Spark pools you want to attach to the aml workspace. Pool name is the name of spark pool shown in Synapse workspace, while compute name is the alias for this pool after it is attached to aml workspace."
+                "description": "Spark pools you want to attach to the aml workspace, in such format: [ {\"computeName\":\"compute1\", \"poolName\":\"sparkPool1\"}, ... ]. Pool name is the name of spark pool shown in Synapse workspace, while compute name is the alias for this pool after it is attached to aml workspace."
             }
         },
         "location": {
             "type": "string",
-            "defaultValue": "[resourceGroup().location]",
             "allowedValues": [
                 "australiaeast",
                 "brazilsouth",
@@ -63,63 +53,43 @@
             "metadata": {
                 "description": "Location(aka region) of the LinkedService"
             }
-        },
-        "subscriptionId": {
-            "type": "string",
-            "defaultValue": "[subscription().id]"
-        },
-        "resourceGroup": {
-            "type": "string",
-            "defaultValue": "[resourceGroup().name]"
         }
-    },
-    "functions": [],
-    "variables": {
-        "apiVersion": "2020-04-01-preview"
     },
     "resources": [
         {
-            "name": "[concat(parameters('amlWorkspaceName'), '/', parameters('linkName'))]",
             "type": "Microsoft.MachineLearningServices/workspaces/linkedServices",
-            "apiVersion": "[variables('apiVersion')]",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[concat(parameters('amlWorkspaceName'), '/', parameters('linkName'))]",
             "location": "[parameters('location')]",
-            "properties": {
-                "linkedServiceResourceId": "[parameters('synapseWorkspaceResourceId')]"
-            },
             "identity": {
                 "type": "SystemAssigned"
+            },
+            "properties": {
+                "linkedServiceResourceId": "[parameters('synapseWorkspaceResourceId')]"
             }
         },
         {
-            "name": "[concat(parameters('amlWorkspaceName'), '/', parameters('sparkPools')[copyIndex()].computeName)]",
             "type": "Microsoft.MachineLearningServices/workspaces/computes",
             "apiVersion": "2018-11-19",
+            "name": "[concat(parameters('amlWorkspaceName'), '/', parameters('sparkPools')[copyIndex()].computeName)]",
             "location": "[parameters('location')]",
-            "properties": {
-                "resourceId": "[concat(parameters('synapseWorkspaceResourceId'), '/bigDataPools/', parameters('sparkPools')[copyIndex()].poolName)]",
-                "computeType": "SynapseSpark"
-            },
             "copy": {
                 "name": "poolCopy",
                 "count": "[length(parameters('sparkPools'))]"
-            }           
+            },
+            "properties": {
+                "resourceId": "[concat(parameters('synapseWorkspaceResourceId'), '/bigDataPools/', parameters('sparkPools')[copyIndex()].poolName)]",
+                "computeType": "SynapseSpark"
+            }
         }
     ],
     "outputs": {
         "SaiPrincipalId": {
             "type": "string",
-            "value": "[reference(parameters('linkName'), variables('apiVersion'), 'Full').identity.principalId]",
+            "value": "[reference(parameters('linkName'), '2020-04-01-preview', 'Full').identity.principalId]",
             "metadata": {
                 "description": "PrincipalId of the SAI(System Assigned Identity) of the LinkedService, please use this to asssign roles."
             }
-        },
-        "subscriptionId": {
-            "type": "string",
-            "value": "[parameters('subscriptionId')]"
-        },
-        "resourceGroup": {
-            "type": "string",
-            "value": "[parameters('resourceGroup')]"
-        },
+        }
     }
 }
