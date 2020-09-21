@@ -24,7 +24,7 @@ ScriptDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 FORKS=5
 
 echo "AdminPassword: '{sas001}${sasPassword}'" >/tmp/ansible_vars.yaml
-echo "ExternalPassword: '${azurePassword}'" >>/tmp/ansible_vars.yaml
+echo "ExternalPassword: '{sas001}${azurePassword}'" >>/tmp/ansible_vars.yaml
 
 INVENTORY_FILE="inventory.ini"
 cd $ANSIBLE_DIR
