@@ -21,23 +21,18 @@ This is an experimental module at the moment...
 
 | Name | Type | Required | Description |
 | :------------- | :----------: | :----------: | :------------- |
-| vaultName | string | No | Specifies the name of the KeyVault, this value must be globally unique. |
-| location | string | No | Specifies the Azure location where the key vault should be created. |
-| enabledForDeployment | bool | No | Specifies whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault. |
-| enabledForDiskEncryption | bool | No | Specifies whether Azure Disk Encryption is permitted to retrieve secrets from the vault and unwrap keys.|
-| enabledForTemplateDeployment | bool | No | Specifies whether Azure Resource Manager is permitted to retrieve secrets from the key vault. |
-| enablePurgeProtection | bool | No | Property specifying whether protection against purge is enabled for this vault. This property does not accept false but enabled here to allow for this to be optional, if false, the property will not be set. |
-| enableRbacAuthorization |  bool | No | Property that controls how data actions are authorized. When true, the key vault will use Role Based Access Control (RBAC) for authorization of data actions, and the access policies specified in vault properties will be ignored. |
-| enableSoftDelete |  bool | No | Property to specify whether the 'soft delete' functionality is enabled for this key vault. If it's not set to any value(true or false) when creating new key vault, it will be set to true by default. Once set to true, it cannot be reverted to false. |
-| softDeleteRetentionInDays |  int | No | softDelete data retention days, only used if enableSoftDelete is true. It accepts >=7 and <=90. |
-| tenantId |  string | No | Specifies the Azure Active Directory tenant ID that should be used for authenticating requests to the key vault. Get it by using Get-AzSubscription cmdlet. |
-| networkRuleBypassOptions |  string | No | Tells what traffic can bypass network rules. This can be 'AzureServices' or 'None'. If not specified the default is 'AzureServices'. |
-| NetworkRuleAction | string | No | The default action when no rule from ipRules and from virtualNetworkRules match. This is only used after the bypass property has been evaluated. allowedValues [ 'Allow', 'Deny' ] |
-| ipRules |  array | No | An array of IPv4 addresses or rangea in CIDR notation, e.g. '124.56.78.91' (simple IP address) or '124.56.78.0/24' (all addresses that start with 124.56.78). |
-| accessPolicies |  array | No | An complex object array that contains the complete definition of the access policy.  See the [accessPolicy](https://docs.microsoft.com/en-us/azure/templates/microsoft.keyvault/2019-09-01/vaults#accesspolicyentry-object) documentation for details. |
-| virtualNetworkRules |  array | No | An array for resourceIds for the virtualNetworks allowed to access the vault. |
-| skuName | string | No | Standard | Specifies whether the key vault is a standard vault or a premium vault.  allowedValues [ Standard, Premium ] |
-| tags | object | No | Tags to be assigned to the KeyVault. |
+| adminUsername | string | Yes | The name of the administrator account of the new VM and domain.|
+| adminPassword | securestring | Yes | The password for the administrator account of the new VM and domain.|
+| domainName | string | Yes | The FQDN of the Active Directory Domain to be created.|
+| dnsPrefix | string | No | The DNS prefix for the public IP address used by the Load Balancer.|
+| vmSize | string | No | Size of the VM for the controller.|
+| _artifactsLocation | string | No | The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.|
+| _artifactsLocationSasToken | securestring | No | The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated.|
+| location | string | No | Specifies the Azure location where the resources will be created. |
+| virtualMachineName | string | No | The name of the AD Virtual Machine.|
+| virtualNetworkAddressRange | string | No | Virtual network address range.|
+| privateIPAddress  | string | No | Private IP Address.|
+| subnetRange  | string | No | Subnet IP range.|
 
 ## Outputs
 
@@ -46,6 +41,4 @@ This is an experimental module at the moment...
 | vaultName | string | The name of the KeyVault. |
 | location | string | The resource location of the gallery. |
 
-```apiVersion: 2019-09-01```
-
-
+```apiVersion: n/a```
