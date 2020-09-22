@@ -22,6 +22,8 @@ export count_of_va_worker="${11}"
 export sasPassword="${12}"
 export azurePassword="${13}"
 export PUBLIC_DNS_NAME="${14}"
+export azure_subscription="${15}"
+export azure_resource_group="${16}"
 
 export DIRECTORY_NFS_SHARE="/sasshare"
 export INSTALL_DIR="/sas/install"
