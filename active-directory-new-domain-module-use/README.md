@@ -1,4 +1,4 @@
-# Create a new Windows VM and create a new AD Forest, Domain and DC
+# Create an Azure VM with a new AD Forest (from a module)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/active-directory-new-domain/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/active-directory-new-domain/PublicDeployment.svg)
