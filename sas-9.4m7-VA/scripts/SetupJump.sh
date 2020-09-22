@@ -264,15 +264,19 @@ createCertificates() {
 }
 
 waitForSasServers() {
-  cd ${ANSIBLE_DIR}
-  export ANSIBLE_LOG_PATH=/tmp/step01_wait_for_servers.log
-  ansible-playbook -i ${INVENTORY_FILE} -v step01_wait_for_servers.yaml
+    pushd ${ANSIBLE_DIR}
+    export ANSIBLE_LOG_PATH=/tmp/step01_wait_for_servers.log
+    ansible-playbook -i ${INVENTORY_FILE} -v step01_wait_for_servers.yaml
+    popd
 }
 
 handoverToInstallRunner() {
-  echo "handover"
-  cd ${INSTALL_DIR}/scripts/install_runner
-  ./wrapper__base.sh
+    echo "handover"
+    pushd
+    cd ${INSTALL_DIR}/scripts/install_runner
+    ./wrapper__base.sh
+    popd
+END
 }
 
 ## First things first, we are going to map all the inputs to variables
