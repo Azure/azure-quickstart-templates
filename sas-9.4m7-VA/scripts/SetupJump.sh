@@ -264,18 +264,18 @@ createCertificates() {
 }
 
 waitForSasServers() {
-    pushd ${ANSIBLE_DIR}
+    su - ${INSTALL_USER}<<END
+    cd ${ANSIBLE_DIR}
     export ANSIBLE_LOG_PATH=/tmp/step01_wait_for_servers.log
     ansible-playbook -i ${INVENTORY_FILE} -v step01_wait_for_servers.yaml
-    popd
+END
 }
 
 handoverToInstallRunner() {
     echo "handover"
-    pushd
+    su - ${INSTALL_USER}<<END
     cd ${INSTALL_DIR}/scripts/install_runner
     ./wrapper__base.sh
-    popd
 END
 }
 
