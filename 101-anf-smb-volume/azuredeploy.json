@@ -28,18 +28,6 @@
         "description": "The value of Active Directory password"
       }
     },
-    "dnsServerIp": {
-      "type": "string",
-      "metadata": {
-        "description": "DNS server IP address"
-      }
-    },
-    "domainFqdn": {
-      "type": "string",
-      "metadata": {
-        "description": "Domain name"
-      }
-    },
     "smbServerName": {
       "type": "string",
       "metadata": {
@@ -78,10 +66,10 @@
         "description": "Amount of logical storage that is allocated to the volume."
       }
     },
-    "existingVnetName": {
-      "type": "String",
+    "vnetSettings": {
+      "type": "object",
       "metadata": {
-        "description": "The name of the EXISTING VNET to add a subnet to."
+        "description": "Existing VNET properties (VNET Name, DNS IP Address, Domain FQDN) "
       }
     },
     "anfSubnetName": {
@@ -112,13 +100,17 @@
   },
   "variables": {
     "capacityPoolName": "[concat(parameters('netAppAccountName'), '/',parameters('netAppPoolName'))]",
-    "volumeName": "[concat(parameters('netAppAccountName'), '/',parameters('netAppPoolName'),'/', parameters('netAppVolumeName'))]"
+    "volumeName": "[concat(parameters('netAppAccountName'), '/',parameters('netAppPoolName'),'/', parameters('netAppVolumeName'))]",
+    "existingVnetName": "[parameters('vnetSettings').virtualNetworkName]",
+    "domainFqdn": "[parameters('vnetSettings').domainName]",
+    "dnsServerIp": "[parameters('vnetSettings').dnsIpAddress]"
+
   },
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "apiVersion": "2020-05-01",
-      "name": "[concat(parameters('existingVnetName'),'/',parameters('anfSubnetName'))]",
+      "name": "[concat(variables('existingVnetName'),'/',parameters('anfSubnetName'))]",
       "location": "[parameters('location')]",
       "properties": {
         "addressPrefix": "[parameters('anfSubnetAddressPrefix')]",
@@ -142,8 +134,8 @@
           {
             "username": "[parameters('adUsername')]",
             "password": "[parameters('adPassword')]",
-            "domain": "[parameters('domainFqdn')]",
-            "dns": "[parameters('dnsServerIp')]",
+            "domain": "[variables('domainFqdn')]",
+            "dns": "[variables('dnsServerIp')]",
             "smbServerName": "[parameters('smbServerName')]"
           }
         ]
@@ -174,7 +166,7 @@
         "serviceLevel": "[parameters('serviceLevel')]",
         "creationToken": "[parameters('netAppVolumeName')]",
         "usageThreshold": "[parameters('volSizeBytes')]",
-        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('anfSubnetName'))]"
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('existingVnetName'), parameters('anfSubnetName'))]"
       }
     }
   ],
