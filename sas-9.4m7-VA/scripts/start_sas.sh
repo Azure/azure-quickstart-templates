@@ -18,7 +18,7 @@ set -e
 # Verify that the user has logged in to Azure
 #
 
-AZ_STATUS=$(/opt/rh/rh-python36/root/usr/bin/az account list) 
+AZ_STATUS=$(/opt/rh/rh-python36/root/usr/bin/az account list)
 
 if [[ ${#AZ_STATUS} -le 2 ]]; then
   echo "You must authenticate with Azure before running this command. Run"
@@ -30,7 +30,7 @@ if [[ ${#AZ_STATUS} -le 2 ]]; then
   echo "Verify that the current subscription matches the subscription for this resource group."
   echo "If they do not match, run"
   echo ""
-  echo "   /opt/rh/rh-python36/root/usr/bin/az account set --subcription [subscription-name-or-id]"
+  echo "   /opt/rh/rh-python36/root/usr/bin/az account set --subscription [subscription-name-or-id]"
   echo ""
   echo "to set the current subscription."
   exit 0
@@ -67,16 +67,16 @@ ansible-playbook -i ${INVENTORY_FILE} -v step01_wait_for_servers.yaml
 
 LOG_FILE="start_sas.log"
 
-if [[ -e /tmp/${LOG_FILE} ]]; then    
+if [[ -e /tmp/${LOG_FILE} ]]; then
     rm -rf  /tmp/${LOG_FILE}
-fi 
+fi
 
 # Start order of sas servers on nodes
 # 1.	Metadata                                                       -  metadata_servers
 # 2.	Metadata cluster node(s) - there may be zero or more of these  -  metadata_servers
 # 3.	VA compute main                                                -  va-controllers
 # 4.	VA compute worker - there may be zero or more of these         -  va_workers
-# 5.	Mid-tier                                                       -  midtier_servers 
+# 5.	Mid-tier                                                       -  midtier_servers
 # 6.	Mid-tier cluster node(s) - there may be zero or more of these  -  midtier_servers
 export ANSIBLE_LOG_PATH=/tmp/${LOG_FILE}
 ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=metadata_servers sas_action=start"
@@ -85,8 +85,7 @@ ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_
 ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=midtier_servers sas_action=start"
 
 if (( $(grep -c 'SAS_ERROR:'  "/tmp/${LOG_FILE}") != 0 )); then
-    exit 1   
+    exit 1
 fi
 
 exit 0
-

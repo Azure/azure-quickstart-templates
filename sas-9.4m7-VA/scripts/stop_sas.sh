@@ -18,7 +18,7 @@ set -e
 # Verify that the user has logged in to Azure
 #
 
-AZ_STATUS=$(/opt/rh/rh-python36/root/usr/bin/az account list) 
+AZ_STATUS=$(/opt/rh/rh-python36/root/usr/bin/az account list)
 
 if [[ ${#AZ_STATUS} -le 2 ]]; then
   echo "You must authenticate with Azure before running this command. Run"
@@ -30,7 +30,7 @@ if [[ ${#AZ_STATUS} -le 2 ]]; then
   echo "Verify that the current subscription matches the subscription for this resource group."
   echo "If they do not match, run"
   echo ""
-  echo "   /opt/rh/rh-python36/root/usr/bin/az account set --subcription [subscription-name-or-id]"
+  echo "   /opt/rh/rh-python36/root/usr/bin/az account set --subscription [subscription-name-or-id]"
   echo ""
   echo "to set the current subscription."
   exit 0
@@ -47,14 +47,14 @@ INVENTORY_FILE="inventory.ini"
 cd $ANSIBLE_DIR
 LOG_FILE="stop_sas.log"
 
-if [[ -e /tmp/${LOG_FILE} ]]; then    
+if [[ -e /tmp/${LOG_FILE} ]]; then
     rm -rf  /tmp/${LOG_FILE}
-fi 
+fi
 # ansible-playbook -i ${INVENTORY_FILE} -vvv stop_sas_servers.yaml --extra-vars "hosts=<host_group> sas_action=stop"
 # ansible-playbook -i inventory.ini run_sas_servers.yaml.yaml --extra-vars "hosts=va_workers"
 # 1.	Mid-tier cluster node(s) - there may be zero or more of these  -  midtier_servers
 # 2.	Mid-tier                                                       -  midtier_servers
-# 3.	VA compute worker - there may be zero or more of these         -  va_workers 
+# 3.	VA compute worker - there may be zero or more of these         -  va_workers
 # 4.	VA compute main                                                -  va-controllers
 # 5.	Metadata cluster node(s) - there may be zero or more of these  -  metadata_servers
 # 6.	Metadata                                                       -  metadata_servers
@@ -67,7 +67,7 @@ ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_
 COUNT=$(grep -c 'SAS_ERROR:'  "/tmp/${LOG_FILE}")
 if (( $COUNT != 0 )); then
   if [[ $(grep -c 'sas.servers NOT found' "/tmp/${LOG_FILE}") != $COUNT ]]; then
-    exit 1   
+    exit 1
   fi
 fi
 
