@@ -1,4 +1,4 @@
-# Jenkins to Azure Container Registry [![Build Status](http://devops-ci.westcentralus.cloudapp.azure.com/job/qs/job/201-jenkins-acr/badge/icon)](http://devops-ci.westcentralus.cloudapp.azure.com/blue/organizations/jenkins/qs%2F201-jenkins-acr/activity)
+# Jenkins to Azure Container Registry
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-jenkins-acr/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-jenkins-acr/PublicDeployment.svg" />&nbsp;
