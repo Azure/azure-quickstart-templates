@@ -1,4 +1,4 @@
-# Create Azure Netapp Files resource with smbV3 or smbv4.1 volume
+# Create Azure Netapp Files resource with SMB volume
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-anf-smb-volume/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-anf-smb-volume/PublicDeployment.svg)
