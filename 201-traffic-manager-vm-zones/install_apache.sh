@@ -1,12 +1,22 @@
 #!/bin/bash
+
+# Cleanup
+echo "* Cleanup..."
+dpkg --configure -a
+apt-get install -f
+
+# Upgrade
+echo "* Upgrade.."
 apt-get -y update
+apt-get -y dist-upgrade
 
-# install Apache2
+# Install Apache2
+echo "* Install Apache..."
+apt-get remove apache*
 apt-get -y install apache2
-apt-get -y install mysql-server
-apt-get -y install php libapache2-mod-php php-mysql
-# write some HTML
-echo \<center\>\<h1\>My Demo App\</h1\>\<br/\>\</center\> > /var/www/html/demo.html
 
-# restart Apache
+# Restart Apache
+echo "* Restart Apache..."
 apachectl restart
+
+echo "* Finished!"
