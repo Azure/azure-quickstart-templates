@@ -26,5 +26,3 @@ If you are new to template development, see:
 - [Create an Azure Machine Learning service workspace by using a template](https://docs.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
 
 Tags: Azure Machine Learning, Machine Learning, Linked Service, Synapse
-
-
