@@ -9,7 +9,7 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-application-custom-billing/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-application-custom-billing/CredScanResult.svg" />&nbsp;
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fgithub.com%2Fvayada%2Fazure-quickstart-templates%2Fblob%2Fvayada%2FplanConversionSample0925%2F101-managed-application-plan-conversion%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fvayada%2Fazure-quickstart-templates%2Fvayada%2FplanConversionSample0925%2F101-managed-application-plan-conversion%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Filahat%2Fazure-quickstart-templates%2Fmaster%2F101-managed-application-custom-billing%2Fazuredeploy.json" target="_blank">
