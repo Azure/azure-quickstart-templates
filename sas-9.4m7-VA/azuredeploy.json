@@ -813,16 +813,6 @@
           "name": "Standard_v2",
           "tier": "Standard_v2"
         },
-        "sslPolicy": {
-          "policyType": "Custom",
-          "cipherSuites": [
-            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-            "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
-            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
-          ],
-          "minProtocolVersion": "TLSv1_2"
-        },
         "gatewayIPConfigurations": [
           {
             "name": "appGatewayIpConfig",
@@ -830,15 +820,6 @@
               "subnet": {
                 "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'appgateway_subnet')]"
               }
-            }
-          }
-        ],
-        "sslCertificates": [
-          {
-            "name": "appGatewayFrontendCertificate",
-            "properties": {
-              "data": "[json(concat(split(reference('Phase2GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1], split(reference('Phase3GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).data]",
-              "password": "[json(concat(split(reference('Phase2GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1], split(reference('Phase3GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).password]"
             }
           }
         ],
@@ -855,9 +836,15 @@
         ],
         "frontendPorts": [
           {
-            "name": "port_443",
+            "name": "port_80",
             "properties": {
-              "port": 443
+              "port": 80
+            }
+          },
+          {
+            "name": "port_7980",
+            "properties": {
+              "port": 7980
             }
           }
         ],
@@ -882,18 +869,28 @@
         ],
         "httpListeners": [
           {
-            "name": "http-listener-443",
+            "name": "http-listener-80",
             "properties": {
               "frontendIPConfiguration": {
                 "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendIPConfigurations/appGwPublicFrontendIp')]"
               },
               "frontendPort": {
-                "id": "[concat(resourceid('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendPorts/port_443')]"
+                "id": "[concat(resourceid('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendPorts/port_80')]"
               },
-              "protocol": "Https",
-              "sslCertificate": {
-                "id": "[resourceId('Microsoft.Network/applicationGateways/sslCertificates', 'loadbalancer', 'appGatewayFrontendCertificate')]"
+              "protocol": "Http",
+              "requireServerNameIndication": false
+            }
+          },
+          {
+            "name": "http-listener-7980",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendIPConfigurations/appGwPublicFrontendIp')]"
               },
+              "frontendPort": {
+                "id": "[concat(resourceid('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendPorts/port_7980')]"
+              },
+              "protocol": "Http",
               "requireServerNameIndication": false
             }
           }
@@ -904,7 +901,22 @@
             "properties": {
               "ruleType": "Basic",
               "httpListener": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-443')]"
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-80')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendAddressPools/midtierAddressPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendHttpSettingsCollection/http-setting')]"
+              }
+            }
+          },
+          {
+            "name": "rule2",
+            "properties": {
+              "ruleType": "Basic",
+              "httpListener": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-7980')]"
               },
               "backendAddressPool": {
                 "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendAddressPools/midtierAddressPool')]"
@@ -915,7 +927,7 @@
             }
           }
         ],
-        "enableHttp2": true,
+        "enableHttp2": false,
         "autoscaleConfiguration": {
           "minCapacity": 0,
           "maxCapacity": 5
