@@ -8,6 +8,7 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/CredScanResult.svg)
+
 This template creates a data factory of version 2 with a pipeline that copies data from one folder to another in an Azure Blob Storage.
 
 Here are a few important points about the template:
@@ -33,7 +34,7 @@ The following sections provide steps for running and monitoring the pipeline. Fo
 
 ## Run and monitor the pipeline
 
-After you deploy the template, to run and monitor the pipeline, do the following steps: 
+After you deploy the template, to run and monitor the pipeline, do the following steps:
 
 1. Download [runmonitor.ps1](https://github.com/Azure/azure-quickstart-templates/tree/master/101-data-factory-v2-blob-to-blob-copy/scripts) to a folder on your machine.
 2. Launch Azure PowerShell.
@@ -50,3 +51,7 @@ After you deploy the template, to run and monitor the pipeline, do the following
     ```powershell
     .\runmonitor.ps1 -resourceGroupName "<name of your resource group>" -DataFactoryName "<name of your data factory>"
     ```
+
+## Learn more
+
+For more information about how to deploy an Azure Data Factory, see [Quickstart: Create an Azure Data Factory using ARM template](https://docs.microsoft.com/azure/data-factory/quickstart-create-data-factory-resource-manager-template).

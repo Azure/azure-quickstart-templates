@@ -217,7 +217,7 @@ This section includes common errors faced during deployments and details on how 
 
 - If your deployment fails at the **VM Custom Script Extension** resource, a more detailed failure message is available in the VM log file. Please refer to the next section for further troubleshooting.
 
-#### Troubleshooting EAP deployment extension
+#### Troubleshooting WildFly deployment extension
 
 Follow the steps below to troubleshoot VM Custom Script Extension failures further:
 
