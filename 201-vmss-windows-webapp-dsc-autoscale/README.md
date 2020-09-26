@@ -1,5 +1,6 @@
 # Create/Upgrade a VM scale set running IIS configured for autoscale
 
+
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/PublicDeployment.svg)
 
