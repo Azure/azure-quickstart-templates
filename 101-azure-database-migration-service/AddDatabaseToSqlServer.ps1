@@ -20,6 +20,7 @@ else
 
 	if ((Get-Module -ListAvailable SqlServer) -eq $null)
 	{
+		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; 
 		Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null;
 		Install-Module -Name SqlServer -Force -AllowClobber | Out-Null;
 	}
