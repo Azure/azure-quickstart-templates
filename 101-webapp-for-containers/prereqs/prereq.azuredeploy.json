@@ -1,17 +1,17 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-    "parameters": {
+  "parameters": {
     "name": {
       "type": "string",
-	  "metadata": {
+      "metadata": {
         "description": "The name of the container registry."
       }
     },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
-	  "metadata": {
+      "metadata": {
         "description": "The location of the container registry."
       }
     },
@@ -24,37 +24,64 @@
         "Standard",
         "Premium"
       ],
-	  "metadata": {
+      "metadata": {
         "description": "The SKU of the container registry."
       }
     },
     "servicePrincipalObjectId": {
       "type": "string",
-	  "metadata": {
+      "metadata": {
         "description": "The object id of the service principal that will be allowed to pull images from the container registry."
       }
     }
   },
   "variables": {
-    "AcrPull": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
-    "roleAssignmentName": "[concat(parameters('name'), '/Microsoft.Authorization/', guid(concat(resourceGroup().id), variables('AcrPull')))]"
+    "containerImageName": "quickstarts/demo",
+    "AcrPull": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+    "roleAssignmentName": "[guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('name')), variables('AcrPull'), parameters('servicePrincipalObjectId'))]",
+    "identityName": "scratch",
+    "contributorRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+    "scriptRoleAssignmentName": "[guid(variables('identityName'), variables('contributorRoleDefinitionId'))]"
   },
   "resources": [
     {
-      "name": "[parameters('name')]",
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2018-11-30",
+      "name": "[variables('identityName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[variables('scriptRoleAssignmentName')]",
+      "dependsOn": [
+        "[variables('identityName')]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables('contributorRoleDefinitionId')]",
+        "principalId": "[reference(variables('identityName')).principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
       "type": "Microsoft.ContainerRegistry/registries",
       "apiVersion": "2019-05-01",
+      "name": "[parameters('name')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('sku')]"
       },
+      "dependsOn": [
+        "[variables('scriptRoleAssignmentName')]" // use the dependency to allow the roleAssignmentTime to replicate
+      ],
       "properties": {
         "adminUserEnabled": false
       }
     },
     {
-      "type": "Microsoft.ContainerRegistry/registries/providers/roleAssignments",
-      "apiVersion": "2017-09-01",
+      "scope": "[concat('Microsoft.ContainerRegistry/registries/', parameters('name'))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
       "name": "[variables('roleAssignmentName')]",
       "dependsOn": [
         "[resourceId('Microsoft.ContainerRegistry/registries', parameters('name'))]"
@@ -63,12 +90,41 @@
         "roleDefinitionId": "[variables('AcrPull')]",
         "principalId": "[parameters('servicePrincipalObjectId')]"
       }
+    },
+    {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2019-10-01-preview",
+      "name": "createImage",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('roleAssignmentName')]" // don't start this until everything else is done to allow for replication time
+      ],
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]": { /*ttk bug*/
+          }
+        }
+      },
+      "kind": "AzureCLI",
+      "properties": {
+        "AzCliVersion": "2.9.1",
+        "timeout": "PT30M",
+        "retentionInterval": "P1D",
+        "cleanupPreference": "OnSuccess",
+        "arguments": "[format('{0} {1}', parameters('name'), variables('containerImageName'))]",
+        "scriptContent": "printf \"FROM nginxdemos/hello\\nEXPOSE 80\\n\" > Dockerfile;az acr build . --registry $1 --file Dockerfile --image \"$2:1.0.0\" --image \"$2:latest\""
+      }
     }
   ],
   "outputs": {
     "existingContainerRegistryName": {
       "type": "string",
       "value": "[parameters('name')]"
+    },
+    "containerImageName": {
+      "type": "string",
+      "value": "[variables('containerImageName')]"
     }
   }
 }
