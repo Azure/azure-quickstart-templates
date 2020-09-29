@@ -1,0 +1,61 @@
+---
+- name: Update WIP Data Server for loadbalancer
+  hosts: [midtier_servers]
+  become_user: sasinst
+  become: yes
+  gather_facts: false
+  vars_files:
+    - /tmp/ansible_vars.yaml
+
+  tasks:
+    - name: update server.xml files for each managed server
+      become: yes
+      shell: |-
+        pushd /sas/config/Lev1/Web/WebAppServer
+        cp SASServer1_1/conf/server.xml SASServer1_1/conf/server.xml.orig
+        cp SASServer2_1/conf/server.xml SASServer2_1/conf/server.xml.orig
+        cp SASServer12_1/conf/server.xml SASServer12_1/conf/server.xml.orig
+        sed -i 's/proxyName="{{ inventory_hostname }}.internal.cloudapp.net"\ proxyPort="7980" redirectPort="${nio.https.port}"\ scheme="http"/proxyName="{{ LoadbalancerDNS }}"\ proxyPort="443"\ redirectPort="${nio.https.port}"\ scheme="https"/g' SASServer1_1/conf/server.xml
+        sed -i 's/proxyName="{{ inventory_hostname }}.internal.cloudapp.net"\ proxyPort="7980" redirectPort="${nio.https.port}"\ scheme="http"/proxyName="{{ LoadbalancerDNS }}"\ proxyPort="443"\ redirectPort="${nio.https.port}"\ scheme="https"/g' SASServer2_1/conf/server.xml
+        sed -i 's/proxyName="{{ inventory_hostname }}.internal.cloudapp.net"\ proxyPort="7980" redirectPort="${nio.https.port}"\ scheme="http"/proxyName="{{ LoadbalancerDNS }}"\ proxyPort="443"\ redirectPort="${nio.https.port}"\ scheme="https"/g' SASServer12_1/conf/server.xml
+        popd
+
+    - name: update SASServer1_1 specific files
+      become: yes
+      shell: |-
+        pushd /sas/config/Lev1/Web/WebAppServer/SASServer1_1/sas_webapps/sas.svcs.scs.war/WEB-INF
+        cp web.xml web.xml.orig
+        sed -i 's/http:\/\/{{ inventory_hostname }}.internal.cloudapp.net:7980/https:\/\/{{ LoadbalancerDNS }}:443/g' web.xml
+        cp spring-config/webapp-config.xml spring-config/webapp-config.xml.orig
+        sed -i 's/host:{{ inventory_hostname }}.internal.cloudapp.net/host:{{ LoadbalancerDNS }}/g' spring-config/webapp-config.xml
+        sed -i 's/:7980}/:443}/g' spring-config/webapp-config.xml
+        sed -i 's/scheme:http}:/scheme:https:/g' spring-config/webapp-config.xml
+        popd
+
+    - name: setenv.sh files
+      become: yes
+      shell: |-
+        pushd /sas/config/Lev1/Web/WebAppServer
+        cp SASServer1_1/bin/setenv.sh SASServer1_1/bin/setenv.sh.orig
+        cp SASServer2_1/bin/setenv.sh SASServer2_1/bin/setenv.sh.orig
+        cp SASServer12_1/bin/setenv.sh SASServer12_1/bin/setenv.sh.orig
+        sed -i 's/sas.scs.cas.scheme=http /sas.scs.cas.scheme=https /g' SASServer1_1/bin/setenv.sh
+        sed -i 's/sas.scs.cas.host={{ inventory_hostname }}.internal.cloudapp.net/sas.scs.cas.host={{ LoadbalancerDNS }}/g' SASServer1_1/bin/setenv.sh
+        sed -i 's/sas.scs.cas.port=7980/sas.scs.cas.port=443/g' SASServer1_1/bin/setenv.sh
+        sed -i 's/sas.scs.svc.scheme=http /sas.scs.svc.scheme=https /g' SASServer1_1/bin/setenv.sh
+        sed -i 's/sas.scs.svc.host={{ inventory_hostname }}.internal.cloudapp.net/sas.scs.svc.host={{ LoadbalancerDNS }}/g' SASServer1_1/bin/setenv.sh
+        sed -i 's/sas.scs.svc.port=7980/sas.scs.svc.port=443/g' SASServer1_1/bin/setenv.sh
+        echo '
+           PROXY_OPTS="-Dsas.scs.svc.internal.url=http://{{ inventory_hostname }}.internal.cloudapp.net:7980 -Dsas.retry.internal.url=true -Dsas.web.html.cdps.use.internal.urls=true"
+           JAVA_OPTS="$JAVA_OPTS $PROXY_OPTS"' >>SASServer1_1/bin/setenv.sh
+        echo '
+           PROXY_OPTS="-Dsas.scs.cas.scheme=https -Dsas.scs.cas.host={{ LoadbalancerDNS }} -Dsas.scs.cas.port=443"
+           PROXY_OPTS="$PROXY_OPTS -Dsas.scs.svc.scheme=https -Dsas.scs.svc.host={{ LoadbalancerDNS }} -Dsas.scs.svc.port=443"
+           PROXY_OPTS="$PROXY_OPTS -Dsas.scs.svc.internal.url=http://{{ inventory_hostname }}.internal.cloudapp.net:7980 -Dsas.retry.internal.url -Dsas.web.html.cdps.use.internal.urls=true"
+           JAVA_OPTS="$JAVA_OPTS $PROXY_OPTS"' >> SASServer2_1/bin/setenv.sh
+        echo '
+           PROXY_OPTS="-Dsas.scs.cas.scheme=https -Dsas.scs.cas.host={{ LoadbalancerDNS }} -Dsas.scs.cas.port=443"
+           PROXY_OPTS="$PROXY_OPTS -Dsas.scs.svc.scheme=https -Dsas.scs.svc.host={{ LoadbalancerDNS }} -Dsas.scs.svc.port=443"
+           PROXY_OPTS="$PROXY_OPTS -Dsas.scs.svc.internal.url=http://{{ inventory_hostname }}.internal.cloudapp.net:7980 -Dsas.retry.internal.url -Dsas.web.html.cdps.use.internal.urls=true"
+           JAVA_OPTS="$JAVA_OPTS $PROXY_OPTS"' >> SASServer12_1/bin/setenv.sh
+        popd
