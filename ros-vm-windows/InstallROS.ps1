@@ -6,7 +6,7 @@ choco source add -n=ros-win -s="https://aka.ms/ros/public" --priority=1
 choco upgrade ros-melodic-desktop_full -y --execution-timeout=0 -i
 
 # Install ROS2
-choco upgrade ros-eloquent-desktop -y --execution-timeout=0 -i
+choco upgrade ros-foxy-desktop -y --execution-timeout=0 -i
 
 # finally enable RemotePS 
 Enable-PSRemoting -Force -SkipNetworkProfileCheck
