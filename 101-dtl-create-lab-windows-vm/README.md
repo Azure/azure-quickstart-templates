@@ -13,8 +13,4 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-dtl-create-lab-windows-vm%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-dtl-create-lab-windows-vm%2Fazuredeploy.json)
 
-This template creates a new DevTestLab instance with a Windows Server 2019 Datacenter VM in it.
-
-More Azure Resource Manger Quickstart Templates for Azure DevTestLab can be found at: https://github.com/Azure/azure-devtestlab 
-
-
+This template creates a new DevTestLab instance that includes a Windows Server 2019 Datacenter virtual machine. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/devtest-labs/create-lab-windows-vm-template) article. More Azure Resource Manger quickstart templates for Azure DevTest Labs can be found in the [repository](https://github.com/Azure/azure-devtestlab).

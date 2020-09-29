@@ -1,0 +1,97 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "serviceBusNamespaceName": {
+            "type": "string",
+            "defaultValue": "[concat('sb-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Unique name of the Service Bus namespace"
+            }
+        },
+        "serviceBusTopicName": {
+            "type": "string",
+            "defaultValue": "sbt-topic",
+            "metadata": {
+                "description": "Name of the Topic"
+            }
+        },
+        "eventGridTopicName": {
+            "type": "string",
+            "defaultValue": "[concat('egt-', uniqueString(resourceGroup().id, parameters('serviceBusNamespaceName')))]",
+            "metadata": {
+                "description": "Unique name of the Event Grid custom topic."
+            }
+        },
+        "eventGridSubscriptionName": {
+            "type": "string",
+            "defaultValue": "evg-subscription",
+            "metadata": {
+                "description": "The name of the Event Grid custom topic's subscription."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location in which the Event Grid resources should be deployed."
+            }
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-01-01-preview",
+            "name": "[parameters('serviceBusNamespaceName')]",
+            "type": "Microsoft.ServiceBus/namespaces",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {},
+            "resources": [
+                {
+                    "apiVersion": "2017-04-01",
+                    "name": "[parameters('serviceBusTopicName')]",
+                    "type": "topics",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespaceName'))]"
+                    ],
+                    "properties": {
+                        "path": "[parameters('serviceBusTopicName')]"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "[parameters('eventGridTopicName')]",
+            "type": "Microsoft.EventGrid/topics",
+            "location": "[parameters('location')]",
+            "apiVersion": "2020-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespaceName'))]"
+            ]
+        },
+        {
+            "scope": "[concat('Microsoft.EventGrid/topics/', parameters('eventGridTopicName'))]",
+            "type": "Microsoft.EventGrid/eventSubscriptions",
+            "name": "[parameters('eventGridSubscriptionName')]",
+            "apiVersion": "2020-01-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventGrid/topics', parameters('eventGridTopicName'))]"
+            ],
+            "properties": {
+                "destination": {
+                    "endpointType": "ServiceBusTopic",
+                    "properties": {
+                        "resourceId": "[resourceId('Microsoft.ServiceBus/namespaces/topics', parameters('serviceBusNamespaceName'),  parameters('serviceBusTopicName'))]"
+                    }
+                },
+                "eventDeliverySchema": "EventGridSchema",
+                "filter": {
+                    "isSubjectCaseSensitive": false
+                }
+            }
+        }
+    ]
+}
