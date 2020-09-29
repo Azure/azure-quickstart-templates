@@ -3,7 +3,13 @@
 # So, the purpose of this file is stop all components on all sas tiers sas, using <SAS_HOME>/config/Lev1/sas.servers stop
 # input action - stop sas servers
 #
+# By default, this script only stops the sas servers
+#
+# If the "hard" parameter is used, it will also stop the VMs after stopping the sas servers
+#
 ###
+HARD=$1
+
 if [ -e "$HOME/.profile" ]; then
 	. $HOME/.profile
 fi
@@ -13,28 +19,6 @@ fi
 #set -x
 #set -v
 set -e
-
-#
-# Verify that the user has logged in to Azure
-#
-
-AZ_STATUS=$(/opt/rh/rh-python36/root/usr/bin/az account list)
-
-if [[ ${#AZ_STATUS} -le 2 ]]; then
-  echo "You must authenticate with Azure before running this command. Run"
-  echo ""
-  echo "   /opt/rh/rh-python36/root/usr/bin/az login --use-device-code"
-  echo ""
-  echo "to authenticate."
-  echo ""
-  echo "Verify that the current subscription matches the subscription for this resource group."
-  echo "If they do not match, run"
-  echo ""
-  echo "   /opt/rh/rh-python36/root/usr/bin/az account set --subscription [subscription-name-or-id]"
-  echo ""
-  echo "to set the current subscription."
-  exit 0
-fi
 
 ScriptDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
  . "/tmp/sasinstall.env"
@@ -71,19 +55,43 @@ if (( $COUNT != 0 )); then
   fi
 fi
 
+if [[ "${HARD}" == "hard" ]]; then
+#
+# Verify that the user has logged in to Azure
+#
+
+	AZ_STATUS=$(/opt/rh/rh-python36/root/usr/bin/az account list)
+
+	if [[ ${#AZ_STATUS} -le 2 ]]; then
+	  echo "You must authenticate with Azure before running this command. Run"
+	  echo ""
+	  echo "   /opt/rh/rh-python36/root/usr/bin/az login --use-device-code"
+	  echo ""
+	  echo "to authenticate."
+	  echo ""
+	  echo "Verify that the current subscription matches the subscription for this resource group."
+	  echo "If they do not match, run"
+	  echo ""
+	  echo "   /opt/rh/rh-python36/root/usr/bin/az account set --subscription [subscription-name-or-id]"
+	  echo ""
+	  echo "to set the current subscription."
+	  exit 0
+	fi
+
 #
 # Stop the running VMs
 #
 
 # Get a list of the VMs in this resource group - azure_resource_group is a variable from sasinstall.env
-VMLIST=( $(/opt/rh/rh-python36/root/usr/bin/az vm list -g "${azure_resource_group}" --query "[].name" -o tsv) )
+	VMLIST=( $(/opt/rh/rh-python36/root/usr/bin/az vm list -g "${azure_resource_group}" --query "[].name" -o tsv) )
 
 # Iterate through the VM list and stop all VMs EXCEPT jumpvm
-for v in ${VMLIST[@]}; do
-    if [[ $v != "jumpvm" ]]; then
-      echo "Stopping ${v}"
-      /opt/rh/rh-python36/root/usr/bin/az vm stop --resource-group "${azure_resource_group}" --name "${v}"
-    fi
-done
+	for v in ${VMLIST[@]}; do
+	    if [[ $v != "jumpvm" ]]; then
+	      echo "Stopping ${v}"
+	      /opt/rh/rh-python36/root/usr/bin/az vm stop --resource-group "${azure_resource_group}" --name "${v}"
+	    fi
+	done
+fi
 
 exit 0
