@@ -3,9 +3,6 @@
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-hsm-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-hsm-create/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-hsm-create/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-hsm-create/FairfaxDeployment.svg)
-
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-hsm-create/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-hsm-create/CredScanResult.svg)
 
