@@ -13,25 +13,24 @@ servicePrincipalObjectId=$(az ad sp show --id $appId --query objectId --output t
 resourceGroupName="rg-$uniqueId"
 az group create --name $resourceGroupName --location westeurope
 
-# Create an Azure Container Registry (ACR)
+# Create an Azure Container Registry (ACR) and push a sample Docker image to it
 containerRegistryName="$uniqueId"
+deploymentName="$uniqueId"
 az deployment group create --resource-group $resourceGroupName \
+  --name $deploymentName \
   --template-file ../prereqs/prereq.azuredeploy.json \
   --parameters name=$containerRegistryName \
     sku="Basic" \
     servicePrincipalObjectId=$servicePrincipalObjectId
-  
-# Build and Push a Docker Image to the ACR
-dockerImageName='mgnsm/demo'
-dockerTag='1.0.0'
-az acr build . \
-  --registry $containerRegistryName  \
-  --file Dockerfile \
-  --image "$dockerImageName:$dockerTag" \
-  --image "$dockerImageName:latest"
-
-# Create the Web App for Container App Service
+	
+# Create the Web App for Containers App Service
 webAppName="app-$uniqueId"
+dockerImageName=$(az deployment group show \
+  --name $deploymentName \
+  --resource-group $resourceGroupName \
+  --query properties.outputs.containerImageName.value \
+  --output tsv)
+
 az deployment group create \
     --resource-group $resourceGroupName \
     --template-file ../azuredeploy.json \
@@ -40,7 +39,7 @@ az deployment group create \
      webAppName=$webAppName \
      existingContainerRegistryName=$containerRegistryName \
      dockerImageName=$dockerImageName \
-     dockerTag=$dockerTag \
+     dockerTag=latest \
      containerRegistryUsername=$appId \
      containerRegistryPassword=$password \
      appSettings="[ {\"name\": \"settingA\", \"value\": \"foo\" }, {\"name\": \"settingB\", \"value\": \"bar\" } ]"
