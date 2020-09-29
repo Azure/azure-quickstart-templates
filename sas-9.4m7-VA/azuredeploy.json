@@ -348,6 +348,21 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2019-12-01",
+      "name": "nat_publicIP",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+      ],
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2019-12-01",
       "name": "loadbalancer_publicIP",
       "location": "[variables('location')]",
       "dependsOn": [
@@ -364,6 +379,26 @@
         "dnsSettings": {
           "domainNameLabel": "[variables('domainActual')]"
         }
+      }
+    },
+    {
+      "type": "Microsoft.Network/natGateways",
+      "apiVersion": "2019-11-01",
+      "name": "application_nat",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'nat_publicIP')]"
+      ],
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "idleTimeoutInMinutes": 4,
+        "publicIpAddresses": [
+          {
+            "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'nat_publicIP')]"
+          }
+        ]
       }
     },
     {
@@ -442,7 +477,8 @@
       "name": "appgateway_sg",
       "condition": "[variables('useNewNetwork')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'nat_publicIP')]"
       ],
       "location": "[variables('location')]",
       "properties": {
@@ -458,6 +494,20 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 500,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow_nat_ingress",
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[concat(reference(resourceId('Microsoft.Network/publicIPAddresses', 'nat_publicIP)).ipAddress'), '/32')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 501,
               "direction": "Inbound"
             }
           },
@@ -488,7 +538,8 @@
         "[resourceId('Microsoft.Network/networkSecurityGroups', 'midtier_sg')]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', 'metadata_sg')]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', 'va_sg')]",
-        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+        "[resourceId('Microsoft.Network/natGateways', 'application_nat')]"
       ],
       "properties": {
         "addressSpace": {
@@ -525,6 +576,9 @@
             "name": "metadata_subnet",
             "properties": {
               "addressPrefix": "10.2.0.16/28",
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', 'application_nat')]"
+              },
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'metadata_sg')]"
               }
@@ -534,6 +588,9 @@
             "name": "midtier_subnet",
             "properties": {
               "addressPrefix": "10.2.0.0/28",
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', 'application_nat')]"
+              },
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'midtier_sg')]"
               }
@@ -543,6 +600,9 @@
             "name": "va_subnet",
             "properties": {
               "addressPrefix": "10.2.2.0/24",
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', 'application_nat')]"
+              },
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'va_sg')]"
               }
@@ -813,6 +873,16 @@
           "name": "Standard_v2",
           "tier": "Standard_v2"
         },
+        "sslPolicy": {
+          "policyType": "Custom",
+          "cipherSuites": [
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          ],
+          "minProtocolVersion": "TLSv1_2"
+        },
         "gatewayIPConfigurations": [
           {
             "name": "appGatewayIpConfig",
@@ -820,6 +890,15 @@
               "subnet": {
                 "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'appgateway_subnet')]"
               }
+            }
+          }
+        ],
+        "sslCertificates": [
+          {
+            "name": "appGatewayFrontendCertificate",
+            "properties": {
+              "data": "[json(concat(split(reference('Phase2GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1], split(reference('Phase3GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).data]",
+              "password": "[json(concat(split(reference('Phase2GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1], split(reference('Phase3GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).password]"
             }
           }
         ],
@@ -836,15 +915,9 @@
         ],
         "frontendPorts": [
           {
-            "name": "port_80",
+            "name": "port_443",
             "properties": {
-              "port": 80
-            }
-          },
-          {
-            "name": "port_7980",
-            "properties": {
-              "port": 7980
+              "port": 443
             }
           }
         ],
@@ -869,28 +942,18 @@
         ],
         "httpListeners": [
           {
-            "name": "http-listener-80",
+            "name": "http-listener-443",
             "properties": {
               "frontendIPConfiguration": {
                 "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendIPConfigurations/appGwPublicFrontendIp')]"
               },
               "frontendPort": {
-                "id": "[concat(resourceid('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendPorts/port_80')]"
+                "id": "[concat(resourceid('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendPorts/port_443')]"
               },
-              "protocol": "Http",
-              "requireServerNameIndication": false
-            }
-          },
-          {
-            "name": "http-listener-7980",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendIPConfigurations/appGwPublicFrontendIp')]"
+              "protocol": "Https",
+              "sslCertificate": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/sslCertificates', 'loadbalancer', 'appGatewayFrontendCertificate')]"
               },
-              "frontendPort": {
-                "id": "[concat(resourceid('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendPorts/port_7980')]"
-              },
-              "protocol": "Http",
               "requireServerNameIndication": false
             }
           }
@@ -901,22 +964,7 @@
             "properties": {
               "ruleType": "Basic",
               "httpListener": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-80')]"
-              },
-              "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendAddressPools/midtierAddressPool')]"
-              },
-              "backendHttpSettings": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendHttpSettingsCollection/http-setting')]"
-              }
-            }
-          },
-          {
-            "name": "rule2",
-            "properties": {
-              "ruleType": "Basic",
-              "httpListener": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-7980')]"
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-443')]"
               },
               "backendAddressPool": {
                 "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendAddressPools/midtierAddressPool')]"
@@ -927,7 +975,7 @@
             }
           }
         ],
-        "enableHttp2": false,
+        "enableHttp2": true,
         "autoscaleConfiguration": {
           "minCapacity": 0,
           "maxCapacity": 5
