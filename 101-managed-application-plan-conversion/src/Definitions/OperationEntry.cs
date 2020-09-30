@@ -1,7 +1,8 @@
 ﻿
 namespace PlanConversionAgent.Definitions
 {
-    class OperationEntry
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "CosmosDB is case sensitive.")]
+    public class OperationEntry
     {
         /// <summary>
         /// Gets or sets the operation identifier.

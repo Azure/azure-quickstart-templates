@@ -17,6 +17,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ErrorEventArgs = Newtonsoft.Json.Serialization.ErrorEventArgs;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.Azure.Documents;
 
 namespace PlanConversionAgent
 {
@@ -117,6 +118,8 @@ namespace PlanConversionAgent
                     Webhook.GetAsync(uri: Webhook.GetManagedAppUri(notificationDefinition.ApplicationId), config: config, log: log)
                     .ConfigureAwait(continueOnCapturedContext: false);
 
+                log.LogTrace($"Managed application content is: {response.Content.ReadAsStringAsync().Result}");
+
                 if (response?.IsSuccessStatusCode != true)
                 {
                     log.LogError($"Failed to get managed application {notificationDefinition.ApplicationId}.");
@@ -136,6 +139,7 @@ namespace PlanConversionAgent
                     .Replace("parametersTemplate", config["PARAMETERS_TEMPLATE"]);
 
                 log.LogTrace($"Deployment definition is: {deploymentDefinition}.");
+                log.LogTrace($"Deployment uri is: {deploymentUri}.");
 
                 var deploymentResponse = await
                     Webhook.PutAsync(uri: deploymentUri, body: deploymentDefinition, config: config, log: log)
@@ -144,7 +148,7 @@ namespace PlanConversionAgent
                 if (deploymentResponse?.IsSuccessStatusCode != true)
                 {
                     log.LogError($"Failed to deploy template. {deploymentResponse.StatusCode}");
-                    return new StatusCodeResult(500);
+                    return new StatusCodeResult(Convert.ToInt32(deploymentResponse.StatusCode));
                 }
 
                 log.LogTrace($"Template deployment state is Accepted.");
@@ -233,6 +237,25 @@ namespace PlanConversionAgent
             {
                 Status = status
             };
+
+            // Delete operation entry for completed operation (Successful or Failed deployment).
+            if (status == "Succeeded" || status == "Failed")
+            {
+                try
+                {
+                    await documentClient
+                        .DeleteDocumentAsync(
+                            documentUri: UriFactory.CreateDocumentUri(DatabaseName, CollectionName, operationEntry.id),
+                            options: new RequestOptions { PartitionKey = new PartitionKey(operationEntry.id) })
+                        .ConfigureAwait(continueOnCapturedContext: false);
+
+                    log.LogTrace($"Successfully deleted the operation entry in CosmosDB for the application {operationEntry.applicationId.Replace("|", "/")}");
+                }
+                catch (DocumentClientException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    log.LogTrace($"There was no operation entry in CosmosDB for the application {operationEntry.applicationId.Replace("|", "/")}");
+                }
+            }
 
             return new OkObjectResult(operationResult);
         }
@@ -333,11 +356,12 @@ namespace PlanConversionAgent
             }
 
             var httpClient = HttpClientFactory.Create();
-            var token = Webhook.GetToken(httpClient, config, log).ConfigureAwait(continueOnCapturedContext: false);
+            var token = await 
+                Webhook.GetToken(httpClient, config, log).ConfigureAwait(continueOnCapturedContext: false);
             httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
 
             return await
-                httpClient.PutAsync(uri, new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json")).ConfigureAwait(continueOnCapturedContext: false);
+                httpClient.PutAsync(uri, new StringContent(body, Encoding.UTF8, "application/json")).ConfigureAwait(continueOnCapturedContext: false);
         }
 
         /// <summary>
@@ -358,7 +382,8 @@ namespace PlanConversionAgent
             }
 
             var httpClient = HttpClientFactory.Create();
-            var token = Webhook.GetToken(httpClient, config, log).ConfigureAwait(continueOnCapturedContext: false);
+            var token = await
+                Webhook.GetToken(httpClient, config, log).ConfigureAwait(continueOnCapturedContext: false);
             httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             var request = new HttpRequestMessage(HttpMethod.Get, $"{uri}");
 

@@ -1,7 +1,7 @@
 ﻿
 namespace PlanConversionAgent.Definitions
 {
-    class Application
+    public class Application
     {
         /// <summary>
         /// Gets or sets the appliance properties.

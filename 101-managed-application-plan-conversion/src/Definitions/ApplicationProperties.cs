@@ -1,7 +1,7 @@
 ﻿
 namespace PlanConversionAgent.Definitions
 {
-    class ApplicationProperties
+    public class ApplicationProperties
     {
         /// <summary>
         /// Gets or sets the managed resource group Id.
