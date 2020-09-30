@@ -164,8 +164,7 @@
     "scriptStart": "su -c'sh ",
     "customScriptCommand": "[concat(variables('scriptStart'), variables('scriptFileName'), ' ')]",
     "loadBalancersName": "jbosseap-lb",
-    "vmssNamePAYG": "[concat('jbosseap-payg-server',parameters('vmssName'))]",
-    "vmssNameBYOS": "[concat('jbosseap-byos-server',parameters('vmssName'))]",
+    "vmssInstanceName": "[concat('jbosseap-server',parameters('vmssName'))]",
     "nicName": "jbosseap-server-nic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "jbosseap-server-subnet",
@@ -173,6 +172,10 @@
     "virtualNetworkName": "jbosseap-vnet",
     "backendPoolName": "jbosseap-server",
     "frontendName" : "LoadBalancerFrontEnd",
+    "natPoolName1": "natpool1",
+    "natStartPort1": 9000,
+    "natEndPort1": 9120,
+    "adminBackendPort": 9990,
     "healthProbe" : "eap-lb-health",
     "bootStorageAccountName": "[concat('bootstrg', uniqueString(resourceGroup().id))]",
     "storageAccountType": "Standard_LRS",
@@ -187,35 +190,41 @@
         ]
       }
     },
-    "planBYOS": {
-      "name": "[if(equals(parameters('eapOnRHELVersion'),'JBoss-EAP7.2-on-RHEL7.7'), 'rhel-lvm77', 'rhel-lvm8')]",
-      "publisher": "redhat",
-      "product": "rhel-byos"
+    "skuMap": {
+        "BYOS": {
+            "JBoss-EAP7.2-on-RHEL7.7": "rhel-lvm77",
+            "JBoss-EAP7.2-on-RHEL8.0": "rhel-lvm8",
+            "JBoss-EAP7.3-on-RHEL8.0": "rhel-lvm8"
+        },
+        "PAYG": {
+            "JBoss-EAP7.2-on-RHEL7.7": "7.7",
+            "JBoss-EAP7.2-on-RHEL8.0": "8",
+            "JBoss-EAP7.3-on-RHEL8.0": "8"
+        }
     },
-    "storageProfilePAYG": {
-      "osDisk": {
-        "createOption": "FromImage",
-        "caching": "ReadWrite"
-      },
-      "imageReference": {
+    "imageSku": "[variables('skuMap')[parameters('rhelOSLicenseType')][parameters('eapOnRHELVersion')]]",
+    "offerMap": {
+        "BYOS": "rhel-byos",
+        "PAYG": "rhel"
+    },
+    "imageOffer": "[variables('offerMap')[parameters('rhelOSLicenseType')]]",
+    "imageReference": {
         "publisher": "redhat",
-        "offer": "rhel",
-        "sku": "[if(equals(parameters('eapOnRHELVersion'), 'JBoss-EAP7.2-on-RHEL7.7'), '7.7', '8')]",
+        "offer": "[variables('imageOffer')]",
+        "sku": "[variables('imageSku')]",
         "version": "latest"
-      }
     },
-    "storageProfileBYOS": {
-      "osDisk": {
-        "createOption": "FromImage",
-        "caching": "ReadWrite"
-      },
-      "imageReference": {
+    "plan": {
+        "name": "[variables('imageSku')]",
         "publisher": "redhat",
-        "offer": "rhel-byos",
-        "sku": "[if(equals(parameters('eapOnRHELVersion'), 'JBoss-EAP7.2-on-RHEL7.7'), 'rhel-lvm77', 'rhel-lvm8')]",
-        "version": "latest"
-      }
+        "product": "rhel-byos"
     },
+    "guidMap": {
+        "JBoss-EAP7.2-on-RHEL7.7": "pid-92abde63-f331-4e50-96ca-e0e5c2339caa",
+        "JBoss-EAP7.2-on-RHEL8.0": "pid-4d9c78a6-451b-467d-a6da-d86c71c4a6c7",
+        "JBoss-EAP7.3-on-RHEL8.0": "pid-8c47eaba-ad48-4d3b-b2f8-9f69a44b57f5"
+    },
+    "guid": "[variables('guidMap')[parameters('eapOnRHELVersion')]]",
     "storageAccountName": "[concat('jbosstrg', uniqueString(resourceGroup().id))]",
     "scriptFolder": "scripts",
     "fileToBeDownloaded": "eap-session-replication.war",
@@ -223,38 +232,9 @@
   },
   "resources": [
     {
-      "condition": "[equals(parameters('eapOnRHELVersion'),'JBoss-EAP7.2-on-RHEL7.7')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-05-01",
-      "name": "pid-92abde63-f331-4e50-96ca-e0e5c2339caa",
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "resources": []
-        }
-      }
-    },
-    {
-      "condition": "[equals(parameters('eapOnRHELVersion'),'JBoss-EAP7.2-on-RHEL8.0')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
-      "name": "pid-4d9c78a6-451b-467d-a6da-d86c71c4a6c7",
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "resources": []
-        }
-      }
-    },
-    {
-      "condition": "[equals(parameters('eapOnRHELVersion'),'JBoss-EAP7.3-on-RHEL8.0')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
-      "name": "pid-8c47eaba-ad48-4d3b-b2f8-9f69a44b57f5",
+      "name": "[variables('guid')]",
       "properties": {
         "mode": "Incremental",
         "template": {
@@ -302,16 +282,16 @@
       }
     },
     {
-      "condition": "[equals(parameters('rhelOSLicenseType'),'PAYG')]",
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "apiVersion": "2019-07-01",
-      "name": "[variables('vmssNamePAYG')]",
+      "name": "[variables('vmssInstanceName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('vmSize')]",
         "tier": "Standard",
         "capacity": "[parameters('instanceCount')]"
       },
+      "plan": "[if(equals(parameters('rhelOSLicenseType'),'PAYG'), json('null'), variables('plan'))]",
       "dependsOn": [
         "[variables('loadBalancersName')]",
         "[variables('virtualNetworkName')]",
@@ -327,9 +307,15 @@
           "mode": "Manual"
         },
         "virtualMachineProfile": {
-          "storageProfile": "[variables('storageProfilePAYG')]",
+          "storageProfile": {
+            "osDisk": {
+              "createOption": "FromImage",
+              "caching": "ReadWrite"
+            },
+            "imageReference": "[variables('imageReference')]"
+          },
           "osProfile": {
-            "computerNamePrefix": "[variables('vmssNamePAYG')]",
+            "computerNamePrefix": "[variables('vmssInstanceName')]",
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPasswordOrSSHKey')]",
             "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
@@ -351,94 +337,10 @@
                           {
                             "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancersName'), variables('backendPoolName'))]"
                           }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          "diagnosticsProfile": {
-            "bootDiagnostics": {
-              "enabled": true,
-              "storageUri": "[reference(variables('bootStorageAccountName'), '2019-06-01').primaryEndpoints['blob']]"
-            }
-          },
-          "extensionProfile": {
-            "extensions": [
-              {
-                "name": "jbosseap-setup-extension",
-                "properties": {
-                  "publisher": "Microsoft.Azure.Extensions",
-                  "type": "CustomScript",
-                  "typeHandlerVersion": "2.0",
-                  "autoUpgradeMinorVersion": true,
-                  "settings": {
-                    "fileUris": [
-                      "[uri(parameters('_artifactsLocation'), concat('scripts/jbosseap-setup-redhat.sh', parameters('_artifactsLocationSasToken')))]"
-                    ]
-                  },
-                  "protectedSettings": {
-                    "commandToExecute": "[concat(variables('customScriptCommand'),' ',variables('scriptArgs'),' ', parameters('jbossEAPUserName'),' ', variables('singlequote'), parameters('jbossEAPPassword'), variables('singlequote'),' ',parameters('rhelOSLicenseType'),' ', parameters('rhsmUserName'),' ', variables('singlequote'), parameters('rhsmPassword'), variables('singlequote'),' ', parameters('rhsmPoolEAP'),' ', variables('storageAccountName'),' ', variables('containerName'),' ',base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-04-01').keys[0].value),' ', parameters('eapOnRHELVersion'),' ', parameters('rhsmPoolRHEL'),' ', variables('singlequote'))]"
-                  }
-                }
-             }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "condition": "[equals(parameters('rhelOSLicenseType'),'BYOS')]",
-      "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "apiVersion": "2019-07-01",
-      "name": "[variables('vmssNameBYOS')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "[parameters('vmSize')]",
-        "tier": "Standard",
-        "capacity": "[parameters('instanceCount')]"
-      },
-      "plan": "[variables('planBYOS')]",
-      "dependsOn": [
-        "[variables('loadBalancersName')]",
-        "[variables('virtualNetworkName')]",
-        "[variables('storageAccountName')]",
-        "[variables('bootStorageAccountName')]"
-      ],
-      "tags": {
-                "QuickstartName": "JBoss EAP on RHEL (clustered, VMSS)"
-            },
-      "properties": {
-        "overprovision": "false",
-        "upgradePolicy": {
-          "mode": "Manual"
-        },
-        "virtualMachineProfile": {
-          "storageProfile": "[variables('storageProfileBYOS')]",
-          "osProfile": {
-            "computerNamePrefix": "[variables('vmssNameBYOS')]",
-            "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[parameters('adminPasswordOrSSHKey')]",
-            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
-          },
-          "networkProfile": {
-            "networkInterfaceConfigurations": [
-              {
-                "name": "[variables('nicName')]",
-                "properties": {
-                  "primary": true,
-                  "ipConfigurations": [
-                    {
-                     "name": "ipconfig",
-                     "properties": {
-                       "subnet": {
-                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
-                       },
-                        "loadBalancerBackendAddressPools": [
+                        ],
+                        "loadBalancerInboundNatPools": [
                           {
-                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancersName'), variables('backendPoolName'))]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('loadBalancersName'), variables('natPoolName1'))]"
                           }
                         ]
                       }
@@ -509,6 +411,20 @@
      "backendAddressPools": [
       {
        "name": "[variables('backendPoolName')]"
+      }
+     ],
+     "inboundNatPools": [
+      {
+       "name": "[variables('natPoolName1')]",
+       "properties": {
+         "frontendIPConfiguration": {
+           "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancersName'), variables('frontendName'))]"
+         },
+         "protocol": "Tcp",
+         "frontendPortRangeStart": "[variables('natStartPort1')]",
+         "frontendPortRangeEnd": "[variables('natEndPort1')]",
+         "backendPort": "[variables('adminBackendPort')]"
+       }
       }
      ],
      "loadBalancingRules": [
