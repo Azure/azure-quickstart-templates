@@ -1,6 +1,5 @@
 # JBoss EAP on RHEL (clustered, VMSS)
 
-
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/jboss-eap-clustered-vmss-rhel/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/jboss-eap-clustered-vmss-rhel/PublicDeployment.svg)
 
@@ -13,8 +12,6 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjboss-eap-clustered-vmss-rhel%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjboss-eap-clustered-vmss-rhel%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjboss-eap-clustered-vmss-rhel%2Fazuredeploy.json)
-
-`Tags: JBoss, Red Hat, EAP 7.2, EAP 7.3, Cluster, Load Balancer, RHEL 7.7, RHEL 8.0, Azure, Azure VMSS, Java EE`
 
 <!-- TOC -->
 
@@ -180,41 +177,13 @@ The deployment takes approximately 10 minutes to complete.
 
 Once the deployment is successful, go to the outputs section of the deployment to obtain the **app URL**. You can access the RHEL VMSS instance and the application by following one of the 3 options:
 
-1. Create a Jump VM in a different subnet (new subnet) in the same Virtual Network and access the Load Balancer and RHEL VMSS instance via Jump VM.
-2. Create a Jump VM in a different Virtual Network and access the Load Balancer and RHEL VMSS instance using Virtual Network Peering. (recommended method)
+1. Create a Jump VM in a different Virtual Network and access the Load Balancer and RHEL VMSS instance using Virtual Network Peering. (recommended method).
+2. Create a Jump VM in a different subnet (new subnet) in the same Virtual Network and access the Load Balancer and RHEL VMSS instance via Jump VM.
 3. Using an Application Gateway.
 
   ![alt text](images/outputs.png)
 
-**Option 1 of 3**. Create a Jump VM in a different subnet (new subnet) in the same Virtual Network and access the Load Balancer and RHEL VMSS instance via Jump VM.
-
-   - [Add a new subnet](https://docs.microsoft.com/azure/virtual-network/virtual-network-manage-subnet#add-a-subnet) in the existing Virtual Network which contains the RHEL VMSS.
-
-   - [Create a Windows Virtual Machine](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) in Azure in the same Resource Group you deployed the template. Provide the required details and leave other configurations as default except for the Virtual Network and subnet. Make sure you select the existing Virtual Network in the Resource Group and select the subnet you just created in the step above. This will be your Jump VM.
-
-   - Access Jump VM Public IP - once the Jump VM is successfully deployed, go to the VM details page and copy the Public IP. Log into the Jump VM using this Public IP.
-
-   - To obtain the Private IP of a RHEL VMSS instance, go to the VMSS details page and under settings section select *Instances*. Select the instance from here and copy the Private IP address. Open a web browser inside the Jump VM, go to **http://<PRIVATE_IP_Address>:8080** and you should see the web page as follows. Use the same Private IP to log into the VMSS instance.
-
-     ![alt text](images/eap.png)
-
-   - To access the administration console, click on the **Administration Console** shown in the above image and enter JBoss EAP username and password to access the console of the respective VMSS instance.
-
-     ![alt text](images/eap-admin-console.png)
-
-   - To access the App UI console - copy the app URL from the output page of the deployment and paste it in a browser inside the Jump VM. The web application displays the *Session ID*, *Session counter* and *Timestamp* (these are variables stored in the session that are replicated) and the VMSS instance Private IP address that the web page and session is being hosted from. Clicking on the *Increment Counter* updates the session counter and clicking on *Refresh* will refresh the page.
-
-     <a href="mailto:appdevonazure@redhat.com">
-       <img src="images/eap-session.png"/>
-     </a>
-  
-     ![alt text](images/eap-session-rep.png)
-     
-   - Note that in the EAP Session Replication page of Load Balancer, the Private IP displayed is that of one of the VMSS instance. If you click on *Increment Counter* or *Refresh* button when the service of the VMSS instance corresponding to the Private IP displayed is down (can be due to various reasons like the instance in stopped state or instance restarting), the Private IP displayed will change to that of another VMSS instance Private IP but the Session ID remains the same. This validates that the Session was replicated.
-
-     ![alt text](images/eap-ses-rep.png)
-
-**Option 2 of 3**. Create a Jump VM in a different Virtual Network and access the Load Balancer and RHEL VMSS instance using Virtual Network Peering.
+**Option 1 of 3**. Create a Jump VM in a different Virtual Network and access the Load Balancer and RHEL VMSS instance using Virtual Network Peering.
 
    - [Create a Windows Virtual Machine](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) - in a new Azure Resource Group, create a Windows VM. This should be the same location as the Resource Group you deployed the template. Provide the required details and leave other configurations as default. This will create the Jump VM in a new Virtual Network.
 
@@ -231,6 +200,34 @@ Once the deployment is successful, go to the outputs section of the deployment t
      ![alt text](images/eap-admin-console.png)
 
    - To access the App UI console, copy the app URL from the output page and paste it in a browser inside the Jump VM. The web application displays the *Session ID*, *Session counter* and *Timestamp* (these are variables stored in the session that are replicated) and the VMSS instance Private IP address that the web page and session is being hosted from. Clicking on the *Increment Counter* updates the session counter and clicking on *Refresh* will refresh the page.
+
+     <a href="mailto:appdevonazure@redhat.com">
+       <img src="images/eap-session.png"/>
+     </a>
+  
+     ![alt text](images/eap-session-rep.png)
+     
+   - Note that in the EAP Session Replication page of Load Balancer, the Private IP displayed is that of one of the VMSS instance. If you click on *Increment Counter* or *Refresh* button when the service of the VMSS instance corresponding to the Private IP displayed is down (can be due to various reasons like the instance in stopped state or instance restarting), the Private IP displayed will change to that of another VMSS instance Private IP but the Session ID remains the same. This validates that the Session was replicated.
+
+     ![alt text](images/eap-ses-rep.png)
+
+**Option 2 of 3**. Create a Jump VM in a different subnet (new subnet) in the same Virtual Network and access the Load Balancer and RHEL VMSS instance via Jump VM.
+
+   - [Add a new subnet](https://docs.microsoft.com/azure/virtual-network/virtual-network-manage-subnet#add-a-subnet) in the existing Virtual Network which contains the RHEL VMSS.
+
+   - [Create a Windows Virtual Machine](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) in Azure in the same Resource Group you deployed the template. Provide the required details and leave other configurations as default except for the Virtual Network and subnet. Make sure you select the existing Virtual Network in the Resource Group and select the subnet you just created in the step above. This will be your Jump VM.
+
+   - Access Jump VM Public IP - once the Jump VM is successfully deployed, go to the VM details page and copy the Public IP. Log into the Jump VM using this Public IP.
+
+   - To obtain the Private IP of a RHEL VMSS instance, go to the VMSS details page and under settings section select *Instances*. Select the instance from here and copy the Private IP address. Open a web browser inside the Jump VM, go to **http://<PRIVATE_IP_Address>:8080** and you should see the web page as follows. Use the same Private IP to log into the VMSS instance.
+
+     ![alt text](images/eap.png)
+
+   - To access the administration console, click on the **Administration Console** shown in the above image and enter JBoss EAP username and password to access the console of the respective VMSS instance.
+
+     ![alt text](images/eap-admin-console.png)
+
+   - To access the App UI console - copy the app URL from the output page of the deployment and paste it in a browser inside the Jump VM. The web application displays the *Session ID*, *Session counter* and *Timestamp* (these are variables stored in the session that are replicated) and the VMSS instance Private IP address that the web page and session is being hosted from. Clicking on the *Increment Counter* updates the session counter and clicking on *Refresh* will refresh the page.
 
      <a href="mailto:appdevonazure@redhat.com">
        <img src="images/eap-session.png"/>
@@ -327,7 +324,9 @@ Please refer to [Using the Azure Custom Script Extension Version 2 with Linux VM
 
 #### Cleanup
 
-If your deployment fails due to any reason (like the ones mentioned above), make sure you delete the whole resource group so that you are not charged for any of the resources deployed so far before failure occurred. In case of successful deployment, follow the same process of deleting the resource group created by the template and related resources (if created in other resource groups) to optimize Azure cost. Once your resources are deleted make sure you log into your RHSM account and remove the system you registered for the deployment of the template, so that you do not hit the "Maximum Enabled Entitlement Quantity" (if you have set any). You can remove the registered system under the *Systems* section in the Red Hat portal.
+If your deployment fails due to any reason (like the ones mentioned above), make sure you delete the whole resource group so that you are not charged for any of the resources deployed so far before failure occurred. In case of successful deployment, follow the same process of deleting the resource group created by the template and related resources (if created in other resource groups) to optimize Azure cost. Note that if you want to keep any resources in the resource group, you can delete other resources manually which does not have dependencies on the resources that you do not want to delete. Once your resources are deleted make sure you log into your RHSM account and remove the system you registered for the deployment of the template, so that you do not hit the "Maximum Enabled Entitlement Quantity" (if you have set any). You can remove the registered system under the *Systems* section in the Red Hat portal.
+
+`Tags: JBoss, Red Hat, EAP 7.2, EAP 7.3, Cluster, Load Balancer, RHEL 7.7, RHEL 8.0, Azure, Azure VMSS, Java EE`
 
 ## Support
 
