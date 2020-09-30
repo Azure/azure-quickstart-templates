@@ -1,4 +1,4 @@
-# Advanced template to create an Azure Machine Learning workspace.
+# Advanced template to create an Azure Machine Learning workspace
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-machine-learning-advanced/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-machine-learning-advanced/PublicDeployment.svg)
@@ -10,7 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-machine-learning-advanced/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-machine-learning-advanced%2Fazuredeploy.json)
-
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-machine-learning-advanced%2Fazuredeploy.json)
 
 This template is an advanced Azure Machine Learning workspace creation templates which support:
@@ -19,13 +18,15 @@ This template is an advanced Azure Machine Learning workspace creation templates
 - Create workspace with auto-approval or manual approval private endpoint, both new VNET and existing vnet is supported.
 - Create workspace with customer managed key.
 - Create workspace with link to Azure Databricks workspace.
-- Create workspace with dependent resources(new resources only) behind virtual network. 
+- Create workspace with dependent resources(new resources only) behind virtual network.
 
-### Supported Scenarios
-The following commands shows the advanced scenarios for workspace creation
+## Supported Scenarios
 
-#### Create machine learning workspace with existing dependent resources
-This command creates a workspace with private endpoint
+The following commands show the advanced scenarios for workspace creation.
+
+### Create machine learning workspace with existing dependent resources
+
+This command creates a workspace with private endpoint.
 
 ```PowerShell
 # For deployment with existing resources, use "existing" for the option and resource group name is required.
@@ -34,8 +35,9 @@ This command creates a workspace with private endpoint
 New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -storageAccountOption "existing" -storageAccountResourceGroupName "existing-storage-rg" -storageAccountName "existing-storage-name" -keyVaultOption "existing" -keyVaultResourceGroupName "existing-kv-rg" -keyVaultName "existing-kv-name" -applicationInsightsOption "existing" -applicationInsightsResourceGroupName "existing-ai-rg" - applicationInsightsName "existing-ai-name"
 ```
 
-#### Create machine learning workspace with private endpoint
-This command creates a workspace with private endpoint
+### Create machine learning workspace with private endpoint
+
+This command creates a workspace with private endpoint.
 
 ```PowerShell
 # The deployment is only valid in regions which support private endpoints. For manual approval private endpoint, just set privateEndpointType="ManualApproval"
@@ -50,7 +52,8 @@ New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredepl
 New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -privateEndpointType "AutoApproval" -vnetName "vnet" -vnetOption "existing" -vnetResourceGroupName "rg" -subnetName "subnet" -subnetOption "existing"
 ```
 
-#### Create machine learning workspace with resources behind virtual network
+### Create machine learning workspace with resources behind virtual network
+
 This command is an example of creating workspace with resource behind vnet.
 
 ```PowerShell
@@ -77,6 +80,8 @@ Get-AzVirtualNetwork -ResourceGroupName "rg" -Name "vnet" | Set-AzVirtualNetwork
 # Deployment
 New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -containerRegistryOption "new" -containerRegistrySku "Premium" -storageAccountBehindVNet "true" -keyVaultBehindVNet "true" -containerRegistryBehindVNet "true" -vnetOption "existing" -vnetName "vnet" -vnetResourceGroupName "rg" -subnetName "subnet" -subnetOption "existing"
 ```
+
+## Learn more
 
 If you are new to Azure Machine Learning, see:
 
