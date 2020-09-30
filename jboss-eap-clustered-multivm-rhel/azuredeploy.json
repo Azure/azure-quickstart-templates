@@ -154,8 +154,11 @@
     "scriptStart": "su -c'sh ",
     "customScriptCommand": "[concat(variables('scriptStart'), variables('scriptFileName'), ' ')]",
     "loadBalancersName": "jbosseap-lb",
-    "vmNamePAYG": "jbosseap-payg-server",
-    "vmNameBYOS": "jbosseap-byos-server",
+    "vmNameMap": {
+        "BYOS": "jbosseap-payg-server",
+        "PAYG": "jbosseap-byos-server"
+    },
+    "vmName": "[variables('vmNameMap')[parameters('rhelOSLicenseType')]]",
     "asName": "jbosseap-as",
     "skuName": "Aligned",
     "nicName": "jbosseap-server-nic",
@@ -180,33 +183,41 @@
         ]
       }
     },
-    "planBYOS": {
-      "name": "[if(equals(parameters('eapOnRHELVersion'),'JBoss-EAP7.2-on-RHEL7.7'), 'rhel-lvm77', 'rhel-lvm8')]",
-      "publisher": "redhat",
-      "product": "rhel-byos"
+    "skuMap": {
+        "BYOS": {
+            "JBoss-EAP7.2-on-RHEL7.7": "rhel-lvm77",
+            "JBoss-EAP7.2-on-RHEL8.0": "rhel-lvm8",
+            "JBoss-EAP7.3-on-RHEL8.0": "rhel-lvm8"
+        },
+        "PAYG": {
+            "JBoss-EAP7.2-on-RHEL7.7": "7.7",
+            "JBoss-EAP7.2-on-RHEL8.0": "8",
+            "JBoss-EAP7.3-on-RHEL8.0": "8"
+        }
     },
-    "storageProfilePAYG": {
-      "osDisk": {
-        "createOption": "FromImage"
-      },
-      "imageReference": {
+    "imageSku": "[variables('skuMap')[parameters('rhelOSLicenseType')][parameters('eapOnRHELVersion')]]",
+    "offerMap": {
+        "BYOS": "rhel-byos",
+        "PAYG": "rhel"
+    },
+    "imageOffer": "[variables('offerMap')[parameters('rhelOSLicenseType')]]",
+    "imageReference": {
         "publisher": "redhat",
-        "offer": "rhel",
-        "sku": "[if(equals(parameters('eapOnRHELVersion'), 'JBoss-EAP7.2-on-RHEL7.7'), '7.7', '8')]",
+        "offer": "[variables('imageOffer')]",
+        "sku": "[variables('imageSku')]",
         "version": "latest"
-      }
     },
-    "storageProfileBYOS": {
-      "osDisk": {
-        "createOption": "FromImage"    
-      },
-      "imageReference": {
+    "plan": {
+        "name": "[variables('imageSku')]",
         "publisher": "redhat",
-        "offer": "rhel-byos",
-        "sku": "[if(equals(parameters('eapOnRHELVersion'), 'JBoss-EAP7.2-on-RHEL7.7'), 'rhel-lvm77', 'rhel-lvm8')]",
-        "version": "latest"
-      }
+        "product": "rhel-byos"
     },
+    "guidMap": {
+        "JBoss-EAP7.2-on-RHEL7.7": "pid-9c48eb09-c7f5-4cc1-9ee5-033abb031ff0",
+        "JBoss-EAP7.2-on-RHEL8.0": "pid-d269e266-aa09-4080-b4af-84d641b0b81c",
+        "JBoss-EAP7.3-on-RHEL8.0": "pid-43604955-685a-4680-bfb0-5bf4ced404c0"
+    },
+    "guid": "[variables('guidMap')[parameters('eapOnRHELVersion')]]",
     "storageAccountName": "[concat('jbosstrg', uniqueString(resourceGroup().id))]",
     "scriptFolder": "scripts",
     "fileToBeDownloaded": "eap-session-replication.war",
@@ -214,38 +225,9 @@
   },
   "resources": [
     {
-      "condition": "[equals(parameters('eapOnRHELVersion'),'JBoss-EAP7.2-on-RHEL7.7')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-05-01",
-      "name": "pid-9c48eb09-c7f5-4cc1-9ee5-033abb031ff0",
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "resources": []
-        }
-      }
-    },
-    {
-      "condition": "[equals(parameters('eapOnRHELVersion'),'JBoss-EAP7.2-on-RHEL8.0')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
-      "name": "pid-d269e266-aa09-4080-b4af-84d641b0b81c",
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "resources": []
-        }
-      }
-    },
-    {
-      "condition": "[equals(parameters('eapOnRHELVersion'),'JBoss-EAP7.3-on-RHEL8.0')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
-      "name": "pid-43604955-685a-4680-bfb0-5bf4ced404c0",
+      "name": "[variables('guid')]",
       "properties": {
         "mode": "Incremental",
         "template": {
@@ -328,11 +310,11 @@
       }
     },
     {
-      "condition": "[equals(parameters('rhelOSLicenseType'),'PAYG')]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2019-12-01",
-      "name": "[concat(variables('vmNamePAYG'), copyIndex())]",
+      "name": "[concat(variables('vmName'), copyIndex())]",
       "location": "[parameters('location')]",
+      "plan": "[if(equals(parameters('rhelOSLicenseType'),'PAYG'), json('null'), variables('plan'))]",
       "copy": {
           "name": "virtualMachineLoop",
           "count": "[parameters('numberOfInstances')]"
@@ -361,12 +343,17 @@
           ]
         },
         "osProfile": {
-          "computerName": "[concat(variables('vmNamePAYG'), copyIndex())]",
+          "computerName": "[concat(variables('vmName'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPasswordOrSSHKey')]",
           "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
-        "storageProfile": "[variables('storageProfilePAYG')]",
+        "storageProfile": {
+          "osDisk": {
+            "createOption": "FromImage"
+          },
+          "imageReference": "[variables('imageReference')]"
+        },
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
@@ -376,91 +363,12 @@
       },
       "resources": [
         {
-          "condition": "[equals(parameters('rhelOSLicenseType'),'PAYG')]",
           "type": "extensions",
           "apiVersion": "2019-12-01",
           "name": "[concat('jbosseap-setup-extension-', copyIndex())]",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmNamePAYG'), copyIndex()))]"
-          ],
-          "tags": {
-                "QuickstartName": "JBoss EAP on RHEL (clustered, multi-VM)"
-            },
-          "properties": {
-            "publisher": "Microsoft.Azure.Extensions",
-            "type": "CustomScript",
-            "typeHandlerVersion": "2.0",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "fileUris": [
-                "[uri(parameters('_artifactsLocation'), concat('scripts/jbosseap-setup-redhat.sh', parameters('_artifactsLocationSasToken')))]"
-              ]
-            },
-            "protectedSettings": {
-              "commandToExecute": "[concat(variables('customScriptCommand'),' ',variables('scriptArgs'),' ',parameters('jbossEAPUserName'),' ',variables('singlequote'),parameters('jbossEAPPassword'),variables('singlequote'),' ',parameters('rhelOSLicenseType'),' ',parameters('rhsmUserName'),' ',variables('singlequote'),parameters('rhsmPassword'),variables('singlequote'),' ', parameters('rhsmPoolEAP'),' ',variables('storageAccountName'),' ',variables('containerName'),' ',base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-04-01').keys[0].value), ' ', parameters('eapOnRHELVersion'),' ', parameters('rhsmPoolRHEL'),' ', variables('singlequote'))]"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "condition": "[equals(parameters('rhelOSLicenseType'),'BYOS')]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-12-01",
-      "name": "[concat(variables('vmNameBYOS'), copyIndex())]",
-      "location": "[parameters('location')]",
-      "plan": "[variables('planBYOS')]",
-      "copy": {
-          "name": "virtualMachineLoop",
-          "count": "[parameters('numberOfInstances')]"
-      },
-      "dependsOn": [
-        "nicLoop",
-        "[variables('storageAccountName')]",
-        "[variables('asName')]",
-        "[variables('bootStorageAccountName')]"
-      ],
-      "tags": {
-                "QuickstartName": "JBoss EAP on RHEL (clustered, multi-VM)"
-            },
-      "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('asName'))]"
-        },
-        "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
-            }
-          ]
-        },
-        "osProfile": {
-          "computerName": "[concat(variables('vmNameBYOS'), copyIndex())]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPasswordOrSSHKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
-        },
-        "storageProfile": "[variables('storageProfileBYOS')]",
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[reference(variables('bootStorageAccountName'), '2019-06-01').primaryEndpoints['blob']]"
-          }
-        }
-      },
-      "resources": [
-        {
-          "condition": "[equals(parameters('rhelOSLicenseType'),'BYOS')]",
-          "type": "extensions",
-          "apiVersion": "2019-12-01",
-          "name": "[concat('jbosseap-setup-extension-', copyIndex())]",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmNameBYOS'), copyIndex()))]"
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'), copyIndex()))]"
           ],
           "tags": {
                 "QuickstartName": "JBoss EAP on RHEL (clustered, multi-VM)"
