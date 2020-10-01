@@ -13,8 +13,6 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjboss-eap-standalone-rhel%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjboss-eap-standalone-rhel%2Fazuredeploy.json)
 
-`Tags: JBoss, Red Hat, EAP 7.2, EAP 7.3, RHEL 7.7, RHEL 8.0, Azure, Azure VM, JavaEE`
-
 <!-- TOC -->
 
 1. [Solution Overview](#solution-overview)
@@ -169,51 +167,15 @@ The deployment takes approximately 10 minutes to complete.
 
 Once the deployment is successful, go to the outputs section of the deployment to obtain the **Private IP of the RHEL VM**, **app URL** and the **Admin Console URL**. You can access the RHEL VM and the application by following one of the 5 options:
 
-1. Create a Public IP to access the RHEL VM and JBoss EAP Admin Console.
-2. Create a Jump VM in a different subnet (new subnet) in the same Virtual Network and access the RHEL VM via a Jump VM. 
-3. Create a Jump VM in a different Virtual Network and access the RHEL VM using Virtual Network Peering. (recommended method)
+1. Create a Jump VM in a different Virtual Network and access the RHEL VM using Virtual Network Peering. (recommended method)
+2. Create a Public IP to access the RHEL VM and JBoss EAP Admin Console.
+3. Create a Jump VM in a different subnet (new subnet) in the same Virtual Network and access the RHEL VM via a Jump VM.
 4. Using an Application Gateway.
 5. Using an External Load Balancer (ELB).
 
    ![alt text](images/output.png)
 
-**Option 1 of 5**. Create Public IP to access the RHEL VM and JBoss EAP Admin Console
-
-   - The RHEL VM you created does not have a Public IP associated with it. You can [create a Public IP](https://docs.microsoft.com/azure/virtual-network/virtual-network-public-ip-address#create-a-public-ip-address) for accessing the VM and [associate the Public IP to the VM](https://docs.microsoft.com/azure/virtual-network/associate-public-ip-address-vm). All this can be done using Azure Portal or Powershell commands or CLI commands.
-
-   - Obtain the Public IP of a VM - go to the VM details page and copy the Public IP. You can use this Public IP to access the VM and JBoss EAP Admin Console.
-
-   - View the JBoss EAP on Azure web page - open a web browser and go to *http://<PUBLIC_HOSTNAME>:8080/JBoss-EAP_on_Azure/* and you should see the application running.
-
-     <a href="mailto:appdevonazure@redhat.com">
-       <img src="images/app.png"/>
-     </a>
-
-   - Log into the JBoss EAP Admin Console - open a web browser and go to *http://<PUBLIC_HOSTNAME>:9990*. Enter the JBoss EAP username and password to log in.
-
-     ![alt text](images/admin.png)
-
-**Option 2 of 5**. Create a Jump VM in a different subnet (new subnet) in the same Virtual Network and access the RHEL VM via Jump VM.
-
-   - [Add a new subnet](https://docs.microsoft.com/azure/virtual-network/virtual-network-manage-subnet#add-a-subnet) in the existing Virtual Network which contains the RHEL VM.
-
-   - [Create a Windows Virtual Machine](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) in Azure in the same Resource Group as the RHEL VM. Provide the required details and leave other configurations as default except for the Virtual Network and subnet. Make sure you select the existing Virtual Network in the Resource Group and select the subnet you just created in the step above. This will be your Jump VM.
-
-   - Access Jump VM Public IP - once successfully deployed, go to the VM details page and copy the Public IP. Log into the Jump VM using this Public IP.
-
-   - Log into RHEL VM - copy the Private IP of RHEL VM from the output page and use it to log into the RHEL VM from the Jump VM.
-
-   - Access the JBoss EAP on Azure web page - in your Jump VM, open a browser and paste the app URL that you copied from the output page of the deployment.
-
-     <a href="mailto:appdevonazure@redhat.com">
-       <img src="images/app.png"/>
-     </a>
-     
-   - Access the JBoss EAP Admin Console - paste the Admin Console URL that you copied from the output page in a browser inside the Jump VM to access the JBoss EAP Admin Console and enter the JBoss EAP username and password to log in.
-
-     ![alt text](images/admin.png)
-
-**Option 3 of 5**. Create a Jump VM in a different Virtual Network and access the RHEL VM using Virtual Network Peering.
+**Option 1 of 5**. Create a Jump VM in a different Virtual Network and access the RHEL VM using Virtual Network Peering.
 
    - [Create a Windows Virtual Machine](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) - in a new Azure Resource Group, create a Windows VM. This should be in the same location as RHEL VM. Provide the required details and leave other configurations as default. This will create the Jump VM in a new Virtual Network.
 
@@ -230,6 +192,42 @@ Once the deployment is successful, go to the outputs section of the deployment t
      </a>
      
    - Access the JBoss EAP Admin Console - paste the Admin Console URL copied from the output page in a browser inside the Jump VM, enter the JBoss EAP username and password to log in.
+
+     ![alt text](images/admin.png)
+
+**Option 2 of 5**. Create Public IP to access the RHEL VM and JBoss EAP Admin Console
+
+   - The RHEL VM you created does not have a Public IP associated with it. You can [create a Public IP](https://docs.microsoft.com/azure/virtual-network/virtual-network-public-ip-address#create-a-public-ip-address) for accessing the VM and [associate the Public IP to the VM](https://docs.microsoft.com/azure/virtual-network/associate-public-ip-address-vm). All this can be done using Azure Portal or Powershell commands or CLI commands.
+
+   - Obtain the Public IP of a VM - go to the VM details page and copy the Public IP. You can use this Public IP to access the VM and JBoss EAP Admin Console.
+
+   - View the JBoss EAP on Azure web page - open a web browser and go to *http://<PUBLIC_HOSTNAME>:8080/JBoss-EAP_on_Azure/* and you should see the application running.
+
+     <a href="mailto:appdevonazure@redhat.com">
+       <img src="images/app.png"/>
+     </a>
+
+   - Log into the JBoss EAP Admin Console - open a web browser and go to *http://<PUBLIC_HOSTNAME>:9990*. Enter the JBoss EAP username and password to log in.
+
+     ![alt text](images/admin.png)
+
+**Option 3 of 5**. Create a Jump VM in a different subnet (new subnet) in the same Virtual Network and access the RHEL VM via Jump VM.
+
+   - [Add a new subnet](https://docs.microsoft.com/azure/virtual-network/virtual-network-manage-subnet#add-a-subnet) in the existing Virtual Network which contains the RHEL VM.
+
+   - [Create a Windows Virtual Machine](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) in Azure in the same Resource Group as the RHEL VM. Provide the required details and leave other configurations as default except for the Virtual Network and subnet. Make sure you select the existing Virtual Network in the Resource Group and select the subnet you just created in the step above. This will be your Jump VM.
+
+   - Access Jump VM Public IP - once successfully deployed, go to the VM details page and copy the Public IP. Log into the Jump VM using this Public IP.
+
+   - Log into RHEL VM - copy the Private IP of RHEL VM from the output page and use it to log into the RHEL VM from the Jump VM.
+
+   - Access the JBoss EAP on Azure web page - in your Jump VM, open a browser and paste the app URL that you copied from the output page of the deployment.
+
+     <a href="mailto:appdevonazure@redhat.com">
+       <img src="images/app.png"/>
+     </a>
+     
+   - Access the JBoss EAP Admin Console - paste the Admin Console URL that you copied from the output page in a browser inside the Jump VM to access the JBoss EAP Admin Console and enter the JBoss EAP username and password to log in.
 
      ![alt text](images/admin.png)
 
@@ -322,7 +320,9 @@ Please refer to [Using the Azure Custom Script Extension Version 2 with Linux VM
 
 #### Cleanup
 
-If your deployment fails due to any reason (like the ones mentioned above), make sure you delete the whole resource group so that you are not charged for any of the resources deployed so far before failure occurred. In case of successful deployment, follow the same process of deleting the resource group created by the template and related resources (if created in other resource groups) to optimize Azure cost. Once your resources are deleted make sure you log into your RHSM account and remove the system you registered for the deployment of the template, so that you do not hit the "Maximum Enabled Entitlement Quantity" (if you have set any). You can remove the registered system under the *Systems* section in the Red Hat portal.
+If your deployment fails due to any reason (like the ones mentioned above), make sure you delete the whole resource group so that you are not charged for any of the resources deployed so far before failure occurred. In case of successful deployment, follow the same process of deleting the resource group created by the template and related resources (if created in other resource groups) to optimize Azure cost. Note that if you want to keep any resources in the resource group, you can delete other resources manually which does not have dependencies on the resources that you do not want to delete. Once your resources are deleted make sure you log into your RHSM account and remove the system you registered for the deployment of the template, so that you do not hit the "Maximum Enabled Entitlement Quantity" (if you have set any). You can remove the registered system under the *Systems* section in the Red Hat portal.
+
+`Tags: JBoss, Red Hat, EAP 7.2, EAP 7.3, RHEL 7.7, RHEL 8.0, Azure, Azure VM, JavaEE`
 
 ## Support
 
