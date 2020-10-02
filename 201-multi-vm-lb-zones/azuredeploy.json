@@ -4,13 +4,9 @@
   "parameters": {
     "location": {
       "type": "string",
-      "allowedValues": [
-        "CentralUS",
-        "FranceCentral"
-      ],
-      "defaultValue": "CentralUS",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for the VMs, only certain regions support zones during preview."
+        "description": "Location for the VMs, only certain regions support zones."
       }
     },
     "adminUsername": {
@@ -61,6 +57,13 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A2_v2",
+      "metadata": {
+        "description": "Size of the virtual machine"
+      }
     }
   },
   "variables": {
@@ -72,19 +75,18 @@
     "networkSecurityGroupName": "allowRemoting",
     "lbName": "multiVMLB",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), variables('subnetName'))]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
-    "frontEndIPConfigID": "[concat(variables('lbID'), '/frontendIPConfigurations/loadBalancerFrontend')]",
+    "frontEndIPConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('lbName'), 'loadBalancerFrontend')]",
     "inboundNatRuleName": "remoting",
     "windowsImage": {
       "publisher": "MicrosoftWindowsServer",
       "offer": "WindowsServer",
-      "sku": "2016-Datacenter",
+      "sku": "2019-Datacenter",
       "version": "latest"
     },
     "linuxImage": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
-      "sku": "16.04.0-LTS",
+      "sku": "18.04-LTS",
       "version": "latest"
     },
     "linuxConfiguration": {
@@ -103,16 +105,16 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
       },
-      "kind": "Storage",
+      "kind": "StorageV2",
       "properties": {}
     },
     {
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -127,7 +129,7 @@
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
@@ -151,7 +153,7 @@
       }
     },
     {
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -178,7 +180,7 @@
       }
     },
     {
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyindex())]",
       "location": "[parameters('location')]",
@@ -202,12 +204,12 @@
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('lbID'), '/backendAddressPools/LoadBalancerBackend')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), 'LoadBalancerBackend')]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/', variables('inboundNatRuleName'), copyindex())]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('lbName'), concat(variables('inboundNatRuleName'), copyindex()))]"
                 }
               ]
             }
@@ -216,7 +218,7 @@
       }
     },
     {
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-05-01",
       "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[parameters('location')]",
@@ -250,13 +252,13 @@
                 "id": "[variables('frontendIPConfigID')]"
               },
               "backendaddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers/', variables('lbName')), '/backendAddressPools/LoadBalancerBackend')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), 'LoadBalancerBackend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
               "backendPort": 80,
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/probes/tcpProbe')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), 'tcpProbe')]"
               }
             }
           }
@@ -267,15 +269,15 @@
             "properties": {
               "protocol": "Tcp",
               "port": 80,
-              "intervalInSeconds": "5",
-              "numberOfProbes": "2"
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
             }
           }
         ]
       }
     },
     {
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/loadBalancers/inboundNatRules",
       "name": "[concat(variables('lbName'), '/', variables('inboundNatRuleName'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -297,7 +299,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('dnsName'), copyindex())]",
       "zones": "[split(string(add(mod(copyIndex(),3),1)), ',')]",
@@ -311,7 +313,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_A2_v2"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[concat(parameters('dnsName'), copyIndex())]",
