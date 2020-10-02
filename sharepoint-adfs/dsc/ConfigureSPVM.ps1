@@ -193,7 +193,7 @@ configuration ConfigureSPVM
         WaitForADDomain WaitForDCReady
         {
             DomainName              = $DomainFQDN
-            WaitTimeout             = 1200
+            WaitTimeout             = 1800
             RestartCount            = 2
             WaitForValidCredentials = $True
             PsDscRunAsCredential    = $DomainAdminCredsQualified
@@ -761,7 +761,7 @@ configuration ConfigureSPVM
                 }
             )
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplicationExtension]ExtendMainWebApp"
+            DependsOn            = "[SPWebApplicationExtension]ExtendMainWebApp", "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
         }
 
         xWebsite SetHTTPSCertificate
@@ -1034,6 +1034,7 @@ configuration ConfigureSPVM
             DestinationPath = "C:\inetpub\wwwroot\addins"
             Type            = "Directory"
             Ensure          = "Present"
+            DependsOn       = "[SPFarm]CreateSPFarm"
         }
 
         xWebAppPool CreateAddinsSiteApplicationPool
@@ -1047,6 +1048,7 @@ configuration ConfigureSPVM
             Credential            = $SPSvcCredsQualified
             Ensure                = "Present"
             PsDscRunAsCredential  = $DomainAdminCredsQualified
+            DependsOn             = "[SPFarm]CreateSPFarm"
         }
 
         xWebsite CreateAddinsSite

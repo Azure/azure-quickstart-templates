@@ -36,13 +36,12 @@
         "description": "FQDN of the AD forest to create"
       }
     },
-    "addFrontEndToFarm": {
-      "type": "string",
+    "numberOfAdditionalFrontEnd": {
+      "type": "int",
       "allowedValues": [
-        "Yes",
-        "No"
+        0,1,2,3
       ],
-      "defaultValue": "No",
+      "defaultValue": 0,
       "metadata": {
         "description": "Select whether a SharePoint Front End VM should be provisioned and joined to the farm."
       }
@@ -196,10 +195,10 @@
     },
     "_artifactsLocation": {
       "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-      },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sharepoint-adfs/"
+      }
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -344,15 +343,6 @@
       {
         "lun": 0,
         "name": "[variables('vmSP').vmDataDiskName]",
-        "caching": "ReadWrite",
-        "createOption": "Empty",
-        "diskSizeGB": "[parameters('sharePointDataDiskSize')]"
-      }
-    ],
-    "vmFEDataDisk": [
-      {
-        "lun": 0,
-        "name": "[variables('vmFE').vmDataDiskName]",
         "caching": "ReadWrite",
         "createOption": "Empty",
         "diskSizeGB": "[parameters('sharePointDataDiskSize')]"
@@ -927,13 +917,17 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('addFrontEndToFarm'), 'Yes'), equals(parameters('addPublicIPAddressToEachVM'), 'Yes'))]",
-      "name": "[variables('vmFE').vmPublicIPName]",
+      "condition": "[and(greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1), equals(parameters('addPublicIPAddressToEachVM'), 'Yes'))]",
+      "name": "[concat(variables('vmFE').vmPublicIPName, '-', copyIndex())]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
       "apiVersion": "2019-09-01",
       "tags": {
-        "displayName": "[variables('vmFE').vmPublicIPName]"
+        "displayName": "[concat(variables('vmFE').vmPublicIPName, '-', copyIndex())]"
+      },
+      "copy": {
+          "name": "frontendPublicIPAddresses",
+          "count": "[parameters('numberOfAdditionalFrontEnd')]"
       },
       "sku": {
         "name": "Basic",
@@ -942,22 +936,26 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[variables('vmFE').vmPublicIPDnsName]"
+          "domainNameLabel": "[concat(variables('vmFE').vmPublicIPDnsName, '-', copyIndex())]"
         }
       }
     },
     {
-      "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
-      "name": "[variables('vmFE').vmNicName]",
+      "condition": "[greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1)]",
+      "name": "[concat(variables('vmFE').vmNicName, '-', copyIndex())]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
       "apiVersion": "2019-09-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmFE').vmPublicIPName)]"
+        "frontendPublicIPAddresses"
       ],
       "tags": {
-        "displayName": "[variables('vmFE').vmNicName]"
+        "displayName": "[concat(variables('vmFE').vmNicName, '-', copyIndex())]"
+      },
+      "copy": {
+          "name": "frontendNetworkInterfaces",
+          "count": "[parameters('numberOfAdditionalFrontEnd')]"
       },
       "properties": {
         "ipConfigurations": [
@@ -968,30 +966,36 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSPName)]"
               },
-              "publicIPAddress": "[if(equals(parameters('addPublicIPAddressToEachVM'), 'Yes'), variables('networkSettings').vmFEPublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmFE').vmPublicIPName, '-', copyIndex()))]"
+              }
             }
           }
         ]
       }
     },
     {
-      "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
-      "name": "[variables('generalSettings').vmFEName]",
+      "condition": "[greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1)]",
+      "name": "[concat(variables('generalSettings').vmFEName, '-', copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
       "apiVersion": "2019-12-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmFE').vmNicName)]"
+        "frontendNetworkInterfaces"
       ],
       "tags": {
-        "displayName": "[variables('generalSettings').vmFEName]"
+        "displayName": "[concat(variables('generalSettings').vmFEName, '-', copyIndex())]"
+      },
+      "copy": {
+          "name": "frontendVirtualMachines",
+          "count": "[parameters('numberOfAdditionalFrontEnd')]"
       },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSP').vmVmSize]"
         },
         "osProfile": {
-          "computerName": "[variables('generalSettings').vmFEName]",
+          "computerName": "[concat(variables('generalSettings').vmFEName, '-', copyIndex())]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
@@ -1008,7 +1012,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[variables('vmFE').vmOSDiskName]",
+            "name": "[concat(variables('vmFE').vmOSDiskName, '-', copyIndex())]",
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
@@ -1016,13 +1020,12 @@
             "managedDisk": {
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
-          },
-          "dataDisks": "[if(equals(parameters('sharePointDataDiskSize'), 0), json('null'), variables('vmFEDataDisk'))]"
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmFE').vmNicName)]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmFE').vmNicName, '-', copyIndex()))]"
             }
           ]
         },
@@ -1031,16 +1034,20 @@
       "resources": []
     },
     {
-      "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
-      "name": "[concat(variables('generalSettings').vmFEName,'/ConfigureFEVM')]",
+      "condition": "[greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1)]",
+      "name": "[concat(variables('generalSettings').vmFEName, '-', copyIndex(),'/ConfigureFEVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
       "apiVersion": "2019-12-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmFEName)]"
+        "frontendVirtualMachines"
       ],
       "tags": {
-        "displayName": "[concat(variables('generalSettings').vmFEName,'/ConfigureFEVM')]"
+        "displayName": "[concat(variables('generalSettings').vmFEName, '-', copyIndex(),'/ConfigureFEVM')]"
+      },
+       "copy": {
+          "name": "frontendVirtualMachineExtensions",
+          "count": "[parameters('numberOfAdditionalFrontEnd')]"
       },
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -1162,14 +1169,18 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('addFrontEndToFarm'), 'Yes'), not(equals(parameters('vmsAutoShutdownTime'), '9999')))]",
+      "condition": "[and(greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1), not(equals(parameters('vmsAutoShutdownTime'), '9999')))]",
       "type": "Microsoft.DevTestLab/schedules",
-      "name": "[variables('vmFE').shutdownResourceName]",
+      "name": "[concat(variables('vmFE').shutdownResourceName, '-', copyIndex())]",
       "apiVersion": "2018-10-15-preview",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmFEName)]"
+        "frontendVirtualMachines"
       ],
+      "copy": {
+          "name": "frontendAutoShutdowns",
+          "count": "[parameters('numberOfAdditionalFrontEnd')]"
+      },
       "properties": {
         "status": "Enabled",
         "taskType": "ComputeVmShutdownTask",
@@ -1181,7 +1192,7 @@
           "status": "Disabled",
           "timeInMinutes": 30
         },
-        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmFEName)]"
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('generalSettings').vmFEName, '-', copyIndex()))]"
       }
     },
     {
