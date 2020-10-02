@@ -174,7 +174,7 @@ configuration ConfigureFEVM
         WaitForADDomain WaitForDCReady
         {
             DomainName              = $DomainFQDN
-            WaitTimeout             = 1200
+            WaitTimeout             = 1800
             RestartCount            = 2
             WaitForValidCredentials = $True
             PsDscRunAsCredential    = $DomainAdminCredsQualified
@@ -304,28 +304,30 @@ configuration ConfigureFEVM
             DependsOn            = "[xScript]WaitForSPFarmReadyToJoin"
         }
 
-        # xScript WaitForAppServer
-        # {
-        #     SetScript =
-        #     {
-        #         $retry = $true
-        #         $retrySleep = $using:RetryIntervalSec
-        #         $serverName = $using:DCName
-        #         $fileName = "SPDSCFinished.txt"
-        #         $fullPath = "\\$serverName\C$\Setup\$fileName"
-        #         while ($retry) {
-        #             if ((Get-Item $fullPath -ErrorAction SilentlyContinue) -ne $null){   
-        #                 $retry = $false
-        #             }
-        #             Write-Verbose "File '$fullPath' not found on server '$serverName', retry in $retrySleep secs..."
-        #             Start-Sleep -s $retrySleep
-        #         }
-        #     }
-        #     GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-        #     TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn            = "[SPDistributedCacheService]EnableDistributedCache"
-        # }
+        # If multiple servers join the SharePoint farm at the same time, resource JoinSPFarm may fail on a server with this error:
+        # "Scheduling DiagnosticsService timer job failed" (SharePoint event id aitap or aitaq)
+        # This script uses the computer name (FE-0 FE-1) to sequence the time when servers join the farm
+        xScript WaitToAvoidServersJoiningFarmSimultaneously
+        {
+            SetScript =
+            {                
+                $computerName = $env:computerName
+                $digitFound = $computerName -match '\d+'
+                if ($digitFound) {
+                    $computerNumber = [Convert]::ToInt16($matches[0])
+                }
+                else {
+                    $computerNumber = 0
+                }
+                $sleepTimeInSeconds = $computerNumber * 60  # Add a delay of 1 minute between each server
+                Write-Verbose "Computer $computerName is going to sleep for $sleepTimeInSeconds seconds before joining the SharePoint farm, to avoid multiple servers joining it at the same time"
+                Start-Sleep -Seconds $sleepTimeInSeconds
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup"
+        }
 
         #**********************************************************
         # Join SharePoint farm
@@ -343,7 +345,7 @@ configuration ConfigureFEVM
             RunCentralAdmin           = $false
             IsSingleInstance          = "Yes"
             Ensure                    = "Present"
-            DependsOn                 = "[Group]AddSPSetupAccountToAdminGroup"
+            DependsOn                 = "[xScript]WaitToAvoidServersJoiningFarmSimultaneously"
         }
 
         xDnsRecord UpdateDNSAliasSPSites
