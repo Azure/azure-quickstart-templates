@@ -1,5 +1,9 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in October 5, 2020
+
+* Implement workaround to the template validation error when it is deployed from the portal and parameter numberOfAdditionalFrontEnd is set to 0
+
 ## Enhancements & bug-fixes - Published in October 2, 2020
 
 * Replace parameter addFrontEndToFarm with numberOfAdditionalFrontEnd
