@@ -43,5 +43,3 @@ Use browser to access the SiteFQDN from output. WordPress will guide you through
 
 ## Notes
 Azure Container Instance is available in selected [locations](https://docs.microsoft.com/en-us/azure/container-instances/container-instances-quotas#region-availability). Please use one of the available location for Azure Container Instance resource.
-
-
