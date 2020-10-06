@@ -56,7 +56,7 @@ def prepare_user(username, password):
                               roles=["ROLE_ADMIN", "ROLE_READONLY"]))
 
         logging.info('Successfully created new admin user %s.' % dirUsername)
-    except HTTPError, e:
+    except HTTPError as e:
         logging.error("Failed to create user '%s'. %s" % (username, e.msg))
         return ExitCodes.ERROR
 
@@ -70,7 +70,7 @@ def prepare_user(username, password):
 
         logging.info("Successfully deleted default user 'admin'")
         return ExitCodes.OK
-    except HTTPError, e:
+    except HTTPError as e:
         logging.error("Failed to delete default user 'admin'. %s" % e.msg)
         return ExitCodes.ERROR
 

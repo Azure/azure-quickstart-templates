@@ -17,6 +17,7 @@
 # Simple script that shows how to use the Cloudera Director API to initialize
 # the environment and instance templates
 
+from __future__ import print_function
 import argparse
 import ConfigParser
 import sys
@@ -96,11 +97,11 @@ def create_environment(client, config, provider_type, cloud_provider_metadata):
 
     except HTTPError as e:
         if e.code == 302:
-            print "Warning: an environment with the same name already exists"
+            print("Warning: an environment with the same name already exists")
         else:
             raise e
 
-    print "Environments: %s" % api.list()
+    print("Environments: %s" % api.list())
     return env.name
 
 
@@ -157,7 +158,7 @@ def configure_provider(merged_provider_config, provider_type, cloud_provider_met
     provider = InstanceProviderConfig()
     provider.type = provider_type
     if debug:
-        print "merged_provider_config: %s" % merged_provider_config
+        print("merged_provider_config: %s" % merged_provider_config)
     provider.config = {}
 
     provider.config.update(get_configuration_property_values(merged_provider_config, cloud_provider_metadata.credentialsProperties))
@@ -166,8 +167,8 @@ def configure_provider(merged_provider_config, provider_type, cloud_provider_met
         provider.config.update(get_configuration_property_values(merged_provider_config, resource_provider_metadata.configurationProperties))
 
     if debug:
-        print "provider.config: %s" % provider.config
-        print "Unknown keys: %s" % (merged_provider_config.viewkeys() - provider.config.viewkeys())
+        print("provider.config: %s" % provider.config)
+        print("Unknown keys: %s" % (merged_provider_config.viewkeys() - provider.config.viewkeys()))
 
     return provider
 
@@ -197,16 +198,16 @@ def create_instance_templates(client, config, environment_name, provider_type, c
             instance_provider_metadata = resource_provider_metadata
             break
     if instance_provider_metadata is None:
-        print "Warning: there is no compute instance provider for provider type: %s" % provider_type
+        print("Warning: there is no compute instance provider for provider type: %s" % provider_type)
     else:
         template_configs_by_template_name = config.get_config('instances')
         for template_name in template_configs_by_template_name.viewkeys():
             template_config = template_configs_by_template_name.get_config(template_name)
             merged_template_config = merge_configs([merged_provider_config, template_config])
             if debug:
-                print "template %s: %s" % (template_name, merged_template_config)
+                print("template %s: %s" % (template_name, merged_template_config))
             template = configure_instance_template(merged_template_config, template_name, instance_provider_metadata)
-            print "Creating a new instance template: %s ..." % template_name
+            print("Creating a new instance template: %s ..." % template_name)
             create_instance_template(client, environment_name, template)
             template_names.append(template_name)
 
@@ -268,10 +269,10 @@ def configure_instance_template(merged_template_config, template_name, instance_
     template.config.update(get_configuration_property_values(merged_template_config, instance_provider_metadata.templateProperties))
 
     if debug:
-        print "name: %s, type: %s, image: %s, sshUsername: %s, normalizeInstance: %s, bootstrapScript: %s, tags: %s" % \
-            (template.name, template.type, template.image, template.sshUsername, template.normalizeInstance, template.bootstrapScript, template.tags)
-        print "template.config: %s" % template.config
-        print "Unknown keys: %s" % (merged_template_config.viewkeys() - template.config.viewkeys())
+        print("name: %s, type: %s, image: %s, sshUsername: %s, normalizeInstance: %s, bootstrapScript: %s, tags: %s" % \
+            (template.name, template.type, template.image, template.sshUsername, template.normalizeInstance, template.bootstrapScript, template.tags))
+        print("template.config: %s" % template.config)
+        print("Unknown keys: %s" % (merged_template_config.viewkeys() - template.config.viewkeys()))
 
     return template
 
@@ -294,7 +295,7 @@ def create_instance_template(client, environment_name, template):
 
     except HTTPError as e:
         if e.code == 302:
-            print "Warning: an instance template with the same name already exists"
+            print("Warning: an instance template with the same name already exists")
         else:
             raise e
 
@@ -323,14 +324,14 @@ def add_existing_external_db_servers(client, config, environment_name):
         if is_existing_db_server(db_config):
             merged_db_config = merge_configs([merged_provider_config, db_config])
             if debug:
-                print "external db %s: %s" % (db_name, merged_db_config)
+                print("external db %s: %s" % (db_name, merged_db_config))
             db_server_template = configure_external_db_server(merged_db_config, db_name)
-            print "Adding an existing external DB server: %s ..." % db_name
+            print("Adding an existing external DB server: %s ..." % db_name)
             create_external_db_server(client, environment_name, db_server_template)
             db_server_names.append(db_name)
         else:
-            print "External DB server config template %s is not referring to an existing server" \
-                  % db_name
+            print("External DB server config template %s is not referring to an existing server" \
+                  % db_name)
 
     return db_server_names
 
@@ -379,9 +380,9 @@ def configure_external_db_server(db_server_config, db_name):
         db_server_template.type = config_value.upper()
 
     if debug:
-        print "name: %s, hostname: %s, port: %s, username: %s, type: %s" % \
+        print("name: %s, hostname: %s, port: %s, username: %s, type: %s" % \
             (db_name, db_server_template.hostname, db_server_template.port,
-             db_server_template.username, db_server_template.type)
+             db_server_template.username, db_server_template.type))
 
     return db_server_template
 
@@ -401,7 +402,7 @@ def create_external_db_server(client, environment_name, db_server):
 
     except HTTPError as e:
         if e.code == 302:
-            print "Warning: an database server with the same name already exists"
+            print("Warning: an database server with the same name already exists")
         else:
             raise e
 
@@ -425,7 +426,7 @@ def get_cloud_provider_metadata(client, provider_type):
 
     except HTTPError as e:
         if e.code == 404:
-            print "Error: no such provider type: %s" % provider_type
+            print("Error: no such provider type: %s" % provider_type)
         raise e
 
     return cloud_provider_metadata
@@ -488,7 +489,7 @@ def set_configuration_property_value(values_by_config_key, config_key, config_va
 
     if config_value:
         if debug:
-            print "setting %s: %s" % (config_key, config_value)
+            print("setting %s: %s" % (config_key, config_value))
         if config_type == 'BOOLEAN':
             config_value = config_value.lower()
         values_by_config_key[config_key] = config_value
@@ -514,7 +515,7 @@ def load_config(config_file, fallback_config_files):
             if isfile(fallback_config_file):
                 config = config.with_fallback(fallback_config_file)
             else:
-                print 'Warn: "%s" not found or not a file' % fallback_config_file
+                print('Warn: "%s" not found or not a file' % fallback_config_file)
 
     return config
 
@@ -544,7 +545,7 @@ def main():
         urllib2.install_opener(opener)
 
     if not isfile(args.config_file):
-        print 'Error: "%s" not found or not a file' % args.config_file
+        print('Error: "%s" not found or not a file' % args.config_file)
         return -1
 
     script_path = dirname(realpath(__file__))
@@ -558,13 +559,13 @@ def main():
     providerType = config.get_string('provider.type')
     cloudProviderMetadata = get_cloud_provider_metadata(client, providerType)
 
-    print "Creating a new environment ..."
+    print("Creating a new environment ...")
     environment_name = create_environment(client, config, providerType, cloudProviderMetadata)
 
-    print "Creating new instance templates ..."
+    print("Creating new instance templates ...")
     create_instance_templates(client, config, environment_name, providerType, cloudProviderMetadata)
 
-    print "Adding existing external database servers ..."
+    print("Adding existing external database servers ...")
     add_existing_external_db_servers(client, config, environment_name)
 
     return 0
@@ -575,5 +576,5 @@ if __name__ == '__main__':
         sys.exit(main())
 
     except HTTPError as e:
-        print e.read()
+        print(e.read())
         raise e
