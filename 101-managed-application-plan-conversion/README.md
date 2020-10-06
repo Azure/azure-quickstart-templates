@@ -18,7 +18,7 @@
 
 This function app deploys the sample plan conversion agent in publisher's tenant, which will listen for plan update notifications from AMA service. It performs additional resource deployment in customer's managed resource group. Additionaly, it creates an entry in CosmosDB for async operation mapping so that it can provide the status when AMA polls for async operation status. And, it will provide status of operation when AMA polls for status on given location uri.
 
-## This quickstart template requires following mandatory parameters:
+## This quickstart template requires following mandatory parameters
 ### Current Plan
 This is the "Plan ID" for the source plan. You can get this from partner center.
 ### New Plan
@@ -28,7 +28,7 @@ This is the link to the deployment template file which you want to deploy in cus
 ### Parameters Template Uri
 This is the link to the parameters template file for providing parameters to your deployment template(Main Template Uri).
 
-## Once you deploy this function app in publisher subscription please use following output properties as below:
+## Once you deploy this function app in publisher subscription please use following output properties as below
 + "identityPrincipalId" => "Principal ID" in "Authorizations" (In partner center, enter this principal id in authorizations of your source plan technical configuration in partner center. This step will whitelist this function app in your offer to perform any additional template deployment in customer's managed resource group.) 
 + "webhookEndpoint" => "Notification Endpoint URL" (In your target plan's technical configuration use the following template output property as notification endpoint.)
 
