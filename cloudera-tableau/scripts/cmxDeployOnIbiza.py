@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # 
+from __future__ import print_function
 __version__ = '0.11.2803'
 
 import socket
@@ -80,11 +81,11 @@ def init_cluster():
     cm.update_config({"REMOTE_PARCEL_REPO_URLS": "http://archive.cloudera.com/cdh5/parcels/{latest_supported}",
                       "PHONE_HOME": False, "PARCEL_DISTRIBUTE_RATE_LIMIT_KBS_PER_SECOND": "1024000"})
 
-    print "> Initialise Cluster"
+    print("> Initialise Cluster")
     if cmx.cluster_name in [x.name for x in api.get_all_clusters()]:
-        print "Cluster name: '%s' already exists" % cmx.cluster_name
+        print("Cluster name: '%s' already exists" % cmx.cluster_name)
     else:
-        print "Creating cluster name '%s'" % cmx.cluster_name
+        print("Creating cluster name '%s'" % cmx.cluster_name)
         api.create_cluster(name=cmx.cluster_name, version=cmx.cluster_version)
 
 
@@ -93,7 +94,7 @@ def add_hosts_to_cluster():
     Add hosts to cluster
     :return:
     """
-    print "> Add hosts to Cluster: %s" % cmx.cluster_name
+    print("> Add hosts to Cluster: %s" % cmx.cluster_name)
     api = ApiResource(server_host=cmx.cm_server, username=cmx.username, password=cmx.password)
     cluster = api.get_cluster(cmx.cluster_name)
     cm = api.get_cloudera_manager()
@@ -104,30 +105,30 @@ def add_hosts_to_cluster():
     if host_list:
         cmd = cm.host_install(user_name=cmx.ssh_root_user, host_names=host_list,
                               password=cmx.ssh_root_password, private_key=cmx.ssh_private_key)
-        print "Installing host(s) to cluster '%s' - [ http://%s:7180/cmf/command/%s/details ]" % \
-              (socket.getfqdn(cmx.cm_server), cmx.cm_server, cmd.id)
+        print("Installing host(s) to cluster '%s' - [ http://%s:7180/cmf/command/%s/details ]" % \
+              (socket.getfqdn(cmx.cm_server), cmx.cm_server, cmd.id))
         #check.status_for_command("Hosts: %s " % host_list, cmd)
-        print "Installing hosts. This might take a while."
+        print("Installing hosts. This might take a while.")
         while cmd.success == None:
             sleep(20)
             cmd = cmd.fetch()
-            print "Installing hosts... Checking"
+            print("Installing hosts... Checking")
 
         if cmd.success != True:
-            print "cm_host_install failed: " + cmd.resultMessage
+            print("cm_host_install failed: " + cmd.resultMessage)
             exit(0)
 
-    print "Host install finish, agents installed"
+    print("Host install finish, agents installed")
     hosts = []
     for host in api.get_all_hosts():
         if host.hostId not in [x.hostId for x in cluster.list_hosts()]:
-            print "Adding {'ip': '%s', 'hostname': '%s', 'hostId': '%s'}" % (host.ipAddress, host.hostname, host.hostId)
+            print("Adding {'ip': '%s', 'hostname': '%s', 'hostId': '%s'}" % (host.ipAddress, host.hostname, host.hostId))
             hosts.append(host.hostId)
 
-    print "adding new hosts to cluster"
+    print("adding new hosts to cluster")
     if hosts:
-        print "Adding hostId(s) to '%s'" % cmx.cluster_name
-        print "%s" % hosts
+        print("Adding hostId(s) to '%s'" % cmx.cluster_name)
+        print("%s" % hosts)
         cluster.add_hosts(hosts)
 
 
@@ -137,7 +138,7 @@ def host_rack():
     :return:
     """
     # TODO: Add host to rack
-    print "> Add host to rack"
+    print("> Add host to rack")
     api = ApiResource(server_host=cmx.cm_server, username=cmx.username, password=cmx.password)
     cluster = api.get_cluster(cmx.cluster_name)
     hosts = []
@@ -160,7 +161,7 @@ def deploy_parcel(parcel_product, parcel_version):
     cluster = api.get_cluster(cmx.cluster_name)
     parcel = cluster.get_parcel(parcel_product, parcel_version)
     if parcel.stage != 'ACTIVATED':
-        print "> Deploying parcel: [ %s-%s ]" % (parcel_product, parcel_version)
+        print("> Deploying parcel: [ %s-%s ]" % (parcel_product, parcel_version))
         parcel.start_download()
         # unlike other commands, check progress by looking at parcel stage and status
         while True:
@@ -173,8 +174,8 @@ def deploy_parcel(parcel_product, parcel_version):
             sys.stdout.write(msg + " " * (78 - len(msg)) + "\r")
             sys.stdout.flush()
 
-        print ""
-        print "1. Parcel Stage: %s" % parcel.stage
+        print("")
+        print("1. Parcel Stage: %s" % parcel.stage)
         parcel.start_distribution()
 
         while True:
@@ -187,7 +188,7 @@ def deploy_parcel(parcel_product, parcel_version):
             sys.stdout.write(msg + " " * (78 - len(msg)) + "\r")
             sys.stdout.flush()
 
-        print "2. Parcel Stage: %s" % parcel.stage
+        print("2. Parcel Stage: %s" % parcel.stage)
         if parcel.stage == 'DISTRIBUTED':
             parcel.activate()
 
@@ -200,7 +201,7 @@ def deploy_parcel(parcel_product, parcel_version):
            # elif parcel.state.errors:
              #   raise Exception(str(parcel.state.errors))
             else:
-                print "3. Parcel Stage: %s" % parcel.stage
+                print("3. Parcel Stage: %s" % parcel.stage)
                 break
 
 
@@ -215,9 +216,9 @@ def setup_zookeeper(HA):
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "ZOOKEEPER"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "zookeeper"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         
@@ -239,9 +240,9 @@ def setup_zookeeper(HA):
                 # Pick 3 hosts and deploy Zookeeper Server role for Zookeeper HA
                 # mingrui change install on primary, secondary, and CM
                 if HA:
-                    print cmhost
-                    print [x for x in hosts if x.id == 0 ][0]
-                    print [x for x in hosts if x.id == 1 ][0]
+                    print(cmhost)
+                    print([x for x in hosts if x.id == 0 ][0])
+                    print([x for x in hosts if x.id == 1 ][0])
                     cdh.create_service_role(service, rcg.roleType, cmhost)
                     cdh.create_service_role(service, rcg.roleType, [x for x in hosts if x.id == 0 ][0])
                     cdh.create_service_role(service, rcg.roleType, [x for x in hosts if x.id == 1 ][0])
@@ -268,9 +269,9 @@ def setup_hdfs(HA):
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "HDFS"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "hdfs"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         hosts = management.get_hosts()
@@ -385,9 +386,9 @@ def setup_hbase():
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "HBASE"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "hbase"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         hosts = management.get_hosts()
@@ -434,9 +435,9 @@ def setup_solr():
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "SOLR"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "solr"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         hosts = management.get_hosts()
@@ -473,9 +474,9 @@ def setup_ks_indexer():
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "KS_INDEXER"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "ks_indexer"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         hosts = management.get_hosts()
@@ -506,9 +507,9 @@ def setup_spark_on_yarn():
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "SPARK_ON_YARN"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "spark_on_yarn"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         hosts = management.get_hosts()
@@ -551,9 +552,9 @@ def setup_yarn(HA):
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "YARN"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "yarn"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         hosts = management.get_hosts()
@@ -641,9 +642,9 @@ def setup_mapreduce(HA):
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "MAPREDUCE"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "mapreduce"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         hosts = management.get_hosts()
@@ -694,9 +695,9 @@ def setup_hive():
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "HIVE"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "hive"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         hosts = management.get_hosts()
@@ -749,9 +750,9 @@ def setup_sqoop():
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "SQOOP"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "sqoop"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         hosts = management.get_hosts()
@@ -778,9 +779,9 @@ def setup_sqoop_client():
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "SQOOP_CLIENT"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "sqoop_client"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         # hosts = get_cluster_hosts()
@@ -812,15 +813,15 @@ def setup_impala(HA):
         max_count=int(diskcount)-1
         if x < max_count:
           impala_dir_list+=","
-          print "x is %d. Adding comma" % (x)
+          print("x is %d. Adding comma" % (x))
 
     api = ApiResource(server_host=cmx.cm_server, username=cmx.username, password=cmx.password)
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "IMPALA"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "impala"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         service_config = {"impala_cmd_args_safety_valve": "-scratch_dirs=%s" % (impala_dir_list) }
@@ -877,9 +878,9 @@ def setup_oozie():
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "OOZIE"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "oozie"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         hosts = management.get_hosts()
@@ -912,9 +913,9 @@ def setup_hue():
     cluster = api.get_cluster(cmx.cluster_name)
     service_type = "HUE"
     if cdh.get_service_type(service_type) is None:
-        print "> %s" % service_type
+        print("> %s" % service_type)
         service_name = "hue"
-        print "Create %s service" % service_name
+        print("Create %s service" % service_name)
         cluster.create_service(service_name, service_type)
         service = cluster.get_service(service_name)
         hosts = management.get_hosts()
@@ -960,7 +961,7 @@ def setup_hdfs_ha():
     # api = ApiResource(cmx.cm_server, username=cmx.username, password=cmx.password, version=6)
     # cluster = api.get_cluster(cmx.cluster_name)
     try:
-        print "> Setup HDFS-HA"
+        print("> Setup HDFS-HA")
         hdfs = cdh.get_service_type('HDFS')
         zookeeper = cdh.get_service_type('ZOOKEEPER')
 
@@ -1013,7 +1014,7 @@ def setup_hdfs_ha():
             cdh('HDFS').start()
 
     except ApiException as err:
-        print " ERROR: %s" % err.message
+        print(" ERROR: %s" % err.message)
 
 
 def setup_yarn_ha():
@@ -1023,7 +1024,7 @@ def setup_yarn_ha():
     """
     # api = ApiResource(server_host=cmx.cm_server, username=cmx.username, password=cmx.password)
     # cluster = api.get_cluster(cmx.cluster_name)
-    print "> Setup YARN-HA"
+    print("> Setup YARN-HA")
     yarn = cdh.get_service_type('YARN')
     zookeeper = cdh.get_service_type('ZOOKEEPER')
     hosts = management.get_hosts()
@@ -1044,7 +1045,7 @@ def setup_kerberos():
     """
     # api = ApiResource(server_host=cmx.cm_server, username=cmx.username, password=cmx.password)
     # cluster = api.get_cluster(cmx.cluster_name)
-    print "> Setup Kerberos"
+    print("> Setup Kerberos")
     hdfs = cdh.get_service_type('HDFS')
     zookeeper = cdh.get_service_type('ZOOKEEPER')
     hue = cdh.get_service_type('HUE')
@@ -1108,7 +1109,7 @@ def setup_easy():
     """
     api = ApiResource(server_host=cmx.cm_server, username=cmx.username, password=cmx.password)
     cluster = api.get_cluster(cmx.cluster_name)
-    print "> Easy setup for cluster: %s" % cmx.cluster_name
+    print("> Easy setup for cluster: %s" % cmx.cluster_name)
     # Do not install these services
     do_not_install = ['KEYTRUSTEE', 'KMS', 'KS_INDEXER', 'ISILON', 'FLUME', 'MAPREDUCE', 'ACCUMULO',
                       'ACCUMULO16', 'SPARK_ON_YARN', 'SPARK', 'SOLR', 'SENTRY']
@@ -1143,23 +1144,23 @@ def teardown(keep_cluster=True):
     try:
         cluster = api.get_cluster(cmx.cluster_name)
         service_list = cluster.get_all_services()
-        print "> Teardown Cluster: %s Services and keep_cluster: %s" % (cmx.cluster_name, keep_cluster)
+        print("> Teardown Cluster: %s Services and keep_cluster: %s" % (cmx.cluster_name, keep_cluster))
         check.status_for_command("Stop %s" % cmx.cluster_name, cluster.stop())
 
         for service in service_list[:None:-1]:
             try:
                 check.status_for_command("Stop Service %s" % service.name, service.stop())
             except ApiException as err:
-                print " ERROR: %s" % err.message
+                print(" ERROR: %s" % err.message)
 
-            print "Processing service %s" % service.name
+            print("Processing service %s" % service.name)
             for role in service.get_all_roles():
-                print " Delete role %s" % role.name
+                print(" Delete role %s" % role.name)
                 service.delete_role(role.name)
 
             cluster.delete_service(service.name)
     except ApiException as err:
-        print err.message
+        print(err.message)
         exit(1)
 
     # Delete Management Services
@@ -1168,20 +1169,20 @@ def teardown(keep_cluster=True):
         check.status_for_command("Stop Management services", mgmt.get_service().stop())
         mgmt.delete_mgmt_service()
     except ApiException as err:
-        print " ERROR: %s" % err.message
+        print(" ERROR: %s" % err.message)
 
     # cluster.remove_all_hosts()
     if not keep_cluster:
         # Remove CDH Parcel and GPL Extras Parcel
         for x in cmx.parcel:
-            print "Removing parcel: [ %s-%s ]" % (x['product'], x['version'])
+            print("Removing parcel: [ %s-%s ]" % (x['product'], x['version']))
             parcel_product = x['product']
             parcel_version = x['version']
 
             while True:
                 parcel = cluster.get_parcel(parcel_product, parcel_version)
                 if parcel.stage == 'ACTIVATED':
-                    print "Deactivating parcel"
+                    print("Deactivating parcel")
                     parcel.deactivate()
                 else:
                     break
@@ -1189,9 +1190,9 @@ def teardown(keep_cluster=True):
             while True:
                 parcel = cluster.get_parcel(parcel_product, parcel_version)
                 if parcel.stage == 'DISTRIBUTED':
-                    print "Executing parcel.start_removal_of_distribution()"
+                    print("Executing parcel.start_removal_of_distribution()")
                     parcel.start_removal_of_distribution()
-                    print "Executing parcel.remove_download()"
+                    print("Executing parcel.remove_download()")
                     parcel.remove_download()
                 elif parcel.stage == 'UNDISTRIBUTING':
                     msg = " [%s: %s / %s]" % (parcel.stage, parcel.state.progress, parcel.state.totalProgress)
@@ -1200,7 +1201,7 @@ def teardown(keep_cluster=True):
                 else:
                     break
 
-        print "Deleting cluster: %s" % cmx.cluster_name
+        print("Deleting cluster: %s" % cmx.cluster_name)
         api.delete_cluster(cmx.cluster_name)
 
 
@@ -1246,7 +1247,7 @@ class ManagementActions:
         :return:
         """
         # api = ApiResource(server_host=cmx.cm_server, username=cmx.username, password=cmx.password)
-        print "> Setup Management Services"
+        print("> Setup Management Services")
         self._cm.update_config({"TSQUERY_STREAMS_LIMIT": 1000})
         hosts = management.get_hosts(include_cm_host=True)
         # pick hostId that match the ipAddress of cm_server
@@ -1259,12 +1260,12 @@ class ManagementActions:
         for role_type in [x for x in self._service.get_role_types() if x in self._role_list]:
             try:
                 if not [x for x in self._service.get_all_roles() if x.type == role_type]:
-                    print "Creating Management Role %s " % role_type
+                    print("Creating Management Role %s " % role_type)
                     role_name = "mgmt-%s-%s" % (role_type, mgmt_host.md5host)
                     for cmd in self._service.create_role(role_name, role_type, mgmt_host.hostId).get_commands():
                         check.status_for_command("Creating %s" % role_name, cmd)
             except ApiException as err:
-                print "ERROR: %s " % err.message
+                print("ERROR: %s " % err.message)
 
         # now configure each role
         for group in [x for x in self._service.get_all_role_config_groups() if x.roleType in self._role_list]:
@@ -1330,10 +1331,10 @@ class ManagementActions:
         api = ApiResource(server_host=cmx.cm_server, username=cmx.username, password=cmx.password)
         cm = api.get_cloudera_manager()
         if cmx.license_file and not management.licensed():
-            print "Upload license"
+            print("Upload license")
             with open(cmx.license_file, 'r') as f:
                 license_contents = f.read()
-                print "Upload CM License: \n %s " % license_contents
+                print("Upload CM License: \n %s " % license_contents)
                 cm.update_license(license_contents)
                 # REPORTSMANAGER required after applying license
                 management("REPORTSMANAGER").setup()
@@ -1346,7 +1347,7 @@ class ManagementActions:
         :return:
         """
         api = ApiResource(server_host=cmx.cm_server, username=cmx.username, password=cmx.password)
-        print "def begin_trial"
+        print("def begin_trial")
         if not management.licensed():
             try:
                 api.post("/cm/trial/begin")
@@ -1354,7 +1355,7 @@ class ManagementActions:
                 management("REPORTSMANAGER").setup()
                 management("REPORTSMANAGER").start()
             except ApiException as err:
-                print err.message
+                print(err.message)
 
     @classmethod
     def get_mgmt_password(cls, role_type):
@@ -1372,7 +1373,7 @@ class ManagementActions:
                 with open(file_path) as f:
                     contents = f.readlines()
             except IOError:
-                print "Unable to open file %s." % file_path
+                print("Unable to open file %s." % file_path)
 
         # role_type expected to be in
         # ACTIVITYMONITOR, REPORTSMANAGER, NAVIGATOR, OOZIE, HIVEMETASTORESERVER
@@ -1515,8 +1516,8 @@ class ServiceActions:
         if isinstance(obj, str) or isinstance(obj, unicode):
             for role_name in [x.roleName for x in api.get_host(obj).roleRefs if 'GATEWAY' in x.roleName]:
                 service = cdh.get_service_type('GATEWAY')
-                print "Deploying client config for service: %s - host: [%s]" % \
-                      (service.type, api.get_host(obj).hostname)
+                print("Deploying client config for service: %s - host: [%s]" % \
+                      (service.type, api.get_host(obj).hostname))
                 check.status_for_command("Deploy client config for role %s" %
                                          role_name, service.deploy_client_config(role_name))
         elif isinstance(obj, ApiService):
@@ -1534,7 +1535,7 @@ class ServiceActions:
             if len(role_type) > 24 else service.name
 
         role_name = "-".join([service_name, role_type, host.md5host])[:64]
-        print "Creating role: %s on host: [%s]" % (role_name, host.hostname)
+        print("Creating role: %s on host: [%s]" % (role_name, host.hostname))
         for cmd in service.create_role(role_name, role_type, host.hostId).get_commands():
             check.status_for_command("Creating role: %s on host: [%s]" % (role_name, host.hostname), cmd)
 
@@ -1546,7 +1547,7 @@ class ServiceActions:
         """
         api = ApiResource(server_host=cmx.cm_server, username=cmx.username, password=cmx.password)
         cluster = api.get_cluster(cmx.cluster_name)
-        print "Restart cluster: %s" % cmx.cluster_name
+        print("Restart cluster: %s" % cmx.cluster_name)
         check.status_for_command("Stop %s" % cmx.cluster_name, cluster.stop())
         check.status_for_command("Start %s" % cmx.cluster_name, cluster.start())
         # Example deploying cluster wide Client Config
@@ -1636,7 +1637,7 @@ class ActiveCommands:
                     _state = 0
                 time.sleep(2)
             else:
-                print "\n [%s] %s" % (command.id, self._api.get("/commands/%s" % command.id)['resultMessage'])
+                print("\n [%s] %s" % (command.id, self._api.get("/commands/%s" % command.id)['resultMessage']))
                 self._child_cmd(self._api.get("/commands/%s" % command.id)['children']['items'])
                 break
 
@@ -1647,11 +1648,11 @@ class ActiveCommands:
         :return:
         """
         if len(cmd) != 0:
-            print " Sub tasks result(s):"
+            print(" Sub tasks result(s):")
             for resMsg in cmd:
                 if resMsg.get('resultMessage'):
-                    print "  [%s] %s" % (resMsg['id'], resMsg['resultMessage']) if not resMsg.get('roleRef') \
-                        else "  [%s] %s - %s" % (resMsg['id'], resMsg['resultMessage'], resMsg['roleRef']['roleName'])
+                    print("  [%s] %s" % (resMsg['id'], resMsg['resultMessage']) if not resMsg.get('roleRef') \
+                        else "  [%s] %s - %s" % (resMsg['id'], resMsg['resultMessage'], resMsg['roleRef']['roleName']))
                 self._child_cmd(self._api.get("/commands/%s" % resMsg['id'])['children']['items'])
 
 def display_eula():
@@ -1685,14 +1686,14 @@ def parse_options():
 
     def cmx_args(option, opt_str, value, *args, **kwargs):
         if option.dest == 'host_names':
-            print "switch %s value check: %s" % (opt_str, value)
+            print("switch %s value check: %s" % (opt_str, value))
             for host in value.split(','):
                 if not hostname_resolves(host):
                     exit(1)
             else:
                 cmx_config_options[option.dest] = [socket.gethostbyname(x) for x in value.split(',')]
         elif option.dest == 'cm_server':
-            print "switch %s value check: %s" % (opt_str, value)
+            print("switch %s value check: %s" % (opt_str, value))
 
             cmx_config_options[option.dest] = socket.gethostbyname(value) if \
                 hostname_resolves(value) else exit(1)
@@ -1700,14 +1701,14 @@ def parse_options():
             while retry_count > 0:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 if not s.connect_ex((socket.gethostbyname(value), 7180)) == 0:
-                    print "Cloudera Manager Server is not started on %s " % value
+                    print("Cloudera Manager Server is not started on %s " % value)
                     s.close()
                     sleep(60)
                 else:
                     break
                 retry_count -= 1
             if retry_count == 0:
-                print "Couldn't connect to Cloudera Manager after 5 minutes, exiting"
+                print("Couldn't connect to Cloudera Manager after 5 minutes, exiting")
                 exit(1)
         elif option.dest == 'ssh_private_key':
             with open(value, 'r') as f:
@@ -1724,15 +1725,15 @@ def parse_options():
         """
         try:
             if socket.gethostbyname(hostname) == '0.0.0.0':
-                print "Error [{'host': '%s', 'fqdn': '%s'}]" % \
-                      (socket.gethostbyname(hostname), socket.getfqdn(hostname))
+                print("Error [{'host': '%s', 'fqdn': '%s'}]" % \
+                      (socket.gethostbyname(hostname), socket.getfqdn(hostname)))
                 return False
             else:
-                print "Success [{'host': '%s', 'fqdn': '%s'}]" % \
-                      (socket.gethostbyname(hostname), socket.getfqdn(hostname))
+                print("Success [{'host': '%s', 'fqdn': '%s'}]" % \
+                      (socket.gethostbyname(hostname), socket.getfqdn(hostname)))
                 return True
         except socket.error:
-            print "Error 'host': '%s'" % hostname
+            print("Error 'host': '%s'" % hostname)
             return False
 
     def manifest_to_dict(manifest_json):
@@ -1841,10 +1842,10 @@ def parse_options():
     if cmx_config_options['cm_server'] and options.teardown:
         if options.teardown.lower() in ['remove_cluster', 'keep_cluster']:
             teardown(keep_cluster=(options.teardown.lower() == 'keep_cluster'))
-            print "Bye!"
+            print("Bye!")
             exit(0)
         else:
-            print 'Teardown Cloudera Manager Cluster. Required arguments "keep_cluster" or "remove_cluster".'
+            print('Teardown Cloudera Manager Cluster. Required arguments "keep_cluster" or "remove_cluster".')
             exit(1)
 
     # Uncomment here to see cmx configuration options
@@ -1852,7 +1853,7 @@ def parse_options():
     return options
 
 def log(msg):
-    print time.strftime("%X") + ": " + msg
+    print(time.strftime("%X") + ": " + msg)
 
 def postEulaInfo(firstName, lastName, emailAddress, company,jobRole, jobFunction, businessPhone):
     elqFormName='Cloudera_Azure_EULA'
@@ -1965,13 +1966,13 @@ def main():
     # setup_kerberos()
     # setup_sentry()
 
-    print "Enjoy!"
+    print("Enjoy!")
 
 
 if __name__ == "__main__":
-    print "%s" % '- ' * 20
-    print "Version: %s" % __version__
-    print "%s" % '- ' * 20
+    print("%s" % '- ' * 20)
+    print("Version: %s" % __version__)
+    print("%s" % '- ' * 20)
     main()
 
     #   def setup_template():

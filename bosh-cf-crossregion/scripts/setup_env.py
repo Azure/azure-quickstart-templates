@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import json
 import netaddr
 import os
@@ -202,7 +203,7 @@ def main():
     prepare_storage(settings)
 
     bosh_director_ip = render_bosh_manifest(settings)
-    print bosh_director_ip
+    print(bosh_director_ip)
 
     render_cloud_foundry_manifest(settings)
     render_cloud_foundry_deployment_cmd(settings)

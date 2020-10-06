@@ -6,6 +6,7 @@ Azure Python SDK documentation : https://aka.ms/azure-python-sdk
 
 This tutorial runbook demonstrate how to authenticate against Azure using the Azure automation service principal and then lists the resource groups present in the specified subscription.
 """
+from __future__ import print_function
 import azure.mgmt.resource
 import automationassets
 from msrestazure.azure_cloud import AZURE_PUBLIC_CLOUD
@@ -54,4 +55,4 @@ resource_client = azure.mgmt.resource.ResourceManagementClient(
 # Get list of resource groups and print them out
 groups = resource_client.resource_groups.list()
 for group in groups:
-    print group.name.encode('utf-8')
+    print(group.name.encode('utf-8'))

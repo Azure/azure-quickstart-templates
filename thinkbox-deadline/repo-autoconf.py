@@ -1,3 +1,4 @@
+from __future__ import print_function
 import subprocess
 import os
 import re
@@ -10,9 +11,9 @@ def change_line(src, pattern, sub, dest=None, verbose=False):
     lines = []
 
     if verbose:
-        print 'Editing:', src
-        print 'Searching for:', pattern
-        print 'Replacing with:', sub
+        print('Editing:', src)
+        print('Searching for:', pattern)
+        print('Replacing with:', sub)
 
     with open(src, 'r') as f:
         lines = f.readlines()
@@ -20,8 +21,8 @@ def change_line(src, pattern, sub, dest=None, verbose=False):
     with open(dest, 'w') as f:
         for line in lines:
             if verbose and re.search(pattern, line):
-                print '\tBefore:', line
-                print '\tAfter:', re.sub(pattern, sub, line)
+                print('\tBefore:', line)
+                print('\tAfter:', re.sub(pattern, sub, line))
             f.write(re.sub(pattern, sub, line))
 
 
