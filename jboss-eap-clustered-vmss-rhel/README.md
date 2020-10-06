@@ -191,13 +191,15 @@ Once the deployment is successful, go to the outputs section of the deployment t
 
    - Go to the Jump VM details page and copy the Public IP. Log into the Jump VM using this Public IP.
 
-   - To obtain the Private IP of a RHEL VMSS instance, go to the VMSS details page and under settings section select *Instances*. Select the instance from here and copy the Private IP address. Open a web browser inside the Jump VM, go to **http://<PRIVATE_IP_Address>:8080** and you should see the web page as follows. Use the same Private IP to log into the VMSS instance.
+   - Inside the Jump VM, you will notice that the following page loads when you enter the Load Balancer private IP in a browser.
 
      ![alt text](images/eap.png)
-
-   - To access the administration console, click on the **Administration Console** shown in the above image and enter JBoss EAP username and password to access the console of the respective VMSS instance.
-
+   
+   - Go to the VMSS details page and under settings section select *Instances*, you will notice that all the instances have an ID appended at the end of their name. To access the Administration Console of an instance with ID 0, open a web browser and go to **http://<PRIVATE_IP_Address_LB>:9000** and enter JBoss EAP username and password. You can append the ID of the VMSS instance with 900 to access the Adminstration Console of the respective VMSS instance.
+   
      ![alt text](images/eap-admin-console.png)
+   
+   - To obtain the Private IP of a RHEL VMSS instance, go to the VMSS details page and under settings section select *Instances*. Select the instance and copy the Private IP address. Use this Private IP to log into the VMSS instance.
 
    - To access the App UI console, copy the app URL from the output page and paste it in a browser inside the Jump VM. The web application displays the *Session ID*, *Session counter* and *Timestamp* (these are variables stored in the session that are replicated) and the VMSS instance Private IP address that the web page and session is being hosted from. Clicking on the *Increment Counter* updates the session counter and clicking on *Refresh* will refresh the page.
 
@@ -219,13 +221,15 @@ Once the deployment is successful, go to the outputs section of the deployment t
 
    - Access Jump VM Public IP - once the Jump VM is successfully deployed, go to the VM details page and copy the Public IP. Log into the Jump VM using this Public IP.
 
-   - To obtain the Private IP of a RHEL VMSS instance, go to the VMSS details page and under settings section select *Instances*. Select the instance from here and copy the Private IP address. Open a web browser inside the Jump VM, go to **http://<PRIVATE_IP_Address>:8080** and you should see the web page as follows. Use the same Private IP to log into the VMSS instance.
+   - Inside the Jump VM, you will notice that the following page loads when you enter the Load Balancer private IP in a browser.
 
      ![alt text](images/eap.png)
 
-   - To access the administration console, click on the **Administration Console** shown in the above image and enter JBoss EAP username and password to access the console of the respective VMSS instance.
+   - Go to the VMSS details page and under settings section select *Instances*, you will notice that all the instances have an ID appended at the end of their name. To access the Administration Console of an instance with ID 0, open a web browser and go to **http://<PRIVATE_IP_Address_LB>:9000** and enter JBoss EAP username and password. You can append the ID of the VMSS instance with 900 to access the Adminstration Console of the respective VMSS instance.
 
      ![alt text](images/eap-admin-console.png)
+
+  - To obtain the Private IP of a RHEL VMSS instance, go to the VMSS details page and under settings section select *Instances*. Select the instance and copy the Private IP address. Use this Private IP to log into the VMSS instance.
 
    - To access the App UI console - copy the app URL from the output page of the deployment and paste it in a browser inside the Jump VM. The web application displays the *Session ID*, *Session counter* and *Timestamp* (these are variables stored in the session that are replicated) and the VMSS instance Private IP address that the web page and session is being hosted from. Clicking on the *Increment Counter* updates the session counter and clicking on *Refresh* will refresh the page.
 
