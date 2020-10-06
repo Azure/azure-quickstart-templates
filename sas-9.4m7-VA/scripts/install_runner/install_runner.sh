@@ -67,34 +67,34 @@ export ANSIBLE_LOG_PATH=/tmp/step07_install_sas.log
 ansible-playbook -i ${INVENTORY_FILE} -vvv step07_install_sas.yaml
 
 # Stop the midtier SAS servers
-#export ANSIBLE_LOG_PATH=/tmp/step08_run_sas_servers.log
-#ansible-playbook -i ${INVENTORY_FILE} -vvv run_sas_servers.yaml --extra-vars "sas_hosts=midtier_servers sas_action=stop"
+export ANSIBLE_LOG_PATH=/tmp/step08_run_sas_servers.log
+ansible-playbook -i ${INVENTORY_FILE} -vvv run_sas_servers.yaml --extra-vars "sas_hosts=midtier_servers sas_action=stop"
 
 # Update the external URL connections for each SAS web app to use the SSL and loadbalancer DNS name
-#export ANSIBLE_LOG_PATH=/tmp/step09_setSASWebUrls.log
-#mkdir /tmp/sasfiles
-#mkdir /sasshare/sasfiles
-#ansible-playbook -i ${INVENTORY_FILE} -vvv create_metadata_update_scripts.yaml
-#cp /tmp/sasfiles/* /sasshare/sasfiles/
-#ansible-playbook -i ${INVENTORY_FILE} -vvv run_metadata_update_scripts.yaml
+export ANSIBLE_LOG_PATH=/tmp/step09_setSASWebUrls.log
+mkdir /tmp/sasfiles
+mkdir /sasshare/sasfiles
+ansible-playbook -i ${INVENTORY_FILE} -vvv create_metadata_update_scripts.yaml
+cp /tmp/sasfiles/* /sasshare/sasfiles/
+ansible-playbook -i ${INVENTORY_FILE} -vvv run_metadata_update_scripts.yaml
 
 # Update the midtier server configuration files with the loadbalancer name, scheme and port
-#export ANSIBLE_LOG_PATH=/tmp/step10_update_midtier_files.log
-#ansible-playbook -i ${INVENTORY_FILE} -vvv update_midtier_files.yaml
+export ANSIBLE_LOG_PATH=/tmp/step10_update_midtier_files.log
+ansible-playbook -i ${INVENTORY_FILE} -vvv update_midtier_files.yaml
 
 # Update the WIP Data Server to use the loadbalancer name, scheme and port for SASThemes_default
-#export ANSIBLE_LOG_PATH=/tmp/step11_update_wip_server.log
-#ansible-playbook -i ${INVENTORY_FILE} -vvv update_wip_server.yaml
+export ANSIBLE_LOG_PATH=/tmp/step11_update_wip_server.log
+ansible-playbook -i ${INVENTORY_FILE} -vvv update_wip_server.yaml
 
 # Copy the loadbalancer cert to /sasshare and run the playbook to add it to all of the SAS installations
-#cp /sas/install/setup/ssl/loadbalancer.crt.pem /sasshare
-#export ANSIBLE_LOG_PATH=/tmp/step12_install_loadbalancer_cert.log
-#ansible-playbook -i ${INVENTORY_FILE} -vvv install_loadbalancer_cert.yaml
+cp /sas/install/setup/ssl/loadbalancer.crt.pem /sasshare
+export ANSIBLE_LOG_PATH=/tmp/step12_install_loadbalancer_cert.log
+ansible-playbook -i ${INVENTORY_FILE} -vvv install_loadbalancer_cert.yaml
 
 # Restart the SAS servers on all installations
-#export ANSIBLE_LOG_PATH=/tmp/step13_restart_servers.log
-#ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=metadata_servers sas_action=restart"
-#ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=va_controllers sas_action=restart"
-#ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=midtier_servers sas_action=restart"
+export ANSIBLE_LOG_PATH=/tmp/step13_restart_servers.log
+ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=metadata_servers sas_action=restart"
+ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=va_controllers sas_action=restart"
+ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=midtier_servers sas_action=restart"
 
 popd
