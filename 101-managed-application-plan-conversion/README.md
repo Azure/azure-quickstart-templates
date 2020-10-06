@@ -28,14 +28,14 @@ This is the link to the deployment template file which you want to deploy in cus
 ### Parameters Template Uri
 This is the link to the parameters template file for providing parameters to your deployment template(Main Template Uri).
 
-## Once you deploy this function app in publisher subscription please use following output properties as below
+## Once you deploy this function app in publisher subscription, use following output properties as below
 + "identityPrincipalId" => "Principal ID" in "Authorizations" (In partner center, enter this principal id in authorizations of your source plan technical configuration in partner center. This step will whitelist this function app in your offer to perform any additional template deployment in customer's managed resource group.) 
 + "webhookEndpoint" => "Notification Endpoint URL" (In your target plan's technical configuration use the following template output property as notification endpoint.)
 
-### Note:
+### Note
 + Offer should be published with the above information in plan technical configuration page. Existing managed application cannot use plan conversion feature if those are not deployed with the offer containing above information about "Authorizations" & "Notification Endpoint URL".
 
-## Plan update notification schema:
+## Plan update notification schema
 ```json
 { 
     "applicationId": "subscriptions/<subscriptionId>/resourceGroups/<rresourceGroupName>/providers/Microsoft.Solutions/applications/<applicationName>",
@@ -54,7 +54,7 @@ This is the link to the parameters template file for providing parameters to you
 } 
 ```
 
-## AsyncOperationResult schema:
+## AsyncOperationResult schema
 ```json
 { 
     "status": "SUCCEEDED",
