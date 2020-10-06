@@ -1,0 +1,59 @@
+/*************************************************************/
+/* Change the connection URL for the SAS Content Server
+/* to use the loadbalancer name, protocol and port
+/*************************************************************/
+options metaserver="{{ metadata_server_host }}"
+        metaport={{ metadata_server_port }}
+        metauser="{{ metadata_username }}"
+        metapass="{{ metadata_password }}";
+options  symbolgen;
+
+%Macro SetContentServerConnection(mode=dryrun,ExtHost=,ExtPort=,ExtProtocol=);
+%***  dryrun only reports on findings. no changes made **;
+%***  alternative is update ***;
+
+data _null_;
+   %*Declare text vars:;
+   length connection applicationprotocol hostname port $256;
+   %*declare Numeric variables;
+   length  n NumProps   8.;
+
+   NumProps = 0;
+   n = 0;
+   connection = "";
+   applicationprotocol = "";
+   hostname = "";
+   port = "";
+
+   n = 0;
+   do while (NumProps >= 0);
+      %* this loop works because NumProps becomes (-4) when I have found all the things I was looking for. (n becomes too high) *;
+
+      n++1;
+      NumProps = metadata_getnobj("omsobj:TCPIPConnection?@Name='Connection: SAS Content Server'", n, connection);
+      put n= NumProps=;
+      if (NumProps ne -4  ) then do;
+         rc = metadata_getattr(connection, "ApplicationProtocol", applicationprotocol);
+         rc = metadata_getattr(connection, "HostName", hostname);
+         rc = metadata_getattr(connection, "Port", port);
+
+         %if "&mode"="update" %then %do;
+            put @8 '+Updating ApplicationProtocol from "' applicationprotocol '" to "' "&ExtProtocol"'"';
+            rc = metadata_setattr(connection, "ApplicationProtocol", compress("&ExtProtocol"));
+            if (rc >=0) then put @12 'change successful';
+
+            put @8 '+Updating HostName from "' hostname '" to "' "&ExtHost"'"';
+            rc = metadata_setattr(connection, "HostName", compress("&ExtHost"));
+            if (rc >=0) then put @12 'change successful';
+
+            put @8 '+Updating Port from "' port '" to "' "&ExtPort"'"';
+            rc = metadata_setattr(connection, "Port", compress("&ExtPort"));
+            if (rc >=0) then put @12 'change successful';
+         %end;
+      end;
+   end;
+run;
+
+%mend;
+
+%SetContentServerConnection(mode=update,ExtHost={{ external_host_name }},ExtPort={{ external_port }},ExtProtocol={{ external_protocol }});

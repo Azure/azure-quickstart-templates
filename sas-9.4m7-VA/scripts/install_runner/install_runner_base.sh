@@ -8,6 +8,7 @@ fi
 ScriptDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 #set -x
 #set -v
+
 #the file into which the return code will be written
 RETURN_FILE="$1"
 if [[ -z "$RETURN_FILE" ]]; then

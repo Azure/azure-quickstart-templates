@@ -265,19 +265,17 @@ createCertificates() {
   popd
 }
 
-waitForSasServers() {
+startSASInstall() {
     su - ${INSTALL_USER}<<END
-    cd ${ANSIBLE_DIR}
+    pushd ${ANSIBLE_DIR}
     export ANSIBLE_LOG_PATH=/tmp/step01_wait_for_servers.log
-    ansible-playbook -i ${INVENTORY_FILE} -v step01_wait_for_servers.yaml
-END
-}
-
-handoverToInstallRunner() {
-    echo "handover"
-    su - ${INSTALL_USER}<<END
-    cd ${INSTALL_DIR}/scripts/install_runner
+    ansible-playbook -i ${INVENTORY_FILE} -vvv step01_wait_for_servers.yaml
+    export ANSIBLE_LOG_PATH=/tmp/step02_install_os_updates.log
+    ansible-playbook -i ${INVENTORY_FILE} -vvv step02_install_os_updates.yaml
+    popd
+    pushd ${INSTALL_DIR}/scripts/install_runner
     ./wrapper__base.sh
+    popd
 END
 }
 
@@ -290,6 +288,5 @@ elif [[ "$SCRIPT_PHASE" -eq "2" ]]; then
 elif [[ "$SCRIPT_PHASE" -eq "3" ]]; then
   cat "${FILE_SSL_JSON_FILE}.2" | tr -d '\n'
 elif [[ "$SCRIPT_PHASE" -eq "4" ]]; then
-  waitForSasServers
-  handoverToInstallRunner
+  startSASInstall
 fi

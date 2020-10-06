@@ -1,4 +1,5 @@
 #!/bin/bash
+
 if [ -e "$HOME/.profile" ]; then
 	. $HOME/.profile
 fi
@@ -7,6 +8,7 @@ if [ -e "$HOME/.bash_profile" ]; then
 fi
 #set -x
 #set -v
+
 ScriptDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # import the exported global source
 . "/tmp/sasinstall.env"
@@ -55,9 +57,8 @@ TIME_TO_LIVE_IN_SECONDS=$((60*60))
 CURRENT_TIME_ALIVE_IN_SECONDS=0
 # wait for an hour or until the child process finishes.
 while [ "$TIME_TO_LIVE_IN_SECONDS" -gt "$CURRENT_TIME_ALIVE_IN_SECONDS" ] && kill -s 0 $PID && [ ! -e "$TOUCHPOINT_FILE" ]; do
-    sleep 1
-    CURRENT_TIME_ALIVE_IN_SECONDS=$((CURRENT_TIME_ALIVE_IN_SECONDS+1))
-
+    sleep 5
+    CURRENT_TIME_ALIVE_IN_SECONDS=$((CURRENT_TIME_ALIVE_IN_SECONDS+5))
 done
 #kill $tail_command_pid
 tail -1000 "$FILE_OF_RECORD"
@@ -73,6 +74,7 @@ else
             exit 1
         else
             # if the process is still running and we just ran out of time, return 0
+						echo "Process is still running but time expired for this wrapper. Returning 0."
             exit 0
         fi
     else
