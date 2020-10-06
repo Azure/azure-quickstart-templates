@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import subprocess
 import socket
 import sys
@@ -9,21 +10,21 @@ number_nodes = sys.argv[2]
 accountname = sys.argv[3] 
 accountkey =  sys.argv[4]
 
-print"inputs:\n"
-print "clustername = " + clustername 
-print "accontname = " + accountname 
-print "accountkey = " + accountkey 
+print("inputs:\n")
+print("clustername = " + clustername) 
+print("accontname = " + accountname) 
+print("accountkey = " + accountkey) 
 
 hostname = socket.gethostname()
-print "hostname: " + hostname
+print("hostname: " + hostname)
 
 hostbase = "10.0.2.1"
-print "hostbase: " + hostbase
+print("hostbase: " + hostbase)
 
 
 def RunCommand(cmd):
 	ret = subprocess.check_output(cmd, shell=True)
-	print ret
+	print(ret)
 	return
 
 
@@ -35,11 +36,11 @@ cmds = ["yum -y install nano",
 	"/usr/share/elasticsearch/bin/plugin -install royrusso/elasticsearch-HQ",
 	"/usr/share/elasticsearch/bin/plugin -install elasticsearch/elasticsearch-cloud-azure/2.8.2"]
 
-print "start running installs"
+print("start running installs")
 for cmd in cmds:
 	RunCommand(cmd)
 
-print "prep data disk for use"
+print("prep data disk for use")
 cmds=["sfdisk /dev/sdc < sdc.layout",
 	"mkfs -t ext4 /dev/sdc1",
 	"mkdir /data",
@@ -54,7 +55,7 @@ uuid = temp[17:53]
 with open("/etc/fstab", "a") as fstab:
     fstab.write("UUID="+uuid+"\t/data\text4\tdefaults\t1\t2\n")
 
-print RunCommand("chmod go+w /data")
+print(RunCommand("chmod go+w /data"))
 
 datapath = "/data/elastic"
 
@@ -74,7 +75,7 @@ sysconfig.truncate()
 sysconfig.write("ES_HEAP_SIZE=" + heapsize + "\n")
 sysconfig.close()
 
-print "start writing elastic config"
+print("start writing elastic config")
 
 # write config
 hosts=""
@@ -101,9 +102,9 @@ config.write("       account: " + accountname + "\n")
 config.write("       key: " + accountkey + "\n")
 config.close()
 
-print "finished writing config file" 
+print("finished writing config file") 
 
 
 RunCommand("systemctl start elasticsearch")
-print "elastic install script finished"
+print("elastic install script finished")
 

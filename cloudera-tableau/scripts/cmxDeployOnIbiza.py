@@ -1881,7 +1881,7 @@ def main():
     options = parse_options()
     global diskcount
     diskcount= getDataDiskCount()
-    log("data_disk_count"+`diskcount`)
+    log("data_disk_count" + str(diskcount))
     if(cmx.do_post):
         postEulaInfo(cmx.fname, cmx.lname, cmx.email, cmx.company,
                      cmx.jobrole, cmx.jobfunction, cmx.phone)
