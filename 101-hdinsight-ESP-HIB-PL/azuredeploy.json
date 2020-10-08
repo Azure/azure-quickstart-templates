@@ -1,0 +1,466 @@
+{
+   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+      "clusterName": {
+         "type": "string",
+         "defaultValue": "",
+         "metadata": {
+            "description": "The name of the cluster to create. The first 6 characters must be unique when created in the subnet."
+         }
+      },
+      "clusterKind": {
+         "type": "string",
+         "defaultValue": "INTERACTIVEHIVE",
+         "allowedValues": [
+            "HADOOP",
+            "SPARK",
+            "INTERACTIVEHIVE"
+         ],
+         "metadata": {
+            "description": "The type of the HDInsight cluster to create."
+         }
+      },
+      "LocalSSHAndAdminPassword": {
+         "type": "securestring",
+         "defaultvalue":"",
+         "metadata": {
+            "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+         }
+      },
+      "virtualNetworkResourceId": {
+         "type": "string",
+         "defaultValue": "/subscriptions/<SubID>/resourceGroups/<RGName>/providers/Microsoft.Network/virtualNetworks/<VMName>",
+         "metadata": {
+            "description": "VNET to inject the cluster to."
+         }
+      },
+      "subnetName": {
+         "type": "string",
+         "defaultValue": "cluster-subnet",
+         "metadata": {
+            "description": "Subnet to inject the cluster to. This subnet must ne configured correctly to allow the outbound dependencies, either directly, or through a UDR to Azure Firewall."
+         }
+      },
+      "ADLSGen2ResourceId": {
+         "type": "string",
+         "defaultValue": "/subscriptions/<SubID>/resourceGroups/<RGName>/providers/Microsoft.Storage/storageAccounts/<AccountName>",
+         "metadata": {
+            "description": "Specify a pre-created ADLS Gen 2 storage account resource Id. This storage accunt must be accessible from within the subnet."
+         }
+      },
+
+      "adlsGen2FileSystem": {
+         "type": "string",
+         "defaultValue": "existingfilesytem",
+         "metadata": {
+            "description": "Specify a pre-created file system name in the ADLS Gen 2 storage account. This file system must already exist."
+         }
+      },
+
+      "privateLink": {
+         "type": "string",
+         "allowedValues": [
+            "Enabled",
+            "Disabled"
+         ],
+         "defaultValue": "Enabled",
+         "metadata": {
+            "description": "Specify whether private link should be enabled or not for the cluster. This will provision PLS for each internal LB."
+         }
+      },
+      "existingSQLServer": {
+         "type": "string",
+         "defaultValue": "<ServerName>.database.windows.net",
+         "metadata": {
+            "description": "SQL Server FQDN used for Hive, Oozie, Ambari and Ranger. This server must be accessible from inside the cluster Subnet. The SQL databases will be created in this server."
+         }
+      },
+      "existingSQLServerResourceGroup": {
+         "type": "string",
+         "defaultValue": "sql-server-rg",
+         "metadata": {
+            "description": "Resource Group where the SQL Server is created under."
+         }
+      },
+      "SQLServerUsername": {
+         "type": "string",
+         "defaultValue": "sqladmin",
+         "metadata": {
+            "description": "SQL Server username with SQL authentication used for accessing Hive, Oozie, Ambari and Ranger DBs."
+         }
+      },
+      "SQLServerPassword": {
+         "type": "securestring",
+          "defaultValue": "",
+         "metadata": {
+            "description": "SQL Server password with SQL authentication used for accessing Hive, Oozie, Ambari and Ranger DBs."
+         }
+      },     
+      "AADDSResourceId": {
+         "type": "string",
+         "defaultValue": "/subscriptions/<SubID>/resourceGroups/<RGName>/providers/Microsoft.AAD/domainServices/<DomainName>",
+         "metadata": {
+            "description": "Specify AAD-DS resource ID. The cluster VMs will be joined to this domain."
+         }
+      },
+      "AADClusterAdminUsername": {
+         "type": "string",
+         "defaultValue": "UPN@domain.com",
+         "metadata": {
+            "description": "Specify AAD user name that will be the cluster admin. This user must exist in AAD-DS."
+         }
+      },
+      "AADGroups": {
+         "type": "Array",
+         "defaultValue": [ "group1", "group2" ],
+         "metadata": {
+            "description": "Specify one or multiple AAD groups that are already synced and available in AAD-DS. Members of these groups will be able to access the cluster."
+         }
+      },
+      "ClusterManagedIdentityResourceId": {
+         "type": "string",
+         "defaultValue": "/subscriptions/<SubID>/resourcegroups/<RGName>/providers/Microsoft.ManagedIdentity/userAssignedIdentities/<MSIName>",
+         "metadata": {
+            "description": "Specify an MSI resource ID that has 'data blob owner' role on the ADLS Gen2 account as well as 'HDInsight AAD-DS configuration' role on the AAD-DS resource."
+         }
+      }
+   },
+   "variables": {
+      "sshuser": "localssh",
+      "resourceProviderConnection": "Outbound",
+      "ambariDBName": "[tolower(concat(parameters('clusterName'), uniqueString(resourceGroup().id), 'ambaridb'))]",
+      "hiveDBName": "[tolower(concat(parameters('clusterName'), uniqueString(resourceGroup().id), 'hivedb'))]",
+      "oozieDBName": "[tolower(concat(parameters('clusterName'), uniqueString(resourceGroup().id), 'ooziedb'))]",      
+      "rangerDBName": "[tolower(concat(parameters('clusterName'), uniqueString(resourceGroup().id), 'rangerdb'))]"
+
+   },
+   "resources": [
+      {
+         "apiVersion":"2019-05-01",
+         "name":"AmbariDBCreationDeployment",
+         "type":"Microsoft.Resources/deployments",
+         "resourceGroup":"[parameters('existingSQLServerResourceGroup')]",
+         "properties":{
+            "mode":"Incremental",
+            "template":{
+               "$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+               "contentVersion":"1.0.0.0",
+               "resources":[
+                  {
+                     "type":"Microsoft.Sql/servers/databases",
+                     "apiVersion":"2019-06-01-preview",
+                     "location":"[resourceGroup().location]",
+                     "name":"[concat( first(split(parameters('existingSQLServer'), '.')), '/', variables('ambariDBName'))]",
+                     "properties":{
+                        "collation":"SQL_Latin1_General_CP1_CI_AS",
+                        "maxSizeBytes":268435456000,
+                        "zoneRedundant":false,
+                        "readScale":"Disabled",
+                        "readReplicaCount":0
+                     },
+                     "sku":{
+                        "name":"S2",
+                        "tier":"Standard"
+                     }
+                  }
+               ]
+            }
+         }
+      },  
+      {
+         "apiVersion":"2019-05-01",
+         "name":"HiveDBCreationDeployment",
+         "type":"Microsoft.Resources/deployments",
+         "resourceGroup":"[parameters('existingSQLServerResourceGroup')]",
+         "dependsOn":[
+            "[concat('Microsoft.Resources/deployments/', 'AmbariDBCreationDeployment')]"
+         ],
+         "properties":{
+            "mode":"Incremental",
+            "template":{
+               "$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+               "contentVersion":"1.0.0.0",
+               "resources":[
+                  {
+                     "type":"Microsoft.Sql/servers/databases",
+                     "apiVersion":"2019-06-01-preview",
+                     "location":"[resourceGroup().location]",
+                     "name":"[concat( first(split(parameters('existingSQLServer'), '.')), '/', variables('hiveDBName'))]",
+                     "properties":{
+                        "collation":"SQL_Latin1_General_CP1_CI_AS",
+                        "maxSizeBytes":268435456000,
+                        "zoneRedundant":false,
+                        "readScale":"Disabled",
+                        "readReplicaCount":0
+                     },
+                     "sku":{
+                        "name":"S2",
+                        "tier":"Standard"
+                     }
+                  }
+               ]
+            }
+         }
+      },        
+      {
+         "apiVersion":"2019-05-01",
+         "name":"OozieDBCreationDeployment",
+         "type":"Microsoft.Resources/deployments",
+         "resourceGroup":"[parameters('existingSQLServerResourceGroup')]",
+         "dependsOn":[
+            "[concat('Microsoft.Resources/deployments/', 'AmbariDBCreationDeployment')]"
+         ],
+         "properties":{
+            "mode":"Incremental",
+            "template":{
+               "$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+               "contentVersion":"1.0.0.0",
+               "resources":[
+                  {
+                     "type":"Microsoft.Sql/servers/databases",
+                     "apiVersion":"2019-06-01-preview",
+                     "location":"[resourceGroup().location]",
+                     "name":"[concat( first(split(parameters('existingSQLServer'), '.')), '/', variables('oozieDBName'))]",
+                     "properties":{
+                        "collation":"SQL_Latin1_General_CP1_CI_AS",
+                        "maxSizeBytes":268435456000,
+                        "zoneRedundant":false,
+                        "readScale":"Disabled",
+                        "readReplicaCount":0
+                     },
+                     "sku":{
+                        "name":"S2",
+                        "tier":"Standard"
+                     }
+                  }
+               ]
+            }
+         }
+      },        
+      {
+         "apiVersion":"2019-05-01",
+         "name":"RangerDBCreationDeployment",
+         "type":"Microsoft.Resources/deployments",
+         "resourceGroup":"[parameters('existingSQLServerResourceGroup')]",
+         "dependsOn":[
+            "[concat('Microsoft.Resources/deployments/', 'AmbariDBCreationDeployment')]"
+         ],
+         "properties":{
+            "mode":"Incremental",
+            "template":{
+               "$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+               "contentVersion":"1.0.0.0",
+               "resources":[
+                  {
+                     "type":"Microsoft.Sql/servers/databases",
+                     "apiVersion":"2019-06-01-preview",
+                     "location":"[resourceGroup().location]",
+                     "name":"[concat( first(split(parameters('existingSQLServer'), '.')), '/', variables('rangerDBName'))]",
+                     "properties":{
+                        "collation":"SQL_Latin1_General_CP1_CI_AS",
+                        "maxSizeBytes":268435456000,
+                        "zoneRedundant":false,
+                        "readScale":"Disabled",
+                        "readReplicaCount":0
+                     },
+                     "sku":{
+                        "name":"S2",
+                        "tier":"Standard"
+                     }
+                  }
+               ]
+            }
+         }
+      },      
+      {
+         "name": "[parameters('clusterName')]",
+         "type": "Microsoft.HDInsight/clusters",
+         "location": "[resourceGroup().location]",
+         "apiVersion": "2018-06-01-preview",
+         "dependsOn":[
+            "[concat('Microsoft.Resources/deployments/', 'RangerDBCreationDeployment')]"
+         ],         
+         "properties": {
+            "clusterVersion": "4.0",
+            "osType": "Linux",
+            "tier": "premium",
+            "clusterDefinition": {
+               "kind": "[parameters('clusterKind')]",
+               "configurations": {
+                  "gateway": {
+                     "restAuthCredential.isEnabled": true,
+                     "restAuthCredential.username": "ambariadmin",
+                     "restAuthCredential.password": "[parameters('LocalSSHAndAdminPassword')]"
+                  },
+                  "hive-site": {
+                     "javax.jdo.option.ConnectionDriverName": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
+                     "javax.jdo.option.ConnectionURL": "[concat('jdbc:sqlserver://',parameters('existingSQLServer'), ';database=', variables('hiveDBName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
+                     "javax.jdo.option.ConnectionUserName": "[parameters('SQLServerUsername')]",
+                     "javax.jdo.option.ConnectionPassword": "[parameters('SQLServerPassword')]"
+                  },
+                  "hive-env": {
+                     "hive_database": "Existing MSSQL Server database with SQL authentication",
+                     "hive_database_name": "[variables('hiveDBName')]",
+                     "hive_database_type": "mssql",
+                     "hive_existing_mssql_server_database": "[variables('hiveDBName')]",
+                     "hive_existing_mssql_server_host": "[parameters('existingSQLServer')]",
+                     "hive_hostname": "[parameters('existingSQLServer')]"
+                  },
+                  "oozie-site": {
+                     "oozie.service.JPAService.jdbc.driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
+                     "oozie.service.JPAService.jdbc.url": "[concat('jdbc:sqlserver://',parameters('existingSQLServer'), ';database=', variables('oozieDBName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
+                     "oozie.service.JPAService.jdbc.username": "[parameters('SQLServerUsername')]",
+                     "oozie.service.JPAService.jdbc.password": "[parameters('SQLServerPassword')]",
+                     "oozie.db.schema.name": "oozie"
+                  },
+                  "oozie-env": {
+                     "oozie_database": "Existing MSSQL Server database with SQL authentication",
+                     "oozie_database_name": "[variables('oozieDBName')]",
+                     "oozie_database_type": "mssql",
+                     "oozie_existing_mssql_server_database": "[variables('oozieDBName')]",
+                     "oozie_existing_mssql_server_host": "[parameters('existingSQLServer')]",
+                     "oozie_hostname": "[parameters('existingSQLServer')]"
+                  },
+                  "ambari-conf": {
+                     "database-server": "[parameters('existingSQLServer')]",
+                     "database-name": "[variables('ambariDBName')]",
+                     "database-user-name": "[parameters('SQLServerUsername')]",
+                     "database-user-password": "[parameters('SQLServerPassword')]"
+                  },
+                  "admin-properties": {
+                     "audit_db_name": "[variables('rangerDBName')]",
+                     "audit_db_user": "[parameters('SQLServerUsername')]",
+                     "audit_db_password": "[parameters('SQLServerPassword')]",
+                     "db_name": "[variables('rangerDBName')]",
+                     "db_user": "[parameters('SQLServerUsername')]",
+                     "db_password": "[parameters('SQLServerPassword')]",
+                     "db_host": "[parameters('existingSQLServer')]",
+                     "db_root_user": "[parameters('SQLServerUsername')]",
+                     "db_root_password": "[parameters('SQLServerPassword')]"
+                  },
+                  "ranger-admin-site": {
+                     "ranger.jpa.jdbc.url": "[concat('jdbc:sqlserver://',parameters('existingSQLServer'), ';database=',variables('rangerDBName'),';trustServerCertificate=false;encrypt=true;')]"
+                  },
+                  "ranger-env": {
+                     "ranger_privelege_user_jdbc_url": "[concat('jdbc:sqlserver://',parameters('existingSQLServer'), ';database=',variables('rangerDBName'),';trustServerCertificate=false;encrypt=true;')]"
+                  },
+                  "ranger-hive-security": {
+                     "ranger.plugin.hive.service.name": "central_service_hive"
+                  },
+                  "ranger-yarn-security": {
+                     "ranger.plugin.yarn.service.name": "central_service_yarn"
+                  }
+               }
+            },
+            "storageProfile": {
+               "storageaccounts": [
+                  {
+                     "name": "[concat(last(split(parameters('adlsGen2ResourceId'), '/')), '.dfs.core.windows.net')]",
+                     "isDefault": true,
+                     "fileSystem": "[parameters('adlsGen2FileSystem')]",
+                     "resourceId": "[parameters('adlsGen2ResourceId')]",
+                     "msiResourceId": "[parameters('ClusterManagedIdentityResourceId')]"
+                  }
+               ]
+            },
+            "networkProperties": {
+               "resourceProviderConnection": "[variables('resourceProviderConnection')]",
+               "privateLink": "[parameters('privateLink')]"
+            },
+            "minSupportedTlsVersion": "1.2",
+            "computeProfile": {
+               "roles": [
+                  {
+                     "name": "headnode",
+                     "minInstanceCount": 1,
+                     "targetInstanceCount": 2,
+                     "hardwareProfile": {
+                        "vmSize": "Standard_D13_v2"
+                     },
+                     "osProfile": {
+                        "linuxOperatingSystemProfile": {
+                           "username": "[variables('sshuser')]",
+                           "password": "[parameters('LocalSSHAndAdminPassword')]"
+                        },
+                        "windowsOperatingSystemProfile": null
+                     },
+                     "virtualNetworkProfile": {
+                        "id": "[parameters('virtualNetworkResourceId')]",
+                        "subnet": "[concat(parameters('virtualNetworkResourceId'), '/subnets/', parameters('subnetName'))]"
+                     },
+                     "scriptActions": []
+                  },
+                  {
+                     "name": "idbrokernode",
+                     "targetInstanceCount": 2,
+                     "hardwareProfile": {
+                        "vmSize": "Standard_A2_v2"
+                     },
+                     "virtualNetworkProfile": {
+                        "id": "[parameters('virtualNetworkResourceId')]",
+                        "subnet": "[concat(parameters('virtualNetworkResourceId'), '/subnets/', parameters('subnetName'))]"
+                     }
+                  },
+                  {
+                     "name": "workernode",
+                     "targetInstanceCount": 4,
+                     "hardwareProfile": {
+                        "vmSize": "Standard_D13_v2"
+                     },
+                     "osProfile": {
+                        "linuxOperatingSystemProfile": {
+                           "username": "[variables('sshuser')]",
+                           "password": "[parameters('LocalSSHAndAdminPassword')]"
+                        },
+                        "windowsOperatingSystemProfile": null
+                     },
+                     "virtualNetworkProfile": {
+                        "id": "[parameters('virtualNetworkResourceId')]",
+                        "subnet": "[concat(parameters('virtualNetworkResourceId'), '/subnets/', parameters('subnetName'))]"
+                     },
+                     "scriptActions": []
+                  },
+                  {
+                     "name": "zookeepernode",
+                     "targetInstanceCount": 3,
+                     "hardwareProfile": {
+                        "vmSize": "Standard_A2_v2"
+                     },
+                     "osProfile": {
+                        "linuxOperatingSystemProfile": {
+                           "username": "[variables('sshuser')]",
+                           "password": "[parameters('LocalSSHAndAdminPassword')]"
+                        }
+                     }
+                  }
+               ]
+            },
+            "securityProfile": {
+               "aaddsResourceId": "[parameters('aaddsResourceId')]",
+               "clusterUsersGroupDNs": "[parameters('AADGroups')]",
+               "directoryType": "ActiveDirectory",
+               "domain": "[last(split(parameters('aaddsResourceId'), '/'))]",
+               "domainUsername": "[parameters('AADClusterAdminUsername')]",
+               "ldapsUrls": [
+                  "[concat('ldaps://', last(split(parameters('aaddsResourceId'), '/')), ':636')]"
+               ],
+               "msiResourceId": "[parameters('ClusterManagedIdentityResourceId')]"
+            }
+
+         },
+         "identity": {
+            "type": "UserAssigned",
+            "userAssignedIdentities": {
+               "[parameters('ClusterManagedIdentityResourceId')]": {}
+            }
+         }
+      }
+   ],
+   "outputs": {
+      "cluster": {
+         "type": "object",
+         "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+      }
+   }
+}
