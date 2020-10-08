@@ -12,6 +12,6 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-azure-spring-cloud%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-azure-spring-cloud%2Fazuredeploy.json)
 
-This template deploys a simple Azure Spring Cloud microservice application to run on Azure.
+This template deploys a simple Azure Spring Cloud microservice application to run on Azure. You'll see that there are two deployments in the template: The first deployment provisions resources, but traffic is not yet routed to the apps; the second deployment sets the apps to _active_.
 
 `Tags: Azure Spring Cloud, Spring Boot, microservice, application`
