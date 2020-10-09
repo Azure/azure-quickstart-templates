@@ -33,7 +33,7 @@ This is an experimental module at the moment...
 | virtualNetworkName | string | No | The name of the virtualNetwork.|
 | subnetName | string | No | The name of the subnet.|
 | virtualNetworkAddressRange | string | No | Virtual network address range.|
-| privateIPAddress  | string | No | Private IP Address.|
+| privateIPAddress  | string | No | Private IP Address of the DNS server.|
 | subnetRange  | string | No | Subnet IP range.|
 
 ## Outputs
@@ -45,7 +45,8 @@ This is an experimental module at the moment...
 | virtualNetworkSubscriptionId | string | SubscriptionId of the virtualNetwork. The value of subscription().subscriptionId. |
 | virtualNetworkResourceGroupName | string | Name of the resourceGroup for the virtualNetwork.  The value of resourceGroup().name |
 | virtualNetworkName | string | Name of the virtualNetwork.  The value of the virtualNetworkName parameter. |
+| subnetName | string | The name of the subnet.|
 | virtualNetworkAddressPrefixes | array | Address ranges for the virtualNetwork. The value of the virtualNetworkAddressRanges parameter. |
-
+| privateIPAddress  | string | Private IP Address of the DNS server.|
 
 ```apiVersion: n/a```
