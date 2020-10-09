@@ -71,9 +71,9 @@
       },
       "existingSQLServer": {
          "type": "string",
-         "defaultValue": "<ServerName>.database.windows.net",
+         "defaultValue": "FQDN",
          "metadata": {
-            "description": "SQL Server FQDN used for Hive, Oozie, Ambari and Ranger. This server must be accessible from inside the cluster Subnet. The SQL databases will be created in this server."
+            "description": "SQL Server FQDN (<ServerName>. database. windows. net) used for Hive, Oozie, Ambari and Ranger. This server must be accessible from inside the cluster Subnet. The SQL databases will be created in this server."
          }
       },
       "existingSQLServerResourceGroup": {
@@ -124,6 +124,13 @@
          "metadata": {
             "description": "Specify an MSI resource ID that has 'data blob owner' role on the ADLS Gen2 account as well as 'HDInsight AAD-DS configuration' role on the AAD-DS resource."
          }
+      },
+      "location": {
+         "type": "string",
+         "defaultValue": "[resourceGroup().location]",
+         "metadata": {
+         "description": "Location for all resources."
+         }
       }
    },
    "variables": {
@@ -150,7 +157,7 @@
                   {
                      "type":"Microsoft.Sql/servers/databases",
                      "apiVersion":"2019-06-01-preview",
-                     "location":"[resourceGroup().location]",
+                     "location":"[parameters('location')]",
                      "name":"[concat( first(split(parameters('existingSQLServer'), '.')), '/', variables('ambariDBName'))]",
                      "properties":{
                         "collation":"SQL_Latin1_General_CP1_CI_AS",
@@ -174,7 +181,7 @@
          "type":"Microsoft.Resources/deployments",
          "resourceGroup":"[parameters('existingSQLServerResourceGroup')]",
          "dependsOn":[
-            "[concat('Microsoft.Resources/deployments/', 'AmbariDBCreationDeployment')]"
+            "Microsoft.Resources/deployments/AmbariDBCreationDeployment"
          ],
          "properties":{
             "mode":"Incremental",
@@ -185,7 +192,7 @@
                   {
                      "type":"Microsoft.Sql/servers/databases",
                      "apiVersion":"2019-06-01-preview",
-                     "location":"[resourceGroup().location]",
+                     "location":"[parameters('location')]",
                      "name":"[concat( first(split(parameters('existingSQLServer'), '.')), '/', variables('hiveDBName'))]",
                      "properties":{
                         "collation":"SQL_Latin1_General_CP1_CI_AS",
@@ -209,7 +216,7 @@
          "type":"Microsoft.Resources/deployments",
          "resourceGroup":"[parameters('existingSQLServerResourceGroup')]",
          "dependsOn":[
-            "[concat('Microsoft.Resources/deployments/', 'AmbariDBCreationDeployment')]"
+            "Microsoft.Resources/deployments/AmbariDBCreationDeployment"
          ],
          "properties":{
             "mode":"Incremental",
@@ -220,7 +227,7 @@
                   {
                      "type":"Microsoft.Sql/servers/databases",
                      "apiVersion":"2019-06-01-preview",
-                     "location":"[resourceGroup().location]",
+                     "location":"[parameters('location')]",
                      "name":"[concat( first(split(parameters('existingSQLServer'), '.')), '/', variables('oozieDBName'))]",
                      "properties":{
                         "collation":"SQL_Latin1_General_CP1_CI_AS",
@@ -244,7 +251,7 @@
          "type":"Microsoft.Resources/deployments",
          "resourceGroup":"[parameters('existingSQLServerResourceGroup')]",
          "dependsOn":[
-            "[concat('Microsoft.Resources/deployments/', 'AmbariDBCreationDeployment')]"
+            "Microsoft.Resources/deployments/AmbariDBCreationDeployment"
          ],
          "properties":{
             "mode":"Incremental",
@@ -255,7 +262,7 @@
                   {
                      "type":"Microsoft.Sql/servers/databases",
                      "apiVersion":"2019-06-01-preview",
-                     "location":"[resourceGroup().location]",
+                     "location":"[parameters('location')]",
                      "name":"[concat( first(split(parameters('existingSQLServer'), '.')), '/', variables('rangerDBName'))]",
                      "properties":{
                         "collation":"SQL_Latin1_General_CP1_CI_AS",
@@ -276,10 +283,10 @@
       {
          "name": "[parameters('clusterName')]",
          "type": "Microsoft.HDInsight/clusters",
-         "location": "[resourceGroup().location]",
+         "location": "[parameters('location')]",
          "apiVersion": "2018-06-01-preview",
          "dependsOn":[
-            "[concat('Microsoft.Resources/deployments/', 'RangerDBCreationDeployment')]"
+            "Microsoft.Resources/deployments/RangerDBCreationDeployment"
          ],         
          "properties": {
             "clusterVersion": "4.0",
@@ -382,14 +389,12 @@
                         "linuxOperatingSystemProfile": {
                            "username": "[variables('sshuser')]",
                            "password": "[parameters('LocalSSHAndAdminPassword')]"
-                        },
-                        "windowsOperatingSystemProfile": null
+                        }
                      },
                      "virtualNetworkProfile": {
                         "id": "[parameters('virtualNetworkResourceId')]",
                         "subnet": "[concat(parameters('virtualNetworkResourceId'), '/subnets/', parameters('subnetName'))]"
-                     },
-                     "scriptActions": []
+                     }
                   },
                   {
                      "name": "idbrokernode",
@@ -412,14 +417,12 @@
                         "linuxOperatingSystemProfile": {
                            "username": "[variables('sshuser')]",
                            "password": "[parameters('LocalSSHAndAdminPassword')]"
-                        },
-                        "windowsOperatingSystemProfile": null
+                        }
                      },
                      "virtualNetworkProfile": {
                         "id": "[parameters('virtualNetworkResourceId')]",
                         "subnet": "[concat(parameters('virtualNetworkResourceId'), '/subnets/', parameters('subnetName'))]"
-                     },
-                     "scriptActions": []
+                     }
                   },
                   {
                      "name": "zookeepernode",
