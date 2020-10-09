@@ -2,8 +2,11 @@
 Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 choco source add -n=ros-win -s="https://aka.ms/ros/public" --priority=1
 
-# Install ROS1
+# Install ROS1 - Melodic
 choco upgrade ros-melodic-desktop_full -y --execution-timeout=0 -i
+
+# Install ROS1 - Noetic
+choco upgrade ros-noetic-desktop_full -y --execution-timeout=0 -i
 
 # Install ROS2
 choco upgrade ros-foxy-desktop -y --execution-timeout=0 -i
