@@ -16,14 +16,14 @@
 This template deploys Sonarqube in an Azure App Service web app Linux container
 using the official Sonarqube image and backed by an Azure SQL Server.
 
-## Versions of Sonarqube that work with Azure Web App for Containers
+## Compatible Versions of Sonarqube
 
-- **Working**: Sonarqube v7.7 and below.
-- **Not Working**: Sonarqube v7.8 and above,
+- **Compatible**: Sonarqube v7.7 and below.
+- **Not Compatible**: Sonarqube v7.8 and above.
 
 Sonarqube v7.8 and above does not work in Azure App Service Web App for Containers.
-This is because ElasticSearch is required by Sonarqube but this requires
-`vm.max_map_count = 262144` to be set in the container host kernel.
+This is because ElasticSearch is included by Sonarqube in version 7.8 and above
+but this requires `vm.max_map_count = 262144` to be set in the container host kernel.
 At this time, there is no way to configure this setting for an Azure App Service
 Web App for Containers. See [Issue #7481](https://github.com/Azure/azure-quickstart-templates/issues/7481)
 for more information.
