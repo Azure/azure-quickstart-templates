@@ -32,51 +32,68 @@
   "resources": [
     {
       "type": "Microsoft.Network/virtualWans",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-06-01",
       "name": "VWan-01",
       "location": "[parameters('location')]",
       "properties": {
         "disableVpnEncryption": false,
         "allowBranchToBranchTraffic": true,
-        "allowVnetToVnetTraffic": false,
         "office365LocalBreakoutCategory": "None",
         "type": "Standard"
       }
     },
     {
       "type": "Microsoft.Network/virtualHubs",
-      "apiVersion": "2020-04-01",
+      "apiVersion": "2020-06-01",
       "name": "Hub-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualWans', 'VWan-01')]"
       ],
       "properties": {
-        "virtualNetworkConnections": [
-          {
-            "name": "hub-spoke",
-            "properties": {
-              "remoteVirtualNetwork": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks', 'Spoke-01')]"
-              },
-              "allowHubToRemoteVnetTransit": true,
-              "allowRemoteVnetToUseHubVnetGateways": false,
-              "enableInternetSecurity": true
-            }
-          }
-        ],
         "addressPrefix": "10.1.0.0/16",
         "virtualWan": {
           "id": "[resourceId('Microsoft.Network/virtualWans', 'VWan-01')]"
-        },
-        "azureFirewall": {
-          "id": "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]"
         }
       }
     },
     {
+      "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
+      "apiVersion": "2020-06-01",
+      "name": "Hub-01/hub-spoke",
+      "properties": {
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', 'Spoke-01')]"
+        },
+        "allowHubToRemoteVnetTransit": true,
+        "allowRemoteVnetToUseHubVnetGateways": false,
+        "enableInternetSecurity": true,
+        "routingConfiguration": {
+          "associatedRouteTable": {
+            "id": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', 'Hub-01', 'RT_VNet')]"
+          },
+          "propagatedRouteTables": {
+            "labels": [
+              "VNet"
+            ],
+            "ids": [
+              {
+                "id": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', 'Hub-01', 'RT_VNet')]"
+              }
+            ]
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]",
+        "[resourceId('Microsoft.Network/virtualHubs', 'Hub-01')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', 'Spoke-01')]",
+        "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', 'Hub-01', 'RT_VNet')]"
+      ]
+    },
+    {
       "type": "Microsoft.Network/firewallPolicies",
-      "apiVersion": "2020-04-01",
+      "apiVersion": "2020-06-01",
       "name": "Policy-01",
       "location": "[parameters('location')]",
       "properties": {
@@ -84,43 +101,46 @@
       }
     },
     {
-      "type": "Microsoft.Network/firewallPolicies/ruleGroups",
-      "apiVersion": "2020-04-01",
+      "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+      "apiVersion": "2020-06-01",
       "name": "Policy-01/DefaultApplicationRuleCollectionGroup",
-      "location": "[parameters('location')]",
+      "location": "westeurope",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/firewallPolicies','Policy-01')]"
+        "[resourceId('Microsoft.Network/firewallPolicies', 'Policy-01')]"
       ],
       "properties": {
         "priority": 300,
-        "rules": [
+        "ruleCollections": [
           {
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
             "name": "RC-01",
             "priority": 100,
-            "ruleType": "FirewallPolicyFilterRule",
             "action": {
               "type": "Allow"
             },
-            "ruleConditions": [
+            "rules": [
               {
+                "ruleType": "ApplicationRule",
                 "name": "Allow-msft",
-                "protocols": [
-                  {
-                    "protocolType": "http",
-                    "port": 80
-                  },
-                  {
-                    "protocolType": "https",
-                    "port": 443
-                  }
-                ],
+                "description": "",
                 "sourceAddresses": [
                   "*"
+                ],
+                "sourceIpGroups": [],
+                "protocols": [
+                  {
+                    "port": "80",
+                    "protocolType": "http"
+                  },
+                  {
+                    "port": "443",
+                    "protocolType": "https"
+                  }
                 ],
                 "targetFqdns": [
                   "*.microsoft.com"
                 ],
-                "ruleConditionType": "ApplicationRuleCondition"
+                "fqdnTags": []
               }
             ]
           }
@@ -187,7 +207,7 @@
       "apiVersion": "2020-06-01",
       "name": "Spoke-01/Jump-SN",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', 'Spoke-01')]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Spoke-01', 'Workload-SN')]",
         "[resourceId('Microsoft.Network/routeTables', 'RT-01')]"
       ],
       "properties": {
@@ -423,58 +443,36 @@
       }
     },
     {
-      "type": "Microsoft.Network/virtualHubs/routeTables",
-      "apiVersion": "2020-04-01",
-      "name": "Hub-01/VirtualNetworkRouteTable",
+      "type": "Microsoft.Network/virtualHubs/hubRouteTables",
+      "apiVersion": "2020-06-01",
+      "name": "Hub-01/RT_VNet",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualHubs', 'Hub-01')]",
         "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]"
       ],
       "properties": {
         "routes": [
           {
-            "destinationType": "CIDR",
-            "destinations": [
-              "10.0.1.0/24",
-              "0.0.0.0/0"
-            ],
-            "nextHopType": "IPAddress",
-            "nextHops": [
-              "10.1.64.4"
-            ]
-          }
-        ],
-        "attachedConnections": [
-          "All_Vnets"
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Network/virtualHubs/routeTables",
-      "apiVersion": "2020-04-01",
-      "name": "Hub-01/BranchRouteTable",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualHubs', 'Hub-01')]",
-        "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]",
-        "[resourceId('Microsoft.Network/virtualHubs/routeTables', 'Hub-01','VirtualNetworkRouteTable')]"
-      ],
-      "properties": {
-        "routes": [
-          {
+            "name": "Workload-SNToFirewall",
             "destinationType": "CIDR",
             "destinations": [
               "10.0.1.0/24"
             ],
-            "nextHopType": "IPAddress",
-            "nextHops": [
-              "10.1.64.4"
-            ]
+            "nextHopType": "ResourceId",
+            "nextHop": "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]"
+          },
+          {
+            "name": "InternetToFirewall",
+            "destinationType": "CIDR",
+            "destinations": [
+              "0.0.0.0/0"
+            ],
+            "nextHopType": "ResourceId",
+            "nextHop": "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]"
           }
         ],
-        "attachedConnections": [
-          "All_Branches"
+        "labels": [
+          "VNet"
         ]
       }
     }
