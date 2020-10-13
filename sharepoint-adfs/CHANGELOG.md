@@ -1,5 +1,26 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in October 13, 2020
+
+* Set FrontEnd VMs with SharePoint MinRole Front-End on SharePoint versions that support MinRoles configuration
+* Increase max numberOfAdditionalFrontEnd from 3 to 4
+* Install Edge Chromium in SharePoint VM and Front-End VMs through Chocolatey
+* Install Notepad++ in SharePoint VM and Front-End VMs through Chocolatey
+* Install 7-zip in SharePoint VM and Front-End VMs through Chocolatey
+* Install Fiddler in SharePoint VM and Front-End VMs through Chocolatey
+* Install ULS Viewer in SharePoint VM and Front-End VMs through Chocolatey
+* Install Chrome in Front-End VMs through Chocolatey
+* Install Everything in Front-End VM through Chocolatey
+* Define the list of all possible values for the time zone parameter vmsTimeZone
+* Update WaitToAvoidServersJoiningFarmSimultaneously to ensure it runs only 1 time, and updated the delay from 60 to 90 secs to improve reliability
+* Use a unique location for custom registry keys
+* Update parameters passed to ConfigureFE
+* Update DSC module SharePointDSC from 4.2 to 4.3
+* Update DSC module NetworkingDsc from 8.0 to 8.1
+* Update DSC module ActiveDirectoryCSDsc from 4.1 to 5.0
+* Update DSC module xWebAdministration from 3.1.1 to 3.2
+* Remove the workaround on the template validation error as the bug is fixed in the portal
+
 ## Enhancements & bug-fixes - Published in October 5, 2020
 
 * Implement workaround to the template validation error when it is deployed from the portal and parameter numberOfAdditionalFrontEnd is set to 0
