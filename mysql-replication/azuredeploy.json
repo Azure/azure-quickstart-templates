@@ -4,6 +4,7 @@
   "parameters": {
     "dnsName": {
       "type": "string",
+      "defaultValue": "[concat('mysql', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Connect to your cluster using dnsName.location.cloudapp.azure.com"
       }
@@ -179,14 +180,6 @@
         "description": "MySQL public port slave"
       }
     },
-    "artifactsPath": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-replication",
-      "metadata": {
-        "description": "template and script file location",
-        "artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
-      }
-    },
     "customScriptCommandToExecute": {
       "type": "string",
       "defaultValue": "bash azuremysql.sh",
@@ -224,6 +217,20 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
@@ -238,10 +245,9 @@
     "sshIPConfig": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('sshIPConfigName'))]",
     "nicName": "[concat(parameters('dnsName'), '-nic')]",
     "availabilitySetName": "[concat(parameters('dnsName'), '-set')]",
-    "customScriptFilePath": "[concat(parameters('artifactsPath'), '/azuremysql.sh')]",
-    "mysqlConfigFilePath": "[concat(parameters('artifactsPath'), '/my.cnf.template')]",
-    "singleQuote": "",
-    "virtualNetworkSetupURL": "[concat(parameters('artifactsPath'),'/vnet-',parameters('vnetNewOrExisting'),'.json')]",
+    "customScriptFilePath": "[uri(parameters('_artifactsLocation'), concat('azuremysql.sh', parameters('_artifactsLocationSasToken')))]",
+    "mysqlConfigFilePath": "[uri(parameters('_artifactsLocation'), concat('my.cnf.template', parameters('_artifactsLocationSasToken')))]",
+    "virtualNetworkSetupURL": "[uri(parameters('_artifactsLocation'), concat('vnet-',parameters('vnetNewOrExisting'),'.json', parameters('_artifactsLocationSasToken')))]",
     "sa": "[parameters('dbSubnetStartAddress')]",
     "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
     "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
@@ -440,7 +446,7 @@
         "count": "[variables('nodeCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('dnsName'), copyIndex())]"
+        "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('dnsName'), copyIndex()))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -453,7 +459,24 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), ' ', copyIndex(1), ' ', variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255), ' ', variables('mysqlConfigFilePath'), ' ', variables('singleQuote'), parameters('mysqlReplicationPassword'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('mysqlRootPassword'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('mysqlProbePassword'), variables('singleQuote'), ' ', parameters('dbSubnetStartAddress'))]"
+          "commandToExecute": "[format('{0} {1} {2} ''{3}'' ''{4}'' ''{5}'' ''{6}'' {7}',
+                                       parameters('customScriptCommandToExecute'),  
+                                       copyIndex(1),  
+                                       concat(variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255)),  
+                                       variables('mysqlConfigFilePath'),  
+                                       parameters('mysqlReplicationPassword'),  
+                                       parameters('mysqlRootPassword'),  
+                                       parameters('mysqlProbePassword'),  
+                                       parameters('dbSubnetStartAddress'))]"
+          /*
+          "commandToExecute1": "[concat(parameters('customScriptCommandToExecute'), ' ', 
+                                       copyIndex(1), ' ', 
+                                       variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255), ' ', 
+                                       variables('singleQuote'), variables('mysqlConfigFilePath'), variables('singleQuote'), ' ', 
+                                       variables('singleQuote'), parameters('mysqlReplicationPassword'), variables('singleQuote'), ' ', 
+                                       variables('singleQuote'), parameters('mysqlRootPassword'), variables('singleQuote'), ' ', 
+                                       variables('singleQuote'), parameters('mysqlProbePassword'), variables('singleQuote'), ' ', 
+                                       parameters('dbSubnetStartAddress'))]"*/
         }
       }
     },
@@ -560,12 +583,12 @@
   ],
   "outputs": {
     "fqdn": {
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),'2015-06-15').dnsSettings.fqdn]",
-      "type": "string"
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName'))).dnsSettings.fqdn]"
     },
     "ipaddress": {
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),'2015-06-15').ipAddress]",
-      "type": "string"
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName'))).ipAddress]"
     }
   }
 }
