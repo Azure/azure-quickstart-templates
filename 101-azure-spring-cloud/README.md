@@ -1,4 +1,4 @@
-# Create an Azure portal dashboard
+# Deploy a simple Azure Spring Cloud microservice application
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-azure-spring-cloud/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-azure-spring-cloud/PublicDeployment.svg)
