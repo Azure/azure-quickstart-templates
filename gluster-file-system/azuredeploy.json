@@ -62,32 +62,50 @@
         "description": "VM name prefix, a number will be appended for each node"
       }
     },
-    "vnetAddressPrefix": {
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "gluster-vnet",
+      "metadata": {
+        "description": "Virtual network name for the cluster"
+      }
+    },
+    "virtualNetworkNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Identifies whether to use new or existing Virtual Network"
+      }
+    },
+    "virtualNetworkResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "If using existing VNet, specifies the resource group for the existing VNet"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "gluster-subnet",
+      "metadata": {
+        "description": "subnet name"
+      }
+    },
+    "virtualNetworkAddressPrefix": {
       "type": "string",
       "defaultValue": "10.0.0.0/16",
       "metadata": {
-        "description": "virtual network CIDR in which the cluster will be created"
+        "description": "IP address in CIDR for virtual network"
       }
     },
-    "gfsSubnetName": {
+    "subnetAddressPrefix": {
       "type": "string",
-      "defaultValue": "gfs-subnet",
+      "defaultValue": "10.0.1.0/24",
       "metadata": {
-        "description": "name of the subnet for the Gluster nodes"
-      }
-    },
-    "gfsVirtualNetworkName": {
-      "type": "string",
-      "defaultValue": "gfs-vnet",
-      "metadata": {
-        "description": "name of the subnet for the Gluster nodes"
-      }
-    },
-    "gfsSubnetPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/24",
-      "metadata": {
-        "description": "CIDR of the subnet for the Gluster nodes"
+        "description": "IP address in CIDR for subnet"
       }
     },
     "volumeName": {
@@ -139,8 +157,8 @@
   "variables": {
     "pipName": "pip",
     "nicName": "nic",
-    "gfsSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('gfsVirtualNetworkName'), parameters('gfsSubnetName'))]",
-    "vmIPPrefix": "[concat(substring(parameters('gfsSubnetPrefix'), 0, add(indexOf(parameters('gfsSubnetPrefix'), '/'), -2)), '1')]",
+    "gfsSubnetRef": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+    "vmIPPrefix": "[concat(substring(parameters('subnetAddressPrefix'), 0, lastIndexOf(parameters('subnetAddressPrefix'), '.')), '.10')]",
     "imageReference": {
       "Ubuntu": {
         "publisher": "Canonical",
@@ -172,7 +190,7 @@
   },
   "resources": [
     {
-      "comments": "Default Network Security Group for template",
+      "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2020-06-01",
       "name": "[variables('networkSecurityGroupName')]",
@@ -196,9 +214,10 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
+      "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "name": "[parameters('gfsVirtualNetworkName')]",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
@@ -206,14 +225,14 @@
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[parameters('vnetAddressPrefix')]"
+            "[parameters('virtualNetworkAddressPrefix')]"
           ]
         },
         "subnets": [
           {
-            "name": "[parameters('gfsSubnetName')]",
+            "name": "[parameters('subnetName')]",
             "properties": {
-              "addressPrefix": "[parameters('gfsSubnetPrefix')]",
+              "addressPrefix": "[parameters('subnetAddressPrefix')]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
               }
@@ -245,7 +264,7 @@
         "count": "[parameters('scaleNumber')]"
       },
       "dependsOn": [
-        "[parameters('gfsVirtualNetworkName')]",
+        "[parameters('virtualNetworkName')]",
         "pipLoop"
       ],
       "properties": {
