@@ -58,7 +58,7 @@ if ! type -p ansible;  then
    # install Ansible
     curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
     sudo python get-pip.py
-    pip install 'ansible==2.7.10'
+    pip install 'ansible==2.9.14'
     fail_if_error $? "Error: Ansible client installation is failed"
 fi
 
