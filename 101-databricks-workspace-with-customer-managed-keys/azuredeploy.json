@@ -26,23 +26,28 @@
         "description": "Location for all resources."
       }
     },
-    "keyVaultUri": {
+    "keyVaultName": {
       "type": "string",
       "metadata": {
-        "description": "Specifies the name of the key vault."
+        "description": "The Azure Key Vault name."
+      }
+    },
+    "keyVaultResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure Key Vault resource group name."
       }
     },
     "keyName": {
       "type": "string",
       "metadata": {
-        "description": "Azure Key Vault Key name."
+        "description": "The Azure Key Vault encryption key name."
       }
     },
     "keyVersion": {
       "type": "string",
-      "defaultValue": "",
       "metadata": {
-        "description": "Azure KeyVault Key version."
+        "description": "The Azure Key Vault encryption key version."
       }
     }
   },
@@ -52,26 +57,98 @@
   "resources": [
     {
       "type": "Microsoft.Databricks/workspaces",
+      "apiVersion": "2018-04-01",
       "name": "[parameters('workspaceName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-04-01",
       "sku": {
         "name": "[parameters('pricingTier')]"
       },
       "properties": {
-        "ManagedResourceGroupId": "[concat(subscription().id, '/resourceGroups/', variables('managedResourceGroupName'))]",
+        "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('managedResourceGroupName'))]",
         "parameters": {
           "prepareEncryption": {
             "value": true
-          },
-          "encryption": {
-            "value": {
-              "keySource": "Microsoft.Keyvault",
-              "keyvaulturi": "[parameters('keyVaultUri')]",
-              "KeyName": "[parameters('keyName')]",
-              "keyversion": "[parameters('keyVersion')]"
-            }
           }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-02-01",
+      "name": "addAccessPolicy",
+      "dependsOn": [
+        "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]"
+      ],
+      "resourceGroup": "[parameters('keyVaultResourceGroupName')]",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "0.9.0.0",
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults/accessPolicies",
+              "name": "[concat(parameters('keyVaultName'), '/add')]",
+              "apiVersion": "2019-09-01",
+              "properties": {
+                "accessPolicies": [
+                  {
+                    "objectId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2018-04-01').storageAccountIdentity.principalId]",
+                    "tenantId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2018-04-01').storageAccountIdentity.tenantId]",
+                    "permissions": {
+                      "keys": [
+                        "wrapKey",
+                        "unwrapKey",
+                        "get"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-02-01",
+      "name": "updateDatabricksWorkspace",
+      "dependsOn": [
+        "addAccessPolicy"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "0.9.0.0",
+          "resources": [
+            {
+              "type": "Microsoft.Databricks/workspaces",
+              "apiVersion": "2018-04-01",
+              "name": "[parameters('workspaceName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "[parameters('pricingTier')]"
+              },
+              "properties": {
+                "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('managedResourceGroupName'))]",
+                "parameters": {
+                  "prepareEncryption": {
+                    "value": true
+                  },
+                  "encryption": {
+                    "value": {
+                      "keySource": "Microsoft.Keyvault",
+                      "keyvaulturi": "[reference(resourceId(parameters('keyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2019-09-01').vaultUri]",
+                      "KeyName": "[parameters('keyName')]",
+                      "keyversion": "[parameters('keyVersion')]"
+                    }
+                  }
+                }
+              }
+            }
+          ]
         }
       }
     }
