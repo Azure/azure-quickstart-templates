@@ -1,4 +1,4 @@
-# Drupal 8 VM scaleset (with GlusterFS and MySQL) Template
+# Drupal 8 VM scaleset (with Azure Files and MySQL) Template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/301-drupal8-vmss-glusterfs-mysql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/301-drupal8-vmss-glusterfs-mysql/PublicDeployment.svg)
@@ -15,10 +15,10 @@
 
 This template deploys a Drupal 8 installation using a VM scale set.  It has the following capabilities:
 
-- Maximum and minimum number of Drupal 8 VMs in the scaleset can be configured. each of these uses Ubuntu OS
-- The template also deploys a Gluster cluster, where the number of nodes is configurable. The OS used by the Gluster VMs is also ubuntu. The Drupal nodes mount the gluster volume, where the settings file and files folder are stored
+- Maximum and minimum number of Drupal 8 VMs in the scaleset can be configured - each of these uses Ubuntu OS
+- The template also deploys an Azure file share. The Drupal nodes mount the file share, where the settings file and files folder are stored
 - The Template can be configured to use an existing MySQL server, or create a New MySQL server (using the MySQL Replication Template)
-- Deploys a load balancer in front of the Drupal VM Scaleset, so that the VMs are not directly exposed to the internet.  SSH ports on the VMs are exposed through the load balancer (Natted ports)
+- Deploys a load balancer in front of the Drupal VM Scaleset, so that the VMs are not directly exposed to the internet. SSH ports on the VMs are exposed through the load balancer (NAT ports)
 
 ## How to access the Drupal Site
 
