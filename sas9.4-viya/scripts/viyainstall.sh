@@ -117,11 +117,13 @@ cd $playbook_directory && ansible-playbook system-assessment.yml -i inventory.in
 elif [[ "$SCRIPT_PHASE" -eq 2 ]]; then
          mkdir /.ssh && touch /.ssh/known_hosts 
         cd $playbook_directory && ansible-playbook install-only.yml -i inventory.ini -vvv
+        echo "*** Phase 5 Part 2 - Viya Install only ended at `date +'%Y-%m-%d_%H-%M-%S'` ***"
 
 elif [[ "$SCRIPT_PHASE" -eq 3 ]]; then
-
+        sleep 120
         cd $playbook_directory && ansible-playbook site.yml -i inventory.ini -vvv
-
+        echo "*** Phase 5 Part 3 - Viya Configuration ended at `date +'%Y-%m-%d_%H-%M-%S'` ***"
+        
 elif [[ "$SCRIPT_PHASE" -eq 4 ]]; then
         wget $viya_ark_uri
         mkdir -p $playbook_directory/viya-ark
