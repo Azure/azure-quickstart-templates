@@ -32,7 +32,9 @@
       "allowedValues": [
         "Basic",
         "Standard",
-        "Premium"
+        "Premium",
+        "GP_Gen5",
+        "BC_Gen5"
       ],
       "metadata": {
         "description": "The Elastic Pool edition."
@@ -82,8 +84,18 @@
       }
     }
   },
+  "variables": {
+    "editionToSkuMap": {
+      "Basic": "BasicPool",
+      "Standerd": "StanderdPool",
+      "Premium": "PremiumPool",
+      "GP_Gen5": "GeneralPurpose",
+      "BC_Gen5": "BusinessCritical"
+    }
+  },
   "resources": [
     {
+      "type": "Microsoft.Sql/servers",
       "apiVersion": "2020-02-02-preview",
       "location": "[parameters('location')]",
       "name": "[parameters('serverName')]",
@@ -91,23 +103,27 @@
         "administratorLogin": "[parameters('administratorLogin')]",
         "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
         "version": "12.0"
-      },
-      "type": "Microsoft.Sql/servers"
+      }
     },
     {
+      "type": "Microsoft.Sql/servers/elasticPools",
       "apiVersion": "2020-02-02-preview",
       "dependsOn": [
         "[resourceId('Microsoft.Sql/servers/', parameters('serverName'))]"
       ],
       "location": "[parameters('location')]",
       "name": "[concat(parameters('serverName'), '/', parameters('elasticPoolName'))]",
-      "properties": {
-        "edition": "[parameters('edition')]",
-        "dtu": "[parameters('poolDtu')]",
-        "databaseDtuMin": "[parameters('databaseDtuMin')]",
-        "databaseDtuMax": "[parameters('databaseDtuMax')]"
+      "sku": {
+        "name": "[parameters('edition')]",
+        "tier": "[variables('editionToSkuMap')[parameters('edition')]]",
+        "capacity": "[parameters('poolDtu')]"
       },
-      "type": "Microsoft.Sql/servers/elasticPools"
+      "properties": {
+        "perDatabaseSettings": {
+        "minCapacity": "[parameters('databaseDtuMin')]",
+        "maxCapacity": "[parameters('databaseDtuMax')]"
+        }
+      }
     },
     {
       "type": "Microsoft.Sql/servers/databases",
@@ -118,10 +134,14 @@
         "[resourceId('Microsoft.Sql/servers/', parameters('serverName'))]",
         "[resourceId('Microsoft.Sql/servers/elasticpools', parameters('serverName'), parameters('elasticPoolName'))]"
       ],
+      "sku": {
+          "name": "ElasticPool",
+          "tier": "[variables('editionToSkuMap')[parameters('edition')]]",
+          "capacity": 0
+      },
       "properties": {
         "collation": "[parameters('databaseCollation')]",
-        "requestedServiceObjectiveName": "ElasticPool",
-        "elasticPoolName": "[parameters('elasticPoolName')]"
+        "elasticPoolId": "[resourceId('Microsoft.Sql/servers/elasticpools', parameters('serverName'), parameters('elasticPoolName'))]"
       },
       "copy": {
         "name": "addDatabasesInElasticPool",
