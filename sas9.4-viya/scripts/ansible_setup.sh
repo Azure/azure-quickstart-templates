@@ -84,7 +84,7 @@ if ! type -p ansible;  then
     # install Ansible
     curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
     python get-pip.py
-    pip install 'ansible==2.10.0'
+    pip install 'ansible==2.8.3'
 	fail_if_error $? "Pip Installation failed"
 fi
 
