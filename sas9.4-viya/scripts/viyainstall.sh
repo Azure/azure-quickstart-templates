@@ -120,10 +120,9 @@ elif [[ "$SCRIPT_PHASE" -eq 2 ]]; then
         echo "*** Phase 5 Part 2 - Viya Install only ended at `date +'%Y-%m-%d_%H-%M-%S'` ***"
 
 elif [[ "$SCRIPT_PHASE" -eq 3 ]]; then
-        sleep 120
         cd $playbook_directory && ansible-playbook site.yml -i inventory.ini -vvv
         echo "*** Phase 5 Part 3 - Viya Configuration ended at `date +'%Y-%m-%d_%H-%M-%S'` ***"
-        
+
 elif [[ "$SCRIPT_PHASE" -eq 4 ]]; then
         wget $viya_ark_uri
         mkdir -p $playbook_directory/viya-ark
