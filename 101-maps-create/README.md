@@ -1,4 +1,4 @@
-# Create an Azure Maps
+# Create an Azure Maps account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-maps-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-maps-create/PublicDeployment.svg)
@@ -13,7 +13,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-maps-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-maps-create%2Fazuredeploy.json)
 
-This template creates an Azure Maps account and lists the primary key as output. To learn more about how to deploy the template, see the [article](https://docs.microsoft.com/azure/azure-maps/how-to-create-template) article.
+This template creates an Azure Maps account. To learn more about how to deploy the template, see the [article](https://docs.microsoft.com/azure/azure-maps/how-to-create-template) article.
 
 If you're new to Azure Maps, see:
 
