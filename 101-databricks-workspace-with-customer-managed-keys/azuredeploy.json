@@ -4,8 +4,27 @@
   "parameters": {
     "workspaceName": {
       "type": "string",
+      "defaultValue": "[uniqueString(resourceGroup().id)]",
       "metadata": {
         "description": "The name of the Azure Databricks workspace to create."
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure Key Vault name."
+      }
+    },
+    "keyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure Key Vault encryption key name."
+      }
+    },
+    "keyVaultResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure Key Vault resource group name."
       }
     },
     "pricingTier": {
@@ -21,52 +40,9 @@
     },
     "location": {
       "type": "string",
-      "allowedValues": [
-        "westus",
-        "eastus2",
-        "westeurope",
-        "northeurope",
-        "eastus",
-        "southeastasia",
-        "eastasia",
-        "southcentralus",
-        "northcentralus",
-        "westus2",
-        "centralus",
-        "ukwest",
-        "uksouth",
-        "australiaeast",
-        "australiasoutheast",
-        "australiacentral",
-        "australiacentral2",
-        "japaneast",
-        "japanwest",
-        "canadacentral",
-        "canadaeast",
-        "centralindia",
-        "southindia",
-        "westindia",
-        "koreacentral",
-        "southafricanorth",
-        "uaenorth",
-        "francecentral",
-        "brazilsouth",
-        "switzerlandnorth"
-      ],
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
-      }
-    },
-    "keyVaultName": {
-      "type": "string",
-      "metadata": {
-        "description": "The Azure Key Vault name."
-      }
-    },
-    "keyName": {
-      "type": "string",
-      "metadata": {
-        "description": "The Azure Key Vault encryption key name."
       }
     }
   },
@@ -95,6 +71,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-06-01",
       "name": "addAccessPolicy",
+      "resourceGroup": "[parameters('keyVaultResourceGroupName')]",
       "dependsOn": [
         "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]"
       ],
@@ -105,15 +82,10 @@
           "contentVersion": "0.9.0.0",
           "resources": [
             {
-              "type": "Microsoft.KeyVault/vaults",
+              "type": "Microsoft.KeyVault/vaults/accessPolicies",
               "apiVersion": "2019-09-01",
-              "name": "[parameters('keyVaultName')]",
-              "location": "[parameters('location')]",
+              "name": "[concat(parameters('keyVaultName'), '/add')]",
               "properties": {
-                "enableSoftDelete": true,
-                "enablePurgeProtection": true,
-                "softDeleteRetentionInDays": 90,
-                "tenantId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2018-04-01').storageAccountIdentity.tenantId]",
                 "accessPolicies": [
                   {
                     "objectId": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName')), '2018-04-01').storageAccountIdentity.principalId]",
@@ -126,34 +98,6 @@
                       ]
                     }
                   }
-                ],
-                "sku": {
-                  "name": "standard",
-                  "family": "A"
-                },
-                "networkAcls": {
-                  "defaultAction": "Allow",
-                  "bypass": "AzureServices"
-                }
-              }
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults/keys",
-              "name": "[concat(parameters('keyVaultName'), '/', parameters('keyName'))]",
-              "apiVersion": "2019-09-01",
-              "location": "[parameters('location')]",
-              "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
-              ],
-              "properties": {
-                "kty": "RSA",
-                "keyOps": [
-                  "encrypt",
-                  "decrypt",
-                  "sign",
-                  "verify",
-                  "wrapKey",
-                  "unwrapKey"
                 ]
               }
             }
@@ -191,7 +135,7 @@
                   "encryption": {
                     "value": {
                       "keySource": "Microsoft.Keyvault",
-                      "keyvaulturi": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net')]",
+                      "keyvaulturi": "[concat('https://', parameters('keyVaultName'), environment().suffixes.keyvaultDns)]",
                       "KeyName": "[parameters('keyName')]"
                     }
                   }
