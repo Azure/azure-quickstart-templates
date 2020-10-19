@@ -27,7 +27,7 @@ This template deploys a Drupal 8 installation using a VM scale set.  It has the 
 
 ## How to SSH into the Drupal VMs
 
-- You can ssh into the VMs in the VM scaleset if needed, using the inbound NAT Pool ports on the load balancer. So for VM 0 ssh in to port 50000, for VM 1 ssh to port 50001 and so on. You can use https://resources.azure.com/ to see the VMs in the VM scale set. See Screen shot below:
+- You can ssh into the VMs in the VM scaleset if needed, using the inbound NAT Pool ports on the load balancer. So for VM 0 ssh in to port 50000, for VM 1 ssh to port 50001 and so on. You can use [Resource Explorer](https://resources.azure.com/) to see the VMs in the VM scale set. See screenshot below:
 
  ![SSH into Drupal VMs](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/images/azureResourceExplorer.png "SSH into Drupal VMs")
 
