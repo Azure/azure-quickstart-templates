@@ -4,6 +4,7 @@
 # $3 = Azure file share name
 # $4 = mountpoint path
 # $5 - username
+# $6 - storageAccount suffix
 
 # For more details refer to https://azure.microsoft.com/en-us/documentation/articles/storage-how-to-use-files-linux/
 
@@ -13,7 +14,7 @@ apt-get -y update
 # install cifs-utils and mount file share
 apt-get install cifs-utils
 mkdir $4
-mount -t cifs //$1.file.core.windows.net/$3 $4 -o vers=3.0,username=$1,password=$2,dir_mode=0755,file_mode=0664
+mount -t cifs //$1.file.$6/$3 $4 -o vers=3.0,username=$1,password=$2,dir_mode=0755,file_mode=0664
 
 # create a symlink from /mountpath/xxx to ~username/xxx
 linkpoint=`echo $4 | sed 's/.*\///'`
