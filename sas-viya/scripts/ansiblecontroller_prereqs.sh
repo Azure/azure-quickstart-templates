@@ -23,7 +23,7 @@ if ! type -p ansible;  then
    # install Ansible
     curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
     sudo python get-pip.py
-    pip install 'ansible==2.7.10'
+    pip install 'ansible==2.9.14'
 fi
 yum install -y yum-utils
 yum install -y java-1.8.0-openjdk
@@ -102,7 +102,7 @@ fi
 ##
 ## get Common Code
 ##
-COMMON_CODE_TAG="002cbe7b3fdbc5474ea3f8cde7d2d3e6f5f4b3f4"
+COMMON_CODE_TAG="64ed3a9afe242293025e7ca64919edfc7f1d2b36"
 RETRIES=10
 DELAY=10
 COUNT=1
