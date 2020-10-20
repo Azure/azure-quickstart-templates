@@ -2,18 +2,11 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "keyVaultName": {
+    "vaultName": {
       "type": "string",
-      "defaultValue": "[concat('kv', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[concat('keyvault-', uniqueString(resourceGroup().id))]",
       "metadata": {
-        "description": "Specifies the name of the key vault."
-      }
-    },
-    "keyName": {
-      "type": "string",
-      "defaultValue": "testKey",
-      "metadata": {
-        "description": "Specifies the name of the key that you want to create."
+        "description": "Specifies the name of the KeyVault, this value must be globally unique."
       }
     },
     "location": {
@@ -23,75 +16,42 @@
         "description": "Specifies the Azure location where the key vault should be created."
       }
     },
-    "tenantId": {
+    "keyName": {
       "type": "string",
-      "defaultValue": "[subscription().tenantId]",
+      "defaultValue": "cmk",
       "metadata": {
-        "description": "Specifies the Azure Active Directory tenant ID that should be used for authenticating requests to the key vault. Get it by using Get-AzSubscription cmdlet."
-      }
-    },
-    "objectId": {
-      "type": "string",
-      "metadata": {
-        "description": "Specifies the object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault. The object ID must be unique for the list of access policies. Get it by using Get-AzADUser or Get-AzADServicePrincipal cmdlets."
-      }
-    },
-    "skuName": {
-      "type": "string",
-      "defaultValue": "Standard",
-      "allowedValues": [
-        "Standard",
-        "Premium"
-      ],
-      "metadata": {
-        "description": "Specifies whether the key vault is a standard vault or a premium vault."
+        "description": "Name of the encryption key"
       }
     }
   },
   "resources": [
     {
-      "type": "Microsoft.KeyVault/vaults",
+      "name": "prereqs",
+      "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-09-01",
-      "name": "[parameters('keyVaultName')]",
-      "location": "[parameters('location')]",
       "properties": {
-        "enableSoftDelete": true,
-        "enablePurgeProtection": true,
-        "softDeleteRetentionInDays": 90,
-        "tenantId": "[parameters('tenantId')]",
-        "accessPolicies": [
-          {
-            "objectId": "[parameters('objectId')]",
-            "tenantId": "[parameters('tenantId')]",
-            "permissions": {
-              "keys": [
-                "encrypt",
-                "decrypt",
-                "sign",
-                "verify",
-                "wrapKey",
-                "unwrapKey"
-              ]
-            }
-          }
-        ],
-        "sku": {
-          "name": "[parameters('skuName')]",
-          "family": "A"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/modules/Microsoft.KeyVault/vaults/1.0/azuredeploy.json",
+          "contentVersion": "1.0.0.0"
         },
-        "networkAcls": {
-          "defaultAction": "Allow",
-          "bypass": "AzureServices"
+        "parameters": {
+          "vaultName": {
+            "value": "[parameters('vaultName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
         }
       }
     },
     {
       "type": "Microsoft.KeyVault/vaults/keys",
       "apiVersion": "2019-09-01",
-      "name": "[concat(parameters('keyVaultName'), '/', parameters('keyName'))]",
+      "name": "[concat(parameters('vaultName'), '/', parameters('keyName'))]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+        "prereqs"
       ],
       "properties": {
         "kty": "RSA",
@@ -109,7 +69,7 @@
   "outputs": {
     "outKeyVaultName": {
       "type": "string",
-      "value": "[parameters('keyVaultName')]"
+      "value": "[parameters('vaultName')]"
     },
     "outKeyName": {
       "type": "string",
