@@ -16,8 +16,9 @@
     },
     "clusterLoginPassword": {
       "type": "securestring",
+      "minLength": 10,
       "metadata": {
-        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one upper case letter, one lower case letter, and one non-alphanumeric character except (single-quote, double-quote, backslash, right-bracket, full-stop). Also, the password must not contain 3 consecutive characters from the cluster username or SSH username."
       }
     },
     "sshUserName": {
@@ -28,8 +29,10 @@
     },
     "sshPassword": {
       "type": "securestring",
+      "minLength": 6,
+      "maxLength": 72,
       "metadata": {
-        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+        "description": "SSH password must be 6-72 characters long and must contain at least one digit, one upper case letter, and one lower case letter.  It must not contain any 3 consecutive characters from the cluster login name"
       }
     },
     "location": {
@@ -39,43 +42,41 @@
         "description": "Location for all resources."
       }
     },
-      "HeadNodeVirtualMachineSize": {
+    "HeadNodeVirtualMachineSize": {
       "type": "string",
       "defaultValue": "Standard_D3_v2",
       "allowedValues": [
-        "Standard_A1_v2",
-        "Standard_A2_v2",
         "Standard_A4_v2",
         "Standard_A8_v2",
-        "Standard_D1_v2",
         "Standard_D2_v2",
         "Standard_D3_v2",
         "Standard_D4_v2",
-        "Standard_D5_v2"
+        "Standard_D5_v2",
+        "Standard_E4_v3",
+        "Standard_E8_v3"
       ],
       "metadata": {
         "description": "This is the headnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
       }
     },
-      "WorkerNodeVirtualMachineSize": {
+    "WorkerNodeVirtualMachineSize": {
       "type": "string",
       "defaultValue": "Standard_D3_v2",
       "allowedValues": [
-        "Standard_A1_v2",
-        "Standard_A2_v2",
         "Standard_A4_v2",
         "Standard_A8_v2",
-        "Standard_D1_v2",
         "Standard_D2_v2",
         "Standard_D3_v2",
         "Standard_D4_v2",
-        "Standard_D5_v2"
+        "Standard_D5_v2",
+        "Standard_E4_v3",
+        "Standard_E8_v3"
       ],
       "metadata": {
         "description": "This is the worerdnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
       }
     },
-      "ZookeeperNodeVirtualMachineSize": {
+    "ZookeeperNodeVirtualMachineSize": {
       "type": "string",
       "defaultValue": "Standard_D3_v2",
       "allowedValues": [
@@ -83,15 +84,16 @@
         "Standard_A2_v2",
         "Standard_A4_v2",
         "Standard_A8_v2",
-        "Standard_D1_v2",
         "Standard_D2_v2",
         "Standard_D3_v2",
         "Standard_D4_v2",
-        "Standard_D5_v2"
+        "Standard_D5_v2",
+        "Standard_E4_v3",
+        "Standard_E8_v3"
       ],
       "metadata": {
         "description": "This is the Zookeepernode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
-      }    
+      }
     }
   },
   "variables": {
@@ -103,9 +105,9 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
       "name": "[variables('defaultStorageAccount').name]",
       "location": "[parameters('location')]",
-      "apiVersion": "2019-06-01",
       "sku": {
         "name": "[variables('defaultStorageAccount').type]"
       },
@@ -113,10 +115,10 @@
       "properties": {}
     },
     {
-      "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
+      "apiVersion": "2018-06-01-preview",
+      "name": "[parameters('clusterName')]",
       "location": "[parameters('location')]",
-        "apiVersion": "2018-06-01-preview",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts',variables('defaultStorageAccount').name)]"
       ],
@@ -149,7 +151,7 @@
               "name": "headnode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
-              "vmSize": "[parameters('HeadNodeVirtualMachineSize')]"
+                "vmSize": "[parameters('HeadNodeVirtualMachineSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -162,7 +164,7 @@
               "name": "workernode",
               "targetInstanceCount": 4,
               "hardwareProfile": {
-              "vmSize": "[parameters('WorkerNodeVirtualMachineSize')]"
+                "vmSize": "[parameters('WorkerNodeVirtualMachineSize')]"
               },
               "dataDisksGroups": [
                 {
@@ -180,7 +182,7 @@
               "name": "zookeepernode",
               "targetInstanceCount": 3,
               "hardwareProfile": {
-              "vmSize": "[parameters('ZookeeperNodeVirtualMachineSize')]"
+                "vmSize": "[parameters('ZookeeperNodeVirtualMachineSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {

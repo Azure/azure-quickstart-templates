@@ -31,16 +31,16 @@ class InstallADK
         $_adkpath = $this.ADKPath
         if(!(Test-Path $_adkpath))
         {
-            #ADK 1809 (17763)
-            $adkurl = "https://go.microsoft.com/fwlink/?linkid=2026036"
+            #ADK 2004 (19041)
+            $adkurl = "https://go.microsoft.com/fwlink/?linkid=2120254"
             Invoke-WebRequest -Uri $adkurl -OutFile $_adkpath
         }
 
         $_adkWinPEpath = $this.ADKWinPEPath
         if(!(Test-Path $_adkWinPEpath))
         {
-            #ADK add-on (17763)
-            $adkurl = "https://go.microsoft.com/fwlink/?linkid=2022233"
+            #ADK add-on (19041)
+            $adkurl = "https://go.microsoft.com/fwlink/?linkid=2120253"
             Invoke-WebRequest -Uri $adkurl -OutFile $_adkWinPEpath
         }
         #Install DeploymentTools

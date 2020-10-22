@@ -91,7 +91,7 @@ PowerShell
 
 ### Add a key for encryption
 
-To generate a key in an existing Azure Key Vault, use one of the following commands. Replace `<keyvault-name>` with the name of the key vault. Replace `<key-name>` with the name to use for the key:
+To generate a key in an existing Azure Key Vault, use the [prereq template](prereqs/prereq.azuredeploy.json) provide with this sample or one of the following commands. Replace `<keyvault-name>` with the name of the key vault. Replace `<key-name>` with the name to use for the key:
 
 Azure CLI
 
@@ -160,7 +160,7 @@ PowerShell: Resource id  is cmk_keyvault. Like this: /subscriptions/<subscripito
 ```
 Use this command to see resource_cmk_uri.
 
-Azure CLI: Kid is resource_cmk_uri. Like this: https://<keyvault-name>.vault.azure.net/keys/<key-name>/******.
+Azure CLI: kid is resource_cmk_uri. Like this: https://<keyvault-name>.vault.azure.net/keys/<key-name>/******.
 
 ```bash
     az keyvault key show --vault-name <keyvault-name> --name <key-name> 
