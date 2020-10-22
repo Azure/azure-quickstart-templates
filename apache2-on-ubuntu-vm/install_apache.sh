@@ -1,4 +1,5 @@
 #!/bin/bash
+dpkg --configure -a
 apt-get -y update
 
 # install Apache2

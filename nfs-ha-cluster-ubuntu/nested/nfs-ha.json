@@ -17,7 +17,6 @@
         },
         "location": {
             "type": "string",
-            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Azure location where this template is to be deployed"
             }
@@ -87,7 +86,7 @@
             "defaultValue": {
                 "offer": "UbuntuServer",
                 "publisher": "Canonical",
-                "sku": "16.04-LTS",
+                "sku": "18.04-LTS",
                 "version": "latest"
             }
         },
@@ -126,10 +125,26 @@
             "defaultValue": "[substring(uniqueString(resourceGroup().id, deployment().name), 3, 6)]"
         }
     },
+    "variables": {
+        "availSetName": "[concat('nfs-ha-availset-', parameters('resourcesUniqueString'))]",
+        "vmDeploymentNameBase": "nfs-ha-vm-deployment",
+        "nodeIpAddrs": [
+            "[parameters('node0IPAddr')]",
+            "[parameters('node1IPAddr')]"
+        ],
+        "nfsHaLbName": "[concat('nfs-ha-lb-', parameters('resourcesUniqueString'))]",
+        "nfsHaLbFeName": "nfs-ha-lb-fe",
+        "nfsHaLbFeId": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('nfsHaLbName'), variables('nfsHaLbFeName'))]",
+        "nfsHaLbBeName": "nfs-ha-lb-be",
+        "nfsHaLbBeId": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('nfsHaLbName'), variables('nfsHaLbBeName'))]",
+        "nfsHaLbRuleName": "nfs-ha-lb-rule",
+        "nfsHaLbProbeName": "nfs-ha-lb-probe",
+        "nfsHaLbProbeId": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('nfsHaLbName'), variables('nfsHaLbProbeName'))]"
+    },
     "resources": [
         {
             "type": "Microsoft.Compute/availabilitySets",
-            "apiVersion": "2017-03-30",
+            "apiVersion": "2019-12-01",
             "location": "[parameters('location')]",
             "name": "[variables('availSetName')]",
             "properties": {
@@ -148,7 +163,7 @@
             "sku": {
                 "name": "Basic"
             },
-            "apiVersion": "2017-10-01",
+            "apiVersion": "2020-05-01",
             "location": "[parameters('location')]",
             "name": "[variables('nfsHaLbName')]",
             "properties": {
@@ -490,14 +505,14 @@
         },
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
+            "apiVersion": "2020-06-01",
             "copy": {
                 "count": 2,
                 "name": "nfs-ha-vm-loop"
             },
             "dependsOn": [
-                "[concat('Microsoft.Compute/availabilitySets/', variables('availSetName'))]",
-                "[concat('Microsoft.Network/loadBalancers/', variables('nfsHaLbName'))]"
+                "[resourceId('Microsoft.Compute/availabilitySets/', variables('availSetName'))]",
+                "[resourceId('Microsoft.Network/loadBalancers/', variables('nfsHaLbName'))]"
             ],
             "name": "[concat(variables('vmDeploymentNameBase'), copyIndex())]",
             "properties": {
@@ -563,21 +578,5 @@
                 }
             }
         }
-    ],
-    "variables": {
-        "availSetName": "[concat('nfs-ha-availset-', parameters('resourcesUniqueString'))]",
-        "vmDeploymentNameBase": "nfs-ha-vm-deployment",
-        "nodeIpAddrs": [
-            "[parameters('node0IPAddr')]",
-            "[parameters('node1IPAddr')]"
-        ],
-        "nfsHaLbName": "[concat('nfs-ha-lb-', parameters('resourcesUniqueString'))]",
-        "nfsHaLbFeName": "nfs-ha-lb-fe",
-        "nfsHaLbFeId": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('nfsHaLbName'), variables('nfsHaLbFeName'))]",
-        "nfsHaLbBeName": "nfs-ha-lb-be",
-        "nfsHaLbBeId": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('nfsHaLbName'), variables('nfsHaLbBeName'))]",
-        "nfsHaLbRuleName": "nfs-ha-lb-rule",
-        "nfsHaLbProbeName": "nfs-ha-lb-probe",
-        "nfsHaLbProbeId": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('nfsHaLbName'), variables('nfsHaLbProbeName'))]"
-    }
+    ]
 }
