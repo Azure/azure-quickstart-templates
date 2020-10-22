@@ -1,4 +1,4 @@
-# Deploy an Azure SignalR service
+# Deploy an Azure SignalR Service
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-signalr/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-signalr/PublicDeployment.svg)
