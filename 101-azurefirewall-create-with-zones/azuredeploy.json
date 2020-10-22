@@ -62,7 +62,6 @@
   "variables": {
     "azureFirewallSubnetName": "AzureFirewallSubnet",
     "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
-    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPNamePrefix'))]",
     "azureFirewallSubnetJSON": "[json(format('{{\"id\": \"{0}\"}}', variables('azureFirewallSubnetId')))]",
     "copy": [
       {
@@ -73,7 +72,7 @@
           "properties": {
             "subnet": "[if(equals(copyIndex('azureFirewallIpConfigurations'), 0), variables('azureFirewallSubnetJSON'), json('null'))]",
             "publicIPAddress": {
-              "id": "[concat(variables('azureFirewallPublicIpId'), add(copyIndex('azureFirewallIpConfigurations'), 1))]"
+              "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('publicIPNamePrefix'), add(copyIndex('azureFirewallIpConfigurations'), 1)))]"
             }
           }
         }
@@ -83,10 +82,9 @@
   "resources": [
     {
       "name": "[parameters('virtualNetworkName')]",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
-      "dependsOn": [],
       "tags": {
         "displayName": "[parameters('virtualNetworkName')]"
       },
@@ -109,7 +107,7 @@
     {
       "name": "[concat(parameters('publicIPNamePrefix'), add(copyIndex(), 1))]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
@@ -124,13 +122,13 @@
       }
     },
     {
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/azureFirewalls",
       "name": "[parameters('firewallName')]",
       "location": "[parameters('location')]",
       "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), parameters('availabilityZones'))]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
         "publicIpCopy"
       ],
       "properties": {
@@ -146,7 +144,7 @@
                   "name": "appRule1",
                   "protocols": [
                     {
-                      "port": "80",
+                      "port": 80,
                       "protocolType": "http"
                     }
                   ],

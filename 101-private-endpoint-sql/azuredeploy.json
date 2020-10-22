@@ -27,12 +27,12 @@
       }
     },
     "VmSize": {
-        "type": "string",
-        "defaultValue": "Standard_D2_v2",
-        "metadata": {
-            "description": "The size of the VM"
-        }
-    },    
+      "type": "string",
+      "defaultValue": "Standard_D2_v2",
+      "metadata": {
+        "description": "The size of the VM"
+      }
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -49,9 +49,9 @@
     "sqlServerName": "[concat('sqlserver', uniqueString(resourceGroup().id))]",
     "databaseName": "[concat(variables('sqlServerName'),'/sample-db')]",
     "privateEndpointName": "myPrivateEndpoint",
-    "privateDnsZoneName": "privatelink.database.windows.net",
+    "privateDnsZoneName": "[concat('privatelink', environment().suffixes.sqlServerHostname)]",
     "pvtendpointdnsgroupname": "[concat(variables('privateEndpointName'),'/mydnsgroupname')]",
-    "vmName": "[take(concat('myVm', uniqueString(resourceGroup().id)),15)]",    
+    "vmName": "[take(concat('myVm', uniqueString(resourceGroup().id)),15)]",
     "publicIpAddressName": "[concat(variables('vmName'), 'PublicIP' )]",
     "networkInterfaceName": "[concat(variables('vmName'),'NetInt')]",
     "osDiskType": "Standard_LRS"
@@ -59,13 +59,13 @@
   "resources": [
     {
       "type": "Microsoft.Sql/servers",
-      "apiVersion": "2019-06-01-preview",
+      "apiVersion": "2020-02-02-preview",
       "name": "[variables('sqlServerName')]",
       "location": "[parameters('location')]",
+      "kind": "v12.0",
       "tags": {
         "displayName": "[variables('sqlServerName')]"
       },
-      "kind": "v12.0",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
@@ -77,32 +77,32 @@
     },
     {
       "type": "Microsoft.Sql/servers/databases",
-      "apiVersion": "2019-06-01-preview",
-      "name": "[variables('databaseName')]",      
+      "apiVersion": "2020-02-02-preview",
+      "name": "[variables('databaseName')]",
       "location": "[parameters('location')]",
-      "tags": {
-        "displayName": "[variables('databaseName')]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
-      ],
       "sku": {
         "name": "Basic",
         "tier": "Basic",
         "capacity": 5
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
+      ],
+      "tags": {
+        "displayName": "[variables('databaseName')]"
       },
       "properties": {
         "collation": "SQL_Latin1_General_CP1_CI_AS",
         "edition": "Basic",
         "maxSizeBytes": 104857600,
         "requestedServiceObjectiveName": "Basic",
-        "sampleName" : "AdventureWorksLT"
+        "sampleName": "AdventureWorksLT"
       }
     },
 
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-06-01",
       "name": "[variables('vnetName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -115,7 +115,7 @@
       "resources": [
         {
           "type": "subnets",
-          "apiVersion": "2018-10-01",
+          "apiVersion": "2020-06-01",
           "name": "[variables('subnet1Name')]",
           "location": "[parameters('location')]",
           "dependsOn": [
@@ -130,9 +130,9 @@
     },
     {
       "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-06-01",
       "name": "[variables('privateEndpointName')]",
-      "location": "[parameters('location')]",      
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('vnetName')]",
         "[variables('sqlServerName')]"
@@ -156,16 +156,17 @@
     },
     {
       "type": "Microsoft.Network/privateDnsZones",
-      "apiVersion": "2018-09-01",
+      "apiVersion": "2020-01-01",
       "name": "[variables('privateDnsZoneName')]",
       "location": "global",
       "dependsOn": [
         "[variables('vnetName')]"
-      ]
+      ],
+      "properties": ""
     },
     {
       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-      "apiVersion": "2018-09-01",
+      "apiVersion": "2020-01-01",
       "name": "[concat(variables('privateDnsZoneName'), '/', variables('privateDnsZoneName'), '-link')]",
       "location": "global",
       "dependsOn": [
@@ -181,7 +182,7 @@
     },
     {
       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-      "apiVersion": "2020-03-01",
+      "apiVersion": "2020-06-01",
       "name": "[variables('pvtendpointdnsgroupname')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -201,7 +202,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2020-06-01",
       "name": "[variables('publicIpAddressName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -216,7 +217,7 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2020-06-01",
       "name": "[variables('networkInterfaceName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -245,7 +246,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-07-01",
+      "apiVersion": "2020-06-01",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -289,7 +290,5 @@
         }
       }
     }
-
-
   ]
 }

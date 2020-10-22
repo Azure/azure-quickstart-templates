@@ -68,44 +68,54 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. For example, if stored on a public GitHub repo, you'd use the following URI: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/nagios-on-ubuntu/."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/nagios-on-ubuntu/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  If your artifacts are stored on a public repo or public storage account you can leave this blank."
+      }
     }
   },
   "variables": {
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "imageSKU": "14.04.5-LTS",
-    "vmStorageAccountContainerName": "vhd",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+    "imageSKU": "18.04-LTS",
     "computerNamePrefix": "NagiosCoreSrv",
-    "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/nagios-on-ubuntu/",
     "tshirtSizeSmall": {
       "numberOfInstances": 1,
-      "vmSize": "Standard_A1"
+      "vmSize": "Standard_A1_v2"
     },
     "tshirtSizeMedium": {
       "numberOfInstances": 1,
-      "vmSize": "Standard_D1"
+      "vmSize": "Standard_D1_v2"
     },
     "tshirtSizeLarge": {
       "numberOfInstances": 1,
-      "vmSize": "Standard_D2"
+      "vmSize": "Standard_D2_v2"
     },
     "tshirtSizeXLarge": {
       "numberOfInstances": 1,
-      "vmSize": "Standard_D3"
+      "vmSize": "Standard_D3_v2"
     },
     "tshirtSizeXXLarge": {
       "numberOfInstances": 1,
-      "vmSize": "Standard_D4"
+      "vmSize": "Standard_D4_v2"
     },
     "numberOfInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfInstances]",
     "vmSize": "[variables(concat('tshirtSize', parameters('tshirtSize'))).vmSize]",
-    "securityGroupName": "nagiosNSG",
-    "apiVersion": "2015-06-15"
+    "securityGroupName": "nagiosNSG"
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -126,7 +136,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat('publicIP', copyIndex())]",
       "location": "[parameters('location')]",
@@ -142,7 +152,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('securityGroupName')]",
       "location": "[parameters('location')]",
@@ -166,7 +176,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('nic', copyindex())]",
       "location": "[parameters('location')]",
@@ -175,9 +185,9 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP', copyindex())]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat('publicIP', copyindex()))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
       ],
       "properties": {
         "networkSecurityGroup": {
@@ -192,7 +202,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat('publicIP', copyindex()))]"
               },
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
               }
             }
           }
@@ -200,7 +210,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('nagiosSrv', copyindex())]",
       "location": "[parameters('location')]",
@@ -209,7 +219,7 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic', copyindex()))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -245,15 +255,15 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat('nagiosSrv', copyindex(), '/installnagios')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineExtensionsLoop",
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', 'nagiosSrv', copyindex())]",
-        "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat('nagiosSrv', copyindex()))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic', copyindex()))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -262,7 +272,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('scriptUrl'), 'nagios-core-install.sh')]"
+            "[uri(parameters('_artifactsLocation'), concat('nagios-core-install.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {

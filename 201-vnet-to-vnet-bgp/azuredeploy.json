@@ -21,11 +21,18 @@
             "metadata": {
                 "description": "The SKU for the VPN Gateway. Cannot be Basic SKU."
             }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location of the resources"
+            },
+            "defaultValue": "[resourceGroup().location]"
         }
     },
     "variables": {
         "vNet1": {
-            "name": "[concat('vNet1-', resourceGroup().location)]",
+            "name": "[concat('vNet1-', parameters('location'))]",
             "addressSpacePrefix": "10.0.0.0/23",
             "subnetName": "subnet1",
             "subnetPrefix": "10.0.0.0/24",
@@ -36,7 +43,7 @@
             "asn": 65010
         },
         "vNet2": {
-            "name": "[concat('vNet2-', resourceGroup().location)]",
+            "name": "[concat('vNet2-', parameters('location'))]",
             "addressSpacePrefix": "10.0.2.0/23",
             "subnetName": "subnet1",
             "subnetPrefix": "10.0.2.0/24",
@@ -45,16 +52,14 @@
             "gatewayPublicIPName": "[concat('gw2pip', uniqueString(resourceGroup().id))]",
             "connectionName": "vNet2-to-vNet1",
             "asn": 65050
-        },
-        "gateway1SubnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('vNet1').name),'/subnets/','GatewaySubnet')]",
-        "gateway2SubnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('vNet2').name),'/subnets/','GatewaySubnet')]"
+        }
     },
     "resources": [
         {
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2020-05-01",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('vNet1').name]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "comments": "This is the first vNet",
             "properties": {
                 "addressSpace": {
@@ -79,10 +84,10 @@
             }
         },
         {
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2020-05-01",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('vNet2').name]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "comments": "This is the second vNet",
             "properties": {
                 "addressSpace": {
@@ -107,33 +112,33 @@
             }
         },
         {
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2020-05-01",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('vNet1').gatewayPublicIPName]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "comments": "This is the public IP for vNet Gateway 1",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic"
             }
         },
         {
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2020-05-01",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('vNet2').gatewayPublicIPName]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "comments": "This is the public IP for vNet Gateway 2",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic"
             }
         },
         {
-            "apiVersion": "2017-03-01",
+            "apiVersion": "2020-05-01",
             "type": "Microsoft.Network/virtualNetworkGateways",
             "name": "[variables('vNet1').gatewayName]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('vNet1').gatewayPublicIPName)]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('vNet1').name)]"
+                "[resourceId('Microsoft.Network/publicIPAddresses/', variables('vNet1').gatewayPublicIPName)]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('vNet1').name)]"
             ],
             "comments": "This is the vNet Gateway for vNet 1",
             "properties": {
@@ -142,10 +147,10 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
-                                "id": "[variables('gateway1SubnetRef')]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNet1').name, 'GatewaySubnet')]"
                             },
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('vNet1').gatewayPublicIPName)]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vNet1').gatewayPublicIPName)]"
                             }
                         },
                         "name": "vNet1GatewayConfig"
@@ -157,20 +162,20 @@
                     "tier": "[parameters('gatewaySku')]"
                 },
                 "vpnType": "RouteBased",
-                "enableBgp": "true",
+                "enableBgp": true,
                 "bgpSettings": {
                     "asn": "[variables('vNet1').asn]"
                 }
             }
         },
         {
-            "apiVersion": "2017-03-01",
+            "apiVersion": "2020-05-01",
             "type": "Microsoft.Network/virtualNetworkGateways",
             "name": "[variables('vNet2').gatewayName]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('vNet2').gatewayPublicIPName)]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('vNet2').name)]"
+                "[resourceId('Microsoft.Network/publicIPAddresses/', variables('vNet2').gatewayPublicIPName)]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('vNet2').name)]"
             ],
             "comments": "This is the vNet Gateway for vNet 2",
             "properties": {
@@ -179,10 +184,10 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
-                                "id": "[variables('gateway2SubnetRef')]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vNet2').name, 'GatewaySubnet')]"
                             },
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('vNet2').gatewayPublicIPName)]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vNet2').gatewayPublicIPName)]"
                             }
                         },
                         "name": "vNet2GatewayConfig"
@@ -194,20 +199,20 @@
                     "tier": "[parameters('gatewaySku')]"
                 },
                 "vpnType": "RouteBased",
-                "enableBgp": "true",
+                "enableBgp": true,
                 "bgpSettings": {
                     "asn": "[variables('vNet2').asn]"
                 }
             }
         },
         {
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2020-05-01",
             "type": "Microsoft.Network/connections",
             "name": "[variables('vNet1').connectionName]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworkGateways/', variables('vNet1').gatewayName)]",
-                "[concat('Microsoft.Network/virtualNetworkGateways/', variables('vNet2').gatewayName)]"
+                "[resourceId('Microsoft.Network/virtualNetworkGateways/', variables('vNet1').gatewayName)]",
+                "[resourceId('Microsoft.Network/virtualNetworkGateways/', variables('vNet2').gatewayName)]"
             ],
             "comments": "This is the VPN connection from Gateway 1 to Gateway 2",
             "properties": {
@@ -220,17 +225,17 @@
                 "connectionType": "Vnet2Vnet",
                 "routingWeight": 3,
                 "sharedKey": "[parameters('sharedKey')]",
-                "enableBGP": "true"
+                "enableBGP": true
             }
         },
         {
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2020-05-01",
             "type": "Microsoft.Network/connections",
             "name": "[variables('vNet2').connectionName]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworkGateways/', variables('vNet1').gatewayName)]",
-                "[concat('Microsoft.Network/virtualNetworkGateways/', variables('vNet2').gatewayName)]"
+                "[resourceId('Microsoft.Network/virtualNetworkGateways/', variables('vNet1').gatewayName)]",
+                "[resourceId('Microsoft.Network/virtualNetworkGateways/', variables('vNet2').gatewayName)]"
             ],
             "comments": "This is the VPN connection from Gateway 2 to Gateway 1",
             "properties": {
@@ -243,7 +248,7 @@
                 "connectionType": "Vnet2Vnet",
                 "routingWeight": 3,
                 "sharedKey": "[parameters('sharedKey')]",
-                "enableBGP": "true"
+                "enableBGP": true
             }
         }
     ]
