@@ -6,6 +6,21 @@
       "type": "string",
       "defaultValue": "[concat('kusto', uniqueString(resourceGroup().id))]"
     },
+    "dataManagementPublicIpName": {
+      "type": "string",
+      "defaultValue": "dm-pip"
+    },
+    "enginePublicIpName": {
+      "type": "string",
+      "defaultValue": "engine-pip"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
     "skuName": {
       "type": "string",
       "defaultValue": "Standard_D13_v2"
@@ -14,40 +29,98 @@
       "type": "string",
       "defaultValue": "Standard"
     },
-    "virtualNetworkName": {
-      "type": "string",
-      "defaultValue": "vnet"
-    },
     "subnetName": {
       "type": "string",
       "defaultValue": "subnet"
     },
-    "enginePublicIpName": {
+    "virtualNetworkName": {
       "type": "string",
-      "defaultValue": "engine-pip"
-    },
-    "dataManagementPublicIpName": {
-      "type": "string",
-      "defaultValue": "dm-pip"
-    },
-    "location": {
-        "type": "string",
-        "defaultValue": "[resourceGroup().location]",
-          "metadata": {
-            "description": "Location for all resources."
-        }
+      "defaultValue": "vnet"
     }
   },
-  "variables" : {
-      "publicIpAllocationMethod" : "Static",
-      "nsgName" : "azureDataExplorerNsg",
-      "nsgId" : "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
-      "vnetId" : "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-	  "subnetId" : "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'),parameters('subnetName'))]",
-      "enginePublicIpId" : "[resourceId('Microsoft.Network/publicIPAddresses', parameters('enginePublicIpName'))]",
-      "dataManagementPublicIpId" : "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dataManagementPublicIpName'))]"
+  "variables": {
+    "dataManagementPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dataManagementPublicIpName'))]",
+    "enginePublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('enginePublicIpName'))]",
+    "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
+    "nsgName": "azureDataExplorerNsg",
+    "publicIpAllocationMethod": "Static",
+    "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'),parameters('subnetName'))]",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]"
   },
   "resources": [
+    {
+      "type": "Microsoft.Kusto/Clusters",
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "tier": "[parameters('skuTier')]"
+      },
+      "name": "[parameters('clusterName')]",
+      "apiVersion": "2020-06-14",
+      "dependsOn": [
+        "[variables('enginePublicIpId')]",
+        "[variables('dataManagementPublicIpId')]",
+        "[variables('vnetId')]"
+      ],
+      "location": "[parameters('location')]",
+      "properties": {
+        "virtualNetworkConfiguration": {
+          "subnetId": "[variables('subnetId')]",
+          "enginePublicIpId": "[variables('enginePublicIpId')]",
+          "dataManagementPublicIpId": "[variables('dataManagementPublicIpId')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('dataManagementPublicIpName')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIpAllocationMethod')]",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('enginePublicIpName')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIpAllocationMethod')]",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [ "[variables('nsgId')]" ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/20",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgName')]",
@@ -70,79 +143,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "apiVersion": "2019-07-01",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[parameters('virtualNetworkName')]",
-      "location": "[parameters('location')]",
-      "dependsOn": ["[variables('nsgId')]"],
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "10.0.0.0/16"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[parameters('subnetName')]",
-            "properties": {
-              "addressPrefix": "10.0.0.0/20",
-              "networkSecurityGroup": {
-                "id": "[variables('nsgId')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2019-07-01",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[parameters('enginePublicIpName')]",
-      "sku" : {
-        "name" : "Standard"
-      },
-      "location": "[parameters('location')]",
-      "properties": {
-         "publicIPAllocationMethod": "[variables('publicIpAllocationMethod')]",
-         "publicIPAddressVersion" : "IPv4"
-      }
-    },
-    {
-      "apiVersion": "2019-07-01",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[parameters('dataManagementPublicIpName')]",
-      "sku" : {
-        "name" : "Basic"
-      },
-      "location": "[parameters('location')]",
-      "properties": {
-         "publicIPAllocationMethod": "[variables('publicIpAllocationMethod')]",
-         "publicIPAddressVersion" : "IPv4"
-      }
-    },
-    {
-      "type": "Microsoft.Kusto/Clusters",
-      "sku": {
-          "name": "[parameters('skuName')]",
-          "tier": "[parameters('skuTier')]"
-      },
-      "name": "[parameters('clusterName')]",
-      "apiVersion": "2019-05-15",
-      "dependsOn" :[
-        "[variables('enginePublicIpId')]",
-        "[variables('dataManagementPublicIpId')]",
-		"[variables('vnetId')]"
-      ],
-      "location": "[parameters('location')]",
-      "properties": {
-          "virtualNetworkConfiguration": {
-            "subnetId": "[variables('subnetId')]",
-            "enginePublicIpId": "[variables('enginePublicIpId')]",
-            "dataManagementPublicIpId": "[variables('dataManagementPublicIpId')]"
-          }
       }
     }
   ]

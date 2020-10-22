@@ -63,7 +63,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSecurityGroup').name]",
       "location": "[parameters('location')]",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2020-05-01",
       "properties": {
         "securityRules": [
           {
@@ -73,7 +73,7 @@
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "443",
-              "sourceAddressPrefixes": ["168.61.49.99", "23.99.5.239", "168.61.48.131", "138.91.141.162"],
+              "sourceAddressPrefix": "HDInsight",
               "destinationAddressPrefix": "VirtualNetwork",
               "access": "Allow",
               "priority": 300,
@@ -93,20 +93,6 @@
               "priority": 301,
               "direction": "Inbound"
             }
-          },
-          {
-            "name": "Allow_HDInsight_Management_Traffic_Regional",
-            "properties": {
-              "description": "Adapt this rule based on the region where you are deploying HDInsight, or remove the rule if your region is not listed.",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "443",
-              "sourceAddressPrefixes": ["23.102.235.122", "52.175.38.134", "13.76.245.160", "13.76.136.249", "104.210.84.115", "13.75.152.195", "13.77.2.56", "13.77.2.94", "191.235.84.104", "191.235.87.113", "52.229.127.96", "52.229.123.172", "52.228.37.66", "52.228.45.222", "42.159.96.170", "139.217.2.219", "42.159.198.178", "42.159.234.157", "40.73.37.141", "40.73.38.172", "52.164.210.96", "13.74.153.132", "52.166.243.90", "52.174.36.244", "51.4.146.68", "51.4.146.80", "51.5.150.132", "51.5.144.101", "52.172.153.209", "52.172.152.49", "104.211.223.67", "104.211.216.210", "13.78.125.90", "13.78.89.60", "40.74.125.69", "138.91.29.150", "52.231.39.142", "52.231.36.209", "52.231.203.16", "52.231.205.214", "51.141.13.110", "51.141.7.20", "51.140.47.39", "51.140.52.16", "13.67.223.215", "40.86.83.253", "13.82.225.233", "40.71.175.99", "157.56.8.38", "157.55.213.99", "52.161.23.15", "52.161.10.167", "13.64.254.98", "23.101.196.19", "52.175.211.210", "52.175.222.222"],
-              "destinationAddressPrefix": "VirtualNetwork",
-              "access": "Allow",
-              "priority": 302,
-              "direction": "Inbound"
-            }
           }
         ]
       }
@@ -115,9 +101,9 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vNet').name]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-05-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroup').name)]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroup').name)]"
       ],
       "properties": {
         "addressSpace": {
@@ -142,23 +128,22 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('defaultStorageAccount').name]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2019-06-01",
       "sku": {
         "name": "[variables('defaultStorageAccount').type]"
       },
-      "kind": "Storage",
+      "kind": "StorageV2",
       "properties": {}
     },
     {
       "type": "Microsoft.HDInsight/clusters",
       "name": "[parameters('clusterName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-03-01-preview",
+      "apiVersion": "2018-06-01-preview",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts',variables('defaultStorageAccount').name)]",
         "[resourceId('Microsoft.Network/virtualNetworks',variables('vNet').name)]"
       ],
-      "tags": {},
       "properties": {
         "clusterVersion": "3.6",
         "osType": "Linux",
@@ -175,10 +160,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2016-01-01').primaryEndpoints.blob),'https:',''),'/','')]",
+              "name": "[replace(replace(concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2019-06-01').primaryEndpoints.blob),'https:',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').keys[0].value]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').keys[0].value]"
             }
           ]
         },
@@ -196,7 +181,7 @@
                   "password": "[parameters('sshPassword')]"
                 }
               },
-             "virtualNetworkProfile": {
+              "virtualNetworkProfile": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks',variables('vNet').name)]",
                 "subnet": "[variables('vNet').subnet]"
               }
