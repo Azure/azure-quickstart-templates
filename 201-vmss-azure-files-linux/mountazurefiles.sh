@@ -22,7 +22,7 @@ linkpoint=`echo $4 | sed 's/.*\///'`
 eval ln -s $4 ~$5/$linkpoint
 
 # create marker files for testing
-echo "hello from $HOSTNAME" > $4/$HOSTNAME.txt                                                                         
+echo "hello from $HOSTNAME" > $4/$HOSTNAME.txt
 
 
 

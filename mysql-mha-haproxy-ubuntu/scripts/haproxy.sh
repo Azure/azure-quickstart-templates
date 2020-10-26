@@ -63,35 +63,35 @@ apt-get install make gcc -y > /dev/null 2>&1
 make TARGET=linux2628 PREFIX=/usr/local/haproxy
 make install PREFIX=/usr/local/haproxy
 cat > /usr/local/haproxy/haproxy.cfg <<EOF
-global         
-       maxconn 4096           
+global
+       maxconn 4096
        chroot /usr/local/haproxy
-        uid 99                 
-        gid 99               
-       daemon                  
-       pidfile /usr/local/haproxy/haproxy.pid  
+        uid 99
+        gid 99
+       daemon
+       pidfile /usr/local/haproxy/haproxy.pid
 
-defaults             
+defaults
        log    global
-        log     127.0.0.1       local3        
-       mode    tcp         
-       option  tcplog       
-        option  dontlognull  
-        option  httpclose    
-       retries 3           
-       option  redispatch   
-       maxconn 2000                     
-       timeout connect     5000           
-       timeout client     50000          
-       timeout server     50000          
+        log     127.0.0.1       local3
+       mode    tcp
+       option  tcplog
+        option  dontlognull
+        option  httpclose
+       retries 3
+       option  redispatch
+       maxconn 2000
+       timeout connect     5000
+       timeout client     50000
+       timeout server     50000
 
-frontend mysqlwrite-in                       
+frontend mysqlwrite-in
        bind *:3306
-        mode    tcp 
+        mode    tcp
         option  tcplog
         log     global
-        default_backend mysqlwritepool 
-       
+        default_backend mysqlwritepool
+
 frontend mysqlread-in
       bind *:3307
       mode tcp
@@ -99,11 +99,11 @@ frontend mysqlread-in
       log global
       default_backend mysqlreadpool
 
-backend mysqlwritepool                    
+backend mysqlwritepool
        balance roundrobin
        server  mysql01 10.0.0.10:3306  weight 5 check inter 2000 rise 2 fall 3
 
-backend mysqlreadpool                    
+backend mysqlreadpool
        balance roundrobin
         server  10.0.0.11 10.0.0.11:3306  weight 5 check inter 2000 rise 2 fall 3
         server  10.0.0.12 10.0.0.12:3306  weight 5 check inter 2000 rise 2 fall 3
@@ -136,7 +136,7 @@ do
 result=\`mysql -u\$mysqlUser -p\$mysqlPass -h \$candiMasterIP -e "show slave status\G"\`
 if [[ -n \$result ]];then   #the candidate master is still slave
 
-slaveRunningNumber=\`mysql -u\$mysqlUser -p\$mysqlPass -h \$candiMasterIP -e "show slave status\G" |grep -i "running: Yes" |wc -l\` 
+slaveRunningNumber=\`mysql -u\$mysqlUser -p\$mysqlPass -h \$candiMasterIP -e "show slave status\G" |grep -i "running: Yes" |wc -l\`
   if [[ \$slaveRunningNumber -ne 2 ]];then                     #master-slave has problem
      echo "checked at \$(date +"%F %H:%M:%S"):candidate master \$candiMasterIP slave status is not OK, please check ! "
   fi
@@ -176,10 +176,10 @@ echo "execution method: \`basename \$0\` slaveip1 slaveip2 ...
 
 restartHaproxy() {
 \$haproxyDir/sbin/haproxy -f \$haproxyConFile -st \`cat \$haproxyPidFile\`   #reload
-if [[ \$? -eq 0 ]];then 
+if [[ \$? -eq 0 ]];then
   echo "at \$(date +"%F %H:%M:%S"): reloaded haproxy process. "
 else
-  echo "at \$(date +"%F %H:%M:%S"): reloaded haproxy process failed. Please check haproxy ! " 
+  echo "at \$(date +"%F %H:%M:%S"): reloaded haproxy process failed. Please check haproxy ! "
 fi
 }
 
@@ -197,7 +197,7 @@ result=\`mysql -u\$mysqlUser -p\$mysqlPass -h \$slaveIP -e "show slave status\G"
 slaveResult=\`sed -n "/^backend.*\$mysqlBackendReadPool/,/^backend/{/\$slaveIP/p}" \$haproxyConFile\`
 if [[ -n \$result ]];then   #the slave is still slave
 
-slaveRunningNumber=\`mysql -u\$mysqlUser -p\$mysqlPass -h \$slaveIP -e "show slave status\G" |grep -i "running: Yes" |wc -l\` 
+slaveRunningNumber=\`mysql -u\$mysqlUser -p\$mysqlPass -h \$slaveIP -e "show slave status\G" |grep -i "running: Yes" |wc -l\`
   if [[ \$slaveRunningNumber -ne 2 ]];then                      #master-slave has problem
      echo "checked at \$(date +"%F %H:%M:%S"):MySQL \$slaveIP slave status is not OK, please check ! "
   elif [[ -z \$slaveResult ]];then  #slave is not in the read pool

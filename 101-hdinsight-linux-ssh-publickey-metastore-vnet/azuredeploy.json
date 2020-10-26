@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "clusterName": {
@@ -18,14 +18,14 @@
     },
     "headNodeSize": {
       "type": "string",
-      "defaultValue": "Standard_D3_v3",
+      "defaultValue": "Standard_D12_V2",
       "metadata": {
         "description": "The VM size of the head nodes."
       }
     },
     "workerNodeSize": {
       "type": "string",
-      "defaultValue": "Standard_D3_v3",
+      "defaultValue": "Standard_D13_V2",
       "metadata": {
         "description": "The VM size of the worker nodes."
       }
@@ -79,10 +79,16 @@
         "description": "The name of the storage container to use."
       }
     },
+    "existingHiveMetastoreServerResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource group name where the existing metastore SQL server is located."
+      }
+    },
     "existingHiveMetastoreServerName": {
       "type": "string",
       "metadata": {
-        "description": "The fully-qualified domain name of the SQL server to use for the external Hive metastore."
+        "description": "The fully-qualified domain name (FQDN) of the SQL server to use for the external Hive metastore."
       }
     },
     "existingHiveMetastoreDatabaseName": {
@@ -129,13 +135,12 @@
       }
     }
   },
-  "variables": { },
   "resources": [
     {
       "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-03-01-preview",
+      "apiVersion": "2018-06-01-preview",
       "properties": {
         "clusterVersion": "[parameters('clusterVersion')]",
         "osType": "Linux",
@@ -149,7 +154,7 @@
             },
             "hive-site": {
               "javax.jdo.option.ConnectionDriverName": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
-              "javax.jdo.option.ConnectionURL": "[concat('jdbc:sqlserver://', reference(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Sql/servers', parameters('existingHiveMetastoreServerName')), '2015-05-01-preview').fullyQualifiedDomainName, ';database=',parameters('existingHiveMetastoreDatabaseName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
+              "javax.jdo.option.ConnectionURL": "[concat('jdbc:sqlserver://', reference(resourceId(parameters('existingHiveMetastoreServerResourceGroupName'), 'Microsoft.Sql/servers',parameters('existingHiveMetastoreServerName')), '2018-06-01-preview').fullyQualifiedDomainName, ';database=',parameters('existingHiveMetastoreDatabaseName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
               "javax.jdo.option.ConnectionUserName": "[parameters('existingHiveMetastoreUsername')]",
               "javax.jdo.option.ConnectionPassword": "[parameters('existingHiveMetastorePassword')]"
             },
@@ -158,8 +163,9 @@
               "hive_database_name": "[parameters('existingHiveMetastoreDatabaseName')]",
               "hive_database_type": "mssql",
               "hive_existing_mssql_server_database": "[parameters('existingHiveMetastoreDatabaseName')]",
-              "hive_existing_mssql_server_host": "[parameters('existingHiveMetastoreServerName')]",
-              "hive_hostname": "[parameters('existingHiveMetastoreServerName')]"
+              "hive_existing_mssql_server_host": "[reference(resourceId(parameters('existingHiveMetastoreServerResourceGroupName'),'Microsoft.Sql/servers',parameters('existingHiveMetastoreServerName')), '2018-06-01-preview').fullyQualifiedDomainName]",
+              "hive_hostname": "[reference(resourceId(parameters('existingHiveMetastoreServerResourceGroupName'),'Microsoft.Sql/servers',parameters('existingHiveMetastoreServerName')), '2018-06-01-preview').fullyQualifiedDomainName]"
+
             }
           }
         },
@@ -177,7 +183,7 @@
           "roles": [
             {
               "name": "headnode",
-              "targetInstanceCount": "2",
+              "targetInstanceCount": 2,
               "hardwareProfile": {
                 "vmSize": "[parameters('headNodeSize')]"
               },
@@ -206,7 +212,7 @@
               },
               "virtualNetworkProfile": {
                 "id": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName'))]",
-                "subnet": "[concat(resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName')), '/subnets/', parameters('existingVirtualNetworkSubnetName'))]"
+                "subnet": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingVirtualNetworkSubnetName'))]"
               }
             }
           ]

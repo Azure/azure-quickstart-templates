@@ -37,21 +37,19 @@ function listenForAnnounce() {
 
     var pubnub = require("pubnub")({
         ssl: true,
-        subscribe_key: PNSubscribeKey,
+        subscribeKey: PNSubscribeKey,
         uuid: uuid
     });
 
-    console.log("\nListening for new PN/Azure Web Job Announce...");
-    pubnub.subscribe({
-        uuid: uuid,
-        channel: PNAnnounceChannel,
-        message: function (message) {
+    pubnub.addListener({
+        status: function(message) {
+            // optionally, handle status events here
+        },
+        message: function(message) {
             console.log("Received Message: ", JSON.stringify(message, null, 4));
         },
-        presence: function (message) {
-
+        presence: function(message) {
             if (message.action == "state-change") {
-
                 console.log("\nReceived auto-provisioning payload from " + message.uuid);
 
                 EHInConnectionString = message.data.EHInConnectionString;
@@ -68,10 +66,18 @@ function listenForAnnounce() {
 
                 pubnub.unsubscribe({
                     "channel": PNAnnounceChannel,
-                    "callback": fireEHListeners
+                    // "callback": fireEHListeners
                 });
+                // 'callback' is no longer supported in 'unsubscribe'
+                // so it might be desirable to use a 'await' to call this next line
+                fireEHListeners();
             }
         }
+    });
+
+    console.log("\nListening for new PN/Azure Web Job Announce...");
+    pubnub.subscribe({
+        channels: [PNAnnounceChannel]
     });
 }
 

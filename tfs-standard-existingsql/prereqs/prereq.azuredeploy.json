@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -57,16 +57,16 @@
     "availabilitySetName": "tfsStandardAvailabilitySet",
     "dcIpAddress": "10.0.0.4",
     "nestedTemplates": {
-      "networkTemplate": "[uri(parameters('_artifactsLocation'), concat('prereqs/nestedtemplates/virtualNetwork.json', parameters('_artifactsLocationSasToken')))]",
-      "domainControllerTemplate": "[uri(parameters('_artifactsLocation'), concat('prereqs/nestedtemplates/domainController.json', parameters('_artifactsLocationSasToken')))]",
-      "sqlServerTemplate": "[uri(parameters('_artifactsLocation'), concat('prereqs/nestedtemplates/sqlServer.json', parameters('_artifactsLocationSasToken')))]"
+      "networkTemplate": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/virtualNetwork.json', parameters('_artifactsLocationSasToken')))]",
+      "domainControllerTemplate": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/domainController.json', parameters('_artifactsLocationSasToken')))]",
+      "sqlServerTemplate": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/sqlServer.json', parameters('_artifactsLocationSasToken')))]"
     }
   },
   "resources": [
     {
       "name": "Network",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2019-09-01",
       "comments": "This creates the public IP address, virtual network and load balancer",
       "properties": {
         "mode": "Incremental",
@@ -75,6 +75,9 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
           "vnetName": {
             "value": "[variables('vnetName')]"
           },
@@ -91,7 +94,8 @@
             "value": "[variables('availabilitySetName')]"
           },
           "dnsServers": {
-            "value": []
+            "value": [
+            ]
           }
         }
       }
@@ -99,10 +103,10 @@
     {
       "name": "DomainController",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2019-09-01",
       "comments": "This creates the Domain Controller VM",
       "dependsOn": [
-        "Microsoft.Resources/deployments/Network"
+        "Network"
       ],
       "properties": {
         "mode": "Incremental",
@@ -111,6 +115,9 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
           "vmName": {
             "value": "tfsDC"
           },
@@ -156,10 +163,10 @@
     {
       "name": "UpdateDNS",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2019-09-01",
       "comments": "Updates the DNS setting on the vNet to use our new DC",
       "dependsOn": [
-        "Microsoft.Resources/deployments/DomainController"
+        "DomainController"
       ],
       "properties": {
         "mode": "Incremental",
@@ -168,6 +175,9 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
           "vnetName": {
             "value": "[variables('vnetName')]"
           },
@@ -194,10 +204,10 @@
     {
       "name": "SQLServer",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2019-09-01",
       "comments": "This creates the SQL Server VM",
       "dependsOn": [
-        "Microsoft.Resources/deployments/UpdateDNS"
+        "UpdateDNS"
       ],
       "properties": {
         "mode": "Incremental",
@@ -206,6 +216,9 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
           "vmName": {
             "value": "tfsSQL"
           },
@@ -251,10 +264,6 @@
       "type": "string",
       "value": "[parameters('adminUsername')]"
     },
-    "adminPassword": {
-      "type": "string",
-      "value": "[parameters('adminPassword')]"
-    },
     "existingDomainName": {
       "type": "string",
       "value": "[parameters('domainName')]"
@@ -262,6 +271,10 @@
     "existingVnetName": {
       "type": "string",
       "value": "[variables('vnetName')]"
+    },
+    "existingVnetResourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
     },
     "existingSubnetName": {
       "type": "string",

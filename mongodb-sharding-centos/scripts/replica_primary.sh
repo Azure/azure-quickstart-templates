@@ -45,7 +45,7 @@ disk_format() {
 	yum install wget -y
 	for ((j=1;j<=3;j++))
 	do
-		wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh 
+		wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh
 		if [[ -f /tmp/vm-disk-utils-0.1.sh ]]; then
 			bash /tmp/vm-disk-utils-0.1.sh -b /var/lib/mongo -s
 			if [[ $? -eq 0 ]]; then
@@ -59,14 +59,14 @@ disk_format() {
 			continue
 		fi
 	done
-		
+
 }
 
 
 install_zabbix() {
 	#install zabbix agent
 	cd /tmp
-	yum install -y gcc wget > /dev/null 
+	yum install -y gcc wget > /dev/null
 	wget http://jaist.dl.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/2.2.5/zabbix-2.2.5.tar.gz > /dev/null
 	tar zxvf zabbix-2.2.5.tar.gz
 	cd zabbix-2.2.5
@@ -240,7 +240,7 @@ sleep 15
 start
 }
 
-case "\$1" in 
+case "\$1" in
     start)
 	start;;
 	stop)

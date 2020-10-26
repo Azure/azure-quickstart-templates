@@ -1,17 +1,11 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {    
+  "parameters": {
     "adminUsername": {
-      "type": "string",      
+      "type": "string",
       "metadata": {
         "description": "Username you want to use for the VM the template creates"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password you want to use to log in to the VM"
       }
     },
     "vmSize": {
@@ -22,7 +16,7 @@
       }
     },
     "dnsNameForPublicIP": {
-      "type": "string",  
+      "type": "string",
       "defaultValue": "[uniqueString(resourceGroup().id)]",
       "metadata": {
         "description": "The DNS name (prefix) you want to use for the VM to map against its public IP"
@@ -51,32 +45,60 @@
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
-          "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-      },  
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-gateway-logviewer-goaccess/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
       "metadata": {
-          "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
       },
       "defaultValue": ""
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
     "vmName": "[parameters('dnsNameForPublicIP')]",
     "nicName": "[concat(parameters('dnsNameForPublicIP'), '_vmnic')]",
     "addressPrefix": "10.0.0.0/16",
-    "subnetPrefix": "10.0.0.0/24",  
+    "subnetPrefix": "10.0.0.0/24",
     "subnetName": "DefaultSubnet",
-    "publicIPAddressName": "[concat(parameters('dnsNameForPublicIP'), '_publicip')]",    
+    "publicIPAddressName": "[concat(parameters('dnsNameForPublicIP'), '_publicip')]",
     "virtualNetworkName": "[concat(parameters('dnsNameForPublicIP'), '_vnet')]",
     "networkSecurityGroupName": "[concat(parameters('dnsNameForPublicIP'), '_nsg')]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/setup_vm.sh', parameters('_artifactsLocationSasToken')))]",
     "appGatewayLogProcessorArtifactUri": "[uri(parameters('_artifactsLocation'), concat('scripts/AppGatewayLogProcessor.zip', parameters('_artifactsLocationSasToken')))]",
     "appGwAccessLogsBlobSasUriVar": "[concat('\"', parameters('appGwAccessLogsBlobSasUri'), '\"')]",
-    "filterRegexForAppGwAccessLogsVar": "[concat('\"|', parameters('filterRegexForAppGwAccessLogs'), '|\"')]"
+    "filterRegexForAppGwAccessLogsVar": "[concat('\"|', parameters('filterRegexForAppGwAccessLogs'), '|\"')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -94,8 +116,8 @@
     {
       "apiVersion": "2018-08-01",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('networkSecurityGroupName')]",      
-      "location": "[parameters('location')]",      
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -212,7 +234,7 @@
               }
             }
           }
-        ],        
+        ],
         "networkSecurityGroup": {
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
         }
@@ -223,7 +245,7 @@
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [        
+      "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -233,7 +255,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -243,7 +266,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),'_osdisk')]", 
+            "name": "[concat(variables('vmName'),'_osdisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
@@ -285,7 +308,7 @@
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "fileUris": [            
+          "fileUris": [
             "[variables('scriptFileUri')]",
             "[variables('appGatewayLogProcessorArtifactUri')]"
           ],

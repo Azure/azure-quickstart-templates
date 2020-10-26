@@ -72,7 +72,7 @@ else
         sleep 2
         sshpass -p "$vmadminpass" scp -o "StrictHostKeyChecking no" $vmadminuser@ldap1.$subdomain.local:/etc/ssl/slapd/cacert.pem /etc/ssl/slapd
     done
-    
+
     sshpass -p "$vmadminpass" scp -o "StrictHostKeyChecking no" $vmadminuser@ldap1.$subdomain.local:/etc/ssl/slapd/cakey.pem /etc/ssl/slapd
 fi
 
@@ -213,17 +213,17 @@ if [ "$index" = "1" ]; then
     sed -i "s@{dn}@$base@" hdb_2_addOlcSuffix.ldif
     # ldapmodify -Y EXTERNAL -H ldapi:/// -f hdb_2_addOlcSuffix.ldif
     ldapmodify -ZZ -h $localdomain -D "cn=admin,cn=config" -w $SLAPPASSWD -f hdb_2_addOlcSuffix.ldif
-    
+
     echo "===== Add Root DN ====="
     sed -i "s@{dn}@$base@" hdb_3_addOlcRootDN.ldif
     # ldapmodify -Y EXTERNAL -H ldapi:/// -f hdb_3_addOlcRootDN.ldif
     ldapmodify -ZZ -h $localdomain -D "cn=admin,cn=config" -w $SLAPPASSWD -f hdb_3_addOlcRootDN.ldif
-    
+
     echo "===== Add Root password ====="
     sed -i "s@{password}@$SLAPPASSWDEscaped@" hdb_4_addOlcRootPW.ldif
     # ldapmodify -Y EXTERNAL -H ldapi:/// -f hdb_4_addOlcRootPW.ldif
     ldapmodify -ZZ -h $localdomain -D "cn=admin,cn=config" -w $SLAPPASSWD -f hdb_4_addOlcRootPW.ldif
-    
+
     echo "===== Add  syncRepl among servers ====="
     for i in `seq 1 $vmCount`; do
         let "rid=i+vmCount"
@@ -232,15 +232,15 @@ if [ "$index" = "1" ]; then
 
     # ldapmodify -Y EXTERNAL -H ldapi:/// -f hdb_5_addOlcSyncRepl.ldif
     ldapmodify -ZZ -h $localdomain -D "cn=admin,cn=config" -w $SLAPPASSWD -f hdb_5_addOlcSyncRepl.ldif
-    
+
     echo "===== Add mirror mode ====="
     # ldapmodify -Y EXTERNAL -H ldapi:/// -f hdb_6_addOlcMirrorMode.ldif
     ldapmodify -ZZ -h $localdomain -D "cn=admin,cn=config" -w $SLAPPASSWD -f hdb_6_addOlcMirrorMode.ldif
-    
+
     echo "===== Add index to the database ====="
     # ldapmodify -Y EXTERNAL -H ldapi:/// -f hdb_7_addIndexHDB.ldif
     ldapmodify -ZZ -h $localdomain -D "cn=admin,cn=config" -w $SLAPPASSWD -f hdb_7_addIndexHDB.ldif
-    
+
 fi
 
 echo "===== Restart Apache ====="

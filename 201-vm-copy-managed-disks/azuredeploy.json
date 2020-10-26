@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "virtualMachineAdminUserName": {
@@ -46,13 +46,14 @@
     },
     "operatingSystem": {
       "type": "string",
-      "defaultValue": "Server2016",
+      "defaultValue": "Server2019",
       "metadata": {
         "description": "Operating System of the Server"
       },
       "allowedValues": [
         "Server2012R2",
-        "Server2016"
+        "Server2016",
+        "Server2019"
       ]
     },
     "availabilitySetName": {
@@ -95,19 +96,51 @@
         "PublisherValue": "MicrosoftWindowsServer",
         "OfferValue": "WindowsServer",
         "SkuValue": "2016-Datacenter"
+      },
+      "Server2019": {
+        "PublisherValue": "MicrosoftWindowsServer",
+        "OfferValue": "WindowsServer",
+        "SkuValue": "2019-Datacenter"
       }
     },
     "availabilitySetPlatformFaultDomainCount": "2",
     "availabilitySetPlatformUpdateDomainCount": "5",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('myVNETName'),  variables('myVNETSubnet1Name'))]"
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('myVNETName'),  variables('myVNETSubnet1Name'))]",
+    "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
+    {
+      "comments": "Default Network Security Group for template",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
     {
       "name": "[variables('myVNETName')]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
-      "dependsOn": [],
+      "apiVersion": "2020-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "tags": {
         "displayName": "[variables('myVNETName')]"
       },
@@ -121,7 +154,10 @@
           {
             "name": "[variables('myVNETSubnet1Name')]",
             "properties": {
-              "addressPrefix": "[variables('myVNETSubnet1Prefix')]"
+              "addressPrefix": "[variables('myVNETSubnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
@@ -131,20 +167,19 @@
       "name": "[variables('diagnosticStorageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2019-06-01",
       "sku": {
         "name": "Standard_LRS"
       },
-      "dependsOn": [],
       "tags": {
         "displayName": "diagnosticStorageAccount"
       },
-      "kind": "Storage"
+      "kind": "StorageV2"
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[parameters('availabilitySetName')]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": "[variables('availabilitySetPlatformFaultDomainCount')]",
@@ -157,7 +192,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1))]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "VMcopy",
@@ -189,7 +224,6 @@
           "windowsConfiguration": {
             "provisionVMAgent": true
           },
-          "secrets": [],
           "adminPassword": "[parameters('virtualMachineAdminPassword')]"
         },
         "networkProfile": {
@@ -210,15 +244,15 @@
         }
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticStorageAccountName'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('diagnosticStorageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-NIC1'))]"
       ]
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-NIC1')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "NICCopy",
@@ -239,9 +273,6 @@
             }
           }
         ],
-        "dnsSettings": {
-          "dnsServers": []
-        },
         "enableIPForwarding": false
       },
       "dependsOn": [
@@ -250,7 +281,7 @@
       ]
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-PIP1')]",
       "location": "[parameters('location')]",

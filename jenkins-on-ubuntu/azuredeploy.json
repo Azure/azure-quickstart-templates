@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "virtualNetworkName": {
@@ -13,12 +13,6 @@
       "type": "string",
       "metadata": {
         "description": "Administrator user name used when provisioning virtual machines"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Administrator password used when provisioning virtual machines"
       }
     },
     "dnsName": {
@@ -62,13 +56,43 @@
       "metadata": {
         "description": "Location for all resources."
       }
-    }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+     "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+          },
+          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jenkins-on-ubuntu/"
+      },
+      "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+          },
+          "defaultValue": ""
+      }
   },
   "variables": {
-    "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jenkins-on-ubuntu/",
-    "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
-    "jenkMasterTemplateUrl": "[concat(variables('templateBaseUrl'), 'jenkmaster-resources.json')]",
-    "jenkSlaveTemplateUrl": "[concat(variables('templateBaseUrl'), 'jenkslave-resources.json')]",
+    "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "jenkMasterTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('jenkmaster-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "jenkSlaveTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('jenkslave-resources.json', parameters('_artifactsLocationSasToken')))]",
     "namespace": "jenk",
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
@@ -96,8 +120,8 @@
         "version": "latest"
       },
       "scripts": [
-        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jenkins-on-ubuntu/jenkMstrInstall.sh",
-        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jenkins-on-ubuntu/jenkAddNode.groovy"
+        "[uri(parameters('_artifactsLocation'), concat('jenkMstrInstall.sh', parameters('_artifactsLocationSasToken')))]",
+        "[uri(parameters('_artifactsLocation'), concat('jenkAddNode.groovy', parameters('_artifactsLocationSasToken')))]"
       ]
     },
     "slaveOsSettings": {
@@ -108,7 +132,7 @@
         "version": "latest"
       },
       "scripts": [
-        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jenkins-on-ubuntu/jenkSlaveInstall.sh"
+        "[uri(parameters('_artifactsLocation'), concat('jenkSlaveInstall.sh', parameters('_artifactsLocationSasToken')))]"
       ]
     }
   },
@@ -144,11 +168,8 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-         "adminUsername": {
+          "adminUsername": {
             "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
           },
           "namespace": {
             "value": "[variables('namespace')]"
@@ -173,6 +194,12 @@
           },
           "osSettings": {
             "value": "[variables('masterOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
           }
         }
       }
@@ -199,9 +226,6 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
           "namespace": {
             "value": "[variables('namespace')]"
           },
@@ -219,6 +243,12 @@
           },
           "osSettings": {
             "value": "[variables('slaveOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
           }
         }
       }

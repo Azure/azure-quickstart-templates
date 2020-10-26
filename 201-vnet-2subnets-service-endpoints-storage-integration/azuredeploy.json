@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -56,6 +56,13 @@
         "description": "Address prefix for subnet2"
       }
     },
+    "vmSize": {
+        "type": "string",
+        "defaultValue": "Standard_A1",
+        "metadata": {
+            "description": "Size of VM"
+        }
+    },
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
@@ -84,14 +91,42 @@
     "subnetId": [
       "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet1Name'))]",
       "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnet2Name'))]"
-    ]
+    ],
+    "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
+    {
+      "comments": "Default Network Security Group for template",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
     {
       "apiVersion": "2017-09-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('vnetName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -107,7 +142,10 @@
                 {
                   "service": "Microsoft.Storage"
                 }
-              ]
+              ],
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           },
           {
@@ -219,7 +257,7 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets', 'as1')]"
         },
         "hardwareProfile": {
-          "vmSize": "Standard_A1"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computername": "[concat(variables('vmName'), copyIndex())]",

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "newStorageAccountName": {
@@ -44,15 +44,6 @@
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_A1_v2",
-      "allowedValues": [
-        "Standard_A1_v2",
-        "Standard_A2m_v2",
-        "Standard_A2_v2",
-        "Standard_A4m_v2",
-        "Standard_A4_v2",
-        "Standard_A8m_v2",
-        "Standard_A8_v2"
-      ],
       "metadata": {
         "description": "Size of the VM"
       }
@@ -73,9 +64,8 @@
     },
     "imageSKU": {
       "type": "string",
-      "defaultValue": "12.04.5-LTS",
+      "defaultValue": "18.04-LTS",
       "allowedValues": [
-        "12.04.5-LTS",
         "14.04.5-LTS",
         "16.04-LTS",
         "18.04-LTS"
@@ -88,12 +78,6 @@
       "type": "string",
       "metadata": {
         "description": "VM Admin Username"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "VM Password"
       }
     },
     "virtualNetworkName": {
@@ -126,24 +110,51 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
-    "vnetID": "[resourceId(parameters('virtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', parameters('subnet1Name'))]"
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "StorageV2"
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[parameters('publicIPName')]",
       "location": "[parameters('location')]",
@@ -152,12 +163,12 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[parameters('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', parameters('publicIPName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -169,7 +180,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPName'))]"
               },
               "subnet": {
-                "id": "[variables('subnet1Ref')]"
+                "id": "[resourceId(parameters('virtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnet1Name'))]"
               }
             }
           }
@@ -177,13 +188,13 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-06-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -192,7 +203,8 @@
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -220,7 +232,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('newStorageAccountName')))).primaryEndpoints.blob]"
           }
         }
       }

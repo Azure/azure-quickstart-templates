@@ -41,7 +41,7 @@ EOF
 install_zabbix() {
 	#install zabbix agent
 	cd /tmp
-	yum install -y gcc wget > /dev/null 
+	yum install -y gcc wget > /dev/null
 	wget http://jaist.dl.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/2.2.5/zabbix-2.2.5.tar.gz > /dev/null
 	tar zxvf zabbix-2.2.5.tar.gz
 	cd zabbix-2.2.5
@@ -188,7 +188,7 @@ sleep 15
 start
 }
 
-case "\$1" in 
+case "\$1" in
     start)
 	start;;
 	stop)

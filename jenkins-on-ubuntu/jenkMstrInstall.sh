@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -30,11 +30,11 @@
 #    This script install Jenkins master on an Ubuntu VM image
 #    and optionally configures tohe master with multiple dumb slave nodes.
 #
-# Parameters : 
+# Parameters :
 #    -n number of dumb slave nodes to configure
 #    -h view this help content
 #
-# Note : 
+# Note :
 #    This script has only been tested on Ubuntu 14.04 LTS
 #
 
@@ -102,14 +102,14 @@ install_jenkins()
     log "Waiting for Jenkins master to start..."
     sleep 60
 }
- 
+
 
 # Configure jenkins slave nodes
 configure_slave_nodes()
 {
     log "Configuring Jenkins master with $NODECNT dumb slave node(s)"
 
-    if [ $NODECNT -gt 0 ]; then        
+    if [ $NODECNT -gt 0 ]; then
         # Run groovy script to configure master with $NODECNT dumb slave node(s)
         sudo java -jar /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar -s http://localhost:8080 groovy jenkAddNode.groovy $NODECNT
     fi

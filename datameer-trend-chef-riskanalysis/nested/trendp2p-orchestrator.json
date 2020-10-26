@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "publicIPDomainNameLabelOrchServer": {
@@ -21,10 +21,6 @@
     "vmAdminUsernameOrchServer": {
       "defaultValue": "",
       "type": "string"
-    },
-    "vmAdminPasswordOrchServer": {
-      "defaultValue": "",
-      "type": "securestring"
     },
     "storageAccountName": {
       "defaultValue": "",
@@ -89,10 +85,27 @@
     },
     "quickstartTags": {
       "type": "object"
+    },
+    "authenticationType": {
+      "type": "string"
+    },
+    "vmAdminPasswordOrPublicKeyOrchServer": {
+      "type": "securestring"
     }
   },
   "variables": {
-    "publicIPAddressNameOrchServer": "publicipOrchestratorServer"
+    "publicIPAddressNameOrchServer": "publicipOrchestratorServer",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('vmAdminUsernameOrchServer'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('vmAdminPasswordOrPublicKeyOrchServer')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -119,7 +132,7 @@
           },
           "osDisk": {
             "name": "[concat(parameters('vmNameOrchServer'),'-osDisk')]",
-            "createOption": "FromImage", 
+            "createOption": "FromImage",
             "caching": "ReadWrite"
           },
           "dataDisks": []
@@ -127,11 +140,9 @@
         "osProfile": {
           "computerName": "[parameters('vmNameOrchServer')]",
           "adminUsername": "[parameters('vmAdminUsernameOrchServer')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": false
-          },
           "secrets": [],
-          "adminPassword": "[parameters('vmAdminPasswordOrchServer')]"
+          "adminPassword": "[parameters('vmAdminPasswordOrPublicKeyOrchServer')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "networkProfile": {
           "networkInterfaces": [

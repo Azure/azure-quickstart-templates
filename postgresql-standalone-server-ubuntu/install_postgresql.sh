@@ -1,6 +1,6 @@
 #!/bin/bash
-sudo apt-get update 
-#install the necessary tools 
+sudo apt-get update
+#install the necessary tools
 sudo apt-get install gcc make libreadline6-dev zlib1g-dev -y
 #download postgresql source code
 wget https://ftp.postgresql.org/pub/source/v9.3.5/postgresql-9.3.5.tar.bz2 -P /tmp 2>/dev/null

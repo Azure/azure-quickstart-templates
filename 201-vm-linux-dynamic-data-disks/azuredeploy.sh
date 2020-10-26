@@ -101,7 +101,7 @@ done
 }
 # Creates and exports two shares on the node:
 #
-# /share/home 
+# /share/home
 # /share/data
 #
 setup_shares()
@@ -120,8 +120,8 @@ setup_shares()
 		  -o DPkg::Options::=--force-confdef \
 		 -o DPkg::Options::=--force-confold \
     		install nfs-kernel-server
-		/etc/init.d/apparmor stop 
-		/etc/init.d/apparmor teardown 
+		/etc/init.d/apparmor stop
+		/etc/init.d/apparmor teardown
 		update-rc.d -f apparmor remove
 		apt-get -y remove apparmor
                 systemctl start rpcbind || echo "Already enabled"
@@ -136,8 +136,8 @@ setup_shares()
                 systemctl enable rpcbind || echo "Already enabled"
                 systemctl enable nfs-server || echo "Already enabled"
          fi
-        
-        
+
+
     #else
     #    echo "master:$SHARE_HOME $SHARE_HOME    nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
     #    echo "master:$SHARE_DATA $SHARE_DATA    nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
@@ -172,7 +172,7 @@ system_update()
 install_docker()
 {
 
-    wget -qO- "https://pgp.mit.edu/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e" 
+    wget -qO- "https://pgp.mit.edu/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e"
     rpm --import "https://pgp.mit.edu/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e"
     yum install -y yum-utils
     yum-config-manager --add-repo https://packages.docker.com/$dockerVer/yum/repo/main/centos/7
@@ -204,7 +204,7 @@ install_docker_apps()
 
     # Setting tomcat
     #docker run -it -dp 80:8080 -p 8009:8009  rossbachp/apache-tomcat8
-    docker run -dti --restart=always --name=azure-cli microsoft/azure-cli 
+    docker run -dti --restart=always --name=azure-cli microsoft/azure-cli
     docker run -it -d --restart=always -p 8080:8080 rancher/server
 }
 
@@ -249,7 +249,7 @@ DEBIAN_FRONTEND=noninteractive update-initramfs -u
 }
 install_docker_ubuntu()
 {
-	
+
         # System Update and docker version update
          DEBIAN_FRONTEND=noninteractive apt-get -y update
          apt-get install -y apt-transport-https ca-certificates
@@ -265,8 +265,8 @@ install_docker_ubuntu()
 	 usermod -aG docker $userName
          #apt-get install -y docker-engine
 	 apt-get install -y --allow-unauthenticated docker-engine
-	 /etc/init.d/apparmor stop 
-	 /etc/init.d/apparmor teardown 
+	 /etc/init.d/apparmor stop
+	 /etc/init.d/apparmor teardown
 	 update-rc.d -f apparmor remove
 	 apt-get -y remove apparmor
          #DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated docker-engine

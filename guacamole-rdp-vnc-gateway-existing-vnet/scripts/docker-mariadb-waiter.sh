@@ -13,6 +13,6 @@ sleep 60
 while ! docker run --rm --link $CONTAINER_NAME $IMAGE_NAME mysqladmin ping -h $CONTAINER_NAME --silent; do
     sleep 5
 done
-    
+
 # Wait 5 more seconds before sending the green light
 sleep 5

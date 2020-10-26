@@ -8,10 +8,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-#parameters 
+#parameters
 {
     moodleVersion=${1}
     glusterNode=${2}
@@ -636,10 +636,10 @@ EOF
 
     if [ $fileServerType = "gluster" ]; then
         # mount gluster files system
-        echo -e '\n\rInstalling GlusterFS on '$glusterNode':/'$glusterVolume '/moodle\n\r' 
+        echo -e '\n\rInstalling GlusterFS on '$glusterNode':/'$glusterVolume '/moodle\n\r'
         sudo mount -t glusterfs $glusterNode:/$glusterVolume /moodle
     fi
-    
+
     # install pre-requisites
     sudo apt-get install -y --fix-missing python-software-properties unzip
 
@@ -663,11 +663,11 @@ EOF
     mkdir -p /moodle/moodledata
     chown -R www-data.www-data /moodle
 
-    # install Moodle 
+    # install Moodle
     echo '#!/bin/bash
     cd /tmp
 
-    # downloading moodle 
+    # downloading moodle
     /usr/bin/curl -k --max-redirs 10 https://github.com/moodle/moodle/archive/'$moodleVersion'.zip -L -o moodle.zip
     /usr/bin/unzip -q moodle.zip
     /bin/mv -v moodle-'$moodleVersion' /moodle/html/moodle
@@ -708,7 +708,7 @@ EOF
     /bin/mkdir -p /moodle/html/moodle/local/azure_storage
     /bin/cp -r moodle-local_azure_storage-master/* /moodle/html/moodle/local/azure_storage
     /bin/rm -rf moodle-local_azure_storage-master
-    ' > /tmp/setup-moodle.sh 
+    ' > /tmp/setup-moodle.sh
 
     chmod 755 /tmp/setup-moodle.sh
     sudo -u www-data /tmp/setup-moodle.sh >> /tmp/setupmoodle.log
@@ -733,7 +733,7 @@ http {
   client_max_body_size 0;
   proxy_max_temp_file_size 0;
   server_names_hash_bucket_size  128;
-  fastcgi_buffers 16 16k; 
+  fastcgi_buffers 16 16k;
   fastcgi_buffer_size 32k;
   proxy_buffering off;
   include /etc/nginx/mime.types;
@@ -756,11 +756,11 @@ http {
   gzip_http_version 1.1;
   gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
 
-  map \$http_x_forwarded_proto \$fastcgi_https {                                                                                          
-    default \$https;                                                                                                                   
-    http '';                                                                                                                          
-    https on;                                                                                                                         
-  }   
+  map \$http_x_forwarded_proto \$fastcgi_https {
+    default \$https;
+    http '';
+    https on;
+  }
 
   log_format moodle_combined '\$remote_addr - \$upstream_http_x_moodleuser [\$time_local] '
                              '"\$request" \$status \$body_bytes_sent '
@@ -807,13 +807,13 @@ server {
 	location / {
 		try_files \$uri \$uri/index.php?\$query_string;
 	}
- 
+
         location ~ [^/]\.php(/|$) {
           fastcgi_split_path_info ^(.+?\.php)(/.*)$;
           if (!-f \$document_root\$fastcgi_script_name) {
                   return 404;
           }
- 
+
           fastcgi_buffers 16 16k;
           fastcgi_buffer_size 32k;
           fastcgi_param   SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
@@ -860,7 +860,7 @@ EOF
     echo -e "Generating SSL self-signed certificate"
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /moodle/certs/nginx.key -out /moodle/certs/nginx.crt -subj "/C=BR/ST=SP/L=SaoPaulo/O=IT/CN=$siteFQDN"
 
-   # php config 
+   # php config
    PhpIni=/etc/php/7.0/fpm/php.ini
    sed -i "s/memory_limit.*/memory_limit = 512M/" $PhpIni
    sed -i "s/max_execution_time.*/max_execution_time = 18000/" $PhpIni
@@ -876,7 +876,7 @@ EOF
    sed -i "s/;opcache.memory_consumption.*/opcache.memory_consumption = 256/" $PhpIni
    sed -i "s/;opcache.max_accelerated_files.*/opcache.max_accelerated_files = 8000/" $PhpIni
 
-   # fpm config - overload this 
+   # fpm config - overload this
    cat <<EOF > /etc/php/7.0/fpm/pool.d/www.conf
 [www]
 user = www-data
@@ -886,16 +886,16 @@ listen.owner = www-data
 listen.group = www-data
 pm = dynamic
 pm.max_children = 3000
-pm.start_servers = 20 
-pm.min_spare_servers = 22 
-pm.max_spare_servers = 30 
+pm.start_servers = 20
+pm.min_spare_servers = 22
+pm.max_spare_servers = 30
 EOF
 
    # Remove the default site. Moodle is the only site we want
    rm -f /etc/nginx/sites-enabled/default
 
    # restart Nginx
-    sudo service nginx restart 
+    sudo service nginx restart
 
    # Configure varnish startup for 16.04
    VARNISHSTART="ExecStart=\/usr\/sbin\/varnishd -j unix,user=vcache -F -a :80 -T localhost:6082 -f \/etc\/varnish\/moodle.vcl -S \/etc\/varnish\/secret -s malloc,1024m -p thread_pool_min=200 -p thread_pool_max=4000 -p thread_pool_add_delay=2 -p timeout_linger=100 -p timeout_idle=30 -p send_timeout=1800 -p thread_pools=4 -p http_max_hdr=512 -p workspace_backend=512k"
@@ -1011,7 +1011,7 @@ sub vcl_recv {
 
 sub vcl_backend_response {
     # Happens after we have read the response headers from the backend.
-    # 
+    #
     # Here you clean the response headers, removing silly Set-Cookie headers
     # and other mistakes your backend does.
 
@@ -1113,7 +1113,7 @@ sub vcl_backend_error {
 sub vcl_synth {
 
     #Redirect using '301 - Permanent Redirect', permanent redirect
-    if (resp.status == 851) { 
+    if (resp.status == 851) {
         set resp.http.Location = req.http.x-redir;
         set resp.http.X-Varnish-Redirect = true;
         set resp.status = 301;
@@ -1121,7 +1121,7 @@ sub vcl_synth {
     }
 
     #Redirect using '302 - Found', temporary redirect
-    if (resp.status == 852) { 
+    if (resp.status == 852) {
         set resp.http.Location = req.http.x-redir;
         set resp.http.X-Varnish-Redirect = true;
         set resp.status = 302;
@@ -1129,7 +1129,7 @@ sub vcl_synth {
     }
 
     #Redirect using '307 - Temporary Redirect', !GET&&!HEAD requests, dont change method on redirected requests
-    if (resp.status == 857) { 
+    if (resp.status == 857) {
         set resp.http.Location = req.http.x-redir;
         set resp.http.X-Varnish-Redirect = true;
         set resp.status = 307;
@@ -1184,7 +1184,7 @@ EOF
         echo -e "cd /tmp; sudo -u www-data /usr/bin/php /moodle/html/moodle/admin/cli/install.php --chmod=770 --lang=en_us --wwwroot=https://"$siteFQDN" --dataroot=/moodle/moodledata --dbhost="$mysqlIP" --dbname="$moodledbname" --dbuser="$azuremoodledbuser" --dbpass="$moodledbpass" --dbtype=mysqli --fullname='Moodle LMS' --shortname='Moodle' --adminuser=admin --adminpass="$adminpass" --adminemail=admin@"$siteFQDN" --non-interactive --agree-license --allow-unstable || true "
         cd /tmp; sudo -u www-data /usr/bin/php /moodle/html/moodle/admin/cli/install.php --chmod=770 --lang=en_us --wwwroot=https://$siteFQDN   --dataroot=/moodle/moodledata --dbhost=$mysqlIP   --dbname=$moodledbname   --dbuser=$azuremoodledbuser   --dbpass=$moodledbpass   --dbtype=mysqli --fullname='Moodle LMS' --shortname='Moodle' --adminuser=admin --adminpass=$adminpass   --adminemail=admin@$siteFQDN   --non-interactive --agree-license --allow-unstable || true
 
-        mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'enabletasks', 1);" 
+        mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'enabletasks', 1);"
         mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'filesystem', '\\\tool_objectfs\\\azure_file_system');"
         mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_accountname', '${wabsacctname}');"
         mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_container', 'objectfs');"
@@ -1206,7 +1206,7 @@ EOF
     echo -e "\n\rDone! Installation completed!\n\r"
 
     create_redis_configuration_in_moodledata_muc_config_php
-    
+
     # redis configuration in /moodle/html/moodle/config.php
     sed -i "23 a \$CFG->session_redis_lock_expire = 7200;" /moodle/html/moodle/config.php
     sed -i "23 a \$CFG->session_redis_acquire_lock_timeout = 120;" /moodle/html/moodle/config.php

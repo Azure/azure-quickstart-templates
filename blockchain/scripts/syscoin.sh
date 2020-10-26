@@ -25,14 +25,14 @@ sudo apt-get update
 sudo apt-get install -y libdb4.8-dev libdb4.8++-dev
 
 cd /usr/local
-file=/usr/local/syscoin2
+file=/usr/local/syscoin
 if [ ! -e "$file" ]
 then
-	sudo git clone https://github.com/syscoin/syscoin2.git
+	sudo git clone https://github.com/syscoin/syscoin.git
 fi
 
-cd /usr/local/syscoin2
-file=/usr/local/syscoin2/src/syscoind
+cd /usr/local/syscoin
+file=/usr/local/syscoin/src/syscoind
 if [ ! -e "$file" ]
 then
 	sudo ./autogen.sh
@@ -40,8 +40,8 @@ then
 	sudo make -j$NPROC
 fi
 
-sudo cp /usr/local/syscoin2/src/syscoind /usr/bin/syscoind
-sudo cp /usr/local/syscoin2/src/syscoin-cli /usr/bin/syscoin-cli
+sudo cp /usr/local/syscoin/src/syscoind /usr/bin/syscoind
+sudo cp /usr/local/syscoin/src/syscoin-cli /usr/bin/syscoin-cli
 
 else    
 #################################################################
@@ -49,7 +49,7 @@ else
 #################################################################
 sudo add-apt-repository -y ppa:syscoin/syscoin
 sudo apt-get update
-sudo apt-get install -y syscoin2
+sudo apt-get install -y syscoin
 
 fi
 

@@ -1,0 +1,236 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "australiaeast",
+        "australiasoutheast",
+        "eastus",
+        "westus2",
+        "eastus2euap",
+        "westeurope",
+        "northeurope",
+        "canadacentral",
+        "canadaeast",
+        "japaneast",
+        "japanwest"
+      ],
+      "metadata": {
+        "description": "Location for the resources."
+      }
+    },
+    "logicAppName": {
+      "type": "string",
+      "defaultValue": "[uniqueString(resourceGroup().id)]",
+      "metadata": {
+        "description": "Name of the logic app to be created."
+      }
+    },
+    "customResourceProviderName": {
+      "type": "string",
+      "defaultValue": "[uniqueString(resourceGroup().id)]",
+      "metadata": {
+        "description": "Name of the custom provider to be created."
+      }
+    },
+    "customResourceProviderId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The resource id of an existing custom provider. Provide this to skip deployment of new logic app and custom provider."
+      }
+    },
+    "associationName": {
+      "type": "string",
+      "defaultValue": "myDemoAssociationResource",
+      "metadata": {
+        "description": "Name of the association resource that is being created."
+      }
+    }
+  },
+  "resources": [
+    {
+      "condition": "[empty(parameters('customResourceProviderId'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-09-01",
+      "name": "customProviderInfrastructureTemplate",
+      "properties": {
+        "mode": "Incremental",
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "parameters": {
+            "location": {
+              "value": "[parameters('location')]"
+            },
+            "logicAppName": {
+              "value": "[parameters('logicAppName')]"
+            },
+            "customResourceProviderName": {
+              "value": "[parameters('customResourceProviderName')]"
+            }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "logicAppName": {
+              "type": "string"
+            },
+            "customResourceProviderName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Logic/workflows",
+              "apiVersion": "2019-05-01",
+              "name": "[parameters('logicAppName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "state": "Enabled",
+                "definition": {
+                  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                  "actions": {
+                    "Switch": {
+                      "cases": {
+                        "CreateAssociation": {
+                          "actions": {
+                            "CreateCustomResource": {
+                              "inputs": {
+                                "body": {
+                                  "properties": "@addProperty(triggerBody().Body['properties'], 'myDynamicProperty', 'myDynamicValue')"
+                                },
+                                "statusCode": 200
+                              },
+                              "kind": "Http",
+                              "type": "Response"
+                            }
+                          },
+                          "case": "CREATE"
+                        }
+                      },
+                      "default": {
+                        "actions": {
+                          "DefaultHttpResponse": {
+                            "inputs": {
+                              "statusCode": 200
+                            },
+                            "kind": "Http",
+                            "type": "Response"
+                          }
+                        }
+                      },
+                      "expression": "@triggerBody().operationType",
+                      "type": "Switch"
+                    }
+                  },
+                  "contentVersion": "1.0.0.0",
+                  "outputs": {
+                  },
+                  "parameters": {
+                  },
+                  "triggers": {
+                    "CustomProviderWebhook": {
+                      "inputs": {
+                        "schema": {
+                          "required": [
+                            "OperationType",
+                            "ResourceType",
+                            "ResourceId",
+                            "ResourceName",
+                            "Body"
+                          ],
+                          "properties": {
+                            "OperationType": {
+                              "$id": "#/properties/OperationType",
+                              "type": "string",
+                              "enum": [
+                                "CREATE",
+                                "DELETE",
+                                "GET",
+                                "LIST",
+                                "TRIGGER"
+                              ]
+                            },
+                            "ResourceType": {
+                              "$id": "#/properties/ResourceType",
+                              "type": "string"
+                            },
+                            "ResourceId": {
+                              "$id": "#/properties/ResourceId",
+                              "type": "string"
+                            },
+                            "ResourceName": {
+                              "$id": "#/properties/ResourceName",
+                              "type": "string"
+                            },
+                            "Body": {
+                              "$id": "#/properties/Body",
+                              "type": "object"
+                            }
+                          }
+                        }
+                      },
+                      "kind": "Http",
+                      "type": "Request"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "Microsoft.CustomProviders/resourceProviders",
+              "apiVersion": "2018-09-01-preview",
+              "name": "[parameters('customResourceProviderName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "resourceTypes": [
+                  {
+                    "name": "associations",
+                    "mode": "Secure",
+                    "routingType": "Webhook,Cache,Extension",
+                    "endpoint": "[listCallbackURL(resourceId('Microsoft.Logic/workflows/triggers', parameters('logicAppName'), 'CustomProviderWebhook'), '2019-05-01').value]"
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "customProviderResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.CustomProviders/resourceProviders', parameters('customResourceProviderName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.CustomProviders/associations",
+      "apiVersion": "2018-09-01-preview",
+      "name": "[parameters('associationName')]",
+      "location": "global",
+      "dependsOn": [
+        "customProviderInfrastructureTemplate"
+      ],
+      "properties": {
+        "targetResourceId": "[if(empty(parameters('customResourceProviderId')), reference('customProviderInfrastructureTemplate').outputs.customProviderResourceId.value, parameters('customResourceProviderId'))]",
+        "myCustomInputProperty": "myCustomInputValue",
+        "myCustomInputObject": {
+          "Property1": "Value1"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "associationResource": {
+      "type": "object",
+      "value": "[reference(parameters('associationName'), '2018-09-01-preview', 'Full')]"
+    }
+  }
+}

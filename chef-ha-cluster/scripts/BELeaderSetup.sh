@@ -4,11 +4,11 @@ wget -qO - https://downloads.chef.io/packages-chef-io-public.key | sudo apt-key 
 echo "deb https://packages.chef.io/stable-apt trusty main" > /etc/apt/sources.list.d/chef-stable.list
 apt-get update
 
-# store data on local ssd
+# store data on persisten, external volume
 apt-get install lvm2 xfsprogs sysstat atop -y
 umount -f /mnt
-pvcreate -f /dev/sdb1
-vgcreate chef-vg /dev/sdb1
+pvcreate -f /dev/SOMETHING
+vgcreate chef-vg /dev/SOMETHING
 lvcreate -n chef-lv -l 80%VG chef-vg
 mkfs.xfs /dev/chef-vg/chef-lv
 mkdir -p /var/opt/chef-backend

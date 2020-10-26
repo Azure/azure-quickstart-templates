@@ -3,11 +3,11 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #   http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# 
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
@@ -50,7 +50,7 @@ NODES=()
 
 let "NAMEEND=MASTERNODES-1"
 for i in $(seq 0 $NAMEEND)
-do 
+do
   IP=`atoi ${MASTERIP}`
   let "IP=i+IP"
   HOSTIP=`itoa ${IP}`
@@ -59,7 +59,7 @@ done
 
 let "DATAEND=DATANODES-1"
 for i in $(seq 0 $DATAEND)
-do 
+do
   IP=`atoi ${WORKERIP}`
   let "IP=i+IP"
   HOSTIP=`itoa ${IP}`
@@ -100,8 +100,8 @@ numDataDirs=$(ls -la / | grep data | wc -l)
 echo "numDataDirs:" $numDataDirs
 let endLoopIter=(numDataDirs - 1)
 for x in $(seq 0 $endLoopIter)
-do 
-  echo mkdir -p /data${x}/impala/scratch 
+do
+  echo mkdir -p /data${x}/impala/scratch
   mkdir -p /data${x}/impala/scratch
   chmod 777 /data${x}/impala/scratch
 done

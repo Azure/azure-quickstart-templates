@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -55,7 +55,8 @@
     "vmExtensionName": "[concat(variables('resourcePrefix'), 'Init')]",
     "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
     "_extensionScript": "tigscript.sh",
-    "_configfilelocation": "[concat(parameters('_artifactsLocation'), 'scripts/Configfiles.zip',parameters('_artifactsLocationSasToken'))]"
+    "_configfilelocation": "[concat(parameters('_artifactsLocation'), 'scripts/Configfiles.zip',parameters('_artifactsLocationSasToken'))]",
+    "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
     {
@@ -82,10 +83,89 @@
       }
     },
     {
+      "comments": "Default Network Security Group for template",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-22",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "22",
+              "protocol": "TCP",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-3000",
+            "properties": {
+              "priority": 1001,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3000",
+              "protocol": "TCP",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-8083",
+            "properties": {
+              "priority": 1002,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "8083",
+              "protocol": "TCP",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-8086",
+            "properties": {
+              "priority": 1003,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "8086",
+              "protocol": "TCP",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-8090",
+            "properties": {
+              "priority": 1004,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "8090",
+              "protocol": "TCP",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
       "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -96,14 +176,17 @@
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "10.0.0.0/24"
+              "addressPrefix": "10.0.0.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
       }
     },
     {
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
@@ -160,7 +243,7 @@
           "imageReference": {
             "publisher": "Canonical",
             "offer": "UbuntuServer",
-            "sku": "14.04.5-LTS",
+            "sku": "18.04-LTS",
             "version": "latest"
           },
           "osDisk": {
@@ -199,12 +282,11 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(parameters('_artifactsLocation'),'scripts/',variables('_extensionScript'),parameters('_artifactsLocationSasToken'))]"
-              ],
-              "timestamp": 16012018
+                "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('_extensionScript'), parameters('_artifactsLocationSasToken')))]"
+              ]
             },
             "protectedSettings": {
-              "commandToExecute": "[concat('sh tigscript.sh',' ',variables('_configfilelocation'))]"
+              "commandToExecute": "[concat('sh tigscript.sh', ' ', variables('_configfilelocation'))]"
             }
           }
         }

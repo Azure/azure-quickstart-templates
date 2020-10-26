@@ -45,7 +45,7 @@ install_ansible()
 write_settings_to_file()
 {
     pushd $CURRENT_SCRIPT_PATH
-    
+
     bash -c "cat <<EOF >extra-vars.yml
 ---
 edx_platform_version: \"$OPENEDX_RELEASE\"
@@ -113,4 +113,4 @@ done
 
 # Enable "immediate exit" on error
 set -e
-  
+

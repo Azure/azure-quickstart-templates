@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -240,7 +240,7 @@ install_es()
         log "Failed to import GPG-KEY-elasticsearch."
         exit 1
     fi
-    
+
     # Create a new yum repository file for Elasticsearch
     if [[ "${ES_VERSION}" == \2* ]]; then
         echo '[elasticsearch-2.x]
@@ -250,16 +250,16 @@ gpgcheck=1
 gpgkey=http://packages.elastic.co/GPG-KEY-elasticsearch
 enabled=1' | tee /etc/yum.repos.d/elasticsearch.repo
     fi
-    
+
     if [[ "${ES_VERSION}" == \1* ]]; then
         echo '[elasticsearch-1.7]
 name=Elasticsearch repository for 1.7.x packages
 baseurl=http://packages.elastic.co/elasticsearch/1.7/centos
 gpgcheck=1
 gpgkey=http://packages.elastic.co/GPG-KEY-elasticsearch
-enabled=1' | tee /etc/yum.repos.d/elasticsearch.repo    
+enabled=1' | tee /etc/yum.repos.d/elasticsearch.repo
     fi
-    
+
     # Install Elasticsearch
     RETRY=0
     while [ $RETRY -lt $MAX_RETRY ]; do
@@ -275,7 +275,7 @@ enabled=1' | tee /etc/yum.repos.d/elasticsearch.repo
         log "Failed to install elasticsearch."
         exit 1
     fi
-    
+
 }
 
 # Primary Install Tasks
@@ -284,10 +284,10 @@ enabled=1' | tee /etc/yum.repos.d/elasticsearch.repo
 #      Future enhancement - (export the functions and use background/wait to run in parallel)
 
 
-#if [ ${USE_AFS} -ne 0 ]; 
+#if [ ${USE_AFS} -ne 0 ];
 #then
 #    log "setting up afs"
-    
+
     # install cachefilesd
     # disabled for more extensive testing
     ##apt-get install cachefilesd
@@ -298,9 +298,9 @@ enabled=1' | tee /etc/yum.repos.d/elasticsearch.repo
 #    bash afs-utils-0.1.sh -cp -a ${STORAGE_ACCOUNT} -k ${ACCESS_KEY}
 #else
 #    log "setting up disks"
-    
+
     #Format data disks (Find data disks then partition, format, and mount them as separate drives)
-bash vm-disk-utils-0.1.sh    
+bash vm-disk-utils-0.1.sh
 #fi
 
 #Install Oracle Java
@@ -313,7 +313,7 @@ install_java
 install_es
 
 #install jmeter server agent
-#if [ $JMETER_AGENT ]; 
+#if [ $JMETER_AGENT ];
 #then
 #    install_jmeter_server
 #fi
@@ -361,11 +361,11 @@ if [ -n "$DATAPATH_CONFIG" ]; then
 fi
 
 # if we are using AFS, then add that path
-#if [ ${USE_AFS} -ne 0 ]; 
+#if [ ${USE_AFS} -ne 0 ];
 #then
 #    echo "node.enable_custom_paths: true" >> /etc/elasticsearch/elasticsearch.yml
 #    echo "node.add_id_to_custom_path: false" >> /etc/elasticsearch/elasticsearch.yml
-#    echo "path.shared_data: /sharedfs" >> /etc/elasticsearch/elasticsearch.yml        
+#    echo "path.shared_data: /sharedfs" >> /etc/elasticsearch/elasticsearch.yml
 #fi
 
 # Configure discovery
@@ -404,7 +404,7 @@ if [[ "${MARVEL_ENDPOINTS}" ]]; then
   # non-Marvel node
   mep=$(expand_ip_range "$MARVEL_ENDPOINTS")
   expanded_marvel_endpoints="[\"${mep// /\",\"}\"]"
-  
+
   if [[ "${ES_VERSION}" == \2* ]]; then
     # 2.x non-Marvel node
     echo "marvel.agent.exporters:" >> /etc/elasticsearch/elasticsearch.yml
@@ -475,7 +475,7 @@ if [ ${INSTALL_MARVEL} -ne 0 ]; then
             log "Failed to install plugin marvel-agent."
             exit 1
         fi
-        
+
     else
         RETRY=0
         while [ $RETRY -lt $MAX_RETRY ]; do
@@ -491,8 +491,8 @@ if [ ${INSTALL_MARVEL} -ne 0 ]; then
             log "Failed to install Marvel plugin."
             exit 1
         fi
-        
-        
+
+
     fi
 fi
 

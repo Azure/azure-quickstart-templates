@@ -111,7 +111,7 @@ Catch
             InlineScript{
                 $azurevm = Get-AzureRMVM -ResourceGroupName $Using:VM.ResourceGroupName -Name $Using:VM.RoleName 
                 write-output "Updating DNS for" $azurevm.Id 
-                $NicArmObject = Get-AzureRmResource -ResourceId $azurevm.NetworkInterfaceIDs[0] 
+                $NicArmObject = Get-AzureRmResource -ResourceId $azurevm.NetworkProfile.NetworkInterfaces[0].Id
                 $VMNetworkInterfaceObject = Get-AzureRmNetworkInterface -Name $NicArmObject.Name -ResourceGroupName $NicArmObject.ResourceGroupName
                 $IPconfiguration = $VMNetworkInterfaceObject.IpConfigurations[0]
                 $IP =  $IPconfiguration.PrivateIpAddress

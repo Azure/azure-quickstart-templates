@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "dnsName": {
@@ -12,12 +12,6 @@
       "type": "string",
       "metadata": {
         "description": "user name to ssh to the VMs"
-      }
-    },
-    "vmPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "password to ssh to the VMs"
       }
     },
     "mysqlRootPassword": {
@@ -171,13 +165,6 @@
         "description": "MySQL public port slave"
       }
     },
-    "artifactsPath": {
-      "type": "string",
-      "metadata": {
-        "description": "template and script file location",
-        "artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
-      }
-    },
     "customScriptCommandToExecute": {
       "type": "string",
       "defaultValue": "bash azuremysql.sh",
@@ -198,6 +185,18 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string"
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring"
+    },
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring"
     }
   },
   "variables": {
@@ -214,15 +213,26 @@
     "sshIPConfig": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('sshIPConfigName'))]",
     "nicName": "[concat(parameters('dnsName'), '-nic')]",
     "availabilitySetName": "[concat(parameters('dnsName'), '-set')]",
-    "customScriptFilePath": "[concat(parameters('artifactsPath'), '/scripts/azuremysql.sh')]",
-    "mysqlConfigFilePath": "[concat(parameters('artifactsPath'), '/scripts/my.cnf.template')]",
+    "customScriptFilePath": "[uri(parameters('_artifactsLocation'), concat('scripts/azuremysql.sh', parameters('_artifactsLocationSasToken')))]",
+    "mysqlConfigFilePath": "[uri(parameters('_artifactsLocation'), concat('scripts/my.cnf.template', parameters('_artifactsLocationSasToken')))]",
     "singleQuote": "",
-    "virtualNetworkSetupURL": "[concat(parameters('artifactsPath'),'/nested/vnet-',parameters('vnetNewOrExisting'),'.json')]",
+    "virtualNetworkSetupURL": "[uri(parameters('_artifactsLocation'), concat('nested/vnet-',parameters('vnetNewOrExisting'),'.json', parameters('_artifactsLocationSasToken')))]",
     "sa": "[parameters('dbSubnetStartAddress')]",
     "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
     "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
     "ipOctet3": "[int(split(variables('sa'), '.')[3])]",
-    "DBName": "[concat(uniquestring(resourceGroup().id),'wordpress')]"
+    "DBName": "[concat(uniquestring(resourceGroup().id),'wordpress')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('vmUserName'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -273,11 +283,11 @@
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-        },
-        "properties": { 
+      },
+      "properties": {
         "platformFaultDomainCount": 2,
         "platformUpdateDomainCount": 5
-        }
+      }
     },
     {
       "apiVersion": "2015-06-15",
@@ -346,7 +356,8 @@
         "osProfile": {
           "computerName": "[concat(parameters('dnsName'), copyIndex())]",
           "adminUsername": "[parameters('vmUserName')]",
-          "adminPassword": "[parameters('vmPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -442,7 +453,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort0')]",
               "backendPort": 22,
               "enableFloatingIP": false
@@ -454,7 +465,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort1')]",
               "backendPort": 22,
               "enableFloatingIP": false
@@ -466,7 +477,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('mysqlFrontEndPort0')]",
               "backendPort": 3306,
               "enableFloatingIP": false
@@ -478,7 +489,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('mysqlFrontEndPort1')]",
               "backendPort": 3306,
               "enableFloatingIP": false
@@ -490,7 +501,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('mysqlProbePort0')]",
               "backendPort": 9200,
               "enableFloatingIP": false
@@ -502,7 +513,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('mysqlProbePort1')]",
               "backendPort": 9200,
               "enableFloatingIP": false

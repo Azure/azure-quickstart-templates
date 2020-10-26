@@ -1,14 +1,17 @@
 # Setup Concourse CI with Bosh
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fconcourse-ci%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fconcourse-ci%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/concourse-ci/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/concourse-ci/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/concourse-ci/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/concourse-ci/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/concourse-ci/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/concourse-ci/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fconcourse-ci%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fconcourse-ci%2Fazuredeploy.json)
 
 >Significant updated on 2018-6-21, see [ChangeLog](.\CHANGELOG.md)
-
 
 [Concourse](http://concourse.ci/) is a CI system composed of simple tools and ideas. It can express entire pipelines, integrating with arbitrary resources, or it can be used to execute one-off tasks, either locally or in another CI system.
 
@@ -27,7 +30,6 @@ Here we’ll create the following Azure resources that’s required for deployin
 * A Bosh director if you need
 
 This ARM template can help you to deploy all the above resources on Azure. Just click the button below with the following parameters:
-
 
 | Name | Required | Default Value | Description |
 |:----:|:--------:|:-------------:|:----------- |
@@ -187,3 +189,5 @@ After Concourse had been successfully deployed, you can find the output `CONCOUR
 ![Deployment Result 1](https://raw.githubusercontent.com/CloudFoundryOnAzure/pictures/master/concourse-ci-template/concourse_template_1.PNG)
 
 ![Deployment Result 2](https://raw.githubusercontent.com/CloudFoundryOnAzure/pictures/master/concourse-ci-template/concourse_template_2.PNG)
+
+

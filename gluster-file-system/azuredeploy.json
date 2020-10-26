@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "hostOs": {
@@ -31,15 +31,9 @@
         "description": "ssh user name"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "ssh password"
-      }
-    },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A1",
+      "defaultValue": "Standard_A2_v2",
       "metadata": {
         "description": "VM size for the nodes"
       }
@@ -68,25 +62,50 @@
         "description": "VM name prefix, a number will be appended for each node"
       }
     },
-    "vnetAddressPrefix": {
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "gluster-vnet",
+      "metadata": {
+        "description": "Virtual network name for the cluster"
+      }
+    },
+    "virtualNetworkNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Identifies whether to use new or existing Virtual Network"
+      }
+    },
+    "virtualNetworkResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "If using existing VNet, specifies the resource group for the existing VNet"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "gluster-subnet",
+      "metadata": {
+        "description": "subnet name"
+      }
+    },
+    "virtualNetworkAddressPrefix": {
       "type": "string",
       "defaultValue": "10.0.0.0/16",
       "metadata": {
-        "description": "virtual network CIDR in which the cluster will be created"
+        "description": "IP address in CIDR for virtual network"
       }
     },
-    "gfsSubnetName": {
+    "subnetAddressPrefix": {
       "type": "string",
-      "defaultValue": "gfs-subnet",
+      "defaultValue": "10.0.1.0/24",
       "metadata": {
-        "description": "name of the subnet for the Gluster nodes"
-      }
-    },
-    "gfsSubnetPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/24",
-      "metadata": {
-        "description": "CIDR of the subnet for the Gluster nodes"
+        "description": "IP address in CIDR for subnet"
       }
     },
     "volumeName": {
@@ -116,14 +135,30 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
       "defaultValue": ""
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
     "pipName": "pip",
     "nicName": "nic",
-    "virtualNetworkName": "gfs-vnet",
-    "gfsSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), parameters('gfsSubnetName'))]",
-    "vmIPPrefix": "[concat(substring(parameters('gfsSubnetPrefix'), 0, add(indexOf(parameters('gfsSubnetPrefix'), '/'), -2)), '1')]",
+    "gfsSubnetRef": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+    "vmIPPrefix": "[concat(substring(parameters('subnetAddressPrefix'), 0, lastIndexOf(parameters('subnetAddressPrefix'), '.')), '.10')]",
     "imageReference": {
       "Ubuntu": {
         "publisher": "Canonical",
@@ -139,32 +174,75 @@
       }
     },
     "customScriptFilePath": "[uri(parameters('_artifactsLocation'), concat('azuregfs.sh', parameters('_artifactsLocationSasToken')))]",
-    "customScriptCommandToExecute": "bash azuregfs.sh"
+    "customScriptCommandToExecute": "bash azuregfs.sh",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    },
+    "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
     {
-      "apiVersion": "2018-04-01",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetworkName')]",
+      "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[parameters('vnetAddressPrefix')]"
-          ]
-        },
-        "subnets": [
+        "securityRules": [
           {
-            "name": "[parameters('gfsSubnetName')]",
+            "name": "default-allow-22",
             "properties": {
-              "addressPrefix": "[parameters('gfsSubnetPrefix')]"
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "22",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
             }
           }
         ]
       }
     },
     {
-      "apiVersion": "2018-04-01",
+      "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetAddressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('pipName'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -177,7 +255,7 @@
       }
     },
     {
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2020-06-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyindex())]",
       "location": "[parameters('location')]",
@@ -186,7 +264,7 @@
         "count": "[parameters('scaleNumber')]"
       },
       "dependsOn": [
-        "[variables('virtualNetworkName')]",
+        "[parameters('virtualNetworkName')]",
         "pipLoop"
       ],
       "properties": {
@@ -208,7 +286,7 @@
       }
     },
     {
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2020-06-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('vmNamePrefix'), copyindex())]",
       "location": "[parameters('location')]",
@@ -226,19 +304,19 @@
         "osProfile": {
           "computerName": "[concat(parameters('vmNamePrefix'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[variables('imageReference')[parameters('hostOS')]]",
-            "osDisk": {
+          "osDisk": {
             "name": "[concat(parameters('vmNamePrefix'), copyIndex(), '_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
-                "storageAccountType": "Standard_LRS"
+              "storageAccountType": "Standard_LRS"
             }
-        },
-        
+          },
           "dataDisks": [
             {
               "name": "[concat(parameters('vmNamePrefix'), copyIndex(), '_DataDisk1')]",
@@ -266,10 +344,10 @@
         {
           "type": "extensions",
           "name": "gfs-config",
-          "apiVersion": "2018-04-01",
+          "apiVersion": "2020-06-01",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat(parameters('vmNamePrefix'), copyindex())]"
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('vmNamePrefix'), copyindex()))]"
           ],
           "properties": {
             "publisher": "Microsoft.Azure.Extensions",

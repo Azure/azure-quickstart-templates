@@ -15,7 +15,7 @@ function addtofstab()
   log " not adding fstab entry"
   log " manual mount with 'mount $partPath $mount'"
   $(mount $partPath $mount)
-  
+
   log " addtofstab done"
 }
 
@@ -45,7 +45,7 @@ function getdevicepath()
 
 function createlvm()
 {
-  
+
   log "createlvm"
 
   local lunsA=(${1//,/ })
@@ -65,14 +65,14 @@ function createlvm()
     local numRaidDevices=0
     local raidDevices=""
     log "num luns $lunsCount"
-    
+
     for ((i=0; i<lunsCount; i++))
     do
       log "trying to find device path"
       local lun=${lunsA[$i]}
       getdevicepath $lun
       local devicePath=$getdevicepathresult;
-      
+
       if [ -n "$devicePath" ];
       then
         log " Device Path is $devicePath"
@@ -96,7 +96,7 @@ function createlvm()
       $(lvcreate --extents $sizeLoc%FREE --stripes $numRaidDevices --name $lvNameLoc $vgName)
       $(mkfs -t xfs /dev/$vgName/$lvNameLoc)
       $(mkdir -p $mountPathLoc)
-    
+
       addtofstab /dev/$vgName/$lvNameLoc $mountPathLoc
     done
 
@@ -110,7 +110,7 @@ function createlvm()
     if [ -n "$devicePath" ];
     then
       log " Device Path is $devicePath"
-      
+
       local partedOut=$(parted $devicePath print -s | grep 'Partition Table' | awk '{print $3}')
       if [ "$partedOut" = "unknown" ];
       then
@@ -129,7 +129,7 @@ function createlvm()
         local sizeLoc=${sizeA[$j]}
         local partNumber=$(expr $j + 1)
         local endPercent=$( echo "((100 - $startPercent) * $sizeLoc / 100) + $startPercent" | bc)
-        if [ "$sizeLoc" = "100" ]; 
+        if [ "$sizeLoc" = "100" ];
         then
           local endPercent=100
         fi
@@ -140,15 +140,15 @@ function createlvm()
         log "  partition created - rereading partition table"
         partprobe $devicePath
         udevadm settle
-        
+
         local partPath="$devicePath""$partNumber"
         log "  creating file system"
         mkfs.xfs $partPath -f
         mkdir -p $mountPathLoc
 
         addtofstab $partPath $mountPathLoc
-        
-        startPercent=$endPercent        
+
+        startPercent=$endPercent
       done
     else
       log "no device path for LUN $lun"
@@ -166,7 +166,7 @@ names=""
 paths=""
 sizes=""
 
-while true; 
+while true;
 do
   case "$1" in
     "-luns")  luns=$2;shift 2;log "found luns"
@@ -182,8 +182,8 @@ do
   esac
 
   if [[ -z "$1" ]];
-  then 
-    break; 
+  then
+    break;
   fi
 done
 
@@ -213,6 +213,13 @@ then
   done
 else
   log "count not equal"
+fi
+
+osVersion=$(cat /etc/os-release)
+if [[ $osVersion =~ SUSE ]]
+then
+  systemctl restart nfsserver
+  systemctl enable nfsserver
 fi
 
 exit

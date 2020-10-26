@@ -1,11 +1,20 @@
 # *Deploy and manage a Scalable Mahara Cluster on Azure*
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/mahara-autoscale-cache/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/mahara-autoscale-cache/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/mahara-autoscale-cache/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/mahara-autoscale-cache/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/mahara-autoscale-cache/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/mahara-autoscale-cache/CredScanResult.svg)
+
 After deploying, these templates will provide you with a new Mahara site with caching for speed and scaling frontends to handle PHP load. The filesystem behind it is mirrored for high availability. Filesystem permissions and options have been tuned to make Mahara more secure than the default install.
 
-[![Deploy to Azure Minimally](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com/Azure/azure-quickstart-templates/master/mahara-autoscale-cache/azuredeploy.json) [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com/Azure/azure-quickstart-templates/master/mahara-autoscale-cache/azuredeploy.json)
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com/Azure/azure-quickstart-templates/master/mahara-autoscale-cache/azuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com/Azure/azure-quickstart-templates/master/mahara-autoscale-cache/azuredeploy.json)
 
 `Tags: cluster, ha, mahara, autoscale, linux, ubuntu`
-
 
 ## *What this stack will give you*
 
@@ -76,7 +85,6 @@ While Azure does not currently backup up Postgres/MySQL database, by dumping it 
 
 If you have set azureBackupSwitch to 1 then Azure will provide VM backups of your Gluster node. This is recommended as it contains both your Mahara code and your sitedata. Restoring a backed up VM is outside the scope of this dos, but Azure's documentation on Recovery Services can be found here: https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-first-look-arm
 
-
 ### *Resizing your database*
 
 Note: This involves a lengthy site downtime.
@@ -130,4 +138,5 @@ The controller handles both syslog and cron duties. Depending on how big you Mah
 In general the frontend instances will not be the source of any bottlenecs unless they are severly undersized versus the rest of the cluster. More powerful instances will be needed should fpm processess spawn and exhaust memory during periods of heavy site load. This can also be mitigated against by increasing the number of VMs but spawning new VMs is slower (and potentially more expensive) than having that capacity already available.
 
 It is worth noting that the memory allowances on these instances allow for more memory than they may be able to provide with lower instance tiers. This is intentional as you can opt to run larger VMs with more memory and not require manual configuration. FPM also allows for a very large number of threads with prevents the systerm from failing during many small jobs.
+
 

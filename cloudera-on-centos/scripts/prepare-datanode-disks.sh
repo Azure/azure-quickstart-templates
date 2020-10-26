@@ -13,7 +13,7 @@
 
 LOG_FILE="/var/log/cloudera-azure-initialize.log"
 
-# manually set EXECNAME because this file is called from another script and it $0 contains a 
+# manually set EXECNAME because this file is called from another script and it $0 contains a
 # relevant path
 EXECNAME="prepare-datanode-disks.sh"
 
@@ -188,6 +188,6 @@ log "------- prepare-datanode-disks.sh starting -------"
 sudo bash -c "source ./inputs2.sh; prepare_unmounted_volumes"
 
 log "------- prepare-datanode-disks.sh succeeded -------"
- 
+
 # always `exit 0` on success
 exit 0

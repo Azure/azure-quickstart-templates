@@ -1,10 +1,17 @@
 # Telegraf-influxDB-Grafana in Azure 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-Telegraf-InfluxDB-Grafana%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-Telegraf-InfluxDB-Grafana%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
+
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/CredScanResult.svg)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-Telegraf-InfluxDB-Grafana%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-Telegraf-InfluxDB-Grafana%2Fazuredeploy.json)
+
+    
+
 This template allows you to deploy an instance of Telegraf-InfluxDB-Grafana on a Linux Ubuntu 14.04 LTS VM. This will deploy a VM in the resource group location and return the FQDN of the VM and installs the components of Telegraf, InfluxDB and Grafana. The template provides configuration for telegraf with plugins enabled for Docker,container host metrics.
 
 ## A. Deploy TIG VM
@@ -45,3 +52,5 @@ ssh -i <path to private key file> -L 3000:localhost:3000 -L 8083:localhost:8083 
 
 1. After you have started your tunnel, navigate to http://localhost:3000/ on your local machine, to view Grafana UI. Username: admin, Password: YOUR_PASSWORD
 2. After you have started your tunnel, navigate to http://localhost:8083/ on your local machine, to view InfluxDB UI. Username: root,Password : root. Give the host name as the full DNS name of your instance and save. Select the database "TIG".  
+
+

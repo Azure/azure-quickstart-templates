@@ -129,7 +129,7 @@ sleep 15
 start
 }
 
-case "\$1" in 
+case "\$1" in
     start)
 	start;;
 	stop)

@@ -1,11 +1,18 @@
 # S2D Management Solution for OMS
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/s2d-oms-mgmt-solution/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/s2d-oms-mgmt-solution/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/s2d-oms-mgmt-solution/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/s2d-oms-mgmt-solution/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/s2d-oms-mgmt-solution/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/s2d-oms-mgmt-solution/CredScanResult.svg)
+
 Version: 2.0.0.0
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fs2d-oms-mgmt-solution%2Fazuredeploy.json) 
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fs2d-oms-mgmt-solution%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fs2d-oms-mgmt-solution%2F%2Fazuredeploy.json) 
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%s2d-oms-mgmt-solution%2Fazuredeploy.json)
 
 Check [Updates](#updates) section if you have applied previous version.
 
@@ -308,7 +315,6 @@ C:\temp\s2dmon.ps1 -Start
 
 - Deploy S2D ARM template again.
 
-
 >**Note**: As some fields are changed it may take some time until the new data is fully visible in the dashboards.
 
 ### Update 2
@@ -353,3 +359,5 @@ C:\temp\s2dmon.ps1 -Remove
 C:\temp\s2dmon.ps1 -Setup -OMSWorkspaceCreds (Get-Credential)
 C:\temp\s2dmon.ps1 -Start
 ```
+
+

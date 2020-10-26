@@ -5,8 +5,8 @@
 region=${1}
 otcName=${2}
 adminEmail=${3}
-encodedadminPassword=${4} 
-encodedOTCPassword=${5} 
+encodedadminPassword=${4}
+encodedOTCPassword=${5}
 subscriptionId=${6}
 azureTenantId=${7}
 applicationId=${8}
@@ -22,18 +22,18 @@ QuickstartNameTagValue=${17}
 QuickstartProviderTagValue=${18}
 netappOntapVersion=${19}
 
-adminPassword=`echo $encodedadminPassword| base64 --decode` 
-OTCPassword=`echo $encodedOTCPassword| base64 --decode` 
+adminPassword=`echo $encodedadminPassword| base64 --decode`
+OTCPassword=`echo $encodedOTCPassword| base64 --decode`
 
 
-##Variable Values for Setting up OnCommand Manager 
+##Variable Values for Setting up OnCommand Manager
 tenantName="azurenetappqs_tenant"
 roleID="Role-1"
 siteName="AzureQS"
 siteCompany="AzureQS"
 autoVsaCapacityManagement=true
 autoUpgrade=false
-## Variable Values for Deploying Working Environment on Azure 
+## Variable Values for Deploying Working Environment on Azure
 unit="GB"
 
 
@@ -55,7 +55,7 @@ echo storageType $storageType >> /tmp/inputlog.txt
 echo QuickstartNameTagValue $QuickstartNameTagValue >> /tmp/inputlog.txt
 echo QuickstartProviderTagValue $QuickstartProviderTagValue >> /tmp/inputlog.txt
 
-## Downloading jQuery 
+## Downloading jQuery
 sudo wget -O /usr/bin/jq http://stedolan.github.io/jq/download/linux64/jq
 sleep 5
 sudo chmod +x /usr/bin/jq
@@ -74,7 +74,7 @@ sleep 5
 ## Getting the NetApp Tenant ID, to deploy the ONTAP Cloud
 tenantId=""
 until [ "$tenantId" != "" ]; do
-curl http://localhost/occm/api/auth/login --header 'Content-Type:application/json' --header 'Referer:AzureQS1' --data '{"email":"'${adminEmail}'","password":"'${adminPassword}'"}' --cookie-jar cookies.txt 
+curl http://localhost/occm/api/auth/login --header 'Content-Type:application/json' --header 'Referer:AzureQS1' --data '{"email":"'${adminEmail}'","password":"'${adminPassword}'"}' --cookie-jar cookies.txt
 tenantId=`sudo curl http://localhost/occm/api/tenants -X GET --header 'Content-Type:application/json' --header 'Referer:AzureQS' --cookie cookies.txt | jq -r .[0].publicId`
 sleep 10
 done
@@ -101,7 +101,7 @@ curl 'http://localhost/occm/api/azure/vsa/working-environments/'${OtcPublicId}'?
 otcstatus=`cat /tmp/envdetails.json | jq -r .status.status`
 }
 
-until  [ ${otcstatus} = ON ] 
+until  [ ${otcstatus} = ON ]
 do
   message="OTC not deployed yet, Checking again in 60 seconds"
   echo  ${message}

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "VMSSName": {
@@ -18,11 +18,26 @@
     "adminUsername": {
       "type": "string"
     },
-    "adminPassword": {
+    "authenticationType": {
+      "type": "string"
+    },
+    "adminPasswordOrKey": {
       "type": "securestring"
     }
   },
-  "variables": {},
+  "variables": {
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
   "resources": [
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
@@ -30,7 +45,7 @@
       "name": "[parameters('vmSSName')]",
       "location": "[resourceGroup().location]",
       "sku": {
-        "name": "Standard_A1",
+        "name": "Standard_A1_v2",
         "tier": "Standard",
         "capacity": "[parameters('instanceCount')]"
       },
@@ -56,7 +71,8 @@
           "osProfile": {
             "computerNamePrefix": "[parameters('vmSSName')]",
             "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[parameters('adminPassword')]"
+            "adminPassword": "[parameters('adminPasswordOrKey')]",
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [

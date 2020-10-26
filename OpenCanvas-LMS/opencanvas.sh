@@ -51,7 +51,7 @@ bundle install --path vendor/bundle
 echo "Yarn Installation"
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-sudo apt-get update && sudo apt-get install yarn 
+sudo apt-get update && sudo apt-get install yarn
 sudo apt-get install python
 
 echo "Yarn Installation"
@@ -84,7 +84,7 @@ mv config/outgoing_mail_new.yml config/outgoing_mail.yml
 sed -e 's/"password"/"'"$smtp_pass"'"/' config/outgoing_mail.yml > config/outgoing_mail_new.yml
 mv config/outgoing_mail_new.yml config/outgoing_mail.yml
 echo "domain changes"
-cp config/domain.yml.example config/domain.yml 
+cp config/domain.yml.example config/domain.yml
 sed -e "s/canvas.example.com/$hname/" config/domain.yml > config/domain_new.yml
 mv config/domain_new.yml config/domain.yml
 echo "Security Changes"
@@ -112,11 +112,11 @@ export CANVAS_LMS_ADMIN_EMAIL="$admin_email"
 export CANVAS_LMS_ADMIN_PASSWORD="$admin_pass"
 export CANVAS_LMS_ACCOUNT_NAME="$admin_acct_name"
 export CANVAS_LMS_STATS_COLLECTION="$lms_stat_coll"
-RAILS_ENV=production bundle exec rake db:initial_setup 
+RAILS_ENV=production bundle exec rake db:initial_setup
 sudo chown $USER config/*.yml
 sudo chmod 400 config/*.yml
 echo "Install Passenger"
-sudo apt-get --assume-yes install passenger libapache2-mod-passenger apache2 
+sudo apt-get --assume-yes install passenger libapache2-mod-passenger apache2
 sudo a2enmod rewrite
 sudo a2enmod passenger
 sudo a2enmod ssl
@@ -170,7 +170,7 @@ sed -e "s/files.$hname/$hname/" canvas.conf > canvas_new.conf
 mv canvas_new.conf canvas.conf
 sed -e "s/youremail@example.com/$smtp_email/" canvas.conf > canvas_new.conf
 mv canvas_new.conf canvas.conf
-sudo mv canvas.conf /etc/apache2/sites-available/ 
+sudo mv canvas.conf /etc/apache2/sites-available/
 sudo a2ensite canvas
 echo "APACHE RESTART"
 sudo service apache2 restart

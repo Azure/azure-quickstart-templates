@@ -22,11 +22,11 @@ if [ ! -e /mnt/data/mysql/mysql ]; then
     TMP_SQL_FILE=/mnt/resource/initdb.sql
     rm -rf $TMP_SQL_FILE $TMP_SQL_FILE.tmp
     docker run --rm $GUACAMOLE_IMAGE_NAME /opt/guacamole/bin/initdb.sh --mysql > $TMP_SQL_FILE
-    
+
     # Prepend database name to SQL query
     echo "USE $MYSQL_DATABASE; " | cat - $TMP_SQL_FILE > $TMP_SQL_FILE.tmp \
         && mv $TMP_SQL_FILE.tmp $TMP_SQL_FILE
-    
+
     docker run \
         --name $CONTAINER_NAME \
         -e MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD \

@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 alias azure=azure.cmd
 
 # Set variables for the new resource group
@@ -48,7 +48,7 @@ azure network public-ip create --resource-group $rgName \
     --name $pipName \
     --location $location \
     --allocation-method Static \
-    --domain-name-label $dnsName 
+    --domain-name-label $dnsName
 
 # Get subnet ID
 subnetId="$(azure network vnet subnet show --resource-group $rgName \
@@ -68,7 +68,7 @@ azure network nic create --name $nicName \
 
 azure storage account create $stdStorageAccountName \
     --resource-group $rgName \
-    --location $location --type LRS 
+    --location $location --type LRS
 
 #Create the VM
 azure vm create --resource-group $rgName \

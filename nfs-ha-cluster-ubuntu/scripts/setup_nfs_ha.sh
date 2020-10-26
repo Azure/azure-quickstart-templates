@@ -20,8 +20,15 @@ MY_IP=$(hostname -i)
 
 function setup_required_packages
 {
-    apt update
-    apt -y install build-essential autoconf flex nfs-kernel-server corosync pacemaker resource-agents
+    # Cleanup
+    dpkg --configure -a
+    apt-get install -f
+
+    # Upgrade
+    apt-get -y update
+    apt-get -y dist-upgrade
+
+    apt-get -y install build-essential autoconf flex nfs-kernel-server corosync pacemaker resource-agents
 
     # Shouldn't let systemd start nfs-kernel-server (Pacemaker should do that)
     systemctl stop nfs-kernel-server
@@ -54,6 +61,7 @@ EOF
         curl -LO https://raw.githubusercontent.com/ClusterLabs/resource-agents/master/heartbeat/azure-lb
         chmod +x ./azure-lb
     fi
+    ln -s /bin/nc /usr/bin/nc
     popd
 }
 
@@ -145,7 +153,7 @@ function setup_corosync_and_pacemaker_for_nfs
     local nfs_client_spec=$7        # E.g., * or 10.11.22.0/24
 
     mv /etc/corosync/corosync.conf /etc/corosync/corosync.conf.orig || true
-    
+
     local cluster_name=azmdl-cluster
 
     cat <<EOF > /etc/corosync/corosync.conf

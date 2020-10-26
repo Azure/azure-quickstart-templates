@@ -1,7 +1,14 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "apiManagementServiceName":{
+      "type": "string",
+      "defaultValue": "[concat('apiservice', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description" : "Name of the API Management service."
+      }
+    },
     "publisherEmail": {
       "type": "string",
       "minLength": 1,
@@ -30,33 +37,29 @@
         "description": "The instance size of this API Management service."
       }
     },
-    "additionalLocation1": {
-      "type": "string",
-      "metadata": {
-        "description": "Azure location name where additional API Management gateways need to be deployed."
-      }
-    },
-    "additionalLocation2": {
-      "type": "string",
-      "metadata": {
-        "description": "Azure location name where additional API Management gateways need to be deployed."
-      }
-    },
-    "location": {
+    "location":{
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for all resources."
+        "description" : "Location of the primary region of API Management service."
+      }
+    },
+    "additionalLocations": {
+      "type": "array",
+      "defaultValue": [
+        "East US",
+        "South Central US"
+      ],
+      "metadata": {
+        "description": "Additional Locations to setup the ApiManagement gateway."
       }
     }
   },
-  "variables": {
-    "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]"
-  },
+  "variables": {  },
   "resources": [
     {
-      "apiVersion": "2017-03-01",
-      "name": "[variables('apiManagementServiceName')]",
+      "apiVersion": "2018-01-01",
+      "name": "[parameters('apiManagementServiceName')]",
       "type": "Microsoft.ApiManagement/service",
       "location": "[parameters('location')]",
       "tags": {},
@@ -67,19 +70,16 @@
       "properties": {
         "publisherEmail": "[parameters('publisherEmail')]",
         "publisherName": "[parameters('publisherName')]",
-        "additionalLocations": [
+        "copy": [
           {
-            "location": "[parameters('additionalLocation1')]",
-            "sku": {
-              "name": "[parameters('sku')]",
-              "capacity": "[parameters('skuCount')]"
-            }
-          },
-          {
-            "location": "[parameters('additionalLocation2')]",
-            "sku": {
-              "name": "[parameters('sku')]",
-              "capacity": "[parameters('skuCount')]"
+            "name": "additionalLocations",
+            "count": "[length(parameters('additionalLocations'))]",
+            "input": {
+              "location": "[parameters('additionalLocations')[copyIndex('additionalLocations')]]",
+              "sku": {
+                "name": "[parameters('sku')]",
+                "capacity": "[parameters('skuCount')]"
+              }
             }
           }
         ]

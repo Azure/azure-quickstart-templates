@@ -9,19 +9,22 @@ export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"
 export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"
 export EAP_RPM_CONF_DOMAIN="/etc/opt/rh/eap7/wildfly/eap7-domain.conf"
 
-EAP_USER=$2
-EAP_PASSWORD=$3
-RHSM_USER=$4
-RHSM_PASSWORD=$5
-PROFILE=standalone 
+export EAP_USER=$2
+export EAP_PASSWORD=$3
+export RHSM_USER=$4
+export RHSM_PASSWORD=$5
+export RHSM_POOL=$6
+
+PROFILE=standalone
 echo "EAP admin user"+${EAP_USER} >> /home/$1/install.progress.txt
 echo "Initial EAP7 setup" >> /home/$1/install.progress.txt
-subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --auto-attach >> /home/$1/install.progress.txt 2>&1
+subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD  >> /home/$1/install.progress.txt 2>&1
+subscription-manager attach --pool=${RHSM_POOL} >> /home/$1/install.progress.txt 2>&1
 echo "Subscribing the system to get access to EAP 7 repos" >> /home/$1/install.progress.txt
-# Install EAP7 
+
+# Install EAP7
 subscription-manager repos --enable=jb-eap-7-for-rhel-7-server-rpms >> /home/$1/install.out.txt 2>&1
 yum-config-manager --disable rhel-7-server-htb-rpms
-yum update
 
 echo "Installing EAP7 repos" >> /home/$1/install.progress.txt
 yum groupinstall -y jboss-eap7 >> /home/$1/install.out.txt 2>&1
@@ -47,14 +50,13 @@ echo "Configuring EAP managment user" >> /home/$1/install.progress.txt
 $EAP_HOME/bin/add-user.sh -u $EAP_USER -p $EAP_PASSWORD -g 'guest,mgmtgroup'
 
 echo "Start EAP 7" >> /home/$1/install.progress.txt
-systemctl start eap7-standalone.service > /home/$1/install.out.txt 2>&1
-
+systemctl restart eap7-standalone.service
 
 # Open Red Hat software firewall for port 8080 and 9990:
 firewall-cmd --zone=public --add-port=8080/tcp --permanent  >> /home/$1/install.out.txt 2>&1
 firewall-cmd --zone=public --add-port=9990/tcp --permanent  >> /home/$1/install.out.txt 2>&1
 firewall-cmd --reload  >> /home/$1/install.out.txt 2>&1
-    
+
 echo "Done." >> /home/$1/install.progress.txt
 /bin/date +%H:%M:%S >> /home/$1/install.progress.txt
 

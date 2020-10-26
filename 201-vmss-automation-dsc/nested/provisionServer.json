@@ -1,0 +1,254 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "vmssName": {
+      "type": "string"
+    },
+    "vmSize": {
+      "type": "string"
+    },
+    "instanceCount": {
+      "type": "int",
+      "defaultValue": 5,
+      "maxValue": 100
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "nicName": {
+      "type": "string"
+    },
+    "virtualNetworkName": {
+      "type": "string"
+    },
+    "subnetName": {
+      "type": "string"
+    },
+    "loadBalancerName": {
+      "type": "string"
+    },
+    "automationAccountName": {
+      "type": "string"
+    },
+    "nodeConfigurationName": {
+      "type": "string",
+      "defaultValue": "WindowsIISServerConfig.localhost"
+    }
+  },
+  "variables": {
+    "osType": {
+      "publisher": "MicrosoftWindowsServer",
+      "offer": "WindowsServer",
+      "sku": "2019-Datacenter",
+      "version": "latest"
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('automationAccountName')]",
+      "type": "Microsoft.Automation/automationAccounts",
+      "apiVersion": "2018-06-30",
+      "location": "[parameters('location')]",
+      "comments": "Automation account for OMS",
+      "properties": {
+        "sku": {
+          "name": "Basic"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[toLower(parameters('vmssName'))]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-10-01",
+      "dependsOn": [
+        "[parameters('automationAccountName')]"
+      ],
+      "sku": {
+        "name": "[parameters('VMSize')]",
+        "tier": "Standard",
+        "capacity": "[parameters('instanceCount')]"
+      },
+      "properties": {
+        "overprovision": true,
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "caching": "ReadOnly",
+              "createOption": "FromImage"
+            },
+            "imageReference": "[variables('osType')]"
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "Microsoft.Powershell.DSC",
+                "properties": {
+                  "publisher": "Microsoft.Powershell",
+                  "type": "DSC",
+                  "typeHandlerVersion": "2.76",
+                  "autoUpgradeMinorVersion": true,
+                  "protectedSettings": {
+                    "Items": {
+                      "registrationKeyPrivate": "[listKeys(resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName')), '2018-01-15').Keys[0].value]"
+                    }
+                  },
+                  "settings": {
+                    "Properties": [
+                      {
+                        "Name": "RegistrationKey",
+                        "Value": {
+                          "UserName": "PLACEHOLDER_DONOTUSE",
+                          "Password": "PrivateSettingsRef:registrationKeyPrivate"
+                        },
+                        "TypeName": "System.Management.Automation.PSCredential"
+                      },
+                      {
+                        "Name": "RegistrationUrl",
+                        "Value": "[reference(concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))).registrationUrl]",
+                        "TypeName": "System.String"
+                      },
+                      {
+                        "Name": "NodeConfigurationName",
+                        "Value": "[parameters('nodeConfigurationName')]",
+                        "TypeName": "System.String"
+                      },
+                      {
+                        "Name": "ConfigurationMode",
+                        "Value": "ApplyandAutoCorrect",
+                        "TypeName": "System.String"
+                      },
+                      {
+                        "Name": "RebootNodeIfNeeded",
+                        "Value": true,
+                        "TypeName": "System.Boolean"
+                      },
+                      {
+                        "Name": "ActionAfterReboot",
+                        "Value": "ContinueConfiguration",
+                        "TypeName": "System.String"
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "osProfile": {
+            "computerNamePrefix": "[toLower(parameters('vmssName'))]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "[parameters('nicName')]",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "ipConfig",
+                      "properties": {
+                        "subnet": {
+                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/',parameters('virtualNetworkName')),'/subnets/',parameters('subnetName'))]"
+                        },
+                        "loadBalancerBackendAddressPools": [
+                          {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers/',parameters('loadBalancerName')),'/backendAddressPools/backendAddressPool')]"
+                          }
+                        ],
+                        "loadBalancerInboundNatPools": [
+                          {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers/',parameters('loadBalancerName')),'/inboundNatPools/natRDPPool')]"
+                          },
+                          {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers/',parameters('loadBalancerName')),'/inboundNatPools/natWinRMPool')]"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/autoscaleSettings",
+      "apiVersion": "2015-04-01",
+      "name": "autoscalehost",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachineScaleSets/', parameters('vmSSName'))]"
+      ],
+      "properties": {
+        "name": "autoscalehost",
+        "targetResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets/', parameters('vmSSName'))]",
+        "enabled": true,
+        "profiles": [
+          {
+            "name": "Profile1",
+            "capacity": {
+              "minimum": "2",
+              "maximum": "25",
+              "default": "2"
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "Percentage CPU",
+                  "metricNamespace": "",
+                  "metricResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets/', parameters('vmSSName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT5M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": 60
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT1M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "Percentage CPU",
+                  "metricNamespace": "",
+                  "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', parameters('vmSSName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT5M",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": 30
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT1M"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {}
+}
