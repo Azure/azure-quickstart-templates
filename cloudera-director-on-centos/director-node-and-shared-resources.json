@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.1",
   "parameters": {
     "vnetID": {
@@ -14,8 +14,11 @@
     "dnsNameSuffix": {
       "type": "string"
     },
-    "scriptsUri": {
+    "_artifactsLocation": {
       "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring"
     },
     "storageAccount": {
       "type": "object"
@@ -50,7 +53,18 @@
     "dirSecurityGroupName": "[concat(parameters('dnsNamePrefix'), '-dir-sg')]",
     "masterAsName": "asmaster",
     "workerAsName": "asworker",
-    "edgeAsName": "asedge"
+    "edgeAsName": "asedge",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('vmSpec').adminUsername, '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('vmSpec').adminPasswordOrKey]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -215,10 +229,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('vmSpec').adminUsername]",
-          "adminPassword": "[parameters('vmSpec').adminPassword]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
-          }
+          "adminPassword": "[parameters('vmSpec').adminPasswordOrKey]",
+          "linuxConfiguration": "[if(equals(parameters('vmSpec').authenticationType, 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -235,7 +247,7 @@
           "dataDisks": [
             {
               "name": "[concat(variables('vmName'),'_DataDisk0')]",
-              "diskSizeGB": "128",
+              "diskSizeGB": 128,
               "lun": 0,
               
               "caching": "ReadWrite",
@@ -267,13 +279,13 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('scriptsUri'), '/scripts/initialize-director-server.sh')]",
-            "[concat(parameters('scriptsUri'), '/scripts/initialize-dns-server.sh')]",
-            "[concat(parameters('scriptsUri'), '/scripts/requirements.txt')]",
-            "[concat(parameters('scriptsUri'), '/scripts/prepare-mysql-disks.sh')]",
-            "[concat(parameters('scriptsUri'), '/scripts/initialize-mysql-server.sh')]",
-            "[concat(parameters('scriptsUri'), '/scripts/marketing.py')]",
-            "[concat(parameters('scriptsUri'), '/scripts/director_user_passwd.py')]"
+            "[uri(parameters('_artifactsLocation'), concat('scripts/initialize-director-server.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/initialize-dns-server.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/requirements.txt', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/prepare-mysql-disks.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/initialize-mysql-server.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/marketing.py', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/director_user_passwd.py', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {

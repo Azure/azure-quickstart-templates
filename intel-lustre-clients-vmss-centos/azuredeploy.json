@@ -1,21 +1,21 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "artifactsBaseUrl": {
+    "location": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/intel-lustre-clients-vmss-centos",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Base URL of the solution template gallery package",
-        "artifactsBaseUrl": ""
+        "description": "Location for the resources."
       }
     },
     "imageSku": {
       "type": "string",
-      "defaultValue": "6.6",
+      "defaultValue": "8.0",
       "allowedValues": [
         "6.6",
-        "7.0"
+        "7.0",
+        "8.0"
       ],
       "metadata": {
         "description": "OpenLogic CentOS version to use"
@@ -23,6 +23,7 @@
     },
     "vmssName": {
       "type": "string",
+      "defaultValue": "lustre",
       "metadata": {
         "description": "String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended."
       },
@@ -30,8 +31,9 @@
     },
     "adminUsername": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
-        "description": "Admin username for the virtual machines"
+        "description": "Admin username for the virtual machines, optional when scaling and existing vmss"
       }
     },
     "authenticationType": {
@@ -45,71 +47,19 @@
         "description": "Authentication type for the virtual machines"
       }
     },
-    "adminPassword": {
+    "adminPasswordOrKey": {
       "type": "securestring",
       "defaultValue": "",
       "metadata": {
-        "description": "Admin password for the virtual machines"
-      }
-    },
-    "sshPublicKey": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "SSH public key that will be included on all nodes. The OpenSSH public key can be generated with tools like ssh-keygen on Linux or OS X."
+        "description": "Admin password or SSH public key for the virtual machines, optional when scaling and existing vmss"
       }
     },
     "clientVmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2",
+      "defaultValue": "Standard_D2_v3",
       "metadata": {
         "description": "Size of the Lustre client VM"
-      },
-      "allowedValues": [
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4",
-        "Standard_D11",
-        "Standard_D12",
-        "Standard_D13",
-        "Standard_D14",
-        "Standard_D2_V2",
-        "Standard_D3_V2",
-        "Standard_D4_V2",
-        "Standard_D5_V2",
-        "Standard_D11_V2",
-        "Standard_D12_V2",
-        "Standard_D13_V2",
-        "Standard_D14_V2",
-        "Standard_DS2",
-        "Standard_DS3",
-        "Standard_DS4",
-        "Standard_DS11",
-        "Standard_DS12",
-        "Standard_DS13",
-        "Standard_DS14",
-        "Standard_G1",
-        "Standard_G2",
-        "Standard_G3",
-        "Standard_G4",
-        "Standard_G5",
-        "Standard_GS1",
-        "Standard_GS2",
-        "Standard_GS3",
-        "Standard_GS4",
-        "Standard_GS5",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_A5",
-        "Standard_A6",
-        "Standard_A7",
-        "Standard_A8",
-        "Standard_A9",
-        "Standard_A1",
-        "Standard_D1",
-        "Standard_DS1"
-      ]
+      }
     },
     "clientCount": {
       "type": "int",
@@ -122,7 +72,7 @@
     },
     "filesystemName": {
       "type": "string",
-      "defaultValue": "scratch",
+      "defaultValue": "lustre",
       "metadata": {
         "description": "Name of the Lustre filesystem exposed by the Lustre MGS node"
       }
@@ -134,33 +84,84 @@
         "description": "IP address of the Lustre MGS node"
       }
     },
-    "existingVnetResourceGroupName": {
+    "vnetNewOrExisting": {
       "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Specifies whether to use a new or existing vnet"
+      }
+    },
+    "vnetResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
       "metadata": {
         "description": "Existing Virtual Network Resource Group where Lustre servers are deployed"
       }
     },
-    "existingVnetName": {
+    "vnetName": {
       "type": "string",
       "defaultValue": "vnet-lustre",
       "metadata": {
         "description": "Existing Virtual Network name (e.g. vnet-lustre)"
       }
     },
-    "existingSubnetClientsName": {
+    "subnetName": {
       "type": "string",
       "defaultValue": "subnet-lustre-clients",
       "metadata": {
         "description": "Lustre clients will be deployed into this subnet within the existing Virtual Network"
       }
+    },
+    "addressPrefixes": {
+      "type": "array",
+      "defaultValue": [
+        "10.0.0.0/16"
+      ],
+      "metadata": {
+        "description": "Address prefix of the virtual network"
+      }
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Subnet prefix of the virtual network"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/intel-lustre-clients-vmss-centos/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "NewOrScaleExisting": {
+      "type": "string",
+      "defaultValue": "Deploy New ScaleSet",
+      "allowedValues": [
+        "Deploy New ScaleSet",
+        "Scale Existing VMSS"
+      ],
+      "metadata": {
+        "description": "Determines whether to deploy a new instance or scale and existing scale set up or down."
+      }
     }
   },
   "variables": {
-    "osDiskName": "[concat(parameters('vmssName'), 'osdisk')]",
     "publicIPAddressName": "[concat(parameters('vmssName'), 'pip')]",
     "loadBalancerName": "[concat(parameters('vmssName'), 'lb')]",
     "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName'))]",
     "natPoolName": "[concat(parameters('vmssName'), 'natpool')]",
     "bePoolName": "[concat(parameters('vmssName'), 'bepool')]",
     "natStartPort": 50000,
@@ -168,9 +169,7 @@
     "natBackendPort": 22,
     "nicName": "[concat(parameters('vmssName'), 'nic')]",
     "ipConfigName": "[concat(parameters('vmssName'), 'ipconfig')]",
-    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
-    "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('bePoolName'))]",
-    "lbProbeID": "[concat(variables('lbID'),'/probes/tcpProbe')]",
+    "frontEndIPConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerName'), 'loadBalancerFrontEnd')]",
     "osType": {
       "publisher": "openlogic",
       "offer": "CentOS",
@@ -179,30 +178,47 @@
     },
     "imageReference": "[variables('osType')]",
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
-    "linuxConfiguration_sshPublicKey": {
+    "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
         "publicKeys": [
           {
             "path": "[variables('sshKeyPath')]",
-            "keyData": "[parameters('sshPublicKey')]"
+            "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
       }
     },
-    "baseUrl": "[concat(parameters('artifactsBaseUrl'),'/')]",
-    "vnetID": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('existingVnetName'))]",
-    "subnetClientsID": "[concat(variables('vnetID'), '/subnets/', parameters('existingSubnetClientsName'))]",
-    "scriptUrlLustreClient": "[concat(variables('baseUrl'),'lustre_client.sh')]",
-    "linuxConfiguration_password": {},
-    "linuxConfiguration": "[variables(concat('linuxConfiguration_',parameters('authenticationType')))]"
+    "subnetClientsID": "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]",
+    "scriptUrlLustreClient": "[uri(parameters('_artifactsLocation'), concat('lustre_client.sh', parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
-      {
+    {
+      "condition": "[equals(parameters('vnetNewOrExisting'), 'new')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2019-11-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": "[parameters('addressPrefixes')]"
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[equals(parameters('NewOrScaleExisting'), 'Deploy New ScaleSet')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-11-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -211,12 +227,13 @@
       }
     },
     {
+      "condition": "[equals(parameters('NewOrScaleExisting'), 'Deploy New ScaleSet')]",
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-11-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -234,8 +251,6 @@
             "name": "[variables('bePoolName')]"
           }
         ],
-        "loadBalancingRules": [],
-        "probes": [],
         "inboundNatPools": [
           {
             "name": "[variables('natPoolName')]",
@@ -243,7 +258,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('frontEndIPConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPortRangeStart": "[variables('natStartPort')]",
               "frontendPortRangeEnd": "[variables('natEndPort')]",
               "backendPort": "[variables('natBackendPort')]"
@@ -253,12 +268,13 @@
       }
     },
     {
+      "condition": "[equals(parameters('NewOrScaleExisting'), 'Deploy New ScaleSet')]",
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "name": "[parameters('vmssName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-03-30",
+      "name": "[if(equals(parameters('NewOrScaleExisting'), 'Deploy New ScaleSet'), parameters('vmssName'), 'none')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-12-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]"
       ],
       "sku": {
         "name": "[parameters('clientVmSize')]",
@@ -272,7 +288,6 @@
         "virtualMachineProfile": {
           "storageProfile": {
             "osDisk": {
-              "name": "[variables('osDiskName')]",
               "caching": "ReadOnly",
               "createOption": "FromImage"
             },
@@ -281,8 +296,8 @@
           "osProfile": {
             "computerNamePrefix": "[parameters('vmssName')]",
             "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[parameters('adminPassword')]",
-            "linuxConfiguration": "[variables('linuxConfiguration')]"
+            "adminPassword": "[parameters('adminPasswordOrKey')]",
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [
@@ -336,12 +351,24 @@
         },
         "overprovision": true
       }
+    },
+    {
+      "condition": "[equals(parameters('NewOrScaleExisting'), 'Scale Existing VMSS')]",
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "apiVersion": "2019-12-01",
+      "name": "[if(equals(parameters('NewOrScaleExisting'), 'Scale Existing VMSS'), parameters('vmssName'), 'none')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('clientVmSize')]",
+        "tier": "Standard",
+        "capacity": "[parameters('clientCount')]"
+      }
     }
   ],
   "outputs": {
     "fqdn": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))).dnsSettings.fqdn]"
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), '2019-11-01').dnsSettings.fqdn]"
     }
   }
 }

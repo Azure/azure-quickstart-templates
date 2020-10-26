@@ -1,5 +1,14 @@
 # Spark & Cassandra on CentOS 7.x
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/CredScanResult.svg)
+
 This project configures a Spark cluster (1 master and n-slave nodes) and a single node Cassandra on Azure using CentOS 7.x.  The base image starts with CentOS 7.1 and it is updated to the latest version as part of the provisioning steps.
 
 Please note that [Azure Resource Manager][3] is used to provision the environment.
@@ -12,7 +21,6 @@ Please note that [Azure Resource Manager][3] is used to provision the environmen
 | Java | OpenJDK | 1.8.0 | Installed on all servers |
 | Spark | Spark | 1.6.0 with Hadoop 2.6 | The installation contains libraries needed for Hadoop 2.6 |
 | Cassandra | Cassandra | 3.2 | Installed through DataStax's YUM repository |
-
 
 ### Defaults ###
 
@@ -81,15 +89,12 @@ New-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
 3. Spark WebUI is running on port 8080.  Access it using MASTER_WEB_UI_PUBLIC_IP:8080 on your browser.  Public IP is available through Azure Portal.
 4. Delete the Resource Group that was created to stage the provisioning scripts.
 
-
-
 ### Getting Started (For XPLAT-CLI)
 
 #### Pre-Deployment
 
 1.  Checkout the Git repository.  This folder will be known in the rest of the instructions as **CHECKOUT_DIRECTORY
 2.  Copy the scripts located in CustomScripts folder to a publically accessible location or in Azure Storage.  Once uploaded, update **artifactsLocation** and **artifactsLocationSasToken** in azuredeploy.json accordingly.
-
 
 #### Deployment
 
@@ -107,10 +112,11 @@ New-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
 2. All servers are configured with the same username and password (as entered on the prompts).  SSH into each server and ensure connectivity.
 3. Spark WebUI is running on port 8080.  Access it using MASTER_WEB_UI_PUBLIC_IP:8080 on your browser.  Public IP is available through Azure Portal.
 
-
 [1]: https://azure.microsoft.com/en-us/pricing/free-trial/
 [2]: https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/
 [3]: https://azure.microsoft.com/en-us/documentation/articles/powershell-azure-resource-manager/
 [4]: http://stackoverflow.com/questions/9271681/how-to-run-powershell-script-even-if-set-executionpolicy-is-banned
 [5]: https://azure.microsoft.com/en-us/documentation/articles/virtual-networks-nsg/
 [6]: https://azure.microsoft.com/en-us/documentation/articles/xplat-cli-install/
+
+

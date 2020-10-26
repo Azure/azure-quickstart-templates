@@ -16,7 +16,7 @@ echo "---Configure Repos for Azure Cli 2.0---" >> $LOG
 echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | sudo tee /etc/apt/sources.list.d/azure-cli.list >> $LOG
 sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893 >> $LOG
 
-# Repository Updates 
+# Repository Updates
 echo "---Repository Updates---"	>> $LOG
 sudo apt-get update
 

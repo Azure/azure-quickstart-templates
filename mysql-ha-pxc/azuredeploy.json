@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "dnsName": {
@@ -12,12 +12,6 @@
       "type": "string",
       "metadata": {
         "description": "user name to ssh to the VMs"
-      }
-    },
-    "password": {
-      "type": "securestring",
-      "metadata": {
-        "description": "password to ssh to the VMs"
       }
     },
     "vmSize": {
@@ -194,20 +188,6 @@
         "description": "private ssh port for the VMs"
       }
     },
-    "customScriptFilePath": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-ha-pxc/azurepxc.sh",
-      "metadata": {
-        "description": "bash file location to configure the cluster"
-      }
-    },
-    "mysqlConfigFilePath": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-ha-pxc/my.cnf.template",
-      "metadata": {
-        "description": "my.cnf file location"
-      }
-    },
     "customScriptCommandToExecute": {
       "type": "string",
       "defaultValue": "bash azurepxc.sh",
@@ -221,6 +201,37 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-ha-pxc/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
@@ -250,7 +261,6 @@
     "nicId1": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName1'))]",
     "nicId2": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName2'))]",
     "nicId3": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName3'))]",
-
     "vmName1": "[concat('a-', parameters('vmNamePrefix'))]",
     "vmName2": "[concat('k-', parameters('vmNamePrefix'))]",
     "vmName3": "[concat('z-', parameters('vmNamePrefix'))]",
@@ -258,10 +268,22 @@
     "vmExtensionName": "[concat(parameters('vmNamePrefix'), '-ext')]",
     "pxcClusterAddress": "[concat(parameters('vmIP1'), ',', parameters('vmIP2'), ',', parameters('vmIP3'))]",
     "customScriptCommandCommon": "[concat(parameters('customScriptCommandToExecute'), ' ', variables('pxcClusterAddress'), ' ')]",
-     "customScriptParamVm1": "[concat(parameters('vmIP1'), ' bootstrap-pxc ', parameters('mysqlConfigFilePath'))]",
+    "mysqlConfigFilePath": "[uri(parameters('_artifactsLocation'), concat('my.cnf.template', parameters('_artifactsLocationSasToken')))]",
+    "customScriptParamVm1": "[concat(parameters('vmIP1'), ' bootstrap-pxc ', variables('mysqlConfigFilePath'))]",
     "vmExtensionName1": "[concat(variables('vmName1'),'/', variables('vmExtensionName'))]",
-      "customScriptParamVm2": "[concat(parameters('vmIP2'), ' start ', parameters('mysqlConfigFilePath'))]",
-    "customScriptParamVm3": "[concat(parameters('vmIP3'), ' start ', parameters('mysqlConfigFilePath'))]"
+    "customScriptParamVm2": "[concat(parameters('vmIP2'), ' start ', variables('mysqlConfigFilePath'))]",
+    "customScriptParamVm3": "[concat(parameters('vmIP3'), ' start ', variables('mysqlConfigFilePath'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('userName'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -283,11 +305,11 @@
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-        },
-        "properties": { 
+      },
+      "properties": {
         "platformFaultDomainCount": 2,
         "platformUpdateDomainCount": 5
-        }
+      }
     },
     {
       "apiVersion": "2015-06-15",
@@ -431,7 +453,8 @@
         "osProfile": {
           "computerName": "[variables('vmName1')]",
           "adminUsername": "[parameters('userName')]",
-          "adminPassword": "[parameters('password')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -441,7 +464,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name":"[concat(variables('vmName1'),'_OSDisk')]",
+            "name": "[concat(variables('vmName1'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
@@ -484,7 +507,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[parameters('customScriptFilePath')]"
+            "[uri(parameters('_artifactsLocation'), concat('azurepxc.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
@@ -511,7 +534,8 @@
         "osProfile": {
           "computerName": "[variables('vmName2')]",
           "adminUsername": "[parameters('userName')]",
-          "adminPassword": "[parameters('password')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -565,7 +589,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[parameters('customScriptFilePath')]"
+            "[uri(parameters('_artifactsLocation'), concat('azurepxc.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
@@ -592,7 +616,8 @@
         "osProfile": {
           "computerName": "[variables('vmName3')]",
           "adminUsername": "[parameters('userName')]",
-          "adminPassword": "[parameters('password')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -646,7 +671,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[parameters('customScriptFilePath')]"
+            "[uri(parameters('_artifactsLocation'), concat('azurepxc.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
@@ -685,7 +710,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort1')]",
               "backendPort": "[parameters('sshNatRuleBackEndPort')]",
               "enableFloatingIP": false
@@ -697,7 +722,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort2')]",
               "backendPort": "[parameters('sshNatRuleBackEndPort')]",
               "enableFloatingIP": false
@@ -709,7 +734,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort3')]",
               "backendPort": "[parameters('sshNatRuleBackEndPort')]",
               "enableFloatingIP": false

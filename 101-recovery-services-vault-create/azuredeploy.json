@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vaultName": {
@@ -8,14 +8,22 @@
         "description": "Name of the Vault"
       }
     },
-    "skuTier": {
+    "changeStorageType": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Change Vault Storage Type Selection (Works if vault has not registered any backup instance)"
+      }
+    },
+    "vaultStorageType": {
       "type": "string",
-      "defaultValue": "Standard",
+      "defaultValue": "GeoRedundant",
       "allowedValues": [
-        "Standard"
+        "LocallyRedundant",
+        "GeoRedundant"
       ],
       "metadata": {
-        "description": "SKU tier for the vault"
+        "description": "Change Vault Storage Type (not allowed if the vault has registered backups)"
       }
     },
     "location": {
@@ -26,17 +34,33 @@
       }
     }
   },
+  "variables": {
+    "skuName": "RS0",
+    "skuTier": "Standard"
+  },
   "resources": [
     {
       "type": "Microsoft.RecoveryServices/vaults",
-      "apiVersion": "2018-01-10",
+      "apiVersion": "2020-02-02",
       "name": "[parameters('vaultName')]",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "RS0",
-        "tier": "[parameters('skuTier')]"
+        "name": "[variables('skuName')]",
+        "tier": "[variables('skuTier')]"
       },
       "properties": {}
+    },
+    {
+      "condition": "[parameters('changeStorageType')]",
+      "type": "Microsoft.RecoveryServices/vaults/backupstorageconfig",
+      "apiVersion": "2020-02-02",
+      "name": "[concat(parameters('vaultName'), '/vaultstorageconfig')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+      ],
+      "properties": {
+        "StorageModelType": "[parameters('vaultStorageType')]"
+      }
     }
   ]
 }

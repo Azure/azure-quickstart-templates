@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,8 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # Author: Cognosys Technologies
- 
-### 
+
+###
 ### Warning! This script partitions and formats disk information be careful where you run it
 ###          This script is currently under development and has only been tested on Ubuntu images in Azure
 ###          This script is not currently idempotent and only works for provisioning at the moment
@@ -45,7 +45,7 @@ help()
 
 log()
 {
-	# If you want to enable this logging add a un-comment the line below and add your account key 
+	# If you want to enable this logging add a un-comment the line below and add your account key
     	#curl -X POST -H "content-type:text/plain" --data-binary "$(date) | ${HOSTNAME} | $1" https://logs-01.loggly.com/inputs/[account-key]/tag/redis-extension,${HOSTNAME}
 	echo "$1"
 }
@@ -110,17 +110,17 @@ install_pre()
 {
 # First install pre-requisites
 	sudo  apt-get -y update
-	 
+
 	echo "Installing Java"
 	add-apt-repository -y ppa:webupd8team/java
-	apt-get -y update 
+	apt-get -y update
 	echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
 	echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
 	apt-get -y install oracle-java7-installer
 	sudo ntpdate pool.ntp.org
 	sudo apt-get -y install ntp
-	sudo apt-get -y install python-software-properties 
-	sudo apt-get -y update 
+	sudo apt-get -y install python-software-properties
+	sudo apt-get -y update
 	sudo apt-get -y install git
 }
 
@@ -136,20 +136,20 @@ install_spark()
 #	wget http://mirror.tcpdiag.net/apache/spark/spark-1.2.1/spark-1.2.1.tgz
 #	gunzip -c spark-1.2.1.tgz | tar -xvf -
 #	mv spark-1.2.1 ../
-#	cd ../spark-1.2.1/	
+#	cd ../spark-1.2.1/
 # this will take quite a while
 #	sudo sbt/sbt assembly 2>&1 1>buildlog.txt
 ##########
 
 	version=${SPK_VERSION}
-	wget http://mirror.tcpdiag.net/apache/spark/spark-${version}/spark-${version}-bin-hadoop1.tgz  
+	wget https://archive.apache.org/dist/spark/spark-${version}/spark-${version}-bin-hadoop2.7.tgz
 	echo "Unpacking Spark"
 	tar xvzf spark-*.tgz > /tmp/spark-ec2_spark.log
 	rm spark-*.tgz
-	mv spark-${version}-bin-hadoop1 ../
+	mv spark-${version}-bin-hadoop2.7 ../
 	cd ..
 	cd /usr/local/
-	sudo ln -s spark-${version}-bin-hadoop1 spark
+	sudo ln -s spark-${version}-bin-hadoop2.7 spark
 
 #	Third create a spark user with proper privileges and ssh keys.
 
@@ -158,15 +158,15 @@ install_spark()
 	sudo adduser spark sudo
 	sudo mkdir /home/spark
 	sudo chown spark:spark /home/spark
-	 
-#	Add to sudoers file:
-	 
-	echo "spark ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/90-cloud-init-users	 
-	sudo chown -R spark:spark /usr/local/spark/
-	
-#	Setting passwordless ssh for root 
 
-        rm -f ~/.ssh/id_rsa 
+#	Add to sudoers file:
+
+	echo "spark ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/90-cloud-init-users
+	sudo chown -R spark:spark /usr/local/spark/
+
+#	Setting passwordless ssh for root
+
+        rm -f ~/.ssh/id_rsa
 	ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 
 #	Fourth setup some Apache Spark working directories with proper user permissions
@@ -175,21 +175,21 @@ install_spark()
 	sudo chown -R spark:spark /srv/spark
 	sudo chmod 4755 /srv/spark/tmp
 
-#	Fifth let’s do a quick test
-#	cd /usr/local/spark	 
+#	Fifth letï¿½s do a quick test
+#	cd /usr/local/spark
 #	bin/run-example SparkPi 10
 
 #	Now lets adjust some Spark configuration files
 
 	cd /usr/local/spark/conf/
 	cp -p spark-env.sh.template spark-env.sh
-	touch spark-env.sh  
-	 
+	touch spark-env.sh
+
 #	========================================================
 #	echo 'SPARK-ENV.SH (ADD BELOW)' >> spark-env.sh
 
 # Can change the memory settings
-	 
+
 	echo 'export SPARK_WORKER_MEMORY="1g"' >> spark-env.sh
 	echo 'export SPARK_DRIVER_MEMORY="1g"' >> spark-env.sh
 	echo 'export SPARK_REPL_MEM="2g"' >> spark-env.sh
@@ -216,25 +216,25 @@ install_spark()
 
 	cp -p spark-defaults.conf.template spark-defaults.conf
 	touch spark-defaults.conf
-	 
+
 	#=========================================================
 	#SPARK-DEFAULTS (ADD BELOW)
-	 
+
 	echo "spark.master            spark://${MASTERIP}:7077" >> spark-defaults.conf
 	echo 'spark.executor.memory   512m' >> spark-defaults.conf
 	echo 'spark.eventLog.enabled  true' >> spark-defaults.conf
 	echo 'spark.serializer        org.apache.spark.serializer.KryoSerializer' >> spark-defaults.conf
-	 
+
 	#================================================================
 
 	#Time to start Apache Spark up
 
 	sudo su spark
-	rm -f ~/.ssh/id_rsa 
+	rm -f ~/.ssh/id_rsa
 	ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 
 	ssh localhost
- 
+
 	cd /usr/local/spark/sbin
 	if [ ${MASTER1SLAVE0} -eq "1" ];
 	    then
@@ -244,9 +244,9 @@ install_spark()
 	fi
 
 #Note to stop processes do:
-	 
+
 	#./stop-slaves.sh
-	 
+
 	#./stop-master.sh
 }
 

@@ -1,34 +1,23 @@
-  {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
       "type": "string",
-      "allowedValues": [
-        "CentralUS",
-        "FranceCentral"
-      ],
-      "defaultValue": "CentralUS",
       "metadata": {
-        "description": "Location for the VM, only certain regions support zones during preview."
+        "description": "Location for the VM, only certain regions support zones."
       }
     },
     "trafficManagerDnsName": {
       "type": "string",
       "metadata": {
-        "description": "Relative DNS name for the traffic manager profile, resulting FQDN will be <uniqueDnsName>.trafficmanager.net, must be globally unique."
+        "description": "Relative DNS name for the traffic manager profile, must be globally unique."
       }
     },
     "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "User name for the Virtual Machines."
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machines."
       }
     },
     "publicIpDnsName": {
@@ -45,6 +34,56 @@
       "metadata": {
         "description": "Number of VMs to provision"
       }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A2_v2",
+      "metadata": {
+        "description": "Size of the virtual machines"
+      }
+    },
+    "ubuntuOSVersion": {
+      "type": "string",
+      "defaultValue": "18.04-LTS",
+      "allowedValues": [
+        "18.04-LTS",
+        "16.04.0-LTS",
+        "14.04.5-LTS"
+      ],
+      "metadata": {
+        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 18.04-LTS, 16.04.0-LTS, 14.04.5-LTS."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-traffic-manager-vm-zones/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
@@ -53,22 +92,34 @@
     "publicIPAddressName": "myPublicIP",
     "vmName": "MyUbuntuVM",
     "virtualNetworkName": "MyVNET",
+    "networkSecurityGroupName": "MyNSG",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), variables('subnetName'))]",
     "linuxImage": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
-      "sku": "16.04.0-LTS",
+      "sku": "[parameters('ubuntuOSVersion')]",
       "version": "latest"
+    },
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
     }
   },
   "resources": [
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-05-01",
       "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
       "zones": "[split(string(add(mod(copyIndex(),3),1)), ',')]",
       "sku": {
-        "name": "Basic"
+        "name": "Standard"
       },
       "copy": {
         "name": "ipLoop",
@@ -76,7 +127,7 @@
       },
       "location": "[parameters('location')]",
       "properties": {
-        "publicIPAllocationMethod": "Dynamic",
+        "publicIPAllocationMethod": "Static",
         "dnsSettings": {
           "domainNameLabel": "[concat(parameters('publicIpDnsName'), copyindex())]"
         }
@@ -84,7 +135,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-05-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -105,7 +156,7 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-05-01",
       "name": "[concat(variables('nicName'), copyIndex())]",
       "copy": {
         "name": "nicLoop",
@@ -114,7 +165,8 @@
       "location": "[parameters('location')]",
       "dependsOn": [
         "ipLoop",
-        "[variables('virtualNetworkName')]"
+        "[variables('virtualNetworkName')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -130,12 +182,15 @@
               }
             }
           }
-        ]
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+        }
       }
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-12-01",
       "name": "[concat(variables('vmName'), copyIndex())]",
       "zones": "[split(string(add(mod(copyIndex(),3),1)), ',')]",
       "location": "[parameters('location')]",
@@ -148,12 +203,13 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_A2_v2"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[variables('linuxImage')]",
@@ -167,16 +223,16 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
             }
           ]
-        }        
+        }
       },
       "resources": [
         {
           "type": "extensions",
-          "apiVersion": "2017-03-30",
-          "name": "installcustomscript",
+          "apiVersion": "2019-12-01",
+          "name": "[concat(variables('vmName'), copyIndex(), '-installcustomscript')]",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyIndex())]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vmName'), copyIndex()))]"
           ],
           "properties": {
             "publisher": "Microsoft.Azure.Extensions",
@@ -184,14 +240,17 @@
             "typeHandlerVersion": "2.0",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "commandToExecute": "sudo bash -c 'apt-get update && apt-get -y install apache2' "
+              "fileUris": [
+                "[uri(parameters('_artifactsLocation'), concat('install_apache.sh', parameters('_artifactsLocationSasToken')))]"
+              ],
+              "commandToExecute": "sh install_apache.sh"
             }
           }
-        }    
+        }
       ]
     },
     {
-      "apiVersion": "2017-05-01",
+      "apiVersion": "2018-08-01",
       "type": "Microsoft.Network/trafficManagerProfiles",
       "name": "VMEndpointExample",
       "location": "global",
@@ -210,11 +269,11 @@
           "port": 80,
           "path": "/"
         },
-        "copy" :[
+        "copy": [
           {
             "name": "endpoints",
             "count": "[parameters('numberOfVms')]",
-            "input":{
+            "input": {
               "name": "[concat('endpoint', copyIndex('endpoints'))]",
               "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
               "properties": {
@@ -226,16 +285,39 @@
           }
         ]
       }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Port_80",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
     }
   ],
   "outputs": {
     "trafficManagerFqdn": {
       "type": "string",
-      "value": "[reference('VMEndpointExample', '2017-05-01').dnsConfig.fqdn]"
+      "value": "[reference('VMEndpointExample', '2018-04-01').dnsConfig.fqdn]"
     },
     "trafficManagerEndpoints": {
       "type": "array",
-      "value": "[reference('VMEndpointExample', '2017-05-01').endpoints]"
+      "value": "[reference('VMEndpointExample', '2018-04-01').endpoints]"
     }
   }
 }

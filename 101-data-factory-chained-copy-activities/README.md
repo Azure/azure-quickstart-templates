@@ -1,8 +1,16 @@
 # Two-Activity Chained Data Factory Pipeline
 
-[![deploy](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-chained-copy-activities%2Fazuredeploy.json)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/PublicDeployment.svg)
 
-[![visualize](http://armviz.io/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-chained-copy-activities%2Fazuredeploy.json)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/CredScanResult.svg)
+
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-chained-copy-activities%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-chained-copy-activities%2Fazuredeploy.json)
 
 This template deploys a new Data Factory and requisite objects (linked services, datasets, pipelines, gateways, etc.) to fascilitate a two-activity chained Data Factory pipeline. The first leg of the pipeline leverages [data management gateway](https://docs.microsoft.com/en-us/azure/data-factory/data-factory-data-management-gateway) to pull data from an on-premises SQL server source into Azure Data Lake Store in [Apache orc columnar storage format](https://orc.apache.org/). The second leg of the pipeline pulls data from orc files in Azure Data Lake Store and inserts into Azure SQL as a final destination. This pipeline can be easily customized to accomodated a wide variety of additional sources and targets.
 
@@ -39,3 +47,4 @@ azure-group-deploy.sh -a 101-data-factory-blob-to-sql-copy-stored-proc -l eastus
 4. Replace the placeholder connectionString value in your SqlLinkedService linked service with the encrypted value created above by editing the linked service in the Data Factory console's "Author and deploy" blade. This password will be encrypted using an ADF managed key.
 5. Un-pause data pipeline from the ADF [Monitor and Manage console](https://docs.microsoft.com/en-us/azure/data-factory/data-factory-monitor-manage-app).
 6. Test your new pipline out by inserting a new record into the Sales.Currency table in your on-premises database. Make sure to set the timestamp to a time that falls within an upcoming [ADF data slice](https://docs.microsoft.com/en-us/azure/data-factory/data-factory-scheduling-and-execution).
+

@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "redisCacheName": {
@@ -8,8 +8,9 @@
                 "description": "The name of the Azure Redis Cache to create."
             }
         },
-        "redisCacheLocation": {
+        "location": {
             "type": "string",
+            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "The location of the Redis Cache. For best performance, use the same location as the app to be used with the cache."
             }
@@ -27,17 +28,23 @@
                 "description": "The size of the new Azure Redis Cache instance. Valid family and capacity combinations are (C0..C6, P1..P4)."
             }
         },
-        "rdbBackupStorageConnectionString": {
-            "type": "string",
-            "metadata": {
-                "description": "A storage connection string to an Azure Storage Account. (note: a Premium Storage Account in the same region is required)."
-            }
-        },
         "existingDiagnosticsStorageAccountName": {
             "type": "string",
             "metadata": {
                 "description": "Name of an existing storage account for diagnostics. Must be in the same subscription and region."
             }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of an existing storage account to be cached."
+            }            
+        },
+        "storageAccountResourceGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "ResourceGroup for the storageAccount being cached."
+            }            
         },
         "enableNonSslPort": {
             "type": "bool",
@@ -49,10 +56,10 @@
     },
     "resources": [
         {
-            "apiVersion": "2015-08-01",
+            "apiVersion": "2019-07-01",
             "name": "[parameters('redisCacheName')]",
             "type": "Microsoft.Cache/Redis",
-            "location": "[parameters('redisCacheLocation')]",
+            "location": "[parameters('location')]",
             "properties": {
                 "enableNonSslPort": "[parameters('enableNonSslPort')]",
                 "sku": {
@@ -63,17 +70,17 @@
                 "redisConfiguration": {
                     "rdb-backup-enabled": "true",
                     "rdb-backup-frequency": "60",
-                    "rdb-storage-connection-string": "[parameters('rdbBackupStorageConnectionString')]"
+                    "rdb-storage-connection-string": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=', listKeys(resourceId(parameters('storageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value)]"
                 }
             },
             "resources": [
                 {
-                    "apiVersion": "2015-07-01",
+                    "apiVersion": "2017-05-01-preview",
                     "name": "[concat(parameters('redisCacheName'), '/Microsoft.Insights/service')]",
                     "type": "Microsoft.Cache/redis/providers/diagnosticsettings",
-                    "location": "[parameters('redisCacheLocation')]",
+                    "location": "[parameters('location')]",
                     "dependsOn": [
-                        "[concat('Microsoft.Cache/Redis/', parameters('redisCacheName'))]"
+                        "[resourceId('Microsoft.Cache/Redis', parameters('redisCacheName'))]"
                     ],
                     "properties": {
                         "status": "ON",

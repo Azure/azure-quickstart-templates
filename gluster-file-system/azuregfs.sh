@@ -4,8 +4,8 @@
 # You can customize variables such as MOUNTPOINT, RAIDCHUNKSIZE and so on to your needs.
 # You can also customize it to work with other Linux flavours and versions.
 # If you customize it, copy it to either Azure blob storage or Github so that Azure
-# custom script Linux VM extension can access it, and specify its location in the 
-# parameters of powershell script or runbook or Azure Resource Manager CRP template.   
+# custom script Linux VM extension can access it, and specify its location in the
+# parameters of powershell script or runbook or Azure Resource Manager CRP template.
 
 NODENAME=$(hostname)
 PEERNODEPREFIX=${1}
@@ -48,16 +48,16 @@ scan_for_new_disks() {
 get_disk_count() {
     DISKCOUNT=0
     for DISK in "${DISKS[@]}";
-    do 
+    do
         DISKCOUNT+=1
     done;
     echo "$DISKCOUNT"
 }
 
 create_raid0_ubuntu() {
-    dpkg -s mdadm 
+    dpkg -s mdadm
     if [ ${?} -eq 1 ];
-    then 
+    then
         echo "installing mdadm"
         wget --no-cache http://mirrors.cat.pdx.edu/ubuntu/pool/main/m/mdadm/mdadm_3.2.5-5ubuntu4_amd64.deb
         dpkg -i mdadm_3.2.5-5ubuntu4_amd64.deb
@@ -86,7 +86,7 @@ p
 
 
 w
-" | fdisk "${DISK}" 
+" | fdisk "${DISK}"
 #> /dev/null 2>&1
 
 #
@@ -116,13 +116,13 @@ add_to_fstab() {
 configure_disks() {
     ls "${MOUNTPOINT}"
     if [ ${?} -eq 0 ]
-    then 
+    then
         return
     fi
     DISKS=($(scan_for_new_disks))
     echo "Disks are ${DISKS[@]}"
     declare -i DISKCOUNT
-    DISKCOUNT=$(get_disk_count) 
+    DISKCOUNT=$(get_disk_count)
     echo "Disk count is $DISKCOUNT"
     if [ $DISKCOUNT -gt 1 ];
     then
@@ -196,7 +196,7 @@ activate_secondnic_ubuntu() {
         declare -a gateway=(${defaultgw// / })
         echo "" >> /etc/network/interfaces
         echo "post-up ip route add default via $gateway" >> /etc/network/interfaces
-        /etc/init.d/networking restart    
+        /etc/init.d/networking restart
     fi
 }
 
@@ -227,10 +227,10 @@ install_glusterfs_ubuntu() {
         apt-add-repository -y ppa:gluster/glusterfs-3.7
         apt-get -y update
     fi
-    
+
     echo "installing gluster"
     apt-get -y install glusterfs-server
-    
+
     return
 }
 
@@ -240,7 +240,7 @@ install_glusterfs_centos() {
     then
         return
     fi
-    
+
     if [ ! -e /etc/yum.repos.d/epel.repo ];
     then
         echo "Installing extra packages for enterprise linux"
@@ -249,7 +249,7 @@ install_glusterfs_centos() {
         rm ./epel-release-latest-6*.rpm
         yum -y update
     fi
-    
+
     echo "installing gluster"
     wget --no-cache http://download.gluster.org/pub/gluster/glusterfs/LATEST/EPEL.repo/glusterfs-epel.repo
     mv glusterfs-epel.repo  /etc/yum.repos.d/
@@ -265,7 +265,7 @@ configure_gluster() {
         then
             install_glusterfs_centos
         fi
-        /etc/init.d/glusterd start        
+        /etc/init.d/glusterd start
     elif [ $isubuntu -eq 0 ];
     then
         /etc/init.d/glusterfs-server status
@@ -287,7 +287,7 @@ configure_gluster() {
     then
         return
     fi
-    
+
     allNodes="${NODENAME}:${GLUSTERDIR}"
     retry=10
     failed=1
@@ -344,13 +344,13 @@ allow_passwordssh() {
 
 check_os
 
-# temporary workaround form CRP 
-allow_passwordssh  
+# temporary workaround form CRP
+allow_passwordssh
 
 if [ $iscentos -ne 0 ] && [ $isubuntu -ne 0];
 then
     echo "unsupported operating system"
-    exit 1 
+    exit 1
 else
     configure_network
     configure_disks

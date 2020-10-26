@@ -1,10 +1,9 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "clusterNamePrefix": {
       "type": "string",
-      "maxLength": 5,
       "metadata": {
         "description": "The prefix of the HDInsight cluster name."
       }
@@ -15,17 +14,41 @@
         "description": "These credentials can be used to remotely access the cluster."
       }
     },
-    "sshPassword": {
-      "type": "securestring",
+
+    "Vnet1Region": {
+      "type": "string",
       "metadata": {
-        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+        "description": "Region for the first vNet."
       }
     },
-    "location": {
+    "Vnet2Region": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for all resources."
+        "description": "Region for the second vNet. This should be in another Azure region from the first vNet."
+      }
+    }, 
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+      "UnbuntuNodeVirtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_D3_v2",
+      "metadata": {
+        "description": "This is the Unbuntu DNS node Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
       }
     }
   },
@@ -38,7 +61,7 @@
     },
     "vNet1": {
       "name": "[concat(parameters('clusterNamePrefix'),'-vnet1')]",
-      "location": "West US",      
+      "location": "[parameters('Vnet1Region')]",
       "addressSpacePrefix": "10.1.0.0/16",
       "subnetName": "subnet1",
       "subnetPrefix": "10.1.0.0/24",
@@ -53,7 +76,7 @@
     },
     "vNet2": {
       "name": "[concat(parameters('clusterNamePrefix'),'-vnet2')]",
-      "location": "East US",
+      "location": "[parameters('Vnet2Region')]",
       "addressSpacePrefix": "10.2.0.0/16",
       "subnetName": "subnet1",
       "subnetPrefix": "10.2.0.0/24",
@@ -70,22 +93,53 @@
       "name1": "vnet1tovnet2",
       "name2": "vnet2tovnet1",
       "sharedKey": "A1b2C3D4"
-    }
+    },
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('sshUserName'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    },
+    "networkSecurityGroupName": "vNet1-subnet1-nsg",
+    "networkSecurityGroupName2": "vNet2-subnet1-nsg"
   },
   "resources": [
     {
+      "comments": "Simple Network Security Group for subnet [variables('vNet1').subnetName]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-04-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[variables('vNet1').location]",
+      "properties": {}
+    },
+    {
+      "comments": "Simple Network Security Group for subnet [variables('vNet2').subnetName]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-04-01",
+      "name": "[variables('networkSecurityGroupName2')]",
+      "location": "[variables('vNet2').location]",
+      "properties": {}
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vNet1').name]",
-      "apiVersion": "2018-02-01",
+      "apiVersion": "2020-04-01",
       "location": "[variables('vNet1').location]",
-      "scale": null,
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
             "[variables('vNet1').addressSpacePrefix]"
           ]
         },
-        "dhcpOptions":{
+        "dhcpOptions": {
           "dnsServers": [
             "[variables('vNet1').dnsIPAddress]"
           ]
@@ -94,7 +148,10 @@
           {
             "name": "[variables('vNet1').subnetName]",
             "properties": {
-              "addressPrefix": "[variables('vNet1').subnetPrefix]"
+              "addressPrefix": "[variables('vNet1').subnetPrefix]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           },
           {
@@ -110,7 +167,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('vNet1').vpnGatewayIP]",
       "location": "[variables('vNet1').location]",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-04-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
@@ -120,10 +177,10 @@
       "name": "[variables('vNet1').vpnGatewayName]",
       "location": "[variables('vNet1').location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('vNet1').vpnGatewayIP)]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vNet1').name)]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vNet1').vpnGatewayIP)]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNet1').name)]"
       ],
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2020-04-01",
       "properties": {
         "gatewayType": "Vpn",
         "vpnType": "RouteBased",
@@ -150,16 +207,18 @@
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vNet2').name]",
-      "apiVersion": "2018-02-01",
+      "apiVersion": "2020-04-01",
       "location": "[variables('vNet2').location]",
-      "scale": null,
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName2'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
             "[variables('vNet2').addressSpacePrefix]"
           ]
         },
-        "dhcpOptions":{
+        "dhcpOptions": {
           "dnsServers": [
             "[variables('vNet2').dnsIPAddress]"
           ]
@@ -168,7 +227,10 @@
           {
             "name": "[variables('vNet2').subnetName]",
             "properties": {
-              "addressPrefix": "[variables('vNet2').subnetPrefix]"
+              "addressPrefix": "[variables('vNet2').subnetPrefix]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName2'))]"
+              }
             }
           },
           {
@@ -184,7 +246,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('vNet2').vpnGatewayIP]",
       "location": "[variables('vNet2').location]",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-04-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
@@ -194,10 +256,10 @@
       "name": "[variables('vNet2').vpnGatewayName]",
       "location": "[variables('vNet2').location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('vNet2').vpnGatewayIP)]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vNet2').name)]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vNet2').vpnGatewayIP)]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNet2').name)]"
       ],
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2020-04-01",
       "properties": {
         "gatewayType": "Vpn",
         "vpnType": "RouteBased",
@@ -224,11 +286,11 @@
     {
       "type": "Microsoft.Network/connections",
       "name": "[variables('vpnConnections').name1]",
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2020-04-01",
       "location": "[variables('vNet1').location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworkGateways/', variables('vNet1').vpnGatewayName)]",
-        "[concat('Microsoft.Network/virtualNetworkGateways/', variables('vNet2').vpnGatewayName)]"
+        "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('vNet1').vpnGatewayName)]",
+        "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('vNet2').vpnGatewayName)]"
       ],
       "properties": {
         "connectionType": "Vnet2Vnet",
@@ -241,18 +303,17 @@
         "sharedKey": "[variables('vpnConnections').sharedKey]",
         "routingWeight": 0,
         "enableBgp": false,
-        "usePolicyBasedTrafficSelectors": false,
-        "ipsecPolicies": []
+        "usePolicyBasedTrafficSelectors": false
       }
     },
     {
       "type": "Microsoft.Network/connections",
       "name": "[variables('vpnConnections').name2]",
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2020-04-01",
       "location": "[variables('vNet2').location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworkGateways/', variables('vNet2').vpnGatewayName)]",
-        "[concat('Microsoft.Network/virtualNetworkGateways/', variables('vNet1').vpnGatewayName)]"
+        "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('vNet2').vpnGatewayName)]",
+        "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('vNet1').vpnGatewayName)]"
       ],
       "properties": {
         "connectionType": "Vnet2Vnet",
@@ -265,28 +326,26 @@
         "sharedKey": "[variables('vpnConnections').sharedKey]",
         "routingWeight": 0,
         "enableBgp": false,
-        "usePolicyBasedTrafficSelectors": false,
-        "ipsecPolicies": []
+        "usePolicyBasedTrafficSelectors": false
       }
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('vNet1').dnsIPName]",
       "location": "[variables('vNet1').location]",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-04-01",
       "properties": {
-          "publicIPAllocationMethod": "Dynamic"
+        "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('vNet1').dnsNICName]",
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2020-04-01",
       "location": "[variables('vNet1').location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/',variables('vNet1').name)]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('vNet1').dnsIPName)]"
-
+        "[resourceId('Microsoft.Network/virtualNetworks',variables('vNet1').name)]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vNet1').dnsIPName)]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -308,19 +367,20 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vNet1').dnsName]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-12-01",
       "location": "[variables('vNet1').location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('vNet1').dnsNICName)]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vNet1').dnsNICName)]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_D1_v2"
+        "vmSize": "[parameters('UnbuntuNodeVirtualMachineSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vNet1').dnsName]",
           "adminUsername": "[parameters('sshUserName')]",
-          "adminPassword": "[parameters('sshPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[variables('ubuntu')]",
@@ -341,19 +401,19 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('vNet2').dnsIPName]",
       "location": "[variables('vNet2').location]",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-04-01",
       "properties": {
-          "publicIPAllocationMethod": "Dynamic"
+      "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('vNet2').dnsNICName]",
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2020-04-01",
       "location": "[variables('vNet2').location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/',variables('vNet2').name)]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('vNet2').dnsIPName)]"
+        "[resourceId('Microsoft.Network/virtualNetworks',variables('vNet2').name)]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vNet2').dnsIPName)]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -375,24 +435,25 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vNet2').dnsName]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-12-01",
       "location": "[variables('vNet2').location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('vNet2').dnsNICName)]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vNet2').dnsNICName)]"
       ],
       "properties": {
-        "hardwareProfile": {
-          "vmSize": "Standard_D1_v2"
+      "hardwareProfile": {
+      "vmSize": "[parameters('UnbuntuNodeVirtualMachineSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vNet2').dnsName]",
           "adminUsername": "[parameters('sshUserName')]",
-          "adminPassword": "[parameters('sshPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[variables('ubuntu')]",
           "osDisk": {
-            "createOption": "FromImage"
+          "createOption": "FromImage"
           }
         },
         "networkProfile": {

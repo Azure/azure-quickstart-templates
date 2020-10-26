@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -23,7 +23,7 @@
 # SOFTWARE.
 
 glusterNode=$1
-glusterVolume=$2 
+glusterVolume=$2
 siteFQDN=$3
 syslogserver=$4
 webServerType=$5
@@ -124,7 +124,7 @@ http {
   client_max_body_size 0;
   proxy_max_temp_file_size 0;
   server_names_hash_bucket_size  128;
-  fastcgi_buffers 16 16k; 
+  fastcgi_buffers 16 16k;
   fastcgi_buffer_size 32k;
   proxy_buffering off;
   include /etc/nginx/mime.types;
@@ -147,11 +147,11 @@ http {
   gzip_http_version 1.1;
   gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
 
-  map \$http_x_forwarded_proto \$fastcgi_https {                                                                                          
-    default \$https;                                                                                                                   
-    http '';                                                                                                                          
-    https on;                                                                                                                         
-  }   
+  map \$http_x_forwarded_proto \$fastcgi_https {
+    default \$https;
+    http '';
+    https on;
+  }
 
   log_format moodle_combined '\$remote_addr - \$upstream_http_x_moodleuser [\$time_local] '
                              '"\$request" \$status \$body_bytes_sent '
@@ -239,13 +239,13 @@ server {
 	location / {
 		try_files \$uri \$uri/index.php?\$query_string;
 	}
- 
+
         location ~ [^/]\.php(/|$) {
           fastcgi_split_path_info ^(.+?\.php)(/.*)$;
           if (!-f \$document_root\$fastcgi_script_name) {
                   return 404;
           }
- 
+
           fastcgi_buffers 16 16k;
           fastcgi_buffer_size 32k;
           fastcgi_param   SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
@@ -296,7 +296,7 @@ EOF
 EOF
   fi
 
-   # php config 
+   # php config
    if [ "$webServerType" = "apache" ]; then
      PhpIni=/etc/php/7.0/apache2/php.ini
    else
@@ -315,7 +315,7 @@ EOF
    sed -i "s/;opcache.enable.*/opcache.enable = 1/" $PhpIni
    sed -i "s/;opcache.memory_consumption.*/opcache.memory_consumption = 256/" $PhpIni
    sed -i "s/;opcache.max_accelerated_files.*/opcache.max_accelerated_files = 8000/" $PhpIni
-    
+
    # Remove the default site. Moodle is the only site we want
    rm -f /etc/nginx/sites-enabled/default
    if [ "$webServerType" = "apache" ]; then
@@ -323,10 +323,10 @@ EOF
    fi
 
    # restart Nginx
-   sudo service nginx restart 
+   sudo service nginx restart
 
    if [ "$webServerType" = "nginx" ]; then
-     # fpm config - overload this 
+     # fpm config - overload this
      cat <<EOF > /etc/php/7.0/fpm/pool.d/www.conf
 [www]
 user = www-data
@@ -335,10 +335,10 @@ listen = /run/php/php7.0-fpm.sock
 listen.owner = www-data
 listen.group = www-data
 pm = dynamic
-pm.max_children = 3000 
-pm.start_servers = 20 
-pm.min_spare_servers = 20 
-pm.max_spare_servers = 30 
+pm.max_children = 3000
+pm.start_servers = 20
+pm.min_spare_servers = 20
+pm.max_spare_servers = 30
 EOF
 
      # Restart fpm
@@ -463,7 +463,7 @@ sub vcl_recv {
 
 sub vcl_backend_response {
     # Happens after we have read the response headers from the backend.
-    # 
+    #
     # Here you clean the response headers, removing silly Set-Cookie headers
     # and other mistakes your backend does.
 
@@ -565,7 +565,7 @@ sub vcl_backend_error {
 sub vcl_synth {
 
     #Redirect using '301 - Permanent Redirect', permanent redirect
-    if (resp.status == 851) { 
+    if (resp.status == 851) {
         set resp.http.Location = req.http.x-redir;
         set resp.http.X-Varnish-Redirect = true;
         set resp.status = 301;
@@ -573,7 +573,7 @@ sub vcl_synth {
     }
 
     #Redirect using '302 - Found', temporary redirect
-    if (resp.status == 852) { 
+    if (resp.status == 852) {
         set resp.http.Location = req.http.x-redir;
         set resp.http.X-Varnish-Redirect = true;
         set resp.status = 302;
@@ -581,7 +581,7 @@ sub vcl_synth {
     }
 
     #Redirect using '307 - Temporary Redirect', !GET&&!HEAD requests, dont change method on redirected requests
-    if (resp.status == 857) { 
+    if (resp.status == 857) {
         set resp.http.Location = req.http.x-redir;
         set resp.http.X-Varnish-Redirect = true;
         set resp.status = 307;

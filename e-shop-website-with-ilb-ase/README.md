@@ -1,5 +1,17 @@
 # eShop Website with ILB ASE
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json)    
+
 **Table of Contents**
 
 [Architecture](#architecture)
@@ -17,9 +29,7 @@
 * [Check Deployment Outputs](#check-deployment-outputs)
 * [Get ASE ILB IP address](#get-ase-ilb-ip-address)
 
-
 * [Add DNS Records](#add-dns-records)
-
 
 * [Add Reply URL to the Admin Web App](#add-reply-url-to-the-admin-web-app)
 
@@ -90,8 +100,8 @@ It takes about 70 minutes to create a new App Service Environment in Azure.
 1. Click the **Deploy to Azure** Button:
 
    <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fprereqs%2Fprereq.azuredeploy.json" target="_blank">
-     <img src="http://azuredeploy.net/deploybutton.png"/>
-   </a>
+     
+   
 
 2. Fill in the values on the custom deployment page:
 
@@ -160,13 +170,13 @@ After the App Service Environment is deployed, follow the steps below to deploy 
 
 2. Click the **Deploy to Azure** Button:
 
-   <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json" target="_blank">
-     <img src="http://azuredeploy.net/deploybutton.png"/>
-   </a>
+   [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json)
+     
+   
 
-   <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json" target="_blank">
-     <img src="http://armviz.io/visualizebutton.png"/>
-   </a>
+   
+     
+   
 
 3. Fill in the values on the deployment page:
 
@@ -270,6 +280,6 @@ Open the **Web App URL** you got from the outputs section in a browser.
 
 Open the **Admin App URL** you got from the outputs section in a browser. Then sign in with a work account in the AAD where you registered the AAD application. ![](images/admin-app.png)
 
-
-
 **Copyright (c) 2018 Microsoft. All rights reserved.**
+
+

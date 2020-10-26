@@ -1,7 +1,13 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "existingStorageAcctResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the exiting Storage Account to archieve captures"
+      }
+    },
     "eventHubNamespaceName": {
       "type": "string",
       "metadata": {
@@ -10,10 +16,7 @@
     },
     "eventhubSku": {
       "type": "string",
-      "allowedValues": [
-        "Basic",
-        "Standard"
-      ],
+      "allowedValues": [ "Basic", "Standard" ],
       "defaultValue": "Standard",
       "metadata": {
         "description": "The messaging tier for service Bus namespace"
@@ -21,11 +24,7 @@
     },
     "skuCapacity": {
       "type": "int",
-      "allowedValues": [
-        1,
-        2,
-        4
-      ],
+      "allowedValues": [ 1, 2, 4 ],
       "defaultValue": 1,
       "metadata": {
         "description": "MessagingUnits for premium namespace"
@@ -34,10 +33,7 @@
     "isAutoInflateEnabled": {
       "type": "string",
       "defaultValue": "True",
-      "allowedValues": [
-        "True",
-        "False"
-      ],
+      "allowedValues": [ "True", "False" ],
       "metadata": {
         "description": "Enable or disable AutoInflate"
       }
@@ -76,12 +72,8 @@
       }
     },
     "captureEnabled": {
-      "type": "string",
-      "defaultValue": "true",
-      "allowedValues": [
-        "false",
-        "true"
-      ],
+      "type": "bool",
+      "defaultValue": true,
       "metadata": {
         "description": "Enable or disable the Capture feature for your Event Hub"
       }
@@ -89,9 +81,7 @@
     "captureEncodingFormat": {
       "type": "string",
       "defaultValue": "Avro",
-      "allowedValues": [
-        "Avro"
-      ],
+      "allowedValues": [ "Avro" ],
       "metadata": {
         "description": "The encoding format Eventhub capture serializes the EventData when archiving to your storage"
       }
@@ -112,12 +102,6 @@
       "maxValue": 524288000,
       "metadata": {
         "description": "the size window in bytes for evetn hub capture"
-      }
-    },
-    "destinationStorageAccountResourceId": {
-      "type": "string",
-      "metadata": {
-        "description": "Your existing storage account resource id where you want the blobs be archived"
       }
     },
     "blobContainerName": {
@@ -147,7 +131,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2017-04-01",
+      "apiVersion": "2018-01-01-preview",
       "name": "[parameters('eventHubNamespaceName')]",
       "type": "Microsoft.EventHub/Namespaces",
       "location": "[parameters('location')]",
@@ -168,22 +152,23 @@
         {
           "apiVersion": "2017-04-01",
           "name": "[parameters('eventHubName')]",
-          "type": "EventHubs",
+          "type": "eventhubs",
           "dependsOn": [
-            "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]"
+            "[resourceId('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]"
           ],
           "properties": {
             "messageRetentionInDays": "[parameters('messageRetentionInDays')]",
             "partitionCount": "[parameters('partitionCount')]",
             "captureDescription": {
-              "enabled": "true",
+              "enabled": "[parameters('captureEnabled')]",
+              "skipEmptyArchives": false,
               "encoding": "[parameters('captureEncodingFormat')]",
               "intervalInSeconds": "[parameters('captureTime')]",
               "sizeLimitInBytes": "[parameters('captureSize')]",
               "destination": {
                 "name": "EventHubArchive.AzureBlockBlob",
                 "properties": {
-                  "storageAccountResourceId": "[parameters('destinationStorageAccountResourceId')]",
+                  "storageAccountResourceId": "[parameters('existingStorageAcctResourceId')]",
                   "blobContainer": "[parameters('blobContainerName')]",
                   "archiveNameFormat": "[parameters('captureNameFormat')]"
                 }
@@ -195,13 +180,9 @@
     }
   ],
   "outputs": {
-    "NamespaceConnectionString": {
+    "authRuleResourceId": {
       "type": "string",
-      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryConnectionString]"
-    },
-    "SharedAccessPolicyPrimaryKey": {
-      "type": "string",
-      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryKey]"
+      "value": "[variables('authRuleResourceId')]"
     }
   }
 }
