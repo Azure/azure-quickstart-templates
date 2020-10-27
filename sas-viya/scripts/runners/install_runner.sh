@@ -45,11 +45,11 @@ ln -s "$INVENTORY_FILE" "inventory.ini"
 
 ANSIBLE_LOG_PATH=/var/log/sas/install/prepare_inventory.log \
                     export ANSIBLE_CONFIG=/sas/install/common/ansible/playbooks/ansible.cfg
-                    ansible-playbook -v /sas/install/common/ansible/playbooks/assemble_main_inventory.yml \
+                    ansible-playbook -vvv /sas/install/common/ansible/playbooks/assemble_main_inventory.yml \
                       -e "CAS_INSTANCE_COUNT=${CASInstanceCount}"
 
 echo "Create LB certificate files"
-time ansible-playbook -v create_load_balancer_cert.yml -i $INVENTORY_FILE -e "SSL_HOSTNAME=${PUBLIC_DNS_NAME}" -e "SSL_WORKING_FOLDER=${DIRECTORY_SSL_JSON_FILE}" -e "ARM_CERTIFICATE_FILE=${FILE_SSL_JSON_FILE}"
+time ansible-playbook -vvv create_load_balancer_cert.yml -i $INVENTORY_FILE -e "SSL_HOSTNAME=${PUBLIC_DNS_NAME}" -e "SSL_WORKING_FOLDER=${DIRECTORY_SSL_JSON_FILE}" -e "ARM_CERTIFICATE_FILE=${FILE_SSL_JSON_FILE}"
 
 popd
 finished_server_prerequisites="$(date -u +%s)"
@@ -58,7 +58,7 @@ touch "$TOUCHPOINT_PREREQUISITES"
 
 echo "Preparing nodes"
 ANSIBLE_LOG_PATH="${LOGS_DIR}/prepare_nodes.log" \
-    time ansible-playbook -v "${CODE_DIRECTORY}/ansible/playbooks/prepare_nodes.yml" \
+    time ansible-playbook -vvv "${CODE_DIRECTORY}/ansible/playbooks/prepare_nodes.yml" \
         -e SAS_INSTALL_DISK="256.00 GB" \
         --skip-tags mount_cascache \
         --skip-tags mount_userlib_dir \
@@ -67,7 +67,7 @@ ANSIBLE_LOG_PATH="${LOGS_DIR}/prepare_nodes.log" \
 
 echo "Building Controller and Services Cert"
 pushd "${CODE_DIRECTORY}/ansible/playbooks"
-    time ansible-playbook -v create_sas_cert.yml -i $INVENTORY_FILE -e SSL_WORKING_FOLDER="${DIRECTORY_SSL_JSON_FILE}" -e CODE_DIRECTORY="${CODE_DIRECTORY}"
+    time ansible-playbook -vvv create_sas_cert.yml -i $INVENTORY_FILE -e SSL_WORKING_FOLDER="${DIRECTORY_SSL_JSON_FILE}" -e CODE_DIRECTORY="${CODE_DIRECTORY}"
     ret="$?"
     if [ "$ret" -ne "0" ]; then
         exit $ret
@@ -80,7 +80,7 @@ touch "$TOUCHPOINT_PREORCHESTRATION"
 if [ -n "${ADMINPASS}" ] && [ -n "${USERPASS}" ]; then
 
     ANSIBLE_LOG_PATH="${LOGS_DIR}/openldap.log" \
-        time ansible-playbook -v /sas/install/ansible/playbooks/openldapsetup.yml \
+        time ansible-playbook -vvv /sas/install/ansible/playbooks/openldapsetup.yml \
             -e "OLCROOTPW='${ADMINPASS}'" \
             -e "OLCUSERPW='${USERPASS}'" \
             -i $INVENTORY_FILE \
@@ -93,7 +93,7 @@ openldap_installed_time="$(date -u +%s)"
 if [[ "$DUMMY_LICENSE_STRING" != "$license_file_uri" ]]; then
 
     ANSIBLE_LOG_PATH=/var/log/sas/install/prepare_deployment.log \
-        time ansible-playbook -v /sas/install/ansible/playbooks/prepare_deployment.yml \
+        time ansible-playbook -vvv /sas/install/ansible/playbooks/prepare_deployment.yml \
           -e "DEPLOYMENT_MIRROR=${MIRROR_HTTP}" \
           -e "DEPLOYMENT_DATA_LOCATION=${license_file_uri}" \
           -e "ADMINPASS=${ADMINPASS}" \
@@ -108,7 +108,7 @@ if [[ "$DUMMY_LICENSE_STRING" != "$license_file_uri" ]]; then
     pushd /sas/install/ansible/sas_viya_playbook
     export ANSIBLE_CONFIG=/sas/install/ansible/sas_viya_playbook/ansible.cfg
     ANSIBLE_LOG_PATH=/var/log/sas/install/virk.log \
-        time ansible-playbook -v /sas/install/ansible/sas_viya_playbook/viya-ark/playbooks/pre-install-playbook/viya_pre_install_playbook.yml \
+        time ansible-playbook -vvv /sas/install/ansible/sas_viya_playbook/viya-ark/playbooks/pre-install-playbook/viya_pre_install_playbook.yml \
             -e "use_pause=false" \
             --skip-tags skipmemfail,skipcoresfail,skipstoragefail,skipnicssfail,bandwidth \
             -e "DefaultTimeoutStartSec=3600s"
@@ -123,17 +123,17 @@ if [[ "$DUMMY_LICENSE_STRING" != "$license_file_uri" ]]; then
 
     export ANSIBLE_CONFIG=/sas/install/common/ansible/playbooks/ansible.cfg
     ANSIBLE_LOG_PATH=/var/log/sas/install/post_deployment.log \
-        time ansible-playbook -v /sas/install/ansible/playbooks/post_deployment.yml -i $INVENTORY_FILE
+        time ansible-playbook -vvv /sas/install/ansible/playbooks/post_deployment.yml -i $INVENTORY_FILE
 
 
     finished_post_orchestration_time="$(date -u +%s)"
 
     ANSIBLE_LOG_PATH=/var/log/sas/install/post_service_restart.log \
-        time ansible-playbook -v /sas/install/common/ansible/playbooks/restart_services.yml -i $INVENTORY_FILE
+        time ansible-playbook -vvv /sas/install/common/ansible/playbooks/restart_services.yml -i $INVENTORY_FILE
 
     pushd "${CODE_DIRECTORY}/ansible/playbooks"
     echo "create cas sizing file"
-    time ansible-playbook -v create_cas_uri_file.yml -i $INVENTORY_FILE -e CAS_URI_FILE="${CAS_URI_FILE}"
+    time ansible-playbook -vvv create_cas_uri_file.yml -i $INVENTORY_FILE -e CAS_URI_FILE="${CAS_URI_FILE}"
     popd
     finished_checking_for_restart="$(date -u +%s)"
 
