@@ -9,11 +9,11 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-iothub-auto-route-messages/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-iothub-auto-route-messages/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-iothub-auto-route-messages%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-iothub-auto-route-messages%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-iothub-auto-route-messages%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-iothub-auto-route-messages%2Fazuredeploy.json)
 
-This template creates an IoT Hub instance and a storage account, and shows how to auto-route messages to storage. For more information, go to: https://docs.microsoft.com/azure/iot-hub/.
+This template creates an IoT Hub instance and a storage account, and shows how to auto-route messages to storage.
 
 If you are new to Azure Iot Hub, see:
 
@@ -25,6 +25,7 @@ If you are new to Azure Iot Hub, see:
 
 If you are new to the template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Quickstart: Deploy an Azure IoT Hub and a storage account using an ARM template](https://docs.microsoft.com/azure/iot-hub/horizontal-arm-route-messages)
 
-Tags: Azure Iot Hub, Iot Hub, Resource Manager, Resource Manager templates, ARM templates
+`Tags: Azure Iot Hub, Iot Hub, Resource Manager, Resource Manager templates, ARM templates`
