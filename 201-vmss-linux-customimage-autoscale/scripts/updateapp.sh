@@ -3,11 +3,11 @@
 
 # exit on any error
 set -e
-sudo -i
 
 # functions
 update_app(){
     echo "creating folder " $2 "/temp"
+    mkdir $2
     mkdir $2/temp
 
     if [ ${1:0:4} == "http" ]; then
