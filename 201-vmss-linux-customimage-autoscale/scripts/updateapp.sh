@@ -3,6 +3,7 @@
 
 # exit on any error
 set -e
+sudo -i
 
 # functions
 update_app(){
