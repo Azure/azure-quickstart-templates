@@ -25,9 +25,10 @@ update_app(){
 }
 
 restart_service(){
-    #something like: systemctl restart mainsite.service
+    # something like: systemctl restart mainsite.service
     # this sample originally expected a specific custom image that's no longer available... so the service in question may not exist.
-    #systemctl restart $1
+    # systemctl restart $1
+    pwd
 }
 
 # script start
