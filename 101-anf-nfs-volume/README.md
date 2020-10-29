@@ -18,6 +18,7 @@ This template creates Azure NetApp Files account along with setting up a capacit
 ## Sample overview and deployed resources
 
 The following resources are deployed as part of the solution:
+
 1. A Virtual Network with a delegated Subnet is deployed.
 1. Azure NetApp Files account is deployed.
 1. A Capacity Pool is created into the ANF account.
@@ -25,4 +26,4 @@ The following resources are deployed as part of the solution:
 
 ## Deployment steps
 
-You can click the "Deploy to Azure" button at the beginning of this document.
+You can click the **Deploy to Azure** button at the beginning of this document. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/azure-netapp-files/azure-netapp-files-quickstart-set-up-account-create-volumes) article.
