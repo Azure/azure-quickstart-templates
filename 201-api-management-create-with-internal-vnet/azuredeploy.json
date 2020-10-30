@@ -68,6 +68,12 @@
         "description": "Subnet Name"
       }
     },
+    "apimSubnetServiceEndpoints": {
+      "type": "array",
+      "metadata": {
+        "description": "Service Endpoints enabled on the APIM subnet"
+      }
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -141,6 +147,19 @@
             }
           },
           {
+            "name": "Dependency_to_sync_Rate_Limit_Inbound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4290",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 135,
+              "direction": "Inbound"
+            }
+          },
+          {
             "name": "Dependency_on_Azure_SQL",
             "properties": {
               "protocol": "Tcp",
@@ -176,6 +195,19 @@
               "destinationAddressPrefix": "VirtualNetwork",
               "access": "Allow",
               "priority": 160,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Depenedency_To_sync_RateLimit_Outbound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4290",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 165,
               "direction": "Outbound"
             }
           },
@@ -233,7 +265,7 @@
               "destinationAddressPrefix": "Internet",
               "access": "Allow",
               "priority": 190,
-              "direction": "Outbound",              
+              "direction": "Outbound",
               "destinationPortRanges": [
                 "25",
                 "587",
@@ -242,7 +274,7 @@
             }
           },
           {
-            "name": "Authenticate_To_Azure_Active_Directory",            
+            "name": "Authenticate_To_Azure_Active_Directory",
             "properties": {
               "description": "Connect to Azure Active Directory for Developer Portal Authentication or for Oauth2 flow during any Proxy Authentication",
               "protocol": "Tcp",
@@ -286,6 +318,22 @@
             }
           },
           {
+            "name": "Access_KeyVault",
+            "properties": {
+              "description": "Allow APIM service control plane access to KeyVault to refresh secrets",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "AzureKeyVault",
+              "access": "Allow",
+              "priority": 350,
+              "direction": "Outbound",
+              "destinationPortRanges": [
+                "443"
+              ]
+            }
+          },
+          {
             "name": "Deny_All_Internet_Outbound",
             "properties": {
               "protocol": "*",
@@ -303,7 +351,7 @@
       "dependsOn": []
     },
     {
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -323,14 +371,15 @@
               "addressPrefix": "[parameters('subnetPrefix')]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('apimNsgName'))]"
-              }
+              },
+              "serviceEndpoints": "[parameters('apimSubnetServiceEndpoints')]"
             }
           }
         ]
       }
     },
     {
-      "apiVersion": "2018-01-01",
+      "apiVersion": "2019-12-01",
       "name": "[parameters('apiManagementServiceName')]",
       "type": "Microsoft.ApiManagement/service",
       "location": "[parameters('location')]",
