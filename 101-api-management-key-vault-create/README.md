@@ -14,6 +14,10 @@
 
 The Template deploys API Management service Developer Tier with integration with Managed Identities. Please refer to documentation at aka.ms/apimmsi.
 
+The template shows how to create an API Management with SSL retrieved from KeyVault using a single click deployment using User Assigned identities.
+
+With System Assigned identity, associating an API Management with SSL was a two step process.
+
 It deploys the following components
 - User Assigned Managed Identity
 - KeyVault which is granted access to the Managed Identity 
