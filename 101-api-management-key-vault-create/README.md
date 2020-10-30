@@ -16,7 +16,7 @@ The Template deploys API Management service Developer Tier with integration with
 
 The template shows how to create an API Management with SSL retrieved from KeyVault using a single click deployment using User Assigned identities.
 
-With System Assigned identity, associating an API Management with SSL was a two step process.
+With System Assigned identity, associating an API Management with SSL was a two step process. With User Assigned identities, this is single step.
 
 It deploys the following components
 - User Assigned Managed Identity
