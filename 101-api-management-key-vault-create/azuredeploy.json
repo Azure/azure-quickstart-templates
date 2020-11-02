@@ -4,6 +4,7 @@
   "parameters": {
     "publisherEmail": {
       "type": "string",
+      "defaultValue" : "contoso@contoso.com",
       "minLength": 1,
       "metadata": {
         "description": "The email address of the owner of the service"
@@ -11,6 +12,7 @@
     },
     "publisherName": {
       "type": "string",
+      "defaultValue" : "Contoso",
       "minLength": 1,
       "metadata": {
         "description": "The name of the owner of the service"
@@ -25,7 +27,7 @@
         "Standard",
         "Premium"
       ],
-      "defaultValue": "Developer",
+      "defaultValue": "Standard",
       "metadata": {
         "description": "The pricing tier of this API Management service"
       }
@@ -35,20 +37,6 @@
       "defaultValue": 1,
       "metadata": {
         "description": "The instance size of this API Management service."
-      }
-    },
-    "addressPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/16",
-      "metadata": {
-        "description": "Address prefix for the Virtual Network"
-      }
-    },
-    "subnetPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/28",
-      "metadata": {
-        "description": "Subnet prefix"
       }
     },
     "Secrets": {
@@ -71,13 +59,6 @@
         "description": "Name of the KeyVault to provision"
       }
     },
-    "identityName": {
-      "type": "string",
-      "defaultValue": "[concat('id-', uniqueString(resourceGroup().id))]",
-      "metadata": {
-        "description": "Name of the user assigned identity"
-      }
-    },
     "gatewayCustomHostname": {
       "type": "string",
       "metadata": {
@@ -87,14 +68,13 @@
   },
   "variables": {
     "apiManagementServiceName": "[concat('apim-', uniqueString(resourceGroup().id))]",
-    "virtualNetworkName": "apim-vnet",
-    "subnetName": "apim",
-    "identityID": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]"
+    "identityName": "[concat('id-', uniqueString(resourceGroup().id))]",
+    "identityID": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-      "name": "[parameters('identityName')]",
+      "name": "[variables('identityName')]",
       "apiVersion": "2018-11-30",
       "location": "[parameters('location')]"
     },
@@ -104,7 +84,7 @@
       "name": "[parameters('keyVaultName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]"
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]"
       ],
       "properties": {
         "sku": {
@@ -147,35 +127,13 @@
           "exp": 1679814000
         }
       }
-    },
-    {
-      "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-05-01",
-      "name": "[variables('virtualNetworkName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[parameters('addressPrefix')]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[parameters('subnetPrefix')]"
-            }
-          }
-        ]
-      }
-    },
+    },   
     {
       "apiVersion": "2020-06-01-preview",
       "type": "Microsoft.ApiManagement/service",
       "name": "[variables('apiManagementServiceName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
       ],
       "identity": {
@@ -201,10 +159,6 @@
         ],
         "publisherEmail": "[parameters('publisherEmail')]",
         "publisherName": "[parameters('publisherName')]",
-        "virtualNetworkType": "External",
-        "virtualNetworkConfiguration": {
-          "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
-        },
         "customProperties": {
           "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA": false,
           "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA": false,
@@ -220,7 +174,7 @@
           "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10": false,
           "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11": false,
           "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30": false,
-          "Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2": false
         },
       }
     }

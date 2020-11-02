@@ -12,7 +12,7 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-api-management-key-vault-create%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-api-management-key-vault-create%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-api-management-key-vault-create%2Fazuredeploy.json)
 
-The Template deploys API Management service Developer Tier with integration with Managed Identities. Please refer to documentation at aka.ms/apimmsi.
+The Template deploys API Management service Standard Tier with integration with Managed Identities. Please refer to documentation at aka.ms/apimmsi.
 
 The template shows how to create an API Management with SSL retrieved from KeyVault using a single click deployment using User Assigned identities.
 
@@ -20,6 +20,5 @@ With System Assigned identity, associating an API Management with SSL was a two 
 
 It deploys the following components
 - User Assigned Managed Identity
-- KeyVault which is granted access to the Managed Identity 
-- Virtual Network where the API Management service is deployed
+- KeyVault which is granted access to the Managed Identity
 - API Management service which is assigned access to the KeyVault using User Assigned Identity.
