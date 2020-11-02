@@ -1,0 +1,140 @@
+#
+# Copyright (c) 2020, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+---
+  - name: Installing all updates with zypper
+    hosts: [compute_servers]
+    become_user: root
+    become: yes
+    gather_facts: false
+    tasks:
+      - name: doing the update
+        zypper:
+          name: '*'
+          state: latest
+
+      - name: install required packages
+        package:
+          name: "{{ item }}"
+          state: latest
+        loop:
+          - java-1_8_0-openjdk
+
+  - name: download hadoop and setup environment
+    hosts: [compute_servers]
+    become_user: AzureUser
+    become: yes
+    vars:
+      HADOOP_VERSION: 3.1.4
+    tasks:
+      - name: downloading hadoop from apache
+        become: yes
+        unarchive:
+            remote_src: yes
+            src: "https://downloads.apache.org/hadoop/core/hadoop-{{ HADOOP_VERSION }}/hadoop-{{ HADOOP_VERSION }}.tar.gz"
+            dest: "$HOME"
+        register: task_result
+        until: task_result is success
+        retries: 10
+        delay: 5
+  
+      - name: insert hadoop environment into bashrc
+        blockinfile:
+          dest: "$HOME/.bashrc"
+          block: |
+            export HADOOP_HOME=$HOME/hadoop-{{ HADOOP_VERSION }}
+            export HADOOP_CONF_DIR=$HOME/hadoop-{{ HADOOP_VERSION }}/etc/hadoop
+            export HADOOP_MAPRED_HOME=$HOME/hadoop-{{ HADOOP_VERSION }}
+            export HADOOP_COMMON_HOME=$HOME/hadoop-{{ HADOOP_VERSION }}
+            export HADOOP_HDFS_HOME=$HOME/hadoop-{{ HADOOP_VERSION }}
+            export YARN_HOME=$HOME/hadoop-{{ HADOOP_VERSION }}
+            export HDFS_NAMENODE_USER="AzureUser"
+            export HDFS_DATANODE_USER="AzureUser"
+            export HDFS_SECONDARYNAMENODE_USER="AzureUser"
+            export YARN_RESOURCEMANAGER_USER="AzureUser"
+            export YARN_NODEMANAGER_USER="AzureUser"
+            export JAVA_HOME=/usr/lib64/jvm/jre-1.8.0-openjdk
+            export PATH=/usr/lib64/jvm/jre-1.8.0-openjdk:$PATH:$HOME/hadoop-{{ HADOOP_VERSION }}/bin
+          marker: '# {mark} ANSIBLE MANAGED BLOCK - hadoopenv'
+          insertafter: EOF
+          create: yes 
+
+      - name: edit core-site.xml configuration
+        blockinfile:
+          path: $HOME/hadoop-{{ HADOOP_VERSION }}/etc/hadoop/core-site.xml
+          insertafter: "<configuration>"
+          block: |
+            <property>
+            <name>fs.default.name</name>
+            <value>hdfs://localhost:9000</value>
+            </property>
+            
+      - name: edit hdfs-site.xml configuration
+        blockinfile:
+          path: $HOME/hadoop-{{ HADOOP_VERSION }}/etc/hadoop/hdfs-site.xml
+          insertafter: "<configuration>"
+          block: |
+            <property>
+            <name>dfs.replication</name>
+            <value>1</value>
+            </property>
+            <property>
+            <name>dfs.permission</name>
+            <value>false</value>\n</property><property>
+            <name>fs.default.name</name>
+            <value>hdfs://localhost:9000</value>
+            </property>
+          
+      - name: edit mapred-site.xml configuration
+        blockinfile:
+          path: $HOME/hadoop-{{ HADOOP_VERSION }}/etc/hadoop/mapred-site.xml
+          insertafter: "<configuration>"
+          block: |
+            <property>
+            <name>mapreduce.framework.name</name>
+            <value>yarn</value>
+            </property>
+          
+      - name: edit yarn-site.xml configuration
+        blockinfile:
+          path: $HOME/hadoop-{{ HADOOP_VERSION }}/etc/hadoop/yarn-site.xml
+          insertafter: "<configuration>"
+          block: |
+            <property>
+            <name>yarn.nodemanager.aux-services</name>
+            <value>mapreduce_shuffle</value>
+            </property>
+            <property>
+            <name>yarn.nodemanager.auxservices.mapreduce.shuffle.class</name>
+            <value>org.apache.hadoop.mapred.ShuffleHandler</value>
+            </property>
+          
+      - name: edit hadoop-env.sh configuration
+        blockinfile:
+          path: $HOME/hadoop-{{ HADOOP_VERSION }}/etc/hadoop/hadoop-env.sh
+          insertafter: "# export JAVA_HOME="
+          block: |
+            export JAVA_HOME=\/usr\/lib64\/jvm\/jre-1.8.0-openjdk
+            
+      - name: format hdfs via namenode
+        become: yes
+        shell: |-    
+          $HOME/hadoop-{{ HADOOP_VERSION }}/bin/hdfs namenode -format
+          
+      - name: start hdfs daemons
+        become: yes
+        shell: |-
+          $HOME/hadoop-{{ HADOOP_VERSION }}/bin/hdfs --daemon start namenode
+          $HOME/hadoop-{{ HADOOP_VERSION }}/bin/hdfs --daemon start datanode
+
+      - name: start yarn daemons
+        become: yes
+        shell: |-
+          $HOME/hadoop-{{ HADOOP_VERSION }}/bin/yarn --daemon start resourcemanager
+          $HOME/hadoop-{{ HADOOP_VERSION }}/bin/yarn --daemon start nodemanager
+
+      - name: start job history server daemon
+        become: yes
+        shell: |-
+          $HOME/hadoop-{{ HADOOP_VERSION }}/bin/mapred --daemon start historyserver
