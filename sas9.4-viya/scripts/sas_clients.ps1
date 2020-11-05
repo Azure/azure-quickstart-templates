@@ -50,7 +50,7 @@ if ($connectTestResult.TcpTestSucceeded) {
 Set-Location "Z:\${depot_folder_name}"
 .\setup.exe -lang en -deploy -datalocation C:\saslog -responsefile ${logdir}\clients_install.properties -quiet 
 ExitWithCode
-Start-Sleep -Seconds 1500
+Start-Sleep -Seconds 1800
 $latest = Get-ChildItem -Path ${logdir}\deployw* | Sort-Object LastAccessTime -Descending | Select-Object -First 1
 $latest.name
 Set-Location $logdir

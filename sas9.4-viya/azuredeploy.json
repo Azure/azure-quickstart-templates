@@ -39,17 +39,17 @@
             }
         },
         "ansibleVMSize": {
-            "defaultValue": "Standard_DS2_v2",
+            "defaultValue": "Standard_D4s_v3",
             "type": "String",
             "metadata": {
-                "description": "This is the SKU for the Mid VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks. For details: https://azure.microsoft.com/en-in/pricing/details/virtual-machines/red-hat/"
+                "description": "This is the SKU for the Ansible VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks. For details: https://azure.microsoft.com/en-in/pricing/details/virtual-machines/red-hat/"
             }
         },
         "windowsRdpVMSize": {
             "defaultValue": "Standard_D8S_v3",
             "type": "String",
             "metadata": {
-                "description": "This is the SKU for the Mid VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks. For details: https://azure.microsoft.com/en-in/pricing/details/virtual-machines/red-hat/"
+                "description": "This is the SKU for the Windows Server VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks"
             }
         },
         "SASMetaVMSize": {
@@ -82,6 +82,13 @@
                 "description": "The SAS data volume size for SAS 94"
             }
         },
+        "primaryUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for the Virtual Machine."
+            },
+            "defaultValue": "vmuser"
+        },        
         "SASExternalPassword": {
             "minLength": 12,
             "maxLength": 255,
@@ -173,13 +180,15 @@
             "type": "String",
             "metadata": {
                 "description": "Folder Name in Azure File share where SAS94 depot is located"
-            }
+            },
+            "defaultValue": "sasdepot"
         },
         "viyaRepoFolder": {
             "type": "String",
             "metadata": {
                 "description": "Folder Name in Azure File share where SAS Viya Repo is located"
-            }
+            },
+            "defaultValue": "viyarepo"
         },
         "SASServerLicenseFile": {
             "type": "String",
@@ -207,28 +216,25 @@
             }
         },
         "_artifactsLocation": {
-            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sas9.4-viya/",
-            "type": "String",
-            "metadata": {
-                "description": "For a standard deployment, keep the default.  The https URL to the base of the deployment files in Microsoft Azure. If a SAS key is needed, please do not include the SAS key in the URL. Instead, add the part after and include the question mark to the _artifactsLocationSasToken variable. ex. https://(STORAGE_ACCOUNT_FQDN)/(SHARE_NAME)/(SUBDIRECTORY_NAME)/"
-            }
-        },
-        "_artifactsLocationSasToken": {
-            "type": "securestring",
-            "defaultValue": "",
-            "metadata": {
-                "description": "For a standard deployment, leave empty. If you are running from a blob template, then provide the Shared Access Signature token (starting with a ?) that grants authorization to the private template. "
-            }
-        }
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+          },
+          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sas9.4-viya/" 
+      },
+      "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+          },
+          "defaultValue": ""
+      }
     },
     "variables": {
-        "_artifactsLocationSasToken": "[parameters('_artifactsLocationSasToken')]",
-        "access_policy_template": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/access_policy.json', variables('_artifactsLocationSasToken')))]",
+        "access_policy_template": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/access_policy.json', parameters('_artifactsLocationSasToken')))]",
         "ansible_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('ansible_vm_name'),'_nic')]",
         "ansible_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('ansible_vm_name'),'_nsg')]",
         "ansible_pub_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('ansible_vm_name'),'_pub_nic')]",
-        "ansible_ssl_copy_sh": "[uri(parameters('_artifactsLocation'), concat('scripts/ansible_ssl.sh', variables('_artifactsLocationSasToken')))]",
-        "ansible_startup_script_sh": "[uri(parameters('_artifactsLocation'), concat('scripts/ansible_setup.sh', variables('_artifactsLocationSasToken')))]",
         "ansible_vm_name": "ansible",
         "cascontroller_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('cascontroller_vm_name'),'_nic')]",
         "cascontroller_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('cascontroller_vm_name'),'_nsg')]",
@@ -240,8 +246,6 @@
             "get",
             "list"
         ],
-        "compute_config_sh": "[uri(parameters('_artifactsLocation'), concat('scripts/compute_config.sh', variables('_artifactsLocationSasToken')))]",
-        "compute_install_sh": "[uri(parameters('_artifactsLocation'), concat('scripts/compute_install.sh', variables('_artifactsLocationSasToken')))]",
         "compute_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('compute_vm_name'),'_nic')]",
         "compute_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('compute_vm_name'),'_nsg')]",
         "compute_vm_name": "compute",
@@ -249,7 +253,7 @@
         "custom_data_sas": "#cloud-config\n mounts:\n   - [ ephemeral0, /saswork]",
         "diagnostic_storagegroup_name": "[toLower(concat(parameters('SASApplicationName'),'diag', variables('resourceGroupUniqueString')))]",
         "domain_name": "internal.cloudapp.net",
-        "key_vault_name": "[concat(parameters('SASApplicationName'),'keyVault')]",
+        "key_vault_name": "[concat(parameters('SASApplicationName'),'KeyVault')]",
         "key_vault_secretname_pubkey": "ansible-pubkey",
         "key_vault_secretname_pvtkey": "ansible-pvtkey",
         "key_vault_secretname_sasext": "sasextpw",
@@ -260,35 +264,38 @@
             "list",
             "import"
         ],
-        "linux_extension_template": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vm_linux_extension.json', variables('_artifactsLocationSasToken')))]",
-        "meta_config_sh": "[uri(parameters('_artifactsLocation'), concat('scripts/meta_config.sh', variables('_artifactsLocationSasToken')))]",
-        "meta_install_sh": "[uri(parameters('_artifactsLocation'), concat('scripts/meta_install.sh', variables('_artifactsLocationSasToken')))]",
+        "linux_extension_template": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vm_linux_extension.json', parameters('_artifactsLocationSasToken')))]",
         "meta_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('meta_vm_name'),'_nic')]",
         "meta_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('meta_vm_name'),'_nsg')]",
         "meta_vm_name": "meta",
         "microservices_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('microservices_vm_name'),'_nic')]",
         "microservices_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('microservices_vm_name'),'_nsg')]",
         "microservices_vm_name": "microservices",
-        "mid_config_sh": "[uri(parameters('_artifactsLocation'), concat('scripts/mid_config.sh', variables('_artifactsLocationSasToken')))]",
-        "mid_install_sh": "[uri(parameters('_artifactsLocation'), concat('scripts/mid_install.sh', variables('_artifactsLocationSasToken')))]",
         "mid_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('mid_vm_name'),'_nic')]",
         "mid_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('mid_vm_name'),'_nsg')]",
         "mid_vm_name": "mid",
-        "primary_user_name": "vmuser",
-        "pub_sub_nw_sg": "[concat(parameters('SASApplicationName'), '_subnt_pub1_nsg')]",
-        "pvt_sub_nw_sg": "[concat(parameters('SASApplicationName'), '_subnt_pvt1_nsg')]",
+        "ppg_name": "[concat(parameters('SASApplicationName'),'_ppg_',variables('resourceGroupUniqueString'))]",
+        "pub_sub_nw_sg": "[concat(parameters('SASApplicationName'), '_subnet_pub1_nsg')]",
+        "pvt_sub_nw_sg": "[concat(parameters('SASApplicationName'), '_subnet_pvt1_nsg')]",
+        "rbacPrincipalID": "[parameters('keyVaultOwnerID')]",
         "rdp_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('rdp_vm_name'),'_nic')]",
         "rdp_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('rdp_vm_name'),'_nsg')]",
-        "rdp_os_version": "2012-R2-Datacenter",
+        "rdp_os_version": "2019-Datacenter",
         "rdp_vm_name": "rdp",
         "reader_role": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
         "resourceGroupUniqueString": "[uniqueString(resourceGroup().id)]",
-        "role_assignment_template": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/role_assignments.json', variables('_artifactsLocationSasToken')))]",
+        "role_assignment_template": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/role_assignments.json', parameters('_artifactsLocationSasToken')))]",
         "sas_opt_sas_disk_size": 128,
         "sas_osdisk_size": 128,
         "sas_viya_backup_size": 100,
-        "sasapp_startup_script_sh": "[uri(parameters('_artifactsLocation'), concat('scripts/sasapp_prereq.sh', variables('_artifactsLocationSasToken')))]",
-        "sasclients_power_shell_script": "[uri(parameters('_artifactsLocation'), concat('scripts/sas_clients.ps1', variables('_artifactsLocationSasToken')))]",
+        "sas94vm_tags": {
+            "Application": "[parameters('SASApplicationName')]",
+            "Component": "SAS94NonGrid"
+        },
+        "sasviyavm_tags": {
+            "Application": "[parameters('SASApplicationName')]",
+            "Component": "SASViya"
+        },
         "secretsPermissions": [
             "get",
             "list",
@@ -299,23 +306,11 @@
         "spre_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('spre_vm_name'),'_nsg')]",
         "spre_vm_name": "spre",
         "tenantId": "[subscription().tenantId]",
-        "viya_ark_sh": "[uri(parameters('_artifactsLocation'), concat('scripts/viya_ark.sh', variables('_artifactsLocationSasToken')))]",
-        "viya_install_sh": "[uri(parameters('_artifactsLocation'), concat('scripts/viyainstall.sh', variables('_artifactsLocationSasToken')))]",
-        "viya_startup_script_sh": "[uri(parameters('_artifactsLocation'), concat('scripts/viya_prereq.sh', variables('_artifactsLocationSasToken')))]",
         "vnet_name": "[concat(parameters('SASApplicationName'),'_vnet')]",
-        "vnet_pub_subnt": "[concat(parameters('SASApplicationName'),'_vnet_pub1_subnt')]",
-        "vnet_pvt_subnt": "[concat(parameters('SASApplicationName'), '_vnet_pvt1_subnt')]",
-        "vnet_viya_pvt_subnt": "[concat(parameters('SASApplicationName'), '_vnet_pvt2_subnt')]",
-        "windows_extension_template": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vm_windows_extension.json', variables('_artifactsLocationSasToken')))]",
-        "sas94vm_tags": {
-            "Application": "[parameters('SASApplicationName')]",
-            "Component": "SAS94NonGrid"
-        },
-        "sasviyavm_tags": {
-            "Application": "[parameters('SASApplicationName')]",
-            "Component": "SASViya"
-        },
-        "ppg_name": "[concat(parameters('SASApplicationName'),'_ppg_',variables('resourceGroupUniqueString'))]"
+        "vnet_pub_subnt": "[concat(parameters('SASApplicationName'),'_vnet_pub1_subnet')]",
+        "vnet_pvt_subnt": "[concat(parameters('SASApplicationName'), '_vnet_pvt1_subnet')]",
+        "vnet_viya_pvt_subnt": "[concat(parameters('SASApplicationName'), '_vnet_pvt2_subnet')]",
+        "windows_extension_template": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vm_windows_extension.json', parameters('_artifactsLocationSasToken')))]"
     },
     "resources": [
         {
@@ -1470,13 +1465,13 @@
                 },
                 "osProfile": {
                     "computerName": "[variables('ansible_vm_name')]",
-                    "adminUsername": "[variables('primary_user_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": true,
                         "ssh": {
                             "publicKeys": [
                                 {
-                                    "path": "[concat('/home/', variables('primary_user_name'), '/.ssh/authorized_keys')]",
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
                                     "keyData": "[parameters('SSHPublicKey')]"
                                 }
                             ]
@@ -1516,7 +1511,7 @@
                 },
                 "parameters": {
                     "roleAssignmentName": {
-                        "value": "[guid(variables('ansible_vm_name'),resourceGroup().id)]"
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('ansible_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
                     },
                     "roleDefinitionID": {
                         "value": "[variables('reader_role')]"
@@ -1585,11 +1580,14 @@
                     "commandToExecute": {
                         "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./ansible_setup.sh',' ',parameters('storageAccountName'),' ',parameters('fileShareName'),' ',parameters('viyaRepoFolder'),' ',parameters('SASApplicationName'),' ',variables('domain_name'),' ',variables('ansible_vm_name'),' ',variables('microservices_vm_name'),' ',variables('cascontroller_vm_name'),' ',variables('spre_vm_name'),' ',variables('casworker_vm_name'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',parameters('numberOfViyaCASNodes'),' ',variables('mid_vm_name'),' ',parameters('_artifactsLocation'),' ',variables('compute_vm_name'),' ',variables('meta_vm_name'),' ',variables('key_vault_secretname_stgacc'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
                     },
+                    "filepath":{
+                        "value": "scripts/ansible_setup.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('ansible_startup_script_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -1621,11 +1619,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;./ansible_ssl.sh 2>&1 | tee /var/log/sas/install/runPhase2AnsibleSSLCopy.log;')]"
                     },
+                    "filepath": {
+                        "value": "scripts/ansible_ssl.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('ansible_ssl_copy_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -1656,11 +1657,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./viyainstall.sh',' ', '1',' ','2>&1 | tee /var/log/sas/install/runPhase3_viyainstallpart1.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/viyainstall.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('viya_install_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -1687,11 +1691,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./viyainstall.sh',' ', '2',' ','2>&1 | tee /var/log/sas/install/runPhase4_viyainstallpart2.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/viyainstall.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('viya_install_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -1718,11 +1725,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./viyainstall.sh',' ', '3',' ','2>&1 | tee /var/log/sas/install/runPhase5_viyainstallpart3.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/viyainstall.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('viya_install_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -1749,11 +1759,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./viyainstall.sh',' ', '4',' ','2>&1 | tee /var/log/sas/install/runPhase6_viyapostinstall.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/viyainstall.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('viya_install_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -1817,7 +1830,7 @@
                 },
                 "osProfile": {
                     "computerName": "[variables('rdp_vm_name')]",
-                    "adminUsername": "[variables('primary_user_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
                     "adminPassword": "[parameters('SASExternalPassword')]"
                 },
                 "networkProfile": {
@@ -1861,11 +1874,14 @@
                     "commandToExecute": {
                         "value": "[concat('powershell -ExecutionPolicy Unrestricted -File sas_clients.ps1 ','-stg_acc_name ',parameters('storageAccountName'),' -stg_key ',parameters('storageAccountKey'),' -file_share_name ',parameters('fileShareName'),' -depot_folder_name ',parameters('SASDepotFolder'),' -clients_sid ',parameters('SASServerLicenseFile'),' -app_name ',parameters('SASApplicationName'),' -mid_name ',variables('mid_vm_name'),' -domain_name ',variables('domain_name'),' -artifact_loc ',parameters('_artifactsLocation'))]"
                     },
+                    "filepath": {
+                        "value": "scripts/sas_clients.ps1"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('sasclients_power_shell_script')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -1944,13 +1960,13 @@
                 },
                 "osProfile": {
                     "computerName": "[variables('meta_vm_name')]",
-                    "adminUsername": "[variables('primary_user_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": true,
                         "ssh": {
                             "publicKeys": [
                                 {
-                                    "path": "[concat('/home/', variables('primary_user_name'), '/.ssh/authorized_keys')]",
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
                                     "keyData": "[parameters('SSHPublicKey')]"
                                 }
                             ]
@@ -1989,7 +2005,7 @@
                 },
                 "parameters": {
                     "roleAssignmentName": {
-                        "value": "[guid('meta',resourceGroup().id)]"
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('meta_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
                     },
                     "roleDefinitionID": {
                         "value": "[variables('reader_role')]"
@@ -2060,11 +2076,14 @@
                     "commandToExecute": {
                         "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./sasapp_prereq.sh',' ',parameters('SASApplicationName'),' ',parameters('SASDepotFolder'),' ',parameters('fileShareName'),' ',parameters('storageAccountName'),' ',variables('domain_name'),' ',parameters('location'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',variables('mid_vm_name'),' ',variables('meta_vm_name'),' ',variables('compute_vm_name'),' ',parameters('SASServerLicenseFile'),' ','meta',' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/sasapp_prereq.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('sasapp_startup_script_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -2093,11 +2112,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./meta_install.sh 2>&1 | tee /var/log/sas/install/meta_install.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/meta_install.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('meta_install_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -2126,11 +2148,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./meta_config.sh 2>&1 | tee /var/log/sas/install/meta_config.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/meta_config.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('meta_config_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -2215,14 +2240,14 @@
                 },
                 "osProfile": {
                     "computerName": "[variables('compute_vm_name')]",
-                    "adminUsername": "[variables('primary_user_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
                     "customData": "[base64(variables('custom_data_sas'))]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": true,
                         "ssh": {
                             "publicKeys": [
                                 {
-                                    "path": "[concat('/home/', variables('primary_user_name'), '/.ssh/authorized_keys')]",
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
                                     "keyData": "[parameters('SSHPublicKey')]"
                                 }
                             ]
@@ -2261,7 +2286,7 @@
                 },
                 "parameters": {
                     "roleAssignmentName": {
-                        "value": "[guid('compute',resourceGroup().id)]"
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('compute_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
                     },
                     "roleDefinitionID": {
                         "value": "[variables('reader_role')]"
@@ -2331,12 +2356,15 @@
                     "commandToExecute": {
                         "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./sasapp_prereq.sh',' ',parameters('SASApplicationName'),' ',parameters('SASDepotFolder'),' ',parameters('fileShareName'),' ',parameters('storageAccountName'),' ',variables('domain_name'),' ',parameters('location'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',variables('mid_vm_name'),' ',variables('meta_vm_name'),' ',variables('compute_vm_name'),' ',parameters('SASServerLicenseFile'),' ','compute',' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/sasapp_prereq.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('sasapp_startup_script_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
-                    }
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }   
                 }
             }
         },
@@ -2364,11 +2392,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./compute_install.sh 2>&1 | tee /var/log/sas/install/compute_install.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/compute_install.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('compute_install_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -2396,11 +2427,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./compute_config.sh 2>&1 | tee /var/log/sas/install/compute_config.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/compute_config.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('compute_config_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -2479,13 +2513,13 @@
                 },
                 "osProfile": {
                     "computerName": "[variables('mid_vm_name')]",
-                    "adminUsername": "[variables('primary_user_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": true,
                         "ssh": {
                             "publicKeys": [
                                 {
-                                    "path": "[concat('/home/', variables('primary_user_name'), '/.ssh/authorized_keys')]",
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
                                     "keyData": "[parameters('SSHPublicKey')]"
                                 }
                             ]
@@ -2524,7 +2558,7 @@
                 },
                 "parameters": {
                     "roleAssignmentName": {
-                        "value": "[guid('mid',resourceGroup().id)]"
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('mid_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
                     },
                     "roleDefinitionID": {
                         "value": "[variables('reader_role')]"
@@ -2594,12 +2628,15 @@
                     "commandToExecute": {
                         "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./sasapp_prereq.sh',' ',parameters('SASApplicationName'),' ',parameters('SASDepotFolder'),' ',parameters('fileShareName'),' ',parameters('storageAccountName'),' ',variables('domain_name'),' ',parameters('location'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',variables('mid_vm_name'),' ',variables('meta_vm_name'),' ',variables('compute_vm_name'),' ',parameters('SASServerLicenseFile'),' ','mid',' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/sasapp_prereq.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('sasapp_startup_script_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
-                    }
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    } 
                 }
             }
         },
@@ -2627,11 +2664,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./mid_install.sh 2>&1 | tee /var/log/sas/install/mid-install.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/mid_install.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('mid_install_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -2660,11 +2700,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./mid_config.sh 2>&1 | tee /var/log/sas/install/mid_config.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/mid_config.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('mid_config_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -2749,13 +2792,13 @@
                 },
                 "osProfile": {
                     "computerName": "[variables('microservices_vm_name')]",
-                    "adminUsername": "[variables('primary_user_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": true,
                         "ssh": {
                             "publicKeys": [
                                 {
-                                    "path": "[concat('/home/', variables('primary_user_name'), '/.ssh/authorized_keys')]",
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
                                     "keyData": "[parameters('SSHPublicKey')]"
                                 }
                             ]
@@ -2794,7 +2837,7 @@
                 },
                 "parameters": {
                     "roleAssignmentName": {
-                        "value": "[guid('microservices',resourceGroup().id)]"
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('microservices_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
                     },
                     "roleDefinitionID": {
                         "value": "[variables('reader_role')]"
@@ -2864,11 +2907,14 @@
                     "commandToExecute": {
                         "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./viya_prereq.sh',' ',parameters('storageAccountName'),' ',parameters('fileShareName'),' ',parameters('viyaRepoFolder'),' ',parameters('SASApplicationName'),' ',variables('domain_name'),' ',variables('ansible_vm_name'),' ',variables('microservices_vm_name'),' ',variables('cascontroller_vm_name'),' ',variables('spre_vm_name'),' ',variables('casworker_vm_name'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',parameters('numberOfViyaCASNodes'),' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/viya_prereq.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('viya_startup_script_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -2896,11 +2942,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./viya_ark.sh 2>&1 | tee /var/log/sas/install/runPhase2_viyaark.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/viya_ark.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('viya_ark_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -2985,14 +3034,14 @@
                 },
                 "osProfile": {
                     "computerName": "[variables('spre_vm_name')]",
-                    "adminUsername": "[variables('primary_user_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
                     "customData": "[base64(variables('custom_data_sas'))]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": true,
                         "ssh": {
                             "publicKeys": [
                                 {
-                                    "path": "[concat('/home/', variables('primary_user_name'), '/.ssh/authorized_keys')]",
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
                                     "keyData": "[parameters('SSHPublicKey')]"
                                 }
                             ]
@@ -3031,7 +3080,7 @@
                 },
                 "parameters": {
                     "roleAssignmentName": {
-                        "value": "[guid('spre',resourceGroup().id)]"
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('spre_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
                     },
                     "roleDefinitionID": {
                         "value": "[variables('reader_role')]"
@@ -3101,11 +3150,14 @@
                     "commandToExecute": {
                         "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./viya_prereq.sh',' ',parameters('storageAccountName'),' ',parameters('fileShareName'),' ',parameters('fileShareName'),' ',parameters('SASApplicationName'),' ',variables('domain_name'),' ',variables('ansible_vm_name'),' ',variables('microservices_vm_name'),' ',variables('cascontroller_vm_name'),' ',variables('spre_vm_name'),' ',variables('casworker_vm_name'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',parameters('numberOfViyaCASNodes'),' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/viya_prereq.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('viya_startup_script_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -3133,11 +3185,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./viya_ark.sh 2>&1 | tee /var/log/sas/install/runPhase2_viyaark.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/viya_ark.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('viya_ark_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -3228,14 +3283,14 @@
                 },
                 "osProfile": {
                     "computerName": "[variables('Cascontroller_vm_name')]",
-                    "adminUsername": "[variables('primary_user_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
                     "customData": "[base64(variables('custom_data_cas'))]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": true,
                         "ssh": {
                             "publicKeys": [
                                 {
-                                    "path": "[concat('/home/', variables('primary_user_name'), '/.ssh/authorized_keys')]",
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
                                     "keyData": "[parameters('SSHPublicKey')]"
                                 }
                             ]
@@ -3263,7 +3318,7 @@
         {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
-            "name": "CAScontrollerRoleAssignment",
+            "name": "CASControllerRoleAssignment",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines', variables('Cascontroller_vm_name'))]"
             ],
@@ -3274,7 +3329,7 @@
                 },
                 "parameters": {
                     "roleAssignmentName": {
-                        "value": "[guid('cascontroller',resourceGroup().id)]"
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('Cascontroller_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
                     },
                     "roleDefinitionID": {
                         "value": "[variables('reader_role')]"
@@ -3288,7 +3343,7 @@
         {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
-            "name": "CAScontrollerAccessPolicy",
+            "name": "CASControllerAccessPolicy",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines', variables('Cascontroller_vm_name'))]",
                 "[resourceID('Microsoft.Resources/deployments','MicroServicesAccessPolicy')]",
@@ -3344,11 +3399,14 @@
                     "commandToExecute": {
                         "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./viya_prereq.sh',' ',parameters('storageAccountName'),' ',parameters('fileShareName'),' ',parameters('fileShareName'),' ',parameters('SASApplicationName'),' ',variables('domain_name'),' ',variables('ansible_vm_name'),' ',variables('microservices_vm_name'),' ',variables('cascontroller_vm_name'),' ',variables('spre_vm_name'),' ',variables('casworker_vm_name'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',parameters('numberOfViyaCASNodes'),' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/viya_prereq.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('viya_startup_script_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -3376,11 +3434,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./viya_ark.sh 2>&1 | tee /var/log/sas/install/runPhase2_viyaark.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/viya_ark.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('viya_ark_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -3472,14 +3533,14 @@
                 },
                 "osProfile": {
                     "computerName": "[concat(variables('casworker_vm_name'), copyIndex())]",
-                    "adminUsername": "[variables('primary_user_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
                     "customData": "[base64(variables('custom_data_cas'))]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": true,
                         "ssh": {
                             "publicKeys": [
                                 {
-                                    "path": "[concat('/home/', variables('primary_user_name'), '/.ssh/authorized_keys')]",
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
                                     "keyData": "[parameters('SSHPublicKey')]"
                                 }
                             ]
@@ -3516,7 +3577,7 @@
                 },
                 "parameters": {
                     "roleAssignmentName": {
-                        "value": "[guid(concat(variables('casworker_vm_name'), copyIndex()),resourceGroup().id)]"
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', concat(variables('casworker_vm_name'), copyIndex())), variables('reader_role'), variables('rbacPrincipalID'))]"
                     },
                     "roleDefinitionID": {
                         "value": "[variables('reader_role')]"
@@ -3596,11 +3657,14 @@
                     "commandToExecute": {
                         "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./viya_prereq.sh',' ',parameters('storageAccountName'),' ',parameters('fileShareName'),' ',parameters('fileShareName'),' ',parameters('SASApplicationName'),' ',variables('domain_name'),' ',variables('ansible_vm_name'),' ',variables('microservices_vm_name'),' ',variables('cascontroller_vm_name'),' ',variables('spre_vm_name'),' ',variables('casworker_vm_name'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',parameters('numberOfViyaCASNodes'),' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/viya_prereq.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('viya_startup_script_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -3632,11 +3696,14 @@
                     "commandToExecute": {
                         "value": "[concat('set -o pipefail;','./viya_ark.sh 2>&1 | tee /var/log/sas/install/runPhase2_viyaark.log')]"
                     },
+                    "filepath": {
+                        "value": "scripts/viya_ark.sh"
+                    },
                     "_artifactsLocation": {
-                        "value": "[variables('viya_ark_sh')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
-                        "value": "[variables('_artifactsLocationSasToken')]"
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
