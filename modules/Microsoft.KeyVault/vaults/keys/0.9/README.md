@@ -17,17 +17,23 @@ This module creates a Key in a Key Vault.  The Key Vault must already exist and 
 
 ## Parameters
 
+For more details about the key parameters see the [API reference documentation](https://docs.microsoft.com/en-us/rest/api/keyvault/CreateKey/CreateKey).
+
 | Name | Type | Required | Description |
 | :------------- | :----------: | :----------: | :------------- |
-| vaultName | string | No | Specifies the name of the KeyVault, this value must be globally unique. |
-| virtualNetworkRules |  array | No | An array for resourceIds for the virtualNetworks allowed to access the vault. |
-| skuName | string | No | Standard | Specifies whether the key vault is a standard vault or a premium vault.  allowedValues [ Standard, Premium ] |
+| vaultName | string | Yes | Specifies the name of the KeyVault, this vault must already exist. |
+| keyName | string | Yes | Specifies the name of the key to be created. |
+| attributes | string | No | The attributes of a key managed by the key vault service. |
+| crv | string | No | Elliptic curve name. |
+| key_ops | string | No | JSON web key operations. Operations include: 'encrypt', 'decrypt', 'sign', 'verify', 'wrapKey', 'unwrapKey' |
+| key_size | string | No | The key size in bits. For example: 2048, 3072, or 4096 for RSA. |
+| kty | string | No | The type of key to create. |
 | tags | object | No | Tags to be assigned to the KeyVault. |
 
 ## Outputs
 
 | Name | Type | Description |
 | :------------- | :----------: | :------------- |
-| vaultName | string | The name of the KeyVault. |
+| key | object | The properties of the created key. |
 
 ```apiVersion: 2019-09-01```
