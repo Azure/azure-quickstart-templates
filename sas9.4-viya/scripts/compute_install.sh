@@ -28,12 +28,11 @@ mid_host=`facter mid_hostname`
 sasint_secret_name=`facter sasint_secret_name`
 sasext_secret_name=`facter sasext_secret_name`
 pub_keyname=`facter pub_keyname`
-plan_file_url=${artifact_loc}properties/plan.xml
-computeinstall_url=${artifact_loc}properties/compute_install.properties
-computeconfig_url=${artifact_loc}properties/compute_config.properties
 res_dir="/opt/sas/resources/responsefiles"
-inst_prop=$res_dir/compute_install.properties
-conf_prop=$res_dir/compute_config.properties
+resource_dir="/opt/sas/resources"
+inst_prop=$resource_dir/compute_install.properties
+conf_prop=$resource_dir/compute_config.properties
+properties_uri=${artifact_loc}response-properties.tar.gz
 
 # Getting the password
 az login --identity
@@ -110,17 +109,19 @@ if [ ! -d $res_dir ]; then
 fi
 
 #Downloading the plan file and property files required for SAS install
-wget -P /opt/sas/resources/ $plan_file_url
-wget -P $res_dir $computeinstall_url
-wget -P $res_dir $computeconfig_url
+wget $properties_uri
+tar -xzvf response-properties.tar.gz -C ${res_dir}
+cp -p ${res_dir}/plan.xml ${resource_dir}
+cp -p ${res_dir}/compute_* ${resource_dir}
+chown -R sasinst:sas ${resource_dir}
 
 #Altering the property files
-sed -i "s/domain_name/${domain_name}/g" $res_dir/*.properties
-sed -i "s/host_name/${compute_host}/g" $res_dir/*.properties
-sed -i "s/meta_host/${meta_host}/g" $res_dir/*.properties
-sed -i "s/mid_host/${mid_host}/g" $res_dir/*.properties
-sed -i "s|sas_plan_file_path|/opt/sas/resources/plan.xml|g" $res_dir/*.properties
-sed -i "s|sas_license_file_path|/opt/sas/resources/${sas_sid}|g" $res_dir/*.properties
+sed -i "s/domain_name/${domain_name}/g" $resource_dir/*.properties
+sed -i "s/host_name/${compute_host}/g" $resource_dir/*.properties
+sed -i "s/meta_host/${meta_host}/g" $resource_dir/*.properties
+sed -i "s/mid_host/${mid_host}/g" $resource_dir/*.properties
+sed -i "s|sas_plan_file_path|/opt/sas/resources/plan.xml|g" $resource_dir/*.properties
+sed -i "s|sas_license_file_path|/opt/sas/resources/${sas_sid}|g" $resource_dir/*.properties
 
 #SAS Installation
 if [ -d /opt/sas/temp ]; then 

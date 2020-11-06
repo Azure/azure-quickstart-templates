@@ -23,9 +23,9 @@ Set-PSDebug -Trace 1;
 $logdir = "C:\saslog"
 $mid_fqdn= "${app_name}${mid_name}.${domain_name}"
 New-Item -Path $logdir -ItemType directory
-Invoke-WebRequest -Uri ${artifact_loc}properties/clients_install.properties -OutFile ${logdir}\clients_install.properties
+Invoke-WebRequest -Uri ${artifact_loc}clients_install.properties -OutFile ${logdir}\clients_install.properties
 ExitWithCode
-Invoke-WebRequest -Uri ${artifact_loc}properties/plan.xml -OutFile ${logdir}\plan.xml
+Invoke-WebRequest -Uri ${artifact_loc}plan.xml -OutFile ${logdir}\plan.xml
 ExitWithCode
 (Get-Content -path ${logdir}\clients_install.properties -Raw) -replace 'client_sid',$clients_sid | Add-Content -Path ${logdir}\clients_install_new.properties
 Remove-Item -Path ${logdir}\clients_install.properties

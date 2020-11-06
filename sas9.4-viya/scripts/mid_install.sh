@@ -30,12 +30,10 @@ key_vault_name=`facter key_vault_name`
 pub_keyname=`facter pub_keyname`
 artifact_loc=`facter artifact_loc`
 res_dir="/opt/sas/resources/responsefiles"
-plan_file_url="${artifact_loc}properties/plan.xml"
-midinstall_url="${artifact_loc}properties/mid_install.properties"
-midconfig_url="${artifact_loc}properties/mid_config.properties"
-inst_prop=${res_dir}/mid_install.properties
-conf_prop=${res_dir}/mid_config.properties
-
+resource_dir="/opt/sas/resources"
+inst_prop=${resource_dir}/mid_install.properties
+conf_prop=${resource_dir}/mid_config.properties
+properties_uri=${artifact_loc}response-properties.tar.gz
 
 # Getting the password
 az login --identity
@@ -100,16 +98,19 @@ cp -rv /sasdepot/${depot_loc}/sid_files/${sas_sid} /opt/sas/resources/
 if [ ! -d $res_dir ]; then
     mkdir -p $res_dir
 fi
-wget -P /opt/sas/resources/ $plan_file_url
-wget -P $res_dir $midinstall_url
-wget -P $res_dir $midconfig_url
+
+wget $properties_uri
+tar -xzvf response-properties.tar.gz -C ${res_dir}
+cp -p ${res_dir}/plan.xml ${resource_dir}
+cp -p ${res_dir}/mid_* ${resource_dir}
+chown -R sasinst:sas ${resource_dir}
 
 #Changing the settings in property files
-sed -i "s/domain_name/${domain_name}/g" $res_dir/*.properties
-sed -i "s/host_name/${mid_host}/g" $res_dir/*.properties
-sed -i "s/meta_host/${meta_host}/g" $res_dir/*.properties
-sed -i "s|sas_plan_file_path|/opt/sas/resources/plan.xml|g" $res_dir/*.properties
-sed -i "s|sas_license_file_path|/opt/sas/resources/${sas_sid}|g" $res_dir/*.properties
+sed -i "s/domain_name/${domain_name}/g" $resource_dir/*.properties
+sed -i "s/host_name/${mid_host}/g" $resource_dir/*.properties
+sed -i "s/meta_host/${meta_host}/g" $resource_dir/*.properties
+sed -i "s|sas_plan_file_path|/opt/sas/resources/plan.xml|g" $resource_dir/*.properties
+sed -i "s|sas_license_file_path|/opt/sas/resources/${sas_sid}|g" $resource_dir/*.properties
 
 #SAS Installation
 if [ -d /opt/sas/temp ]; then 
