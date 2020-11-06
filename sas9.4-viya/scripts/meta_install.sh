@@ -28,12 +28,10 @@ sasint_secret_name=`facter sasint_secret_name`
 sasext_secret_name=`facter sasext_secret_name`
 pub_keyname=`facter pub_keyname`
 res_dir="/opt/sas/resources/responsefiles"
-plan_file_url=${artifact_loc}properties/plan.xml
-metainstall_url=${artifact_loc}properties/meta_install.properties
-metaconfig_url=${artifact_loc}properties/meta_config.properties
-inst_prop=$res_dir/meta_install.properties
-conf_prop=$res_dir/meta_config.properties
-
+resource_dir="/opt/sas/resources"
+inst_prop=${resource_dir}/meta_install.properties
+conf_prop=${resource_dir}/meta_config.properties
+properties_uri=${artifact_loc}response-properties.tar.gz
 
 # Getting the password
 az login --identity
@@ -98,21 +96,24 @@ else
 fi
 
 #copyign SID file to local directories from SASDepot
-cp -rv /sasdepot/${depot_loc}/sid_files/${sas_sid} /opt/sas/resources/ 
+cp -rv /sasdepot/${depot_loc}/sid_files/${sas_sid} /opt/sas/resources/
 #Downloading Meta Install Property files
 if [ ! -d $res_dir ]; then
     mkdir -p $res_dir
 fi
-wget -P /opt/sas/resources/ $plan_file_url
-wget -P $res_dir $metainstall_url 
-wget -P $res_dir $metaconfig_url
+
+wget $properties_uri
+tar -xzvf response-properties.tar.gz -C ${res_dir}
+cp -p ${res_dir}/plan.xml ${resource_dir}
+cp -p ${res_dir}/meta_* ${resource_dir}
+chown -R sasinst:sas ${resource_dir}
 
 ##Chaning the settings in property files
-sed -i "s/domain_name/${domain_name}/g" $res_dir/*.properties
-sed -i "s/host_name/${meta_host}/g" $res_dir/*.properties
-sed -i "s/mid_host/${mid_host}/g" $res_dir/*.properties
-sed -i "s|sas_plan_file_path|/opt/sas/resources/plan.xml|g" $res_dir/*.properties
-sed -i "s|sas_license_file_path|/opt/sas/resources/${sas_sid}|g" $res_dir/*.properties
+sed -i "s/domain_name/${domain_name}/g" $resource_dir/*.properties
+sed -i "s/host_name/${meta_host}/g" $resource_dir/*.properties
+sed -i "s/mid_host/${mid_host}/g" $resource_dir/*.properties
+sed -i "s|sas_plan_file_path|/opt/sas/resources/plan.xml|g" $resource_dir/*.properties
+sed -i "s|sas_license_file_path|/opt/sas/resources/${sas_sid}|g" $resource_dir/*.properties
 
 #SAS Installation
 if [ -d /opt/sas/temp ]; then
@@ -148,14 +149,14 @@ echo  "filename pwfile '/root/encext.txt'; proc pwencode in=${sasextpw} out=pwfi
 /opt/sas/home/SASFoundation/9.4/bin/sas_u8 -sysin /root/encext.sas -log /root/sasencext.log
 fail_if_error $? "ERROR: SAS External Password encryption failed."
 encsasextpw=$(</root/encext.txt)
-sed -i "s/changeextpass/${encsasextpw}/g" $res_dir/*.properties
+sed -i "s/changeextpass/${encsasextpw}/g" $resource_dir/*.properties
 echo "Encrypted password has been updated successfully."
 ##Encrypting sasintpw password
 echo  "filename pwfile '/root/encint.txt'; proc pwencode in=${sasintpw} out=pwfile; run;" > /root/encint.sas
 /opt/sas/home/SASFoundation/9.4/bin/sas_u8 -sysin /root/encint.sas -log /root/sasencint.log
 fail_if_error $? "ERROR: SAS Internal Password encryption failed."
 encsasintpw=$(</root/encint.txt)
-sed -i "s/changeintpass/${encsasintpw}/g" $res_dir/*.properties
+sed -i "s/changeintpass/${encsasintpw}/g" $resource_dir/*.properties
 echo "Encrypted password has been updated succesfully."
 
 echo "*** Phase 2 - SAS Install Script Ended at `date +'%Y-%m-%d_%H-%M-%S'` ***"
