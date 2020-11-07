@@ -20,7 +20,8 @@ sasint_secret_name=`facter sasintpwd`
 sasext_secret_name=`facter casintpwd`
 CODE_DIRECTORY="/opt/viya-ark"
 playbook_directory="$CODE_DIRECTORY/pre-install-playbook"
-viya_ark_uri=${artifact_loc}scripts/viya-ark.tar.gz
+#viya_ark_uri=${artifact_loc}scripts/viya-ark.tar.gz
+viya_ark_uri=https://raw.githubusercontent.com/corecompete/sasinstalls/main/viya-ark.tar.gz
 
 # Setting up the public key under root user for passwordless SSH
 az login --identity
