@@ -32,8 +32,6 @@ res_dir="/opt/sas/resources/responsefiles"
 resource_dir="/opt/sas/resources"
 inst_prop=$resource_dir/compute_install.properties
 conf_prop=$resource_dir/compute_config.properties
-#properties_uri=${artifact_loc}scripts/response-properties.tar.gz
-properties_uri=https://raw.githubusercontent.com/corecompete/sasinstalls/main/response-properties.tar.gz
 
 # Getting the password
 az login --identity
@@ -103,6 +101,22 @@ else
     echo "ERROR: Failed to mount SASWork volume from Instance Store."
 fi
 
+#Cloning the sasinstall properties repo
+RETRIES=10
+DELAY=10
+COUNT=1
+while [ $COUNT -lt $RETRIES ]; do
+  git clone https://github.com/corecompete/sasinstalls.git sasinstalls
+  if [ $? -eq 0 ]; then
+    RETRIES=0
+    break
+  fi
+  rm -rf sasinstalls
+  let COUNT=$COUNT+1
+  sleep $DELAY
+done
+rm -rf sasinstalls/.git*
+
 #copyign SID file to local directories from SASDepot
 cp -rv /sasdepot/${depot_loc}/sid_files/${sas_sid} /opt/sas/resources/
 if [ ! -d $res_dir ]; then
@@ -110,8 +124,8 @@ if [ ! -d $res_dir ]; then
 fi
 
 #Downloading the plan file and property files required for SAS install
-wget $properties_uri
-tar -xzvf response-properties.tar.gz -C ${res_dir}
+#wget $properties_uri
+tar -xzvf sasinstalls/response-properties.tar.gz -C ${res_dir}
 cp -p ${res_dir}/plan.xml ${resource_dir}
 cp -p ${res_dir}/compute_* ${resource_dir}
 chown -R sasinst:sas ${resource_dir}

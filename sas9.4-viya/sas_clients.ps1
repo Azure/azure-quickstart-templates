@@ -22,13 +22,14 @@ if($? -eq "true"){
 Set-PSDebug -Trace 1;
 $logdir = "C:\saslog"
 $mid_fqdn= "${app_name}${mid_name}.${domain_name}"
-client_uri="https://raw.githubusercontent.com/corecompete/sasinstalls/main/clients_install.properties"
-plan_uri="https://raw.githubusercontent.com/corecompete/sasinstalls/main/plan.xml"
 New-Item -Path $logdir -ItemType directory
-Invoke-WebRequest -Uri ${client_uri} -OutFile ${logdir}\clients_install.properties
+
+Invoke-WebRequest -Uri https://github.com/corecompete/sasinstalls/archive/main.zip -OutFile sasinstall.zip
 ExitWithCode
-Invoke-WebRequest -Uri ${plan_uri} -OutFile ${logdir}\plan.xml
-ExitWithCode
+
+Expand-Archive -LiteralPath sasinstall.zip -DestinationPath sasinstalls
+Move-Item -path sasinstalls\sasinstalls-main\clients_install.properties -Destination  ${logdir}\clients_install.properties
+Move-Item -path sasinstalls\sasinstalls-main\plan.xml -Destination ${logdir}\plan.xml
 (Get-Content -path ${logdir}\clients_install.properties -Raw) -replace 'client_sid',$clients_sid | Add-Content -Path ${logdir}\clients_install_new.properties
 Remove-Item -Path ${logdir}\clients_install.properties
 Move-Item -Path ${logdir}\clients_install_new.properties -Destination ${logdir}\clients_install.properties
