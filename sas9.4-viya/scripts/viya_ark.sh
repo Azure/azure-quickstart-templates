@@ -20,8 +20,7 @@ sasint_secret_name=`facter sasintpwd`
 sasext_secret_name=`facter casintpwd`
 CODE_DIRECTORY="/opt/viya-ark"
 playbook_directory="$CODE_DIRECTORY/pre-install-playbook"
-#viya_ark_uri=${artifact_loc}scripts/viya-ark.tar.gz
-viya_ark_uri=https://raw.githubusercontent.com/corecompete/sasinstalls/main/viya-ark.tar.gz
+
 
 # Setting up the public key under root user for passwordless SSH
 az login --identity
@@ -31,12 +30,26 @@ caspwd=`az keyvault secret show -n $sasext_secret_name --vault-name $key_vault_n
 echo `az keyvault secret show -n ${pub_keyname}  --vault-name ${key_vault_name} | grep value | cut -d '"' -f4` >> ~/.ssh/authorized_keys
 
 ###Downloading viya-ark from git
-wget $viya_ark_uri
+RETRIES=10
+DELAY=10
+COUNT=1
+while [ $COUNT -lt $RETRIES ]; do
+  git clone https://github.com/corecompete/sasinstalls.git sasinstalls
+  if [ $? -eq 0 ]; then
+    RETRIES=0
+    break
+  fi
+  rm -rf sasinstalls
+  let COUNT=$COUNT+1
+  sleep $DELAY
+done
+rm -rf sasinstalls/.git*
+
 ##untar viya-ark
 if [ ! -d ${CODE_DIRECTORY} ]; then
     mkdir -p ${CODE_DIRECTORY}
 fi
-  tar -xzvf viya-ark.tar.gz -C ${CODE_DIRECTORY}
+  tar -xzvf sasinstalls/viya-ark.tar.gz -C ${CODE_DIRECTORY}
   fail_if_error $? "viya-ark file not found"
 #
 ## Running the Ansible Playbook on the Viya Servers

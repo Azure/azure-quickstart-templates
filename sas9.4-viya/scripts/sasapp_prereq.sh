@@ -98,7 +98,7 @@ else
 fi
 
 
-yum -y install java firefox xclock x11* xauth python compat-glibc libpng12 lsof at numactl glibc libpng ntp apr ksh wget mlocate libXext.x86_64 libXp.x86_64 libXtst.x86_64 xorg-x11-xauth.x86_64 gcc libSM.i686 libXrender.i686 zlib.i686 nfs-utils cifs-utils telnet
+yum -y install java firefox xclock x11* xauth python git compat-glibc libpng12 lsof at numactl glibc libpng ntp apr ksh wget mlocate libXext.x86_64 libXp.x86_64 libXtst.x86_64 xorg-x11-xauth.x86_64 gcc libSM.i686 libXrender.i686 zlib.i686 nfs-utils cifs-utils telnet
 fail_if_error $? "ERROR: PreRequisites installation failed"
 
 #System settings 
