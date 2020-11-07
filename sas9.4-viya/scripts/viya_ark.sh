@@ -20,7 +20,7 @@ sasint_secret_name=`facter sasintpwd`
 sasext_secret_name=`facter casintpwd`
 CODE_DIRECTORY="/opt/viya-ark"
 playbook_directory="$CODE_DIRECTORY/pre-install-playbook"
-viya_ark_uri=${artifact_loc}viya-ark.tar.gz
+viya_ark_uri=${artifact_loc}scripts/viya-ark.tar.gz
 
 # Setting up the public key under root user for passwordless SSH
 az login --identity
@@ -36,6 +36,7 @@ if [ ! -d ${CODE_DIRECTORY} ]; then
     mkdir -p ${CODE_DIRECTORY}
 fi
   tar -xzvf viya-ark.tar.gz -C ${CODE_DIRECTORY}
+  fail_if_error $? "viya-ark file not found"
 #
 ## Running the Ansible Playbook on the Viya Servers
 #
