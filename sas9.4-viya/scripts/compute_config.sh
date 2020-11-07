@@ -11,7 +11,7 @@ fail_if_error() {
 }
 
 ##Local Variables
-app_name=`facter application_name`  
+app_name=`facter application_name`
 artifact_loc=`facter artifact_loc`
 depot_loc=`facter sasdepot_folder`
 res_dir="/opt/sas/resources/responsefiles"

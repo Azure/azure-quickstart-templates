@@ -32,7 +32,7 @@ res_dir="/opt/sas/resources/responsefiles"
 resource_dir="/opt/sas/resources"
 inst_prop=$resource_dir/compute_install.properties
 conf_prop=$resource_dir/compute_config.properties
-properties_uri=${artifact_loc}response-properties.tar.gz
+properties_uri=${artifact_loc}scripts/response-properties.tar.gz
 
 # Getting the password
 az login --identity
