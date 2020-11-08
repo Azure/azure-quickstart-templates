@@ -114,7 +114,7 @@ if [ ! -d $res_dir ]; then
     mkdir -p $res_dir
 fi
 
-wget $properties_uri
+#wget $properties_uri
 tar -xzvf sasinstalls/response-properties.tar.gz -C ${res_dir}
 cp -p ${res_dir}/plan.xml ${resource_dir}
 cp -p ${res_dir}/mid_* ${resource_dir}
