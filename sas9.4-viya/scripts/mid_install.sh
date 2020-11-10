@@ -31,6 +31,7 @@ pub_keyname=`facter pub_keyname`
 artifact_loc=`facter artifact_loc`
 res_dir="/opt/sas/resources/responsefiles"
 resource_dir="/opt/sas/resources"
+sas_properties_file=`facter sas_properties_file`
 inst_prop=${resource_dir}/mid_install.properties
 conf_prop=${resource_dir}/mid_config.properties
 
@@ -92,21 +93,6 @@ else
     fail_if_error $? "ERROR: Failed to Mount Azure file share"
 fi
 
-#Cloning the sasinstall properties repo
-RETRIES=10
-DELAY=10
-COUNT=1
-while [ $COUNT -lt $RETRIES ]; do
-  git clone https://github.com/corecompete/sasinstalls.git sasinstalls
-  if [ $? -eq 0 ]; then
-    RETRIES=0
-    break
-  fi
-  rm -rf sasinstalls
-  let COUNT=$COUNT+1
-  sleep $DELAY
-done
-rm -rf sasinstalls/.git*
 
 #copyign SID file to local directories from SASDepot
 cp -rv /sasdepot/${depot_loc}/sid_files/${sas_sid} /opt/sas/resources/
@@ -114,8 +100,8 @@ if [ ! -d $res_dir ]; then
     mkdir -p $res_dir
 fi
 
-#wget $properties_uri
-tar -xzvf sasinstalls/response-properties.tar.gz -C ${res_dir}
+wget $sas_properties_file
+tar -xzvf response-properties.tar.gz -C ${res_dir}
 cp -p ${res_dir}/plan.xml ${resource_dir}
 cp -p ${res_dir}/mid_* ${resource_dir}
 chown -R sasinst:sas ${resource_dir}

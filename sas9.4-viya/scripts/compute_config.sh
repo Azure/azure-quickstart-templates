@@ -15,13 +15,11 @@ app_name=`facter application_name`
 artifact_loc=`facter artifact_loc`
 depot_loc=`facter sasdepot_folder`
 res_dir="/opt/sas/resources/responsefiles"
-#ssl_prop_url=${artifact_loc}properties/ssl_cert.properties
 resource_dir="/opt/sas/resources"
 conf_prop=${resource_dir}/compute_config.properties
 cert_prop=${resource_dir}/ssl_cert.properties
 
 ##Replace crt in certupdatemid.properties
-#wget -P $res_dir $ssl_prop_url
 cp -p ${res_dir}/ssl_cert.properties ${resource_dir}
 sed -i "s|certname|${app_name}|g" ${resource_dir}/ssl_cert.properties
 

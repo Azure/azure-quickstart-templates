@@ -45,6 +45,7 @@ secret_pub_keyname=${15}
 cas_nodes=${16}
 artifact_loc=${17}
 stgacc_secr_name=${18}
+viya_ark_file=${19}
 EOF
 
 
