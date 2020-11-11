@@ -21,7 +21,7 @@ playbook_directory="$ansible_directory/sas_viya_playbook"
 inventory="$playbook_directory/inventory.ini"
 viyarepo_loc=`facter viyarepo_folder`
 artifact_loc=`facter artifact_loc`
-viya_ark_uri=${artifact_loc}viya-ark.tar.gz
+viya_ark_uri=${artifact_loc}properties/viya-ark.tar.gz
 
 if [[ -z "$SCRIPT_PHASE" ]]; then
         SCRIPT_PHASE="$1"
