@@ -27,10 +27,7 @@ $logdir = "C:\saslog"
 $mid_fqdn = "${app_name}${mid_name}.${domain_name}"
 New-Item -Path $logdir -ItemType directory
 
-Invoke-WebRequest $clientproperties -OutFile ${logdir}\clients_install.properties
-ExitWithCode
-Invoke-WebRequest $clientplan -OutFile ${logdir}\plan.xml
-ExitWithCode
+Copy-Item -Path "C:\WindowsAzure\client_install\*" -Destination ${logdir} -Recurse
 
 (Get-Content -path ${logdir}\clients_install.properties -Raw) -replace 'client_sid', $clients_sid | Add-Content -Path ${logdir}\clients_install_new.properties
 Remove-Item -Path ${logdir}\clients_install.properties

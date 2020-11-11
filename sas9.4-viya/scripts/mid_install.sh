@@ -31,7 +31,6 @@ pub_keyname=`facter pub_keyname`
 artifact_loc=`facter artifact_loc`
 res_dir="/opt/sas/resources/responsefiles"
 resource_dir="/opt/sas/resources"
-sas_properties_file=`facter sas_properties_file`
 inst_prop=${resource_dir}/mid_install.properties
 conf_prop=${resource_dir}/mid_config.properties
 
@@ -100,8 +99,8 @@ if [ ! -d $res_dir ]; then
     mkdir -p $res_dir
 fi
 
-wget $sas_properties_file
-tar -xzvf response-properties.tar.gz -C ${res_dir}
+#extracting the properties files
+tar -xzvf /tmp/response-properties.tar.gz -C ${res_dir}
 cp -p ${res_dir}/plan.xml ${resource_dir}
 cp -p ${res_dir}/mid_* ${resource_dir}
 chown -R sasinst:sas ${resource_dir}

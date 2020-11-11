@@ -30,7 +30,6 @@ sasext_secret_name=`facter sasext_secret_name`
 pub_keyname=`facter pub_keyname`
 res_dir="/opt/sas/resources/responsefiles"
 resource_dir="/opt/sas/resources"
-sas_properties_file=`facter sas_properties_file`
 inst_prop=$resource_dir/compute_install.properties
 conf_prop=$resource_dir/compute_config.properties
 
@@ -111,8 +110,7 @@ if [ ! -d $res_dir ]; then
 fi
 
 #Downloading the plan file and property files required for SAS install
-wget $sas_properties_file
-tar -xzvf response-properties.tar.gz -C ${res_dir}
+tar -xzvf /tmp/response-properties.tar.gz -C ${res_dir}
 cp -p ${res_dir}/plan.xml ${resource_dir}
 cp -p ${res_dir}/compute_* ${resource_dir}
 chown -R sasinst:sas ${resource_dir}
