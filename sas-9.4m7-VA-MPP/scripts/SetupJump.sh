@@ -24,6 +24,7 @@ export azurePassword="${13}"
 export PUBLIC_DNS_NAME="${14}"
 export azure_subscription="${15}"
 export azure_resource_group="${16}"
+export planfile_uri="${17}"
 
 export DIRECTORY_NFS_SHARE="/sasshare"
 export INSTALL_DIR="/sas/install"
