@@ -29,6 +29,7 @@ sasext_secret_name=`facter sasext_secret_name`
 pub_keyname=`facter pub_keyname`
 res_dir="/opt/sas/resources/responsefiles"
 resource_dir="/opt/sas/resources"
+cifs_server_fqdn=`facter cifs_server_fqdn`
 inst_prop=${resource_dir}/meta_install.properties
 conf_prop=${resource_dir}/meta_config.properties
 
@@ -90,8 +91,7 @@ else
         echo "password=${store_key}" >> /etc/smbcredentials/store.cred
     fi
     sudo chmod 600 /etc/smbcredentials/store.cred
-    #echo "//${store_name}.file.core.windows.net/${store_loc} /sasdepot cifs nofail,vers=3.0,credentials=/etc/smbcredentials/store.cred,dir_mode=0777,file_mode=0777,serverino" >> /etc/fstab
-    sudo mount -t cifs //${store_name}.file.core.windows.net/${store_loc} /sasdepot -o vers=3.0,credentials=/etc/smbcredentials/store.cred,dir_mode=0777,file_mode=0777,serverino
+    sudo mount -t cifs //${cifs_server_fqdn}/${store_loc} /sasdepot -o vers=3.0,credentials=/etc/smbcredentials/store.cred,dir_mode=0777,file_mode=0777,serverino
     fail_if_error $? "ERROR: Failed to mount Azure file share"
 fi
 
