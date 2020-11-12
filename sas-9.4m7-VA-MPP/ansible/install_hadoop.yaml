@@ -2,26 +2,10 @@
 # Copyright (c) 2020, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-###
-# Hadoop deployment refercence https://www.techsupportpk.com/2020/03/how-to-create-multi-node-hadoop-cluster-centos-rhel.html
-#
-# May need to run on each node:
-# sudo hostnamectl set-hostname vacontoller
-# sudo hostnamectl set-hostname vaworker-0
-# sudo hostnamectl set-hostname vaworker-1
-#
-# May need to set timezone
-# sudo timedatectl set-timezone Asia/Karachi
-#
-# Hadoop user is AzureUser
-#
-# uninstall ansible 2.7.10 and install sudo pip install 'ansible==2.9.14'
-#
-###
 ---
   - name: Distribute ssh key to Hadoop nodes
     hosts: [va_controllers,va_workers]
-    become_user: AzureUser
+    become_user: sasinst
     become: yes
     tasks:
       - name: Copy ssh key from jumpvm to Hadoop nodes
@@ -57,16 +41,14 @@
       become_user: root
       lineinfile:
         path: "/etc/hosts"
-        # regexp: ".*\t{{ hostvars[item]['ansible_hostname']}}\t{{ hostvars[item]['ansible_hostname']}}"
         line: "{{ hostvars[item]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}\t{{ hostvars[item]['ansible_hostname']}}\t{{ hostvars[item]['ansible_hostname']}}"
         state: present
         backup: yes
-      # when: ansible_hostname != "{{ item }}" or ansible_hostname == "{{ item }}"
-      with_items: "{{groups['va_controllers']}},{{groups['va_workers']}}"
+      with_items: "{{ groups['va_controllers'] }},{{ groups['va_workers'] }}"
 
   - name: Download Hadoop on nameNode and dataNodes
     hosts: [va_controllers,va_workers]
-    become_user: AzureUser
+    become_user: sasinst
     become: yes
     vars:
       HADOOP_VERSION: 3.1.4
@@ -93,10 +75,9 @@
  
   - name: Setup environment on nameNode (master)
     hosts: [va_controllers]
-    become_user: AzureUser
+    become_user: sasinst
     become: yes
     vars:
-      HADOOP_VERSION: 3.1.4
       HADOOP_HOME: "$HOME/hadoop"
     tasks:
       - name: Insert Hadoop environment into bashrc
@@ -110,11 +91,11 @@
             export HADOOP_COMMON_HOME=$HADOOP_HOME
             export HADOOP_HDFS_HOME=$HADOOP_HOME
             export YARN_HOME=$HADOOP_HOME
-            export HDFS_NAMENODE_USER="AzureUser"
-            export HDFS_DATANODE_USER="AzureUser"
-            export HDFS_SECONDARYNAMENODE_USER="AzureUser"
-            export YARN_RESOURCEMANAGER_USER="AzureUser"
-            export YARN_NODEMANAGER_USER="AzureUser"
+            export HDFS_NAMENODE_USER="sasinst"
+            export HDFS_DATANODE_USER="sasinst"
+            export HDFS_SECONDARYNAMENODE_USER="sasinst"
+            export YARN_RESOURCEMANAGER_USER="sasinst"
+            export YARN_NODEMANAGER_USER="sasinst"
             export JAVA_HOME=/usr/lib64/jvm/jre-1.8.0-openjdk
             export PATH=$JAVA_HOME:$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
           marker: '# {mark} ANSIBLE MANAGED BLOCK - hadoopenv'
@@ -145,11 +126,11 @@
           block: |
             <property>
               <name>dfs.namenode.name.dir</name>
-              <value>/home/AzureUser/data/nameNode</value>
+              <value>/home/sasinst/data/nameNode</value>
             </property>
             <property>
               <name>dfs.datanode.data.dir</name>
-              <value>/home/AzureUser/data/dataNode</value>
+              <value>/home/sasinst/data/dataNode</value>
             </property>
             <property>
               <name>dfs.replication</name>
@@ -237,25 +218,23 @@
         become: yes
         lineinfile:
           path: "{{ HADOOP_HOME }}/etc/hadoop/workers"
-          # regexp: ".*\t{{ hostvars[item]['ansible_hostname']}}\t{{ hostvars[item]['ansible_hostname']}}"
           line: "{{ hostvars[item]['ansible_hostname']}}"
           state: present
           backup: yes
-        # when: ansible_hostname != "{{ item }}" or ansible_hostname == "{{ item }}"
-        with_items: "{{groups['va_workers']}}"
+        with_items: "{{ groups['va_workers'] }}"
 
   - name: Distribute Hadoop configuration to work nodes
     hosts: [va_workers]
-    become_user: AzureUser
+    become_user: sasinst
     become: yes
     tasks:
       - name: Copy Hadoop configuration files to worker nodes
-        synchronize: src=~/hadoop/etc/hadoop/ dest=~/hadoop/etc/hadoop
+        synchronize: src=/home/sasinst/hadoop/etc/hadoop/ dest=/home/sasinst/hadoop/etc/hadoop
         delegate_to: vacontroller
   
   - name: Start Hadoop
     hosts: [va_controllers]
-    become_user: AzureUser
+    become_user: sasinst
     become: yes
     vars:
       HADOOP_HOME: "$HOME/hadoop"
