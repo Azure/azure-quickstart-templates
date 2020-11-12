@@ -52,11 +52,12 @@ artifact_loc=${18}
 compute_name=${19}
 meta_name=${20}
 stgacc_secr_name=${21}
+cifs_server_fqdn=${22}
 EOF
 
 #Defining variables with facter values
 azure_storage_account=`facter azure_storage_account`
-cifs_server_fqdn="${azure_storage_account}.file.core.windows.net"
+cifs_server_fqdn=`facter cifs_server_fqdn`
 azure_storage_files_share=`facter azure_storage_files_share`
 DIRECTORY_NFS_SHARE="sasdepot"
 sas_home="/sas/install"

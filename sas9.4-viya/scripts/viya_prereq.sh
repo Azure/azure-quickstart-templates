@@ -45,6 +45,7 @@ secret_pub_keyname=${15}
 cas_nodes=${16}
 artifact_loc=${17}
 stgacc_secr_name=${18}
+cifs_server_fqdn=${19}
 EOF
 
 
@@ -253,7 +254,7 @@ az login --identity
 fail_if_error $? "Error: Az login Failed"
 azure_storage_files_password=`az keyvault secret show -n $stgacc_secr_name --vault-name $key_vault_name | grep value | cut -d '"' -f4`
 echo "setup cifs"
-cifs_server_fqdn="${azure_storage_account}.file.core.windows.net"
+cifs_server_fqdn=`facter cifs_server_fqdn`
 
 if [ ! -d "/etc/smbcredentials" ]; then
     sudo mkdir /etc/smbcredentials
