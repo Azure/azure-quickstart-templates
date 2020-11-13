@@ -23,14 +23,12 @@
         },
         "environmentName": {
             "type": "string",
-            "defaultValue": "",
             "metadata": {
                 "description": "Name of Azure Machine Learning Environment for deployment. See https://docs.microsoft.com/en-us/azure/machine-learning/how-to-use-environments and https://docs.microsoft.com/en-us/azure/machine-learning/resource-curated-environments ."
             }
         },
         "environmentVersion": {
             "type": "string",
-            "defaultValue": "",
             "metadata": {
                 "description": "Version of Azure Machine Learning Environment for deployment."
             }
@@ -65,50 +63,12 @@
         },
         "driverProgram": {
             "type": "string",
-            "defaultValue": "",
             "metadata": {
                 "description": "Relative path of a file from storage account that contains the code to run for service."
             }
         },
-        "computeType": {
-            "type": "string",
-            "defaultValue": "ACI",
-            "allowedValues": [
-                "ACI",
-                "AKS"
-            ],
-            "metadata": {
-                "description": "Compute type of service to deploy."
-            }
-        },
-        "computeTarget": {
-            "type": "string",
-            "defaultValue": "",
-            "metadata": {
-                "description": "Name of compute target. Only applicable when deploying to AKS."
-            }
-        },
-        "numReplicas": {
-            "type": "int",
-            "defaultValue": 1,
-            "metadata": {
-                "description": "The number of containers to allocate for this Webservice. No default, if this parameter is not set then the autoscaler is enabled by default. Only applicable when deploying to AKS."
-            }
-        },
-        "modelIds": {
-            "type": "array",
-            "defaultValue": [
-
-            ],
-            "metadata": {
-                "description": "The IDs of the model to be deployed. Model Id takes the form of <model name>:<model version>. Models need to be registered first."
-            }
-        },
         "models": {
             "type": "array",
-            "defaultValue": [
-
-            ],
             "metadata": {
                 "description": "Details of the models to be deployed. Each model must have the following properties: 'name'(name of the model), 'path'(relative path of a file from storage account linked to Workspace), 'mimeType'(MIME type of Model content. For more details about MIME type, please open https://www.iana.org/assignments/media-types/media-types.xhtml), 'framework'(framework of the model, use Custom if unsure) and 'frameworkVersion'(framework version of the model)."
             }
@@ -154,83 +114,6 @@
             "metadata": {
                 "description": "Whether or not to enable AppInsights for this Webservice."
             }
-        },
-        "autoScaleEnabled": {
-            "type": "bool",
-            "defaultValue": false,
-            "metadata": {
-                "description": "Whether or not to enable autoscaling for this Webservice. Defaults to True if num_replicas is None. Only applicable when deploying to AKS."
-            }
-        },
-        "autoScaleMinReplicas": {
-            "type": "int",
-            "defaultValue": 1,
-            "metadata": {
-                "description": "The minimum number of containers to use when autoscaling this Webservice. Only applicable when deploying to AKS."
-            }
-        },
-        "autoScaleMaxReplicas": {
-            "type": "int",
-            "defaultValue": 10,
-            "metadata": {
-                "description": "The maximum number of containers to use when autoscaling this Webservice. Only applicable when deploying to AKS."
-            }
-        },
-        "autoscaleTargetUtilization": {
-            "type": "int",
-            "defaultValue": 70,
-            "metadata": {
-                "description": "The target utilization (in percent out of 100) the autoscaler should attempt to maintain for this Webservice. Only applicable when deploying to AKS."
-            }
-        },
-        "autoscaleRefreshSeconds": {
-            "type": "int",
-            "defaultValue": 1,
-            "metadata": {
-                "description": "How often the autoscaler should attempt to scale this Webservice. Only applicable when deploying to AKS."
-            }
-        },
-        "namespace": {
-            "type": "string",
-            "defaultValue": "",
-            "metadata": {
-                "description": "Kubernetes namespace in which to deploy the service: up to 63 lowercase alphanumeric ('a'-'z', '0'-'9') and hyphen ('-') characters. The first and last characters cannot be hyphens. Only applicable when deploying to AKS."
-            }
-        },
-        "periodSeconds": {
-            "type": "int",
-            "defaultValue": 10,
-            "metadata": {
-                "description": "How often (in seconds) to perform the liveness probe. Only applicable when deploying to AKS."
-            }
-        },
-        "initialDelaySeconds": {
-            "type": "int",
-            "defaultValue": 310,
-            "metadata": {
-                "description": "Number of seconds after the container has started before liveness probes are initiated. Only applicable when deploying to AKS."
-            }
-        },
-        "timeoutSeconds": {
-            "type": "int",
-            "defaultValue": 2,
-            "metadata": {
-                "description": "Number of seconds after which the liveness probe times out. Only applicable when deploying to AKS."
-            }
-        },
-        "failureThreshold": {
-            "type": "int",
-            "defaultValue": 2,
-            "metadata": {
-                "description": "When a Pod starts and the liveness probe fails, Kubernetes will try --failure-threshold times before giving up. Only applicable when deploying to AKS."
-            }
-        },
-        "successThreshold": {
-            "type": "int",
-            "defaultValue": 1,
-            "metadata": {
-                "description": "Minimum consecutive successes for the liveness probe to be considered successful after having failed. Only applicable when deploying to AKS."
-            }
         }
     },
     "variables": {
@@ -265,8 +148,7 @@
             "location": "[parameters('location')]",
             "properties": {
                 "environmentImageRequest": {
-                    "modelIds": "[if(empty(parameters('modelIds')), json('null'), parameters('modelIds'))]",
-                    "models": "[if(empty(parameters('modelIds')), variables('models'), json('null'))]",
+                    "models": "[ variables('models')]",
                     "driverProgram": "[if(empty(variables('driverProgramFileName')), json('null'), variables('driverProgramFileName'))]",
                     "assets": "[if(empty(variables('driverProgramFileName')), json('null'), variables('assets'))]",
                     "environmentReference": "[if(not(or(empty(parameters('environmentName')), empty(parameters('environmentVersion')))), createObject('name', parameters('environmentName'), 'version', parameters('environmentVersion')), json('null'))]"
@@ -282,12 +164,7 @@
                     "gpu": "[parameters('gpu')]",
                     "memoryInGB": "[parameters('memoryInGB')]"
                 },
-                "computeType": "[parameters('computeType')]",
-                "computeName": "[if(equals(parameters('computeType'), 'AKS'), parameters('computeTarget'), json('null'))]",
-                "numReplicas": "[if(and(equals(parameters('computeType'), 'AKS'), not(parameters('autoScaleEnabled'))), parameters('numReplicas'), json('null'))]",
-                "autoScaler": "[if(and(equals(parameters('computeType'), 'AKS'), parameters('autoScaleEnabled')), createObject('autoscaleEnabled', parameters('autoScaleEnabled'), 'minReplicas', int(parameters('autoScaleMinReplicas')), 'maxReplicas', int(parameters('autoScaleMaxReplicas')), 'targetUtilization', int(parameters('autoscaleTargetUtilization')), 'refreshPeriodInSeconds', int(parameters('autoscaleRefreshSeconds'))), json('null'))]",
-                "namespace": "[if(and(equals(parameters('computeType'), 'AKS'), not(empty(parameters('namespace')))), parameters('namespace'), json('null'))]",
-                "livenessProbeRequirements": "[if(equals(parameters('computeType'), 'AKS'), createObject('periodSeconds', parameters('periodSeconds'), 'initialDelaySeconds', parameters('initialDelaySeconds'), 'timeoutSeconds' , parameters('timeoutSeconds'), 'failureThreshold', parameters('failureThreshold'), 'successThreshold', parameters('successThreshold')), json('null'))]"
+                "computeType": "ACI"
             }
         }
     ]
