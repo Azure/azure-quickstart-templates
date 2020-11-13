@@ -1,15 +1,11 @@
 import os
-import pickle
 import json
 import numpy
 import joblib
-from sklearn.linear_model import Ridge
-from azureml.core.model import Model
 
 def init():
     global model
     # note here "sklearn_regression_model.pkl" is the name of the model registered under
-    # this is a different behavior than before when the code is run locally, even though the code is the same.
     model_path = os.path.join(os.getenv('AZUREML_MODEL_DIR'), 'sklearn_regression_model.pkl')
     # deserialize the model file back into a sklearn model
     model = joblib.load(model_path)
