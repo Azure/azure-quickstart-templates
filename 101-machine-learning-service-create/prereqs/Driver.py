@@ -8,7 +8,7 @@ from azureml.contrib.services.aml_response import AMLResponse
 
 def init():
     global model
-    model_path = Model.get_model_path('sklearn_regression_model1.pkl')
+    model_path = Model.get_model_path('sklearn_regression_model.pkl')
     model = joblib.load(model_path)
 
 @rawhttp
