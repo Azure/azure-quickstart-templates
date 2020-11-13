@@ -506,72 +506,92 @@ To list all users and groups:
 ldapsearch -x -h localhost -b "dc=sasviya,dc=com" 
 ```
 
+**Note:** All LDAP commands listed in this appendix will be issued from the services VM.
+
 <a name="AddBAddUser"></a>
-### Add a User 
-1.	 Create a user file that contains all the user info: 
+### Add a User
+1. Create the LDAP entry for the new user.
 
-**Note:**    You must increment the UID from the last one displayed by the ldapsearch command.
+    - Copy the following content into a new text file, which will be used as a template for values you provide:
+      ```
+      dn: uid=<newuser>,ou=users,dc=sasviya,dc=com
+      cn: <newuser>
+      givenName: <New>
+      sn: <User>
+      objectClass: top
+      objectClass: inetOrgPerson
+      objectClass: organizationalPerson
+      objectClass: posixAccount
+      loginShell: /bin/bash
+      uidNumber: <100000>
+      gidNumber: 100001
+      homeDirectory: /home/<newuser>
+      mail: <newuser>@services.viya.sas
+      displayName: <New User>
+      ```
+      **Note:** The file (which is in LDIF format), can have any base name. For this example, `add_user.ldif` will be used.
 
-   ```
-   dn: uid=newuser,ou=users,dc=sasviya,dc=com
-   cn: newuser
-   givenName: New
-   sn: User
-   objectClass: top
-   objectClass: inetOrgPerson
-   objectClass: organizationalPerson
-   objectClass: posixAccount
-   loginShell: /bin/bash
-   uidNumber: 100011
-   gidNumber: 100001
-   homeDirectory: /home/newuser
-   mail: newuser@services.viya.sas
-   displayName: New User  
-   ```
+    - Replace the values enclosed in angle brackets `(<>)` with information for the new user. The new value for `uidNumber` must be unique (use `ldapsearch` to display the existing values).
+    - Issue this command to add the new entry to the LDAP directory:
+      ```
+      ldapadd -x -W -h localhost -D "cn=admin,dc=sasviya,dc=com" -f /path/to/add_user.ldif 
+      ```
+      **Note:** You will be prompted for a password. For this (and subsequent) LDAP commands, use the SAS admin password that was specified when creating the deployment.
 
-2.	To add the entry to the directory: 
-   ```
-   ldapadd -x -h localhost -D "cn=admin,dc=sasviya,dc=com" -W -f /path/to/user/file 
-   ```
+2. Add the user as a member of the `sasusers` group (to enable access to SAS Viya products).
 
-**Note:**    You will be prompted for the admin password (the same one you specified when you created the stack).
+   - Create another new text file (i.e. `add_to_group.ldif`) with the following contents:
+     ```
+     dn: cn=sasusers,ou=groups,dc=sasviya,dc=com
+     changetype: modify
+     add: memberUid
+     memberUid: <newuser>
+     -
+     add: member
+     member: uid=<newuser>,ou=users,dc=sasviya,dc=com
+     ```
+   - Replace the values in angle brackets `(<>)` with the CN value from the user LDIF file that you created in step 1.
+   - Issue this command to add the member to the group:
+     ```
+     ldapadd -x -W -h localhost -D "cn=admin,dc=sasviya,dc=com" -f /path/to/add_to_group.ldif
+     ```
 
-3.	To enable the new user to access SAS Viya products, add the user as a member of the sasusers group by creating an ldif file with the following data:
-   ```
-   dn: cn=sasusers,ou=groups,dc=sasviya,dc=com
-   changetype: modify
-   add: memberUid
-   memberUid: newuser
+3. Create home directories for the new user on both the services and controller VMs.
 
-   add: member
-   member: uid=newuser,ou=users,dc=sasviya,dc=com
-   ldapadd -x -h localhost -D "cn=admin,dc=sasviya,dc=com" -W -f /path/to/user/file
-   ```
-4.	Add the home directories for your new user on the services and controller VMs. From the Ansible controller VM:
-   ```
-   ssh services
-   sudo mkdir -p /home/newuser
-   sudo chown newuser:sasusers /home/newuser
-   exit
-   ssh controller
-   sudo mkdir -p /home/newuser/casuser
-   sudo chown newuser:sasusers /home/newuser
-   sudo chown newuser:sasusers /home/newuser/casuser
-   exit
-   ```
+   - From the Ansible controller VM, issue the following commands:
+     ```
+     ssh services
+     sudo mkdir -p /home/<newuser>
+     sudo chown <newuser>:sasusers /home/<newuser>
+     exit
+   
+     ssh controller
+     sudo mkdir -p /home/<newuser>/casuser
+     sudo chown -R <newuser>:sasusers /home/<newuser>
+     exit
+     ```
+     **Note:**  Replace `<newuser>` with the CN value of the new user from the user LDIF file that you created in step 1.
+
+4. Set the new user's password (see next section)
 
 <a name="AddBPassword"></a>
-### Change or Set a Password 
+### Change or Set a Password
+Issue this command to change or set a user's password:
 ```
-ldappasswd -h localhost -s USERPASSWORD -W -D cn=admin,dc=sasviya,dc=com -x "uid=newuser,ou=users,dc=sasviya,dc=com" 
+ldappasswd -x -W -h localhost -s <password> -D cn=admin,dc=sasviya,dc=com  "uid=<user>,ou=users,dc=sasviya,dc=com" 
 ```
-**Note:**    To prevent the command from being saved to the bash history, preface this command with a space. The string following the -x should match the dn: attribute of the user.
+   **Note:**  Replace `<password>` with the desired password, and `<user>` with the CN value of the user (to prevent the command
+   from being saved to the bash history, preface the command with a space). Alternately, use `-S` (instead of `-s`) to cause the command to prompt
+   for the password (avoiding the need to enter it on the command line).    
 
 <a name="AddBDeleteUser"></a>
 ### Delete a User
+Issue this command to delete a user:
 ```
-ldapdelete –h localhost -W -D "cn=admin,dc=sasviya,dc=com" "uid=newuser,ou=users,dc=sasviya,dc=com"
+ldapdelete -x -W -h localhost -D "cn=admin,dc=sasviya,dc=com" "uid=<user>,ou=users,dc=sasviya,dc=com"
 ```
+   **Note:**  Replace `<user>` with the CN value of the user being deleted.
+
 <a name="Security"></a>
 ## Appendix C: Security Considerations
 

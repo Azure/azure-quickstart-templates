@@ -4,28 +4,10 @@
   "parameters": {
     "vmSku": {
       "type": "string",
-      "defaultValue": "Standard_D1",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Size of VMs in the VM Scale Set."
-      },
-      "allowedValues": [
-        "Standard_D1",
-        "Standard_DS1",
-        "Standard_D2",
-        "Standard_DS2",
-        "Standard_D3",
-        "Standard_DS3",
-        "Standard_D4",
-        "Standard_DS4",
-        "Standard_D11",
-        "Standard_DS11",
-        "Standard_D12",
-        "Standard_DS12",
-        "Standard_D13",
-        "Standard_DS13",
-        "Standard_D14",
-        "Standard_DS14"
-      ]
+      }
     },
     "vmssName": {
       "type": "string",
@@ -41,6 +23,7 @@
         "description": "Number of VM instances (20 or less)."
       },
       "defaultValue": 2,
+      "minValue": 1,
       "maxValue": 20
     },
     "adminUsername": {
@@ -62,40 +45,12 @@
         "description": "The source of the blob containing the custom image, must be in the same region of the deployment."
       }
     },
-    "appPackage": {
-      "type": "string",
-      "metadata": {
-        "description": "The source of the application package to copy using the configuration.sh script it should be inside the _artifacts/app folder"
-      },
-      "defaultValue": "package.tar.gz"
-    },
-    "destinationFolder": {
-      "type": "string",
-      "metadata": {
-        "description": "path were the appPackage will be copied inside the Linux machine"
-      },
-      "defaultValue": "/nodeserver"
-    },
-    "serviceName": {
-      "type": "string",
-      "metadata": {
-        "description": "name of the service that needs restart when the new package is copied"
-      },
-      "defaultValue": "mainsite.service"
-    },
-    "customScriptName": {
-      "type": "string",
-      "metadata": {
-        "description": "name of the custom script to be run by bash"
-      },
-      "defaultValue": "updateapp.sh"
-    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-linux-customimage-autoscale"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-linux-customimage-autoscale/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -113,7 +68,7 @@
     }
   },
   "variables": {
-    "vmssuniqueName": "[toLower(substring(concat(substring(parameters('vmssName'),0,6), uniqueString(resourceGroup().id)), 0, 9))]",
+    "vmssuniqueName": "[toLower(take(concat(take(parameters('vmssName'),6), uniqueString(resourceGroup().id)), 9))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
     "virtualNetworkName": "[concat(variables('vmssuniqueName'), 'vnet')]",
@@ -121,26 +76,25 @@
     "lbName": "[concat(variables('vmssuniqueName'), 'lb')]",
     "bepoolName": "[concat(variables('lbName'), 'bepool')]",
     "fepoolName": "[concat(variables('lbName'), 'fepool')]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
-    "bepoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('bepoolName'))]",
+    "bepoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('bepoolName'))]",
     "feIpConfigName": "[concat(variables('fepoolName'), 'IpConfig')]",
-    "feIpConfigId": "[concat(variables('lbID'),'/frontendIPConfigurations/', variables('feIpConfigName'))]",
+    "feIpConfigId": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('lbName'), variables('feIpConfigName'))]",
     "pipName": "[concat(variables('vmssuniqueName'), 'pip')]",
     "nicName": "[concat(variables('vmssuniqueName'), 'nic')]",
     "natPoolName": "[concat(variables('lbName'), 'natpool')]",
     "ipConfigName": "[concat(variables('vmssuniqueName'), 'ipconfig')]",
     "httpProbeName": "httpProbe",
     "httpsProbeName": "httpsProbe",
-    "quote": "'",
     "imageName": "myCustomImage"
   },
   "resources": [
     {  
       "type":"Microsoft.Compute/images",
-      "apiVersion":"2017-03-30",
+      "apiVersion":"2020-06-01",
       "name":"[variables('imageName')]",
-      "location":"[resourceGroup().location]",
+      "location":"[parameters('location')]",
       "properties":{  
+         "hyperVGeneration": "V1",
          "storageProfile":{  
             "osDisk":{  
                "osType":"Linux",
@@ -155,7 +109,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-06-01",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -176,7 +130,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('pipName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-06-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -188,9 +142,9 @@
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('lbName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-06-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('pipName'))]"
       ],
       "tags": {
         "displayName": "Load Balancer"
@@ -242,7 +196,7 @@
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                "id": "[concat(variables('lbId'), '/probes/', variables('httpProbeName'))]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('httpsProbeName'))]"
               }
             }
           },
@@ -262,7 +216,7 @@
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/probes/', variables('httpsProbeName'))]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('httpsProbeName'))]"
               }
             }
           }
@@ -293,10 +247,10 @@
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('vmssuniqueName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-06-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Compute/images/',variables('imageName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Compute/images',variables('imageName'))]"
       ],
       "sku": {
         "name": "[parameters('vmSku')]",
@@ -329,16 +283,16 @@
                       "name": "[variables('ipConfigName')]",
                       "properties": {
                         "subnet": {
-                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
                         },
                         "loadBalancerBackendAddressPools": [
                           {
-                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('lbName'), '/backendAddressPools/', variables('bePoolName'))]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('bePoolName'))]"
                           }
                         ],
                         "loadBalancerInboundNatPools": [
                           {
-                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('lbName'), '/inboundNatPools/', variables('natPoolName'))]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('lbName'), variables('natPoolName'))]"
                           }
                         ]
                       }
@@ -359,10 +313,10 @@
                   "autoUpgradeMinorVersion": true,
                   "settings": {
                     "fileUris": [
-                      "[concat(parameters('_artifactsLocation'), '/scripts/', parameters('customScriptName'), parameters('_artifactsLocationSasToken'))]",
-                      "[concat(parameters('_artifactsLocation'), '/app/', parameters('appPackage'), parameters('_artifactsLocationSasToken'))]"
+                      "[uri(parameters('_artifactsLocation'), concat('scripts/updateapp.sh', parameters('_artifactsLocationSasToken')))]",
+                      "[uri(parameters('_artifactsLocation'), concat('app/package.tar.gz', parameters('_artifactsLocationSasToken')))]"
                     ],
-                    "commandToExecute": "[concat('bash ',parameters('customScriptName'), ' ', variables('quote'),parameters('appPackage'),variables('quote'),' ',parameters('destinationFolder'),' ',parameters('serviceName'))]"
+                    "commandToExecute": "[format('sudo bash {0} \"{1}\" {2} {3}', 'updateapp.sh', 'package.tar.gz', '/nodeserver', 'mainsite.service')]"
                   }
                 }
               }
@@ -377,11 +331,11 @@
       "name": "autoscalesettings",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('vmssuniqueName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachineScaleSets', variables('vmssuniqueName'))]"
       ],
       "properties": {
         "name": "autoscalesettings",
-        "targetResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('vmssuniqueName'))]",
+        "targetResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', variables('vmssuniqueName'))]",
         "enabled": true,
         "profiles": [
           {
@@ -395,8 +349,7 @@
               {
                 "metricTrigger": {
                   "metricName": "Percentage CPU",
-                  "metricNamespace": "",
-                  "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('vmssuniqueName'))]",
+                  "metricResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', variables('vmssuniqueName'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT5M",
@@ -414,8 +367,7 @@
               {
                 "metricTrigger": {
                   "metricName": "Percentage CPU",
-                  "metricNamespace": "",
-                  "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/',variables('vmssuniqueName'))]",
+                  "metricResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', variables('vmssuniqueName'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT5M",
@@ -438,7 +390,7 @@
   ],
   "outputs": {
     "fqdn": {
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('pipName')),'2016-03-30').dnsSettings.fqdn]",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('pipName')),'2020-06-01').dnsSettings.fqdn]",
       "type": "string"
     }
   }
