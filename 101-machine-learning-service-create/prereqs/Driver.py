@@ -1,23 +1,32 @@
-import os
 import json
 import numpy
-import joblib
+from sklearn.externals import joblib
+from azureml.core.model import Model
+from azureml.contrib.services.aml_request import AMLRequest, rawhttp
+from azureml.contrib.services.aml_response import AMLResponse
+
 
 def init():
     global model
-    # note here "sklearn_regression_model.pkl" is the name of the model registered under
-    model_path = os.path.join(os.getenv('AZUREML_MODEL_DIR'), 'sklearn_regression_model.pkl')
-    # deserialize the model file back into a sklearn model
+    model_path = Model.get_model_path('sklearn_regression_model1.pkl')
     model = joblib.load(model_path)
 
-# note you can pass in multiple rows for scoring
-def run(raw_data):
-    try:
-        data = json.loads(raw_data)['data']
-        data = numpy.array(data)
-        result = model.predict(data)
-        # you can return any data type as long as it is JSON-serializable
-        return result.tolist()
-    except Exception as e:
-        error = str(e)
-        return error
+@rawhttp
+def run(request):
+    if request.method == 'GET':
+        respBody = str.encode(request.full_path)
+        return AMLResponse(respBody, 200)
+    elif request.method == 'POST':
+        try:
+            reqBody = request.get_data(False)
+            raw_data = reqBody.decode("utf-8")
+            data = json.loads(raw_data)['data']
+            data = numpy.array(data)
+            result = model.predict(data)
+            result_string = json.dumps(result.tolist())
+            return AMLResponse(result_string, 200)
+        except Exception as e:
+            error = str(e)
+            return AMLResponse(error, 500)
+    else:
+        return AMLResponse("bad request", 500)
