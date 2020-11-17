@@ -242,10 +242,22 @@ metadata_servers
 va_workers
 va_controllers
 END
+    echo "[midtier_head]" >> $INVENTORY_FILE
+    echo "midtier-0" >> $INVENTORY_FILE
+    echo "[midtier_nodes]" >> $INVENTORY_FILE
+    for (( i=1; i<$count_of_midtier; i++)); do
+      echo "midtier-${i}" >> $INVENTORY_FILE
+    done
     echo "[midtier_servers]" >> $INVENTORY_FILE
     for (( i=0; i<$count_of_midtier; i++)); do
         echo "midtier-${i}" >> $INVENTORY_FILE
     done
+    echo "[metadata_head]" >> $INVENTORY_FILE
+    echo "metadata-0" >> $INVENTORY_FILE
+    echo "[metadata_nodes]" >> $INVENTORY_FILE
+    for (( i=0; i<$count_of_metadata; i++)); do
+      echo "metadata-${i}" >> $INVENTORY_FILE
+    fi
     echo "[metadata_servers]" >> $INVENTORY_FILE
     for (( i=0; i<$count_of_metadata; i++)); do
         echo "metadata-${i}" >> $INVENTORY_FILE

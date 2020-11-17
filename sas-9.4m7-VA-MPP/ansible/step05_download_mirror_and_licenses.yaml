@@ -9,8 +9,8 @@
     DEPOT_DIRECTORY: /sasshare/depot
     DEPOT_DOWNLOAD_LOCATION: ""
     LICENSE_LOCATION: /sasshare/depot/sid_files/
-    LICENCE_DOWNLOAD_LOCATION: ""
-    PLANFILE_LOCATION: /sasshare/depot/planfiles/plan.xml
+    LICENSE_DOWNLOAD_LOCATION: ""
+    PLANFILE_LOCATION: /sasshare/depot/plan.xml
     PLANFILE_DOWNLOAD_LOCATION: ""
   tasks:
   ############################################# Download the Depot folder ################################################
@@ -56,7 +56,7 @@
           path: "{{ DEPOT_DIRECTORY }}"
           state: directory
 
-    - name: use azsync to download mirror
+    - name: use azcopy to download mirror
       become: yes
       shell: >-
           timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
@@ -64,7 +64,7 @@
       failed_when: false
       register: copy_ret1
 
-    - name: use azsync to download mirror retry 1
+    - name: use azcopy to download mirror retry 1
       become: yes
       shell: |-
           timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
@@ -73,7 +73,7 @@
       register: copy_ret2
       when: "copy_ret1.rc != 0"
 
-    - name: use azsync to download mirror retry 2
+    - name: use azcopy to download mirror retry 2
       become: yes
       shell: |-
           timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
@@ -82,7 +82,7 @@
       register: copy_ret3
       when: "copy_ret1.rc != 0 and copy_ret2.rc != 0"
 
-    - name: use azsync to download mirror retry 3
+    - name: use azcopy to download mirror retry 3
       become: yes
       shell: |-
           timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
@@ -91,10 +91,16 @@
       register: copy_ret4
       when: "copy_ret1.rc != 0 and copy_ret2.rc != 0 and copy_ret3.rc != 0"
 
-    - name: use azsync to download mirror retry 4
+    - name: use azcopy to download mirror retry 4
       become: yes
       shell: |-
           timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
       async: 7200
       register: copy_ret5
       when: "copy_ret1.rc != 0 and copy_ret2.rc != 0 and copy_ret3.rc != 0 and copy_ret4.rc != 0"
+
+    - name: use azcopy to download plan file, if PLANFILE_DOWNLOAD_LOCATION is not blank
+      become: yes
+      shell: |-
+          azcopy --source "{{ PLANFILE_DOWNLOAD_LOCATION }}" --destination "{{ PLANFILE_LOCATION }}" --quiet
+      when: PLANFILE_DOWNLOAD_LOCATION != ""
