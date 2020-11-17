@@ -21,7 +21,7 @@ cp /home/$SUDOUSER/.kube/config /root/.kube/config
 runuser -l $SUDOUSER -c "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"defaultRoute\":true, \"replicas\":$WORKERNODECOUNT}}'"
 runuser -l $SUDOUSER -c "sleep 10"
 runuser -l $SUDOUSER -c "oc project kube-system"
-registryRoute=$(oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}' --config /home/$SUDOUSER/.kube/config)
+registryRoute=$(oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}' --kubeconfig /home/$SUDOUSER/.kube/config)
 runuser -l $SUDOUSER -c "cat > $OCPTEMPLATES/registries.conf <<EOF
 unqualified-search-registries = ['registry.access.redhat.com', 'docker.io']
 [[registry]]
@@ -163,21 +163,17 @@ runuser -l $SUDOUSER -c "echo 'Sleeping for 12mins while MCs apply and the clust
 runuser -l $SUDOUSER -c "sleep 12m"
 
 #CPD Config
-runuser -l $SUDOUSER -c "wget $ARTIFACTSLOCATION/scripts/cpd-linux$ARTIFACTSTOKEN -O $INSTALLERHOME/cpd-linux"
-runuser -l $SUDOUSER -c "chmod +x $INSTALLERHOME/cpd-linux"
+runuser -l $SUDOUSER -c "wget $ARTIFACTSLOCATION/scripts/cpd-artifacts.tgz$ARTIFACTSTOKEN -O $INSTALLERHOME/cpd-artifacts.tgz"
+runuser -l $SUDOUSER -c "(cd $INSTALLERHOME && tar -xf cpd-artifacts.tgz)"
+runuser -l $SUDOUSER -c "chmod +x $INSTALLERHOME/cpd-cli"
 
 # Service Account Token for COD installation
 runuser -l $SUDOUSER -c "oc new-project $NAMESPACE"
 runuser -l $SUDOUSER -c "oc create serviceaccount cpdtoken"
 runuser -l $SUDOUSER -c "oc policy add-role-to-user admin system:serviceaccount:$NAMESPACE:cpdtoken"
 
-# Download repo.yaml and px-override
-runuser -l $SUDOUSER -c "wget $ARTIFACTSLOCATION/scripts/portworx-override.yaml$ARTIFACTSTOKEN -O $INSTALLERHOME/portworx-override.yaml"
+# Download repo.yaml
 runuser -l $SUDOUSER -c "wget $ARTIFACTSLOCATION/scripts/repo.yaml$ARTIFACTSTOKEN -O $INSTALLERHOME/repo.yaml"
-runuser -l $SUDOUSER -c "sed -i s/APIKEYUSERNAME/\"$APIKEYUSERNAME\"/g $INSTALLERHOME/repo.yaml"
 runuser -l $SUDOUSER -c "sed -i s/APIKEYSECRET/\"$APIKEY\"/g $INSTALLERHOME/repo.yaml"
-FSGROUP=$(oc describe project $NAMESPACE  --config /home/$SUDOUSER/.kube/config | grep sa.scc.uid-range | cut -d= -f2 | cut -d/ -f1)
-runuser -l $SUDOUSER -c "sed -i s/PROJECTUID/\"$FSGROUP\"/g $INSTALLERHOME/portworx-override.yaml"
-runuser -l $SUDOUSER -c "sed -i s/FIPS/\"$FIPSENABLED\"/g $INSTALLERHOME/portworx-override.yaml"
 
 echo "$(date) - ############### Script Complete #############"

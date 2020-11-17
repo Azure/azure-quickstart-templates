@@ -1,4 +1,4 @@
-# Cloud Pak for Data 3.0 on Azure
+# Cloud Pak for Data 3.5 on Azure
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/PublicDeployment.svg)
 
@@ -15,7 +15,7 @@ Cloud Pak for Data is an analytics platform that helps you prepare your data for
 
 Cloud Pak for Data uses Azure services and features, including VNets, Availability Zones, Availability Sets, security groups, Managed Disks, and Azure Load Balancers to build a reliable and scalable cloud platform.
 
-This deployment guide provides step-by-step instructions for deploying IBM Cloud Pak for Data on a Red Hat OpenShift Container Platform 4.3 cluster on Azure. With this Template, you can automatically deploy a multi-master, production instance of Cloud Pak for Data. See [Services](#cloud-pak-for-data-services) for the services that are enabled in this deployment.
+This deployment guide provides step-by-step instructions for deploying IBM Cloud Pak for Data on a Red Hat OpenShift Container Platform 4.5 cluster on Azure. With this Template, you can automatically deploy a multi-master, production instance of Cloud Pak for Data. See [Services](#cloud-pak-for-data-services) for the services that are enabled in this deployment.
 
 ## Cost and licenses
 Cloud Pak for Data offers a try and buy experience.
@@ -52,75 +52,44 @@ The template sets up the following:
 
 ### Prerequisites
 
-* Install [az-cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
-
-* You would need to create the following resources on your Azure account to use this deployment template:
-- Service Principal, with Contributor and User Access Administrator.
-- App Service Domain.
+1. You would need to create the following resources on your Azure account to use this deployment template:
+  - Service Principal, with Contributor and User Access Administrator.
+  - App Service Domain.
 
 These can be done by running the azure CLI commands from any host where azure CLI is installed.
 
-
-* Create [App Service Domain](https://portal.azure.com/#create/Microsoft.Domain)
-  * This will also create a DNS Zone needed for this deployment.
-  * Note the DNS Zone name.
-* Create Azure Service Principal with `Contributor` and `User Access Administrator` roles.
-  * Option 1, using a script:
-    ```bash
-    az login
-    scripts/createServicePrincipal.sh -r "Contributor,User Access Administrator"
-    ```
-  * Option 2, running the commands manually:
-    * Create Service Principal, using your Azure Subscription ID, and save the returned json:
+  * Create [App Service Domain](https://portal.azure.com/#create/Microsoft.Domain)
+    * This will also create a DNS Zone needed for this deployment.
+    * Note the DNS Zone name.
+  * Create Azure Service Principal with `Contributor` and `User Access Administrator` roles.
+    * **Option 1:** using the script provided in the `scripts` folder:
       ```bash
       az login
-      az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<subscription_id>"
+      scripts/createServicePrincipal.sh -r "Contributor,User Access Administrator"
       ```
-    * Get `Object ID`, using the AppId from the Service Principal just created:
-      ```bash
-      az ad sp list --filter "appId eq '<app_id>'"
-      ```
-    * Assign `User Access Administrator` roles, using the `Object Id`.
-      ```bash
-      az role assignment create --role "User Access Administrator" --assignee-object-id "<object_id>"
-      ```
-  * Save the `ClientID` and `ClientSecret` from either option.
+    * **Option 2:** running the commands manually:
+      * Create Service Principal, using your Azure Subscription ID, and save the returned json:
+        ```bash
+        az login
+        az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<subscription_id>"
+        ```
+      * Get `Object ID`, using the AppId from the Service Principal just created:
+        ```bash
+        az ad sp list --filter "appId eq '<app_id>'"
+        ```
+      * Assign `User Access Administrator` roles, using the `Object Id`.
+        ```bash
+        az role assignment create --role "User Access Administrator" --assignee-object-id "<object_id>"
+        ```
+    * Save the `ClientID` and `ClientSecret` from either option.
 
-* [Download](https://cloud.redhat.com/openshift/install/pull-secret) a pull secret. Create a Red Hat account if you do not have one.
+2. [Download](https://cloud.redhat.com/openshift/install/pull-secret) a pull secret. Create a Red Hat account if you do not have one.
 
-* [Sign up](https://www.ibm.com/account/reg/us-en/signup?formid=urx-42212) for Cloud Pak for Data Trial Key if you don't have the entitlement api key
+3. [Sign up](https://www.ibm.com/account/reg/us-en/signup?formid=urx-42212) for Cloud Pak for Data Trial Key if you don't have the entitlement api key
 
-* If you choose Portworx as your storage class, see [Portworx documentation](PORTWORX.md) for generating `portworx spec url`. 
+4. (Optional) If you choose Portworx as your storage class, see [Portworx documentation](PORTWORX.md) for generating `portworx spec url`. 
 
-* Read and agree to the [license terms](https://ibm.biz/BdqyB2)
-
-* Retrieve Client ID and Secret:
-
-```bash
-az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<subscription_id>"
-```
-**NOTE** `appId` is the AAD Client ID and `password` is the AAD Client Secret.
-
-* Create Resource Group:
-```bash
-az group create -n <resource_group> -l 'East US'
-```
-* Create KeyVault:
-```bash
-az keyvault create -n <keyvault_name> -g <keyvault_resource_group> --enabled-for-template-deployment true
-```
-* Upload Pull Secret to key vault in a secret:
-```bash
-az keyvault secret set --vault-name <keyvault_name> -n <keyvault_secret_name> --file ~/path/to/pull-secret
-```
-
-#### IBM Cloud Pak for Data Trial key
-For a 60 day trial key of IBM Cloud Pak for Data, you may sign up on the following link:
-[IBM Cloud Pak for Data Trial](https://www.ibm.com/account/reg/us-en/signup?formid=urx-42212),
-and use this Api key in the corresponding deployment parameter in the ARM template.
-<br />
-eg: for "apiKey", use the trial key that is generated (or sent to your email) after signing up with the above link.
-<br/><br/>
+5. Read and agree to the [license terms](https://ibm.biz/BdqyB2)
 
 ### Steps to deploy
 
@@ -237,14 +206,3 @@ As part of the deployment, the following services can be enabled:
 
 
 To get information on various other services that are available, you can visit [Cloud Pak for Data Service Catalog](https://www.ibm.com/support/producthub/icpdata/docs/content/SSQNUZ_current/cpd/svc/services.html)
-
-
-## Cloud Pak for Data Control Plane
-
-As a cluster administrator you can view the status of your cluster by using the OpenShift CLI.
-
-SSH in to the Bastion node. Then ssh in to one of the master nodes. Perform the following steps:
-```bash
-oc login
-```
-Log into Openshift using the credentials specified during deployment.

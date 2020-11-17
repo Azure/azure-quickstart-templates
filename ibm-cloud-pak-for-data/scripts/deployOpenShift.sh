@@ -74,10 +74,10 @@ echo $(date) " - Install httpd-tools Complete"
 echo $(date) " - Download Binaries"
 runuser -l $SUDOUSER -c "mkdir -p /home/$SUDOUSER/.openshift"
 
-runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.3.18/openshift-install-linux-4.3.18.tar.gz"
-runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.3.18/openshift-client-linux-4.3.18.tar.gz"
-runuser -l $SUDOUSER -c "tar -xvf openshift-install-linux-4.3.18.tar.gz -C $INSTALLERHOME"
-runuser -l $SUDOUSER -c "sudo tar -xvf openshift-client-linux-4.3.18.tar.gz -C /usr/bin"
+runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.5.18/openshift-install-linux-4.5.18.tar.gz"
+runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.5.18/openshift-client-linux-4.5.18.tar.gz"
+runuser -l $SUDOUSER -c "tar -xvf openshift-install-linux-4.5.18.tar.gz -C $INSTALLERHOME"
+runuser -l $SUDOUSER -c "sudo tar -xvf openshift-client-linux-4.5.18.tar.gz -C /usr/bin"
 
 chmod +x /usr/bin/kubectl
 chmod +x /usr/bin/oc
@@ -190,7 +190,7 @@ runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/cluster-auto
 echo $(date) " - Cluster Autoscaler setup complete"
 
 echo $(date) " - Setting up Machine Autoscaler"
-clusterid=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.labels.machine\.openshift\.io/cluster-api-cluster}' --config /home/$SUDOUSER/.kube/config)
+clusterid=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.labels.machine\.openshift\.io/cluster-api-cluster}' --kubeconfig /home/$SUDOUSER/.kube/config)
 runuser -l $SUDOUSER -c "cat > $INSTALLERHOME/openshiftfourx/machine-autoscaler.yaml <<EOF
 ---
 kind: MachineAutoscaler
@@ -236,7 +236,7 @@ runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/machine-auto
 echo $(date) " - Machine Autoscaler setup complete"
 
 echo $(date) " - Setting up Machine health checks"
-clusterid=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.labels.machine\.openshift\.io/cluster-api-cluster}' --config /home/$SUDOUSER/.kube/config)
+clusterid=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.labels.machine\.openshift\.io/cluster-api-cluster}' --kubeconfig /home/$SUDOUSER/.kube/config)
 runuser -l $SUDOUSER -c "cat > $INSTALLERHOME/openshiftfourx/machine-health-check.yaml <<EOF
 ---
 apiVersion: machine.openshift.io/v1beta1
