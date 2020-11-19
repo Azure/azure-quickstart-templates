@@ -3,23 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 ---
-- name: Prepare for TKGrid install
-  hosts: [va_controllers]
-  become_user: sasinst
-  become: yes
-  vars:
-    DEPOT_DIRECTORY: /sasshare/depot
-  tasks:
-  - name: Copy TKGrid install scripts from software depot
-    copy:
-      src: "{{ DEPOT_DIRECTORY }}/standalone_installs/SAS_High-Performance_Node_Installation/3_92/Linux_for_x64/{{ item }}"
-      dest: /tmp
-      mode: preserve
-      remote_src: yes
-    loop:
-      - TKGrid_Linux_x86_64.sh
-      - TKTGDat.sh
-
 - name: Create grid.hosts file and installing expect module requirements
   hosts: [va_controllers]
   become_user: root
@@ -48,12 +31,18 @@
   become_user: sasinst
   become: yes
   tasks:
+  - name: Find revision of TKGrid script in path
+    find:
+      paths: /sasshare/depot/standalone_installs/SAS_High-Performance_Node_Installation
+      file_type: directory
+    register: revision
+
   - name: TKGrid questions and responses
     expect:
       chdir: /sas
       echo: yes
       timeout: 180
-      command: /tmp/TKGrid_Linux_x86_64.sh
+      command: "{{ item.path }}/Linux_for_x64/TKGrid_Linux_x86_64.sh"
       responses:
         'Shared install or replicate to each node': 'n'
         'Enter additional paths to include in LD_LIBRARY_PATH': "\n"
@@ -66,20 +55,28 @@
         'Enter maximum runtime for grid jobs': "\n"
         'Enter value for UMASK': "\n"
         'Perform copy': 'YES'
+    with_items: "{{ revision.files }}"
 
 - name: Run TKTGDat install
   hosts: [va_controllers]
   become_user: sasinst
   become: yes
   tasks:
+  - name: Find revision of TKTGDat script in path
+    find:
+      paths: /sasshare/depot/standalone_installs/SAS_High-Performance_Node_Installation
+      file_type: directory
+    register: revision
+
   - name: TKTGDat questions and responses
     expect:
       chdir: /sas
       echo: yes
       timeout: 180
-      command: /tmp/TKTGDat.sh
+      command: "{{ item.path }}/Linux_for_x64/TKTGDat.sh"
       responses:
         'Shared install or replicate to each node': 'n'
         'Enter full path to machine list': '/etc/grid.hosts'
         'Perform copy': 'YES'
+    with_items: "{{ revision.files }}"
         
