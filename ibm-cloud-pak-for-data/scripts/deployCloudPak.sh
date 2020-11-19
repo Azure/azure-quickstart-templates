@@ -15,7 +15,8 @@ echo $(date) " - Attempting ${ASSEMBLY} install"
 storageclass="nfs"
 override=""
 if [[ $STORAGEOPTION == "portworx" ]]; then
-    storageclass="portworx-shared-gp"
+    storageclass="portworx-shared-gp3"
+    override="--override-config portworx"
 fi
 
 # Install
