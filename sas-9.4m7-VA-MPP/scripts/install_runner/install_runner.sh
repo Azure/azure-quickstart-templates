@@ -41,10 +41,6 @@ if [[ "$depot_uri" == "$DEPOT_DUMMY_FOR_QUICK_EXIT_VALUE" ]]; then
 	exit 0
 fi
 
-# Install hadoop
-export ANSIBLE_LOG_PATH=/tmp/install_hadoop.log
-ansible-playbook -i ${INVENTORY_FILE} -vvv install_hadoop.yaml
-
 export ANSIBLE_LOG_PATH=/tmp/step05_download_mirror_and_licenses.log
 ansible-playbook -i ${INVENTORY_FILE} \
 	-e "DEPOT_DOWNLOAD_LOCATION=$depot_uri" \
@@ -71,6 +67,15 @@ ansible-playbook -i ${INVENTORY_FILE} -vvv step06_update_responsefiles.yaml
 
 cp /tmp/responsefiles/* /sasshare/responsefiles
 
+# Install hadoop
+export ANSIBLE_LOG_PATH=/tmp/install_hadoop.log
+ansible-playbook -i ${INVENTORY_FILE} -vvv install_hadoop.yaml
+
+# Install TKGrid
+export ANSIBLE_LOG_PATH=/tmp/install_tkgrid.log
+ansible-playbook -i ${INVENTORY_FILE} -vvv install_tkgrid.yaml
+
+# Install SAS
 export ANSIBLE_LOG_PATH=/tmp/step07_install_sas.log
 ansible-playbook -i ${INVENTORY_FILE} -vvv step07_install_sas.yaml
 
