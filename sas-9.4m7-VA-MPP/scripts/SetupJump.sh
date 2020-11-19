@@ -257,7 +257,7 @@ END
     echo "[metadata_nodes]" >> $INVENTORY_FILE
     for (( i=0; i<$count_of_metadata; i++)); do
       echo "metadata-${i}" >> $INVENTORY_FILE
-    fi
+    done
     echo "[metadata_servers]" >> $INVENTORY_FILE
     for (( i=0; i<$count_of_metadata; i++)); do
         echo "metadata-${i}" >> $INVENTORY_FILE

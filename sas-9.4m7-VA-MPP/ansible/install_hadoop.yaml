@@ -43,19 +43,25 @@
     loop:
       - java-1_8_0-openjdk
 
-- name: Host file update - Local DNS setup across all the Hadoop servers
-  hosts: [va_controllers,va_workers]
-  gather_facts: yes
-  tasks:
-  - name: Update the /etc/hosts file with IP address and hostname
-    become: yes
-    become_user: root
-    lineinfile:
-      path: "/etc/hosts"
-      line: "{{ hostvars[item]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}\t{{ hostvars[item]['ansible_hostname']}}\t{{ hostvars[item]['ansible_hostname']}}"
-      state: present
-      backup: yes
-    with_items: "{{ groups['va_controllers'] }},{{ groups['va_workers'] }}"
+# GWB: Commenting out this step. It doesn't appear necessary, as
+# all nodes in the hadoop cluster can find each other.
+#
+# Forcing IP addresses into /etc/hosts will make it much harder to
+# delete or add additional nodes to the cluster after the deployment.
+#
+#  - name: Host file update - Local DNS setup across all the Hadoop servers
+#    hosts: [va_controllers,va_workers]
+#    gather_facts: yes
+#    tasks:
+#    - name: Update the /etc/hosts file with IP address and hostname
+#      become: yes
+#      become_user: root
+#      lineinfile:
+#        path: "/etc/hosts"
+#        line: "{{ hostvars[item]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}\t{{ hostvars[item]['ansible_hostname']}}\t{{ hostvars[item]['ansible_hostname']}}"
+#        state: present
+#        backup: yes
+#      with_items: "{{ groups['va_controllers'] }},{{ groups['va_workers'] }}"
 
 - name: Download Hadoop on nameNode and dataNodes
   hosts: [va_controllers,va_workers]
@@ -119,7 +125,7 @@
       insertafter: "# export JAVA_HOME="
       block: |
         export JAVA_HOME=/usr/lib64/jvm/jre-1.8.0-openjdk
-        
+
   - name: Edit core-site.xml configuration
     blockinfile:
       path: "{{ HADOOP_HOME }}/etc/hadoop/core-site.xml"
@@ -129,7 +135,7 @@
           <name>fs.default.name</name>
           <value>hdfs://{{ inventory_hostname }}:9000</value>
         </property>
-        
+
   - name: Edit hdfs-site.xml configuration
     blockinfile:
       path: "{{ HADOOP_HOME }}/etc/hadoop/hdfs-site.xml"
@@ -147,7 +153,7 @@
           <name>dfs.replication</name>
           <value>2</value>
         </property>
-      
+
   - name: Edit mapred-site.xml configuration
     blockinfile:
       path: "{{ HADOOP_HOME }}/etc/hadoop/mapred-site.xml"
@@ -181,7 +187,7 @@
           <name>mapreduce.reduce.memory.mb</name>
           <value>256</value>
         </property>
-      
+
   - name: Edit yarn-site.xml configuration
     blockinfile:
       path: "{{ HADOOP_HOME }}/etc/hadoop/yarn-site.xml"
@@ -214,10 +220,10 @@
         <property>
           <name>yarn.nodemanager.vmem-check-enabled</name>
           <value>false</value>
-        </property>          
+        </property>
         # The last property disables virtual-memory checking which can prevent containers from being allocated properly with openjdk if enabled.
-        # Note: Memory allocation can be tricky on low RAM nodes because default values are not suitable for nodes with less than 8GB of RAM. 
-        #       We have manually set memory allocation for MapReduce jobs, and provide a sample configuration for 4GB RAM nodes.            
+        # Note: Memory allocation can be tricky on low RAM nodes because default values are not suitable for nodes with less than 8GB of RAM.
+        #       We have manually set memory allocation for MapReduce jobs, and provide a sample configuration for 4GB RAM nodes.
 
   - name: Make sure localhost is not in the workers file
     lineinfile:
@@ -229,7 +235,7 @@
     become: yes
     lineinfile:
       path: "{{ HADOOP_HOME }}/etc/hadoop/workers"
-      line: "{{ hostvars[item]['ansible_hostname']}}"
+      line: "{{ hostvars[item]['inventory_hostname']}}"
       state: present
       backup: yes
     with_items: "{{ groups['va_workers'] }}"
@@ -252,9 +258,9 @@
   tasks:
   - name: Format hdfs on namenode
     become: yes
-    shell: |-    
+    shell: |-
       {{ HADOOP_HOME }}/bin/hdfs namenode -format
-      
+
   - name: Start dfs
     become: yes
     shell: |-
