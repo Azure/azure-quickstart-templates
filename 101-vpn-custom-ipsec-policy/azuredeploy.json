@@ -1,0 +1,201 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vpnGateway_Name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of existing Virtual Network Gateway to deploy the connection to"
+            }
+        },
+        "localGateway_Name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of existing Local Network Gateway to deploy the connection to"
+            }
+        },
+        "vpnName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the VPN connection between Azure and On-Premises (ex: AzureUKS-to-LDN)"
+            },
+            "defaultValue": "Azure-to-OnPremises"
+        },
+        "vpnProtocol": {
+            "type": "string",
+            "metadata": {
+                "description": "Protocol utilised by the VPN Connection (IKEv1, IKEv2)"
+            },
+            "defaultValue": "IKEv2",
+            "allowedValues": [
+                "IKEv1",
+                "IKEv2"
+            ]
+        },
+        "saLifeTimeSeconds": {
+            "type": "int",
+            "metadata": {
+                "description": "Security Association Lifetime (Seconds)"
+            },
+            "defaultValue": 3600
+        },
+        "saDataSizeKilobytes": {
+            "type": "int",
+            "metadata": {
+                "description": "Security Association Data Size (KB)"
+            },
+            "defaultValue": 1024000000
+        },
+        "ipsecEncryption": {
+            "type": "string",
+            "metadata": {
+                "description": "IPSec Encryption"
+            },
+            "defaultValue": "AES256",
+            "allowedValues": [
+                "None",
+                "DES",
+                "DES3",
+                "AES128",
+                "AES192",
+                "AES256",
+                "GCMAES128",
+                "GCMAES192",
+                "GCMAES256"
+            ]
+        },
+        "ipsecIntegrity": {
+            "type": "string",
+            "metadata": {
+                "description": "IPSec Integrity"
+            },
+            "defaultValue": "SHA256",
+            "allowedValues": [
+                "MD5",
+                "SHA1",
+                "SHA256",
+                "GCMAES128",
+                "GCMAES192",
+                "GCMAES256"
+            ]
+        },
+        "ikeEncryption": {
+            "type": "string",
+            "metadata": {
+                "description": "IKE Encryption"
+            },
+            "defaultValue": "AES256",
+            "allowedValues": [
+                "DES",
+                "DES3",
+                "AES128",
+                "AES192",
+                "AES256",
+                "GCMAES256",
+                "GCMAES128"
+            ]
+        },
+        "ikeIntegrity": {
+            "type": "string",
+            "metadata": {
+                "description": "IKE Integrity"
+            },
+            "defaultValue": "SHA256",
+            "allowedValues": [
+                "MD5",
+                "SHA1",
+                "SHA256",
+                "SHA384",
+                "GCMAES256",
+                "GCMAES128"
+            ]
+        },
+        "dhGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "Diffie-Hellman Group"
+            },
+            "defaultValue": "DHGroup14",
+            "allowedValues": [
+                "None",
+                "DHGroup1",
+                "DHGroup2",
+                "DHGroup14",
+                "DHGroup2048",
+                "ECP256",
+                "ECP384",
+                "DHGroup24"
+            ]
+        },
+        "pfsGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "Perfect Forward Secrecy Group"
+            },
+            "defaultValue": "PFS14",
+            "allowedValues": [
+                "None",
+                "PFS1",
+                "PFS2",
+                "PFS2048",
+                "ECP256",
+                "ECP384",
+                "PFS24",
+                "PFS14",
+                "PFSMM"
+            ]
+        },
+        "sharedKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Pre-Shared Key"
+            }
+        },
+        "policyBasedTrafficSelectors": {
+            "type": "bool",
+            "metadata": {
+                "description": "Enable this if the OnPremises VPN endpoint needs to be configured as a Policy-Based VPN"
+            },
+            "defaultValue": false,
+            "allowedValues": [
+                true,
+                false
+            ]
+        }
+    },
+    "variables": {
+        "location": "[resourceGroup().location]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/connections",
+            "apiVersion": "2020-04-01",
+            "name": "[parameters('vpnName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "virtualNetworkGateway1": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('vpnGateway_Name'))]"
+                },
+                "localNetworkGateway2": {
+                    "id": "[resourceId('Microsoft.Network/localNetworkGateways', parameters('localGateway_Name'))]"
+                },
+                "connectionType": "IPsec",
+                "connectionProtocol": "[parameters('vpnProtocol')]",
+                "sharedKey": "[parameters('sharedKey')]",
+                "usePolicyBasedTrafficSelectors": "[parameters('policyBasedTrafficSelectors')]",
+                "ipsecPolicies": [
+                    {
+                        "saLifeTimeSeconds": "[parameters('saLifeTimeSeconds')]",
+                        "saDataSizeKilobytes": "[parameters('saDataSizeKilobytes')]",
+                        "ipsecEncryption": "[parameters('ipsecEncryption')]",
+                        "ipsecIntegrity": "[parameters('ipsecIntegrity')]",
+                        "ikeEncryption": "[parameters('iKEEncryption')]",
+                        "ikeIntegrity": "[parameters('ikeIntegrity')]",
+                        "dhGroup": "[parameters('dhGroup')]",
+                        "pfsGroup": "[parameters('pfsGroup')]"
+                    }
+                ]
+            }
+        }
+    ]
+}
