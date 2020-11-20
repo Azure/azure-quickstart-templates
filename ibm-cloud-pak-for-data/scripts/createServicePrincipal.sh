@@ -21,9 +21,9 @@ then
     pth=$(pwd)
     export PATH=$PATH:$pth
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        curl -LO https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 jq
+        curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq
     elif [[ "$OSTYPE" == "darwin"* ]]; then
-        curl -LO https://github.com/stedolan/jq/releases/download/jq-1.6/jq-osx-amd64 jq
+        curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-osx-amd64 -o jq
     else
         echo "Unsupported OS type. Exiting..."
         exit 1
