@@ -163,8 +163,9 @@ runuser -l $SUDOUSER -c "echo 'Sleeping for 12mins while MCs apply and the clust
 runuser -l $SUDOUSER -c "sleep 12m"
 
 #CPD Config
-runuser -l $SUDOUSER -c "wget $ARTIFACTSLOCATION/scripts/cpd-artifacts.tgz$ARTIFACTSTOKEN -O $INSTALLERHOME/cpd-artifacts.tgz"
-runuser -l $SUDOUSER -c "(cd $INSTALLERHOME && tar -xf cpd-artifacts.tgz)"
+runuser -l $SUDOUSER -c "wget https://github.com/IBM/cpd-cli/releases/download/v3.5.0/cpd-cli-linux-EE-3.5.1.tgz -O $INSTALLERHOME/cpd-cli-linux-EE-3.5.1.tgz"
+runuser -l $SUDOUSER -c "(cd $INSTALLERHOME && tar -xf cpd-cli-linux-EE-3.5.1.tgz)"
+runuser -l $SUDOUSER -c "(cd $INSTALLERHOME/cpd-cli-linux-EE-3.5.1* && mv * $INSTALLERHOME/)"
 runuser -l $SUDOUSER -c "chmod +x $INSTALLERHOME/cpd-cli"
 
 # Service Account Token for COD installation
