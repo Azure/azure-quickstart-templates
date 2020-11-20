@@ -42,7 +42,7 @@ For assistance with SAS software, contact [SAS Technical Support](https://suppor
     - [Architecture Diagram](#architecture-diagram)
     - [SAS 9.4 Grid Components](#sas-94-grid-components)
     - [SAS Viya Components](#sas-viya-components)
-  - [Cost & Licenses](#Cost-and-Licenses)
+  - [Cost and Licenses](#Cost-and-Licenses)
 	- [SAS Grid Sizing](#sas-Grid-sizing)
 	- [SAS Viya Sizing](#sas-viya-sizing)    
   - [PreRequisites](#prerequisites)
@@ -312,12 +312,13 @@ ssh vmuser@<AnsibleControllerIP>
 ```
 ssh root@<anyvmserver>
 ```
-3.  Create an RDP tunnel through the bastion host. See the [Appendix section](#sshtunneling) for Tunneling instructions.
+3.  Create an RDP tunnel through the bastion host. See the [Appendix section](#Appendix-A-SSH-Tunneling) for Tunneling instructions.
 4.	RDP to the Windows Server using the user(vmuser) and password (SAS External Password parameter value).
 
-### Accessing SAS 9.4 Grid Applicaiton
+### Accessing SAS 9.4 Grid Application
 The SAS 9.4 clients such as **SAS Enterprise Guide, DI Studio, SAS Enterprise Miner,** and **SAS Management Console** are installed on the Windows RDP. Log in to these applications using the sasdemo user. The password would be the one you specified in the template under the “SAS External Password parameter value.” 
 
+### Accessing SAS Viya Application
 The SAS Viya Web applications can be accessed through the Web Brower on the RDP and directly through your browser via SSH Tunnel. See the Appendix section for Tunneling instructions. 
 
 ### Review QuickStart Deployment Outputs
