@@ -1,4 +1,4 @@
-# SAS 9.4 VA/VS Quickstart Template for Azure 
+# SAS 9.4 Visual Analytics/Visual Statistics Quickstart Template for Azure 
 
 ## Contents
 1. [Overview](#Overview)
@@ -27,10 +27,15 @@ This README for SAS 9.4 VA/VS Quickstart Template for Azure is used to deploy th
 
 This Quickstart is a reference architecture for users who want to deploy the SAS 9.4 VA/VS  platform using cloud-friendly technologies. By deploying the SAS platform in Azure, you get access to SAS analytics visualization and the ability to create powerful statistical models in an Azure-validated environment. 
 
+![Network Diagram](Azure_9_vavs_quickstart.svg)
+
+Figure 1: Quickstart architecture for SAS 9.4 Visual Analytics/Visual Statistics on Azure in an SMP Environment
+
+
 For assistance with SAS software, contact  [SAS Technical Support](https://support.sas.com/en/technical-support.html).   When you contact support, you will be required to provide information, such as your SAS site number, company name, email address, and phone number, that identifies you as a licensed SAS software customer. 
 
 <a name="SAS94VAVSonAzure"></a>
-### SAS 9.4 VA/VS on Azure
+### SAS 9.4 Visual Analytics/Visual Statistics on Azure
 
 <a name="Costs"></a>
 ### Costs and Licenses
