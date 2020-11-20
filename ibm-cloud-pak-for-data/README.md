@@ -35,7 +35,7 @@ Note: Cloud Pak for Data license will include entitlements to RHEL and Openshift
 
 Deploying this template builds the following Cloud Pak for Data cluster in a multi zone.
 
-![Alt text](images/azure-multi-zone.jpg)
+![Alt text](images/ocp-azure-arch.png)
 
 The template sets up the following:
 - A highly available architecture that spans up to three Availability Zones.
