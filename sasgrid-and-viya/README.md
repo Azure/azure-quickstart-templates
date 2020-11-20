@@ -6,7 +6,7 @@
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/sasgrid-and-viya/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/sasgrid-and-viya/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/sas9.4-viya/BestPracticeResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/sasgrid-and-viya/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/sasgrid-and-viya/CredScanResult.svg)
 
 
