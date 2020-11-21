@@ -379,7 +379,7 @@
 				"reject"
 			],
 			"metadata": {
-				"description": "description"
+				"description": "Accept License Agreement: https://ibm.biz/Bdq6KP"
 			}
 		}
 	},
@@ -387,7 +387,7 @@
 		"networkResourceGroup": "[parameters('existingVnetResourceGroupName')]",
 		"redHatTags": {
 			"app": "OpenshiftContainerPlatform",
-			"version": "4.3.x",
+			"version": "4.5.x",
 			"platform": "AzurePublic"
 		},
 		"imageReference": {
@@ -407,6 +407,7 @@
 		"sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
 		"clusterNodeDeploymentTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/clusternode.json', parameters('_artifactsLocationSasToken')))]",
 		"openshiftDeploymentTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/openshiftdeploy.json', parameters('_artifactsLocationSasToken')))]",
+		"preloadImagesDeploymentTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/preloadimagesdeploy.json', parameters('_artifactsLocationSasToken')))]",
 		"openshiftDeploymentScriptUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/deployOpenShift.sh', parameters('_artifactsLocationSasToken')))]",
 		"cloudPakDeploymentTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/cloudpakdeploy.json', parameters('_artifactsLocationSasToken')))]",
 		"cloudPakDeploymentScriptUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/deployCloudPak.sh', parameters('_artifactsLocationSasToken')))]",
@@ -415,6 +416,8 @@
 		"nfsInstallScriptUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/setup-nfs.sh', parameters('_artifactsLocationSasToken')))]",
 		"openshiftDeploymentScriptFileName": "deployOpenShift.sh",
 		"cloudPakDeploymentScriptFileName": "deployCloudPak.sh",
+		"uploadImagesScriptFileName": "uploadImages.sh",
+		"uploadImagesScriptUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/uploadImages.sh', parameters('_artifactsLocationSasToken')))]",
 		"nfsInstallScriptFileName": "setup-nfs.sh",
 		"vaultName": "[concat(variables('nfsHostname'), '-vault')]",
 		"backupFabric": "Azure",
@@ -425,9 +428,9 @@
 	},
 	"resources": [
 		{
+			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
 			"name": "pid-06f07fff-296b-5beb-9092-deab0c6bb8ea",
-			"type": "Microsoft.Resources/deployments",
 			"properties": {
 				"mode": "Incremental",
 				"template": {
@@ -441,6 +444,7 @@
 		{
 			"condition": "[equals(parameters('newOrExistingNetwork'), 'new')]",
 			"type": "Microsoft.Network/virtualNetworks",
+			"apiVersion": "2019-09-01",
 			"name": "[parameters('virtualNetworkName')]",
 			"location": "[parameters('location')]",
 			"tags": {
@@ -449,7 +453,6 @@
 				"version": "[variables('redHatTags').version]",
 				"platform": "[variables('redHatTags').platform]"
 			},
-			"apiVersion": "2019-09-01",
 			"properties": {
 				"addressSpace": {
 					"addressPrefixes": "[parameters('virtualNetworkCIDR')]"
@@ -492,12 +495,12 @@
 		},
 		{
 			"type": "Microsoft.Network/publicIPAddresses",
+			"apiVersion": "2019-09-01",
 			"name": "[variables('bastionPublicIpDnsLabel')]",
 			"location": "[parameters('location')]",
 			"sku": {
 				"name": "Standard"
 			},
-			"apiVersion": "2019-09-01",
 			"tags": {
 				"displayName": "BastionPublicIP",
 				"app": "[variables('redHatTags').app]",
@@ -513,20 +516,20 @@
 		},
 		{
 			"type": "Microsoft.Network/networkInterfaces",
+			"apiVersion": "2019-09-01",
 			"name": "[concat(variables('bastionHostname'), '-nic')]",
 			"location": "[parameters('location')]",
-			"apiVersion": "2019-09-01",
+			"dependsOn": [
+				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('bastionSecurityGroupName'))]",
+				"[resourceId('Microsoft.Network/publicIPAddresses/', variables('bastionPublicIpDnsLabel'))]"
+			],
 			"tags": {
 				"displayName": "BastionNetworkInterface",
 				"app": "[variables('redHatTags').app]",
 				"version": "[variables('redHatTags').version]",
 				"platform": "[variables('redHatTags').platform]"
 			},
-			"dependsOn": [
-				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('bastionSecurityGroupName'))]",
-				"[resourceId('Microsoft.Network/publicIPAddresses/', variables('bastionPublicIpDnsLabel'))]"
-			],
 			"properties": {
 				"ipConfigurations": [
 					{
@@ -550,19 +553,19 @@
 		{
 			"condition": "[equals(parameters('storageOption'), 'nfs')]",
 			"type": "Microsoft.Network/networkInterfaces",
+			"apiVersion": "2019-09-01",
 			"name": "[concat(variables('nfsHostname'), '-nic')]",
 			"location": "[parameters('location')]",
-			"apiVersion": "2019-09-01",
+			"dependsOn": [
+				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('workerSecurityGroupName'))]"
+			],
 			"tags": {
 				"displayName": "NFSNetworkInterface",
 				"app": "[variables('redHatTags').app]",
 				"version": "[variables('redHatTags').version]",
 				"platform": "[variables('redHatTags').platform]"
 			},
-			"dependsOn": [
-				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('workerSecurityGroupName'))]"
-			],
 			"properties": {
 				"ipConfigurations": [
 					{
@@ -581,8 +584,8 @@
 			}
 		},
 		{
-			"apiVersion": "2019-09-01",
 			"type": "Microsoft.Network/networkSecurityGroups",
+			"apiVersion": "2019-09-01",
 			"name": "[variables('bastionSecurityGroupName')]",
 			"location": "[parameters('location')]",
 			"tags": {
@@ -613,10 +616,10 @@
 		},
 		{
 			"type": "Microsoft.Storage/storageAccounts",
+			"apiVersion": "2019-06-01",
 			"name": "[variables('diagStorageAccountName')]",
 			"location": "[parameters('location')]",
 			"kind": "Storage",
-			"apiVersion": "2019-06-01",
 			"tags": {
 				"displayName": "[variables('diagStorageAccountName')]",
 				"app": "[variables('redHatTags').app]",
@@ -629,9 +632,9 @@
 			}
 		},
 		{
-			"name": "BastionVmDeployment",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
+			"name": "BastionVmDeployment",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]",
 				"[resourceId('Microsoft.Network/networkInterfaces', concat(variables('bastionHostname'), '-nic'))]"
@@ -683,8 +686,8 @@
 			}
 		},
 		{
-			"apiVersion": "2019-09-01",
 			"type": "Microsoft.Network/networkSecurityGroups",
+			"apiVersion": "2019-09-01",
 			"name": "[variables('masterSecurityGroupName')]",
 			"location": "[parameters('location')]",
 			"tags": {
@@ -714,8 +717,8 @@
 			}
 		},
 		{
-			"apiVersion": "2019-09-01",
 			"type": "Microsoft.Network/networkSecurityGroups",
+			"apiVersion": "2019-09-01",
 			"name": "[variables('workerSecurityGroupName')]",
 			"location": "[parameters('location')]",
 			"tags": {
@@ -758,9 +761,9 @@
 			}
 		},
 		{
-			"name": "OpenShiftDeployment",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
+			"name": "OpenShiftDeployment",
 			"dependsOn": [
 				"BastionVmDeployment"
 			],
@@ -872,11 +875,12 @@
 		},
 		{
 			"condition": "[equals(parameters('storageOption'), 'nfs')]",
-			"name": "nfsVmDeployment",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
+			"name": "nfsVmDeployment",
 			"dependsOn": [
-				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]"
+				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]",
+				"[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nfsHostname'), '-nic'))]"
 			],
 			"properties": {
 				"mode": "Incremental",
@@ -927,18 +931,18 @@
 		{
 			"condition": "[equals(parameters('storageOption'), 'nfs')]",
 			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"apiVersion": "2019-07-01",
 			"name": "[concat(variables('nfsHostname'), '/installNfsServer')]",
 			"location": "[parameters('location')]",
-			"apiVersion": "2019-07-01",
+			"dependsOn": [
+				"nfsVmDeployment"
+			],
 			"tags": {
 				"displayName": "InstallNfsServer",
 				"app": "[variables('redHatTags').app]",
 				"version": "[variables('redHatTags').version]",
 				"platform": "[variables('redHatTags').platform]"
 			},
-			"dependsOn": [
-				"nfsVmDeployment"
-			],
 			"properties": {
 				"publisher": "Microsoft.Azure.Extensions",
 				"type": "CustomScript",
@@ -958,8 +962,8 @@
 			"condition": "[equals(parameters('enableNfsBackup'), 'true')]",
 			"type": "Microsoft.RecoveryServices/vaults",
 			"apiVersion": "2019-05-13",
-			"location": "[parameters('location')]",
 			"name": "[variables('vaultName')]",
+			"location": "[parameters('location')]",
 			"sku": {
 				"name": "RS0",
 				"tier": "Standard"
@@ -984,9 +988,9 @@
 		},
 		{
 			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"apiVersion": "2019-07-01",
 			"name": "[concat(variables('bastionHostname'), '/deployOpenshift')]",
 			"location": "[parameters('location')]",
-			"apiVersion": "2019-07-01",
 			"dependsOn": [
 				"BastionVmDeployment",
 				"OpenShiftDeployment"
@@ -1013,14 +1017,71 @@
 			}
 		},
 		{
-			"name": "CloudPakLiteDeployment",
 			"condition": "[equals(parameters('cloudPakLicenseAgreement'), 'accept')]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
+			"name": "PreloadImagesLite",
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
 				"[variables('deployOpenshiftExt')]"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('preloadImagesDeploymentTemplateUrl')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"assembly": {
+						"value": "lite"
+					},
+					"uploadImagesScriptUrl": {
+						"value": "[variables('uploadImagesScriptUrl')]"
+					},
+					"uploadImagesScriptFileName": {
+						"value": "[variables('uploadImagesScriptFileName')]"
+					},
+					"redHatTags": {
+						"value": "[variables('redHatTags')]"
+					},
+					"adminUsername":{
+						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
+					},
+					"ocpassword": {
+						"value": "[parameters('openshiftPassword')]"
+					},
+					"bastionHostname": {
+						"value": "[variables('bastionHostname')]"
+					},
+					"projectName": {
+						"value": "[parameters('projectName')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"clusterName": {
+						"value": "[parameters('clusterName')]"
+					},
+					"domainName": {
+						"value": "[parameters('dnsZone')]"
+					}
+				}
+			}
+		},
+		{
+			"condition": "[equals(parameters('cloudPakLicenseAgreement'), 'accept')]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-05-01",
+			"name": "CloudPakLiteDeployment",
+			"dependsOn": [
+				"nfsVmDeployment",
+				"OpenShiftDeployment",
+				"[variables('deployOpenshiftExt')]",
+				"PreloadImagesLite"
 			],
 			"properties": {
 				"mode": "Incremental",
@@ -1072,15 +1133,72 @@
 			}
 		},
 		{
-			"name": "CloudPakDVDeployment",
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installDataVirtualization'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
+			"name": "PreloadImagesDV",
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
 				"[variables('deployOpenshiftExt')]",
 				"CloudPakLiteDeployment"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('preloadImagesDeploymentTemplateUrl')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"assembly": {
+						"value": "dv"
+					},
+					"uploadImagesScriptUrl": {
+						"value": "[variables('uploadImagesScriptUrl')]"
+					},
+					"uploadImagesScriptFileName": {
+						"value": "[variables('uploadImagesScriptFileName')]"
+					},
+					"redHatTags": {
+						"value": "[variables('redHatTags')]"
+					},
+					"adminUsername":{
+						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
+					},
+					"ocpassword": {
+						"value": "[parameters('openshiftPassword')]"
+					},
+					"bastionHostname": {
+						"value": "[variables('bastionHostname')]"
+					},
+					"projectName": {
+						"value": "[parameters('projectName')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"clusterName": {
+						"value": "[parameters('clusterName')]"
+					},
+					"domainName": {
+						"value": "[parameters('dnsZone')]"
+					}
+				}
+			}
+		},
+		{
+			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installDataVirtualization'), 'yes'))]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-05-01",
+			"name": "CloudPakDVDeployment",
+			"dependsOn": [
+				"nfsVmDeployment",
+				"OpenShiftDeployment",
+				"[variables('deployOpenshiftExt')]",
+				"PreloadImagesDV"
 			],
 			"properties": {
 				"mode": "Incremental",
@@ -1132,15 +1250,72 @@
 			}
 		},
 		{
-			"name": "CloudPakCDEDeployment",
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installCognosDashboard'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
+			"name": "PreloadImagesCDE",
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
 				"[variables('deployOpenshiftExt')]",
 				"CloudPakDVDeployment"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('preloadImagesDeploymentTemplateUrl')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"assembly": {
+						"value": "cde"
+					},
+					"uploadImagesScriptUrl": {
+						"value": "[variables('uploadImagesScriptUrl')]"
+					},
+					"uploadImagesScriptFileName": {
+						"value": "[variables('uploadImagesScriptFileName')]"
+					},
+					"redHatTags": {
+						"value": "[variables('redHatTags')]"
+					},
+					"adminUsername":{
+						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
+					},
+					"ocpassword": {
+						"value": "[parameters('openshiftPassword')]"
+					},
+					"bastionHostname": {
+						"value": "[variables('bastionHostname')]"
+					},
+					"projectName": {
+						"value": "[parameters('projectName')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"clusterName": {
+						"value": "[parameters('clusterName')]"
+					},
+					"domainName": {
+						"value": "[parameters('dnsZone')]"
+					}
+				}
+			}
+		},
+		{
+			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installCognosDashboard'), 'yes'))]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-05-01",
+			"name": "CloudPakCDEDeployment",
+			"dependsOn": [
+				"nfsVmDeployment",
+				"OpenShiftDeployment",
+				"[variables('deployOpenshiftExt')]",
+				"PreloadImagesCDE"
 			],
 			"properties": {
 				"mode": "Incremental",
@@ -1192,15 +1367,72 @@
 			}
 		},
 		{
-			"name": "CloudPakWSLDeployment",
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonStudioLibrary'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
+			"name": "PreloadImagesWSL",
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
 				"[variables('deployOpenshiftExt')]",
 				"CloudPakCDEDeployment"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('preloadImagesDeploymentTemplateUrl')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"assembly": {
+						"value": "wsl"
+					},
+					"uploadImagesScriptUrl": {
+						"value": "[variables('uploadImagesScriptUrl')]"
+					},
+					"uploadImagesScriptFileName": {
+						"value": "[variables('uploadImagesScriptFileName')]"
+					},
+					"redHatTags": {
+						"value": "[variables('redHatTags')]"
+					},
+					"adminUsername":{
+						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
+					},
+					"ocpassword": {
+						"value": "[parameters('openshiftPassword')]"
+					},
+					"bastionHostname": {
+						"value": "[variables('bastionHostname')]"
+					},
+					"projectName": {
+						"value": "[parameters('projectName')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"clusterName": {
+						"value": "[parameters('clusterName')]"
+					},
+					"domainName": {
+						"value": "[parameters('dnsZone')]"
+					}
+				}
+			}
+		},
+		{
+			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonStudioLibrary'), 'yes'))]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-05-01",
+			"name": "CloudPakWSLDeployment",
+			"dependsOn": [
+				"nfsVmDeployment",
+				"OpenShiftDeployment",
+				"[variables('deployOpenshiftExt')]",
+				"PreloadImagesWSL"
 			],
 			"properties": {
 				"mode": "Incremental",
@@ -1252,15 +1484,72 @@
 			}
 		},
 		{
-			"name": "CloudPakWMLDeployment",
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonMachineLearning'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
+			"name": "PreloadImagesWML",
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
 				"[variables('deployOpenshiftExt')]",
 				"CloudPakWSLDeployment"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('preloadImagesDeploymentTemplateUrl')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"assembly": {
+						"value": "wml"
+					},
+					"uploadImagesScriptUrl": {
+						"value": "[variables('uploadImagesScriptUrl')]"
+					},
+					"uploadImagesScriptFileName": {
+						"value": "[variables('uploadImagesScriptFileName')]"
+					},
+					"redHatTags": {
+						"value": "[variables('redHatTags')]"
+					},
+					"adminUsername":{
+						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
+					},
+					"ocpassword": {
+						"value": "[parameters('openshiftPassword')]"
+					},
+					"bastionHostname": {
+						"value": "[variables('bastionHostname')]"
+					},
+					"projectName": {
+						"value": "[parameters('projectName')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"clusterName": {
+						"value": "[parameters('clusterName')]"
+					},
+					"domainName": {
+						"value": "[parameters('dnsZone')]"
+					}
+				}
+			}
+		},
+		{
+			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonMachineLearning'), 'yes'))]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-05-01",
+			"name": "CloudPakWMLDeployment",
+			"dependsOn": [
+				"nfsVmDeployment",
+				"OpenShiftDeployment",
+				"[variables('deployOpenshiftExt')]",
+				"PreloadImagesWML"
 			],
 			"properties": {
 				"mode": "Incremental",
@@ -1312,15 +1601,132 @@
 			}
 		},
 		{
-			"name": "CloudPakWKCDeployment",
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonKnowledgeCatalog'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
+			"name": "PreloadImagesWKC",
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
 				"[variables('deployOpenshiftExt')]",
 				"CloudPakWMLDeployment"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('preloadImagesDeploymentTemplateUrl')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"assembly": {
+						"value": "wkc"
+					},
+					"uploadImagesScriptUrl": {
+						"value": "[variables('uploadImagesScriptUrl')]"
+					},
+					"uploadImagesScriptFileName": {
+						"value": "[variables('uploadImagesScriptFileName')]"
+					},
+					"redHatTags": {
+						"value": "[variables('redHatTags')]"
+					},
+					"adminUsername":{
+						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
+					},
+					"ocpassword": {
+						"value": "[parameters('openshiftPassword')]"
+					},
+					"bastionHostname": {
+						"value": "[variables('bastionHostname')]"
+					},
+					"projectName": {
+						"value": "[parameters('projectName')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"clusterName": {
+						"value": "[parameters('clusterName')]"
+					},
+					"domainName": {
+						"value": "[parameters('dnsZone')]"
+					}
+				}
+			}
+		},
+		{
+			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonKnowledgeCatalog'), 'yes'))]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-05-01",
+			"name": "CloudPakWKCCoreDeployment",
+			"dependsOn": [
+				"nfsVmDeployment",
+				"OpenShiftDeployment",
+				"[variables('deployOpenshiftExt')]",
+				"PreloadImagesWKC"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('cloudPakDeploymentTemplateUrl')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"assembly": {
+						"value": "wkc-core"
+					},
+					"cloudPakDeploymentScriptUrl": {
+						"value": "[variables('cloudPakDeploymentScriptUrl')]"
+					},
+					"cloudPakDeploymentScriptFileName": {
+						"value": "[variables('cloudPakDeploymentScriptFileName')]"
+					},
+					"redHatTags": {
+						"value": "[variables('redHatTags')]"
+					},
+					"adminUsername":{
+						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
+					},
+					"ocpassword": {
+						"value": "[parameters('openshiftPassword')]"
+					},
+					"storageOption": {
+						"value": "[parameters('storageOption')]"
+					},
+					"bastionHostname": {
+						"value": "[variables('bastionHostname')]"
+					},
+					"projectName": {
+						"value": "[parameters('projectName')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"clusterName": {
+						"value": "[parameters('clusterName')]"
+					},
+					"domainName": {
+						"value": "[parameters('dnsZone')]"
+					}
+				}
+			}
+		},
+		{
+			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonKnowledgeCatalog'), 'yes'))]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-05-01",
+			"name": "CloudPakWKCDeployment",
+			"dependsOn": [
+				"nfsVmDeployment",
+				"OpenShiftDeployment",
+				"[variables('deployOpenshiftExt')]",
+				"CloudPakWKCCoreDeployment"
 			],
 			"properties": {
 				"mode": "Incremental",
@@ -1372,15 +1778,72 @@
 			}
 		},
 		{
-			"name": "CloudPakWOSDeployment",
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonOpenscaleAndWatsonMachineLearning'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
+			"name": "PreloadImagesWOS",
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
 				"[variables('deployOpenshiftExt')]",
 				"CloudPakWKCDeployment"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('preloadImagesDeploymentTemplateUrl')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"assembly": {
+						"value": "aiopenscale"
+					},
+					"uploadImagesScriptUrl": {
+						"value": "[variables('uploadImagesScriptUrl')]"
+					},
+					"uploadImagesScriptFileName": {
+						"value": "[variables('uploadImagesScriptFileName')]"
+					},
+					"redHatTags": {
+						"value": "[variables('redHatTags')]"
+					},
+					"adminUsername":{
+						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
+					},
+					"ocpassword": {
+						"value": "[parameters('openshiftPassword')]"
+					},
+					"bastionHostname": {
+						"value": "[variables('bastionHostname')]"
+					},
+					"projectName": {
+						"value": "[parameters('projectName')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"clusterName": {
+						"value": "[parameters('clusterName')]"
+					},
+					"domainName": {
+						"value": "[parameters('dnsZone')]"
+					}
+				}
+			}
+		},
+		{
+			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonOpenscaleAndWatsonMachineLearning'), 'yes'))]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-05-01",
+			"name": "CloudPakWOSDeployment",
+			"dependsOn": [
+				"nfsVmDeployment",
+				"OpenShiftDeployment",
+				"[variables('deployOpenshiftExt')]",
+				"PreloadImagesWOS"
 			],
 			"properties": {
 				"mode": "Incremental",
@@ -1432,15 +1895,72 @@
 			}
 		},
 		{
-			"name": "CloudPakSparkDeployment",
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installApacheSpark'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
+			"name": "PreloadImagesSpark",
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
 				"[variables('deployOpenshiftExt')]",
 				"CloudPakWOSDeployment"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('preloadImagesDeploymentTemplateUrl')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"assembly": {
+						"value": "spark"
+					},
+					"uploadImagesScriptUrl": {
+						"value": "[variables('uploadImagesScriptUrl')]"
+					},
+					"uploadImagesScriptFileName": {
+						"value": "[variables('uploadImagesScriptFileName')]"
+					},
+					"redHatTags": {
+						"value": "[variables('redHatTags')]"
+					},
+					"adminUsername":{
+						"value": "[parameters('adminUsername')]"
+					},
+					"ocuser": {
+						"value": "[parameters('openshiftUsername')]"
+					},
+					"ocpassword": {
+						"value": "[parameters('openshiftPassword')]"
+					},
+					"bastionHostname": {
+						"value": "[variables('bastionHostname')]"
+					},
+					"projectName": {
+						"value": "[parameters('projectName')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"clusterName": {
+						"value": "[parameters('clusterName')]"
+					},
+					"domainName": {
+						"value": "[parameters('dnsZone')]"
+					}
+				}
+			}
+		},
+		{
+			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installApacheSpark'), 'yes'))]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-05-01",
+			"name": "CloudPakSparkDeployment",
+			"dependsOn": [
+				"nfsVmDeployment",
+				"OpenShiftDeployment",
+				"[variables('deployOpenshiftExt')]",
+				"PreloadImagesSpark"
 			],
 			"properties": {
 				"mode": "Incremental",

@@ -2,7 +2,7 @@
 * Launch the [spec generator](https://central.portworx.com/specGen/wizard)
 * Select Enterprise Trial or Essentials:
 ![Alt text](images/trial-or-essentials.png)
-* Enter the Kubernetes Version and the Portworx version to 1.16.2 and 2.5 respectively, select Built-in and press Next:
+* Select "Use the Portworx Operator" and press Next:
 ![Alt text](images/kube-version-etcd.png)
 * Select Azure Cloud and enter disk size to be 500 GB and press Next:
 ![Alt text](images/azure-disk-size.png)
