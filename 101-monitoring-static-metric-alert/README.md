@@ -20,5 +20,3 @@ For more information on **metric alert rules** see:
 
 - [Metric alert rules overview](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/alerts-metric-overview)
 - [Create a metric alert with a resource manager template](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/alerts-metric-create-templates)
-
-https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true
