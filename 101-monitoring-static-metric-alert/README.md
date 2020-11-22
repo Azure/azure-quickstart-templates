@@ -14,7 +14,7 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-monitoring-static-metric-alert%2Fazuredeploy.json
 )
 
-This template creates a metric alert rule with static threshold.
+This template creates a static threshold metric alert rule, monitoring the percentage cpu metric in a virtual machine.
 
 For more information on **metric alert rules** see:
 
