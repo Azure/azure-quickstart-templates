@@ -21,5 +21,3 @@
 This template creates a VM from a specialized VHD and lets you connect it to a new or existing VNET that can reside in another Resource Group then the virtual machine.
 
 Plese note: This deployment template does not create or attach an existing Network Security Group to the virtual machine. 
-
-
