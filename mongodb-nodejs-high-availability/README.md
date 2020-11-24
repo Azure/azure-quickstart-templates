@@ -12,11 +12,11 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmongodb-nodejs-high-availability%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmongodb-nodejs-high-availability%2Fazuredeploy.json)
 
 This template deploys a configuration of a Node.js front-end server that interacts with a MongoDB cluster. The template is a merge
-of 2 templates - <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/mongodb-high-availability">azure-quickstart-templates/mongodb-high-availability and <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/101-simple-linux-vm">101-simple-linux-vm.
+of 2 templates - <a href=https://github.com/Azure/azure-quickstart-templates/tree/master/mongodb-high-availability>azure-quickstart-templates/mongodb-high-availability and <a href=https://github.com/Azure/azure-quickstart-templates/tree/master/101-simple-linux-vm>101-simple-linux-vm.
 
 The template creates a multi-server MongoDB deployment on Ubuntu and CentOS virtual machines, and configures the MongoDB installation for high availability using a replica set.
 The template also provisions storage accounts, virtual network, availability set, network interfaces, VMs, disks and other infrastructure and runtime resources required by the installation.
-In addition, and when explicitly enabled, the template can create one publicly accessible "jumpbox" VM allowing to ssh into the MongoDB nodes for diagnostics or troubleshooting purposes.
+In addition, and when explicitly enabled, the template can create one publicly accessible jumpbox VM allowing to ssh into the MongoDB nodes for diagnostics or troubleshooting purposes.
 
 The template also creates a Linux VM, using a few different options for the Ubuntu Linux version, in the same virtual network and location as the MongoDB cluster. The VM size is D1.
 A Node.js (Express) service is installed on it, exposes a REST GET endpoint that connects to the MongoDB and then deletes, inserts and retrieves 3 tasks from a Tasks database.
