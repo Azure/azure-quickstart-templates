@@ -9,9 +9,13 @@
         [Parameter(Mandatory)]
         [String]$DPMPName,
         [Parameter(Mandatory)]
-        [String]$ClientName,
+        [String]$CSName,
         [Parameter(Mandatory)]
         [String]$PSName,
+        [Parameter(Mandatory)]
+        [String]$ClientName,
+        [Parameter(Mandatory)]
+        [String]$Configuration,
         [Parameter(Mandatory)]
         [String]$DNSIPAddress,
         [Parameter(Mandatory)]
@@ -24,6 +28,10 @@
     $LogPath = "c:\$LogFolder"
     $CM = "CMCB"
     $DName = $DomainName.Split(".")[0]
+    if($Configuration -ne "Standalone")
+    {
+        $CSComputerAccount = "$DName\$CSName$"
+    }
     $PSComputerAccount = "$DName\$PSName$"
     $DPMPComputerAccount = "$DName\$DPMPName$"
     $ClientComputerAccount = "$DName\$ClientName$"
@@ -44,14 +52,14 @@
             InitialSize = '8192'
             MaximumSize = '8192'
         }
-        
+
         InstallFeatureForSCCM InstallFeature
         {
             Name = 'DC'
             Role = 'DC'
             DependsOn = "[SetCustomPagingFile]PagingSettings"
         }
-
+        
         SetupDomain FirstDS
         {
             DomainFullName = $DomainName
@@ -86,20 +94,100 @@
             DependsOn = "[InstallCA]InstallCA"
         }
 
-        File ShareFolder
-        {            
-            DestinationPath = $LogPath     
-            Type = 'Directory'            
-            Ensure = 'Present'
-            DependsOn = @("[VerifyComputerJoinDomain]WaitForPS","[VerifyComputerJoinDomain]WaitForDPMP","[VerifyComputerJoinDomain]WaitForClient")
-        }
+        if ($Configuration -eq 'Standalone') {
+            File ShareFolder
+            {            
+                DestinationPath = $LogPath     
+                Type = 'Directory'            
+                Ensure = 'Present'
+                DependsOn = @("[VerifyComputerJoinDomain]WaitForPS","[VerifyComputerJoinDomain]WaitForDPMP","[VerifyComputerJoinDomain]WaitForClient")
+            }
 
-        FileReadAccessShare DomainSMBShare
-        {
-            Name   = $LogFolder
-            Path =  $LogPath
-            Account = $PSComputerAccount,$DPMPComputerAccount,$ClientComputerAccount
-            DependsOn = "[File]ShareFolder"
+            FileReadAccessShare DomainSMBShare
+            {
+                Name   = $LogFolder
+                Path =  $LogPath
+                Account = $PSComputerAccount,$DPMPComputerAccount,$ClientComputerAccount
+                DependsOn = "[File]ShareFolder"
+            }
+
+            WriteConfigurationFile WriteDelegateControlfinished
+            {
+                Role = "DC"
+                LogPath = $LogPath
+                WriteNode = "DelegateControl"
+                Status = "Passed"
+                Ensure = "Present"
+                DependsOn = @("[DelegateControl]AddPS","[DelegateControl]AddDPMP")
+            }
+
+            WaitForExtendSchemaFile WaitForExtendSchemaFile
+            {
+                MachineName = $PSName
+                ExtFolder = $CM
+                Ensure = "Present"
+                DependsOn = "[WriteConfigurationFile]WriteDelegateControlfinished"
+            }
+        }
+        else {
+            VerifyComputerJoinDomain WaitForCS
+            {
+                ComputerName = $CSName
+                Ensure = "Present"
+                DependsOn = "[InstallCA]InstallCA"
+            }
+
+            File ShareFolder
+            {            
+                DestinationPath = $LogPath     
+                Type = 'Directory'            
+                Ensure = 'Present'
+                DependsOn = @("[VerifyComputerJoinDomain]WaitForCS","[VerifyComputerJoinDomain]WaitForPS","[VerifyComputerJoinDomain]WaitForDPMP","[VerifyComputerJoinDomain]WaitForClient")
+            }
+
+            FileReadAccessShare DomainSMBShare
+            {
+                Name   = $LogFolder
+                Path =  $LogPath
+                Account = $CSComputerAccount,$PSComputerAccount,$DPMPComputerAccount,$ClientComputerAccount
+                DependsOn = "[File]ShareFolder"
+            }
+            
+            WriteConfigurationFile WriteCSJoinDomain
+            {
+                Role = "DC"
+                LogPath = $LogPath
+                WriteNode = "CSJoinDomain"
+                Status = "Passed"
+                Ensure = "Present"
+                DependsOn = "[FileReadAccessShare]DomainSMBShare"
+            }
+
+            DelegateControl AddCS
+            {
+                Machine = $CSName
+                DomainFullName = $DomainName
+                Ensure = "Present"
+                DependsOn = "[WriteConfigurationFile]WriteCSJoinDomain"
+            }
+
+            WriteConfigurationFile WriteDelegateControlfinished
+            {
+                Role = "DC"
+                LogPath = $LogPath
+                WriteNode = "DelegateControl"
+                Status = "Passed"
+                Ensure = "Present"
+                DependsOn = @("[DelegateControl]AddCS","[DelegateControl]AddPS","[DelegateControl]AddDPMP")
+            }
+
+            WaitForExtendSchemaFile WaitForExtendSchemaFile
+            {
+                MachineName = $CSName
+                ExtFolder = $CM
+                Ensure = "Present"
+                DependsOn = "[WriteConfigurationFile]WriteDelegateControlfinished"
+            }
         }
 
         WriteConfigurationFile WritePSJoinDomain
@@ -146,24 +234,6 @@
             DomainFullName = $DomainName
             Ensure = "Present"
             DependsOn = "[WriteConfigurationFile]WriteDPMPJoinDomain"
-        }
-
-        WriteConfigurationFile WriteDelegateControlfinished
-        {
-            Role = "DC"
-            LogPath = $LogPath
-            WriteNode = "DelegateControl"
-            Status = "Passed"
-            Ensure = "Present"
-            DependsOn = @("[DelegateControl]AddPS","[DelegateControl]AddDPMP")
-        }
-
-        WaitForExtendSchemaFile WaitForExtendSchemaFile
-        {
-            MachineName = $PSName
-            ExtFolder = $CM
-            Ensure = "Present"
-            DependsOn = "[WriteConfigurationFile]WriteDelegateControlfinished"
         }
     }
 }

@@ -9,8 +9,9 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/mysql-replication/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/mysql-replication/CredScanResult.svg)
 
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%mysql-replication%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%mysql-replication%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-replication%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-replication%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-replication%2Fazuredeploy.json)
 
 This template deploys a MySQL replication environment with one master and one slave servers.  It has the following capabilities:
 
@@ -21,54 +22,42 @@ This template deploys a MySQL replication environment with one master and one sl
 - Configures a http based health probe for each MySQL instance that can be used to monitor MySQL health
 - Installs LIS4 driver on each VM. Note that the VMs are not automatically rebooted, so LIS4 will not take effect until the next time a VM reboots
 
-### How to Deploy
-You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.  The example here uses PowerShell to deploy.
+## How to Access MySQL
 
-**Default deployment**
-* Open Azure Powershell console, and log in by running Login-AzureRmAccount command.
-```sh
-> Login-AzureRmAccount 
-```
-* Next, create a resource group:
-```sh
-> New-AzureRMResourceGroup -Name "mysqlrg"-Location "East US"
-```
-* Create a deployment:
-```sh
-> New-AzureRMResourceGroupDeployment -ResourceGroupName mysqlrg -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy.parameters.json
-```
-**Custom deployment**
-* Take a look at AzureDeploy.json to see if you need to make any customization that's not exposed through the template parameters, for example, disk configurations.  If you do, download the template and make modifications locally.
-* Take a look at AzureMysql.sh.  This script configures network and disks within the VM, as well as installs and configures MySQL. You can customize it to meet your own requirements.
-* Take a look at my.cnf.template.  This is the template for /etc/my.cnf.  Empty parameters will be automatically filled during deployment.  You can also add your own parameters.
-* If you make changes to AzureMysql.sh or my.cnf.template, you need to put the modified file in your own GitHub repo or Azure storage account, and modify the parameters "customScriptFilePath" and "mysqlConfigFilePath" to point to your file location.
-* Once you are done with customization, deploy using the same command as default deployment.
+- Access MySQL using the public DNS name.  By default, the master server can be accessed at port 3306, and the slave server 3307.  By default, a user "admin" is created with all privileges to access from remote hosts. For example, access the master with the following command:
 
-### How to Access MySQL
-* Access MySQL using the public DNS name.  By default, the master server can be accessed at port 3306, and the slave server 3307.  By default, a user "admin" is created with all privileges to access from remote hosts. For example, access the master with the following command:
 ```sh
 > mysql -h mysqldns.eastus.cloudapp.azure.com -u admin -p
 ```
-* You can access the VMs through ssh.  By default, public ssh ports are 64001 and 64002 for the 2 VMs. Within the VM you can check MySQL health probe by running, for example, the following command, and it should return 200 to indicate MySQL is healthy.
+
+- You can access the VMs through ssh.  By default, public ssh ports are 64001 and 64002 for the 2 VMs. Within the VM you can check MySQL health probe by running, for example, the following command, and it should return 200 to indicate MySQL is healthy.
+
 ```sh
 > wget http://10.0.1.4:9200
 > wget http://10.0.1.5:9200
 ```
-* Ensure replication topology is properly configured, assuming master is 10.0.1.4:
+
+- Ensure replication topology is properly configured, assuming master is 10.0.1.4:
+
 ```sh
 > mysqlrplshow --master=admin:secret@10.0.1.4 --discover-slaves-login=admin:secret
 ```
 
-### How to Monitor MySQL Health
-* MySQL health can be checked by issuing HTTP query to the MySQL probes and verify that the query returns 200 status code.  Replace the following command with your own dns name and location.
+## How to Monitor MySQL Health
+
+- MySQL health can be checked by issuing HTTP query to the MySQL probes and verify that the query returns 200 status code.  Replace the following command with your own dns name and location.
+
 ```sh
 > wget http://mysqldns.eastus.cloudapp.azure.com:9200
 > wget http://mysqldns.eastus.cloudapp.azure.com:9201
 ```
 
-### How to Failover
+## How to Failover
+
 High availability and failover are no different from other GTID based MySQL replication.  What's specific to Azure is that in order for the applications to access the current master server without changing their configurations, the NAT rules of the load balancer must be updated in the case of failover:
-* Remove the NAT rule for the old master from the load balancer so that applications can't access the failed master, assuming master has $mysqlrg-nic0.  For full powershell script, please see [switchMySQLNatRule.ps1](/mysql-replication/switchMySQLNatRule.ps1).
+
+- Remove the NAT rule for the old master from the load balancer so that applications can't access the failed master, assuming master has $mysqlrg-nic0.  For full powershell script, please see [switchMySQLNatRule.ps1](/mysql-replication/switchMySQLNatRule.ps1).
+
 ```sh
 > $nic0=Get-AzureNetworkInterface -Name mysqldns-nic0 -ResourceGroupName mysqlrg
 > $nic1=Get-AzureNetworkInterface -Name mysqldns-nic1 -ResourceGroupName mysqlrg
@@ -79,14 +68,19 @@ High availability and failover are no different from other GTID based MySQL repl
 > $nic0.IpConfigurations[0].LoadBalancerInboundNatRules.removeRange($i,1)
 > Set-AzureNetworkInterface -NetworkInterface $nic0
 ```
+
 You can also do this in the Azure portal. Find the current master's MySQL NSG, either delete it or set the ports to some invalid value:
 ![Alt text](/mysql-replication/screenshots/1removeOldMasterNSG.PNG?raw=true "Remove or update NSG of the old master")
-* Fail over MySQL from the old master to the new master.  On the slave, run the following, assuming slave 10.0.1.5 is to become the new master:
+
+- Fail over MySQL from the old master to the new master.  On the slave, run the following, assuming slave 10.0.1.5 is to become the new master:
+
 ```sh
 mysql> stop slave;
 mysql> change master to master_host='10.0.1.5', master_user='admin', master_password='secret', master_auto_position=1;
 ```
-* Switch the old master's NAT rule with the new master
+
+- Switch the old master's NAT rule with the new master
+
 ```sh
 ...
 # $j is the index of the target nat rule
@@ -99,33 +93,42 @@ mysql> change master to master_host='10.0.1.5', master_user='admin', master_pass
 > $nic0.IpConfigurations[0].LoadBalancerInboundNatRules.add($rule1)
 > Set-AzureNetworkInterface -NetworkInterface $nic0
 ```
+
 Similarly, this can also be done in the Azure portal. First update the NSG for the new master:
 ![Alt text](/mysql-replication/screenshots/2updateSlaveNSG.PNG?raw=true "Update the NSG for the new master")
 Then update the NSG for the old master back to valid values:
 ![Alt text](/mysql-replication/screenshots/3updateOldMasterToSlave.PNG?raw=true "Update the NSG for the old master")
 
-* Add the old master back to replication as a slave, on the old master, run the following, assuming the new master is 10.0.1.5:
+- Add the old master back to replication as a slave, on the old master, run the following, assuming the new master is 10.0.1.5:
+
 ```sh
 mysql> stop slave;
 mysql> change master to master_host='10.0.1.5', master_user='admin', master_password='secret', master_auto_position=1;
 mysql> start slave;
 ```
-* Verify replication is properly restored by running the following command and make sure there is no error, assuming the new master is 10.0.1.5:
+
+- Verify replication is properly restored by running the following command and make sure there is no error, assuming the new master is 10.0.1.5:
+
 ```sh
 > mysqlrplshow --master=admin:secret@10.0.1.5 --discover-slaves-login=admin:secret
 ```
+
 on the master:
+
 ```sh
 mysql> show master status\G;
 ```
+
 on the slave:
+
 ```sh
 mysql> show slave status\G;
 ```
 
-### How to backup databases to Azure blob storage
-* There are several ways to
-take mysql backups as shown at <a href="https://dev.mysql.com/doc/refman/5.6/en/backup-and-recovery.html" >Mysql Backup and Recovery. The example below shows mysql dump from the slave. 
+## How to backup databases to Azure blob storage
+
+- There are several ways to take mysql backups as shown at [Mysql Backup and Recovery](https://dev.mysql.com/doc/refman/5.6/en/backup-and-recovery.html). The example below shows mysql dump from the slave.
+
 ```sh
 # Create backups directory if not already created (modify folder as required)
 >mkdir  /home/admin/backups/
@@ -139,7 +142,7 @@ take mysql backups as shown at <a href="https://dev.mysql.com/doc/refman/5.6/en/
 > sudo yum install npm -y
 > sudo npm install -g azure-cli
 
-# Login to azure account using azure cli 
+# Login to azure account using azure cli
 > azure login
 
 # Environment settings for your system
@@ -172,13 +175,5 @@ take mysql backups as shown at <a href="https://dev.mysql.com/doc/refman/5.6/en/
 
 # Move the backup to Azure Blob storage
 > azure storage blob upload $image_to_upload $container_name $blob_name
- 
+
 ```
-
-License
-----
-
-MIT
-
-
-

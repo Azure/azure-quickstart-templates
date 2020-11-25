@@ -2,179 +2,81 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageAccountName": {
-      "type": "string",
+    "adminPassword": {
+      "type": "securestring",
       "metadata": {
-        "description": "Name of storage account"
+        "description": "Admin password."
       }
     },
     "adminUsername": {
       "type": "string",
       "metadata": {
-        "description": "Admin username"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Admin password"
+        "description": "Admin username."
       }
     },
     "dnsNameforLBIP": {
       "type": "string",
       "metadata": {
-        "description": "DNS for Load Balancer IP"
+        "description": "DNS for Load Balancer IP."
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      },
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "[concat('storage', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of storage account."
       }
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2_v3",
+      "defaultValue": "Standard_D2_v2",
       "metadata": {
-        "description": "Size of the VM"
+        "description": "Size of the virtual machine."
       }
     }
   },
   "variables": {
-    "apiVersion": "2015-06-15",
-    "storageAccountType": "Standard_LRS",
     "addressPrefix": "10.0.0.0/16",
-    "subnetName": "Subnet-1",
-    "subnetPrefix": "10.0.0.0/24",
-    "publicIPAddressType": "Dynamic",
+    "imageOffer": "WindowsServer",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageSKU": "2019-Datacenter",
+    "lbName": "myLB",
+    "networkSecurityGroupName": "[concat(variables('subnetName'), '-nsg')]",
     "nic1NamePrefix": "nic1",
     "nic2NamePrefix": "nic2",
-    "imagePublisher": "MicrosoftWindowsServer",
-    "imageOffer": "WindowsServer",
-    "imageSKU": "2012-R2-Datacenter",
-    "vnetName": "myVNET",
     "publicIPAddressName": "myPublicIP",
-    "lbName": "myLB",
+    "publicIPAddressType": "Dynamic",
+    "storageAccountType": "Standard_LRS",
+    "subnetName": "Subnet-1",
+    "subnetPrefix": "10.0.0.0/24",
     "vmNamePrefix": "myVM",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
-    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
-    "networkSecurityGroupName": "[concat(variables('subnetName'), '-nsg')]"
+    "vnetName": "myVNET"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('storageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "StorageV2"
     },
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-        "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsNameforLBIP')]"
-        }
-      }
-    },
-    {
-      "comments": "Simple Network Security Group for subnet [variables('subnetName')]",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
-      "name": "[variables('networkSecurityGroupName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {}
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('vnetName')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-      ],
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('addressPrefix')]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nic1NamePrefix')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "subnet": {
-                "id": "[variables('subnetRef')]"
-              },
-              "loadBalancerBackendAddressPools": [
-                {
-                  "id": "[concat(variables('lbID'), '/backendAddressPools/BackendPool1')]"
-                }
-              ],
-              "loadBalancerInboundNatRules": [
-                {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/RDP-VM0')]"
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nic2NamePrefix')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "subnet": {
-                "id": "[variables('subnetRef')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -182,7 +84,7 @@
             "name": "LoadBalancerFrontEnd",
             "properties": {
               "publicIPAddress": {
-                "id": "[variables('publicIPAddressID')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               }
             }
           }
@@ -197,7 +99,7 @@
             "name": "RDP-VM0",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('lbName'), 'LoadBalancerFrontEnd')]"
               },
               "protocol": "Tcp",
               "frontendPort": 50001,
@@ -209,14 +111,89 @@
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "comments": "Simple Network Security Group for subnet [variables('subnetName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nic1NamePrefix')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), 'BackendPool1')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('lbName'), 'RDP-VM0')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nic2NamePrefix')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsNameforLBIP')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmNamePrefix')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nic1NamePrefix'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nic2NamePrefix'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nic1NamePrefix'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nic2NamePrefix'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -257,9 +234,36 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(parameters('storageAccountName'), '2018-02-01').primaryEndpoints.blob]"
+            "storageUri": "[reference(parameters('storageAccountName'), '2019-06-01').primaryEndpoints.blob]"
           }
         }
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
       }
     }
   ]

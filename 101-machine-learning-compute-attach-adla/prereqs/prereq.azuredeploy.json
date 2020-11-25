@@ -1,0 +1,77 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adlAnalyticsName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Data Lake Analytics account to create."
+      }
+    },
+    "adlStoreName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Data Lake Store account to create."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies the location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('adlStoreName')]",
+      "type": "Microsoft.DataLakeStore/accounts",
+      "location": "[parameters('location')]",
+      "apiVersion": "2016-11-01"
+    },
+    {
+      "name": "[parameters('adlAnalyticsName')]",
+      "type": "Microsoft.DataLakeAnalytics/accounts",
+      "location": "[parameters('location')]",
+      "apiVersion": "2016-11-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataLakeStore/accounts', parameters('adlStoreName'))]"
+      ],
+      "properties": {
+        "defaultDataLakeStoreAccount": "[parameters('adlStoreName')]",
+        "dataLakeStoreAccounts": [
+          {
+            "name": "[parameters('adlStoreName')]"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "ml",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/modules/machine-learning-workspace/0.9/azuredeploy.json",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "adlAnalyticsName": {
+      "type": "string",
+      "value": "[parameters('adlAnalyticsName')]"
+    },
+    "workspaceName": {
+      "type": "string",
+      "value": "[reference('ml').outputs.workspaceName.value]"
+    }
+  }
+}

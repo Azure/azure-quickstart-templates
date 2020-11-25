@@ -27,6 +27,13 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS1_V2",
+      "metadata": {
+        "description": "Size of the virtual machines"
+      }
     }
   },
   "variables": {
@@ -38,36 +45,35 @@
     "loadBalancerName": "ilb",
     "networkInterfaceName": "nic",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "numberOfInstances": 2,
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]"
+    "numberOfInstances": 2
   },
   "resources": [
     {
-      "apiVersion": "2018-02-01",
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
-      "kind": "Storage",
       "sku": {
         "name": "[variables('storageAccountType')]"
-      }
+      },
+      "kind": "StorageV2"
     },
     {
-      "apiVersion": "2018-04-01",
       "type": "Microsoft.Compute/availabilitySets",
-      "location": "[parameters('location')]",
+      "apiVersion": "2020-06-01",
       "name": "[variables('availabilitySetName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Aligned"
+      },
       "properties": {
         "PlatformUpdateDomainCount": 2,
         "PlatformFaultDomainCount": 2
-      },
-      "sku": {
-        "name": "Aligned"
       }
     },
     {
-      "apiVersion": "2018-04-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -87,8 +93,8 @@
       }
     },
     {
-      "apiVersion": "2018-04-01",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-06-01",
       "name": "[concat(variables('networkInterfaceName'), copyindex())]",
       "location": "[parameters('location')]",
       "copy": {
@@ -110,7 +116,7 @@
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('lbID'), '/backendAddressPools/BackendPool1')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), 'BackendPool1')]"
                 }
               ]
             }
@@ -119,10 +125,13 @@
       }
     },
     {
-      "apiVersion": "2018-04-01",
       "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2020-06-01",
       "name": "[variables('loadBalancerName')]",
       "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
       "dependsOn": [
         "[variables('virtualNetworkName')]"
       ],
@@ -148,13 +157,13 @@
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadBalancerName'), 'LoadBalancerFrontend')]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/BackendPool1')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), 'BackendPool1')]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/probes/lbprobe')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), 'lbprobe')]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
@@ -178,14 +187,14 @@
       }
     },
     {
-      "apiVersion": "2018-04-01",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-06-01",
       "name": "[concat(parameters('vmNamePrefix'), copyindex())]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfInstances')]"
       },
-      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('storageAccountName')]",
         "nicLoop",
@@ -196,7 +205,7 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
         },
         "hardwareProfile": {
-          "vmSize": "Standard_DS2_V2"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[concat(parameters('vmNamePrefix'), copyIndex())]",
@@ -207,7 +216,7 @@
           "imageReference": {
             "publisher": "MicrosoftWindowsServer",
             "offer": "WindowsServer",
-            "sku": "2016-Datacenter",
+            "sku": "2019-Datacenter",
             "version": "latest"
           },
           "osDisk": {

@@ -23,7 +23,6 @@
         },
         "location": {
             "type": "string",
-            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Azure location where this template is to be deployed"
             }
@@ -126,10 +125,19 @@
             "type": "string"
         }
     },
+    "variables": {
+        "nicName": "[concat('nfs-ha-nic', parameters('vmIndex'), '-', parameters('resourcesUniqueString'))]",
+        "ipCfgName": "[concat('nfs-ha-ipcfg', parameters('vmIndex'))]",
+        "vmResourceName": "[concat('nfs-ha-vm', parameters('vmIndex'), '-', parameters('resourcesUniqueString'))]",
+        "vmName": "[concat('hanode', parameters('vmIndex'), '-', parameters('resourcesUniqueString'))]",
+        "scriptUri": "[concat(parameters('_artifactsLocation'), 'scripts/setup_nfs_ha.sh', parameters('_artifactsLocationSasToken'))]",
+        "commonFunctionsScriptUri": "[concat(parameters('_artifactsLocation'), 'scripts/helper_functions.sh', parameters('_artifactsLocationSasToken'))]",
+        "cmdExec": "[concat('bash -x setup_nfs_ha.sh hanode0-', parameters('resourcesUniqueString'), ' ', parameters('ipAddrs')[0], ' hanode1-', parameters('resourcesUniqueString'), ' ', parameters('ipAddrs')[1], ' ', parameters('nfsClientsIPRange'))]"
+    },
     "resources": [
         {
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2017-10-01",
+            "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
             "name": "[variables('nicName')]",
             "properties": {
@@ -158,9 +166,9 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2017-03-30",
+            "apiVersion": "2019-12-01",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+                "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
             ],
             "location": "[parameters('location')]",
             "name": "[variables('vmResourceName')]",
@@ -221,9 +229,9 @@
             "resources": [
                 {
                     "type": "extensions",
-                    "apiVersion": "2017-03-30",
+                    "apiVersion": "2019-12-01",
                     "dependsOn": [
-                        "[concat('Microsoft.Compute/virtualMachines/', variables('vmResourceName'))]"
+                        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmResourceName'))]"
                     ],
                     "location": "[parameters('location')]",
                     "name": "setup_nfs_ha",
@@ -235,7 +243,7 @@
                                 "[variables('commonFunctionsScriptUri')]"
                             ]
                         },
-                        "protectedSettings":{
+                        "protectedSettings": {
                             "commandToExecute": "[variables('cmdExec')]"
                         },
                         "type": "CustomScript",
@@ -245,19 +253,10 @@
                         "displayName": "NFS-HA VM setup CustomScript extension"
                     }
                 }
-                    ],
+            ],
             "tags": {
                 "displayName": "[concat('NFS-HA Virtual Machine ', variables('vmName'))]"
             }
         }
-    ],
-    "variables": {
-        "nicName": "[concat('nfs-ha-nic', parameters('vmIndex'), '-', parameters('resourcesUniqueString'))]",
-        "ipCfgName": "[concat('nfs-ha-ipcfg', parameters('vmIndex'))]",
-        "vmResourceName": "[concat('nfs-ha-vm', parameters('vmIndex'), '-', parameters('resourcesUniqueString'))]",
-        "vmName": "[concat('hanode', parameters('vmIndex'), '-', parameters('resourcesUniqueString'))]",
-        "scriptUri": "[concat(parameters('_artifactsLocation'), 'scripts/setup_nfs_ha.sh', parameters('_artifactsLocationSasToken'))]",
-        "commonFunctionsScriptUri": "[concat(parameters('_artifactsLocation'), 'scripts/helper_functions.sh', parameters('_artifactsLocationSasToken'))]",
-        "cmdExec": "[concat('bash -x setup_nfs_ha.sh hanode0-', parameters('resourcesUniqueString'), ' ', parameters('ipAddrs')[0], ' hanode1-', parameters('resourcesUniqueString'), ' ', parameters('ipAddrs')[1], ' ', parameters('nfsClientsIPRange'))]"
-    }
+    ]
 }

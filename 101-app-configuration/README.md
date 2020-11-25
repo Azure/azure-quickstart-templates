@@ -11,9 +11,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-app-configuration%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-app-configuration%2Fazuredeploy.json)
 
-
-
-This template references (reads) existing key-value configurations from an existing config store from the Azure Resource Manager template. The retrieved values are used to set properties of the resources created by the template. This template does not create an App Configuration store or modify key-values in an App Configuration store. You must first create an App Configuration store, and then add key-values into the store using the Azure portal or Azure CLI.
+This template references (reads) existing key-value configurations from an existing config store from the Azure Resource Manager template. The retrieved values are used to set properties of the resources created by the template. This template does not create an App Configuration store or modify key-values in an App Configuration store. You must first create an App Configuration store, and then add key-values into the store using the Azure portal or Azure CLI. To create an App Configuration store by using ARM template, see [App Configuration store](https://azure.microsoft.com/resources/templates/101-app-configuration-store/). To go through the whole process, see [Quickstart: Automated VM deployment with App Configuration and Resource Manager template](https://docs.microsoft.com/azure/azure-app-configuration/quickstart-resource-manager).
 
 To use this template, add the following key-values to your Azure App Configuration store:
 
@@ -36,5 +34,3 @@ If you are new to template deployment, see:
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: Azure4Student, AppConfiguration, Beginner`
-
-
