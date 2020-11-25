@@ -32,29 +32,31 @@
       "allowedValues": [
         "Basic",
         "Standard",
-        "Premium"
+        "Premium",
+        "GP_Gen5",
+        "BC_Gen5"
       ],
       "metadata": {
         "description": "The Elastic Pool edition."
       }
     },
-    "poolDtu": {
+    "capacity": {
       "type": "int",
       "metadata": {
-        "description": "The Elastic Pool DTU."
+        "description": "The Elastic Pool DTU or nomber of vcore."
       }
     },
-    "databaseDtuMin": {
+    "databaseCapacityMin": {
       "type": "int",
       "defaultValue": 0,
       "metadata": {
-        "description": "The Elastic Pool database DTU min."
+        "description": "The Elastic Pool database capacity min."
       }
     },
-    "databaseDtuMax": {
+    "databaseCapacityMax": {
       "type": "int",
       "metadata": {
-        "description": "The Elastic Pool database DTU max."
+        "description": "The Elastic Pool database capacity max."
       }
     },
     "databasesNames": {
@@ -82,47 +84,88 @@
       }
     }
   },
-  "variables": {},
+  "variables": {
+    "editionToSkuMap": {
+      "Basic": {
+        "family": null,
+        "name": "BasicPool",
+        "tier": "Basic"
+      },
+      "Standard": {
+        "family": null,
+        "name": "StandardPool",
+        "tier": "Standard"
+      },
+      "Premium":  {
+        "family": null,
+        "name": "PremiumPool",
+        "tier": "Premium"
+      },
+      "GP_Gen5": {
+        "family": "Gen5",
+        "name": "GP_Gen5",
+        "tier": "GeneralPurpose"
+      },
+      "BC_Gen5": {
+          "family": "Gen5",
+          "name": "BC_Gen5",
+          "tier": "BusinessCritical"
+      }
+    },
+    "skuName": "[variables('editionToSkuMap')[parameters('edition')].name]",
+    "skuTier": "[variables('editionToSkuMap')[parameters('edition')].tier]",
+    "skuFamily": "[variables('editionToSkuMap')[parameters('edition')].family]"
+  },
   "resources": [
     {
-      "apiVersion": "2014-04-01-preview",
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2020-02-02-preview",
       "location": "[parameters('location')]",
       "name": "[parameters('serverName')]",
       "properties": {
         "administratorLogin": "[parameters('administratorLogin')]",
         "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
         "version": "12.0"
-      },
-      "type": "Microsoft.Sql/servers"
+      }
     },
     {
-      "apiVersion": "2014-04-01",
+      "type": "Microsoft.Sql/servers/elasticPools",
+      "apiVersion": "2020-02-02-preview",
       "dependsOn": [
-        "[concat('Microsoft.Sql/servers/', parameters('serverName'))]"
+        "[resourceId('Microsoft.Sql/servers/', parameters('serverName'))]"
       ],
       "location": "[parameters('location')]",
       "name": "[concat(parameters('serverName'), '/', parameters('elasticPoolName'))]",
-      "properties": {
-        "edition": "[parameters('edition')]",
-        "dtu": "[parameters('poolDtu')]",
-        "databaseDtuMin": "[parameters('databaseDtuMin')]",
-        "databaseDtuMax": "[parameters('databaseDtuMax')]"
+      "sku": {
+        "name": "[variables('skuName')]",
+        "tier": "[variables('skuTier')]",
+        "family": "[variables('skuFamily')]",
+        "capacity": "[parameters('capacity')]"
       },
-      "type": "Microsoft.Sql/servers/elasticPools"
+      "properties": {
+        "perDatabaseSettings": {
+        "minCapacity": "[parameters('databaseCapacityMin')]",
+        "maxCapacity": "[parameters('databaseCapacityMax')]"
+        }
+      }
     },
     {
       "type": "Microsoft.Sql/servers/databases",
       "name": "[concat(parameters('serverName'), '/', parameters('databasesNames')[copyIndex()])]",
       "location": "[parameters('location')]",
-      "apiVersion": "2014-04-01-preview",
+      "apiVersion": "2020-02-02-preview",
       "dependsOn": [
-        "[concat('Microsoft.Sql/servers/', parameters('serverName'))]",
-        "[concat('Microsoft.Sql/servers/', parameters('serverName') ,'/elasticpools/', parameters('elasticPoolName'))]"
+        "[resourceId('Microsoft.Sql/servers/', parameters('serverName'))]",
+        "[resourceId('Microsoft.Sql/servers/elasticpools', parameters('serverName'), parameters('elasticPoolName'))]"
       ],
+      "sku": {
+          "name": "ElasticPool",
+          "tier": "[variables('skuTier')]",
+          "capacity": 0
+      },
       "properties": {
         "collation": "[parameters('databaseCollation')]",
-        "requestedServiceObjectiveName": "ElasticPool",
-        "elasticPoolName": "[parameters('elasticPoolName')]"
+        "elasticPoolId": "[resourceId('Microsoft.Sql/servers/elasticpools', parameters('serverName'), parameters('elasticPoolName'))]"
       },
       "copy": {
         "name": "addDatabasesInElasticPool",
@@ -130,9 +173,9 @@
       }
     },
     {
-      "apiVersion": "2014-04-01-preview",
+      "apiVersion": "2020-02-02-preview",
       "dependsOn": [
-        "[concat('Microsoft.Sql/servers/', parameters('serverName'))]"
+        "[resourceId('Microsoft.Sql/servers/', parameters('serverName'))]"
       ],
       "location": "[parameters('location')]",
       "name": "[concat(parameters('serverName'), '/', 'AllowAllWindowsAzureIps')]",

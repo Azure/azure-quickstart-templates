@@ -12,10 +12,10 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-privatelink-service%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-privatelink-service%2Fazuredeploy.json)
 
-This is a starter template that shows how to create a private link service.  
+This is a starter template that shows how to create a private link service. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/private-link/create-private-link-service-template) article.
 
 ## Notes
 
-[Azure Private Link FAQ](https://docs.microsoft.com/en-us/azure/private-link/private-link-faq)
+[Azure Private Link FAQ](https://docs.microsoft.com/azure/private-link/private-link-faq)
 
-[Private link service template format](https://docs.microsoft.com/en-us/azure/templates/microsoft.network/2020-04-01/privatelinkservices)
+[Private Link service template format](https://docs.microsoft.com/azure/templates/microsoft.network/privatelinkservices)

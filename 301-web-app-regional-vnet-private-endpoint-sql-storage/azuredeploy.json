@@ -52,8 +52,8 @@
     "variables": {
         "suffix": "[substring(replace(guid(resourceGroup().id), '-', ''), 0, 6)]",
         "appName": "[concat(parameters('webAppName'), '-', variables('suffix'))]",
-        "storagePrivateDnsZoneName": "privatelink.blob.core.windows.net",
-        "sqlPrivateDnsZoneName": "privatelink.database.windows.net",
+        "storagePrivateDnsZoneName": "[concat('privatelink.blob.', environment().suffixes.storage)]",
+        "sqlPrivateDnsZoneName": "[concat('privatelink', environment().suffixes.sqlServerHostname)]",
         "sqlDatabaseName": "mydb01",
         "storageContainerName": "mycontainer",
         "storageGroupType": "blob", // valid values: 'blob', 'file', 'table', 'queue', 'web', 'dfs'
@@ -76,7 +76,7 @@
             "comments": "This deployment links to the vnets.json nested ARM template",
             "name": "[concat('linkedTemplate-vnet', '-', copyIndex())]",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "2020-06-01",
             "copy": {
                 "name": "vnetCopy",
                 "count": "[length(parameters('vNets'))]"
@@ -104,7 +104,7 @@
             "comments": "This deployment links to the vnet_peering.json nested ARM template",
             "name": "linkedTemplate-peerings",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "2020-06-01",
             "dependsOn": [
                 "vnetCopy"
             ],
@@ -131,7 +131,7 @@
             "comments": "This deployment links to the app_svc_plan.json nested ARM template",
             "name": "linkedTemplate-app-svc-plan",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "2020-06-01",
             "dependsOn": [
                 "vnetCopy"
             ],
@@ -161,7 +161,7 @@
             "comments": "This deployment links to the app.json nested ARM template",
             "name": "linkedTemplate-app",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "2020-06-01",
             "dependsOn": [
                 "linkedTemplate-app-svc-plan"
             ],
@@ -196,7 +196,7 @@
             "comments": "This deployment links to the sqldb.json nested ARM template",
             "name": "linkedTemplate-sqldb",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "2020-06-01",
             "dependsOn": [
                 "vnetCopy"
             ],
@@ -229,7 +229,7 @@
             "comments": "This deployment links to the private_link.json nested ARM template",
             "name": "linkedTemplate-sqldb-private-link",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "2020-06-01",
             "dependsOn": [
                 "linkedTemplate-sqldb"
             ],
@@ -265,7 +265,7 @@
             "comments": "This deployment links to the storage.json nested ARM template",
             "name": "linkedTemplate-storage",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "2020-06-01",
             "dependsOn": [
                 "vnetCopy"
             ],
@@ -282,9 +282,6 @@
                     "location": {
                         "value": "[parameters('location')]"
                     },
-                    "storageAccountPrefix": {
-                        "value": "plnk"
-                    },
                     "containerName": {
                         "value": "[variables('storageContainerName')]"
                     },
@@ -298,7 +295,7 @@
             "comments": "This deployment links to the private_link.json nested ARM template",
             "name": "linkedTemplate-storage-private-link",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "2020-06-01",
             "dependsOn": [
                 "linkedTemplate-storage"
             ],
@@ -332,9 +329,9 @@
         },
         {
             "comments": "This deployment links to the private_dns.json nested ARM template",
-            "name": "linkedTemplate-storage-private-dns",
+            "name": "linkedTemplate-storage-private-dns-spoke-link",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "2020-06-01",
             "dependsOn": [
                 "linkedTemplate-storage-private-link"
             ],
@@ -355,12 +352,37 @@
             }
         },
         {
+            "comments": "This deployment links to the private_dns.json nested ARM template",
+            "name": "linkedTemplate-storage-private-dns-hub-link",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "dependsOn": [
+                "linkedTemplate-storage-private-link",
+                "linkedTemplate-storage-private-dns-spoke-link"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('privateDnsNestedTemplateUri')]"
+                },
+                "parameters": {
+                    "privateDnsZoneName": {
+                        "value": "[variables('storagePrivateDnsZoneName')]"
+                    },
+                    "virtualNetworkName": {
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-vnet-0')).outputs.virtualNetworkName.value]"
+                    }
+                }
+            }
+        },
+        {
             "comments": "This deployment links to the private_link_ipconfigs.json nested ARM template",
             "name": "linkedTemplate-storage-private-link-ipconfigs",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "2020-06-01",
             "dependsOn": [
-                "linkedTemplate-storage-private-dns"
+                "linkedTemplate-storage-private-dns-hub-link"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -386,9 +408,9 @@
         },
         {
             "comments": "This deployment links to the private_dns.json nested ARM template",
-            "name": "linkedTemplate-sqldb-private-dns",
+            "name": "linkedTemplate-sqldb-private-dns-spoke-link",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "2020-06-01",
             "dependsOn": [
                 "linkedTemplate-sqldb-private-link"
             ],
@@ -409,12 +431,37 @@
             }
         },
         {
+            "comments": "This deployment links to the private_dns.json nested ARM template",
+            "name": "linkedTemplate-sqldb-private-dns-hub-link",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "dependsOn": [
+                "linkedTemplate-sqldb-private-link",
+                "linkedTemplate-sqldb-private-dns-spoke-link"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('privateDnsNestedTemplateUri')]"
+                },
+                "parameters": {
+                    "privateDnsZoneName": {
+                        "value": "[variables('sqlPrivateDnsZoneName')]"
+                    },
+                    "virtualNetworkName": {
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-vnet-0')).outputs.virtualNetworkName.value]"
+                    }
+                }
+            }
+        },
+        {
             "comments": "This deployment links to the private_link_ipconfig.json nested ARM template",
             "name": "linkedTemplate-sqldb-private-link-ipconfigs",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "2020-06-01",
             "dependsOn": [
-                "linkedTemplate-sqldb-private-dns"
+                "linkedTemplate-sqldb-private-dns-hub-link"
             ],
             "properties": {
                 "mode": "Incremental",
