@@ -75,6 +75,10 @@ ansible-playbook -i ${INVENTORY_FILE} -vvv install_hadoop.yaml
 export ANSIBLE_LOG_PATH=/tmp/install_tkgrid.log
 ansible-playbook -i ${INVENTORY_FILE} -vvv install_tkgrid.yaml
 
+# Install SAS Plug-in for hadoop
+export ANSIBLE_LOG_PATH=/tmp/install_hadoop_plugin.log
+ansible-playbook -i ${INVENTORY_FILE} -vvv install_hadoop_plugin.yaml
+
 # Install SAS
 export ANSIBLE_LOG_PATH=/tmp/step07_install_sas.log
 ansible-playbook -i ${INVENTORY_FILE} -vvv step07_install_sas.yaml
