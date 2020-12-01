@@ -1,4 +1,4 @@
-# Create metric alert rule with dynamic threshold
+# Create metric alert rule with a dynamic threshold
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-monitoring-dynamic-metric-alert/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-monitoring-dynamic-metric-alert/PublicDeployment.svg)
@@ -14,7 +14,7 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-monitoring-dynamic-metric-alert%2Fazuredeploy.json
 )
 
-This template creates a dynamic threshold metric alert rule, monitoring the percentage cpu metric in a virtual machine.
+This template creates a metric alert rule that monitors the CPU Percentage metric of a virtual machine using a dynamic threshold condition type.
 
 For more information on **metric alert rules** see:
 
