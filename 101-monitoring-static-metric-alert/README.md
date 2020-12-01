@@ -1,4 +1,4 @@
-# Create metric alert rule with a static threshold
+# Metric alert rule with a static threshold
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-monitoring-static-metric-alert/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-monitoring-static-metric-alert/PublicDeployment.svg)
