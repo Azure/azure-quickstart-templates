@@ -1,11 +1,23 @@
 # SAS 9.4 Visual Analytics/Visual Statistics Quickstart Template for Azure 
 
+This README for SAS 9.4 Visual Analytics (VA)/ Visual Statistics (VS) Quickstart Template for Azure is used to deploy the following SAS Viya products in the Azure cloud:
+
+* SAS Visual Analytics 7.5
+
+* SAS Visual Statistics 7.5
+
+This Quickstart is a reference architecture for users who want to deploy the SAS 9.4 VA/VS  platform using cloud-friendly technologies. By deploying the SAS platform in Azure, you get access to SAS analytics visualization and the ability to create powerful statistical models in an Azure-validated environment. 
+
+
+For assistance with SAS software, contact  [SAS Technical Support](https://support.sas.com/en/technical-support.html).   When you contact support, you will be required to provide information, such as your SAS site number, company name, email address, and phone number, that identifies you as a licensed SAS software customer. 
 ## Contents
 1. [Overview](#Overview)
-    1. [SAS 9.4 VA/VS on Azure](#SAS94VAVSonAzure)
     1. [Costs and Licenses](#Costs)
-1. [Architecture](#Architecture)
+        1. [SAS 9.4 VA/VS server](#compute)
+        1. [SAS 9.4M6 Mid-Tier server](#midtier)
+        1. [SAS 9.4M6 Metadata clustered server](#metadata)        
 1. [Prerequisites](#Prerequisites)
+    1. [Upload the License File to an Azure Blob](#upload-the-license-file-to-an-azure-blob)
 1. [Deployment Steps](#Deployment)
     1. [Deploy Using the Azure Portal](#azureportal)
     1. [Deploy Using Mercury Admin Tools](#mercuryadmintools)
@@ -14,43 +26,74 @@
     1. [Restarting Services](#restartservices)
     1. [Running SAS Management Console (SMC)](#smc)
 1. [Troubleshooting](#Troubleshooting)
-1. [Appendix A: Upload a Software Depot to Blob Storage  ](#AppendixA)
+1. [Appendix A:](#AppendixA)
 
 
 <a name="Overview"></a>
 ## Overview
-This README for SAS 9.4 VA/VS Quickstart Template for Azure is used to deploy the following SAS Viya products in the Azure cloud:
 
-* SAS Visual Analytics 7.5
+By default, Quickstart deployments enable Transport Layer Security (TLS) for secure communication.
 
-* SAS Visual Statistics 7.5
+This SAS 9.4 Quickstart Template for Azure will take a generic license for SAS 9.4 and deploy SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS 9.4 deployment on the recommended virtual machines (VMs). 
 
-This Quickstart is a reference architecture for users who want to deploy the SAS 9.4 VA/VS  platform using cloud-friendly technologies. By deploying the SAS platform in Azure, you get access to SAS analytics visualization and the ability to create powerful statistical models in an Azure-validated environment. 
+When you deploy the Quickstart with default parameters in a massively parallel processing (MPP) environment, the following SAS 9.4 environment is built in the Microsoft Azure cloud, shown in Figure 1.   
 
 ![Network Diagram](Azure_9_vavs_quickstart.svg)
 
-Figure 1: Quickstart architecture for SAS 9.4 Visual Analytics/Visual Statistics on Azure in an SMP Environment
-
-
-For assistance with SAS software, contact  [SAS Technical Support](https://support.sas.com/en/technical-support.html).   When you contact support, you will be required to provide information, such as your SAS site number, company name, email address, and phone number, that identifies you as a licensed SAS software customer. 
-
-<a name="SAS94VAVSonAzure"></a>
-### SAS 9.4 Visual Analytics/Visual Statistics on Azure
+Figure 1: Quickstart architecture for SAS 9.4 VA/VS on Azure in an MPP Environment
 
 <a name="Costs"></a>
 ### Costs and Licenses
+You are responsible for the cost of the Azure services used while running this Quickstart deployment. There is no additional cost for using the Quickstart.
+You will need a SAS license to launch this Quickstart. Your SAS account team and the SAS Enterprise Excellence Center can advise on the appropriate software licensing and sizing to meet your workload and performance needs.
+The SAS 9.4 VA/VS Quickstart Template for Azure creates three instances, including: 
+* 1 compute server virtual machine (VM), the SAS VA/VS server
+* 1 middle tier VM, the SAS 9.4M6 Mid-Tier server
+* 1 metadata server VM, the SAS 9.4M6 Metadata clustered server
 
-<a name="Architecture"></a>
-## Architecture
+<a name="compute"></a>
+#### SAS 9.4 VA/VS server
+We  recommend that you use at least the memory optimized Standard E16s_v3 VM size.
+
+Here are some recommended example VM sizes based on the number of licensed cores:
+
+| Licensed Cores  | Virtual Machine| SKU	Memory(RAM) | Maximum Dataset Size | Cache Size |
+| ------------- | ------------- | ------------- | ------------- | ------------- |
+|4  | Standard_E8s_v3   | 64 GB  | 20-40 GB	  |128 GB  |
+| 8 | Standard_E16s_v3  | 128 GB  |20-40 GB	  |256 GB  |
+| 16  | Standard_E32s_v3| 256 GB  | 90-170 GB |512 GB  |
+
+<a name="midtier"></a>
+#### SAS 9.4M6 Mid-Tier server
+We  recommend that you use one or two of the memory optimized Standard E16s_v3 VM size at least.
+
+<a name="metadata"></a>
+#### SAS 9.4M6 Metadata clustered server
+We  recommend that you use one or three of the memory optimized Standard E16s_v3 VM size at least.
 
 <a name="Prerequisites"></a>
 ## Prerequisites
 
 Before deploying SAS 9.4 VA/VS Quickstart Template for Azure, you must have the following:
 * A Microsoft Azure account if you do not already have one. Request an Azure account at ["CIS Cloud Services"](http://sww.sas.com/sites/it/cloud-services/).
-* A SAS 9.4m7 VA/VS software order with the depot uploaded to Azure Blob Storage. See ["Uploading a Software Depot to Azure Blob storage "](#AppendixA) for more information. 
+* A SAS 9.4m7 VA/VS software order with the depot uploaded to Azure Blob Storage. See ["Upload the Software Order to an Azure Blob"](#upload-the-license-file-to-an-azure-blob) for more information. 
 
 **Note:** This is not necessary if you are deploying the SAS 9.4m7 depot that is already uploaded to Azure.
+
+<a name="upload-the-license-file-to-an-azure-blob"></a>
+### Upload the Software Order to an Azure Blob
+When you run the deployment, you will need the blob Shared Access Signature (SAS) URL as a parameter. 
+
+Before you run the deployment:
+1. Upload the entire software depot to Azure Blob Storage.  Follow the Microsoft Azure instructions to 
+["Create a Container"](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal#create-a-container) and 
+["Upload a Block Blob."](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal#upload-a-block-blob)
+
+2. Create a Shared Access Signature (SAS) token. Follow these steps to create a Service SAS: 
+    * Navigate to the license file blob and select **Generate SAS**, and then click **Generate blob SAS** token and URL.
+    * Make a note of the blob SAS URL for use during deployment.
+    
+For details, see ["Using Shared Access Signatures."](https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1)
 
 <a name="Deployment"></a>
 ## Deployment Steps
@@ -162,4 +205,4 @@ cd /sas/SASHome/SASManagementConsole/9.4
 ## Troubleshooting
 
 <a name="AppendixA"></a>
-## Appendix A: Upload a Software Depot to Blob Storage
+## Appendix A: 
