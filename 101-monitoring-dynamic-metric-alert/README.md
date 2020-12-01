@@ -1,4 +1,4 @@
-# Create metric alert rule with a dynamic threshold
+# Metric alert rule with a dynamic threshold
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-monitoring-dynamic-metric-alert/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-monitoring-dynamic-metric-alert/PublicDeployment.svg)
