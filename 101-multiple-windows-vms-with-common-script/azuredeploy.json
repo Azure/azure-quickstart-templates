@@ -2,24 +2,20 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-
         "vmCount": {
             "type": "int",
-            "defaultValue": 2,
             "metadata": {
                 "description": "Number of LAB-VM tobe deployed"
             }
         },
         "dns-prefix": {
             "type": "string",
-            "defaultValue": "labvm-400",
             "metadata": {
                 "description": "DNS Prefix used by LabVM Public IP"
             }
         },
         "adminUser": {
             "type": "string",
-            "defaultValue": "mahendra",
             "metadata": {
                 "description": "Admin Username for Lab VM"
             }
@@ -32,7 +28,6 @@
         },
         "vmsize": {
             "type": "string",
-            "defaultValue": "Standard_D4s_v3",
             "metadata": {
                 "description": "VM Size for all lab-vms. "
             }
@@ -44,7 +39,6 @@
                 "description": "Location to deploy current resource"
             }
         },
-
         "_artifactsLocation": {
             "type": "string",
             "metadata": {
@@ -73,33 +67,36 @@
             }
         }
     },
-    "functions": [],
     "variables": {
         "strname": "[toLower(concat('labvmstg',uniqueString(resourceGroup().id)))]",
         "scriptUrl": "[uri(parameters('_artifactsLocation'),concat(parameters('scriptFilename'),parameters('_artifactsLocationSasToken')))]"
     },
     "resources": [
         {
-            "name": "[variables('strname')]",
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2019-06-01",
+            "name": "[variables('strname')]",
             "location": "[parameters('location')]",
-            "tags": {
-                "displayName": "labvm Storage Account"
-            },
             "sku": {
                 "name": "Standard_LRS"
             },
             "kind": "StorageV2",
+             "tags": {
+                "displayName": "labvm Storage Account"
+            },
             "properties": {
                 "accessTier": "Hot"
             }
         },
         {
-            "name": "[concat('labvm-pip-',copyIndex(1))]",
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2019-11-01",
+            "name": "[concat('labvm-pip-',copyIndex(1))]",
             "location": "[parameters('location')]",
+            "copy": {
+                "name": "vmpipcopy",
+                "count": "[parameters('vmCount')]"
+            },
             "tags": {
                 "displayName": "PublicIPAddress"
             },
@@ -108,16 +105,12 @@
                 "dnsSettings": {
                     "domainNameLabel": "[toLower(concat(parameters('dns-prefix'),'-',copyIndex(1)))]"
                 }
-            },
-            "copy": {
-                "name": "vmpipcopy",
-                "count": "[parameters('vmCount')]"
             }
         },
         {
-            "name": "labvm-nsg",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-04-01",
+            "name": "labvm-nsg",
             "location": "[parameters('location')]",
             "properties": {
                 "securityRules": [
@@ -139,9 +132,9 @@
             }
         },
         {
-            "name": "labvm-vnet",
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2019-11-01",
+            "name": "labvm-vnet",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', 'labvm-nsg')]"
@@ -169,14 +162,19 @@
             }
         },
         {
-            "name": "[concat('labvm-nic-',copyIndex(1))]",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2019-11-01",
+            "name": "[concat('labvm-nic-',copyIndex(1))]",
             "location": "[parameters('location')]",
+            "copy": {
+                "count": "[parameters('vmCount')]",
+                "name": "niccopy"
+            },
             "dependsOn": [
                 "vmpipcopy",
                 "[resourceId('Microsoft.Network/virtualNetworks', 'labvm-vnet')]"
             ],
+    
             "tags": {
                 "displayName": "labvm Network Interface"
             },
@@ -195,19 +193,19 @@
                         }
                     }
                 ]
-            },
-            "copy": {
-
-                "count": "[parameters('vmCount')]",
-                "name": "niccopy"
             }
-
+            
         },
         {
-            "name": "[concat('labvm-',copyIndex(1))]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2019-07-01",
+            "name": "[concat('labvm-',copyIndex(1))]",
             "location": "[parameters('location')]",
+            
+            "copy": {
+                "count": "[parameters('vmCount')]",
+                "name": "vmcopy"
+            },
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('strname'))]",
                 "vmpipcopy",
@@ -251,22 +249,19 @@
                         "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('strname'))).primaryEndpoints.blob]"
                     }
                 }
-
-            },
-
-            "copy": {
-                "count": "[parameters('vmCount')]",
-                "name": "vmcopy"
             }
-
         },
         {
-            "name": "[concat('labvm-',copyIndex(1),'/installScript')]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "apiVersion": "2019-07-01",
+            "name": "[concat('labvm-',copyIndex(1),'/installScript')]",
             "location": "[parameters('location')]",
             "tags": {
                 "displayName": "customScript1 for Windows VM"
+            },
+            "copy": {
+                "name": "scriptCopy",
+                "count": "[parameters('vmCount')]"
             },
             "dependsOn": [
                 "vmcopy"
@@ -284,16 +279,9 @@
                 "protectedSettings": {
                     "commandToExecute": "[concat('powershell -ExecutionPolicy Bypass -file  ', parameters('scriptFilename'))]"
                 }
-            },
-            "copy": {
-                "name": "scriptCopy",
-                "count": "[parameters('vmCount')]"
             }
         }
     ],
     "outputs": {
-
-
     }
-
 }
