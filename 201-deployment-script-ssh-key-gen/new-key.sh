@@ -11,3 +11,4 @@ json="{\"keyinfo\":{\"privateKey\":\"$privateKey\",\"publicKey\":\"$publicKey\"}
 echo "$json" > $AZ_SCRIPTS_OUTPUT_PATH
 
 sleep 10800
+
