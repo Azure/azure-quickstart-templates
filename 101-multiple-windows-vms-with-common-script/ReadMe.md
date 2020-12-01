@@ -1,4 +1,4 @@
-# ARM Template for Deploying Jenkins Master/Slave Cluster
+# ARM Template for Deploying Multiple Lab VMs (Windows with Custom Script)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-multiple-windows-vms-with-common-script%2Fazuredeploy.json)
 
@@ -17,13 +17,13 @@
 
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-multiple-windows-vms-with-common-script/CredScanResult.svg)
 
-# Deploying Multiple VMs (NOT VMSS) with Common custom script 
+* All Windows VMs would be of SAME SIZE and would have SAME CREDENTIALS
+* Number of VMs can be set using Parameter 'vmCount'
+* Number of ready-to-deploy scripts included in this template:
 
-1.  Use parameter 'vmCount' to define number of VMs to be provisioned.
-
-2.  Use parameter 'scriptFilename' to use any of following pre-defined scripts
-
-    - container-lab.ps1
-    - jenkins-java8.ps1
-    - container-vs2019-lab.ps1
-    - az500.ps1
+Script filename | Packages installed
+----------------|-------------------
+container-lab.ps1 | Docker-Desktop, VSCode & Git
+container-vs2019-lab.ps1 | Docker-desktop, VSCode, Git & Visual Studio Community 2019 (All Workloads)
+jenkins-java8.ps1 | OpenJDK8, Maven 3.6, Jenkins latest, VScode, Spring ToolSuite latest, firefox latest
+az-500.ps1 | Azure CLI latest, Azure Powershell 'Az' modules, VSCode, git, Visual Studio Community 2019 (All workloads), Sql Server Management Studio
