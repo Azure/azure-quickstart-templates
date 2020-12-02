@@ -2,16 +2,10 @@
 	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
-		"_artifactsLocation": {
+		"assembly": {
 			"type": "string",
 			"metadata": {
-				"description": "The base URL where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-			}
-		},
-		"_artifactsLocationSasToken": {
-			"type": "secureString",
-			"metadata": {
-				"description": "Token for the base URL where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+				"description": "CloudPak assembly to install"
 			}
 		},
 		"cloudPakDeploymentScriptUrl": {
@@ -31,26 +25,26 @@
 			"metadata": {
 				"description": "Red Hat Tags"
 			}
-        },
-        "ocuser": {
+		},
+		"adminUsername": {
+			"type": "string",
+			"metadata": {
+				"description": "Admin Username"
+			}
+		},
+		"ocuser": {
 			"type": "string",
 			"metadata": {
 				"description": "OpenShift Username"
 			}
-        },
-        "ocpassword": {
-			"type": "string",
+		},
+		"ocpassword": {
+			"type": "securestring",
 			"metadata": {
 				"description": "OpenShift Password"
 			}
 		},
 		"storageOption": {
-			"type": "string",
-			"metadata": {
-				"description": "Storage for CPD installation"
-			}
-		},
-		"masterPublicHostname": {
 			"type": "string",
 			"metadata": {
 				"description": "Storage for CPD installation"
@@ -68,54 +62,55 @@
 				"description": "Project name to deploy CloudPak for Data to"
 			}
 		},
-		"apiKeyUsername": {
-			"type": "string",
-			"defaultValue": "iamapikey",
-			"metadata": {
-				"description": "registry entitlement key username"
-			}
-		},
-		"apiKey": {
-			"type": "string",
-			"defaultValue": "",
-			"metadata": {
-				"description": "registry entitlement key"
-			}
-		},
-		"location":{
+		"location": {
 			"type": "string",
 			"metadata": {
 				"description": "Region where the resources should be created in"
 			}
-		}
-	},
-	"variables": {},
-	"resources": [{
-		"type": "Microsoft.Compute/virtualMachines/extensions",
-		"name": "[concat(parameters('bastionHostname'), '-0/deployOpenShift')]",
-		"location": "[parameters('location')]",
-		"apiVersion": "2019-07-01",
-		"tags": {
-			"displayName": "DeployCloudPak",
-			"provider": "[parameters('redHatTags').provider]",
-			"app": "[parameters('redHatTags').app]",
-			"version": "[parameters('redHatTags').version]",
-			"platform": "[parameters('redHatTags').platform]"
 		},
-		"properties": {
-			"publisher": "Microsoft.Azure.Extensions",
-			"type": "CustomScript",
-			"typeHandlerVersion": "2.0",
-			"autoUpgradeMinorVersion": true,
-			"settings": {
-				"fileUris": [
-					"[parameters('cloudPakDeploymentScriptUrl')]"
-				]
-			},
-			"protectedSettings": {
-				"commandToExecute": "[concat('bash ', parameters('cloudPakDeploymentScriptFileName'), ' \"', parameters('ocuser'), '\"', ' \"', parameters('ocpassword'), '\"', ' \"', parameters('masterPublicHostname'), '\"', ' \"', parameters('projectName'), '\"', ' \"', parameters('apiKeyUsername'), '\"', ' \"', parameters('apiKey'), '\"', ' \"', parameters('storageOption'), '\"', ' \"', parameters('_artifactsLocation'), '\"', ' \"', parameters('_artifactsLocationSasToken'), '\"' )]"
+		"clusterName": {
+			"type": "string",
+			"metadata": {
+				"description": "Cluster resources prefix"
+			}
+		},
+		"domainName": {
+			"type": "string",
+			"metadata": {
+				"description": "Domain name created with the App Service"
 			}
 		}
-	}],
-	"outputs": {}
+	},
+	"variables": {
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"name": "[concat(parameters('bastionHostname'), '/deployOpenshift')]",
+			"location": "[parameters('location')]",
+			"apiVersion": "2019-07-01",
+			"tags": {
+				"displayName": "DeployCloudPak",
+				"app": "[parameters('redHatTags').app]",
+				"version": "[parameters('redHatTags').version]",
+				"platform": "[parameters('redHatTags').platform]"
+			},
+			"properties": {
+				"publisher": "Microsoft.Azure.Extensions",
+				"type": "CustomScript",
+				"typeHandlerVersion": "2.0",
+				"autoUpgradeMinorVersion": true,
+				"settings": {
+					"fileUris": [
+						"[parameters('cloudPakDeploymentScriptUrl')]"
+					]
+				},
+				"protectedSettings": {
+					"commandToExecute": "[concat('bash ', parameters('cloudPakDeploymentScriptFileName'), ' \"', parameters('adminUsername'), '\"', ' \"', parameters('ocpassword'), '\"', ' \"', parameters('projectName'), '\"', ' \"', parameters('storageOption'), '\"', ' \"', parameters('assembly'), '\"', ' \"', parameters('clusterName'), '\"', ' \"', parameters('domainName'), '\"', ' \"', parameters('ocuser'), '\"')]"
+				}
+			}
+		}
+	],
+	"outputs": {
+	}
 }

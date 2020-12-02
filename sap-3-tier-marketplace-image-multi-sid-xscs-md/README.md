@@ -14,8 +14,8 @@
 This template is one of three templates for a 3-tier Multi SID SAP depoyment.
 
 * ASCS/SCS servers template (this template)
-* [Database servers Template](https://github.com/Azure/azure-quickstart-templates/tree/master/sap-3-tier-marketplace-image-multi-sid-db)
-* [Application servers template](https://github.com/Azure/azure-quickstart-templates/tree/master/sap-3-tier-marketplace-image-multi-sid-apps)
+* [Database servers Template](https://github.com/Azure/azure-quickstart-templates/tree/master/sap-3-tier-marketplace-image-multi-sid-db-md)
+* [Application servers template](https://github.com/Azure/azure-quickstart-templates/tree/master/sap-3-tier-marketplace-image-multi-sid-apps-md)
 
 It takes a minimum amount of parameters and deploys a VM that is customized for use with SAP NetWeaver, using the latest patched version of the selected operating system. This is a template for a 3-tier Multi SID configuration. It deploys 1 (no HA) or 2 (HA) ASCS/SCS servers on which multiple ASCS/SCS instances for multiple SAP system can be deployed. In case of a HA deployment, the ASCS/SCS servers are placed in an Availability Set and a Load Balancer is added to the ASCS/SCS servers to allow HA configurations in the operating system (e.g. Windows Failover Cluster).
 This template uses Managed Disks.

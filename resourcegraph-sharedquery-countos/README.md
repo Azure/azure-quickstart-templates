@@ -73,5 +73,6 @@ If you are new to Azure Resource Graph, see:
 If you are new to template deployment, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Quickstart: Create a shared query by using an ARM template](https://docs.microsoft.com/azure/governance/resource-graph/shared-query-template)
 
 `Tags: Resource Graph, KQL, query`
