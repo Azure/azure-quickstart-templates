@@ -14,10 +14,11 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
 1. [Overview](#Overview)
     1. [Costs and Licenses](#Costs)
         1. [SAS 9.4 VA/VS server](#compute)
-        1. [SAS 9.4M6 Mid-Tier server](#midtier)
-        1. [SAS 9.4M6 Metadata clustered server](#metadata)        
+        1. [SAS 9.4M7 Mid-Tier server](#midtier)
+        1. [SAS 9.4M7 Metadata clustered server](#metadata)        
 1. [Prerequisites](#Prerequisites)
-    1. [Upload the License File to an Azure Blob](#upload-the-license-file-to-an-azure-blob)
+    1. [Create the Blob Shared Access Signature](#create-shared-access-signature)
+1. [Best Practices when Deploying SAS 9.4M7 VA/VS on Microsoft Azure](#best_practices) 
 1. [Deployment Steps](#Deployment)
     1. [Deploy Using the Azure Portal](#azureportal)
     1. [Deploy Using Mercury Admin Tools](#mercuryadmintools)
@@ -48,8 +49,8 @@ You are responsible for the cost of the Azure services used while running this Q
 You will need a SAS license to launch this Quickstart. Your SAS account team and the SAS Enterprise Excellence Center can advise on the appropriate software licensing and sizing to meet your workload and performance needs.
 The SAS 9.4 VA/VS Quickstart Template for Azure creates three instances, including: 
 * 1 compute server virtual machine (VM), the SAS VA/VS server
-* 1 middle tier VM, the SAS 9.4M6 Mid-Tier server
-* 1 metadata server VM, the SAS 9.4M6 Metadata clustered server
+* 1 middle tier VM, the SAS 9.4M7 Mid-Tier server
+* 1 metadata server VM, the SAS 9.4M7 Metadata clustered server
 
 <a name="compute"></a>
 #### SAS 9.4 VA/VS server
@@ -64,11 +65,11 @@ Here are some recommended example VM sizes based on the number of licensed cores
 | 16  | Standard_E32s_v3| 256 GB  | 90-170 GB |512 GB  |
 
 <a name="midtier"></a>
-#### SAS 9.4M6 Mid-Tier server
+#### SAS 9.4M7 Mid-Tier server
 We  recommend that you use one or two of the memory optimized Standard E16s_v3 VM size at least.
 
 <a name="metadata"></a>
-#### SAS 9.4M6 Metadata clustered server
+#### SAS 9.4M7 Metadata clustered server
 We  recommend that you use one or three of the memory optimized Standard E16s_v3 VM size at least.
 
 <a name="Prerequisites"></a>
@@ -76,12 +77,24 @@ We  recommend that you use one or three of the memory optimized Standard E16s_v3
 
 Before deploying SAS 9.4 VA/VS Quickstart Template for Azure, you must have the following:
 * A Microsoft Azure account if you do not already have one. Request an Azure account at ["CIS Cloud Services"](http://sww.sas.com/sites/it/cloud-services/).
-* A SAS 9.4m7 VA/VS software order with the depot uploaded to Azure Blob Storage. See ["Upload the Software Order to an Azure Blob"](#upload-the-license-file-to-an-azure-blob) for more information. 
+* A SAS Software Order Confirmation Email that contains the following supported Quickstart products:
 
-**Note:** This is not necessary if you are deploying the SAS 9.4m7 depot that is already uploaded to Azure.
+ 		SAS Visual Analytics 7.5 on Linux
+		SAS Visual Statistics 7.5 on Linux
+        
+* A SAS 9.4M7 VA/VS software order with the depot uploaded to Azure Blob Storage.
+* An Azure blob Shared Access Signature (SAS). See ["Create the Blob Shared Access Signature"](#create-shared-access-signature) for more information. 
 
-<a name="upload-the-license-file-to-an-azure-blob"></a>
-### Upload the Software Order to an Azure Blob
+**Note:** This is not necessary if you are deploying the SAS 9.4M7 depot that is already uploaded to Azure.
+* A response file that you create with the SAS Deployment Wizard.  See ["Recording a SAS Deployment Wizard Response file"](https://go.documentation.sas.com/?cdcId=bicdc&cdcVersion=9.4&docsetId=biig&docsetTarget=n05023intelplatform00install.htm&locale=en#n05026intelplatform00install) for more information.
+* Sufficient quota of at least 28 Cores, based on four licensed SAS cores in an SMP environment.  In MPP environments, apply this sizing to the CAS workers as well as the CAS controller.
+
+*  Verification that your required SAS 9.4M7 file upload sizes do not exceed the limits of the Application Gateway. For details about limits, see 
+["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
+* A resource group that does not already contain a Quickstart deployment. For more information, see ["Resource groups"](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview#resource-groups).
+
+<a name="create-shared-access-signature"></a>
+### Create the Blob Shared Access Signature (SAS)
 When you run the deployment, you will need the blob Shared Access Signature (SAS) URL as a parameter. 
 
 Before you run the deployment:
@@ -94,6 +107,9 @@ Before you run the deployment:
     * Make a note of the blob SAS URL for use during deployment.
     
 For details, see ["Using Shared Access Signatures."](https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1)
+
+<a name="best_practices"></a>
+## Best Practices when Deploying SAS 9.4M7 VA/VS on Microsoft Azure
 
 <a name="Deployment"></a>
 ## Deployment Steps
