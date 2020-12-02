@@ -1,5 +1,7 @@
 Param($DomainFullName,$CM,$CMUser,$Role,$ProvisionToolPath)
 
+$SMSInstallDir="C:\Program Files\Microsoft Configuration Manager"
+
 $logpath = $ProvisionToolPath+"\InstallSCCMlog.txt"
 $ConfigurationFile = Join-Path -Path $ProvisionToolPath -ChildPath "$Role.json"
 $Configuration = Get-Content -Path $ConfigurationFile | ConvertFrom-Json
@@ -12,8 +14,8 @@ $cmpath = "c:\$CM.exe"
 $cmsourcepath = "c:\$CM"
 if(!(Test-Path $cmpath))
 {
-    "[$(Get-Date -format HH:mm:ss)] Copying SCCM installation source..." | Out-File -Append $logpath
-    $cmurl = "http://download.microsoft.com/download/1/B/C/1BCADBD7-47F6-40BB-8B1F-0B2D9B51B289/SC_Configmgr_SCEP_1902.exe"
+    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Copying SCCM installation source..." | Out-File -Append $logpath
+    $cmurl = "https://go.microsoft.com/fwlink/?linkid=2093192"
     Invoke-WebRequest -Uri $cmurl -OutFile $cmpath
     if(!(Test-Path $cmsourcepath))
     {
@@ -21,7 +23,7 @@ if(!(Test-Path $cmpath))
     }
 }
 $CMINIPath = "c:\$CM\Standalone.ini"
-"[$(Get-Date -format HH:mm:ss)] Check ini file." | Out-File -Append $logpath
+"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Check ini file." | Out-File -Append $logpath
 
 $cmini = @'
 [Identification]
@@ -31,7 +33,7 @@ Action=InstallPrimarySite
 ProductID=EVAL
 SiteCode=%Role%
 SiteName=%Role%
-SMSInstallDir=C:\Program Files\Microsoft Configuration Manager
+SMSInstallDir=%InstallDir%
 SDKServer=%MachineFQDN%
 RoleCommunicationProtocol=HTTPorHTTPS
 ClientsUsePKICertificate=0
@@ -65,7 +67,8 @@ $p = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance N
 
 $sqlinfo = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\$inst"
 
-"[$(Get-Date -format HH:mm:ss)] ini file exist." | Out-File -Append $logpath
+"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] ini file exist." | Out-File -Append $logpath
+$cmini = $cmini.Replace('%InstallDir%',$SMSInstallDir)
 $cmini = $cmini.Replace('%MachineFQDN%',"$env:computername.$DomainFullName")
 $cmini = $cmini.Replace('%SQLMachineFQDN%',"$env:computername.$DomainFullName")
 $cmini = $cmini.Replace('%Role%',$Role)
@@ -89,10 +92,10 @@ else
 }
 $CMInstallationFile = "c:\$CM\SMSSETUP\BIN\X64\Setup.exe"
 $cmini > $CMINIPath 
-"[$(Get-Date -format HH:mm:ss)] Installing.." | Out-File -Append $logpath
+"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Installing.." | Out-File -Append $logpath
 Start-Process -Filepath ($CMInstallationFile) -ArgumentList ('/NOUSERINPUT /script "' + $CMINIPath + '"') -wait
 
-"[$(Get-Date -format HH:mm:ss)] Finished installing CM." | Out-File -Append $logpath
+"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Finished installing CM." | Out-File -Append $logpath
 
 Remove-Item $CMINIPath
 
@@ -124,12 +127,12 @@ if((Get-Module ConfigurationManager) -eq $null) {
 }
 
 # Connect to the site's drive if it is not already present
-"[$(Get-Date -format HH:mm:ss)] Setting PS Drive..." | Out-File -Append $logpath
+"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Setting PS Drive..." | Out-File -Append $logpath
 New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
 
 while((Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyContinue) -eq $null) 
 {
-    "[$(Get-Date -format HH:mm:ss)] Retry in 10s to set PS Drive. Please wait." | Out-File -Append $logpath
+    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Retry in 10s to set PS Drive. Please wait." | Out-File -Append $logpath
     Start-Sleep -Seconds 10
     New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
 }
@@ -138,9 +141,9 @@ while((Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyConti
 Set-Location "$($SiteCode):\" @initParams
 
 #Add domain user as CM administrative user
-"Setting $CMUser as CM administrative user." | Out-File -Append $logpath
+"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Setting $CMUser as CM administrative user." | Out-File -Append $logpath
 New-CMAdministrativeUser -Name $CMUser -RoleName "Full Administrator" -SecurityScopeName "All","All Systems","All Users and User Groups"
-"Done" | Out-File -Append $logpath
+"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Done" | Out-File -Append $logpath
 
 $upgradingfailed = $false
 $originalbuildnumber = ""
@@ -151,17 +154,17 @@ $subKey =  $key.OpenSubKey("SOFTWARE\Microsoft\SMS\Components\SMS_Executive\Thre
 $DMPState = $subKey.GetValue("Current State")
 while($DMPState -ne "Running")
 {
-    "Current SMS_DMP_DOWNLOADER state is : $DMPState , will try again 30 seconds later..." | Out-File -Append $logpath
+    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Current SMS_DMP_DOWNLOADER state is : $DMPState , will try again 30 seconds later..." | Out-File -Append $logpath
     Start-Sleep -Seconds 30
     $DMPState = $subKey.GetValue("Current State")
 }
 
-"Current SMS_DMP_DOWNLOADER state is : $DMPState " | Out-File -Append $logpath
+"[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Current SMS_DMP_DOWNLOADER state is : $DMPState " | Out-File -Append $logpath
 
 #get the available update
 function getupdate()
 {
-    "[$(Get-Date -format HH:mm:ss)] Get CM update..." | Out-File -Append $logpath
+    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Get CM update..." | Out-File -Append $logpath
     $CMPSSuppressFastNotUsedCheck = $true
     $updatepacklist= Get-CMSiteUpdate -Fast | ?{$_.State -ne 196612}
     $getupdateretrycount = 0
@@ -171,9 +174,9 @@ function getupdate()
         {
             break
         }
-        "[$(Get-Date -format HH:mm:ss)] Not found any updates, retry to invoke update check." | Out-File -Append $logpath
+        "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Not found any updates, retry to invoke update check." | Out-File -Append $logpath
         $getupdateretrycount++
-        "[$(Get-Date -format HH:mm:ss)] Invoke CM Site update check..." | Out-File -Append $logpath
+        "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Invoke CM Site update check..." | Out-File -Append $logpath
         Invoke-CMSiteUpdateCheck -ErrorAction Ignore
         Start-Sleep 120
 
@@ -267,11 +270,11 @@ $downloadretrycount = 0
 $updatepack = getupdate
 if($updatepack -ne "")
 {
-    "[$(Get-Date -format HH:mm:ss)] Update package is " + $updatepack.Name | Out-File -Append $logpath
+    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Update package is " + $updatepack.Name | Out-File -Append $logpath
 }
 else
 {
-    "[$(Get-Date -format HH:mm:ss)] No update package be found." | Out-File -Append $logpath
+    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] No update package be found." | Out-File -Append $logpath
 }
 while($updatepack -ne "")
 {
@@ -293,7 +296,7 @@ while($updatepack -ne "")
             while($updatepack.State -eq 327682)
             {
                 
-                "[$(Get-Date -format HH:mm:ss)] Waiting SCCM Upgrade package start to download, sleep 2 min..." | Out-File -Append $logpath
+                "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Waiting SCCM Upgrade package start to download, sleep 2 min..." | Out-File -Append $logpath
                 Start-Sleep 120
                 $updatepack = Get-CMSiteUpdate -Name $updatepack.Name -Fast
                 $downloadspan = New-TimeSpan -Start $downloadstarttime -End (Get-Date)
@@ -306,7 +309,7 @@ while($updatepack -ne "")
                 }
                 if($downloadretrycount -ge 2)
                 {
-                    "[$(Get-Date -format HH:mm:ss)] Update package " + $updatepack.Name + " failed to start downloading in 2 hours."| Out-File -Append $logpath
+                    "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Update package " + $updatepack.Name + " failed to start downloading in 2 hours."| Out-File -Append $logpath
                     break
                 }
             }
@@ -321,7 +324,7 @@ while($updatepack -ne "")
         $downloadstarttime = get-date
         while($updatepack.State -eq 262145)
         {
-            "[$(Get-Date -format HH:mm:ss)] Waiting SCCM Upgrade package download, sleep 2 min..." | Out-File -Append $logpath
+            "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Waiting SCCM Upgrade package download, sleep 2 min..." | Out-File -Append $logpath
             Start-Sleep 120
             $updatepack = Get-CMSiteUpdate -Name $updatepack.Name -Fast
             $downloadspan = New-TimeSpan -Start $downloadstarttime -End (Get-Date)
@@ -351,7 +354,7 @@ while($updatepack -ne "")
     Invoke-CMSiteUpdatePrerequisiteCheck -Name $updatepack.Name
     while($updatepack.State -ne 196607 -and $updatepack.State -ne 131074 -and $updatepack.State -ne 131075)
     {
-        ("[$(Get-Date -format HH:mm:ss)] Waiting checking prerequisites complete, current pack " + $updatepack.Name + " state is " + ($state.($updatepack.State)) + ", sleep 2 min...") | Out-File -Append $logpath
+        ("[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Waiting checking prerequisites complete, current pack " + $updatepack.Name + " state is " + ($state.($updatepack.State)) + ", sleep 2 min...") | Out-File -Append $logpath
         Start-Sleep 120
         $updatepack = Get-CMSiteUpdate -Fast -Name $updatepack.Name 
     }
@@ -365,13 +368,13 @@ while($updatepack -ne "")
     Install-CMSiteUpdate -Name $updatepack.Name -SkipPrerequisiteCheck -Force
     while($updatepack.State -ne 196607 -and $updatepack.State -ne 262143 -and $updatepack.State -ne 196612)
     {
-        ("[$(Get-Date -format HH:mm:ss)] Waiting SCCM Upgrade Complete, current pack " + $updatepack.Name + " state is " + ($state.($updatepack.State)) + ", sleep 2 min...") | Out-File -Append $logpath
+        ("[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Waiting SCCM Upgrade Complete, current pack " + $updatepack.Name + " state is " + ($state.($updatepack.State)) + ", sleep 2 min...") | Out-File -Append $logpath
         Start-Sleep 120
         $updatepack = Get-CMSiteUpdate -Fast -Name $updatepack.Name 
     }
     if($updatepack.State -eq 196612)
     {
-        ("[$(Get-Date -format HH:mm:ss)] SCCM Upgrade Complete, current pack " + $updatepack.Name + " state is " + ($state.($updatepack.State)) ) | Out-File -Append $logpath
+        ("[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] SCCM Upgrade Complete, current pack " + $updatepack.Name + " state is " + ($state.($updatepack.State)) ) | Out-File -Append $logpath
         #we need waiting the copying files finished if there is only one site
         $toplevelsite =  Get-CMSite |where {$_.ReportingSiteCode -eq ""}
         if((Get-CMSite).count -eq 1)
@@ -391,7 +394,7 @@ while($updatepack -ne "")
         $updatepack = getupdate 
         if($updatepack -ne "")
         {
-            "[$(Get-Date -format HH:mm:ss)] Found another update package : " + $updatepack.Name | Out-File -Append $logpath
+            "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Found another update package : " + $updatepack.Name | Out-File -Append $logpath
         }
     }
     if($updatepack.State -eq 196607 -or $updatepack.State -eq 262143 )
@@ -407,10 +410,10 @@ while($updatepack -ne "")
 
 if($upgradingfailed -eq $true)
 {
-    ("[$(Get-Date -format HH:mm:ss)] Upgrade " + $updatepack.Name + " failed") | Out-File -Append $logpath
+    ("[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Upgrade " + $updatepack.Name + " failed") | Out-File -Append $logpath
     if($($updatepack.Name).ToLower().Contains("hotfix"))
     {
-        ("[$(Get-Date -format HH:mm:ss)] This is a hotfix, skip it and continue...") | Out-File -Append $logpath
+        ("[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] This is a hotfix, skip it and continue...") | Out-File -Append $logpath
         $Configuration.UpgradeSCCM.Status = 'CompletedWithHotfixInstallFailed'
     }
     else
@@ -428,7 +431,7 @@ else
 
 if($downloadretrycount -ge 2)
 {
-    ("[$(Get-Date -format HH:mm:ss)] Upgrade " + $updatepack.Name + " failed to start downloading") | Out-File -Append $logpath
+    ("[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Upgrade " + $updatepack.Name + " failed to start downloading") | Out-File -Append $logpath
     $Configuration.UpgradeSCCM.Status = 'CompletedWithDownloadFailed'
     $Configuration.UpgradeSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
     $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force

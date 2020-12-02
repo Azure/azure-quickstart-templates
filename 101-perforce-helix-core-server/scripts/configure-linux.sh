@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script is only tested on CentOS 7.5, RHEL 7.x (7.6+) and Ubuntu 18.04 LTS.
+# This script is only tested on CentOS 7.x (7.8+), RHEL 7.x (7.8+) and Ubuntu 18.04 LTS.
 MOUNTPOINT="/hxdata"
 
 # An set of disks to ignore from partitioning and formatting
@@ -164,7 +164,14 @@ configure_helix() {
     chmod +x reset_sdp.sh
     ./reset_sdp.sh -fast -no_sd > reset_sdp.log 2>&1
 
+    cp /p4/common/bin/p4 /usr/local/bin/
+    chmod +x /usr/local/bin/p4
+
+    # Make sure p4d is enabled but broker and p4p are not
     systemctl enable p4d_1
+    systemctl disable p4broker_1
+    systemctl disable p4p_1
+
     # Change default port and then generate SSL cert
     sudo -u perforce perl -pi -e "s/P4PORTNUM=1999/P4PORTNUM=$P4PORT/" /p4/common/config/p4_1.vars 
     sudo -u perforce bash -c "source /p4/common/bin/p4_vars 1 && /p4/1/bin/p4d_1 -Gc"
@@ -181,12 +188,14 @@ source /p4/common/bin/p4_vars 1
 p4 trust -y
 p4 -p ssl:`hostname`:$P4PORTNUM trust -y
 p4 user -o | p4 user -i
+p4 protect -o | p4 protect -i
 
 PASSWORD=`cat /p4/common/config/.p4passwd.p4_1.admin`
 echo -e "$PASSWORD\n$PASSWORD" | p4 passwd
 /p4/common/bin/p4login -v 1
 /p4/sdp/Server/setup/configure_new_server.sh 1
 crontab /p4/p4.crontab
+echo "source /p4/common/bin/p4_vars 1" >> ~/.bashrc
 EOF
 
     chmod +x $init_script

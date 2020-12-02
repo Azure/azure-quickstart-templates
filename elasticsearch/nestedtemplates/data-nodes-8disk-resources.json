@@ -28,7 +28,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A1",
+      "defaultValue": "Standard_D1_v2",
       "metadata": {
         "description": "Size of the Elasticsearch data nodes"
       }
@@ -67,35 +67,32 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
       }
     }
   },
   "variables": {
-    "vmStorageAccountContainerName": "vhd",
-    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
-    "storageAccountName": "[parameters('storageSettings').prefix]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('subnet').vnet, parameters('subnet').name)]",
     "storageAccountNameAFS": "[parameters('storageSettings').afs]",
     "vmName": "[concat(parameters('namespace'), '-vm')]"
   },
   "resources": [
     {
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "es-data-set",
       "location": "[parameters('location')]",
       "sku": {
-				"name": "Aligned"
-            },
+        "name": "Aligned"
+      },
       "properties": {
         "platformUpdateDomainCount": 20,
         "platformFaultDomainCount": 3
       }
     },
     {
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('namespace'), '-nic', copyindex())]",
       "location": "[parameters('location')]",
@@ -119,7 +116,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), copyindex())]",
       "location": "[parameters('location')]",
@@ -147,7 +144,7 @@
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",
           "osDisk": {
-            "name":"[concat(variables('vmName'), copyindex(),'_OSDisk')]",
+            "name": "[concat(variables('vmName'), copyindex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
@@ -222,7 +219,7 @@
         {
           "type": "extensions",
           "name": "installelasticsearch",
-          "apiVersion": "2017-03-30",
+          "apiVersion": "2019-12-01",
           "location": "[parameters('location')]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'), copyindex()))]"
@@ -233,7 +230,7 @@
             "typeHandlerVersion": "[parameters('osSettings').extensionSettings.data.typeHandlerVersion]",
             "settings": {
               "fileUris": "[parameters('osSettings').extensionSettings.data.settings.fileUris]",
-              "commandToExecute": "[concat(parameters('osSettings').extensionSettings.data.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2016-01-01').keys[0].value)]"
+              "commandToExecute": "[concat(parameters('osSettings').extensionSettings.data.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2019-06-01').keys[0].value)]"
             }
           }
         }

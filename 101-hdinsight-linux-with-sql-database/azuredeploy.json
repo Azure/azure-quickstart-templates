@@ -52,7 +52,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://hditutorialdata.blob.core.windows.net/usesqoop/"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-hdinsight-linux-with-sql-database/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -91,22 +91,21 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('defaultStorageAccount').name]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2019-06-01",
       "sku": {
         "name": "[variables('defaultStorageAccount').type]"
       },
-      "kind": "Storage",
+      "kind": "StorageV2",
       "properties": {}
     },
     {
       "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-03-01-preview",
+      "apiVersion": "2018-06-01-preview",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccount').name)]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name)]"
       ],
-      "tags": {},
       "properties": {
         "clusterVersion": "3.6",
         "osType": "Linux",
@@ -123,10 +122,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').primaryEndpoints.blob,'https://',''),'/','')]",
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').primaryEndpoints.blob,'https://',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').keys[0].value]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').keys[0].value]"
             }
           ]
         },
@@ -165,12 +164,11 @@
     {
       "type": "Microsoft.Sql/servers",
       "name": "[variables('sqlDatabase').serverName]",
-      "dependsOn": [],
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "SqlServer"
       },
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-02-02-preview",
       "properties": {
         "administratorLogin": "[parameters('sqlAdminLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdminPassword')]",
@@ -184,7 +182,7 @@
           "tags": {
             "displayName": "Database"
           },
-          "apiVersion": "2015-01-01",
+          "apiVersion": "2020-02-02-preview",
           "dependsOn": [
             "[variables('sqlDatabase').serverName]"
           ],
@@ -204,11 +202,11 @@
               ],
               "properties": {
                 "operationMode": "Import",
-                "storageKey": "?",
+                "storageKey": "[parameters('_artifactsLocationSasToken')]",
                 "storageKeyType": "SharedAccessKey",
                 "administratorLogin": "[parameters('sqlAdminLogin')]",
                 "administratorLoginPassword": "[parameters('sqlAdminPassword')]",
-                "storageUri": "[concat(parameters('_artifactsLocation'), parameters('bacpacFileName'), parameters('_artifactsLocationSasToken'))]"
+                "storageUri": "[concat(parameters('_artifactsLocation'), 'Bacpac/', parameters('bacpacFileName'))]"
               }
             }
           ]
@@ -217,9 +215,9 @@
           "type": "firewallrules",
           "name": "AllowAllAzureIps",
           "location": "[parameters('location')]",
-          "apiVersion": "2014-04-01",
+          "apiVersion": "2020-02-02-preview",
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', variables('sqlDatabase').serverName)]"
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlDatabase').serverName)]"
           ],
           "properties": {
             "startIpAddress": "0.0.0.0",
@@ -240,7 +238,7 @@
     },
     "sqlSvrFqdn": {
       "type": "string",
-      "value": "[reference(concat('Microsoft.Sql/servers/', variables('sqlDatabase').serverName)).fullyQualifiedDomainName]"
+      "value": "[reference(resourceId('Microsoft.Sql/servers/', variables('sqlDatabase').serverName)).fullyQualifiedDomainName]"
     }
   }
 }

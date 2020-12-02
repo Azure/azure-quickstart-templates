@@ -46,13 +46,14 @@
     },
     "operatingSystem": {
       "type": "string",
-      "defaultValue": "Server2016",
+      "defaultValue": "Server2019",
       "metadata": {
         "description": "Operating System of the Server"
       },
       "allowedValues": [
         "Server2012R2",
-        "Server2016"
+        "Server2016",
+        "Server2019"
       ]
     },
     "availabilitySetName": {
@@ -95,6 +96,11 @@
         "PublisherValue": "MicrosoftWindowsServer",
         "OfferValue": "WindowsServer",
         "SkuValue": "2016-Datacenter"
+      },
+      "Server2019": {
+        "PublisherValue": "MicrosoftWindowsServer",
+        "OfferValue": "WindowsServer",
+        "SkuValue": "2019-Datacenter"
       }
     },
     "availabilitySetPlatformFaultDomainCount": "2",
@@ -106,7 +112,7 @@
     {
       "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-05-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -131,7 +137,7 @@
       "name": "[variables('myVNETName')]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-05-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
@@ -161,20 +167,19 @@
       "name": "[variables('diagnosticStorageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2019-06-01",
       "sku": {
         "name": "Standard_LRS"
       },
-      "dependsOn": [],
       "tags": {
         "displayName": "diagnosticStorageAccount"
       },
-      "kind": "Storage"
+      "kind": "StorageV2"
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[parameters('availabilitySetName')]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": "[variables('availabilitySetPlatformFaultDomainCount')]",
@@ -187,7 +192,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1))]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "VMcopy",
@@ -219,7 +224,6 @@
           "windowsConfiguration": {
             "provisionVMAgent": true
           },
-          "secrets": [],
           "adminPassword": "[parameters('virtualMachineAdminPassword')]"
         },
         "networkProfile": {
@@ -240,15 +244,15 @@
         }
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticStorageAccountName'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('diagnosticStorageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-NIC1'))]"
       ]
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-NIC1')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "NICCopy",
@@ -269,9 +273,6 @@
             }
           }
         ],
-        "dnsSettings": {
-          "dnsServers": []
-        },
         "enableIPForwarding": false
       },
       "dependsOn": [
@@ -280,7 +281,7 @@
       ]
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-PIP1')]",
       "location": "[parameters('location')]",
