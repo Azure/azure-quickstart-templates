@@ -51,12 +51,188 @@
     "vNetSubnetName": "BackendSubnet",
     "vNetSubnetAddressPrefix": "10.0.0.0/24",
     "bastionName": "[concat(parameters('projectName'),'-bastion')]",
-    "vNetBastionSubnetName": "AzureBastionSubnet",
+    "bastionSubnetName": "AzureBastionSubnet",
     "vNetBastionSubnetAddressPrefix": "10.0.1.0/24",
     "bastionPublicIPAddressName": "[concat(parameters('projectName'),'-bastionPublicIP')]",
     "vmStorageAccountType": "Premium_LRS"
   },
   "resources": [
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-06-01",
+      "name": "[concat(parameters('projectName'),'-vm', copyIndex(1), '-networkInterface')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "networkInterfaceCopy",
+        "count": 3
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vNetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), variables('vNetSubnetName'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBackendPoolName'))]"
+                },
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBackendPoolNameOutbound'))]"
+                }
+              ]
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2020-06-01",
+      "name": "[concat(parameters('projectName'),'-vm', copyIndex(1), '/', 'InstallWebServer')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "extensionCopy",
+        "count": 3
+      },
+      "dependsOn": [
+        "vmCopy"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.7",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "commandToExecute": "powershell.exe Install-WindowsFeature -name Web-Server -IncludeManagementTools && powershell.exe remove-item 'C:\\inetpub\\wwwroot\\iisstart.htm' && powershell.exe Add-Content -Path 'C:\\inetpub\\wwwroot\\iisstart.htm' -Value $('Hello World from ' + $env:computername)"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-06-01",
+      "name": "[concat(parameters('projectName'),'-vm', copyIndex(1))]",
+      "location": "[parameters('location')]",
+      "zones": [
+        "[copyIndex(1)]"
+      ],
+      "copy": {
+        "name": "vmCopy",
+        "count": 3
+      },
+      "dependsOn": [
+        "networkInterfaceCopy"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2019-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "fromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('vmStorageAccountType')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('projectName'),'-vm', copyIndex(1), '-networkInterface'))]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('projectName'),'-vm', copyIndex(1))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "enableAutomaticUpdates": true,
+            "provisionVmAgent": true
+          }
+        }
+      }
+    },
+    {
+    "type": "Microsoft.Network/virtualNetworks/subnets",
+    "apiVersion": "2020-06-01",
+    "location": "[parameters('location')]",
+    "name": "[concat(variables('vNetName'), '/' ,variables('bastionSubnetName'))]",
+    "dependsOn": [
+      "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]"
+    ],
+    "properties": {
+      "addressPrefix": "[variables('vNetBastionSubnetAddressPrefix')]"
+    }
+    },
+    {
+    "type": "Microsoft.Network/virtualNetworks/subnets",
+    "apiVersion": "2020-06-01",
+    "location": "[parameters('location')]",
+    "name": "[concat(variables('vNetName'), '/' ,variables('vNetSubnetName'))]",
+    "dependsOn": [
+      "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]"
+    ],
+    "properties": {
+      "addressPrefix": "[variables('vNetSubnetAddressPrefix')]"
+    }
+    },
+    {
+            "type": "Microsoft.Network/bastionHosts",
+            "apiVersion": "2020-05-01",
+            "name": "[variables('bastionName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIPAddressName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), variables('bastionSubnetName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "IpConf",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIPAddressName'))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), variables('bastionSubnetName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('bastionPublicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('lbSkuName')]"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static"
+      }
+    },
     {
       "type": "Microsoft.Network/loadBalancers",
       "apiVersion": "2020-06-01",
@@ -180,19 +356,6 @@
       }
     },
     {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('bastionPublicIPAddressName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "[variables('lbSkuName')]"
-      },
-      "properties": {
-        "publicIPAddressVersion": "IPv4",
-        "publicIPAllocationMethod": "Static"
-      }
-    },
-    {
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2020-06-01",
       "name": "[variables('nsgName')]",
@@ -225,158 +388,6 @@
           "addressPrefixes": [
             "[variables('vNetAddressPrefix')]"
           ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('vNetSubnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('vNetSubnetAddressPrefix')]"
-            }
-          },
-          {
-            "name": "[variables('vNetBastionSubnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('vNetBastionSubnetAddressPrefix')]"
-            }
-          }
-        ]
-      }
-    },
-    {
-            "type": "Microsoft.Network/bastionHosts",
-            "apiVersion": "2020-05-01",
-            "name": "[variables('bastionName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIPAddressName'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetBastionSubnetName'))]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "IpConf",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIPAddressName'))]"
-                            },
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetBastionSubnetName'))]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
-    {
-      "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(parameters('projectName'),'-vm', copyIndex(1))]",
-      "location": "[parameters('location')]",
-      "zones": [
-        "[copyIndex(1)]"
-      ],
-      "copy": {
-        "name": "vmCopy",
-        "count": 3
-      },
-      "dependsOn": [
-        "networkInterfaceCopy"
-      ],
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "MicrosoftWindowsServer",
-            "offer": "WindowsServer",
-            "sku": "2019-Datacenter",
-            "version": "latest"
-          },
-          "osDisk": {
-            "createOption": "fromImage",
-            "managedDisk": {
-              "storageAccountType": "[variables('vmStorageAccountType')]"
-            }
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('projectName'),'-vm', copyIndex(1), '-networkInterface'))]"
-            }
-          ]
-        },
-        "osProfile": {
-          "computerName": "[concat(parameters('projectName'),'-vm', copyIndex(1))]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "windowsConfiguration": {
-            "enableAutomaticUpdates": true,
-            "provisionVmAgent": true
-          }
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(parameters('projectName'),'-vm', copyIndex(1), '-networkInterface')]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "networkInterfaceCopy",
-        "count": 3
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vNetName'))]",
-        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), variables('vNetSubnetName'))]"
-              },
-              "loadBalancerBackendAddressPools": [
-                {
-                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBackendPoolName'))]"
-                },
-                {
-                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBackendPoolNameOutbound'))]"
-                }
-              ]
-            }
-          }
-        ],
-        "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(parameters('projectName'),'-vm', copyIndex(1), '/', 'InstallWebServer')]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "extensionCopy",
-        "count": 3
-      },
-      "dependsOn": [
-        "vmCopy"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Compute",
-        "type": "CustomScriptExtension",
-        "typeHandlerVersion": "1.7",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "commandToExecute": "powershell.exe Install-WindowsFeature -name Web-Server -IncludeManagementTools && powershell.exe remove-item 'C:\\inetpub\\wwwroot\\iisstart.htm' && powershell.exe Add-Content -Path 'C:\\inetpub\\wwwroot\\iisstart.htm' -Value $('Hello World from ' + $env:computername)"
         }
       }
     }
