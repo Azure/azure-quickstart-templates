@@ -25,6 +25,8 @@ export PUBLIC_DNS_NAME="${14}"
 export azure_subscription="${15}"
 export azure_resource_group="${16}"
 export planfile_uri="${17}"
+export HADOOP_VERSION="${18}"
+export HADOOP_HOME="${19}"
 
 export DIRECTORY_NFS_SHARE="/sasshare"
 export INSTALL_DIR="/sas/install"
@@ -65,6 +67,7 @@ main() {
     fi
     makeAnsibleInventory
     createCertificates
+    downloadHadoop
 }
 
 mountSASRaidSUSE() {
@@ -208,6 +211,12 @@ downloadAllFiles() {
     curl --retry 10 --max-time 60 --fail --silent --show-error "$target_url" > "$target_file_name"
     chmod $chmod_attr "$target_file_name"
     done <file_list.txt
+}
+
+downloadHadoop() {
+    echo "Downloading Hadoop"
+    curl "https://downloads.apache.org/hadoop/core/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz" --output "/tmp/hadoop-${HADOOP_VERSION}.tar.gz"
+    cp "/tmp/hadoop-${HADOOP_VERSION}.tar.gz" /sasshare
 }
 
 installAnsibleSUSE() {
