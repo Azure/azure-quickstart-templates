@@ -1,4 +1,4 @@
-Param($DomainFullName,$CM,$CMUser,$DPMPName)
+Param($DomainFullName,$CM,$CMUser,$DPMPName,$ClientName)
 
 $Role = "PS1"
 $ProvisionToolPath = "$env:windir\temp\ProvisionScript"
@@ -15,26 +15,59 @@ if (Test-Path -Path $ConfigurationFile)
 } 
 else 
 {
-    [hashtable]$Actions = @{
-        InstallSCCM = @{
-            Status = 'NotStart'
-            StartTime = ''
-            EndTime = ''
+    if($ClientName -eq 'Empty')
+    {
+        [hashtable]$Actions = @{
+            InstallSCCM = @{
+                Status = 'NotStart'
+                StartTime = ''
+                EndTime = ''
+            }
+            UpgradeSCCM = @{
+                Status = 'NotStart'
+                StartTime = ''
+                EndTime = ''
+            }
+            InstallDP = @{
+                Status = 'NotStart'
+                StartTime = ''
+                EndTime = ''
+            }
+            InstallMP = @{
+                Status = 'NotStart'
+                StartTime = ''
+                EndTime = ''
+            }
         }
-        UpgradeSCCM = @{
-            Status = 'NotStart'
-            StartTime = ''
-            EndTime = ''
-        }
-        InstallDP = @{
-            Status = 'NotStart'
-            StartTime = ''
-            EndTime = ''
-        }
-        InstallMP = @{
-            Status = 'NotStart'
-            StartTime = ''
-            EndTime = ''
+    }
+    else
+    {
+        [hashtable]$Actions = @{
+            InstallSCCM = @{
+                Status = 'NotStart'
+                StartTime = ''
+                EndTime = ''
+            }
+            UpgradeSCCM = @{
+                Status = 'NotStart'
+                StartTime = ''
+                EndTime = ''
+            }
+            InstallDP = @{
+                Status = 'NotStart'
+                StartTime = ''
+                EndTime = ''
+            }
+            InstallMP = @{
+                Status = 'NotStart'
+                StartTime = ''
+                EndTime = ''
+            }
+            InstallClient = @{
+                Status = 'NotStart'
+                StartTime = ''
+                EndTime = ''
+            }
         }
     }
     $Configuration = New-Object -TypeName psobject -Property $Actions
@@ -55,3 +88,11 @@ $ScriptFile = Join-Path -Path $ProvisionToolPath -ChildPath "InstallDP.ps1"
 $ScriptFile = Join-Path -Path $ProvisionToolPath -ChildPath "InstallMP.ps1"
 
 . $ScriptFile $DomainFullName $DPMPName $Role $ProvisionToolPath
+
+if($ClientName -ne 'Empty')
+{
+    #Install Client
+    $ScriptFile = Join-Path -Path $ProvisionToolPath -ChildPath "InstallClient.ps1"
+
+    . $ScriptFile $DomainFullName $CMUser $ClientName $DPMPName $Role $ProvisionToolPath
+}
