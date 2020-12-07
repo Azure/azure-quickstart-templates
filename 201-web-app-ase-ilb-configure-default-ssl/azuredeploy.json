@@ -2,13 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-         "appServiceEnvironmentName": {
+        "appServiceEnvironmentName": {
             "type": "string",
             "metadata": {
                 "description": "The default SSL certificate will be configured for this App Service Environment."
             }
         },
-        "existingAseLocation": {
+        "location": {
             "type": "string",
             "metadata": {
                 "description": "Set this to the same location as the App Service Environment defined in appServiceEnvironmentName."
@@ -45,31 +45,32 @@
             "apiVersion": "2020-06-01",
             "type": "Microsoft.Web/certificates",
             "name": "[parameters('certificateName')]",
-            "location": "[parameters('existingAseLocation')]",
+            "location": "[parameters('location')]",
             "properties": {
                 "pfxBlob": "[parameters('pfxBlobString')]",
                 "password": "[parameters('password')]",
                 "hostingEnvironmentProfile": {
-                     "id": "[resourceId('Microsoft.Web/hostingEnvironments',parameters('appServiceEnvironmentName'))]"
+                    "id": "[resourceId('Microsoft.Web/hostingEnvironments',parameters('appServiceEnvironmentName'))]"
                 }
-            }
-        },
-        {
-            "apiVersion": "2020-06-01",
-            "type": "Microsoft.Web/hostingEnvironments",
-            "name": "[parameters('appServiceEnvironmentName')]",
-            "location": "[parameters('existingAseLocation')]",
-            "properties": {
-                 "clusterSettings": [
-                      {
-                            "name": "DefaultSslCertificateThumbprint",
-                            "value": "[parameters('certificateThumbprint')]"
-                      }
-                 ]
             },
-            "dependsOn": [
-                "[concat('Microsoft.Web/certificates/',parameters('certificateName'))]"
+            "resources": [
+                {
+                    "apiVersion": "2020-06-01",
+                    "type": "Microsoft.Web/hostingEnvironments",
+                    "name": "[parameters('appServiceEnvironmentName')]",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                        "clusterSettings": [
+                            {
+                                "name": "DefaultSslCertificateThumbprint",
+                                "value": "[parameters('certificateThumbprint')]"
+                            }
+                        ]
+                    },
+                    "dependsOn": [
+                        "[concat(parameters('certificateName'))]"
+                    ]
+                }
             ]
         }
     ]
-}
