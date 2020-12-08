@@ -1,0 +1,170 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "tmpvmName": {
+            "minLength": 1,
+            "type": "String"
+        },
+        "tmpvmAdminUserName": {
+            "minLength": 1,
+            "type": "String"
+        },
+        "tmpvmAdminPassword": {
+            "type": "SecureString"
+        },
+        "tmpvmUbuntuOSVersion": {
+            "defaultValue": "14.04.2-LTS",
+            "allowedValues": [
+                "12.04.5-LTS",
+                "14.04.2-LTS",
+                "15.04"
+            ],
+            "type": "String"
+        },
+        "tmpstorageType": {
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_ZRS",
+                "Standard_GRS",
+                "Standard_RAGRS",
+                "Premium_LRS"
+            ],
+            "type": "String"
+        }
+    },
+    "variables": {
+        "tmpvmImagePublisher": "Canonical",
+        "tmpvmImageOffer": "UbuntuServer",
+        "tmpvmOSDiskName": "tmpvmOSDisk",
+        "tmpvmVmSize": "Standard_A3",
+        "tmpvmVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'tmpnet')]",
+        "tmpvmSubnetRef": "[concat(variables('tmpvmVnetID'), '/subnets/', variables('tmpnetSubnet1Name'))]",
+        "tmpvmStorageAccountContainerName": "vhds",
+        "tmpvmNicName": "[concat(parameters('tmpvmName'), 'NetworkInterface')]",
+        "tmpstorageName": "[concat('tmpstorage', uniqueString(resourceGroup().id))]",
+        "tmpnetPrefix": "10.0.0.0/16",
+        "tmpnetSubnet1Name": "Subnet-1",
+        "tmpnetSubnet1Prefix": "10.0.0.0/24",
+        "tmpnetSubnet2Name": "Subnet-2",
+        "tmpnetSubnet2Prefix": "10.0.1.0/24"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2015-06-15",
+            "name": "[variables('tmpvmNicName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'tmpnet')]"
+            ],
+            "tags": {
+                "displayName": "tmpvmNic"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('tmpvmSubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2015-06-15",
+            "name": "[parameters('tmpvmName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('tmpstorageName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('tmpvmNicName'))]"
+            ],
+            "tags": {
+                "displayName": "tmpvm"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('tmpvmVmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('tmpvmName')]",
+                    "adminUsername": "[parameters('tmpvmAdminUsername')]",
+                    "adminPassword": "[parameters('tmpvmAdminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('tmpvmImagePublisher')]",
+                        "offer": "[variables('tmpvmImageOffer')]",
+                        "sku": "[parameters('tmpvmUbuntuOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "tmpvmOSDisk",
+                        "vhd": {
+                            "uri": "[concat('http://', variables('tmpstorageName'), '.blob.core.windows.net/', variables('tmpvmStorageAccountContainerName'), '/', variables('tmpvmOSDiskName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('tmpvmNicName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2015-06-15",
+            "name": "[variables('tmpstorageName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "tmpstorage"
+            },
+            "properties": {
+                "accountType": "[parameters('tmpstorageType')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2015-06-15",
+            "name": "tmpnet",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "tmpnet"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('tmpnetPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('tmpnetSubnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('tmpnetSubnet1Prefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('tmpnetSubnet2Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('tmpnetSubnet2Prefix')]"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
