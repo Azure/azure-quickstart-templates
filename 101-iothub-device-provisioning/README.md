@@ -10,12 +10,10 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-iothub-device-provisioning/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-iothub-device-provisioning%2Fazuredeploy.json)
-
 [![Deploy to AzureGov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-iothub-device-provisioning%2Fazuredeploy.json)
-
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-iothub-device-provisioning%2Fazuredeploy.json)
 
-This template creates an IoT hub and an IoT Hub Device Provisioning Service, and link the two services together. For more information, go to: https://docs.microsoft.com/azure/iot-hub/.
+This template creates an IoT hub and an IoT Hub Device Provisioning Service, and links the two services together. For more information, go to: https://docs.microsoft.com/azure/iot-hub/. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/iot-dps/quick-setup-auto-provision-rm) article.
 
 If you are new to Azure Iot Hub, see:
 
@@ -27,6 +25,6 @@ If you are new to Azure Iot Hub, see:
 
 If you are new to the template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
 Tags: Azure Iot Hub, Iot Hub, Resource Manager, Resource Manager templates, ARM templates
