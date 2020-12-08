@@ -1,243 +1,131 @@
 {
-   "$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-   "contentVersion":"1.0.0.0",
-   "parameters":{
-      "projectName":{
-         "type":"string",
-         "metadata":{
-            "description":"Specifies a name for generating resource names."
+   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+      "projectName": {
+         "type": "string",
+         "metadata": {
+            "description": "Specifies a name for generating resource names."
          }
       },
-      "adminPassword":{
-         "type":"string",
-         "metadata":{
-            "description":"The password for the Administrator account."
+      "adminPassword": {
+         "type": "string",
+         "metadata": {
+            "description": "The password for the Administrator account."
          }
       },
-      "vmSize":{
-         "type":"string",
-         "defaultValue":"Standard_D2s_v3",
-         "metadata":{
-            "description":"The size of the virtual machine."
+      "vmSize": {
+         "type": "string",
+         "defaultValue": "Standard_D2s_v3",
+         "metadata": {
+            "description": "The size of the virtual machine."
          }
       },
-      "tenantId":{
-         "type":"string",
-         "defaultValue":"[subscription().tenantId]",
-         "metadata":{
-            "description":"Specifies the tenant ID of the subscription. Get using Get-AzureRmSubscription cmdlet or Get Subscription API."
+      "location": {
+         "type": "string",
+         "defaultValue": "[resourceGroup().location]",
+         "metadata": {
+            "description": "Specifies the location for all resources."
          }
       },
-      "storageAccountName":{
-         "type":"string",
-         "defaultValue":"[concat('sa',uniqueString(resourceGroup().id))]",
-         "metadata":{
-            "description":"The name for the storage account to created and associated with the workspace."
+      "adminUsername": {
+         "type": "string",
+         "metadata": {
+            "description": "Specifies a username for the Virtual Machine."
          }
       },
-      "keyVaultName":{
-         "type":"string",
-         "defaultValue":"[concat('kv',uniqueString(resourceGroup().id))]",
-         "metadata":{
-            "description":"These name of key vault to associate with machine learning workspace."
-         }
-      },
-      "workspaceName":{
-         "type":"string",
-         "metadata":{
-            "description":"These name of with Azure Machine Learning Workspace."
-         }
-      },
-      "applicationInsightsName":{
-         "type":"string",
-         "defaultValue":"[concat('ai',uniqueString(resourceGroup().id))]",
-         "metadata":{
-            "description":"These name of application insights to associate with machine learning workspace."
-         }
-      },
-      "location":{
-         "type":"string",
-         "defaultValue":"[resourceGroup().location]",
-         "metadata":{
-            "description":"Specifies the location for all resources."
-         }
-      },
-      "adminUsername":{
-         "type":"string",
-         "metadata":{
-            "description":"Specifies a username for the Virtual Machine."
-         }
-      },
-      "adminPublicKey":{
-         "type":"string",
-         "metadata":{
-            "description":"Specifies the SSH rsa public key file as a string. Use \"ssh-keygen -t rsa -b 2048\" to generate your SSH key pairs."
+      "adminPublicKey": {
+         "type": "string",
+         "metadata": {
+            "description": "Specifies the SSH rsa public key file as a string. Use \"ssh-keygen -t rsa -b 2048\" to generate your SSH key pairs."
          }
       }
    },
-   "variables":{
-      "vNetName":"[concat(parameters('projectName'), '-vnet')]",
-      "vNetAddressPrefixes":"10.0.0.0/16",
-      "vNetSubnetName":"default",
-      "vNetSubnetAddressPrefix":"10.0.0.0/24",
-      "vmName":"[concat(parameters('projectName'), '-vm')]",
-      "publicIPAddressName":"[concat(parameters('projectName'), '-ip')]",
-      "networkInterfaceName":"[concat(parameters('projectName'), '-nic')]",
-      "networkSecurityGroupName":"[concat(parameters('projectName'), '-nsg')]",
-      "networkSecurityGroupName2":"[concat(variables('vNetSubnetName'), '-nsg')]"
+   "variables": {
+      "vNetName": "[concat(parameters('projectName'), '-vnet')]",
+      "vNetAddressPrefixes": "10.0.0.0/16",
+      "vNetSubnetName": "default",
+      "vNetSubnetAddressPrefix": "10.0.0.0/24",
+      "vmName": "[concat(parameters('projectName'), '-vm')]",
+      "publicIPAddressName": "[concat(parameters('projectName'), '-ip')]",
+      "networkInterfaceName": "[concat(parameters('projectName'), '-nic')]",
+      "networkSecurityGroupName": "[concat(parameters('projectName'), '-nsg')]"
    },
-   "resources":[
+   "resources": [
       {
-         "type":"Microsoft.Storage/storageAccounts",
-         "apiVersion":"2019-04-01",
-         "name":"[parameters('storageAccountName')]",
-         "location":"[parameters('location')]",
-         "sku":{
-            "name":"Standard_LRS"
-         },
-         "kind":"StorageV2",
-         "properties":{
-            "encryption":{
-               "services":{
-                  "blob":{
-                     "enabled":true
-                  },
-                  "file":{
-                     "enabled":true
-                  }
-               },
-               "keySource":"Microsoft.Storage"
+         "type": "Microsoft.Resources/deployments",
+         "apiVersion": "2020-06-01",
+         "name": "ml",
+         "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+               "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/modules/machine-learning-workspace/0.9/azuredeploy.json",
+               "contentVersion": "1.0.0.0"
             },
-            "supportsHttpsTrafficOnly":true
+            "parameters": {
+               "location": {
+                  "value": "[parameters('location')]"
+               }
+            }
          }
       },
       {
-         "type":"Microsoft.KeyVault/vaults",
-         "apiVersion":"2019-09-01",
-         "name":"[parameters('keyVaultName')]",
-         "location":"[parameters('location')]",
-         "properties":{
-            "tenantId":"[parameters('tenantId')]",
-            "sku":{
-               "name":"standard",
-               "family":"A"
-            },
-            "accessPolicies":[
-
-            ]
-         }
-      },
-      {
-         "type":"Microsoft.Insights/components",
-         "apiVersion":"2018-05-01-preview",
-         "name":"[parameters('applicationInsightsName')]",
-         "location":"[parameters('location')]",
-         "kind":"web",
-         "properties":{
-            "Application_Type":"web"
-         }
-      },
-      {
-         "type":"Microsoft.MachineLearningServices/workspaces",
-         "apiVersion":"2020-03-01",
-         "name":"[parameters('workspaceName')]",
-         "location":"[parameters('location')]",
-         "dependsOn":[
-            "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]",
-            "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
-            "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
-         ],
-         "identity":{
-            "type":"systemAssigned"
-         },
-         "properties":{
-            "friendlyName":"[parameters('workspaceName')]",
-            "storageAccount":"[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
-            "keyVault":"[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
-            "applicationInsights":"[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
-         }
-      },
-      {
-         "type":"Microsoft.Network/networkSecurityGroups",
-         "apiVersion":"2018-11-01",
-         "name":"[variables('networkSecurityGroupName')]",
-         "location":"[parameters('location')]",
-         "properties":{
-            "securityRules":[
+         "type": "Microsoft.Network/networkSecurityGroups",
+         "apiVersion": "2020-06-01",
+         "name": "[variables('networkSecurityGroupName')]",
+         "location": "[parameters('location')]",
+         "properties": {
+            "securityRules": [
                {
-                  "name":"ssh_rule",
-                  "properties":{
-                     "description":"Locks inbound down to ssh default port 22.",
-                     "protocol":"Tcp",
-                     "sourcePortRange":"*",
-                     "destinationPortRange":"22",
-                     "sourceAddressPrefix":"*",
-                     "destinationAddressPrefix":"*",
-                     "access":"Allow",
-                     "priority":123,
-                     "direction":"Inbound"
+                  "name": "ssh_rule",
+                  "properties": {
+                     "description": "Locks inbound down to ssh default port 22.",
+                     "protocol": "Tcp",
+                     "sourcePortRange": "*",
+                     "destinationPortRange": "22",
+                     "sourceAddressPrefix": "*",
+                     "destinationAddressPrefix": "*",
+                     "access": "Allow",
+                     "priority": 123,
+                     "direction": "Inbound"
                   }
                }
             ]
          }
       },
       {
-         "type":"Microsoft.Network/publicIPAddresses",
-         "apiVersion":"2018-11-01",
-         "name":"[variables('publicIPAddressName')]",
-         "location":"[parameters('location')]",
-         "properties":{
-            "publicIPAllocationMethod":"Dynamic"
+         "type": "Microsoft.Network/publicIPAddresses",
+         "apiVersion": "2020-06-01",
+         "name": "[variables('publicIPAddressName')]",
+         "location": "[parameters('location')]",
+         "properties": {
+            "publicIPAllocationMethod": "Dynamic"
          },
-         "sku":{
-            "name":"Basic"
+         "sku": {
+            "name": "Basic"
          }
       },
       {
-         "comments":"Simple Network Security Group for subnet [variables('vNetSubnetName')]",
-         "type":"Microsoft.Network/networkSecurityGroups",
-         "apiVersion":"2019-08-01",
-         "name":"[variables('networkSecurityGroupName2')]",
-         "location":"[parameters('location')]",
-         "properties":{
-            "securityRules":[
-               {
-                  "name":"default-allow-22",
-                  "properties":{
-                     "priority":1000,
-                     "access":"Allow",
-                     "direction":"Inbound",
-                     "destinationPortRange":"22",
-                     "protocol":"Tcp",
-                     "sourceAddressPrefix":"*",
-                     "sourcePortRange":"*",
-                     "destinationAddressPrefix":"*"
-                  }
-               }
-            ]
-         }
-      },
-      {
-         "type":"Microsoft.Network/virtualNetworks",
-         "apiVersion":"2018-11-01",
-         "name":"[variables('vNetName')]",
-         "location":"[parameters('location')]",
-         "dependsOn":[
-            "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName2'))]"
+         "type": "Microsoft.Network/virtualNetworks",
+         "apiVersion": "2020-06-01",
+         "name": "[variables('vNetName')]",
+         "location": "[parameters('location')]",
+         "dependsOn": [
+            "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
          ],
-         "properties":{
-            "addressSpace":{
-               "addressPrefixes":[
+         "properties": {
+            "addressSpace": {
+               "addressPrefixes": [
                   "[variables('vNetAddressPrefixes')]"
                ]
             },
-            "subnets":[
+            "subnets": [
                {
-                  "name":"[variables('vNetSubnetName')]",
-                  "properties":{
-                     "addressPrefix":"[variables('vNetSubnetAddressPrefix')]",
-                     "networkSecurityGroup":{
-                        "id":"[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName2'))]"
+                  "name": "[variables('vNetSubnetName')]",
+                  "properties": {
+                     "addressPrefix": "[variables('vNetSubnetAddressPrefix')]",
+                     "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
                      }
                   }
                }
@@ -245,26 +133,26 @@
          }
       },
       {
-         "type":"Microsoft.Network/networkInterfaces",
-         "apiVersion":"2018-11-01",
-         "name":"[variables('networkInterfaceName')]",
-         "location":"[parameters('location')]",
-         "dependsOn":[
+         "type": "Microsoft.Network/networkInterfaces",
+         "apiVersion": "2020-06-01",
+         "name": "[variables('networkInterfaceName')]",
+         "location": "[parameters('location')]",
+         "dependsOn": [
             "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
             "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]",
             "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
          ],
-         "properties":{
-            "ipConfigurations":[
+         "properties": {
+            "ipConfigurations": [
                {
-                  "name":"ipconfig1",
-                  "properties":{
-                     "privateIPAllocationMethod":"Dynamic",
-                     "publicIPAddress":{
-                        "id":"[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+                  "name": "ipconfig1",
+                  "properties": {
+                     "privateIPAllocationMethod": "Dynamic",
+                     "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
                      },
-                     "subnet":{
-                        "id":"[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), variables('vNetSubnetName'))]"
+                     "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), variables('vNetSubnetName'))]"
                      }
                   }
                }
@@ -272,66 +160,66 @@
          }
       },
       {
-         "type":"Microsoft.Compute/virtualMachines",
-         "apiVersion":"2018-10-01",
-         "name":"[variables('vmName')]",
-         "location":"[parameters('location')]",
-         "dependsOn":[
+         "type": "Microsoft.Compute/virtualMachines",
+         "apiVersion": "2020-06-01",
+         "name": "[variables('vmName')]",
+         "location": "[parameters('location')]",
+         "dependsOn": [
             "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
          ],
-         "properties":{
-            "hardwareProfile":{
-               "vmSize":"[parameters('vmSize')]"
+         "properties": {
+            "hardwareProfile": {
+               "vmSize": "[parameters('vmSize')]"
             },
-            "osProfile":{
-               "computerName":"[variables('vmName')]",
-               "adminUsername":"[parameters('adminUsername')]",
-               "adminPassword":"[parameters('adminPassword')]",
-               "linuxConfiguration":{
-                  "disablePasswordAuthentication":"false",
-                  "ssh":{
-                     "publicKeys":[
+            "osProfile": {
+               "computerName": "[variables('vmName')]",
+               "adminUsername": "[parameters('adminUsername')]",
+               "adminPassword": "[parameters('adminPassword')]",
+               "linuxConfiguration": {
+                  "disablePasswordAuthentication": false,
+                  "ssh": {
+                     "publicKeys": [
                         {
-                           "path":"[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-                           "keyData":"[parameters('adminPublicKey')]"
+                           "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                           "keyData": "[parameters('adminPublicKey')]"
                         }
                      ]
                   }
                }
             },
-            "storageProfile":{
-               "imageReference":{
-                  "publisher":"Canonical",
-                  "offer":"UbuntuServer",
-                  "sku":"18.04-LTS",
-                  "version":"latest"
+            "storageProfile": {
+               "imageReference": {
+                  "publisher": "Canonical",
+                  "offer": "UbuntuServer",
+                  "sku": "18.04-LTS",
+                  "version": "latest"
                },
-               "osDisk":{
-                  "createOption":"fromImage"
+               "osDisk": {
+                  "createOption": "fromImage"
                }
             },
-            "networkProfile":{
-               "networkInterfaces":[
+            "networkProfile": {
+               "networkInterfaces": [
                   {
-                     "id":"[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+                     "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
                   }
                ]
             }
          }
       }
    ],
-   "outputs":{
-      "workspaceName":{
-         "type":"string",
-         "value":"[parameters('workspaceName')]"
+   "outputs": {
+      "workspaceName": {
+         "type": "string",
+         "value": "[reference('ml').outputs.workspaceName.value]"
       },
-      "adminUsername":{
-         "type":"string",
-         "value":"[parameters('adminUsername')]"
+      "adminUsername": {
+         "type": "string",
+         "value": "[parameters('adminUsername')]"
       },
-      "vmName":{
-         "type":"string",
-         "value":"[variables('vmName')]"
+      "vmName": {
+         "type": "string",
+         "value": "[variables('vmName')]"
       }
    }
 }

@@ -11,7 +11,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ffw-docs-qs%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ffw-docs-qs%2Fazuredeploy.json)
 
-This template deploys an **Azure Firewall** with multiple public IP addresses. The firewall has NAT rules to allow RDP traffic to the two test virtual machines.
+This template deploys an **Azure Firewall** with multiple public IP addresses allocated from a public IP Prefix. The firewall has NAT rules to allow RDP traffic to the two test virtual machines.
 
 The backend virtual machines are *Standard_B2ms* virtual machines running Windows Server 2019.
 

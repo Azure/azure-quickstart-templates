@@ -70,7 +70,7 @@ if (!$IsCloudSupported) {
 }
 
 $validationType = ($metadata | convertfrom-json).validationType
-Write-Output "Sample type from metadata.json: $validationType"
+Write-Output "Validation type from metadata.json: $validationType"
 
 if($validationType -eq "Manual"){
     Write-Host "##vso[task.setvariable variable=validation.type]$validationType"
