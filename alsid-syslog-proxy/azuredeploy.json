@@ -32,6 +32,13 @@
                 "Premium_LRS"
             ],
             "type": "String"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "westeurope",
+            "metadata": {
+                "description": "Location for all resources."
+            }
         }
     },
     "variables": {
@@ -120,6 +127,41 @@
                         }
                     ]
                 }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "VMSetup",
+            "location": "[parameters('location')]",
+            "kind": "AzureCLI",
+            "properties": 
+            {
+                "containerSettings":
+                {
+                    "containerGroupName": "tmpaci"
+                },
+                "storageAccountSettings":
+                {
+                    "storageAccountName": "[variables('tmpstorageName')]",
+                    "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('tmpstorageName')), '2019-06-01').keys[0].value]"
+                },
+                "azCliVersion": "2.0.80",
+                "environmentVariables":
+                [
+                    {
+                        "name": "RESOURCE_GROUP",
+                        "secureValue": "[resourceGroup().name]"
+                    },
+                    {
+                        "name": "VM_NAME",
+                        "secureValue": "[parameters('tmpvmName')]"
+                    }
+                ],
+                "scriptContent": "az login; az vm run-command invoke --resource-group $RESOURCE_GROUP --name $VM_NAME --scripts \"echo $RESOURCE_GROUP $VM_NAME\" --command-id RunShellScript",
+                "supportingScriptUris": [],
+                "timeout": "PT3M",
+                "retentionInterval": "P1D"
             }
         },
         {
