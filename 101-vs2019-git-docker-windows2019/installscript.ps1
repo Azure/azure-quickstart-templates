@@ -6,3 +6,6 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 
 choco install docker-desktop -y
 choco install git vscode -y
+
+## Added a restart 
+Restart-Computer
