@@ -91,6 +91,12 @@ To make sure your template is added to Azure.com index, please follow these guid
 
 ![alt text](/1-CONTRIBUTION-GUIDE/images/namingConvention.png "Files, folders and naming conventions")
 
++ Pull Request Guidelines
+1. A single PR should reference a single template.  There shouldn't be multiple templates being referenced in a single PR
+1. For each PR created the contributor needs to acknowledge the Contribution and Best Practices Guide.
+1. Each PR will run through the [arm-ttk](https://github.com/Azure/arm-ttk) to ensure best practices
+1. Part of the pre-merge checks will be a deployment to both the Public and USGov clouds
+
 ## README.md
 
 The README.md describes your deployment. A good description helps other community members to understand your deployment. The README.md uses [Github Flavored Markdown](https://guides.github.com/features/mastering-markdown/) for formatting text. If you want to add images to your README.md file, store the images in the **images** folder. Reference the images in the README.md with a relative path (e.g. `![alt text](images/namingConvention.png "Files, folders and naming conventions")`). This ensures the link will reference the target repository if the source repository is forked. A good README.md contains the following sections
