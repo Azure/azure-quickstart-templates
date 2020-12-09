@@ -25,12 +25,4 @@ Build containerized applications using both Docker-Desktop and Visual Studio 201
 - Git for Windows
 - Docker Desktop 
 
-Please restart the Virtual machine once deployment is completed. Once restarted, launch Docker-Desktop from start menu. First run of Docker-Desktop would deploy Virtual machine for linux containers. It might add up another 5-10 minutes.
-
-> You might need to add current user to 'docker-user' group
-
-```pwsh
-$ Add-LocalGroupMember -Group "docker-users" -Member $Env:USERNAME
-$ logoff
-## Please reconnect RDP Session
-```
+At your first login, docker-desktop will start preparing Linux VM for docker. It might take 5 minutes. Thereafter it should start (On every login) within few seconds only.
