@@ -198,7 +198,6 @@ configuration ConfigureSPVM
         {
             Name                 = "microsoft-edge"
             Ensure               = "Present"
-            Version              =  83.0.478.61
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
@@ -206,7 +205,6 @@ configuration ConfigureSPVM
         {
             Name                 = "notepadplusplus.install"
             Ensure               = "Present"
-            Version              =  7.9
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
@@ -420,7 +418,8 @@ configuration ConfigureSPVM
             Password                      = $SPAppPoolCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
+            ServicePrincipalNames         = @("HTTP/$SPTrustedSitesName.$($DomainFQDN)", "HTTP/$MySiteHostAlias.$($DomainFQDN)", "HTTP/$HNSC1Alias.$($DomainFQDN)", "HTTP/$SPTrustedSitesName", "HTTP/$MySiteHostAlias", "HTTP/$HNSC1Alias")
+            PsDscRunAsCredential          = $DomainAdminCredsQualified
             DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
@@ -460,8 +459,8 @@ configuration ConfigureSPVM
         cChocoPackageInstaller InstallFiddler
         {
             Name                 = "fiddler"
+            Version              =  5.0.20204.45441
             Ensure               = "Present"
-            Version              =  5.0.20202.18177
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
@@ -727,7 +726,7 @@ configuration ConfigureSPVM
             )
             SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
             ClaimProviderName            = "LDAPCP"
-            #ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
+            ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
             UseWReplyParameter           = $true
             Ensure                       = "Present"
             DependsOn                    = "[SPFarmSolution]InstallLdapcp"
