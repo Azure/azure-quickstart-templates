@@ -1,0 +1,236 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workflows_testapp001_name": {
+			"defaultValue": "testapp001",
+			"type": "String"
+		},
+		"connections_azuremonitorlogs_externalid": {
+			"defaultValue": "[concat(resourceGroup().id,'/providers/Microsoft.Web/connections/azuremonitorlogs')]",
+			"type": "String"
+		},
+		"connections_office365_externalid": {
+			"defaultValue": "[concat(resourceGroup().id, '/providers/Microsoft.Web/connections/office365')]",
+			"type": "String"
+		},
+		"workspace": {
+			"type": "String"
+		},
+		"location": {
+			"defaultValue": "eastus",
+			"type": "String"
+		},
+		"frequency": {
+			"defaultValue": "Month",
+			"type": "String"
+		},
+		"emailId": {
+			"type": "String"
+		},
+        "testparam": {
+			"type": "String"
+		}
+	},
+	"variables": {},
+	"resources": [
+	{
+			"type": "Microsoft.Web/connections",
+			"apiVersion": "2016-06-01",
+			"name": "office365",
+			"location": "[parameters('location')]",
+			"properties": {
+				"api": {
+					"id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/office365')]"
+				},
+				"displayName": "@parameters('$connections')['office365']['connectionName']"
+			}
+		},
+		{
+			"type": "Microsoft.Web/connections",
+			"apiVersion": "2016-06-01",
+			"name": "azuremonitorlogs",
+			"location": "[parameters('location')]",
+			"properties": {
+				"api": {
+					"id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azuremonitorlogs')]"
+				},
+				"displayName": "@parameters('$connections')['azuremonitorlogs']['connectionId']"
+			}
+		},
+		{
+			"type": "Microsoft.Logic/workflows",
+			"apiVersion": "2017-07-01",
+			"name": "[parameters('workflows_testapp001_name')]",
+			"location": "eastus",
+			"dependsOn": [
+				"[resourceId('Microsoft.Web/connections', 'office365')]",
+				"[resourceId('Microsoft.Web/connections', 'azuremonitorlogs')]"
+			],
+			"properties": {
+				"state": "Enabled",
+				"definition": {
+					"$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+					"contentVersion": "1.0.0.0",
+					"parameters": {
+						"$connections": {
+							"defaultValue": {},
+							"type": "Object"
+						}
+					},
+					"triggers": {
+						"Recurrence": {
+							"recurrence": {
+								"frequency": "[parameters('frequency')]",
+								"interval": 1
+							},
+							"type": "Recurrence"
+						}
+					},
+					"actions": {
+						"Initialize_variable": {
+							"runAfter": {
+								"Run_query_and_visualize_results_3": [
+									"Succeeded"
+								]
+							},
+							"type": "InitializeVariable",
+							"inputs": {
+								"variables": [
+									{
+										"name": "PieChart1",
+										"type": "string",
+										"value": "<div>\n<h3> Jobs by Failure Code</h3> \n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results_2')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Jobs by Status </h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results')?['attachmentName']}\" width:\"50px\"/>\n</div>"
+									}
+								]
+							}
+						},
+						"Run_query_and_visualize_results": {
+							"runAfter": {},
+							"type": "ApiConnection",
+							"inputs": {
+								"body": "AddonAzureBackupJobs | summarize arg_max(TimeGenerated,*) by JobUniqueId | summarize count() by JobStatus",
+								"host": {
+									"connection": {
+										"name": "@parameters('$connections')['azuremonitorlogs']['connectionId']"
+									}
+								},
+								"method": "post",
+								"path": "/visualizeQuery",
+								"queries": {
+									"resourcegroups": "[resourceGroup().name]",
+									"resourcename": "[parameters('workspace')]",
+									"resourcetype": "Log Analytics Workspace",
+									"subscriptions": "[subscription().subscriptionId]",
+									"timerange": "Last 24 hours",
+									"visType": "Pie Chart"
+								}
+							}
+						},
+						"Run_query_and_visualize_results_2": {
+							"runAfter": {
+								"Run_query_and_visualize_results": [
+									"Succeeded"
+								]
+							},
+							"type": "ApiConnection",
+							"inputs": {
+								"body": "AddonAzureBackupJobs | summarize arg_max(TimeGenerated,*) by JobUniqueId | summarize count() by JobFailureCode",
+								"host": {
+									"connection": {
+										"name": "@parameters('$connections')['azuremonitorlogs']['connectionId']"
+									}
+								},
+								"method": "post",
+								"path": "/visualizeQuery",
+								"queries": {
+									"resourcegroups": "[resourceGroup().name]",
+									"resourcename": "[parameters('workspace')]",
+									"resourcetype": "Log Analytics Workspace",
+									"subscriptions": "[subscription().subscriptionId]",
+									"timerange": "Last 24 hours",
+									"visType": "Pie Chart"
+								}
+							}
+						},
+						"Run_query_and_visualize_results_3": {
+							"runAfter": {
+								"Run_query_and_visualize_results_2": [
+									"Succeeded"
+								]
+							},
+							"type": "ApiConnection",
+							"inputs": {
+								"body": "[concat('union workspace(''/subscriptions/ef4ab5a7-c2c0-4304-af80-af49f48af3d1/resourceGroups/adbalajiRG4/providers/Microsoft.OperationalInsights/workspaces/adbalajiLA4'').AddonAzureBackupJobs, workspace(''/subscriptions/ef4ab5a7-c2c0-4304-af80-af49f48af3d1/resourceGroups/adbalajiRG4/providers/Microsoft.OperationalInsights/workspaces/adbalajiLAtest'').AddonAzureBackupJobs | summarize arg_max(TimeGenerated,*) by JobUniqueId | project BackupItemUniqueId, JobStartDateTime, JobOperation, JobStatus, ResourceId | where BackupItemUniqueId contains ', '''',parameters('testparam'),'''')]",
+								"host": {
+									"connection": {
+										"name": "@parameters('$connections')['azuremonitorlogs']['connectionId']"
+									}
+								},
+								"method": "post",
+								"path": "/visualizeQuery",
+								"queries": {
+									"resourcegroups": "[resourceGroup().name]",
+									"resourcename": "[parameters('workspace')]",
+									"resourcetype": "Log Analytics Workspace",
+									"subscriptions": "[subscription().subscriptionId]",
+									"timerange": "Last 24 hours",
+									"visType": "Html Table"
+								}
+							}
+						},
+						"Send_an_email_(V2)": {
+							"runAfter": {
+								"Initialize_variable": [
+									"Succeeded"
+								]
+							},
+							"type": "ApiConnection",
+							"inputs": {
+								"body": {
+									"Attachments": [
+										{
+											"ContentBytes": "@{body('Run_query_and_visualize_results_2')?['attachmentContent']}",
+											"Name": "@body('Run_query_and_visualize_results_2')?['attachmentName']"
+										},
+										{
+											"ContentBytes": "@{body('Run_query_and_visualize_results')?['attachmentContent']}",
+											"Name": "@body('Run_query_and_visualize_results')?['attachmentName']"
+										}
+									],
+									"Body": "<p><u><strong>Jobs</strong></u><strong><br>\n<br>\n</strong><strong>@{variables('PieChart1')}</strong><strong><br>\n<br>\n</strong><u><strong>List of Jobs in last 24 hrs</strong></u><strong><br>\n<br>\n</strong><strong>@{base64ToString(body('Run_query_and_visualize_results_3')?['body'])}</strong><strong><br>\n<br>\n</strong><a href=\"https://ms.portal.azure.com/#blade/AppInsightsExtension/UsageNotebookBlade/Type/backup-insights/ComponentId/Microsoft_Azure_RecoveryServices/Source/Microsoft_Azure_RecoveryServices/TimeContext//GalleryResourceType/Microsoft_Azure_RecoveryServices/ConfigurationId/Community-Workbooks%2FAzure%20Backup%2FBackup%20Report/ViewerMode/true\">View detailed report</a> in the Azure portal&nbsp;</p>",
+									"Subject": "(Auto) Azure Backup Report",
+									"To": "[parameters('emailId')]"
+								},
+								"host": {
+									"connection": {
+										"name": "@parameters('$connections')['office365']['connectionId']"
+									}
+								},
+								"method": "post",
+								"path": "/v2/Mail"
+							}
+						}
+					},
+					"outputs": {}
+				},
+				"parameters": {
+					"$connections": {
+						"value": {
+							"azuremonitorlogs": {
+								"connectionId": "[parameters('connections_azuremonitorlogs_externalid')]",
+								"connectionName": "azuremonitorlogs",
+								"id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azuremonitorlogs')]"
+							},
+							"office365": {
+								"connectionId": "[parameters('connections_office365_externalid')]",
+								"connectionName": "office365",
+								"id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/office365')]"
+							}
+						}
+					}
+				}
+			}
+		}
+	]
+}
