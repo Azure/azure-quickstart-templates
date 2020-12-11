@@ -1,79 +1,89 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "iotHubName": {
-      "type": "string",
-      "metadata": {
-        "description": "Specify the name of the Iot hub."
-      }
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "iotHubName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the name of the Iot hub."
+            }
+        },
+        "provisioningServiceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the name of the provisioning service."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specify the location of the resources."
+            }
+        },
+        "skuName": {
+            "type": "string",
+            "defaultValue": "S1",
+            "metadata": {
+                "description": "The SKU to use for the IoT Hub."
+            }
+        },
+        "skuUnits": {
+            "type": "string",
+            "defaultValue": "1",
+            "metadata": {
+                "description": "The number of IoT Hub units."
+            }
+        },
+        "minTLS": {
+            "type": "string",
+            "defaultValue": "1.2",
+            "allowedValues": [
+                "1.0",
+                "1.1",
+                "1.2"
+            ],
+            "metadata": {
+                "description": "Minimum TLS version for the SSL Binding."
+            }
+        }
     },
-    "provisioningServiceName": {
-      "type": "string",
-      "metadata": {
-        "description": "Specify the name of the provisioning service."
-      }
+    "variables": {
+        "iotHubKeyName": "iothubowner"
     },
-    "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Specify the location of the resources."
-      }
-    },
-    "skuName": {
-      "type": "string",
-      "defaultValue": "S1",
-      "metadata": {
-        "description": "The SKU to use for the IoT Hub."
-      }
-    },
-    "skuUnits": {
-      "type": "string",
-      "defaultValue": "1",
-      "metadata": {
-        "description": "The number of IoT Hub units."
-      }
-    },
-    "minTLS" : {
-    "type" : "object",
-    "defaultValue" : { "minTlsVersion" : "1.2" }
-    }
-  },
-  "variables": {
-    "iotHubKeyName": "iothubowner"    
-  },
-  "resources": [
-    {
-      "type": "Microsoft.Devices/IotHubs",
-      "apiVersion": "2020-03-01",
-      "name": "[parameters('iotHubName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "[parameters('skuName')]",
-        "capacity": "[parameters('skuUnits')]"
-      },
-      "properties": "[if(equals(parameters('location'), 'usgovvirginia'), parameters('minTLS'), json('{}'))]"
-    },
-    {
-      "type": "Microsoft.Devices/provisioningServices",
-      "apiVersion": "2020-01-01",
-      "name": "[parameters('provisioningServiceName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "[parameters('skuName')]",
-        "capacity": "[parameters('skuUnits')]"
-      },
-      "dependsOn": [ "[parameters('iotHubName')]" ],
-      "properties": {
-        "iotHubs": [
-          {
-            "connectionString": "[concat('HostName=', reference(resourceId('Microsoft.Devices/Iothubs', parameters('iotHubName'))).hostName, ';SharedAccessKeyName=', variables('iotHubKeyName'), ';SharedAccessKey=', listkeys(resourceId('Microsoft.Devices/Iothubs/Iothubkeys', parameters('iotHubName'), variables('iotHubKeyName')), '2020-03-01').primaryKey)]",
+    "resources": [
+        {
+            "type": "Microsoft.Devices/IotHubs",
+            "apiVersion": "2020-03-01",
+            "name": "[parameters('iotHubName')]",
             "location": "[parameters('location')]",
-            "name": "[reference(resourceId('Microsoft.Devices/Iothubs', parameters('iotHubName'))).hostName]"
-          }
-        ]
-      }
-    }
-  ]
+            "sku": {
+                "name": "[parameters('skuName')]",
+                "capacity": "[parameters('skuUnits')]"
+            },
+            "properties": {
+                "minTlsVersion": "[if(equals(environment().name, 'AzureUSGoverment'), parameters('minTLS'), json('null'))]"
+            }
+        },
+        {
+            "type": "Microsoft.Devices/provisioningServices",
+            "apiVersion": "2020-01-01",
+            "name": "[parameters('provisioningServiceName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('skuName')]",
+                "capacity": "[parameters('skuUnits')]"
+            },
+            "dependsOn": [ "[parameters('iotHubName')]" ],
+            "properties": {
+                "iotHubs": [
+                    {
+                        "connectionString": "[concat('HostName=', reference(resourceId('Microsoft.Devices/Iothubs', parameters('iotHubName'))).hostName, ';SharedAccessKeyName=', variables('iotHubKeyName'), ';SharedAccessKey=', listkeys(resourceId('Microsoft.Devices/Iothubs/Iothubkeys', parameters('iotHubName'), variables('iotHubKeyName')), '2020-03-01').primaryKey)]",
+                        "location": "[parameters('location')]",
+                        "name": "[reference(resourceId('Microsoft.Devices/Iothubs', parameters('iotHubName'))).hostName]"
+                    }
+                ]
+            }
+        }
+    ]
 }
