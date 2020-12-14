@@ -1,5 +1,7 @@
 # SAS 9.4 Visual Analytics/Visual Statistics Quickstart Template for Azure 
 
+**Note:** If you are using the SAS 9.4 Visual Analytics/Visual Statistics Quickstart Template for Azure, be aware that this is a reference architecture and not intended for production use.  The SAS 9.4 VA/VS Quickstart Template for Azure deploys Apache Hadoop.  As stated in our [SAS 9.4 Support for Hadoop policy](https://support.sas.com/en/documentation/third-party-software-reference/9-4/support-for-hadoop.html), SAS does not provide support for the installation or other aspects of the administration and operation of Apache Hadoop.  For support with these issues, please refer to the Apache Hadoop open source community.
+
 This README for SAS 9.4 Visual Analytics (VA)/ Visual Statistics (VS) Quickstart Template for Azure is used to deploy the following SAS Viya products in the Azure cloud:
 
 * SAS Visual Analytics 7.5
@@ -35,7 +37,7 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
 
 By default, Quickstart deployments enable Transport Layer Security (TLS) for secure communication.
 
-This SAS 9.4 Quickstart Template for Azure will take a generic license for SAS 9.4 and deploy SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS 9.4 deployment on the recommended virtual machines (VMs). 
+This SAS 9.4 VA/VS Quickstart Template for Azure will take a generic license for SAS 9.4 and deploy SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS 9.4 deployment on the recommended virtual machines (VMs). 
 
 When you deploy the Quickstart with default parameters in a massively parallel processing (MPP) environment, the following SAS 9.4 environment is built in the Microsoft Azure cloud, shown in Figure 1.   
 
