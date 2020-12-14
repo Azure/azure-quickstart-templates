@@ -35,17 +35,22 @@
                 "description": "The number of IoT Hub units."
             }
         },
-        "requireTLS": {
+        "minTlsVersion": {
             "type": "bool",
-            "defaultValue": false,
+            "defaultValue": "1.2",
+            "allowedValues": [
+                "1.0",
+                "1.1",
+                "1.2"
+            ],
             "metadata": {
-                "description": "Require devices to use TLS 1.2 to access IoT Hub and DPS"
+                "description": "TLS Version required for devices to access IoT Hub and DPS.  If this template is deployed to usgovvirginia, TLS Version 1.2 will be used."
             }
         }
     },
     "variables": {
         "iotHubKeyName": "iothubowner",
-        "minTlsVersion" : "1.2" 
+        "minTlsVersion" : "[if(equals(replace(parameters('location'), ' ', ''), 'usgovvirginia'), '1.2', parameters('minTlsVersion'))]" 
     },
     "resources": [
         {
@@ -58,7 +63,7 @@
                 "capacity": "[parameters('skuUnits')]"
             },
             "properties": {
-              "minTlsVersion": "[if(parameters('requireTLS'), variables('minTlsVersion'), json('null'))]"
+              "minTlsVersion": "[variables('minTlsVersion')]"
             }
         },
         {
@@ -72,7 +77,6 @@
             },
             "dependsOn": [ "[parameters('iotHubName')]" ],
             "properties": {
-                "minTlsVersion": "[if(parameters('requireTLS'), variables('minTlsVersion'), json('null'))]",
                 "iotHubs": [
                     {
                         "connectionString": "[concat('HostName=', reference(resourceId('Microsoft.Devices/Iothubs', parameters('iotHubName'))).hostName, ';SharedAccessKeyName=', variables('iotHubKeyName'), ';SharedAccessKey=', listkeys(resourceId('Microsoft.Devices/Iothubs/Iothubkeys', parameters('iotHubName'), variables('iotHubKeyName')), '2020-03-01').primaryKey)]",
