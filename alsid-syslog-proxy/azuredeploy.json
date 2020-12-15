@@ -48,34 +48,11 @@
         "tmpnetSubnet1Name": "Subnet-1",
         "tmpnetSubnet1Prefix": "10.0.0.0/24",
         "tmpnetSubnet2Name": "Subnet-2",
-        "tmpnetSubnet2Prefix": "10.0.1.0/24"
+        "tmpnetSubnet2Prefix": "10.0.1.0/24",
+        "publicIPAddressName": "alsid-syslog-IP"
     },
     "resources": [
-        {
-            "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2015-06-15",
-            "name": "[variables('tmpvmNicName')]",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', 'tmpnet')]"
-            ],
-            "tags": {
-                "displayName": "tmpvmNic"
-            },
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig1",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[variables('tmpvmSubnetRef')]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
+
         {
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2015-06-15",
@@ -151,6 +128,17 @@
             ]
         },
         {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-06-01",
+            "name": "[variables('publicIPAddressName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4
+            }
+        },
+        {
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2015-06-15",
             "name": "[variables('tmpstorageName')]",
@@ -189,6 +177,35 @@
                         "name": "[variables('tmpnetSubnet2Name')]",
                         "properties": {
                             "addressPrefix": "[variables('tmpnetSubnet2Prefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2015-06-15",
+            "name": "[variables('tmpvmNicName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'tmpnet')]",
+                "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+            ],
+            "tags": {
+                "displayName": "tmpvmNic"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[resourceId ('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('tmpvmSubnetRef')]"
+                            }
                         }
                     }
                 ]
