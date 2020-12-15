@@ -2,22 +2,14 @@
 
 **Note:** The SAS 9.4 Visual Analytics/Visual Statistics Quickstart Template for Azure is an example architecture only, and is not intended for production use. Specifically, the quickstart provides an example of how SAS 9.4 VA/VS workloads running in a massively parallel processing (MPP) environment with SAS LASR Analytic Server can be run on Azure.  When running in an MPP environment, the SAS 9.4 VA/VS Quickstart Template for Azure deploys Apache Hadoop.  As stated in our [SAS 9.4 Support for Hadoop policy](https://support.sas.com/en/documentation/third-party-software-reference/9-4/support-for-hadoop.html), SAS does not provide support for the installation or administration of Apache Hadoop.  For support with these issues, please refer to the Apache Hadoop open source community.  The intent of the SAS 9.4 VA/VS Quickstart Template for Azure is to provide customers an opportunity to test deployments on the cloud before committing to a lift and shift from their current on-premise deployments.
 
-This README for SAS 9.4 Visual Analytics (VA)/ Visual Statistics (VS) Quickstart Template for Azure is used to deploy the following SAS Viya products in the Azure cloud:
 
-* SAS Visual Analytics 7.5
-
-* SAS Visual Statistics 7.5
-
-This Quickstart is a reference architecture for users who want to deploy the SAS 9.4 VA/VS  platform using cloud-friendly technologies. By deploying the SAS platform in Azure, you get access to SAS analytics visualization and the ability to create powerful statistical models in an Azure-validated environment. 
-
-
-For assistance with SAS software, contact  [SAS Technical Support](https://support.sas.com/en/technical-support.html).   When you contact support, you will be required to provide information, such as your SAS site number, company name, email address, and phone number, that identifies you as a licensed SAS software customer. 
 ## Contents
 1. [Overview](#Overview)
     1. [Costs and Licenses](#Costs)
         1. [SAS 9.4 VA/VS server](#compute)
         1. [SAS 9.4M7 Mid-Tier server](#midtier)
-        1. [SAS 9.4M7 Metadata clustered server](#metadata)        
+        1. [SAS 9.4M7 Metadata clustered server](#metadata)
+1. [Architecture](#architecture)
 1. [Prerequisites](#Prerequisites)
     1. [Create the Blob Shared Access Signature](#create-shared-access-signature)
 1. [Best Practices when Deploying SAS 9.4M7 VA/VS on Microsoft Azure](#best_practices) 
@@ -34,16 +26,15 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
 
 <a name="Overview"></a>
 ## Overview
+This README for SAS 9.4 Visual Analytics (VA)/ Visual Statistics (VS) Quickstart Template for Azure is used to deploy the following SAS Viya products in the Azure cloud:
 
-By default, Quickstart deployments enable Transport Layer Security (TLS) for secure communication.
+* SAS Visual Analytics 7.5
 
-This SAS 9.4 VA/VS Quickstart Template for Azure will take a generic license for SAS 9.4 and deploy SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS 9.4 deployment on the recommended virtual machines (VMs). 
+* SAS Visual Statistics 7.5
 
-When you deploy the Quickstart with default parameters in a massively parallel processing (MPP) environment, the following SAS 9.4 environment is built in the Microsoft Azure cloud, shown in Figure 1.   
+This Quickstart is a reference architecture for users who want to deploy the SAS 9.4 VA/VS  platform using cloud-friendly technologies. By deploying the SAS platform in Azure, you get access to SAS analytics visualization and the ability to create powerful statistical models in an Azure-validated environment. 
 
-![Network Diagram](Azure_9_vavs_quickstart.svg)
-
-Figure 1: Quickstart architecture for SAS 9.4 VA/VS on Azure in an MPP Environment
+For assistance with SAS software, contact  [SAS Technical Support](https://support.sas.com/en/technical-support.html).   When you contact support, you will be required to provide information, such as your SAS site number, company name, email address, and phone number, that identifies you as a licensed SAS software customer. 
 
 <a name="Costs"></a>
 ### Costs and Licenses
@@ -74,29 +65,53 @@ We  recommend that you use one or two of the memory optimized Standard E16s_v3 V
 #### SAS 9.4M7 Metadata clustered server
 We  recommend that you use one or three of the memory optimized Standard E16s_v3 VM size at least.
 
+<a name="architecture"></a>
+## Architecture
+
+This SAS 9.4 VA/VS Quickstart Template for Azure takes a generic license for SAS 9.4 and deploys SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS 9.4 deployment on recommended virtual machines (VMs).  
+
+For details, see [SAS 9.4 Intelligence Platform: Installation and Configuration Guide](https://go.documentation.sas.com/?cdcId=bicdc&cdcVersion=9.4&docsetId=biig&docsetTarget=titlepage.htm&locale=en). 
+
+By default, Quickstart deployments enable Transport Layer Security (TLS) to help ensure that communication between external clients (on the internet) and the load balancer is secure. Likewise, TLS is enabled between the load balancer and the private subnet that contains the SAS 9.4 components. 
+
+Deploying this Quickstart for a new virtual private cloud (VPC) with default parameters in a symmetric multiprocessing (SMP) environment builds the following SAS 9.4 environment in Microsoft Azure, shown in Figure 1.  In SMP environments, the CASInstanceCount parameter is set to one, indicating that only one CAS controller is configured.
+
+Deploying this Quickstart for a new virtual private cloud (VPC) with default parameters in a massively parallel processing (MPP) environment builds the following SAS 9.4 environment in the Microsoft Azure cloud, shown in Figure 2.   In MMP environments, the CASInstanceCount parameter is set to one, indicating that only one CAS controller is configured.
+
+![Network Diagram](Azure_9_vavs_quickstart.svg)
+Figure 2: Quickstart architecture for SAS 9.4 VA/VS on Azure in an MPP Environment
+
 <a name="Prerequisites"></a>
 ## Prerequisites
 
 Before deploying SAS 9.4 VA/VS Quickstart Template for Azure, you must have the following:
-* A Microsoft Azure account if you do not already have one. Request an Azure account at ["CIS Cloud Services"](http://sww.sas.com/sites/it/cloud-services/).
-* A SAS Software Order Confirmation Email that contains the following supported Quickstart products:
-
- 		SAS Visual Analytics 7.5 on Linux
-		SAS Visual Statistics 7.5 on Linux
+* A Microsoft Azure account with Contributor and Admin Roles if you do not already have one. Request an Azure account at ["CIS Cloud Services"](http://sww.sas.com/sites/it/cloud-services/).
         
-* A SAS 9.4M7 VA/VS software order with the depot uploaded to Azure Blob Storage.
-* An Azure blob Shared Access Signature (SAS). See ["Create the Blob Shared Access Signature"](#create-shared-access-signature) for more information. 
+* A SAS 9.4M7 VA/VS software order that contains the following supported Quickstart products: 
 
-**Note:** This is not necessary if you are deploying the SAS 9.4M7 depot that is already uploaded to Azure.
-* A response file that you create with the SAS Deployment Wizard.  See ["Recording a SAS Deployment Wizard Response file"](https://go.documentation.sas.com/?cdcId=bicdc&cdcVersion=9.4&docsetId=biig&docsetTarget=n05023intelplatform00install.htm&locale=en#n05026intelplatform00install) for more information.
-* Sufficient quota of at least 28 Cores, based on four licensed SAS cores in an SMP environment.  In MPP environments, apply this sizing to the CAS workers as well as the CAS controller.
+        SAS Visual Analytics 7.5 on Linux 
+
+        SAS Visual Statistics 7.5 on Linux 
+
+* A software depot that has been downloaded with the SAS Download Manager (per the instructions in the Software Order Email) to a folder similiar to this: /<download_folder_name>/nondist/depot.
+
+* Sufficient quota of at least ## Cores, based on four licensed SAS cores in an SMP environment.  In MPP environments, apply this sizing to the CAS workers as well as the CAS controller.
 
 *  Verification that your required SAS 9.4M7 file upload sizes do not exceed the limits of the Application Gateway. For details about limits, see 
 ["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
 * A resource group that does not already contain a Quickstart deployment. For more information, see ["Resource groups"](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview#resource-groups).
 
+* The software depot must be uploaded to Azure Blob Storage as follows:
+1. Upload the software depot: <waiting on confirmation of these steps that are similiar to uploading Azure mirror to blob storage>
+```
+az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$STORAGEKEY" --destination "$SHARE_NAME" --destination-path "$SUBDIRECTORY_NAME" --source "$(pwd)" 
+```
+2. Create a SAS key that has (at a minimum) List blob and Get blob privileges on the blob store.
+
+3. During deployment, set the DeploymentMirror parameter to the URL of the folder in the Azure blob that is qualified by that SAS key.
+
 <a name="create-shared-access-signature"></a>
-### Create the Blob Shared Access Signature (SAS)
+### Create the Blob Shared Access Signature (SAS) <this section leaving for now but may be removed>
 When you run the deployment, you will need the blob Shared Access Signature (SAS) URL as a parameter. 
 
 Before you run the deployment:
@@ -117,7 +132,7 @@ For details, see ["Using Shared Access Signatures."](https://docs.microsoft.com/
 ## Deployment Steps
 
 <a name="azureportal"></a>
-### Deploy Using the Azure Portal
+### Deploy Using the Azure Portalt 
 
 1. Log into the Azure portal [here](https://portal.azure.com/#home).  
 2. Navigate to the  [Custom Deployment page](https://portal.azure.com/#create/Microsoft.Template/uri/https%3a%2f%2fraw.githubusercontent.com%2fsassoftware%2fazure-quickstart-templates%2fdevelop-sas94m7-VAVS%2fsas-9.4m7-VA%2fazuredeploy.json).
