@@ -34,8 +34,8 @@
             "type": "String"
         },
         "location": {
-            "type": "string",
             "defaultValue": "westeurope",
+            "type": "String",
             "metadata": {
                 "description": "Location for all resources."
             }
@@ -127,28 +127,61 @@
                         }
                     ]
                 }
-            }
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-06-15",
+                    "type": "extensions",
+                    "name": "config-app",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', concat(variables('vmName'),copyindex()))]"
+                    ],
+                    "tags": {
+                        "displayName": "config-app"
+                    },
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Extensions",
+                        "type": "CustomScript",
+                        "typeHandlerVersion": "2.0",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [
+                                "https://raw.githubusercontent.com/Microsoft/dotnet-core-sample-templates/master/dotnet-core-music-linux/scripts/config-music.sh"
+                            ]
+                        },
+                        "protectedSettings": {
+                            "commandToExecute": "sudo touch /test"
+                        }
+                    }
+                }
+            ]
         },
         {
             "type": "Microsoft.Resources/deploymentScripts",
             "apiVersion": "2020-10-01",
             "name": "VMSetup",
             "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('tmpvmName'))]"
+            ],
             "kind": "AzureCLI",
-            "properties": 
-            {
-                "containerSettings":
-                {
+            "identity": {
+                "type": "userAssigned",
+                "userAssignedIdentities": {
+                    "/subscriptions/8c038010-3c7a-40c6-985f-db5e8a04e59f/resourceGroups/Julien_Clement-RG/providers/Microsoft.ManagedIdentity/userAssignedIdentities/tmpid": {}
+                }
+            },
+            "properties": {
+                "containerSettings": {
                     "containerGroupName": "tmpaci"
                 },
-                "storageAccountSettings":
-                {
+                "storageAccountSettings": {
                     "storageAccountName": "[variables('tmpstorageName')]",
                     "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('tmpstorageName')), '2019-06-01').keys[0].value]"
                 },
                 "azCliVersion": "2.0.80",
-                "environmentVariables":
-                [
+                "environmentVariables": [
                     {
                         "name": "RESOURCE_GROUP",
                         "secureValue": "[resourceGroup().name]"
@@ -158,9 +191,9 @@
                         "secureValue": "[parameters('tmpvmName')]"
                     }
                 ],
-                "scriptContent": "az login; az vm run-command invoke --resource-group $RESOURCE_GROUP --name $VM_NAME --scripts \"echo $RESOURCE_GROUP $VM_NAME\" --command-id RunShellScript",
+                "scriptContent": "az login --allow-no-subscriptions -i; az vm run-command invoke --resource-group Julien_Clement-RG --name syslog --scripts \"echo $RESOURCE_GROUP $VM_NAME\" --command-id RunShellScript",
                 "supportingScriptUris": [],
-                "timeout": "PT3M",
+                "timeout": "PT30M",
                 "retentionInterval": "P1D"
             }
         },
