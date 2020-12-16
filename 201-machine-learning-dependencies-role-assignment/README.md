@@ -26,7 +26,7 @@ This command creates role assignment on all the workspace dependencies. Note: ro
 
 ```PowerShell
 
-New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -primaryUserAssignedIdentity "existing-user-assigned-identity" -assignWorkspaceResourceGroup "false" -assignWorkspaceKeyVault "true" -workspaceKeyVault "existing-kv-armid" -assignWorkspaceStorageAccount "true" -workspaceStorageAccount "existing-storage-armid" -assignWorkspaceContainerRegistry "true" -workspaceContainerRegistry "existing-cr-armid" -assignWorkspaceDataBrick "true" -workspaceDataBrick "existing-databrick-armid" -assignWorkspaceCMKKeyVault "true" - workspaceCMKKeyVault "existing-kv-armid"
+New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -primaryUserAssignedIdentity "existing-user-assigned-identity" -assignWorkspaceResourceGroup "false" -assignWorkspaceKeyVault "true" -workspaceKeyVaultName "existing-kv-name" -assignWorkspaceStorageAccount "true" -workspaceStorageAccountName "existing-storage-name" -assignWorkspaceContainerRegistry "true" -workspaceContainerRegistryName "existing-cr-name" -assignWorkspaceDataBrick "true" -workspaceDataBrickName "existing-databrick-name" -assignWorkspaceCMKKeyVault "true" - workspaceCMKKeyVaultName "existing-kv-name"
 ```
 
 
