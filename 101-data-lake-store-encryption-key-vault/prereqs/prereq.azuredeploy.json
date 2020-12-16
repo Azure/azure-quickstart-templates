@@ -80,13 +80,16 @@
             "metadata": {
                 "description": "The name off the key that will contain encryption info for Azure Machine Learning and Cosmos DB."
             }
+        },
+        "objectId": {
+            "type": "string",
+            "metadata": {
+                "description": "ObjectId of the principal deploying the template - access will be granted to the encryption key."
+            }
         }
     },
     "variables": {
         "scriptName": "createKey",
-        "identityName": "scratch",
-        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-        "roleDefinitionName": "[guid(variables('identityName'), variables('roleDefinitionId'))]",
         "keyPermissions": [
             "get",
             "wrapKey",
@@ -94,26 +97,7 @@
         ]
     },
     "resources": [
-        {
-            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-            "name": "[variables('identityName')]",
-            "apiVersion": "2018-11-30",
-            "location": "[parameters('location')]"
-        },
-        {
-            "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "2020-04-01-preview",
-            "name": "[variables('roleDefinitionName')]",
-            "dependsOn": [
-                "[variables('identityName')]"
-            ],
-            "properties": {
-                "roleDefinitionId": "[variables('roleDefinitionId')]",
-                "principalId": "[reference(variables('identityName')).principalId]",
-                "scope": "[resourceGroup().id]",
-                "principalType": "ServicePrincipal"
-            }
-        },
+
         {
             "type": "Microsoft.KeyVault/vaults",
             "name": "[parameters('keyVaultName')]",
@@ -126,7 +110,7 @@
                 "tenantId": "[parameters('tenantId')]",
                 "accessPolicies": [
                     {
-                        "objectId": "[reference(variables('identityName')).principalId]",
+                        "objectId": "[parameters('objectId')]",
                         "tenantId": "[parameters('tenantId')]",
                         "permissions": {
                             "keys": [ "all" ]
@@ -152,21 +136,14 @@
         },
         {
             "type": "Microsoft.Resources/deploymentScripts",
-            "apiVersion": "2019-10-01-preview",
+            "apiVersion": "2020-10-01",
             "name": "[variables('scriptName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[variables('roleDefinitionName')]",
                 "[parameters('keyVaultName')]"
             ],
             "kind": "AzurePowerShell",
-            "identity": {
-                "type": "userAssigned",
-                "userAssignedIdentities": {
-                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]": { /*ttk bug*/
-                    }
-                }
-            },
+
             "properties": {
                 "forceUpdateTag": "1",
                 "azPowerShellVersion": "3.0",
