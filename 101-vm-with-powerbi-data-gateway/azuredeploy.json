@@ -1,0 +1,289 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {
+    "storageType": {
+      "type": "string",
+      "defaultValue": "Premium_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Standard_LRS"
+      ],
+      "metadata": {
+        "description": "Which type of storage you want to use"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "PBIGateway",      
+      "metadata": {
+        "description": "Local name for the VM can be whatever you want"
+      }
+    },
+    "vmAdminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "VM admin user name"
+      }
+    },
+    "vmAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password on VM"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Desired Size of the VM. Any valid option accepted but if you choose premium storage type you must choose a DS class VM size."
+      },
+      "defaultValue": "Standard_DS2"
+    },
+    "dnsLabelPrefix": {
+      "type": "string",
+      "defaultValue": "[concat('vm-', uniqueString(resourceGroup().id))]",      
+      "metadata": {
+        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "aadAppId": {
+      "type": "string",
+      "metadata": {
+        "description": "AAD Application Id"
+      }
+    },
+    "aadAppSecret": {
+      "type": "string",
+      "metadata": {
+        "description": "AAD Application Secret"
+      }
+    },
+    "tenantId": {
+      "type": "string",
+      "defaultValue": "[subscription().tenantId]",            
+      "metadata": {
+        "description": "AAD Tenant Id"
+      }
+    },
+    "gatewayName": {
+      "type": "string",
+      "metadata": {
+        "description": "Power BI Data Gateway name must be unique in subscription"
+      }
+    },
+    "gatewayRegionKey": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",      
+      "metadata": {
+        "description": "Power BI Data Gateway RegionKey eg: northeurope"
+      }
+    },
+    "gatewayRecovery": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Power BI Data Gateway recovery key"
+      }
+    },
+    "gatewayAdminIds": {
+      "type": "string",
+      "metadata": {
+        "description": "Power BI Data Gateway Administrator Ids (comma separted list of AAD Object Ids)"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-with-powerbi-data-gateway/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "storageName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
+    "vnet01Prefix": "10.0.0.0/16",
+    "vnet01Subnet1Name": "Subnet-1",
+    "vnet01Subnet1Prefix": "10.0.0.0/24",
+    "vmImagePublisher": "MicrosoftWindowsServer",
+    "vmImageOffer": "WindowsServer",
+    "vmSKU": "2016-Datacenter",
+    "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Vnet01', variables('Vnet01Subnet1Name'))]",
+    "vmNicName": "[concat(parameters('VMName'), 'NetworkInterface')]",
+    "vmIP01Name": "VMIP01",
+    "setupScriptURL": "[uri(parameters('_artifactsLocation'), concat('setup.ps1', parameters('_artifactsLocationSasToken')))]",
+    "pbiGatewayInstallScriptURL": "[uri(parameters('_artifactsLocation'), concat('pbiGatewayInstall.ps1', parameters('_artifactsLocationSasToken')))]",
+    "logUtilScriptURL": "[uri(parameters('_artifactsLocation'), concat('logUtil.ps1', parameters('_artifactsLocationSasToken')))]"
+  },
+  "resources": [
+    {
+      "name": "[variables('storageName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "Storage01"
+      },
+      "properties": {
+        "accountType": "[parameters('storageType')]"
+      }
+    },
+    {
+      "name": "VNet01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "VNet01"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnet01Prefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vnet01Subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('vnet01Subnet1Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('vmNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', 'Vnet01')]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('vmIP01Name'))]"
+      ],
+      "tags": {
+        "displayName": "VMNic01"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('vmSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmIP01Name'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-03-30",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
+      ],
+      "tags": {
+        "displayName": "VM01"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('vmAdminUsername')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vmImageOffer')]",
+            "sku": "[variables('vmSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('vmName'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "PBIGateway",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+          ],
+          "tags": {
+            "displayName": "PBIGateway"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.10",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[variables('setupScriptURL')]",
+                "[variables('pbiGatewayInstallScriptURL')]",
+                "[variables('logUtilScriptURL')]"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File setup.ps1 -AppId ', parameters('aadAppId'), ' -GatewayName ', parameters('gatewayName'), ' -Secret ' , parameters('aadAppSecret'), ' -TenantId ', parameters('tenantId'), ' -Region ', parameters('gatewayRegionKey'), ' -RecoveryKey ', parameters('gatewayRecovery'), ' -GatewayAdminUserIds ', parameters('gatewayAdminIds'))]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "[variables('vmIP01Name')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "VMIP01"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
