@@ -2,4 +2,4 @@ wget https://raw.githubusercontent.com/AlsidOfficial/azure-quickstart-templates/
 
 mv rsyslog.conf /etc/
 
-systemctl restart rsyslog
+service rsyslog restart
