@@ -11,13 +11,14 @@
         1. [SAS 9.4M7 Metadata clustered server](#metadata)
 1. [Architecture](#architecture)
 1. [Prerequisites](#Prerequisites)
-    1. [Create the Blob Shared Access Signature](#create-shared-access-signature)
 1. [Best Practices when Deploying SAS 9.4M7 VA/VS on Microsoft Azure](#best_practices) 
 1. [Deployment Steps](#Deployment)
     1. [Deploy Using the Azure Portal](#azureportal)
     1. [Deploy Using Mercury Admin Tools](#mercuryadmintools)
 1. [Post Deployment Steps](#PostDeployment)
     1. [Accessing Resources in the Deployment](#accessresources)
+        1. [Check Logs and Services Status](#logsandservices)
+        1. [Obtain SAS VA and SAS Studio URLs](#obtainURLs)
     1. [Restarting Services](#restartservices)
     1. [Running SAS Management Console (SMC)](#smc)
 1. [Troubleshooting](#Troubleshooting)
@@ -47,6 +48,7 @@ The SAS 9.4 VA/VS Quickstart Template for Azure creates three instances, includi
 
 <a name="compute"></a>
 #### SAS 9.4 VA/VS server
+(content under development:  Need sizing recommendations for this QS.  These are from Azure Viya Quickstart.  PD)
 We  recommend that you use at least the memory optimized Standard E16s_v3 VM size.
 
 Here are some recommended example VM sizes based on the number of licensed cores:
@@ -59,10 +61,12 @@ Here are some recommended example VM sizes based on the number of licensed cores
 
 <a name="midtier"></a>
 #### SAS 9.4M7 Mid-Tier server
+(content under development:  Need sizing recommendation.  This came from architecture diagram. PD)
 We  recommend that you use one or two of the memory optimized Standard E16s_v3 VM size at least.
 
 <a name="metadata"></a>
 #### SAS 9.4M7 Metadata clustered server
+(content under development:  Need sizing recommendation.  This came from architecture diagram. PD)
 We  recommend that you use one or three of the memory optimized Standard E16s_v3 VM size at least.
 
 <a name="architecture"></a>
@@ -102,29 +106,11 @@ Before deploying SAS 9.4 VA/VS Quickstart Template for Azure, you must have the 
 * A resource group that does not already contain a Quickstart deployment. For more information, see ["Resource groups"](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview#resource-groups).
 
 * The software depot must be uploaded to Azure Blob Storage as follows:
-1. Upload the software depot: <waiting on confirmation of these steps that are similiar to uploading Azure mirror to blob storage>
+1. Navigate to the directory where the software depot was downloaded.  
+2. Upload the software depot by running this command: 
 ```
 az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$STORAGEKEY" --destination "$SHARE_NAME" --destination-path "$SUBDIRECTORY_NAME" --source "$(pwd)" 
 ```
-2. Create a SAS key that has (at a minimum) List blob and Get blob privileges on the blob store.
-
-3. During deployment, set the DeploymentMirror parameter to the URL of the folder in the Azure blob that is qualified by that SAS key.
-
-<a name="create-shared-access-signature"></a>
-### Create the Blob Shared Access Signature (SAS) <this section leaving for now but may be removed>
-When you run the deployment, you will need the blob Shared Access Signature (SAS) URL as a parameter. 
-
-Before you run the deployment:
-1. Upload the entire software depot to Azure Blob Storage.  Follow the Microsoft Azure instructions to 
-["Create a Container"](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal#create-a-container) and 
-["Upload a Block Blob."](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal#upload-a-block-blob)
-
-2. Create a Shared Access Signature (SAS) token. Follow these steps to create a Service SAS: 
-    * Navigate to the license file blob and select **Generate SAS**, and then click **Generate blob SAS** token and URL.
-    * Make a note of the blob SAS URL for use during deployment.
-    
-For details, see ["Using Shared Access Signatures."](https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1)
-
 <a name="best_practices"></a>
 ## Best Practices when Deploying SAS 9.4M7 VA/VS on Microsoft Azure
 
@@ -140,21 +126,29 @@ For details, see ["Using Shared Access Signatures."](https://docs.microsoft.com/
 
 |Parameter Name|Value|
 |--------------|-----------|
-|Subscription|Use the default subscription (recommended) or provide a valid subscription name.|
-|Resource group|Click *Create new* (recommended) and provide a name for the new group.|
-|Location|Use the default location (recommended).|
-|SAS Depot Location|A SAS 9.4m7 VA/VS depot has been uploaded [here](https://azureviya.blob.core.windows.net/94-deployment-data/vavs97/nondist/depot?sp=rl&st=2020-07-28T13:17:43Z&se=2025-07-28T13:17:00Z&sv=2019-12-12&sr=c&sig=01%2B%2BoiLLo4RYhNRlj9kozsS5oVkT9LiUyeCkCIiP%2FwE%3D). Copy and paste that URL into this field.|
-|Use a New or Existing Virtual Network?|Use a new network (recommended).|
-|Existing Virtual Network Resource Group|Leave blank (recommended).|
+|Subscription|Specifies what subscription to use for the deployment.|
+|Resource group|Specifies what resource group to use. Choose an existing group or click *Create new* and provide a name for the new group.|
+|Region|Defines the Azure region in which the deployment should run.
+|Location|Defines the location in Microsoft Azure where these resources should be created. This is derived from the Resource group.|
+|SAS Depot Location|Specifies the URI of the Azure Blob Store where the software depot was downloaded.|
+|Use a New or Existing Virtual Network?|Specifies whether to use a new or existing network.|
+|Existing Virtual Network Resource Group|Specifies the resource group if using an existing virtual network. Leave blank if using a new network. Otherwise enter the resource group for the existing network|
 |Virtual Network Name|Use the default value (recommended).|
-|Operating System Image|Use the default image which is SUSE Enterprise Linux 12 (recommended).|
-|Mid-Tier VM Name Base| ???????????|
-|Proximity Placement Group Name|Use the default values for all parameters in this range (recommended).|
-|SSH Key for VM Access|Cut and paste a public SSH key into this field.|
-|Allow management from IP address or CIDR block|Use 149.173.0.0/16 to access the deployment from inside the SAS firewall. To access the deployment from outside the SAS firewall, use the IP address of the machine accessing the deployment, followed by “/32” (for example, 123.456.78.9/32).|
-|Deploy Azure Bastion|Use the default (recommended).|
+|Operating System Image|Specifies the operating system to use.  Currently, only SUSE is supported.|
+|Mid-Tier VM Count|Specifies the number of virtual machines (VMs) for the midtier server. Select 1 for a non-clustered midtier server.  Select 2 for a 2 node midtier cluster.
+|Mid-Tier VM Size|Specifies the VM size. Use the default size (recommended).|
+|Visual Analytics Worker Count|Specifies the number of worker instances created for the SAS Visual Analytics controller.| 
+|Visual Analytics Controller Size|(content under development PD)|
+|Visual Analytics Worker Size|(content under development PD)|
+|Proximity Placement Group Name| Specifies the proximity group for instances. For better performance, you might want to place all instances in the same proximity group. You supply the name.|
+|SSH Key for VM Access| Specfies the full SSH public key that will be added to the servers. Cut and paste a public SSH key into this field.|
+|SAS Administration Password|Specifies the password used for SAS authentication. Enter the password for the sasadm@saspw account.|
+|Azure Administration Password|Specifies the password used for OS authentication.  Enter the password for the sasinst account.|
+|Admin Ingress Location|Specifies to allow inbound SSH traffic to the Ansible Controller from this Classless Inter-Domain Routing (CIDR) block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x.|
+|Web Ingress Location| Specfies to allow inbound HTTP traffic to the SAS 9.4 environment from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x.|
+|Deploy Azure Bastion|Specifies to allow users to create a Windows Bastion instance in the deployment.|
 |\_artifacts Location SAS Token|Leave blank.|
-|\_artifacts Location|For deployments using the development templates, use this location: [https://raw.githubusercontent.com/sassoftware/azure-quickstart-templates/develop-sas94m7-VAVS/sas-9.4m7-VA/ ](https://raw.githubusercontent.com/sassoftware/azure-quickstart-templates/develop-sas94m7-VAVS/sas-9.4m7-VA/ )|
+|\_artifacts Location|Use the default value (recommended).|
 
 4. Select *I agree to the terms and conditions stated above* and then select *Purchase*.
 The deployment will begin.  Deployments typically take 2-3 hours to complete. 
@@ -162,7 +156,7 @@ The deployment will begin.  Deployments typically take 2-3 hours to complete.
 <a name="mercuryadmintools"></a>
 ### Deploy Using the Mercury Admin Tools
 
-(content under development:  The mercury-admin tools have not yet been updated for the 9.4m7 deployment.  Also, customer will have the option to use a set of command line tools.)
+(content under development:  Do we still need this?  PD)
 
 <a name="PostDeployment"></a>
 ## Post Deployment Steps
@@ -170,7 +164,10 @@ The deployment will begin.  Deployments typically take 2-3 hours to complete.
 <a name="accessresources"></a>
 ### Accessing Resources in the Deployment
 
-After a deployment successfully completes, you can check the logs and services status by accessing the various VM instances from the jumpvm. 
+<a name="logsandservices"></a>
+#### Check Logs and Services Status
+
+Check the logs and services status by accessing the various VM instances from the jumpvm, as follows: (content under development: What are the correct steps for  checking logs and services status post deployment? Leaving these instructions for now. PD)
 
 1. Obtain the Public IP Address of the jumpvm from the jumpvm’s details: 
 
@@ -205,9 +202,18 @@ After a deployment successfully completes, you can check the logs and services s
    
    SAS is installed in the /sas folder on all VMs. 
 
+<a name="obtainURLs"></a>
+#### Obtain SAS VA and SAS Studio URLs
+
+Obtain the SAS VA and SAS Studio URLs, as follows:
+1. Open the Resource group.
+2. Select "Deployments".by opening the Resource group, selecting “Deployments”, selecting the “azuredeploy” item in the list, then selecting the “Outputs” for that deployment
+3. Select "azuredeploy" from the list.
+4. Select "Outputs" for that deployment.
 
 <a name="restartservices"></a>
 ### Restarting Services
+(content under development: Do we still need this? Should it go in the Troubleshooting section?  PD)
 Some services may not successfully restart when the deployment completes. 
 
 To restart the midtier services, SSH to the midtier-0 VM instance and perform the following steps: 
@@ -219,6 +225,7 @@ cd /sas/config/Lev1
 
 <a name="smc"></a>
 ### Running SAS Management Console (SMC)
+(content under development: Do we still need this?  PD)
 The easiest way to run SMC is to connect to the deployment using X11 port forwarding as follows:
 ```
 ssh -X -i <public key pem file> AzureUser@<jumpvm public IP address>
