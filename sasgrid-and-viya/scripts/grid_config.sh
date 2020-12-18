@@ -18,11 +18,6 @@ domain_name=`facter domain_name`
 res_dir="/opt/sas/resources/responsefiles"
 resource_dir="/opt/sas/resources"
 artifact_loc=`facter artifact_loc`
-#ssl_prop_url=${artifact_loc}properties/ssl_cert.properties
-#plan_file_url=${artifact_loc}properties/plan.xml
-#gridinstall_url=${artifact_loc}properties/grid_install.properties
-#gridconfig_url=${artifact_loc}properties/grid_config.properties
-inst_prop=$/grid_install.properties
 conf_prop=$resource_dir/grid_config.properties
 cert_prop=${resource_dir}/ssl_cert.properties
 
