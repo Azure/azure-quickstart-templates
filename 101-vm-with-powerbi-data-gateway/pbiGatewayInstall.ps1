@@ -29,7 +29,7 @@ Param(
 
 $logger = [TraceLog]::new("$env:SystemDrive\WindowsAzure\Logs\Plugins\Microsoft.Compute.CustomScriptExtension\", "pbiGateway.log")
 
-if(($PSVersionTable).PSVersion.Major -lt 7) {
+if (($PSVersionTable).PSVersion.Major -lt 7) {
     $progressMsg = "Error: This script requires PowerShell v7 or above"
     $logger.Log($progressMsg)
     Write-Error($progressMsg)
@@ -37,7 +37,6 @@ if(($PSVersionTable).PSVersion.Major -lt 7) {
 }
 
 # Install the DataGateway module if not already available
-# ((Get-Module -ListAvailable | Where-Object {$_.Name -eq "Storage"}).Length -eq 0)
 if (!(Get-InstalledModule "DataGateway" -ErrorAction SilentlyContinue)) {
     $progressMsg = "Installing DataGateway PS Module"
     $logger.Log($progressMsg)
@@ -53,11 +52,16 @@ $progressMsg = "Connect to the Data Gateway Service"
 $logger.Log($progressMsg)
 Write-Host($progressMsg)
 $connected = (Connect-DataGatewayServiceAccount -ApplicationId $AppId -ClientSecret $secureClientSecret -Tenant $TenantId)
-if ($null -eq $connected){
+if ($null -eq $connected) {
+    # Surface last error detail
+    $lastError = Resolve-DataGatewayError -Last
+    $logger.Log($lastError.Message)
+    Write-Host($lastError.Message)
+
     $progressMsg = "Error: Connecting to Data Gateway Service"
     $logger.Log($progressMsg)
     Write-Error($progressMsg)
-    exit 1
+    exit 1    
 }
 
 # Check if gateway already installed
@@ -73,7 +77,8 @@ if (!(IsInstalled 'GatewayComponents' $logger)) {
         $logger.Log($progressMsg)
         Write-Host($progressMsg)
         Install-DataGateway -AcceptConditions
-    }else {
+    }
+    else {
         # Use local installer
         $progressMsg = "InstallerLocation: '$InstallerLocation' found"
         $logger.Log($progressMsg)
@@ -82,32 +87,51 @@ if (!(IsInstalled 'GatewayComponents' $logger)) {
     }
 }
 
-# Create the Data Gateway Cluster, returning it's Id
-$newGatewayCluster = $null
-$gatewayClusterId = $null
-$progressMsg = "Creating Data Gateway Cluster: '$GatewayName' in RegionKey: '$RegionKey'"
+# Due to a bug in the DataGeteway PS module only pass in the region to each command if we're not using the default
+$defaultRegionKey = (Get-DataGatewayRegion | Where-Object {$_.IsDefaultPowerBIRegion -eq $true}).RegionKey
+$progressMsg = "Default RegionKey: '$defaultRegionKey'"
+$logger.Log($progressMsg)
+Write-Host($progressMsg)   
+
+# Only splat the RegionKey parameter if it's not been passed or is the default
+$regionKeyParam = @{}
+if ((![string]::IsNullOrEmpty($RegionKey)) -and ($defaultRegionKey -ne $RegionKey)) {
+    $regionKeyParam = @{
+        RegionKey = $RegionKey
+    }
+    $progressMsg = "Creating Data Gateway Cluster: '$GatewayName' in RegionKey: '$RegionKey'"
+} else  {
+    $progressMsg = "Creating Data Gateway Cluster: '$GatewayName' in RegionKey: '$defaultRegionKey' (default)"
+}
 $logger.Log($progressMsg)
 Write-Host($progressMsg)
 
-$newGatewayCluster = (Add-DataGatewayCluster -Name $GatewayName -RecoveryKey $secureRecoveryKey -RegionKey $RegionKey -OverwriteExistingGateway) 
-
-if ($null -eq $newGatewayCluster) {
-    # If Gateway already exists, get the ClusterId (not GatewayId)
-    $gatewayClusterId = (Get-DataGatewayCluster -RegionKey $RegionKey | Where-Object {$_.Name -eq $GatewayName}).Id
-    $progressMsg = "Data Gateway Cluster name '$GatewayName' already exists: '$gatewayClusterId'"
+# Create the Data Gateway Cluster, returning it's Id
+# First check if this cluster already exists & get its ClusterId (not GatewayId)
+$gatewayClusterId = $null
+$gatewayClusterId = (Get-DataGatewayCluster @regionKeyParam | Where-Object { $_.Name -eq $GatewayName }).Id
+if ($null -ne $gatewayClusterId) {
+    $progressMsg = "Data Gateway Cluster name: '$GatewayName' already exists Cluster Id: '$gatewayClusterId'"
     $logger.Log($progressMsg)
     Write-Host($progressMsg)
-}else {
-    # Gateway created ok, get the ClusterId
-    $gatewayClusterId = $newGatewayCluster.GatewayObjectId
-    $progressMsg = "Data Gateway Cluster created Id: '$gatewayClusterId'"
-    $logger.Log($progressMsg)
-    Write-Host($progressMsg)
+} else {
+    # Attempt to create cluster
+    $gatewayClusterId = (Add-DataGatewayCluster @regionKeyParam -Name $GatewayName -RecoveryKey $secureRecoveryKey -OverwriteExistingGateway).GatewayObjectId   
+    if ($null -ne $gatewayClusterId) {
+        $progressMsg = "Data Gateway Cluster name: '$GatewayName' created Cluster Id: '$gatewayClusterId'"
+        $logger.Log($progressMsg)
+        Write-Host($progressMsg)
+    }
 }
 
 # If problem during cluster creation or cluster missing we won't have a ClusterId
 if ($null -eq $gatewayClusterId) {
-    $progressMsg = "Error: Data Gateway Cluster not found, check if Gateway Name: '$GatewayName' already exists and status of Gateway Cluster Id: '$gatewayClusterId'"
+    # Surface last error detail
+    $lastError = Resolve-DataGatewayError -Last
+    $logger.Log($lastError.Message)
+    Write-Host($lastError.Message)
+
+    $progressMsg = "Error: Data Gateway Cluster not created or found, check if Gateway Name: '$GatewayName' already exists, the status and supplied RegionKey: '$RegionKey'"
     $logger.Log($progressMsg)
     Write-Error($progressMsg)
     exit 1
@@ -115,44 +139,56 @@ if ($null -eq $gatewayClusterId) {
 
 # Optionally add additional user as an admin for this data gateway
 if (!([string]::IsNullOrEmpty($GatewayAdminUserIds))) {
-    $progressMsg = "Adding Data Gateway admin user(s): '$GatewayAdminUserIds'"
-    $logger.Log($progressMsg)
-    Write-Host($progressMsg)
-
     $GatewayAdminUserIdArray = $GatewayAdminUserIds -split ','
     $GatewayAdminUserIdArray.foreach{
         [GUID]$userGuid = $PSItem
         $progressMsg = "Adding Data Gateway admin user: '$userGuid'"
         $logger.Log($progressMsg)
         Write-Host($progressMsg)
-        Add-DataGatewayClusterUser -GatewayClusterId $gatewayClusterId -RegionKey $RegionKey -PrincipalObjectId $userGuid -AllowedDataSourceTypes $null -Role Admin
+        Add-DataGatewayClusterUser @regionKeyParam -GatewayClusterId $gatewayClusterId -PrincipalObjectId $userGuid -AllowedDataSourceTypes $null -Role Admin
 
         # Check the user was added ok
-        if ((Get-DataGatewayCluster -Cluster $gatewayClusterId -RegionKey $RegionKey | Select-Object -ExpandProperty Permissions | Where-Object {$_.Id -eq $userGuid}).Length -ne 0) {
+        if ((Get-DataGatewayCluster @regionKeyParam -Cluster $gatewayClusterId | Select-Object -ExpandProperty Permissions | Where-Object { $_.Id -eq $userGuid }).Length -ne 0) {
             $progressMsg = "Data Gateway admin user added"
             $logger.Log($progressMsg)
             Write-Host($progressMsg)
-        }else {
+        }
+        else {
+            # Surface last error detail
+            $lastError = Resolve-DataGatewayError -Last
+            $logger.Log($lastError.Message)
+            Write-Host($lastError.Message)            
+
             $progressMsg = "Warning! Data Gateway admin user not added"
             $logger.Log($progressMsg)
             Write-Warning($progressMsg)
         }
     }
+} else {
+    $progressMsg = "Warning! No additional Data Gateway admins have been set - you will only be able to use the AAD App credentials used to manage this cluster"
+    $logger.Log($progressMsg)
+    Write-Warning($progressMsg)
 }
 
 # Retrieve the cluster status
-$cs = (Get-DataGatewayClusterStatus -GatewayClusterId $gatewayClusterId -RegionKey $RegionKey)
+$cs = (Get-DataGatewayClusterStatus -GatewayClusterId $gatewayClusterId @regionKeyParam)
 $progressMsg = "Cluster '$gatewayClusterId' ClusterStatus: '$($cs.ClusterStatus)' GatewayVersion: '$($cs.GatewayVersion)' GatewayUpgradeState: '$($cs.GatewayUpgradeState)'"
 $logger.Log($progressMsg)
 Write-Host($progressMsg)
 
 # Status other than Live indicates issue
 if ('Live' -ne $cs.ClusterStatus) {
+    # Surface last error detail
+    $lastError = Resolve-DataGatewayError -Last
+    $logger.Log($lastError.Message)
+    Write-Host($lastError.Message)
+
     $progressMsg = "Error: Power BI Gateway not started!"
     $logger.Log($progressMsg)
-    Write-Host($progressMsg)    
+    Write-Host($progressMsg)
     exit 1
-}else {
+}
+else {
     $progressMsg = "Finished pbiGateway.ps1"
     $logger.Log($progressMsg)
     Write-Host($progressMsg)
