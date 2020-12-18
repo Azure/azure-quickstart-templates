@@ -65,15 +65,11 @@ To troubleshoot any Power BI Gateway deployment or configuration errors, check t
 ![image](images/vm_extensions_status.png)
 ![image](images/vm_extensions_status_output.png)
 
-An example of the output within the Azure VM Extension 'Detailed status' is available here: [CustomScriptExtension output](docs/gatewayinstall.json)
-
 If this doesn't help, then remote desktop (RDP) onto the VM and check the logs in the following locations:
 
 - C:\WindowsAzure\Logs\Plugins\Microsoft.Compute.CustomScriptExtension\1.10.9\CustomScriptHandler.log
 - C:\WindowsAzure\Logs\Plugins\Microsoft.Compute.CustomScriptExtension\setup.log
 - C:\WindowsAzure\Logs\Plugins\Microsoft.Compute.CustomScriptExtension\pbiGateway.log
-
-An example of both the [setup.log](docs/setup.log) and [pbigateway.log](docs/pbiGateway.log) have also been included.
 
 You can also check that the PowerShell script files have been successfully downloaded onto the VM in the following location:
 
