@@ -111,6 +111,8 @@ Before deploying SAS 9.4 VA/VS Quickstart Template for Azure, you must have the 
 ```
 az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$STORAGEKEY" --destination "$SHARE_NAME" --destination-path "$SUBDIRECTORY_NAME" --source "$(pwd)" 
 ```
+For more inforation about this command, see ["az storage blob upload-batch"](https://docs.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az_storage_blob_upload_batch).
+
 <a name="best_practices"></a>
 ## Best Practices when Deploying SAS 9.4M7 VA/VS on Microsoft Azure
 
@@ -130,7 +132,7 @@ az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$S
 |Resource group|Specifies what resource group to use. Choose an existing group or click *Create new* and provide a name for the new group.|
 |Region|Defines the Azure region in which the deployment should run.
 |Location|Defines the location in Microsoft Azure where these resources should be created. This is derived from the Resource group.|
-|SAS Depot Location|Specifies the URI of the Azure Blob Store where the software depot was downloaded.|
+|SAS Depot Location|Specifies the URI of the Azure Blob Store where the software depot was uploaded.|
 |Use a New or Existing Virtual Network?|Specifies whether to use a new or existing network.|
 |Existing Virtual Network Resource Group|Specifies the resource group if using an existing virtual network. Leave blank if using a new network. Otherwise enter the resource group for the existing network|
 |Virtual Network Name|Use the default value (recommended).|
@@ -142,8 +144,8 @@ az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$S
 |Visual Analytics Worker Size|(content under development PD)|
 |Proximity Placement Group Name| Specifies the proximity group for instances. For better performance, you might want to place all instances in the same proximity group. You supply the name.|
 |SSH Key for VM Access| Specfies the full SSH public key that will be added to the servers. Cut and paste a public SSH key into this field.|
-|SAS Administration Password|Specifies the password used for SAS authentication. Enter the password for the sasadm@saspw account.|
-|Azure Administration Password|Specifies the password used for OS authentication.  Enter the password for the sasinst account.|
+|SAS Administration Password|Specifies the password used for SAS authentication. Enter the password to be used for the sasadm@saspw account.|
+|Azure Administration Password|Specifies the password used for OS authentication.  Enter the password to be used for the sasinst account.|
 |Admin Ingress Location|Specifies to allow inbound SSH traffic to the Ansible Controller from this Classless Inter-Domain Routing (CIDR) block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x.|
 |Web Ingress Location| Specfies to allow inbound HTTP traffic to the SAS 9.4 environment from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x.|
 |Deploy Azure Bastion|Specifies to allow users to create a Windows Bastion instance in the deployment.|
