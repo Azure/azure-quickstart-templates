@@ -1,3 +1,6 @@
+WORKSPACE_ID=$1
+PRIMARYKEY=$2
+
 wget https://raw.githubusercontent.com/AlsidOfficial/azure-quickstart-templates/alsid-ARM/alsid-syslog-proxy/rsyslog.conf
 
 mv rsyslog.conf /etc/
