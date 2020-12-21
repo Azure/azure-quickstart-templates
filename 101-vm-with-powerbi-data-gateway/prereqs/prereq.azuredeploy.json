@@ -1,0 +1,46 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location for the script resource."
+            }
+        },        
+        "appName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the name of the AAD Application."
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "runBashWithOutputs",
+            "location": "[parameters('location')]",
+            "kind": "AzureCLI",
+            "properties": {
+                "AzCliVersion": "2.15.0",
+                "timeout": "PT30M",
+                "arguments": "[parameters('appName')]",
+                 "scriptContent": "appName=$1;appId=$(az ad sp create-for-rbac --name $appName --query appId --output tsv);appSecret=$(az ad sp create-for-rbac --name $appName --query password --output tsv);json=$( jq -n --arg bn $appId --arg on $appSecret '{appId: $bn, secret: $on}' ); echo $json > $AZ_SCRIPTS_OUTPUT_PATH",
+                "cleanupPreference": "OnSuccess",
+                "retentionInterval": "P1D"
+            }
+        }
+    ],
+    "outputs": {
+        "appId": {
+            "value": "[reference('runBashWithOutputs').outputs.appId]",
+            "type": "string"
+        },
+        "secret": {
+            "value": "[reference('runBashWithOutputs').outputs.secret]",
+            "type": "string"
+        }        
+    }
+}
