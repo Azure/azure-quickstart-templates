@@ -8,26 +8,65 @@
             "metadata": {
                 "description": "The location for the script resource."
             }
-        },        
+        },
         "appName": {
             "type": "string",
             "metadata": {
                 "description": "Specifies the name of the AAD Application."
             }
+        },
+        "utcValue": {
+            "type": "string",
+            "defaultValue": "[utcNow()]"
         }
     },
+    "variables": {
+        "identityName": "scratch",
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "roleDefinitionName": "[guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName')), variables('roleDefinitionId'), resourceGroup().id)]"
+    },
     "resources": [
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "name": "[variables('identityName')]",
+            "apiVersion": "2018-11-30",
+            "location": "[parameters('location')]"
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[variables('roleDefinitionName')]",
+            "dependsOn": [
+                "[variables('identityName')]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('roleDefinitionId')]",
+                "principalId": "[reference(variables('identityName')).principalId]",
+                "scope": "[resourceGroup().id]",
+                "principalType": "ServicePrincipal"
+            }
+        },
         {
             "type": "Microsoft.Resources/deploymentScripts",
             "apiVersion": "2020-10-01",
             "name": "runBashWithOutputs",
             "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('roleDefinitionName')]"
+            ],
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]": {}
+                }
+            },
             "kind": "AzureCLI",
             "properties": {
                 "AzCliVersion": "2.15.0",
+                "forceUpdateTag": "[parameters('utcValue')]",
                 "timeout": "PT30M",
                 "arguments": "[parameters('appName')]",
-                 "scriptContent": "appName=$1;appId=$(az ad sp create-for-rbac --name $appName --query appId --output tsv);appSecret=$(az ad sp create-for-rbac --name $appName --query password --output tsv);json=$( jq -n --arg bn $appId --arg on $appSecret '{appId: $bn, secret: $on}' ); echo $json > $AZ_SCRIPTS_OUTPUT_PATH",
+                "scriptContent": "appName=$1;appInfo=$(az ad sp create-for-rbac --name $appName --output json);appId=$(echo $appInfo | jq .appId);appSecret=$(echo $appInfo | jq .name);json_fmt='{\"result\":{\"appId\":\"%s\",\"appSecret\":\"%s\"}}';printf \"$json_fmt\" \"$appId\" \"$appSecret\" > $AZ_SCRIPTS_OUTPUT_PATH",
                 "cleanupPreference": "OnSuccess",
                 "retentionInterval": "P1D"
             }
@@ -35,11 +74,11 @@
     ],
     "outputs": {
         "appId": {
-            "value": "[reference('runBashWithOutputs').outputs.appId]",
+            "value": "[reference('runBashWithOutputs').outputs.result.appId]",
             "type": "string"
         },
-        "secret": {
-            "value": "[reference('runBashWithOutputs').outputs.secret]",
+        "appSecret": {
+            "value": "[reference('runBashWithOutputs').outputs.result.appSecret]",
             "type": "string"
         }        
     }
