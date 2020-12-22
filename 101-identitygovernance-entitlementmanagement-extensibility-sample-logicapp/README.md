@@ -14,8 +14,15 @@
 
 This template creates a simple logic app with all the authorization policy settings and schema to http trigger that is needed by ELM custom action API.
 
+Below are the parameters that the template expects.
+
+| Name   | Description    |
+|:--- |:---|
+| name  | Name for the logicapp. |
+| catalogId  | CatalogId from entitlement management where you are going to use this logicapp.  |
+
 Then, the arm template will achieve the following:
  * Create a logic app
- * Add suthorization policy settings to verify elm call  
+ * Add authorization policy settings to verify elm call  
  * Policy setting has ELM first party appid (810dcf14-1858-4bf2-8134-4c369fa3235b), to make sure that ELM is calling this logic app.
  * And finally, adds schema to http trigger to match the message schema that is used by ELM
