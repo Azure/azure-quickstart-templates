@@ -1,69 +1,38 @@
 # Alsid Syslog/Sentinel proxy
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/PublicDeployment.svg)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Falsid-syslog-proxy%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Falsid-syslog-proxy%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Falsid-syslog-proxy%2Fazuredeploy.json)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/FairfaxDeployment.svg)
+This template deploys an **Alsid Syslog/Sentinel proxy**. The solution consists of a publicly addressable Ubuntu virtual machine with a **Syslog server** and a **Microsoft Azure Sentinel agent** ready to receive logs from **Alsid for AD**.
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/CredScanResult.svg)
+## Usage instructions
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpath-to-sample%2Fazuredeploy.json)
+### Connect to the server
+You can connect to the server through SSH on port 22.
 
+### Configure Alsid Syslog alerting
+On your **Alsid for AD** portal, go to *System*, *Configuration* and then *Syslog*.
+From there you can create a new Syslog alert toward your Syslog server.
 
-[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpath-to-sample%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpath-to-sample%2Fazuredeploy.json)
+### Configure Sentinel log collection
+The server gathers the log but you still need to configure log collection for your workspace on the azure portal because the Azure CLI doesn't support log collection yet.
+To do this
 
-This template deploys a **solution name**. The **solution name** is a **description**
+Configure the agent to collect the logs.
 
-## Sample overview and deployed resources
+1.  Under workspace advanced settings **Configuration**, select **Data** and then **Custom Logs**
 
-This is an overview of the solution
+2.  Select **Apply below configuration to my machines** and click **Add**.
 
-The following resources are deployed as part of the solution
+4. Upload a sample AFAD Syslog file from the **Linux** machine running the **Syslog** server and click **Next**.
 
-### Resource provider 1
+5. Set the record delimiter to **New Line** if not already the case and click **Next**.
 
-Description Resource Provider 1
+6. Select **Linux** and enter the file path (by default it is /var/log/AlsidForAD.log) to the **Syslog** file, click **+** then **Next**.
 
-+ **Resource type 1A**: Description Resource type 1A
-+ **Resource type 1B**: Description Resource type 1B
-+ **Resource type 1C**: Description Resource type 1C
+7. Set the **Name** to *AlsidForADLog_CL* then click **Done** (Azure automatically adds *_CL* at the end of the name, there must be only one, make sure the name is not *AlsidForADLog_CL_CL*).
 
-### Resource provider 2
+All of theses steps are showcased [here](https://www.youtube.com/watch?v=JwV1uZSyXM4&feature=youtu.be) as an example
 
-Description Resource Provider 2
-
-+ **Resource type 2A**: Description Resource type 2A
-
-### Resource provider 3
-
-Description Resource Provider 3
-
-+ **Resource type 3A**: Description Resource type 3A
-+ **Resource type 3B**: Description Resource type 3B
-
-## Prerequisites
-
-Decscription of the prerequistes for the deployment
-
-## Deployment steps
-
-You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
-
-## Usage
-
-### Connect
-
-How to connect to the solution
-
-#### Management
-
-How to manage the solution
-
-## Notes
-
-Solution notes
-
-`Tags: alsid, syslog, sentinel`
+`Tags: alsid, syslog, sentinel, proxy`
