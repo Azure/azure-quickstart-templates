@@ -2,34 +2,103 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "workflows_BackupReport_LogicApp_BackupInstance_name": {
-            "defaultValue": "BackupReport-LogicApp-BackupInstance",
-            "type": "String"
-        },
-        "workspaces_LaBvtWorkspace_DontUse_externalid": {
-            "defaultValue": "/subscriptions/172424a4-d65f-421e-a8de-197d98aabeba/resourceGroups/testrg/providers/Microsoft.OperationalInsights/workspaces/LaBvtWorkspace-DontUse",
-            "type": "String"
-        },
-        "workspaces_WonderDemoMonitoring_externalid": {
-            "defaultValue": "/subscriptions/ef4ab5a7-c2c0-4304-af80-af49f48af3d1/resourceGroups/WonderDemoMonitoringRG/providers/Microsoft.OperationalInsights/workspaces/WonderDemoMonitoring",
+        "name_prefix": {
+            "defaultValue": "BackupReport-LogicApp",
             "type": "String"
         },
         "connections_azuremonitorlogs_externalid": {
-            "defaultValue": "/subscriptions/172424a4-d65f-421e-a8de-197d98aabeba/resourceGroups/testrg/providers/Microsoft.Web/connections/azuremonitorlogs",
+			"defaultValue": "[concat(resourceGroup().id,'/providers/Microsoft.Web/connections/azuremonitorlogs')]",
             "type": "String"
         },
         "connections_office365_externalid": {
-            "defaultValue": "/subscriptions/172424a4-d65f-421e-a8de-197d98aabeba/resourceGroups/testrg/providers/Microsoft.Web/connections/office365",
+			"defaultValue": "[concat(resourceGroup().id, '/providers/Microsoft.Web/connections/office365')]",
+			"type": "String"
+		},
+		"workspace": {
+			"type": "String"
+		},
+		"workspaceList": {
+			"defaultValue": [
+                "/subscriptions/172424a4-d65f-421e-a8de-197d98aabeba/resourceGroups/testrg/providers/Microsoft.OperationalInsights/workspaces/LaBvtWorkspace-DontUse",
+                "/subscriptions/ef4ab5a7-c2c0-4304-af80-af49f48af3d1/resourceGroups/WonderDemoMonitoringRG/providers/Microsoft.OperationalInsights/workspaces/WonderDemoMonitoring"
+            ],
+			"type": "Array"
+		},
+		"location": {
+			"defaultValue": "eastus",
+			"type": "String"
+		},
+		"frequency": {
+			"defaultValue": "Minute",
+			"type": "String"
+		},
+		"emailId": {
+            "type": "String"
+        },
+		"rangeStart": {
+			"defaultValue": "12/8/2020, 12:00:00.000 AM",
+            "type": "String"
+        },
+		"rangeEnd": {
+			"defaultValue": "12/15/2020, 12:00:00.000 AM",
+            "type": "String"
+        },
+		"vaultSubscriptionList": {
+			"defaultValue": "\"*\"",
+            "type": "String"
+        },		
+		"vaultLocationList": {
+			"defaultValue": "\"*\"",
+            "type": "String"
+        },
+		"vaultList": {
+			"defaultValue": "\"*\"",
+            "type": "String"
+        },
+		"datasourceTypeList": {
+			"defaultValue": "\"*\"",
+            "type": "String"
+        },
+		"excludeLegacyEvent": {
+			"defaultValue": true,
+            "type": "Bool"
+        },
+		"aggregationType": {
+			"defaultValue": "\"Daily\"",
             "type": "String"
         }
     },
     "variables": {},
     "resources": [
         {
+			"type": "Microsoft.Web/connections",
+			"apiVersion": "2016-06-01",
+			"name": "office365",
+			"location": "[parameters('location')]",
+			"properties": {
+				"api": {
+					"id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/office365')]"
+				},
+				"displayName": "@parameters('$connections')['office365']['connectionName']"
+			}
+		},
+		{
+			"type": "Microsoft.Web/connections",
+			"apiVersion": "2016-06-01",
+			"name": "azuremonitorlogs",
+			"location": "[parameters('location')]",
+			"properties": {
+				"api": {
+					"id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azuremonitorlogs')]"
+				},
+				"displayName": "@parameters('$connections')['azuremonitorlogs']['connectionId']"
+			}
+		},
+		{
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2017-07-01",
-            "name": "[parameters('workflows_BackupReport_LogicApp_BackupInstance_name')]",
-            "location": "eastus",
+            "name": "[concat(parameters('name_prefix'), '-Policy')]",
+            "location": "[parameters('location')]",            
             "properties": {
                 "state": "Enabled",
                 "definition": {
@@ -41,49 +110,46 @@
                             "type": "Object"
                         },
                         "AggregationType": {
-                            "defaultValue": "\"Daily\"",
+                            "defaultValue": "[parameters('aggregationType')]",
                             "type": "String"
                         },
                         "DatasourceTypeList": {
-                            "defaultValue": "\"*\"",
+                            "defaultValue": "[parameters('datasourceTypeList')]",
                             "type": "String"
                         },
                         "ExcludeLegacyEvent": {
-                            "defaultValue": false,
+                            "defaultValue": "[parameters('excludeLegacyEvent')]",
                             "type": "Bool"
                         },
                         "RangeEnd": {
-                            "defaultValue": "12/22/2020, 12:00:00.000 AM",
+                            "defaultValue": "[parameters('rangeEnd')]",
                             "type": "String"
                         },
                         "RangeStart": {
-                            "defaultValue": "12/15/2020, 12:00:00.000 AM",
+                            "defaultValue": "[parameters('rangeStart')]",
                             "type": "String"
                         },
                         "VaultList": {
-                            "defaultValue": "\"*\"",
+                            "defaultValue": "[parameters('vaultList')]",
                             "type": "String"
                         },
                         "VaultLocationList": {
-                            "defaultValue": "\"*\"",
+                            "defaultValue": "[parameters('vaultLocationList')]",
                             "type": "String"
                         },
                         "VaultSubscriptionList": {
-                            "defaultValue": "\"*\"",
+                            "defaultValue": "[parameters('vaultSubscriptionList')]",
                             "type": "String"
                         },
                         "WorkSpaceList": {
-                            "defaultValue": [
-                                "[parameters('workspaces_LaBvtWorkspace_DontUse_externalid')]",
-                                "[parameters('workspaces_WonderDemoMonitoring_externalid')]"
-                            ],
+                            "defaultValue": "[parameters('workspaceList')]",
                             "type": "Array"
                         }
                     },
                     "triggers": {
                         "Recurrence": {
                             "recurrence": {
-                                "frequency": "Day",
+								"frequency": "[parameters('frequency')]",
                                 "interval": 10
                             },
                             "type": "Recurrence"
@@ -398,10 +464,10 @@
                                 "method": "post",
                                 "path": "/queryData",
                                 "queries": {
-                                    "resourcegroups": "testrg",
-                                    "resourcename": "LaBvtWorkspace-DontUse",
+                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "172424a4-d65f-421e-a8de-197d98aabeba",
+                                    "subscriptions": "[subscription().subscriptionId]",
                                     "timerange": "Set in query"
                                 }
                             }
@@ -423,11 +489,11 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-                                    "resourcegroups": "testrg",
-                                    "resourcename": "LaBVTWorkspace-DontUse",
+									"resourcegroups": "[resourceGroup().name]",
+									"resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "172424a4-d65f-421e-a8de-197d98aabeba",
-                                    "timerange": "Set in query",
+									"subscriptions": "[subscription().subscriptionId]",
+									"timerange": "Set in query",
                                     "visType": "Time Chart"
                                 }
                             }
@@ -449,11 +515,11 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-                                    "resourcegroups": "testrg",
-                                    "resourcename": "LaBVTWorkspace-DontUse",
+									"resourcegroups": "[resourceGroup().name]",
+									"resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "172424a4-d65f-421e-a8de-197d98aabeba",
-                                    "timerange": "Set in query",
+									"subscriptions": "[subscription().subscriptionId]",
+									"timerange": "Set in query",
                                     "visType": "Time Chart"
                                 }
                             }
@@ -483,7 +549,7 @@
                                     ],
                                     "Body": "<p><u><strong><br>\nBackupInstances Report<br>\n<br>\n</strong></u><u><strong>@{variables('visual')}</strong></u><u><strong><br>\n<br>\n<br>\n</strong></u><br>\n<br>\n</p>",
                                     "Subject": "Policies Report",
-                                    "To": "vijeya@microsoft.com"
+									"To": "[parameters('emailId')]"                                
                                 },
                                 "host": {
                                     "connection": {
@@ -503,12 +569,12 @@
                             "azuremonitorlogs": {
                                 "connectionId": "[parameters('connections_azuremonitorlogs_externalid')]",
                                 "connectionName": "azuremonitorlogs",
-                                "id": "/subscriptions/172424a4-d65f-421e-a8de-197d98aabeba/providers/Microsoft.Web/locations/eastus/managedApis/azuremonitorlogs"
+								"id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azuremonitorlogs')]"
                             },
                             "office365": {
                                 "connectionId": "[parameters('connections_office365_externalid')]",
                                 "connectionName": "office365",
-                                "id": "/subscriptions/172424a4-d65f-421e-a8de-197d98aabeba/providers/Microsoft.Web/locations/eastus/managedApis/office365"
+								"id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/office365')]"
                             }
                         }
                     }
