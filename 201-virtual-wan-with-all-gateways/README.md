@@ -1,6 +1,6 @@
 # Azure Virtual WAN (vWAN) Multi-Hub Deployment
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-1-Virtual-WAN-with-all-gateways%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-virtual-wan-with-all-gateways%2Fazuredeploy.json)
 
 ## Solution Overview
 
@@ -20,7 +20,7 @@ The scenario implemented is exactly the one referenced in the Azure Virtual WAN 
 
 [Azure vWAN Routing Scenario: any-to-Any](https://docs.microsoft.com/azure/virtual-wan/scenario-any-to-any)
 
-:::image type="content" source="Images/AzureVirtualWANArchitectureFigure1.jpg" alt-text="vWAN Architecture":::
+:::image type="content" source="images/azurevirtualwanarchitecturefigure1.jpg" alt-text="vWAN Architecture":::
 
 List of input parameters has been kept at the very minimum, for each one a default value has been provided to expedite sample creation.
 IP addressing scheme can be changed modifying the variables inside the template, default values have been provided based on the architecture diagram above.
@@ -36,11 +36,11 @@ IP addressing scheme can be changed modifying the variables inside the template,
 Due to how vWAN deployment works, the first attempt to run this template is expected to fail.
 It is sufficient to retry the same deployment, but before doing this the Routing Service in each vWAN hub need to be in the deployment state, as shown in the figure below.
 
-:::image type="content" source="Images/AzureVirtualWANRoutingServiceStateFigure2.jpg" alt-text="Routing Service State":::
+:::image type="content" source="images/azurevirtualwanroutingservicestatefigure2.jpg" alt-text="Routing Service State":::
 
 First attempt of template deployment should fail after 5-6 minutes, then 10-15 minutes will be required for the Routing Services to be in ready state. The second attempt will take longer due to the number of gateways and complexity of configuration. During tests, an average duration of 80-90 minutes has been observed, please note that it can vary in your environment.
 
-:::image type="content" source="Images/DeploymentCompleteInAzurePortal.jpg" alt-text="Template Deployment State":::
+:::image type="content" source="images/deploymentcompleteinazureportal.jpg" alt-text="Template Deployment State":::
 
 ## PowerShell Helper Script
 
@@ -52,4 +52,4 @@ It is possible to manage template deployment in order to solve the vWAN first ru
 
 Once the second deployment of the template will be completed, you should see something similar to the image below in your Azure Portal:
 
-:::image type="content" source="Images/vWANResourcesInAzurePortal.jpg" alt-text="vWAN Resources in the Azure Portal":::
+:::image type="content" source="images/vwanresourcesinazureportal.jpg" alt-text="vWAN Resources in the Azure Portal":::
