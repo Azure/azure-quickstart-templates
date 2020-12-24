@@ -2,19 +2,12 @@
 
 #region INIT
 
-function prompt {"$(get-date)> "} 
-
 # Subscription variables #: 
-$SubscriptionName = '<< INSERT YOUR VALUE HERE>>'
 $subscriptionId = '<< INSERT YOUR VALUE HERE>>'
 $TenantId = '<< INSERT YOUR VALUE HERE>>'
-$Environment = 'AzureCloud'
 
 # Login to Azure AAD 
 Connect-AzAccount -Tenant $TenantId -SubscriptionId $subscriptionId
-
-# Set default subscription context
-Set-AzContext -SubscriptionId $subscriptionId
 
 # Resource Variables: #
 $RGname = '<< INSERT YOUR VALUE HERE>>' # resource group name 
@@ -23,7 +16,6 @@ $vWanName = "<< INSERT YOUR VALUE HERE>>" #vWAN name
 $vhub1Name = '<< INSERT YOUR VALUE HERE>>' #vWAN Hub1 name 
 $vhub2Name = '<< INSERT YOUR VALUE HERE>>' #vWAN Hub2 name 
 $templatefilepath = '<< INSERT YOUR VALUE HERE>>' # ARM template downloaded from GitHub
-$paramsfilepath = '<< INSERT YOUR VALUE HERE>>' # Parameters file 
 
 # Create home resource group: #
 New-AzResourceGroup -Name $RGname -Location $location
@@ -64,7 +56,7 @@ do {
      $vHub1 = Get-AzVirtualHub -ResourceGroupName $RGname -Name $vhub1Name
      $vHub2 = Get-AzVirtualHub -ResourceGroupName $RGname -Name $vhub2Name
      Write-Host "Hub Routing Services NOT READY YET...." -ForegroundColor Yellow 
-     Sleep -Seconds 60
+     Start-Sleep -Seconds 60
    }
 while ($vHub1.RoutingState -eq "Provisioning" -or $vHub2.RoutingState -eq "Provisioning")
 
