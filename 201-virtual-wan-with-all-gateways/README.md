@@ -7,7 +7,7 @@
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-virtual-wan-with-all-gateways/FairfaxDeployment.svg)
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-virtual-wan-with-all-gateways/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-virtual-wan-with-all-gatewaysCredScanResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-virtual-wan-with-all-gateways/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-virtual-wan-with-all-gateways%2Fazuredeploy.json)
 
