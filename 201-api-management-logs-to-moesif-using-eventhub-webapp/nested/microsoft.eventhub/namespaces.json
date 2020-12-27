@@ -1,0 +1,159 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "evt_hub_ns_name": {
+            "type": "String",
+            "defaultValue": "demo-event-hub-ns-"
+        },
+        "evt_hub_name": {
+            "type": "String",
+            "defaultValue": "demo-event-hub"
+        },
+        "evt-hub-apim-send-policy": {
+            "type": "String",
+            "defaultValue": "demo-evt-hub-apim-send-policy"
+        },
+        "evt-hub-app-consume-policy": {
+            "type": "String",
+            "defaultValue": "demo-evt-hub-app-consume-policy"
+        },
+        "ehNsSkuName": {
+            "type": "String",
+            "defaultValue": "Basic"
+        },
+        "ehNsSkuTier": {
+            "type": "String",
+            "defaultValue": "Basic"
+        },
+        "ehNsSkuCapacity": {
+            "type": "String",
+            "defaultValue": "1"
+        },
+        "ehNsIsAutoInflateEnabled": {
+            "type": "String",
+            "defaultValue": "false"
+        },
+        "ehNsMaximumThroughputUnits": {
+            "type": "String",
+            "defaultValue": "0"
+        },
+        "ehNsZoneRedundant": {
+            "type": "Bool",
+            "defaultValue": false
+        },
+        "tags": {
+            "type": "Object",
+            "defaultValue": {
+                "purpose": "demo"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "hostnameSuffix": {
+            "type": "string",
+            "defaultValue": "[utcNow('yyyyMMdd-hhmm')]",
+            "metadata": {
+                "description": "Creates a unique suffix for DNS name"
+            }
+        },
+        "ehNsUniqSvcName": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('evt_hub_ns_name'), parameters('hostnameSuffix'))]",
+            "metadata": {
+                "description": "A unique EventHub Namespace that exists in DNS"
+            }
+        }
+    },
+    "variables": {
+        "ehUniqSvcName": "[concat(parameters('ehNsUniqSvcName'), '/', parameters('evt_hub_name'))]",
+        "ehUniqApimSendPolicyName": "[concat(variables('ehUniqSvcName'), '/', parameters('evt-hub-apim-send-policy'))]",
+        "ehUniqAppConsumePolicyName": "[concat(parameters('ehNsUniqSvcName'), '/', parameters('evt-hub-app-consume-policy'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.EventHub/namespaces",
+            "apiVersion": "2018-01-01-preview",
+            "name": "[parameters('ehNsUniqSvcName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "sku": {
+                "name": "[parameters('ehNsSkuName')]",
+                "tier": "[parameters('ehNsSkuTier')]",
+                "capacity": "[parameters('ehNsSkuCapacity')]"
+            },
+            "properties": {
+                "isAutoInflateEnabled": "[parameters('ehNsIsAutoInflateEnabled')]",
+                "maximumThroughputUnits": "[parameters('ehNsMaximumThroughputUnits')]",
+                "zoneRedundant": "[parameters('ehNsZoneRedundant')]"
+            }
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/eventhubs",
+            "apiVersion": "2017-04-01",
+            "name": "[variables('ehUniqSvcName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces', parameters('ehNsUniqSvcName'))]"
+            ],
+            "properties": {
+                "messageRetentionInDays": 1,
+                "partitionCount": 2,
+                "status": "Active"
+            }
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/eventhubs/authorizationRules",
+            "apiVersion": "2017-04-01",
+            "name": "[variables('ehUniqApimSendPolicyName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('ehNsUniqSvcName'), parameters('evt_hub_name'))]"
+            ],
+            "properties": {
+                "rights": [
+                    "Listen",
+                    "Send"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/authorizationRules",
+            "apiVersion": "2017-04-01",
+            "name": "[variables('ehUniqAppConsumePolicyName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces', parameters('ehNsUniqSvcName'))]"
+            ],
+            "properties": {
+                "rights": [
+                    "Manage",
+                    "Listen",
+                    "Send"
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "myEhSendConnStr": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('ehNsUniqSvcName'), parameters('evt_hub_name'), parameters('evt-hub-apim-send-policy')), '2015-08-01').primaryConnectionString]"
+        },
+        "myEhConsumeConnStr": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('ehNsUniqSvcName'), parameters('evt-hub-app-consume-policy')), '2015-08-01').primaryConnectionString]"
+        },
+        "myEhName": {
+            "type": "string",
+            "value": "[parameters('evt_hub_name')]"
+        }
+    }
+}

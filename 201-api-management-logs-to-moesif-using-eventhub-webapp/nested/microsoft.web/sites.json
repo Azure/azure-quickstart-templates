@@ -1,0 +1,227 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "AzureAppServiceName": {
+            "type": "String",
+            "defaultValue": "demo-app-svc-"
+        },
+        "AzureAppServicePlanName": {
+            "type": "String",
+            "defaultValue": "demo-app-svc-plan"
+        },
+        "apimEventHubName": {
+            "type": "string",
+            "defaultValue": "NOT-SET",
+            "metadata": {
+                "description": "ENV VAR APIMEVENTS-EVENTHUB-NAME"
+            }
+        },
+        "apimEventHubCollectorConnStr": {
+            "type": "string",
+            "defaultValue": "NOT-SET",
+            "metadata": {
+                "description": "ENV VAR APIMEVENTS-EVENTHUB-CONNECTIONSTRING"
+            }
+        },
+        "apimEvtStorName": {
+            "type": "string",
+            "defaultValue": "NOT-SET",
+            "metadata": {
+                "description": "ENV VAR APIMEVENTS-STORAGEACCOUNT-NAME"
+            }
+        },
+        "apimEvtStorAcctKey": {
+            "type": "string",
+            "defaultValue": "NOT-SET",
+            "metadata": {
+                "description": "ENV VAR APIMEVENTS-STORAGEACCOUNT-KEY"
+            }
+        },
+        "apimEvtMoesifApplicationId": {
+            "type": "string",
+            "defaultValue": "NOT-SET",
+            "metadata": {
+                "description": "ENV VAR APIMEVENTS-MOESIF-APPLICATION-ID"
+            }
+        },
+        "apimEvtMoesifSessionToken": {
+            "type": "string",
+            "defaultValue": "not-set",
+            "metadata": {
+                "description": "ENV VAR APIMEVENTS-MOESIF-SESSION-TOKEN"
+            }
+        },
+        "apimEvtMoesifApiVersion": {
+            "type": "string",
+            "defaultValue": "v1",
+            "metadata": {
+                "description": "ENV VAR APIMEVENTS-MOESIF-API-VERSION"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "tags": {
+            "type": "Object",
+            "defaultValue": {
+                "purpose": "demo"
+            }
+        },
+        "hostnameSuffix": {
+            "type": "string",
+            "defaultValue": "[utcNow('yyyyMMdd-hhmm')]",
+            "metadata": {
+                "description": "Creates a unique suffix for DNS name"
+            }
+        }
+    },
+    "variables": {
+        "appSvcUniqSvcName": "[concat(parameters('AzureAppServiceName'), parameters('hostnameSuffix'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "name": "[variables('appSvcUniqSvcName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "kind": "app",
+            "properties": {
+                "enabled": true,
+                "hostNameSslStates": [
+                    {
+                        "name": "[concat(variables('appSvcUniqSvcName'), '.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "[concat(variables('appSvcUniqSvcName'), '.scm.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Repository"
+                    }
+                ],
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('AzureAppServicePlanName'))]",
+                "reserved": false,
+                "isXenon": false,
+                "hyperV": false,
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "APIMEVENTS-EVENTHUB-CONNECTIONSTRING",
+                            "value": "[parameters('apimEventHubCollectorConnStr')]"
+                        },
+                        {
+                            "name": "APIMEVENTS-EVENTHUB-NAME",
+                            "value": "[parameters('apimEventHubName')]"
+                        },
+                        {
+                            "name": "APIMEVENTS-STORAGEACCOUNT-NAME",
+                            "value": "[parameters('apimEvtStorName')]"
+                        },
+                        {
+                            "name": "APIMEVENTS-STORAGEACCOUNT-KEY",
+                            "value": "[parameters('apimEvtStorAcctKey')]"
+                        },
+                        {
+                            "name": "APIMEVENTS-MOESIF-APPLICATION-ID",
+                            "value": "[parameters('apimEvtMoesifApplicationId')]"
+                        },
+                        {
+                            "name": "APIMEVENTS-MOESIF-SESSION-TOKEN",
+                            "value": "[parameters('apimEvtMoesifSessionToken')]"
+                        },
+                        {
+                            "name": "APIMEVENTS-MOESIF-API-VERSION",
+                            "value": "[parameters('apimEvtMoesifApiVersion')]"
+                        }
+                    ]
+                },
+                "scmSiteAlsoStopped": false,
+                "clientAffinityEnabled": true,
+                "clientCertEnabled": false,
+                "hostNamesDisabled": false,
+                "containerSize": 0,
+                "dailyMemoryTimeQuota": 0,
+                "httpsOnly": false,
+                "redundancyMode": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(variables('appSvcUniqSvcName'), '/web')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('appSvcUniqSvcName'))]",
+                "[concat('Microsoft.Web/sites/', variables('appSvcUniqSvcName'), '/hostNameBindings/', variables('appSvcUniqSvcName'), '.azurewebsites.net')]"
+            ],
+            "properties": {
+                "netFrameworkVersion": "v5.0",
+                "logsDirectorySizeLimit": 60,
+                "appSettings": [],
+                "numberOfWorkers": 1,
+                "alwaysOn": "true", // Not supported for F1 plan. Fails deployment.
+                "defaultDocuments": [
+                    "Default.htm",
+                    "Default.html",
+                    "Default.asp",
+                    "index.htm",
+                    "hello.htm",
+                    "index.html",
+                    "iisstart.htm",
+                    "default.aspx",
+                    "index.php",
+                    "hostingstart.html"
+                ],
+                "storageAccountUrl": ""
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/hostNameBindings",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(variables('appSvcUniqSvcName'), '/', variables('appSvcUniqSvcName'), '.azurewebsites.net')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('appSvcUniqSvcName'))]"
+            ],
+            "properties": {
+                "siteName": "[variables('appSvcUniqSvcName')]",
+                "hostNameType": "Verified"
+            }
+        }/*,
+        {
+            "apiVersion": "2018-11-01",
+            "name": "[concat(variables('appSvcUniqSvcName'), '/MSDeploy')]",
+            "type": "Microsoft.Web/sites/extensions",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[concat('Microsoft.Web/Sites/', variables('appSvcUniqSvcName'))]",
+                "[concat('Microsoft.Web/Sites/', variables('appSvcUniqSvcName'), '/config/web')]",
+                "[concat('Microsoft.Web/sites/', variables('appSvcUniqSvcName'), '/hostNameBindings/', variables('appSvcUniqSvcName'), '.azurewebsites.net')]"
+            ],
+            "properties": {
+                "addOnPackages": [
+                    {
+                        "packageUri": "[parameters('Apim2MoesifWebjobWebdeployUrl')]",
+                        "AppOffline": true
+                    }
+                ]
+            }
+        }*/
+
+    ],
+    "outputs": {
+        "AppServiceName": {
+            "type": "string",
+            "value": "[variables('appSvcUniqSvcName')]"
+        }
+    }
+}
