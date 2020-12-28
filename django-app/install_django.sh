@@ -6,7 +6,7 @@ apt-get -y update
 apt-get -y install python-setuptools
 
 # install DJango
-easy_install django
+apt-get -y install python-django python-django-common
 
 # install Apache
 apt-get -y install apache2 libapache2-mod-wsgi
@@ -26,6 +26,8 @@ echo "from django.conf.urls import patterns, url
 urlpatterns = patterns('',
     url(r'^$', 'helloworld.views.home', name='home'),
 )" | tee /var/www/helloworld/helloworld/urls.py
+
+sed -i "s|ALLOWED_HOSTS = \[\]|ALLOWED_HOSTS = \['*'\]|" settings.py
 
 # Setup Apache
 echo "<VirtualHost *:80>
