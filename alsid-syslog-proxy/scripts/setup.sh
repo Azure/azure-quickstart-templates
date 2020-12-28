@@ -1,7 +1,8 @@
 WORKSPACE_ID=$1
 PRIMARYKEY=$2
+ARTIFACTS_LOCATION=$3
 
-wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/alsid-syslog-proxy/rsyslog.conf
+wget $ARTIFACTS_LOCATION/rsyslog.conf
 
 mv rsyslog.conf /etc/
 
