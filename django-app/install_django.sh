@@ -3,7 +3,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get -y update
 
 # install Python
-apt-get -y install python3-setuptools
+apt-get -y install python3-setuptools python3-pip
 
 # install DJango
 python3 -m pip install django
