@@ -27,7 +27,7 @@ urlpatterns = patterns('',
     url(r'^$', 'helloworld.views.home', name='home'),
 )" | tee /var/www/helloworld/helloworld/urls.py
 
-sed -i "s|ALLOWED_HOSTS = \[\]|ALLOWED_HOSTS = \['*'\]|" settings.py
+sed -i "s|ALLOWED_HOSTS = \[\]|ALLOWED_HOSTS = \['*'\]|" /var/www/helloworld/helloworld/settings.py
 
 # Setup Apache
 echo "<VirtualHost *:80>
