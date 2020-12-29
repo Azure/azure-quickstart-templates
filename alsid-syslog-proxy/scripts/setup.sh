@@ -20,6 +20,6 @@ snap install --classic certbot
 
 ln -s /snap/bin/certbot /usr/bin/certbot
 
-sudo certbot certonly --standalone --register-unsafely-without-email --domain $DNS_NAME
+sudo certbot certonly --standalone --register-unsafely-without-email -n --agree-tos --domain $DNS_NAME
 
 service rsyslog restart
