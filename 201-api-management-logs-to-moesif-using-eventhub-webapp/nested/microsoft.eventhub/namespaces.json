@@ -3,20 +3,18 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "eventHubNsName": {
-            "type": "String",
-            "defaultValue": "demo-event-hub-ns-"
+            "type": "String"
         },
         "eventHubName": {
-            "type": "String",
-            "defaultValue": "demo-event-hub"
+            "type": "String"
         },
         "eventHubSendPolicyName": {
             "type": "String",
-            "defaultValue": "demo-evt-hub-apim-send-policy"
+            "defaultValue": "evt-hub-apim-send-policy"
         },
         "eventHubListenPolicy": {
             "type": "String",
-            "defaultValue": "demo-evt-hub-app-consume-policy"
+            "defaultValue": "evt-hub-app-consume-policy"
         },
         "ehNsSkuName": {
             "type": "String",
@@ -42,11 +40,16 @@
             "type": "Bool",
             "defaultValue": false
         },
+        "messageRetentionInDays": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Number of days to retain messages in eventhub"
+            }
+        },
         "tags": {
             "type": "Object",
-            "defaultValue": {
-                "purpose": "demo"
-            }
+            "defaultValue": {}
         },
         "location": {
             "type": "string",
@@ -54,26 +57,18 @@
             "metadata": {
                 "description": "Location for all resources."
             }
-        },
-        "hostnameSuffix": {
-            "type": "string",
-            "defaultValue": "[utcNow('yyyyMMdd-hhmm')]",
-            "metadata": {
-                "description": "Creates a unique suffix for DNS name"
-            }
         }
     },
     "variables": {
-        "ehNsUniqSvcName": "[concat(parameters('eventHubNsName'), parameters('hostnameSuffix'))]",
-        "ehUniqSvcName": "[concat(variables('ehNsUniqSvcName'), '/', parameters('eventHubName'))]",
+        "ehUniqSvcName": "[concat(parameters('eventHubNsName'), '/', parameters('eventHubName'))]",
         "ehUniqApimSendPolicyName": "[concat(variables('ehUniqSvcName'), '/', parameters('eventHubSendPolicyName'))]",
-        "ehUniqAppConsumePolicyName": "[concat(variables('ehNsUniqSvcName'), '/', parameters('eventHubListenPolicy'))]"
+        "ehUniqAppListenPolicyName": "[concat(parameters('eventHubNsName'), '/', parameters('eventHubListenPolicy'))]"
     },
     "resources": [
         {
             "type": "Microsoft.EventHub/namespaces",
             "apiVersion": "2018-01-01-preview",
-            "name": "[variables('ehNsUniqSvcName')]",
+            "name": "[parameters('eventHubNsName')]",
             "location": "[parameters('location')]",
             "tags": "[parameters('tags')]",
             "sku": {
@@ -94,10 +89,10 @@
             "location": "[parameters('location')]",
             "tags": "[parameters('tags')]",
             "dependsOn": [
-                "[resourceId('Microsoft.EventHub/namespaces', variables('ehNsUniqSvcName'))]"
+                "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNsName'))]"
             ],
             "properties": {
-                "messageRetentionInDays": 1,
+                "messageRetentionInDays": "[parameters('messageRetentionInDays')]",
                 "partitionCount": 2,
                 "status": "Active"
             }
@@ -109,11 +104,10 @@
             "location": "[parameters('location')]",
             "tags": "[parameters('tags')]",
             "dependsOn": [
-                "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('ehNsUniqSvcName'), parameters('eventHubName'))]"
+                "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNsName'), parameters('eventHubName'))]"
             ],
             "properties": {
                 "rights": [
-                    "Listen",
                     "Send"
                 ]
             }
@@ -121,11 +115,11 @@
         {
             "type": "Microsoft.EventHub/namespaces/authorizationRules",
             "apiVersion": "2017-04-01",
-            "name": "[variables('ehUniqAppConsumePolicyName')]",
+            "name": "[variables('ehUniqAppListenPolicyName')]",
             "location": "[parameters('location')]",
             "tags": "[parameters('tags')]",
             "dependsOn": [
-                "[resourceId('Microsoft.EventHub/namespaces', variables('ehNsUniqSvcName'))]"
+                "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNsName'))]"
             ],
             "properties": {
                 "rights": [
@@ -139,11 +133,11 @@
     "outputs": {
         "eventHubSendConnStr": {
             "type": "string",
-            "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('ehNsUniqSvcName'), parameters('eventHubName'), parameters('eventHubSendPolicyName')), '2015-08-01').primaryConnectionString]"
+            "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('eventHubNsName'), parameters('eventHubName'), parameters('eventHubSendPolicyName')), '2015-08-01').primaryConnectionString]"
         },
         "eventHubListenConnStr": {
             "type": "string",
-            "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('ehNsUniqSvcName'), parameters('eventHubListenPolicy')), '2015-08-01').primaryConnectionString]"
+            "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNsName'), parameters('eventHubListenPolicy')), '2015-08-01').primaryConnectionString]"
         },
         "eventHubName": {
             "type": "string",
