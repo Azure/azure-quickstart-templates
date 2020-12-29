@@ -3,17 +3,6 @@ Analyze access logs from Azure API Management using [Moesif API Analytics](https
 The integration works by logging API calls to an Azure EventHub. An Azure WebJob reads the event hub and sends to Moesif
 [More info on this integration](https://www.moesif.com/implementation/log-http-calls-from-azure-api-management?platform=azure-management).
 
-##### The deployment performs the following tasks:
-- Create Azure Eventhub Namespace, an Eventhub and a policy for Send and for Listen
-- If an existing Azure Api Management instance is provided, create a new logger `log-to-eventhub` named `moesif-log-to-event-hub` for use in Api Management policy xml.
-- Create Storage account to store eventhub consumption checkpoints
-- Create Azure App Service plan and an Azure App Service. Sets environment variables for use by Webjob
-- Create a Webjob (Continuous) that listens for eventhub events (Api Management request/responses) and forwards events to Moesif.
-
-- The Webjob pulls [Moesif/ApimEventProcessor](https://github.com/Moesif/ApimEventProcessor), builds it, and runs it using preset environment variable parameters.
-
-If an existing Azure Api Management is not specified, the `log-to-eventhub` logger is not automatically created. To manually create this logger, utilize the [`nested/microsoft.apimanagement/service/loggers.json` ARM template](nested/microsoft.apimanagement/service/loggers.json)
-
 ## How to install
 
 ### 1. Start Azure Resource Deployment
@@ -104,6 +93,19 @@ That's it! API logs should start showing up after a few minutes.
 ## Manual creation
 
 If you want to create the resources directly, follow [Microsoft's documentation](https://docs.microsoft.com/en-us/azure/api-management/api-management-log-to-eventhub-sample) on configuring Moesif. The example WebJob is available [on GitHub](https://github.com/Moesif/ApimEventProcessor).
+
+## About this template:
+This template performs the following tasks
+
+- Create Azure Eventhub Namespace, an Eventhub and a policy for Send and for Listen
+- If an existing Azure Api Management instance is provided, create a new logger `log-to-eventhub` named `moesif-log-to-event-hub` for use in Api Management policy xml.
+- Create Storage account to store eventhub consumption checkpoints
+- Create Azure App Service plan and an Azure App Service. Sets environment variables for use by Webjob
+- Create a Webjob (Continuous) that listens for eventhub events (Api Management request/responses) and forwards events to Moesif.
+
+- The Webjob pulls [Moesif/ApimEventProcessor](https://github.com/Moesif/ApimEventProcessor), builds it, and runs it using preset environment variable parameters.
+
+If an existing Azure Api Management is not specified, the `log-to-eventhub` logger is not automatically created. To manually create this logger, utilize the [`nested/microsoft.apimanagement/service/loggers.json` ARM template](nested/microsoft.apimanagement/service/loggers.json)
 
 ## Troubleshooting
 
