@@ -114,3 +114,5 @@ If an existing Azure Api Management is not specified, the `log-to-eventhub` logg
 - Ensure the `policy` is set on Api Management Apis
 - Ensure App Service configuration contains correct environment variables. View your App Service/Settings/Configuration/Application settings
 - Review the logs of App Service Webjob named `azure-api-mgmt-logs-2-moesif` and ensure it is running. View your App Service/Settings/WebJobs 
+
+`Tags: Azure API Management, API Management, EventHub, Event Hub, API Gateway, Monitoring, Analytics, Observability, Logs, Logging, API Monitoring, API Analytics, API Logs, API Logging, Moesif, Kong, Tyk, Envoy, WebApp, WebJob, App`
