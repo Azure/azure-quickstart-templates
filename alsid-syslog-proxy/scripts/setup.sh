@@ -3,7 +3,7 @@ PRIMARYKEY=$2
 ARTIFACTS_LOCATION=$3
 DNS_NAME=$4
 
-CERTS_PATH=$/etc/letsencrypt/live/$DNS_NAME/
+CERTS_PATH=/etc/letsencrypt/live/$DNS_NAME/
 
 
 # Install required packages
