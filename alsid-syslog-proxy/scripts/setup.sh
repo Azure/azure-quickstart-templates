@@ -7,6 +7,7 @@ CERTS_PATH=/etc/letsencrypt/live/$DNS_NAME/
 
 
 # Install required packages
+apt update
 apt install rsyslog-gnutls # For TLS support on rsyslog
 
 apt install snapd # Recommended to install certbot
