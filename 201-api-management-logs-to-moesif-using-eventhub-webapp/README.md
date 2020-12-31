@@ -1,4 +1,19 @@
-Analyze access logs from Azure API Management using [Moesif API Analytics](https://www.moesif.com/?language=azure-api-management) without any code changes or redeploy. The integration also provides visibility into rejected requests that never reach your underlying service.
+# Moesif API Analytics for Azure API Management
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-api-management-logs-to-moesif-using-eventhub-webapp/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-api-management-logs-to-moesif-using-eventhub-webapp/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-api-management-logs-to-moesif-using-eventhub-webapp/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-api-management-logs-to-moesif-using-eventhub-webapp/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-api-management-logs-to-moesif-using-eventhub-webapp/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-api-management-logs-to-moesif-using-eventhub-webapp/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-api-management-logs-to-moesif-using-eventhub-webapp%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-api-management-logs-to-moesif-using-eventhub-webapp%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-api-management-logs-to-moesif-using-eventhub-webapp%2Fazuredeploy.json)  
+
+Analyze API logs from Azure API Management using [Moesif API Analytics](https://www.moesif.com/?language=azure-api-management).
+Does not require any modifications to existing Api Management APIs. Just make change to the `policy` XML. Now you can view rejected requests that never reach your underlying service.
 
 The integration works by logging API calls to an Azure EventHub. An Azure WebJob reads the event hub and sends to Moesif
 [More info on this integration](https://www.moesif.com/implementation/log-http-calls-from-azure-api-management?platform=azure-management).
@@ -103,7 +118,7 @@ This template performs the following tasks
 - Create Azure App Service plan and an Azure App Service. Sets environment variables for use by Webjob
 - Create a Webjob (Continuous) that listens for eventhub events (Api Management request/responses) and forwards events to Moesif.
 
-- The Webjob pulls [Moesif/ApimEventProcessor](https://github.com/Moesif/ApimEventProcessor), builds it, and runs it using preset environment variable parameters.
+- The Webjob pulls [Moesif/ApimEventProcessor](https://github.com/Moesif/ApimEventProcessor), builds it, and runs it using preset environment variable parameters. (At present, this webjob is not automatically run. It can be manually launched by deploying arm template [nested/microsoft.web/sites/extensions.json](nested/microsoft.web/sites/extensions.json) and providing it path to zip file [scripts/apim-2-moesif-webjob-webdeploy.zip](scripts/apim-2-moesif-webjob-webdeploy.zip))
 
 If an existing Azure Api Management is not specified, the `log-to-eventhub` logger is not automatically created. To manually create this logger, utilize the [`nested/microsoft.apimanagement/service/loggers.json` ARM template](nested/microsoft.apimanagement/service/loggers.json)
 

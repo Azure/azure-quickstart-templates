@@ -54,13 +54,15 @@
         "moesifSessionToken": "optional",
         "moesifApiVersion": "v1",
         "apiManagementLoggerId": "moesif-log-to-event-hub",
+        "eventHubSendPolicyName": "[concat(parameters('dnsNamePrefix'), '-send-policy')]",
+        "eventHubListenPolicy": "[concat(parameters('dnsNamePrefix'), '-listen-policy')]",
         "azStorageTemplUri": "[concat(parameters('moesifAzureQuickstartTemplateBaseUrl'), '/nested/microsoft.storage/storageaccounts.json')]",
         "azEventHubTemplUri": "[concat(parameters('moesifAzureQuickstartTemplateBaseUrl'), '/nested/microsoft.eventhub/namespaces.json')]",
         "azApiMgmtLoggerInstallTemplUri": "[concat(parameters('moesifAzureQuickstartTemplateBaseUrl'), '/nested/microsoft.apimanagement/service/loggers.json')]",
         "azAppServicePlanTemplUri": "[concat(parameters('moesifAzureQuickstartTemplateBaseUrl'), '/nested/microsoft.web/serverfarms.json')]",
         "azAppServiceTemplUri": "[concat(parameters('moesifAzureQuickstartTemplateBaseUrl'), '/nested/microsoft.web/sites.json')]",
-        "azAppServiceWebJobTemplUri": "[concat(parameters('moesifAzureQuickstartTemplateBaseUrl'), '/nested/microsoft.web/sites/extensions.json')]",
-        "azAppServiceWebJobZipUri": "[concat(parameters('moesifAzureQuickstartTemplateBaseUrl'), '/scripts/apim-2-moesif-webjob-webdeploy.zip')]",
+        //"azAppServiceWebJobTemplUri": "[concat(parameters('moesifAzureQuickstartTemplateBaseUrl'), '/nested/microsoft.web/sites/extensions.json')]",
+        //"azAppServiceWebJobZipUri": "[concat(parameters('moesifAzureQuickstartTemplateBaseUrl'), '/scripts/apim-2-moesif-webjob-webdeploy.zip')]",
         "storageAccountName": "[replace(parameters('dnsNamePrefix'), '-', '')]",
         "apiMgrSpecified": "[greater(length(parameters('existingApiMgmtName')), 0)]",
         "tags": { "purpose": "moesif" }
@@ -103,6 +105,12 @@
                     "eventHubName": {
                         "value": "[parameters('dnsNamePrefix')]"
                     },
+                    "eventHubSendPolicyName": {
+                        "value": "[variables('eventHubSendPolicyName')]"
+                    },
+                    "eventHubListenPolicy": {
+                        "value": "[variables('eventHubListenPolicy')]"
+                    },
                     "tags": {
                         "value": "[variables('tags')]"
                     }
@@ -130,8 +138,14 @@
                     "logToEventhubLoggerId": {
                         "value": "[variables('apiManagementLoggerId')]"
                     },
-                    "eventHubLoggerConnStr": {
-                        "value": "[reference('eventhub-deploy').outputs.eventHubSendConnStr.value]"
+                    "eventHubNS": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "eventHubName": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "eventHubPolicyName": {
+                        "value": "[variables('eventHubSendPolicyName')]"
                     },
                     "tags": {
                         "value": "[variables('tags')]"
@@ -150,7 +164,13 @@
                         "logToEventhubLoggerId": {
                             "type": "string"
                         },
-                        "eventHubLoggerConnStr": {
+                        "eventHubNS": {
+                            "type": "string"
+                        },
+                        "eventHubName": {
+                            "type": "string"
+                        },
+                        "eventHubPolicyName": {
                             "type": "string"
                         },
                         "tags": {
@@ -160,15 +180,11 @@
                             "type": "string"
                         }
                     },
-                    "functions": [],
-                    "variables": {},
                     "resources": [
                         {
                             "type": "Microsoft.Resources/deployments",
                             "apiVersion": "2019-10-01",
                             "name": "api-management-logger-deploy",
-                            "dependsOn": [
-                            ],
                             "properties": {
                                 "mode": "Incremental",
                                 "templateLink": {
@@ -183,7 +199,7 @@
                                         "value": "[parameters('logToEventhubLoggerId')]"
                                     },
                                     "eventHubLoggerConnStr": {
-                                        "value": "[parameters('eventHubLoggerConnStr')]"
+                                        "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('eventHubNS'), parameters('eventHubName'), parameters('eventHubPolicyName')), '2017-04-01').primaryConnectionString]"
                                     },
                                     "tags": {
                                         "value": "[parameters('tags')]"
@@ -240,17 +256,17 @@
                     "appServicePlanName": {
                         "value": "[parameters('dnsNamePrefix')]"
                     },
-                    "apimEventHubName": {
-                        "value": "[reference('eventhub-deploy').outputs.eventHubName.value]"
+                    "eventHubNamespace": {
+                        "value": "[parameters('dnsNamePrefix')]"
                     },
-                    "apimEventHubCollectorConnStr": {
-                        "value": "[reference('eventhub-deploy').outputs.eventHubListenConnStr.value]"
+                    "eventHubName": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "eventHubListenPolicy": {
+                        "value": "[variables('eventHubListenPolicy')]"
                     },
                     "apimEvtStorName": {
-                        "value": "[reference('storage-deploy').outputs.storName.value]"
-                    },
-                    "apimEvtStorAcctKey": {
-                        "value": "[reference('storage-deploy').outputs.storAcctKey.value]"
+                        "value": "[variables('storageAccountName')]"
                     },
                     "apimEvtMoesifApplicationId": {
                         "value": "[parameters('moesifApplicationId')]"
@@ -266,7 +282,7 @@
                     }
                 }
             }
-        },
+        }/*,
         {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
@@ -289,7 +305,7 @@
                     }
                 }
             }
-        }
+        }*/
     ],
     "outputs": {
         "logToEventhubLoggerId": {

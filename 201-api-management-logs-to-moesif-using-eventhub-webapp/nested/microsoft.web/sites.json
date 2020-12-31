@@ -3,29 +3,34 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "appServiceName": {
-            "type": "String",
+            "type": "string",
             "metadata": {
                 "description": "The name to be given to this new App Service. This value is used in DNS and must be unique."
             }
         },
         "appServicePlanName": {
-            "type": "String",
+            "type": "string",
             "metadata": {
                 "description": "The name of an existing App Service plan for which the App Service will be created"
             }
         },
-        "apimEventHubName": {
+        "eventHubNamespace": {
+            "type": "string",
+            "metadata": {
+                "description": "sets environment variable APIMEVENTS-EVENTHUB-NAME"
+            }
+        },
+        "eventHubName": {
             "type": "string",
             "defaultValue": "<please set this environment variable value>",
             "metadata": {
                 "description": "Sets environment variable APIMEVENTS-EVENTHUB-NAME"
             }
         },
-        "apimEventHubCollectorConnStr": {
+        "eventHubListenPolicy": {
             "type": "string",
-            "defaultValue": "<please set this environment variable value>",
             "metadata": {
-                "description": "Sets environment variable APIMEVENTS-EVENTHUB-NAME"
+                "description": "Name of Event Hubs Namespace listen policy. Found in EventHubNamespace/Settings/Shared access policies: eg 'moesiflogaaaaaa-listen-policy'"
             }
         },
         "apimEvtStorName": {
@@ -33,13 +38,6 @@
             "defaultValue": "<please set this environment variable value>",
             "metadata": {
                 "description": "Sets environment variable APIMEVENTS-STORAGEACCOUNT-NAME"
-            }
-        },
-        "apimEvtStorAcctKey": {
-            "type": "string",
-            "defaultValue": "<please set this environment variable value>",
-            "metadata": {
-                "description": "Sets environment variable APIMEVENTS-STORAGEACCOUNT-KEY"
             }
         },
         "apimEvtMoesifApplicationId": {
@@ -63,19 +61,21 @@
                 "description": "Sets environment variable APIMEVENTS-MOESIF-API-VERSION"
             }
         },
+        "tags": {
+            "type": "Object",
+            "defaultValue": {}
+        },
         "location": {
             "type": "string",
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
-                "description": "Location for all resources."
+                "description": "Location for all resources. eg 'westus2'"
             }
-        },
-        "tags": {
-            "type": "Object",
-            "defaultValue": {}
         }
     },
-    "variables": {},
+    "variables": {
+        "appServiceHostName": "[concat(parameters('appServiceName'), '.azurewebsites.net')]"
+    },
     "resources": [
         {
             "type": "Microsoft.Web/sites",
@@ -106,11 +106,11 @@
                     "appSettings": [
                         {
                             "name": "APIMEVENTS-EVENTHUB-CONNECTIONSTRING",
-                            "value": "[parameters('apimEventHubCollectorConnStr')]"
+                            "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespace'), parameters('eventHubListenPolicy')), '2017-04-01').primaryConnectionString]"
                         },
                         {
                             "name": "APIMEVENTS-EVENTHUB-NAME",
-                            "value": "[parameters('apimEventHubName')]"
+                            "value": "[parameters('eventHubName')]"
                         },
                         {
                             "name": "APIMEVENTS-STORAGEACCOUNT-NAME",
@@ -118,7 +118,7 @@
                         },
                         {
                             "name": "APIMEVENTS-STORAGEACCOUNT-KEY",
-                            "value": "[parameters('apimEvtStorAcctKey')]"
+                            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('apimEvtStorName')), '2019-06-01').keys[0].value]"
                         },
                         {
                             "name": "APIMEVENTS-MOESIF-APPLICATION-ID",
@@ -152,12 +152,11 @@
             "tags": "[parameters('tags')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('appServiceName'))]",
-                "[concat('Microsoft.Web/sites/', parameters('appServiceName'), '/hostNameBindings/', parameters('appServiceName'), '.azurewebsites.net')]"
+                "[resourceId('Microsoft.Web/sites/hostNameBindings', parameters('appServiceName'), variables('appServiceHostName'))]"
             ],
             "properties": {
                 "netFrameworkVersion": "v5.0",
                 "logsDirectorySizeLimit": 60,
-                "appSettings": [],
                 "numberOfWorkers": 1,
                 "alwaysOn": "true", // Not supported for F1 and D1 plan. It will fail deployment.
                 "defaultDocuments": [
@@ -170,14 +169,13 @@
                     "default.aspx",
                     "index.php",
                     "hostingstart.html"
-                ],
-                "storageAccountUrl": ""
+                ]
             }
         },
         {
             "type": "Microsoft.Web/sites/hostNameBindings",
             "apiVersion": "2018-11-01",
-            "name": "[concat(parameters('appServiceName'), '/', parameters('appServiceName'), '.azurewebsites.net')]",
+            "name": "[concat(parameters('appServiceName'), '/', variables('appServiceHostName'))]",
             "location": "[parameters('location')]",
             "tags": "[parameters('tags')]",
             "dependsOn": [
@@ -193,6 +191,10 @@
         "appServiceName": {
             "type": "string",
             "value": "[parameters('appServiceName')]"
+        },
+        "appServiceHostName": {
+            "type": "string",
+            "value": "[variables('appServiceHostName')]"
         }
     }
 }
