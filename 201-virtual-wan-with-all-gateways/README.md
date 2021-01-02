@@ -54,7 +54,13 @@ First attempt of template deployment should fail after 5-6 minutes, then 10-15 m
 
 :::image type="content" source="images/deploymentcompleteinazureportal.jpg" alt-text="Template Deployment State":::
 
-## PowerShell Helper Script
+## Successful Deployment
+
+Once the ARM deployment of the template will be completed, you should see something similar to the image below in your Azure Portal:
+
+:::image type="content" source="images/vwanresourcesinazureportal.jpg" alt-text="vWAN Resources in the Azure Portal":::
+
+## PowerShell Helper Script for Deployment
 
 It is possible to manage template deployment retry in order to solve the vWAN possible first run failure issue.
 The sample script ***Deploy_vWAN.ps1*** provided will submit the deployment a first time, then will wait for completion and check for Routing Service state in each hub: once both of them will be in ready state, the same deployment will be retried.
@@ -62,10 +68,14 @@ The sample script ***Deploy_vWAN.ps1*** provided will submit the deployment a fi
 > [!CAUTION]
 > This script is only a sample, it is provided "*as is*", should not be used in production without proper testing.
 
-## Successful Deployment
+## PowerShell Helper Script for Testing
 
-Once the ARM deployment of the template will be completed, you should see something similar to the image below in your Azure Portal:
+Once Virtual WAN (vWAN) is fully deployed, it is necessary to add some Virtual Machines (VMs) to the existing Virtual Networks (VNETs) to test the environment. With the helper sample script ***create-vms-for-vwan-and-inspect-routes.ps1*** provided in this folder, you can easily and automatically create a VM for each VNET, and test effective routes throughout vWAN.
 
-:::image type="content" source="images/vwanresourcesinazureportal.jpg" alt-text="vWAN Resources in the Azure Portal":::
+> [!CAUTION]
+> This script is only a sample, it is provided "*as is*", should not be used in production without proper testing.
+
+> [!NOTE]
+> This template will create all the vWAN resources listed above, but will not create the customer side resources required for hybrid connectivity. After template deployment will be completed, user will need to create P2S VPN clients, VPN branches (Local Sites) and connect Express Route circuits.
 
 `Tags: Virtual WAN, vWAN, Hub, ExpressRoute, VPN, S2S, P2S, Routing`
