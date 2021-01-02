@@ -229,7 +229,6 @@
     {
       "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
       "apiVersion": "2020-05-01",
-      /*"name": "vnetconn1",*/
       "name": "[format('{0}/{1}_connection', variables('virtual_hub1_cfg').name, variables('vnet1_cfg').name)]",
       "properties": {
         "remoteVirtualNetwork": {
@@ -241,13 +240,13 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub1_cfg').name)]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet1_cfg').name)]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet1_cfg').name)]",
+        "[resourceId('Microsoft.Network/vpnGateways', format('{0}_S2SvpnGW', variables('virtual_hub1_cfg').name))]"
       ]
     },
     {
       "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
       "apiVersion": "2020-05-01",
-      /*"name": "vnetconn2",*/
       "name": "[format('{0}/{1}_connection', variables('virtual_hub1_cfg').name, variables('vnet2_cfg').name)]",
       "properties": {
         "remoteVirtualNetwork": {
@@ -266,7 +265,6 @@
     {
       "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
       "apiVersion": "2020-05-01",
-      /*"name": "vnetconn3",*/
       "name": "[format('{0}/{1}_connection', variables('virtual_hub2_cfg').name, variables('vnet3_cfg').name)]",
       "properties": {
         "remoteVirtualNetwork": {
@@ -278,13 +276,13 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub2_cfg').name)]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet3_cfg').name)]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet3_cfg').name)]",
+        "[resourceId('Microsoft.Network/vpnGateways', format('{0}_S2SvpnGW', variables('virtual_hub2_cfg').name))]"
       ]
     },
     {
       "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
       "apiVersion": "2020-05-01",
-      /*"name": "vnetconn4",*/
       "name": "[format('{0}/{1}_connection', variables('virtual_hub2_cfg').name, variables('vnet4_cfg').name)]",
       "properties": {
         "remoteVirtualNetwork": {
@@ -306,9 +304,8 @@
       "apiVersion": "2020-05-01",
       "location": "[parameters('hub1_location')]",
       "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub1_cfg').name)]",
-                "[resourceId('Microsoft.Network/virtualHubs/hubVirtualNetworkConnections', variables('virtual_hub1_cfg').name, format('{0}_connection', variables('vnet2_cfg').name))]"
-                ],
+                "[resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub1_cfg').name)]"                
+                   ],
       "properties": {
                 "vpnGatewayScaleUnit": "[parameters('Hub1_S2SvpnGatewayScaleUnit')]",
                 "virtualHub": {
@@ -325,9 +322,8 @@
        "apiVersion": "2020-05-01",
        "location": "[parameters('hub2_location')]",
        "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub2_cfg').name)]",
-                "[resourceId('Microsoft.Network/virtualHubs/hubVirtualNetworkConnections', variables('virtual_hub2_cfg').name, format('{0}_connection', variables('vnet4_cfg').name))]"
-                ],
+                "[resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub2_cfg').name)]"
+                    ],
        "properties": {
                 "vpnGatewayScaleUnit": "[parameters('Hub2_S2SvpnGatewayScaleUnit')]",
                 "virtualHub": {
@@ -338,17 +334,17 @@
                 }
             }
         },
-        {
+         {
             "type": "Microsoft.Network/expressRouteGateways",
             "apiVersion": "2020-05-01",
             "name": "[format('{0}_ERGW', variables('virtual_hub1_cfg').name)]",
             "location": "[parameters('hub1_location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/vpnGateways', format('{0}_S2SvpnGW', variables('virtual_hub1_cfg').name))]"
+                "[resourceId('Microsoft.Network/virtualHubs/hubVirtualNetworkConnections', variables('virtual_hub1_cfg').name, format('{0}_connection', variables('vnet2_cfg').name))]"
                          ],
             "properties": {
                 "virtualHub": {
-                    "id": "[resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub1_cfg').name)]"
+                    "id": "[resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub1_cfg').name)]" 
                 },
                 "autoScaleConfiguration": {
                     "bounds": {
@@ -363,11 +359,11 @@
             "name": "[format('{0}_ERGW', variables('virtual_hub2_cfg').name)]",
             "location": "[parameters('hub2_location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/vpnGateways', format('{0}_S2SvpnGW', variables('virtual_hub2_cfg').name))]"
+                "[resourceId('Microsoft.Network/virtualHubs/hubVirtualNetworkConnections', variables('virtual_hub2_cfg').name, format('{0}_connection', variables('vnet4_cfg').name))]"
                          ],
             "properties": {
                 "virtualHub": {
-                    "id": "[resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub2_cfg').name)]"
+                    "id": "[resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub2_cfg').name)]" 
                 },
                 "autoScaleConfiguration": {
                     "bounds": {
@@ -445,7 +441,7 @@
                         "properties": {
                             "routingConfiguration": {
                                 "associatedRouteTable": {
-                                    "id": "[concat(resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub1_cfg').name), '/hubRouteTables/defaultRouteTable')]"
+                                    "id": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', variables('virtual_hub1_cfg').name,'defaultRouteTable')]"
                                 },
                                 "propagatedRouteTables": {
                                     "labels": [
@@ -453,10 +449,10 @@
                                     ],
                                     "ids": [
                                         {
-                                            "id": "[concat(resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub1_cfg').name), '/hubRouteTables/defaultRouteTable')]"
+                                            "id": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', variables('virtual_hub1_cfg').name,'defaultRouteTable')]"
                                         }
                                     ]
-                                }                                
+                                }
                             },
                             "vpnClientAddressPool": {
                                 "addressPrefixes": [
@@ -466,8 +462,8 @@
                         }
                     }
                 ],
-                "vpnGatewayScaleUnit": "[parameters('Hub1_P2SvpnGatewayScaleUnit')]"
-              }
+                "vpnGatewayScaleUnit": "[parameters('Hub1_P2SvpnGatewayScaleUnit')]"                
+            }
         },
         {
             "type": "Microsoft.Network/p2sVpnGateways",
@@ -490,7 +486,7 @@
                         "properties": {
                             "routingConfiguration": {
                                 "associatedRouteTable": {
-                                    "id": "[concat(resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub2_cfg').name), '/hubRouteTables/defaultRouteTable')]"
+                                    "id": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', variables('virtual_hub2_cfg').name,'defaultRouteTable')]"
                                 },
                                 "propagatedRouteTables": {
                                     "labels": [
@@ -498,7 +494,7 @@
                                     ],
                                     "ids": [
                                         {
-                                            "id": "[concat(resourceId('Microsoft.Network/virtualHubs', variables('virtual_hub2_cfg').name), '/hubRouteTables/defaultRouteTable')]"
+                                            "id": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', variables('virtual_hub2_cfg').name,'defaultRouteTable')]"
                                         }
                                     ]
                                 }
