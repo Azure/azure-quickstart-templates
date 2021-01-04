@@ -23,6 +23,8 @@ You can connect to the server through SSH on port 22.
 On your **Alsid for AD** portal, go to *System*, *Configuration* and then *Syslog*.
 From there you can create a new Syslog alert toward your Syslog server.
 
+The Server is configured by default to listen on port 514 for UDP and 1514 for TCP (without TLS).
+
 ### Configure Sentinel log collection
 The server gathers the log but you still need to configure log collection for your workspace on the azure portal because the Azure CLI doesn't support log collection yet.
 To do this
