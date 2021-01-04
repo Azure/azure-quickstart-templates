@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
       "primaryUserAssignedIdentityResourceGroup": {
@@ -136,7 +136,7 @@
     },
     "variables": {
       "primaryUserAssignedIdentity": "[resourceId(parameters('primaryUserAssignedIdentityResourceGroup'), 'microsoft.managedidentity/userassignedidentities', parameters('primaryUserAssignedIdentityName'))]",
-      "workspaceResourceGroup": "[concat(subscription().id, '/resourceGroups', parameters('workspaceResourceGroup'))]",
+      "workspaceResourceGroup": "[subscriptionResourceId('resourceGroups', parameters('workspaceResourceGroup'))]",
       "workspaceKeyVault": "[resourceId(parameters('workspaceKeyVaultResourceGroup'), 'microsoft.keyvault/vaults', parameters('workspaceKeyVaultName'))]",
       "workspaceStorageAccount": "[resourceId(parameters('workspaceStorageAccountResourceGroup'), 'microsoft.storage/storageaccounts', parameters('workspaceStorageAccountName'))]",
       "workspaceContainerRegistry": "[resourceId(parameters('workspaceContainerRegistryResourceGroup'), 'Microsoft.ContainerRegistry/registries', parameters('workspaceContainerRegistryName'))]",
@@ -162,12 +162,11 @@
         "properties": {
           "mode": "Incremental",
           "template": {
-            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
             "contentVersion": "1.0.0.0",
-            "parameters": {},
-            "variables": {},
             "resources": [
               {
+                "condition": "[parameters('assignWorkspaceKeyVault')]",
                 "type": "Microsoft.KeyVault/vaults/accessPolicies",
                 "apiVersion": "2019-09-01",
                 "name": "[concat(parameters('workspaceKeyVaultName'), '/add')]",
@@ -190,23 +189,21 @@
                       }
                     }
                   ]
-                },
-                "condition": "[parameters('assignWorkspaceKeyVault')]"
+                }
               },
               {
+                "condition": "[parameters('assignWorkspaceKeyVault')]",
+                "scope": "[concat('Microsoft.KeyVault/vaults/', parameters('workspaceKeyVaultName'))]",
                 "type": "Microsoft.Authorization/roleAssignments",
                 "apiVersion": "2020-04-01-preview",
                 "name": "[variables('workspaceKeyVaultAdministratorRoleName')]",
-                "scope": "[concat('Microsoft.KeyVault/vaults/', parameters('workspaceKeyVaultName'))]",
                 "properties": {
-                  "roleDefinitionId": "[concat(variables('workspaceKeyVault'), '/providers/Microsoft.Authorization/roleDefinitions/', variables('keyVaultAdministratorRoleDefinition'))]",
+                  "roleDefinitionId": "[extensionResourceId(variables('workspaceKeyVault'), 'Microsoft.Authorization/roleDefinitions'), variables('keyVaultAdministratorRoleDefinition')]",
                   "principalId": "[reference(variables('primaryUserAssignedIdentity'), '2018-11-30').principalId]"
-                },
-                "condition": "[parameters('assignWorkspaceKeyVault')]"
+                }
               }
             ]
-          },
-          "parameters": {}
+          }
         }
       },
       {
@@ -217,36 +214,33 @@
         "properties": {
           "mode": "Incremental",
           "template": {
-            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
             "contentVersion": "1.0.0.0",
-            "parameters": {},
-            "variables": {},
             "resources": [
               {
+                "condition": "[parameters('assignWorkspaceStorageAccount')]",
+                "scope": "[concat('Microsoft.Storage/storageAccounts/', parameters('workspaceStorageAccountName'))]",
                 "type": "Microsoft.Authorization/roleAssignments",
                 "apiVersion": "2020-04-01-preview",
                 "name": "[variables('workspaceStorageAccountContributorRoleName')]",
-                "scope": "[concat('Microsoft.Storage/storageAccounts/', parameters('workspaceStorageAccountName'))]",
                 "properties": {
-                  "roleDefinitionId": "[concat(variables('workspaceStorageAccount'), '/providers/Microsoft.Authorization/roleDefinitions/', variables('contributorRoleDefinition'))]",
+                  "roleDefinitionId": "[extensionResourceId(variables('workspaceStorageAccount'), 'Microsoft.Authorization/roleDefinitions', variables('contributorRoleDefinition'))]",
                   "principalId": "[reference(variables('primaryUserAssignedIdentity'), '2018-11-30').principalId]"
-                },
-                "condition": "[parameters('assignWorkspaceStorageAccount')]"
+                }
               },
               {
+                "condition": "[parameters('assignWorkspaceStorageAccount')]",
+                "scope": "[concat('Microsoft.Storage/storageAccounts/', parameters('workspaceStorageAccountName'))]",
                 "type": "Microsoft.Authorization/roleAssignments",
                 "apiVersion": "2020-04-01-preview",
                 "name": "[variables('workspaceStorageAccountBlobDataContributorRoleName')]",
-                "scope": "[concat('Microsoft.Storage/storageAccounts/', parameters('workspaceStorageAccountName'))]",
                 "properties": {
-                  "roleDefinitionId": "[concat(variables('workspaceStorageAccount'), '/providers/Microsoft.Authorization/roleDefinitions/', variables('storageBlobDataContributorRoleDefinition'))]",
+                  "roleDefinitionId": "[extensionResourceId(variables('workspaceStorageAccount'), 'Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleDefinition'))]",
                   "principalId": "[reference(variables('primaryUserAssignedIdentity'), '2018-11-30').principalId]"
-                },
-                "condition": "[parameters('assignWorkspaceStorageAccount')]"
+                }
               }
             ]
-          },
-          "parameters": {}
+          }
         }
       },
       {
@@ -257,25 +251,22 @@
         "properties": {
           "mode": "Incremental",
           "template": {
-            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
             "contentVersion": "1.0.0.0",
-            "parameters": {},
-            "variables": {},
             "resources": [
               {
+                "condition": "[parameters('assignWorkspaceDataBrick')]",
+                "scope": "[concat('Microsoft.Databricks/workspaces/', parameters('workspaceDataBrickName'))]",
                 "type": "Microsoft.Authorization/roleAssignments",
                 "apiVersion": "2020-04-01-preview",
                 "name": "[variables('workspaceDataBrickContributorRoleName')]",
-                "scope": "[concat('Microsoft.Databricks/workspaces/', parameters('workspaceDataBrickName'))]",
                 "properties": {
-                  "roleDefinitionId": "[concat(variables('workspaceDataBrick'), '/providers/Microsoft.Authorization/roleDefinitions/', variables('contributorRoleDefinition'))]",
+                  "roleDefinitionId": "[extensionResourceId(variables('workspaceDataBrick'), 'Microsoft.Authorization/roleDefinitions', variables('contributorRoleDefinition'))]",
                   "principalId": "[reference(variables('primaryUserAssignedIdentity'), '2018-11-30').principalId]"
-                },
-                "condition": "[parameters('assignWorkspaceDataBrick')]"
+                }
               }
             ]
-          },
-          "parameters": {}
+          }
         }
       },
       {
@@ -286,25 +277,22 @@
         "properties": {
           "mode": "Incremental",
           "template": {
-            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
             "contentVersion": "1.0.0.0",
-            "parameters": {},
-            "variables": {},
             "resources": [
               {
+                "condition": "[parameters('assignWorkspaceContainerRegistry')]",
+                "scope": "[concat('Microsoft.ContainerRegistry/registries/', parameters('workspaceContainerRegistryName'))]",
                 "type": "Microsoft.Authorization/roleAssignments",
                 "apiVersion": "2020-04-01-preview",
                 "name": "[variables('workspaceContainerRegistryContributorRoleName')]",
-                "scope": "[concat('Microsoft.ContainerRegistry/registries/', parameters('workspaceContainerRegistryName'))]",
                 "properties": {
-                  "roleDefinitionId": "[concat(variables('workspaceContainerRegistry'), '/providers/Microsoft.Authorization/roleDefinitions/', variables('contributorRoleDefinition'))]",
+                  "roleDefinitionId": "[extensionResourceId(variables('workspaceContainerRegistry'), 'Microsoft.Authorization/roleDefinitions', variables('contributorRoleDefinition'))]",
                   "principalId": "[reference(variables('primaryUserAssignedIdentity'), '2018-11-30').principalId]"
-                },
-                "condition": "[parameters('assignWorkspaceContainerRegistry')]"
+                }
               }
             ]
-          },
-          "parameters": {}
+          }
         }
       },
       {
@@ -315,25 +303,22 @@
         "properties": {
           "mode": "Incremental",
           "template": {
-            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
             "contentVersion": "1.0.0.0",
-            "parameters": {},
-            "variables": {},
             "resources": [
               {
+                "condition": "[parameters('assignWorkspaceCMKKeyVault')]",
+                "scope": "[concat('Microsoft.KeyVault/vaults/', parameters('workspaceCMKKeyVaultName'))]",
                 "type": "Microsoft.Authorization/roleAssignments",
                 "apiVersion": "2020-04-01-preview",
                 "name": "[variables('workspaceCMKKeyVaultContributorRoleName')]",
-                "scope": "[concat('Microsoft.KeyVault/vaults/', parameters('workspaceCMKKeyVaultName'))]",
                 "properties": {
-                  "roleDefinitionId": "[concat(variables('workspaceCMKKeyVault'), '/providers/Microsoft.Authorization/roleDefinitions/', variables('contributorRoleDefinition'))]",
+                  "roleDefinitionId": "[extensionResourceId(variables('workspaceCMKKeyVault'), 'Microsoft.Authorization/roleDefinitions', variables('contributorRoleDefinition'))]",
                   "principalId": "[reference(variables('primaryUserAssignedIdentity'), '2018-11-30').principalId]"
-                },
-                "condition": "[parameters('assignWorkspaceCMKKeyVault')]"
+                }
               }
             ]
-          },
-          "parameters": {}
+          }
         }
       },
       {
@@ -344,26 +329,22 @@
         "properties": {
           "mode": "Incremental",
           "template": {
-            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
             "contentVersion": "1.0.0.0",
-            "parameters": {},
-            "variables": {},
             "resources": [
               {
+                "condition": "[parameters('assignWorkspaceResourceGroup')]",
                 "type": "Microsoft.Authorization/roleAssignments",
                 "apiVersion": "2020-04-01-preview",
                 "name": "[variables('workspaceResourceGroupContributorRoleName')]",
                 "properties": {
-                  "roleDefinitionId": "[concat(variables('workspaceResourceGroup'), '/providers/Microsoft.Authorization/roleDefinitions/', variables('contributorRoleDefinition'))]",
+                  "roleDefinitionId": "[extensionResourceId(variables('workspaceResourceGroup'), 'Microsoft.Authorization/roleDefinitions', variables('contributorRoleDefinition'))]",
                   "principalId": "[reference(variables('primaryUserAssignedIdentity'), '2018-11-30').principalId]"
-                },
-                "condition": "[parameters('assignWorkspaceResourceGroup')]"
+                }
               }
             ]
-          },
-          "parameters": {}
+          }
         }
       }
-    ],
-    "outputs": {}
+    ]
   }
