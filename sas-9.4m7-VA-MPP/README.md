@@ -111,7 +111,7 @@ Before deploying SAS 9.4 VA/VS Quickstart Template for Azure, you must have the 
 ```
 az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$STORAGEKEY" --destination "$SHARE_NAME" --destination-path "$SUBDIRECTORY_NAME" --source "$(pwd)" 
 ```
-For more inforation about this command, see ["az storage blob upload-batch"](https://docs.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az_storage_blob_upload_batch).
+For more information about this command, see ["az storage blob upload-batch"](https://docs.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az_storage_blob_upload_batch).
 
 <a name="best_practices"></a>
 ## Best Practices when Deploying SAS 9.4M7 VA/VS on Microsoft Azure
@@ -152,8 +152,9 @@ For more inforation about this command, see ["az storage blob upload-batch"](htt
 |\_artifacts Location SAS Token|Leave blank.|
 |\_artifacts Location|Use the default value (recommended).|
 
-4. Select *I agree to the terms and conditions stated above* and then select *Purchase*.
-The deployment will begin.  Deployments typically take 2-3 hours to complete. 
+3. Click *Next: Review and Create*. 
+4. If the validation is successful,  click *Create*. When the *Deployment is in progress* window appears, the deployment will begin.
+Deployments typically take 2-3 hours to complete. 
 
 <a name="mercuryadmintools"></a>
 ### Deploy Using the Mercury Admin Tools
@@ -165,6 +166,16 @@ The deployment will begin.  Deployments typically take 2-3 hours to complete.
 
 <a name="accessresources"></a>
 ### Accessing Resources in the Deployment
+
+1. From the *Your Deployment is Complete* window, note the deployment name.
+2. Click *Go to resource group*.
+3. Click *Deployments*.
+4. Click *Microsoft Template-\<deployment name\>*.
+5. Click *Outputs* to access the following:
+    * jump_IP IP address
+    * SAS Visual Analytics URL
+    * SAS Studio URL
+6. Browse to the SAS Visual Analytics and SAS Studio URLs.  Log in as *sasadm@saspw*.  Enter the password that you specified for the SAS Administration password value [here](#azureportal).
 
 <a name="logsandservices"></a>
 #### Check Logs and Services Status
