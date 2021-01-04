@@ -16,19 +16,6 @@ This template is a template that creates role assignments of user assigned ident
 
 - Create role assignments on existing resources like storage account, databrick workspace, key vault or container registry that Azure machine learning workspace depends on.
 
-## Supported Scenarios
-
-The following commands show the advanced scenarios for workspace creation.
-
-### Create machine learning workspace with existing dependent resources
-
-This command creates role assignment on all the workspace dependencies. Note: role assignment creation deployment will fail with 'Conflict' if the same role assignment already exists on that resource.
-
-```PowerShell
-
-New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -primaryUserAssignedIdentity "existing-user-assigned-identity" -assignWorkspaceResourceGroup "false" -assignWorkspaceKeyVault "true" -workspaceKeyVaultName "existing-kv-name" -assignWorkspaceStorageAccount "true" -workspaceStorageAccountName "existing-storage-name" -assignWorkspaceContainerRegistry "true" -workspaceContainerRegistryName "existing-cr-name" -assignWorkspaceDataBrick "true" -workspaceDataBrickName "existing-databrick-name" -assignWorkspaceCMKKeyVault "true" - workspaceCMKKeyVaultName "existing-kv-name"
-```
-
 
 ## Learn more
 
