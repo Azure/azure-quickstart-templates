@@ -17,8 +17,7 @@
     1. [Deploy Using Mercury Admin Tools](#mercuryadmintools)
 1. [Post Deployment Steps](#PostDeployment)
     1. [Accessing Resources in the Deployment](#accessresources)
-        1. [Check Logs and Services Status](#logsandservices)
-        1. [Obtain SAS VA and SAS Studio URLs](#obtainURLs)
+    1. [Check Logs and Services Status](#logsandservices)
     1. [Restarting Services](#restartservices)
     1. [Running SAS Management Console (SMC)](#smc)
 1. [Troubleshooting](#Troubleshooting)
@@ -167,10 +166,9 @@ Deployments typically take 2-3 hours to complete.
 <a name="accessresources"></a>
 ### Accessing Resources in the Deployment
 
-1. From the *Your Deployment is Complete* window, note the deployment name.
-2. Click *Go to resource group*.
-3. Click *Deployments*.
-4. Click *Microsoft Template-\<deployment name\>*.
+1. Open the resource group.
+2. Click *Deployments*.
+3. Click *Microsoft Template-\<deployment name\>*.
 5. Click *Outputs* to access the following:
     * jump_IP IP address
     * SAS Visual Analytics URL
@@ -178,7 +176,7 @@ Deployments typically take 2-3 hours to complete.
 6. Browse to the SAS Visual Analytics and SAS Studio URLs.  Log in as *sasadm@saspw*.  Enter the password that you specified for the SAS Administration password value [here](#azureportal).
 
 <a name="logsandservices"></a>
-#### Check Logs and Services Status
+### Check Logs and Services Status
 
 Check the logs and services status by accessing the various VM instances from the jumpvm, as follows: (content under development: What are the correct steps for  checking logs and services status post deployment? Leaving these instructions for now. PD)
 
@@ -214,15 +212,6 @@ Check the logs and services status by accessing the various VM instances from th
    The password for all accounts is set to the default: *Go4thsas*
    
    SAS is installed in the /sas folder on all VMs. 
-
-<a name="obtainURLs"></a>
-#### Obtain SAS VA and SAS Studio URLs
-
-Obtain the SAS VA and SAS Studio URLs, as follows:
-1. Open the Resource group.
-2. Select "Deployments".by opening the Resource group, selecting “Deployments”, selecting the “azuredeploy” item in the list, then selecting the “Outputs” for that deployment
-3. Select "azuredeploy" from the list.
-4. Select "Outputs" for that deployment.
 
 <a name="restartservices"></a>
 ### Restarting Services
