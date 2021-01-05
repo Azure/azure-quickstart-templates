@@ -26,10 +26,17 @@ This template is used to demonstrate how ARM Templates can be used to configure 
 
 The following resources are deployed in this template:
   * One Standard Public Load Balancer
-  * One Standard Public IP Address
+  * Two Standard Public IP Addresses
   * 3 Virtual Machines
   * 1 Virtual Network
+  * 2 Sub-networks
+  * 1 Bastion Host
  
-The Load Balancer will be deployed and it's Backend Pool configured by IP Addresses. From here Virtual Machines will be added to the created Backend Pool by setting the IP Address in the IP Configuration of their attached NIC to the Backend Addresses that have been added to the Backend Pool. Each Virtual Machine will be configured to host an IIS web server. The resulting deployment can be tested by visiting the Public IP address of the Load Balancer on port 80. 
+The Load Balancer will be deployed and it's Backend Pool configured by IP Addresses. From here Virtual Machines will be added to the created Backend Pool by setting the IP Address in the IP Configuration of their attached NIC to the Backend Addresses that have been added to the Backend Pool. Each Virtual Machine will be configured to run Windows and host an IIS web server. 
+
+The Load Balancer will have two seperate frontend IP addresses. One IP address will be used for a load balancing rule on port 80 and the other for an outbound rule for outbound connections. There will also be a Bastion host which can be used to RDP into the backend VMs.
+
+The resulting deployment can be tested by visiting the Public IP address of the Load Balancer on port 80.
+
 
 For an example template which configures the Backend Pool by Network Interface please refer to the [Create an Internet-facing Standard Load Balancer with three VMs](.../101-load-balancer-standard-create) template. 
