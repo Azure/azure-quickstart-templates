@@ -35,7 +35,7 @@ Configure the agent to collect the logs.
 
 2.  Select **Apply below configuration to my machines** and click **Add**.
 
-4. Upload a sample AFAD Syslog file from the **Linux** machine running the **Syslog** server and click **Next**.
+4. Upload a sample AFAD Syslog file from the virtual machine running the **Syslog** server and click **Next**. Such a file can be found [here](https://github.com/Azure/azure-quickstart-templates/blob/master/alsid-syslog-proxy/AlsidForAD.log)
 
 5. Set the record delimiter to **New Line** if not already the case and click **Next**.
 
