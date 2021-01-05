@@ -43,7 +43,7 @@
                 "description": "A prefix that will be added to created resource names and DNS URLs. Allowed characters: alphabets and numbers only. Resulting name must be maximum 24 characters (storage account maximum)"
             }
         },
-        "webAppDnsName": {
+        "azureWebsitesDomain": {
             "type": "string",
             "metadata": {
                 "description": "DNS name to use for azure webapp such as .azurewebsites.net"
@@ -81,8 +81,7 @@
         "eventHubListenPolicy": "[concat(parameters('dnsNamePrefix'), '-listen-policy')]",
         "azStorageTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.storage/storageaccounts.json', parameters('_artifactsLocationSasToken')))]",
         "azEventHubTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.eventhub/namespaces.json', parameters('_artifactsLocationSasToken')))]",
-        "azApiMgmtLoggerInstallTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.apimanagement/service/loggers.json', parameters('_artifactsLocationSasToken')))]",
-        "azApiMgmtLoggerRGInstallTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.apimanagement/service/loggers-resourcegroup.json', parameters('_artifactsLocationSasToken')))]",
+        "loggersJsonRelPath": "nested/microsoft.apimanagement/service/loggers.json",
         "azAppServicePlanTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.web/serverfarms.json', parameters('_artifactsLocationSasToken')))]",
         "azAppServiceTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.web/sites.json', parameters('_artifactsLocationSasToken')))]",
         //"azAppServiceWebJobTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.web/sites/extensions.json', parameters('_artifactsLocationSasToken')))]",
@@ -180,13 +179,90 @@
                     "tags": {
                         "value": "[variables('tags')]"
                     },
-                    "templLoggerUrl": {
-                        "value": "[variables('azApiMgmtLoggerInstallTemplUri')]"
+                    "loggersJsonRelPath": {
+                        "value": "[variables('loggersJsonRelPath')]"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 },
-                "templateLink": {
-                    "uri": "[variables('azApiMgmtLoggerRGInstallTemplUri')]",
-                    "contentVersion": "1.0.0.0"
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "existingApiMgmtName": {
+                            "type": "string"
+                        },
+                        "logToEventhubLoggerId": {
+                            "type": "string"
+                        },
+                        "eventHubNS": {
+                            "type": "string"
+                        },
+                        "eventHubName": {
+                            "type": "string"
+                        },
+                        "eventHubPolicyName": {
+                            "type": "string"
+                        },
+                        "tags": {
+                            "type": "object"
+                        },
+                        "loggersJsonRelPath": {
+                            "type": "string",
+                            "metadata": {
+                                "description": "description"
+                            }
+                        },
+                        "_artifactsLocation": {
+                            "type": "string",
+                            "metadata": {
+                                "description": "The base URL where templates are located. Should end with trailing '/'"
+                            }
+                        },
+                        "_artifactsLocationSasToken": {
+                            "type": "securestring",
+                            "defaultValue": "",
+                            "metadata": {
+                                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+                            }
+                        }
+                    },
+                    "variables": {
+                        "azApiMgmtLoggerInstallTemplUri": "[uri(parameters('_artifactsLocation'), concat(parameters('loggersJsonRelPath'), parameters('_artifactsLocationSasToken')))]"
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "2019-10-01",
+                            "name": "api-management-logger-deploy",
+                            "properties": {
+                                "mode": "Incremental",
+                                "templateLink": {
+                                    "uri": "[variables('azApiMgmtLoggerInstallTemplUri')]",
+                                    "contentVersion": "1.0.0.0"
+                                },
+                                "parameters": {
+                                    "existingApiMgmtName": {
+                                        "value": "[parameters('existingApiMgmtName')]"
+                                    },
+                                    "logToEventhubLoggerId": {
+                                        "value": "[parameters('logToEventhubLoggerId')]"
+                                    },
+                                    "eventHubLoggerConnStr": {
+                                        "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('eventHubNS'), parameters('eventHubName'), parameters('eventHubPolicyName')), '2017-04-01').primaryConnectionString]"
+                                    },
+                                    "tags": {
+                                        "value": "[parameters('tags')]"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+
                 }
             }
         },
@@ -259,8 +335,8 @@
                     "apimEvtMoesifApiVersion": {
                         "value": "[variables('moesifApiVersion')]"
                     },
-                    "webAppDnsName": {
-                        "value": "[parameters('webAppDnsName')]"
+                    "azureWebsitesDomain": {
+                        "value": "[parameters('azureWebsitesDomain')]"
                     },
                     "tags": {
                         "value": "[variables('tags')]"
@@ -290,10 +366,6 @@
                     },
                     "webJobZipDeployUrl": {
                         "value": "[variables('azAppServiceWebJobZipUri')]"
-                    },
-                    "tags": {
-                        "type": "Object",
-                        "defaultValue": {}
                     },
                     "location": {
                         "type": "string",
