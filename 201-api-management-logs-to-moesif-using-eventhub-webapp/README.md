@@ -120,7 +120,7 @@ If an existing Azure Api Management is not specified, the `log-to-eventhub` logg
 
 ## Troubleshooting
 
-- It is possible that the final step of deployment `app-service-webjob-msdeploy` reports a failed deployment with error such as `conflict` or `BadRequest` or `GatewayTimeout`. Despite these errors, it is possible that the deployment may have actually succeeded, so you may need to ignore this error. You may view detailed logs in your App Service/Activity log
+- It is possible that the final step of deployment `app-service-webjob-msdeploy` reports a failed deployment with error such as `conflict` or `BadRequest` or `GatewayTimeout`. Despite these initial errors reported by deployment, it is possible that the WebJob deployment within Azure App Service may succeed automatically after 5-10 minutes without further user action. At the end of this template deployment, you may view detailed logs in your App Service/Activity log.
 - Ensure the `log-to-eventhub` logger is created
 - Ensure the `policy` is set on Api Management Apis
 - Ensure App Service configuration contains correct environment variables. View your App Service/Settings/Configuration/Application settings

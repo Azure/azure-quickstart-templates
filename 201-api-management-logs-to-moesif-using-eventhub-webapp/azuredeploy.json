@@ -11,7 +11,7 @@
         },
         "existingApiMgmtResourceGroup": {
             "type": "string",
-            "defaultValue": "",
+            "defaultValue": "[resourceGroup().name]",
             "minLength": 0,
             "metadata": {
                 "description": "Name of Resource Group of existing Api Management service. If blank, the current resource group is used"
@@ -28,9 +28,11 @@
         "azureAppServiceSku": {
             "type": "string",
             "defaultValue": "B1",
-            "minLength": 2,
+            "allowedValues": [
+                "B1", "B2", "B3", "S1", "S2", "S3", "P1v2", "P2v2", "P3v2", "P1v3", "P2v3", "P3v3"
+            ],
             "metadata": {
-                "description": "The instance / SKU name for Azure App Service eg: B1, B2, S1, P1V2. Note F1 and D1 plan are not supported as they do not support 'alwaysOn'"
+                "description": "The instance / SKU name for Azure App Service eg: B1, B2, S1, P1V2. Note F1 and D1 shared plan are not supported as they do not support 'alwaysOn'"
             }
         },
         "dnsNamePrefix": {
@@ -39,6 +41,19 @@
             "minLength": 6,
             "metadata": {
                 "description": "A prefix that will be added to created resource names and DNS URLs. Allowed characters: alphabets and numbers only. Resulting name must be maximum 24 characters (storage account maximum)"
+            }
+        },
+        "azureWebsitesDomain": {
+            "type": "string",
+            "metadata": {
+                "description": "DNS name to use for azure webapp such as .azurewebsites.net"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources. eg 'westus2'"
             }
         },
         "_artifactsLocation": {
@@ -65,7 +80,7 @@
         "eventHubListenPolicy": "[concat(parameters('dnsNamePrefix'), '-listen-policy')]",
         "azStorageTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.storage/storageaccounts.json', parameters('_artifactsLocationSasToken')))]",
         "azEventHubTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.eventhub/namespaces.json', parameters('_artifactsLocationSasToken')))]",
-        "azApiMgmtLoggerInstallTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.apimanagement/service/loggers.json', parameters('_artifactsLocationSasToken')))]",
+        "loggersJsonRelPath": "nested/microsoft.apimanagement/service/loggers.json",
         "azAppServicePlanTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.web/serverfarms.json', parameters('_artifactsLocationSasToken')))]",
         "azAppServiceTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.web/sites.json', parameters('_artifactsLocationSasToken')))]",
         //"azAppServiceWebJobTemplUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.web/sites/extensions.json', parameters('_artifactsLocationSasToken')))]",
@@ -91,6 +106,9 @@
                     },
                     "tags": {
                         "value": "[variables('tags')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
                     }
                 }
             }
@@ -120,6 +138,9 @@
                     },
                     "tags": {
                         "value": "[variables('tags')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
                     }
                 }
             }
@@ -157,8 +178,14 @@
                     "tags": {
                         "value": "[variables('tags')]"
                     },
-                    "templLoggerUrl": {
-                        "value": "[variables('azApiMgmtLoggerInstallTemplUri')]"
+                    "loggersJsonRelPath": {
+                        "value": "[variables('loggersJsonRelPath')]"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
                     }
                 },
                 "template": {
@@ -183,9 +210,28 @@
                         "tags": {
                             "type": "object"
                         },
-                        "templLoggerUrl": {
-                            "type": "string"
+                        "loggersJsonRelPath": {
+                            "type": "string",
+                            "metadata": {
+                                "description": "description"
+                            }
+                        },
+                        "_artifactsLocation": {
+                            "type": "string",
+                            "metadata": {
+                                "description": "The base URL where templates are located. Should end with trailing '/'"
+                            }
+                        },
+                        "_artifactsLocationSasToken": {
+                            "type": "securestring",
+                            "defaultValue": "",
+                            "metadata": {
+                                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+                            }
                         }
+                    },
+                    "variables": {
+                        "azApiMgmtLoggerInstallTemplUri": "[uri(parameters('_artifactsLocation'), concat(parameters('loggersJsonRelPath'), parameters('_artifactsLocationSasToken')))]"
                     },
                     "resources": [
                         {
@@ -195,7 +241,7 @@
                             "properties": {
                                 "mode": "Incremental",
                                 "templateLink": {
-                                    "uri": "[parameters('templLoggerUrl')]",
+                                    "uri": "[variables('azApiMgmtLoggerInstallTemplUri')]",
                                     "contentVersion": "1.0.0.0"
                                 },
                                 "parameters": {
@@ -215,6 +261,7 @@
                             }
                         }
                     ]
+
                 }
             }
         },
@@ -237,6 +284,9 @@
                     },
                     "tags": {
                         "value": "[variables('tags')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
                     }
                 }
             }
@@ -284,8 +334,14 @@
                     "apimEvtMoesifApiVersion": {
                         "value": "[variables('moesifApiVersion')]"
                     },
+                    "azureWebsitesDomain": {
+                        "value": "[parameters('azureWebsitesDomain')]"
+                    },
                     "tags": {
                         "value": "[variables('tags')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
                     }
                 }
             }
