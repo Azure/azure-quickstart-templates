@@ -1,7 +1,6 @@
 # Create a Standard Load Balancer and configure the Backend Pool with two Virutal Machines via IP Address
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-load-balancer-ip-configured-backend-pool/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-load-balancer-ip-configured-backend-pool
-/PublicDeployment.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-load-balancer-ip-configured-backend-pool/PublicDeployment.svg)
 
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-load-balancer-ip-configured-backend-pool/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-load-balancer-ip-configured-backend-pool/FairfaxDeployment.svg)
