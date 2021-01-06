@@ -18,7 +18,7 @@ export LOCATION=${11}
 export VIRTUALNETWORKNAME=${12}
 export PXSPECURL=${13}
 export STORAGEOPTION=${14}
-export NFSHOSTNAME=${15}
+export NFSIPADDRESS=${15}
 export SINGLEORMULTI=${16}
 export ARTIFACTSLOCATION=${17::-1}
 export ARTIFACTSTOKEN=\"${18}\"
@@ -315,7 +315,7 @@ fi
 if [[ $STORAGEOPTION == "nfs" ]]; then
   runuser -l $SUDOUSER -c "oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:kube-system:nfs-client-provisioner"
   runuser -l $SUDOUSER -c "wget $ARTIFACTSLOCATION/scripts/nfs-template.yaml$ARTIFACTSTOKEN -O  $INSTALLERHOME/openshiftfourx/nfs-template.yaml"
-  runuser -l $SUDOUSER -c "oc process -f $INSTALLERHOME/openshiftfourx/nfs-template.yaml -p NFS_SERVER=$(getent hosts $NFSHOSTNAME | awk '{ print $1 }') -p NFS_PATH=/exports/home | oc create -n kube-system -f -"
+  runuser -l $SUDOUSER -c "oc process -f $INSTALLERHOME/openshiftfourx/nfs-template.yaml -p NFS_SERVER=$NFSIPADDRESS -p NFS_PATH=/exports/home | oc create -n kube-system -f -"
 fi
 echo $(date) " - Setting up $STORAGEOPTION - Done"
 
