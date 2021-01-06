@@ -1,0 +1,84 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dDoSProtectionPlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify a DDOS protection plan name."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify a DDOS virtual network name."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specify a location for the resources."
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "172.17.0.0/16",
+      "metadata": {
+        "description": "Specify the virtual network address prefix"
+      }
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "defaultValue": "172.17.0.0/24",
+      "metadata": {
+        "description": "Specify the virutal network Subnet prefix"
+      }
+    },
+    "ddosProtectionPlanEnabled": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable DDOS protection plan."
+      }
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.Network/DDoSProtectionPlans",
+      "apiVersion": "2019-02-01",
+      "name": "[parameters('dDoSProtectionPlanName')]",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Network/VirtualNetworks",
+      "apiVersion": "2019-09-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/DDoSProtectionPlans/', parameters('dDoSProtectionPlanName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]"
+            }
+          }
+        ],
+        "enableDdosProtection": "[parameters('ddosProtectionPlanEnabled')]",
+        "ddosProtectionPlan": {
+          "id": "[resourceId('Microsoft.Network/DDoSProtectionPlans/', parameters('dDoSProtectionPlanName'))]"
+        }
+      }
+    }
+  ]
+}
