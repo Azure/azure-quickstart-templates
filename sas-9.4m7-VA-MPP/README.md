@@ -77,8 +77,6 @@ For details, see [SAS 9.4 Intelligence Platform: Installation and Configuration 
 
 By default, Quickstart deployments enable Transport Layer Security (TLS) to help ensure that communication between external clients (on the internet) and the load balancer is secure. Likewise, TLS is enabled between the load balancer and the private subnet that contains the SAS 9.4 components. 
 
-Deploying this Quickstart for a new virtual private cloud (VPC) with default parameters in a symmetric multiprocessing (SMP) environment builds the following SAS 9.4 environment in Microsoft Azure, shown in Figure 1.  In SMP environments, the CASInstanceCount parameter is set to one, indicating that only one CAS controller is configured.
-
 Deploying this Quickstart for a new virtual private cloud (VPC) with default parameters in a massively parallel processing (MPP) environment builds the following SAS 9.4 environment in the Microsoft Azure cloud, shown in Figure 2.   In MMP environments, the CASInstanceCount parameter is set to one, indicating that only one CAS controller is configured.
 
 ![Network Diagram](Azure_9_vavs_quickstart.svg)
