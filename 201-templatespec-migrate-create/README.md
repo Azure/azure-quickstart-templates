@@ -42,3 +42,17 @@ The following parameters or options are available on the script.  Note that ther
 | MigrateRBAC | switch | No | Specifies whether to migrate permissions that exist on the current gallery items to the templateSpec.  When ```ExportToFile``` is provided, the roleAssignemnts will be added to the template file.  When templateSpecs are created, the roleAssignments will be applied to the templateSpecs as they are created.  In addition, when templateSpecs are created, any roleAssignments on the gallery itself will be applied to the resourceGroup that contains the templateSpecs.  roleAssignments at the gallery level are not included in the exported files.|
 | ResourceGroupName | string | No | When provided, templateSpecs will be created during script execution.  The resourceGroup will be created if it does not already exist.  The ```location``` parameter is required when the ResourceGroupName is provided.|
 | Location | string | No | Required when ```ResourceGroupName``` is provided, specifies the location for all templateSpecs.  If the resourceGroup does not exist it will also be created in this location.|
+
+### Notes
+
+A few notes to help with usage and understanding of the script and migration process.
+
+* When exporting AllGalleryItems, specifically for items in galleries not owned by the current user context, note the following:
+  * Naming collisions can occur when creating templateSpecs since all templateSpecs will reside in the same resourceGroup.  A single attempt will be made to change the name to avoid the collision using the origin galleryName, which is the objectId of the owner of the gallery.
+  * The current user context may not have permission to query roleAssignments for shared items, i.e. items not in the gallery owned by the user, and if so, roleAssignments will not be migrated for those items.
+
+* The script does not have an option to simply export the galleryItem as an ARM Template (only a templateSpec) but the template object is available in the $templateJSON variable.  If for some reason you just want to export the ARM Template and not migrate to a templateSpec the script can be easily modified.
+
+* If there are a large number of items in the gallery, the API response will be paged - this script does not follow the link to the next page so will only export from the first page.
+
+* Currently when templateSpecs are created from the script, the sort order of the template properties is changed by conversion to JSON so the source code in the resource itself may not look familiar.  To work around this, export the galleryItems to a file and manually deploy the templateSpecs from that file using the azuredeploy.json template in the sample.  The azuredeploy.parameters.json file created by this script can be used with azuredeploy.json to deploy all exported templates.
