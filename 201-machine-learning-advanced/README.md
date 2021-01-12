@@ -19,6 +19,7 @@ This template is an advanced Azure Machine Learning workspace creation templates
 - Create workspace with customer managed key.
 - Create workspace with link to Azure Databricks workspace.
 - Create workspace with dependent resources(new resources only) behind virtual network.
+- Create workspace with user assigned identity.
 
 ## Supported Scenarios
 
@@ -32,7 +33,7 @@ This command creates a workspace with private endpoint.
 # For deployment with existing resources, use "existing" for the option and resource group name is required.
 
 # Create a workspace with existing storage account, key vault and appinsights
-New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -storageAccountOption "existing" -storageAccountResourceGroupName "existing-storage-rg" -storageAccountName "existing-storage-name" -keyVaultOption "existing" -keyVaultResourceGroupName "existing-kv-rg" -keyVaultName "existing-kv-name" -applicationInsightsOption "existing" -applicationInsightsResourceGroupName "existing-ai-rg" - applicationInsightsName "existing-ai-name"
+New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -storageAccountOption "existing" -storageAccountResourceGroupName "existing-storage-rg" -storageAccountName "existing-storage-name" -keyVaultOption "existing" -keyVaultResourceGroupName "existing-kv-rg" -keyVaultName "existing-kv-name" -applicationInsightsOption "existing" -applicationInsightsResourceGroupName "existing-ai-rg" -applicationInsightsName "existing-ai-name" -identityType "systemAssigned"
 ```
 
 ### Create machine learning workspace with private endpoint
@@ -80,6 +81,15 @@ Get-AzVirtualNetwork -ResourceGroupName "rg" -Name "vnet" | Set-AzVirtualNetwork
 # Deployment
 New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -containerRegistryOption "new" -containerRegistrySku "Premium" -storageAccountBehindVNet "true" -keyVaultBehindVNet "true" -containerRegistryBehindVNet "true" -vnetOption "existing" -vnetName "vnet" -vnetResourceGroupName "rg" -subnetName "subnet" -subnetOption "existing"
 ```
+
+### Create machine learning workspace with user assigned identity
+
+This command is an example of creating workspace with user assigned identity.
+
+```Powershell
+New-AzResourceGroupDeployment -ResourceGroupName "rg" -TemplateFile ".\azuredeploy.json" -workspaceName "workspaceName" -location "westus2" -Name "deploymentname" -storageAccountOption "existing" -storageAccountResourceGroupName "existing-storage-rg" -storageAccountName "existing-storage-name" -keyVaultOption "existing" -keyVaultResourceGroupName "existing-kv-rg" -keyVaultName "existing-kv-name" -applicationInsightsOption "existing" -applicationInsightsResourceGroupName "existing-ai-rg" -applicationInsightsName "existing-ai-name" -identityType "userAssigned" -primaryUserAssignedIdentity "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/uai"
+```
+
 
 ## Learn more
 

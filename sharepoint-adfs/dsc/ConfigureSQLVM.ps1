@@ -78,51 +78,43 @@ configuration ConfigureSQLVM
         #**********************************************************
         # Create accounts and configure SQL Server
         #**********************************************************
+        # By default, SPNs MSSQLSvc/SQL.contoso.local:1433 and MSSQLSvc/SQL.contoso.local are set on the machine account
+        # They need to be removed before they can be set on the SQL service account
+        xScript RemoveSQLSpnOnSQLMachine
+        {
+            SetScript = 
+            {
+                $hostname = $using:ComputerName
+                $domainFQDN = $using:DomainFQDN
+                $spn1 = "MSSQLSvc/$hostname.$($domainFQDN)"
+                $spn2 = "MSSQLSvc/$hostname.$($domainFQDN):1433"
+                setspn -D "$spn1" "$hostname"
+                setspn -D "$spn2" "$hostname"
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+				return $false
+            }
+            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
         ADUser CreateSqlSvcAccount
         {
             DomainName           = $DomainFQDN
             UserName             = $SqlSvcCreds.UserName
             Password             = $SQLCredsQualified
             PasswordNeverExpires = $true
+            ServicePrincipalNames = @("MSSQLSvc/$ComputerName.$($DomainFQDN):1433", "MSSQLSvc/$ComputerName.$DomainFQDN", "MSSQLSvc/$($ComputerName):1433", "MSSQLSvc/$ComputerName")
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
-        }
-
-        ADServicePrincipalName SetSqlSvcSPN1
-        {
-            ServicePrincipalName = "MSSQLSvc/$ComputerName.$($DomainFQDN):1433"
-            Account              = $SqlSvcCreds.UserName
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[ADUser]CreateSqlSvcAccount"
-        }
-
-        ADServicePrincipalName SetSqlSvcSPN2
-        {
-            ServicePrincipalName = "MSSQLSvc/$ComputerName.$DomainFQDN"
-            Account              = $SqlSvcCreds.UserName
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[ADUser]CreateSqlSvcAccount"
-        }
-
-        ADServicePrincipalName SetSqlSvcSPN3
-        {
-            ServicePrincipalName = "MSSQLSvc/$($ComputerName):1433"
-            Account              = $SqlSvcCreds.UserName
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[ADUser]CreateSqlSvcAccount"
-        }
-
-        ADServicePrincipalName SetSqlSvcSPN4
-        {
-            ServicePrincipalName = "MSSQLSvc/$ComputerName"
-            Account              = $SqlSvcCreds.UserName
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[ADUser]CreateSqlSvcAccount"
+            DependsOn            = "[xScript]RemoveSQLSpnOnSQLMachine"
         }
 
         # Tentative fix on random error on resources SqlServiceAccount/SqlLogin after computer joined domain (although SqlMaxDop Test succeeds):
@@ -161,7 +153,7 @@ configuration ConfigureSQLVM
             ServiceType    = "DatabaseEngine"
             ServiceAccount = $SQLCredsQualified
             RestartService = $true
-            DependsOn      = "[xScript]EnsureSQLServiceStarted", "[ADServicePrincipalName]SetSqlSvcSPN1", "[ADServicePrincipalName]SetSqlSvcSPN2", "[ADServicePrincipalName]SetSqlSvcSPN3", "[ADServicePrincipalName]SetSqlSvcSPN4"
+            DependsOn      = "[xScript]EnsureSQLServiceStarted", "[ADUser]CreateSqlSvcAccount"
         }
 
         SqlLogin AddDomainAdminLogin
@@ -296,7 +288,7 @@ $SPSetupCreds = Get-Credential -Credential "spsetup"
 $DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.1.0\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.2.0\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
 ConfigureSQLVM -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 

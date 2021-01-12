@@ -18,7 +18,7 @@ export LOCATION=${11}
 export VIRTUALNETWORKNAME=${12}
 export PXSPECURL=${13}
 export STORAGEOPTION=${14}
-export NFSHOSTNAME=${15}
+export NFSIPADDRESS=${15}
 export SINGLEORMULTI=${16}
 export ARTIFACTSLOCATION=${17::-1}
 export ARTIFACTSTOKEN=\"${18}\"
@@ -74,10 +74,10 @@ echo $(date) " - Install httpd-tools Complete"
 echo $(date) " - Download Binaries"
 runuser -l $SUDOUSER -c "mkdir -p /home/$SUDOUSER/.openshift"
 
-runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.3.18/openshift-install-linux-4.3.18.tar.gz"
-runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.3.18/openshift-client-linux-4.3.18.tar.gz"
-runuser -l $SUDOUSER -c "tar -xvf openshift-install-linux-4.3.18.tar.gz -C $INSTALLERHOME"
-runuser -l $SUDOUSER -c "sudo tar -xvf openshift-client-linux-4.3.18.tar.gz -C /usr/bin"
+runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.5.18/openshift-install-linux-4.5.18.tar.gz"
+runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.5.18/openshift-client-linux-4.5.18.tar.gz"
+runuser -l $SUDOUSER -c "tar -xvf openshift-install-linux-4.5.18.tar.gz -C $INSTALLERHOME"
+runuser -l $SUDOUSER -c "sudo tar -xvf openshift-client-linux-4.5.18.tar.gz -C /usr/bin"
 
 chmod +x /usr/bin/kubectl
 chmod +x /usr/bin/oc
@@ -190,7 +190,7 @@ runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/cluster-auto
 echo $(date) " - Cluster Autoscaler setup complete"
 
 echo $(date) " - Setting up Machine Autoscaler"
-clusterid=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.labels.machine\.openshift\.io/cluster-api-cluster}' --config /home/$SUDOUSER/.kube/config)
+clusterid=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.labels.machine\.openshift\.io/cluster-api-cluster}' --kubeconfig /home/$SUDOUSER/.kube/config)
 runuser -l $SUDOUSER -c "cat > $INSTALLERHOME/openshiftfourx/machine-autoscaler.yaml <<EOF
 ---
 kind: MachineAutoscaler
@@ -236,7 +236,7 @@ runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/machine-auto
 echo $(date) " - Machine Autoscaler setup complete"
 
 echo $(date) " - Setting up Machine health checks"
-clusterid=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.labels.machine\.openshift\.io/cluster-api-cluster}' --config /home/$SUDOUSER/.kube/config)
+clusterid=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.labels.machine\.openshift\.io/cluster-api-cluster}' --kubeconfig /home/$SUDOUSER/.kube/config)
 runuser -l $SUDOUSER -c "cat > $INSTALLERHOME/openshiftfourx/machine-health-check.yaml <<EOF
 ---
 apiVersion: machine.openshift.io/v1beta1
@@ -315,7 +315,7 @@ fi
 if [[ $STORAGEOPTION == "nfs" ]]; then
   runuser -l $SUDOUSER -c "oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:kube-system:nfs-client-provisioner"
   runuser -l $SUDOUSER -c "wget $ARTIFACTSLOCATION/scripts/nfs-template.yaml$ARTIFACTSTOKEN -O  $INSTALLERHOME/openshiftfourx/nfs-template.yaml"
-  runuser -l $SUDOUSER -c "oc process -f $INSTALLERHOME/openshiftfourx/nfs-template.yaml -p NFS_SERVER=$(getent hosts $NFSHOSTNAME | awk '{ print $1 }') -p NFS_PATH=/exports/home | oc create -n kube-system -f -"
+  runuser -l $SUDOUSER -c "oc process -f $INSTALLERHOME/openshiftfourx/nfs-template.yaml -p NFS_SERVER=$NFSIPADDRESS -p NFS_PATH=/exports/home | oc create -n kube-system -f -"
 fi
 echo $(date) " - Setting up $STORAGEOPTION - Done"
 
