@@ -11,6 +11,8 @@
         [Parameter(Mandatory)]
         [String]$PSName,
         [Parameter(Mandatory)]
+        [String]$ClientName,
+        [Parameter(Mandatory)]
         [String]$DNSIPAddress,
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds
