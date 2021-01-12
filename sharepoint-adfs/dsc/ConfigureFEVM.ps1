@@ -252,15 +252,13 @@ configuration ConfigureFEVM
         {
             Name                 = "microsoft-edge"
             Ensure               = "Present"
-            Version              =  83.0.478.61
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         cChocoPackageInstaller InstallChrome
         {
-            Name                 = "googlechrome"
+            Name                 = "GoogleChrome"
             Ensure               = "Present"
-            Version              =  83.0.4103.116
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
@@ -268,7 +266,6 @@ configuration ConfigureFEVM
         {
             Name                 = "everything"
             Ensure               = "Present"
-            Version              =  1.4.1969
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
@@ -276,7 +273,6 @@ configuration ConfigureFEVM
         {
             Name                 = "ilspy"
             Ensure               = "Present"
-            Version              =  6.0.0.5836
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
@@ -284,7 +280,6 @@ configuration ConfigureFEVM
         {
             Name                 = "notepadplusplus.install"
             Ensure               = "Present"
-            Version              =  7.9
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
@@ -299,8 +294,8 @@ configuration ConfigureFEVM
         cChocoPackageInstaller InstallFiddler
         {
             Name                 = "fiddler"
+            Version              =  5.0.20204.45441
             Ensure               = "Present"
-            Version              =  5.0.20202.18177
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
