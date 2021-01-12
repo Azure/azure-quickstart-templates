@@ -17,6 +17,7 @@ Param(
     [string] $DebugOptions = "None",
     [string] $Mode = "Incremental",
     [string] $DeploymentName = ((Split-Path $TemplateFile -LeafBase) + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')),
+    [string] $ManagementGroupId,
     [switch] $Dev
 )
 
@@ -244,8 +245,8 @@ else { # $validateOnly
         }
         "managementGroup" {           
             New-AzManagementGroupDeployment -Name $DeploymentName `
-                -ManagementGroupId $managementGroupId 
-            -Location $Location `
+                -ManagementGroupId $ManagementGroupId `
+                -Location $Location `
                 @TemplateArgs `
                 @OptionalParameters `
                 -Verbose `
