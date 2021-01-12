@@ -11,7 +11,7 @@
     "location": {
       "type": "string",
       "metadata": {
-        "description": "Specifies the location for all new resources."
+        "description": "Specifies the location for workspace."
       }
     },
     "sku": {
@@ -23,6 +23,31 @@
       ],
       "metadata": {
         "description": "Specifies the sku, also referred as 'edition' of the Azure Machine Learning workspace."
+      }
+    },
+    "identityType": {
+      "type": "string",
+      "defaultValue": "systemAssigned",
+      "allowedValues": [
+        "systemAssigned",
+        "userAssigned"
+      ],
+      "metadata": {
+        "description": "Specifies the identity type of the Azure Machine Learning workspace."
+      }
+    },
+    "primaryUserAssignedIdentityResourceGroup": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Specifies the resource group of user assigned identity that represents the Azure Machine Learing workspace."
+      }
+    },
+    "primaryUserAssignedIdentityName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specifies the name of user assigned identity that represents the Azure Machine Learing workspace."
       }
     },
     "tagValues": {
@@ -340,7 +365,42 @@
         ]
       }
     },
-    "defaultPEConnections": "[array(variables('privateEndpointSettings'))]"
+    "defaultPEConnections": "[array(variables('privateEndpointSettings'))]",
+    "userAssignedIdentities": {
+      "[variables('primaryUserAssignedIdentity')]": {}
+    },
+    "primaryUserAssignedIdentity": "[resourceId(parameters('primaryUserAssignedIdentityResourceGroup'), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('primaryUserAssignedIdentityName'))]",
+    "azAppInsightsLocationMap": {
+      "eastasia": "eastasia",
+      "southeastasia": "southeastasia",
+      "centralus": "westcentralus",
+      "eastus": "eastus",
+      "eastus2": "eastus2",
+      "westus": "westus",
+      "northcentralus": "northcentralus",
+      "southcentralus": "southcentralus",
+      "northeurope": "northeurope",
+      "westeurope": "westeurope",
+      "japanwest": "japanwest",
+      "japaneast": "japaneast",
+      "brazilsouth": "brazilsouth",
+      "australiaeast": "australiaeast",
+      "australiasoutheast": "australiasoutheast",
+      "southindia": "southindia",
+      "centralindia": "centralindia",
+      "westindia": "westindia",
+      "canadacentral": "canadacentral",
+      "canadaeast": "canadaeast",
+      "uksouth": "uksouth",
+      "ukwest": "ukwest",
+      "westcentralus": "southcentralus",
+      "westus2": "westus2",
+      "koreacentral": "koreacentral",
+      "koreasouth": "koreasouth",
+      "eastus2euap": "southcentralus",
+      "centraluseuap": "southcentralus"
+    },
+    "appInsightsLocation": "[variables('azAppInsightsLocationMap')[parameters('location')]]"
   },
   "resources": [
     {
@@ -478,7 +538,7 @@
       "type": "Microsoft.Insights/components",
       "apiVersion": "2020-02-02-preview",
       "name": "[parameters('applicationInsightsName')]",
-      "location": "[if(equals(parameters('location'),'westcentralus'),'southcentralus',parameters('location'))]",
+      "location": "[variables('appInsightsLocation')]",
       "kind": "web",
       "tags": "[parameters('tagValues')]",
       "properties": {
@@ -495,7 +555,8 @@
         "name": "[parameters('sku')]"
       },
       "identity": {
-        "type": "systemAssigned"
+        "type": "[parameters('identityType')]",
+        "userAssignedIdentities": "[if(equals(parameters('identityType'), 'userAssigned'), variables('userAssignedIdentities'), json('null'))]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
@@ -511,6 +572,7 @@
         "applicationInsights": "[variables('applicationInsights')]",
         "containerRegistry": "[if(not(equals(parameters('containerRegistryOption'), 'none')), variables('containerRegistry'), json('null'))]",
         "adbWorkspace": "[if(empty(parameters('adbWorkspace')), json('null'), parameters('adbWorkspace'))]",
+        "primaryUserAssignedIdentity": "[if(equals(parameters('identityType'), 'userAssigned'), variables('primaryUserAssignedIdentity'), json('null'))]",
         "encryption": {
           "status": "[parameters('encryption_status')]",
           "keyVaultProperties": {

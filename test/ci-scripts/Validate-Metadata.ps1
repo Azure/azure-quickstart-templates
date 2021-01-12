@@ -54,7 +54,7 @@ else {
 $docOwner = ($metadata | convertfrom-json).docOwner
 Write-Host "docOwner: $docOwner"
 if ($null -ne $docOwner){
-    $msg = "@$docOwner - check this PR for updates that may be needed to documentation that references this sample."
+    $msg = "@$docOwner - check this PR for updates that may be needed to documentation that references this sample.  [this is an automated message]"
     Write-Host "##vso[task.setvariable variable=docOwner.message]$msg"    
 }
 
@@ -70,7 +70,7 @@ if (!$IsCloudSupported) {
 }
 
 $validationType = ($metadata | convertfrom-json).validationType
-Write-Output "Sample type from metadata.json: $validationType"
+Write-Output "Validation type from metadata.json: $validationType"
 
 if($validationType -eq "Manual"){
     Write-Host "##vso[task.setvariable variable=validation.type]$validationType"
