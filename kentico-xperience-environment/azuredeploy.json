@@ -66,17 +66,10 @@
     },
     "administrationSiteName": {
       "type": "string",
-      "defaultValue": "[concat('kenticoadministration', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[concat('kenticoadministration', uniqueString( resourceGroup().id, deployment().name ))]",
       "minLength": 1,
       "metadata": {
         "description": "Name of the Web App hosting the Kentico Xperience administration project. By default, the deployed Web App will be available at AdministrationSiteName.azurewebsites.net. Keep in mind that the name must be unique across the entire Azure environment, not only within your hosting plan."
-      }
-    },
-    "sqlServerName": {
-      "type": "string",
-      "defaultValue": "[concat('kenticoserver', uniqueString(resourceGroup().id))]",
-      "metadata": {
-        "description": "Server name of the deployed Azure SQL server. The server name can contain only lowercase letters, numbers, and '-', but can't start or end with '-' or have more than 63 characters. The deployed server will be available at SQLServerName.database.windows.net. Keep in mind that the server name must be unique across the entire Azure environment, not only within your hosting plan."
       }
     },
     "sqlAdministratorLogin": {
@@ -107,11 +100,15 @@
       }
     }
   },
+  "variables": {
+    "sqlServerName" : "[concat('kenticoserver', uniqueString( resourceGroup().id, deployment().name ))]",
+    "InstrumentationKey" : "[concat('microsoft.insights/components/', parameters('livesiteName'))]" 
+  },
   "resources": [
     {
-      "apiVersion": "2018-05-01",
-      "name": "pid-e3ec0034-3eaf-47a7-bf36-21bcf341b4dd",
       "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-09-01",
+      "name": "pid-e3ec0034-3eaf-47a7-bf36-21bcf341b4dd",
       "properties": {
         "mode": "Incremental",
         "template": {
@@ -122,7 +119,7 @@
       }
     },
     {
-      "name": "[parameters('sqlserverName')]",
+      "name": "[variables('sqlserverName')]",
       "type": "Microsoft.Sql/servers",
       "location": "[parameters('location')]",
       "tags": {
@@ -137,11 +134,11 @@
         {
           "type": "firewallrules",
           "apiVersion": "2020-02-02-preview",
-          "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers/', parameters('sqlserverName'))]"
-          ],
-          "location": "[parameters('location')]",
           "name": "AllowAllWindowsAzureIps",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))]"
+          ],
           "properties": {
             "endIpAddress": "0.0.0.0",
             "startIpAddress": "0.0.0.0"
@@ -150,9 +147,9 @@
       ]
     },
     {
+      "type": "Microsoft.Web/serverfarms",
       "apiVersion": "2020-06-01",
       "name": "[parameters('hostingPlanLivesite')]",
-      "type": "Microsoft.Web/serverfarms",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "HostingPlan"
@@ -166,9 +163,9 @@
       }
     },
     {
+      "type": "Microsoft.Web/sites",
       "apiVersion": "2020-06-01",
       "name": "[parameters('livesiteName')]",
-      "type": "Microsoft.Web/sites",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverFarms/', parameters('hostingPlanLivesite'))]",
@@ -186,31 +183,31 @@
           "connectionStrings": [
             {
               "name": "CMSConnectionString",
-              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', parameters('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', parameters('sqlserverName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
+              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
               "type": "SQLServer"
             }
           ],
           "appSettings": [
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-              "value": "[reference(concat('microsoft.insights/components/', parameters('livesiteName'))).InstrumentationKey]"
+              "value": "[reference(variables('InstrumentationKey')).InstrumentationKey]"
             }
           ]
         }
       }
     },
     {
+      "type": "Microsoft.Insights/autoscalesettings",
       "apiVersion": "2015-04-01",
       "name": "[concat(parameters('hostingPlanLivesite'), '-', resourceGroup().name)]",
-      "type": "Microsoft.Insights/autoscalesettings",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', parameters('hostingPlanLivesite'))]"
+      ],
       "tags": {
         "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanLivesite'))]": "Resource",
         "displayName": "AutoScaleSettings"
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', parameters('hostingPlanLivesite'))]"
-      ],
       "properties": {
         "profiles": [
           {
@@ -266,40 +263,40 @@
       }
     },
     {
+      "type": "Microsoft.Insights/components",
       "apiVersion": "2020-02-02-preview",
       "name": "[parameters('livesiteName')]",
-      "type": "Microsoft.Insights/components",
       "location": "[parameters('location')]",
+      "kind": "web",
       "tags": {
         "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('livesiteName'))]": "Resource",
         "displayName": "AppInsightsComponent"
       },
-      "kind": "web",
       "properties": {
         "Application_Type": "web"
       }
     },
     {
+      "type": "Microsoft.Web/serverfarms",
       "apiVersion": "2020-06-01",
       "name": "[parameters('hostingPlanAdministration')]",
-      "type": "Microsoft.Web/serverfarms",
       "location": "[parameters('location')]",
-      "tags": {
-        "displayName": "HostingPlan"
-      },
       "sku": {
         "name": "[parameters('pricingTierAdministration')]",
         "capacity": 1
+      },
+      "tags": {
+        "displayName": "HostingPlan"
       },
       "properties": {
         "name": "[parameters('hostingPlanAdministration')]"
       }
     },
     {
-      "name": "[parameters('administrationSiteName')]",
       "type": "Microsoft.Web/sites",
-      "location": "[parameters('location')]",
       "apiVersion": "2020-06-01",
+      "name": "[parameters('administrationSiteName')]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanAdministration'))]"
       ],
@@ -315,7 +312,7 @@
           "connectionStrings": [
             {
               "name": "CMSConnectionString",
-              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', parameters('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', parameters('sqlserverName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
+              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
               "type": "SQLServer"
             }
           ]

@@ -70,30 +70,3 @@ You can use this template to configure and deploy resources necessary to host a 
 4. Upload the project's database to a database created under the Azure SQL server instance deployed by the template. 
 
 For more information about site development and general best practices, visit the [Xperience documentation](https://docs.xperience.io/).
-
-## Deployment steps
-
- 1. Click the "**Deploy** to Azure" button at the top of this document.
- 2. Select your Azure subscription, resource group, and resource location.
- 3. Provide the information required to deploy Azure services used to host your Xperience site.
-	 - You are free to modify all provided default values **except** for the **Location** setting. Modifying the **Location** setting's value may cause issues during the template deployment. 
-4. Click **Review + create** and finish the template deployment.
-	- The template deploys all resources necessary to host Xperience sites in Microsoft Azure.
-5. Deploy your local database, live site application and administration application to the created Azure SQL server and Web Apps.
-	- For step-by-step instructions detailing this process, visit the [Xperience documentation](https://devnet.kentico.com/CMSPages/DocLinkMapper.ashx?version=latest&link=kentico_azure_webapps).
-
-### Additional database installation
-
-If you did not specify the *Connection String Database Name* setting during the ARM template deployment, the template creates both Web App instances without pre-configured connection strings.
-
-You can specify the connection strings after deployment in **Azure Portal -> App Services -> Your Web App -> Configuration**. Add the connection strings in the following format:
-
-`Name: CMSConnectionString`
-
-`Value: Data Source=tcp:<SQL_SERVER_NAME>.database.windows.net,1433;Initial Catalog=<DATABASE_NAME>;User Id=<USER_NAME>@<SQL_SERVER_NAME>;Password=<USER_PASSWORD>;`
-
-`Type: SQLServer`
-
-Substitute the *<SQL_SERVER_NAME>*, *<DATABASE_NAME>*, *<USER_NAME>*, and *<USER_PASSWORD>* placeholders with the information you provided during template deployment.
-
-
