@@ -17,7 +17,7 @@ snap install --classic certbot # To generate TLS certificates
 
 
 # Get rsyslog configuration
-wget $ARTIFACTS_LOCATION/rsyslog.conf
+wget $ARTIFACTS_LOCATION/configs/rsyslog.conf
 
 mv rsyslog.conf /etc/
 
