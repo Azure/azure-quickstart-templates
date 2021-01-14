@@ -31,7 +31,7 @@
     },
     "livesiteName": {
       "type": "string",
-      "defaultValue": "[concat('kenticolivesite', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[concat('kentico', uniqueString(resourceGroup().id))]",
       "minLength": 1,
       "metadata": {
         "description": "Name of the Web App hosting the live site application. By default, the deployed Web App will be available at livesiteName.azurewebsites.net. Keep in mind that the name must be unique across the entire Azure environment, not only within your hosting plan."
@@ -66,7 +66,7 @@
     },
     "administrationSiteName": {
       "type": "string",
-      "defaultValue": "[concat('kenticoadministration', uniqueString( resourceGroup().id, deployment().name ))]",
+      "defaultValue": "[concat('kenticoadmin', uniqueString(resourceGroup().id))]",
       "minLength": 1,
       "metadata": {
         "description": "Name of the Web App hosting the Kentico Xperience administration project. By default, the deployed Web App will be available at AdministrationSiteName.azurewebsites.net. Keep in mind that the name must be unique across the entire Azure environment, not only within your hosting plan."
@@ -101,7 +101,7 @@
     }
   },
   "variables": {
-    "sqlServerName" : "[concat('kenticoserver', uniqueString( resourceGroup().id, deployment().name ))]",
+    "sqlServerName" : "[concat('kenticosql', uniqueString(resourceGroup().id))]",
     "InstrumentationKey" : "[concat('microsoft.insights/components/', parameters('livesiteName'))]" 
   },
   "resources": [
@@ -120,7 +120,7 @@
     },
     {
       "type": "Microsoft.Sql/servers",
-      "apiVersion": "2020-02-02-preview",
+      "apiVersion": "2020-08-01-preview",
       "name": "[variables('sqlserverName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -133,11 +133,11 @@
       "resources": [
         {
           "type": "firewallrules",
-          "apiVersion": "2020-02-02-preview",
+          "apiVersion": "2020-08-01-preview",
           "name": "AllowAllWindowsAzureIps",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))]"
+            "[resourceId('Microsoft.Sql/servers', variables('sqlserverName'))]"
           ],
           "properties": {
             "endIpAddress": "0.0.0.0",
@@ -168,11 +168,11 @@
       "name": "[parameters('livesiteName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverFarms/', parameters('hostingPlanLivesite'))]",
-        "[resourceId('microsoft.insights/components/', parameters('livesiteName'))]"
+        "[resourceId('Microsoft.Web/serverFarms', parameters('hostingPlanLivesite'))]",
+        "[resourceId('microsoft.insights/components', parameters('livesiteName'))]"
       ],
       "tags": {
-        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanLivesite'))]": "empty",
+        "[format('{0}:{1}:{2}', 'hidden-related', resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanLivesite')))]": "empty",
         "displayName": "Website"
       },
       "properties": {
@@ -183,7 +183,7 @@
           "connectionStrings": [
             {
               "name": "CMSConnectionString",
-              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
+              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
               "type": "SQLServer"
             }
           ],
@@ -202,10 +202,10 @@
       "name": "[concat(parameters('hostingPlanLivesite'), '-', resourceGroup().name)]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', parameters('hostingPlanLivesite'))]"
+        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanLivesite'))]"
       ],
       "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanLivesite'))]": "Resource",
+        "[format('{0}:{1}:{2}', 'hidden-related', resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanLivesite')))]": "Resource",
         "displayName": "AutoScaleSettings"
       },
       "properties": {
@@ -269,7 +269,7 @@
       "location": "[parameters('location')]",
       "kind": "web",
       "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('livesiteName'))]": "Resource",
+        "[format('{0}:{1}:{2}', 'hidden-related', resourceId('Microsoft.Web/sites', parameters('livesiteName')))]": "Resource",
         "displayName": "AppInsightsComponent"
       },
       "properties": {
@@ -301,7 +301,7 @@
         "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanAdministration'))]"
       ],
       "tags": {
-        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanAdministration')))]": "Resource",
+        "[format('{0}:{1}:{2}', 'hidden-related', resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanAdministration')))]": "Resource",
         "displayName": "Administration"
       },
       "properties": {
