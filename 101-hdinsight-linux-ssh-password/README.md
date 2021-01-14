@@ -1,4 +1,4 @@
-# Deploy a Linux-based HDInsight cluster (with Azure Storage) with an SSH password.
+# Deploy a Linux-based HDInsight cluster (with Azure Storage) with an SSH password
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-linux-ssh-password/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-linux-ssh-password/PublicDeployment.svg)
