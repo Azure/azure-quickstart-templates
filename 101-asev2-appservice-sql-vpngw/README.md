@@ -24,6 +24,8 @@ The aadUserObjectId parameter is your user object Id and allows you to have acce
 $objectId = ((az ad user list --upn (az account list | ConvertFrom-Json).user[1].name) | ConvertFrom-Json).objectId
 ```
 
+The aadUsername is your user principal name which should normally be the email address to login to Azure.
+
 Follow the instructions on https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-certificates-point-to-site to create your own cert and pass it in. Here's an example code snippet.
 
 ```
