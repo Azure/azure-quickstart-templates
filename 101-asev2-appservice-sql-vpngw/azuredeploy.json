@@ -8,6 +8,9 @@
         "aadUserObjectId": {
             "type": "string"
         },
+        "aadUsername": {
+            "type": "string"
+        },
         "loginUser": {
             "type": "string"
         },
@@ -19,10 +22,28 @@
             "metadata": {
                 "description": "The administrator password of the VM and SQL Server."
             }
+        },
+        "privateDbDnsZoneName": {
+            "type": "string",
+            "defaultValue": "privatelink.database.windows.net"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "workerPool": {
+            "type": "int",
+            "defaultValue": 1,
+            "minValue": 1,
+            "maxValue": 10
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_B2ms"
         }
     },
     "variables": {
-        "location": "[resourceGroup().location]",
+        "location": "[parameters('location')]",
         "vnetName": "[concat(parameters('stackName'), '-vnet')]",
         "frontendSubnet": "frontend",
         "backendSubnet": "backend",
@@ -32,11 +53,11 @@
         "databaseEdition": "Basic",
         "databaseCollation": "SQL_Latin1_General_CP1_CI_AS",
         "databaseServiceObjectiveName": "Basic",
-        "workerPool": 1,
+        "workerPool": "[parameters('workerPool')]",
         "numberOfWorkersFromWorkerPool": 1,
         "nicName": "[concat( parameters('stackName'),'vmnic')]",
         "privateDbEndpointName": "[concat( parameters('stackName'),'pvenp')]",
-        "privateDbDnsZoneName": "privatelink.database.windows.net",
+        "privateDbDnsZoneName": "[parameters('privateDbDnsZoneName')]",
         "privateDbDnsGroupName": "[concat(variables('privateDbEndpointName'),'/mydnsgroupname')]",
         "privateHost1DnsZoneName": "[concat(parameters('stackName'),'.appserviceenvironment.net') ]",
         "gatewayPublicIPName": "[concat( parameters('stackName'),'gwpip')]",
@@ -55,7 +76,6 @@
                         "172.16.0.0/16"
                     ]
                 },
-                "virtualNetworkPeerings": [],
                 "enableDdosProtection": false,
                 "enableVmProtection": false,
                 "subnets": [
@@ -68,7 +88,6 @@
                                     "service": "Microsoft.Sql"
                                 }
                             ],
-                            "delegations": [],
                             "privateEndpointNetworkPolicies": "Disabled",
                             "privateLinkServiceNetworkPolicies": "Disabled"
                         }
@@ -79,7 +98,6 @@
                             "addressPrefix": "172.16.1.0/24",
                             "serviceEndpoints": [
                             ],
-                            "delegations": [],
                             "privateEndpointNetworkPolicies": "Disabled",
                             "privateLinkServiceNetworkPolicies": "Disabled"
                         }
@@ -90,7 +108,6 @@
                             "addressPrefix": "172.16.255.0/27",
                             "serviceEndpoints": [
                             ],
-                            "delegations": [],
                             "privateEndpointNetworkPolicies": "Disabled",
                             "privateLinkServiceNetworkPolicies": "Disabled"
                         }
@@ -112,7 +129,6 @@
                         "service": "Microsoft.Sql"
                     }
                 ],
-                "delegations": [],
                 "privateEndpointNetworkPolicies": "Disabled",
                 "privateLinkServiceNetworkPolicies": "Disabled"
             }
@@ -128,7 +144,6 @@
                 "addressPrefix": "172.16.1.0/24",
                 "serviceEndpoints": [
                 ],
-                "delegations": [],
                 "privateEndpointNetworkPolicies": "Disabled",
                 "privateLinkServiceNetworkPolicies": "Disabled"
             }
@@ -144,7 +159,6 @@
                 "addressPrefix": "172.16.255.0/27",
                 "serviceEndpoints": [
                 ],
-                "delegations": [],
                 "privateEndpointNetworkPolicies": "Disabled",
                 "privateLinkServiceNetworkPolicies": "Disabled"
             }
@@ -162,14 +176,14 @@
             "properties": {
                 "internalLoadBalancingMode": 3,
                 "virtualNetwork": {
-                    "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('frontendSubnet'))]"
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('frontendSubnet'))]"
                 }
             }
         },
         {
             "name": "[parameters('stackName')]",
             "type": "Microsoft.Sql/servers",
-            "apiVersion": "2020-02-02-preview",
+            "apiVersion": "2020-08-01-preview",
             "location": "[variables('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
@@ -188,7 +202,7 @@
                 {
                     "name": "[variables('databaseName')]",
                     "type": "databases",
-                    "apiVersion": "2020-02-02-preview",
+                    "apiVersion": "2020-08-01-preview",
                     "location": "[variables('location')]",
                     "tags": {
                         "displayName": "Database"
@@ -224,7 +238,7 @@
                 {
                     "name": "AllowAllMicrosoftAzureIps",
                     "type": "firewallrules",
-                    "apiVersion": "2020-02-02-preview",
+                    "apiVersion": "2020-08-01-preview",
                     "location": "[variables('location')]",
                     "properties": {
                         "endIpAddress": "0.0.0.0",
@@ -236,7 +250,7 @@
                 },
                 {
                     "type": "Microsoft.Sql/servers/virtualNetworkRules",
-                    "apiVersion": "2015-05-01-preview",
+                    "apiVersion": "2020-08-01-preview",
                     "name": "[concat(parameters('stackName'), '/allow-', variables('frontendSubnet'))]",
                     "dependsOn": [ "[resourceId('Microsoft.Sql/servers', parameters('stackName'))]" ],
                     "properties": {
@@ -247,16 +261,16 @@
                 {
                     "type": "administrators",
                     "name": "activeDirectory",
-                    "apiVersion": "2014-04-01-preview",
+                    "apiVersion": "2020-08-01-preview",
                     "location": "[variables('location')]",
                     "properties": {
                         "administratorType": "ActiveDirectory",
-                        "login": "[parameters('loginUser')]",
+                        "login": "[parameters('aadUsername')]",
                         "sid": "[parameters('aadUserObjectId')]",
                         "tenantId": "[subscription().tenantId]"
                     },
                     "dependsOn": [
-                        "[concat('Microsoft.Sql/servers/', parameters('stackName'))]"
+                        "[resourceId('Microsoft.Sql/servers/', parameters('stackName'))]"
                     ]
                 }
             ]
@@ -388,7 +402,7 @@
                 }
             },
             "dependsOn": [
-                "[concat('Microsoft.Web/serverFarms/',parameters('stackName'))]",
+                "[resourceId('Microsoft.Web/serverFarms/',parameters('stackName'))]",
                 "[resourceId('Microsoft.Insights/components/', parameters('stackName'))]"
             ]
         },
@@ -419,7 +433,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('backendSubnet'))]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('backendSubnet'))]"
                             }
                         }
                     }
@@ -431,19 +445,16 @@
             "apiVersion": "2020-06-01",
             "name": "[parameters('stackName')]",
             "location": "[variables('location')]",
-            "identity": {
-                "type": "SystemAssigned"
-            },
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "Standard_B2ms"
+                    "vmSize": "[parameters('vmSize')]"
                 },
                 "osProfile": {
                     "computerName": "[concat(parameters('stackName'),'vm')]",
-                    "adminUsername": "[concat(parameters('stackName'),'admin')]",
+                    "adminUsername": "[parameters('loginUser')]",
                     "adminPassword": "[parameters('loginPassword')]"
                 },
                 "storageProfile": {
@@ -476,7 +487,7 @@
                     "apiVersion": "2019-07-01",
                     "location": "[variables('location')]",
                     "dependsOn": [
-                        "[concat('Microsoft.Compute/virtualMachines/', parameters('stackName'))]"
+                        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('stackName'))]"
                     ],
 
                     "properties": {
@@ -496,8 +507,8 @@
                             "ScheduledScanSettings": {
                                 "isEnabled": "true",
                                 "scanType": "Quick",
-                                "day": "7",
-                                "time": "120"
+                                "day": 7,
+                                "time": 120
                             }
                         },
                         "protectedSettings": null
@@ -533,7 +544,7 @@
         },
         {
             "type": "Microsoft.Network/privateDnsZones",
-            "apiVersion": "2018-09-01",
+            "apiVersion": "2020-06-01",
             "name": "[variables('privateDbDnsZoneName')]",
             "location": "global",
             "dependsOn": [
@@ -542,7 +553,7 @@
         },
         {
             "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-            "apiVersion": "2018-09-01",
+            "apiVersion": "2020-06-01",
             "name": "[concat(variables('privateDbDnsZoneName'), '/', variables('privateDbDnsZoneName'), '-link')]",
             "location": "global",
             "dependsOn": [
@@ -591,8 +602,8 @@
             "name": "[variables('gatewayName')]",
             "location": "[variables('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+                "[resourceId('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -647,8 +658,6 @@
                 "allowBlobPublicAccess": true,
                 "networkAcls": {
                     "bypass": "AzureServices",
-                    "virtualNetworkRules": [],
-                    "ipRules": [],
                     "defaultAction": "Allow"
                 },
                 "supportsHttpsTrafficOnly": true,
@@ -712,15 +721,5 @@
                 "ApplicationId": "[parameters('stackName')]"
             }
         }
-    ],
-    "outputs": {
-        "sqlServerFqdn": {
-            "type": "string",
-            "value": "[reference(resourceId('Microsoft.Sql/servers/', parameters('stackName'))).fullyQualifiedDomainName]"
-        },
-        "databaseName": {
-            "type": "string",
-            "value": "[variables('databaseName')]"
-        }
-    }
+    ]
 }
