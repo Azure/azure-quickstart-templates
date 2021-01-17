@@ -32,18 +32,22 @@ Within the Azure Custom Deployment, set the following properties:
 
 ![Create a Custom Deployment in Azure](https://www.moesif.com/docs/images/docs/integration/azure-api-management-create-custom-deployment.png)
 
-* Set Moesif Application Id to the one displayed after logging into your Moesif account. You can create a free one on [Moesif's website](https://www.moesif.com/?language=azure-api-management)
-* Set _Existing Apim Resource Group_ to the resource group containing your Azure APIM.
-* Set _Existing Apim Name_ to the name of your Azure APIM instance.
+* For the resource group, select the same resource group that your Azure APIM resides in. This ensures the APIM logger, `moesif-log-to-event-hub`, is automatically created for you. 
 
-Then, click _Review+create_ and create the template to start deployment. 
+* Set Moesif Application Id to the one displayed after logging into your Moesif account. You can create a free one on [Moesif's website](https://www.moesif.com/?language=azure-api-management)
+
+* Set _Existing Api Mgmt Name_ to the name of your Azure APIM instance.
+
+Then, click _Review+create_ and create the template to start the deployment. 
+
+> You can deploy Moesif to a different resource group or leave _Existing Api Mgmt Name_ blank, but you will need to manually create an [APIM logger](https://docs.microsoft.com/en-us/azure/api-management/api-management-log-to-eventhub-sample#policy-declaration) later. 
 
 ### 3. Add XML Policy
 
-Within the Azure portal, go to your existing Azure API Management instance.
-Add the below XML policy to all products or APIs that you want logged to Moesif. 
+Within the Azure portal, navigate to your existing Azure API Management instance.
+Then, add the below XML policies to all products or APIs that you want logged to Moesif. 
 
-More info on editing policies available on the [Azure docs](https://docs.microsoft.com/en-us/azure/api-management/set-edit-policies)
+More info on editing APIM policies is available on the [Azure docs](https://docs.microsoft.com/en-us/azure/api-management/set-edit-policies)
 
 ```xml
 <policies>
@@ -56,9 +60,9 @@ More info on editing policies available on the [Azure docs](https://docs.microso
                                                       context.Request.Url.Path + context.Request.Url.QueryString);
 
           var body = context.Request.Body?.As<string>(true);
-          if (body != null && body.Length > 1024)
+          if (body != null && body.Length > 175000)
           {
-              body = body.Substring(0, 1024);
+              body = body.Substring(0, 175000);
           }
 
           var headers = context.Request.Headers
@@ -84,9 +88,9 @@ More info on editing policies available on the [Azure docs](https://docs.microso
                                               context.Response.StatusReason);
 
           var body = context.Response.Body?.As<string>(true);
-          if (body != null && body.Length > 1024)
+          if (body != null && body.Length > 175000)
           {
-              body = body.Substring(0, 1024);
+              body = body.Substring(0, 175000);
           }
 
           var headers = context.Response.Headers
@@ -102,6 +106,7 @@ More info on editing policies available on the [Azure docs](https://docs.microso
   </outbound>
 </policies>
 ```
+
 The [ARM Template `nested/microsoft.apimanagement/service/apis/policies.json`](nested/microsoft.apimanagement/service/apis/policies.json) can be used as a reference to set policy XML thru Azure deployment. This sample template, as implemented, will overwrite existing policy.xml
 That's it! API logs should start showing up after a few minutes.
 
