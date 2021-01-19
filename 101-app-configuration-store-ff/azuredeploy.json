@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "configStoreName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the App Configuration store."
+      }
+    },
+    "featureFlagName": {
+      "type": "string",
+      "defaultValue": "FeatureFlagSample",
+      "metadata": {
+        "description": "Specifies the name of the feature flag. The name is used as the key of the key-value."
+      }
+    },
+    "featureFlagLabel": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specifies the label of the feature flag. The label is optional and can be left as empty."
+      }
+    }
+  },
+  "variables": {
+    "featureFlagValue": {
+      "id": "[parameters('featureFlagName')]",
+      "description": "Your description.",
+      "enabled": true,
+      "conditions": { "client_filters": [] }
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('configStoreName')]",
+      "type": "Microsoft.AppConfiguration/configurationStores",
+      "apiVersion": "2020-07-01-preview",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "standard"
+      },
+      "resources": [
+        {
+          "name": "[concat('.appconfig.featureflag~2F', parameters('featureFlagName'), '$', parameters('featureFlagLabel'))]",
+          "type": "keyValues",
+          "apiVersion": "2020-07-01-preview",
+          "dependsOn": [
+            "[parameters('configStoreName')]"
+          ],
+          "properties": {
+            "value": "[string(variables('featureFlagValue'))]",
+            "contentType": "application/vnd.microsoft.appconfig.ff+json;charset=utf-8"
+          }
+        }
+      ]
+    }
+  ]
+}

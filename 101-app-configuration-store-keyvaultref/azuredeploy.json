@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "configStoreName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the App Configuration store."
+      }
+    },
+    "keyValueName": {
+      "type": "string",
+      "defaultValue": "KeyVaultReferenceSample",
+      "metadata": {
+        "description": "Specifies the name of the key-value resource. The name is a combination of key and label with $ as delimiter."
+      }
+    },
+    "keyValueSecretIdentifier": {
+      "type": "string",
+      "defaultValue": "https://your-key-valut-name.vault.azure.net/secrets/your-secret",
+      "metadata": {
+        "description": "Examples like https://your-key-valut-name.vault.azure.net/secrets/your-secret/secret-version and https://your-key-valut-name.vault.azure.net/secrets/your-secret"
+      }
+    }
+  },
+  "variables": {
+    "keyVaultRef": {
+      "uri": "[parameters('keyValueSecretIdentifier')]"
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('configStoreName')]",
+      "type": "Microsoft.AppConfiguration/configurationStores",
+      "apiVersion": "2020-07-01-preview",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "standard"
+      },
+      "resources": [
+        {
+          "name": "[parameters('keyValueName')]",
+          "type": "keyValues",
+          "apiVersion": "2020-07-01-preview",
+          "dependsOn": [
+            "[parameters('configStoreName')]"
+          ],
+          "properties": {
+            "value": "[string(variables('keyVaultRef'))]",
+            "contentType": "application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8"
+          }
+        }
+      ]
+    }
+  ]
+}
