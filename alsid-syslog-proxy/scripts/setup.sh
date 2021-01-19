@@ -1,7 +1,8 @@
 WORKSPACE_ID=$1
 PRIMARYKEY=$2
 ARTIFACTS_LOCATION=$3
-DNS_NAME=$4
+SAS_TOKEN=$4
+DNS_NAME=$5
 
 CERTS_PATH=/etc/letsencrypt/live/$DNS_NAME/
 
@@ -17,7 +18,7 @@ snap install --classic certbot # To generate TLS certificates
 
 
 # Get rsyslog configuration
-wget $ARTIFACTS_LOCATION/configs/rsyslog.conf
+wget $ARTIFACTS_LOCATION/configs/rsyslog.conf$SAS_TOKEN
 
 mv rsyslog.conf /etc/
 
