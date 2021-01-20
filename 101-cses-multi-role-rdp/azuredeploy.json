@@ -1,0 +1,180 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "cloudServiceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the cloud service"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the cloud service"
+      }
+    },
+    "deploymentLabel": {
+      "type": "string",
+      "metadata": {
+        "description": "Label of the deployment"
+      }
+    },
+    "packageSasUri": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SAS Uri of the CSPKG file to deploy"
+      }
+    },
+    "configurationSasUri": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SAS Uri of the service configuration (.cscfg)"
+      }
+    },
+    "roles": {
+      "type": "array",
+      "metadata": {
+        "description": "Roles created in the cloud service application"
+      }
+    },
+    "rdpPublicConfig": {
+      "type": "string",
+      "metadata": {
+        "description": "Public config of remote desktop extension"
+      }
+    },
+    "rdpPrivateConfig": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Private config of remote desktop extension"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "[concat(parameters('cloudServiceName'), 'VNet')]",
+      "metadata": {
+        "description": "Name of vitual network"
+      }
+    },
+    "publicIPName": {
+      "type": "string",
+      "defaultValue": "contosocsIP",
+      "metadata": {
+        "description": "Name of public IP address"
+      }
+    },
+    "upgradeMode": {
+      "type": "string",
+      "defaultValue": "Auto",
+      "metadata": {
+        "UpgradeMode": "UpgradeMode of the CloudService"
+      }
+    }
+  },
+  "variables": {
+    "cloudServiceName": "[parameters('cloudServiceName')]",
+    "subscriptionID": "[subscription().subscriptionId]",
+    "dnsName": "[variables('cloudServiceName')]",
+    "lbName": "[concat(variables('cloudServiceName'), 'LB')]",
+    "lbFEName": "[concat(variables('cloudServiceName'), 'LBFE')]",
+    "resourcePrefix": "[concat('/subscriptions/', variables('subscriptionID'), '/resourceGroups/', resourceGroup().name, '/providers/')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-08-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "WebTier",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-08-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 10,
+        "publicIPAddressVersion": "IPv4",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('dnsName')]"
+        }
+      },
+      "sku": {
+        "name": "Basic"
+      }
+    },
+    {
+      "apiVersion": "2020-10-01-preview",
+      "type": "Microsoft.Compute/cloudServices",
+      "name": "[variables('cloudServiceName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "DeploymentLabel": "[parameters('deploymentLabel')]",
+        "DeployFromVisualStudio": "true"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPName'))]"
+      ],
+      "properties": {
+        "packageUrl": "[parameters('packageSasUri')]",
+        "configurationUrl": "[parameters('configurationSasUri')]",
+        "upgradeMode": "[parameters('upgradeMode')]",
+        "roleProfile": {
+          "roles": "[parameters('roles')]"
+        },
+        "networkProfile": {
+          "loadBalancerConfigurations": [
+            {
+              "id": "[concat(variables('resourcePrefix'), 'Microsoft.Network/loadBalancers/', variables('lbName'))]",
+              "name": "[variables('lbName')]",
+              "properties": {
+                "frontendIPConfigurations": [
+                  {
+                    "name": "[variables('lbFEName')]",
+                    "properties": {
+                      "publicIPAddress": {
+                        "id": "[concat(variables('resourcePrefix'), 'Microsoft.Network/publicIPAddresses/', parameters('publicIPName'))]"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "extensionProfile": {
+          "extensions": [
+             {
+              "name": "RDPExtension",
+              "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Windows.Azure.Extensions",
+                "type": "RDP",
+                "typeHandlerVersion": "1.2.1",
+                "settings": "[parameters('rdpPublicConfig')]",
+                "protectedSettings": "[parameters('rdpPrivateConfig')]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
