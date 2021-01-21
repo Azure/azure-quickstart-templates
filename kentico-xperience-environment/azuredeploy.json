@@ -84,6 +84,13 @@
         "description": "Password for the Azure SQL server administrator account. The password is case-sensitive and may contain lower case, upper case, numbers and special characters. The default Azure password complexity rules: minimum length of 8 characters, minimum of 1 uppercase character, minimum of 1 lowercase character, minimum of 1 number. Moreover, the password cannot contain the account name of the user account performing the deployment. The password can be up to 128 characters long."
       }
     },
+    "sqlServerName": {
+      "type": "string",
+      "defaultValue": "[uniqueString('kenticoserver', resourceGroup().id)]",
+      "metadata": {
+        "description": "Server name of the deployed Azure SQL server. The server name can contain only lowercase letters, numbers, and '-', but can't start or end with '-' or have more than 63 characters. Keep in mind that the server name must be unique across the entire Azure environment, not only within your hosting plan."
+      }
+    },
     "connectionStringDatabaseName": {
       "type": "string",
       "defaultValue": "",
@@ -101,7 +108,6 @@
     }
   },
   "variables": {
-    "sqlServerName" : "[concat('kenticosql', uniqueString(resourceGroup().id))]",
     "InstrumentationKey" : "[concat('microsoft.insights/components/', parameters('livesiteName'))]" 
   },
   "resources": [
@@ -119,9 +125,10 @@
       }
     },
     {
+      "condition": "[not(empty(parameters('connectionStringDatabaseName')))]",
       "type": "Microsoft.Sql/servers",
       "apiVersion": "2020-08-01-preview",
-      "name": "[variables('sqlserverName')]",
+      "name": "[parameters('sqlServerName')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "SqlServer"
@@ -137,7 +144,7 @@
           "name": "AllowAllWindowsAzureIps",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers', variables('sqlserverName'))]"
+            "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
           ],
           "properties": {
             "endIpAddress": "0.0.0.0",
@@ -183,7 +190,7 @@
           "connectionStrings": [
             {
               "name": "CMSConnectionString",
-              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
+              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', parameters('sqlServerName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
               "type": "SQLServer"
             }
           ],
@@ -312,7 +319,7 @@
           "connectionStrings": [
             {
               "name": "CMSConnectionString",
-              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
+              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', parameters('sqlServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', parameters('sqlServerName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
               "type": "SQLServer"
             }
           ]
