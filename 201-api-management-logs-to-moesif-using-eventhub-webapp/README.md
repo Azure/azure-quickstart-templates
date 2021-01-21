@@ -66,7 +66,7 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
           }
 
           var headers = context.Request.Headers
-                               .Where(h => h.Key != "Authorization" && h.Key != "Ocp-Apim-Subscription-Key")
+                               .Where(h => h.Key != "Ocp-Apim-Subscription-Key")
                                .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value)))
                                .ToArray<string>();
 
