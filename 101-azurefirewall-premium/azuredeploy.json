@@ -1,0 +1,480 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_B2s",
+            "metadata": {
+                "description": "Size of virtual machine sizes"
+            }
+        },
+        "remoteAccessUsername": {
+            "type": "string",
+            "defaultValue": "AzureUser",
+            "metadata": {
+                "description": "Username for remote access"
+            }
+        },
+        "remoteAccessPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for remote access"
+            }
+        },
+        "caPfxEncodedInBase64": {
+            "type": "securestring",
+            "metadata": {
+                "description": "CA Certificate for TLS termination. PFX of the intermediate certificate and private key encoded in Base64"
+            }
+        },
+        "rootPemEncodedInBase64": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Root CA public certificate. PEM of the Root CA encoded in Base64"
+            }
+        }
+    },
+    "variables": {
+        "vnetAddressSpace": "10.0.0.0/16",
+        "firewallAddressSpace": "10.0.100.0/24",
+        "firewallPrivateIPAddress": "10.0.100.4",
+        "serverAddressSpace": "10.0.10.0/24",
+        "serverPrivateIPAddress": "10.0.10.10",
+        "bastionAddressSpace": "10.0.20.0/24",
+        "keyVaultName": "[concat('fw-quick-', uniqueString(resourceGroup().id))]",
+        "keyVaultCASecretName": "CACert",
+        "keyVaultCASecretId": "[concat('https://', variables('keyVaultName'), '.vault.azure.net/secrets/', variables('keyVaultCASecretName'))]",
+        "location": "[resourceGroup().location]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-05-01",
+            "type": "Microsoft.Network/routeTables",
+            "name": "ServerRoute",
+            "location": "[variables('location')]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "ServerRouteFirewall",
+                        "properties": {
+                            "addressPrefix": "0.0.0.0/0",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[variables('firewallPrivateIPAddress')]"
+                        }
+                    }
+                ],
+                "disableBgpRoutePropagation": false
+            }
+        },
+        {
+            "apiVersion": "2020-07-01",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "DemoVnet",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/routeTables', 'ServerRoute')]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnetAddressSpace')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "AzureFirewallSubnet",
+                        "properties": {
+                            "addressPrefix": "[variables('firewallAddressSpace')]"
+                        }
+                    },
+                    {
+                        "name": "ServerSubnet",
+                        "properties": {
+                            "addressPrefix": "[variables('serverAddressSpace')]",
+                            "routeTable": {
+                                "id": "[resourceId('Microsoft.Network/routeTables', 'ServerRoute')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "AzureBastionSubnet",
+                        "properties": {
+                            "addressPrefix": "[variables('bastionAddressSpace')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2020-07-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "ServerNIC",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', 'DemoVnet')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ServerIPConfiguration",
+                        "properties": {
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'DemoVnet', 'ServerSubnet')]"
+                            },
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[variables('serverPrivateIPAddress')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "ServerVM",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2020-06-01",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', 'ServerNIC')]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+                "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), variables('keyVaultCASecretName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsDesktop",
+                        "offer": "Windows-10",
+                        "sku": "20h1-pro",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage"
+                    }
+                },
+                "osProfile": {
+                    "computerName": "ServerVM",
+                    "adminUsername": "[parameters('remoteAccessUsername')]",
+                    "adminPassword": "[parameters('remoteAccessPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'ServerNIC')]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "ServerVM/Bootstrap",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2020-06-01",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', 'ServerVM')]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.7",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "commandToExecute": "[concat('echo ', parameters('rootPemEncodedInBase64'), ' > c:\\root.pem.base64 && powershell \"Set-Content -Path c:\\root.pem -Value ([Text.Encoding]::UTF8.GetString([convert]::FromBase64String((Get-Content -Path c:\\root.pem.base64))))\" && certutil -addstore root c:\\root.pem')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2020-07-01",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "name": "FirewallPublicIP",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "apiVersion": "2020-07-01",
+            "type": "Microsoft.Network/azureFirewalls",
+            "name": "DemoFirewall",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', 'DemoVnet')]",
+                "[resourceId('Microsoft.Network/publicIpAddresses', 'FirewallPublicIP')]",
+                "[resourceId('Microsoft.Network/firewallPolicies', 'DemoFirewallPolicy')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "FirewallIPConfiguration",
+                        "properties": {
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'DemoVnet', 'AzureFirewallSubnet')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'FirewallPublicIP')]"
+                            }
+                        }
+                    }
+                ],
+                "firewallPolicy": {
+                    "id": "[resourceId('Microsoft.Network/firewallPolicies', 'DemoFirewallPolicy')]"
+                },
+                "sku": {
+                    "name": "AZFW_VNet",
+                    "tier": "Premium"
+                }
+            }
+        },
+        {
+            "apiVersion": "2020-07-01",
+            "type": "Microsoft.Network/firewallPolicies",
+            "name": "DemoFirewallPolicy",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), variables('keyVaultCASecretName'))]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DemoIdentity')]"
+            ],
+            "properties": {
+                "sku": {
+                    "tier": "Premium"
+                },
+                "transportSecurity": {
+                    "certificateAuthority": {
+                        "name": "[variables('keyVaultCASecretName')]",
+                        "keyVaultSecretId": "[variables('keyVaultCASecretId')]"
+                    }
+                },
+                "intrusionDetection": {
+                    "mode": "Alert",
+                    "configuration": {
+                        "signatureOverrides": [
+                            {
+                                "id": "2024897",
+                                "mode": "Deny"
+                            },
+                            {
+                                "id": "2024898",
+                                "mode": "Alert"
+                            }
+                        ],
+                        "bypassTrafficSettings": [
+                            {
+                                "name": "SecretBypass",
+                                "protocol": "TCP",
+                                "sourceAddresses": [
+                                    "*"
+                                ],
+                                "destinationAddresses": [
+                                    "1.1.1.1"
+                                ],
+                                "destinationPorts": [
+                                    "80"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            "resources": [
+                {
+                    "apiVersion": "2020-07-01",
+                    "type": "ruleCollectionGroups",
+                    "name": "PolicyRules",
+                    "location": "[variables('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/firewallPolicies', 'DemoFirewallPolicy')]"
+                    ],
+                    "properties": {
+                        "priority": 200,
+                        "ruleCollections": [
+                            {
+                                "name": "AllowWeb",
+                                "priority": 101,
+                                "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+                                "action": {
+                                    "type": "Allow"
+                                },
+                                "rules": [
+                                    {
+                                        "ruleType": "ApplicationRule",
+                                        "name": "AllowAzure",
+                                        "protocols": [
+                                            {
+                                                "protocolType": "Https",
+                                                "port": 443
+                                            }
+                                        ],
+                                        "targetFqdns": [
+                                            "*azure.com",
+                                            "*microsoft.com"
+                                        ],
+                                        "sourceAddresses": [
+                                            "*"
+                                        ],
+                                        "terminateTLS": true
+                                    },
+                                    {
+                                        "ruleType": "ApplicationRule",
+                                        "name": "AllowNews",
+                                        "protocols": [
+                                            {
+                                                "protocolType": "Https",
+                                                "port": 443
+                                            }
+                                        ],
+                                        "webCategories": [
+                                            "sports",
+                                            "news",
+                                            "business",
+                                            "webbasedemail"
+                                        ],
+                                        "sourceAddresses": [
+                                            "*"
+                                        ],
+                                        "terminateTLS": true
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "BlockPage",
+                                "priority": 100,
+                                "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+                                "action": {
+                                    "type": "Deny"
+                                },
+                                "rules": [
+                                    {
+                                        "ruleType": "ApplicationRule",
+                                        "name": "BlockAzureEvents",
+                                        "protocols": [
+                                            {
+                                                "protocolType": "Https",
+                                                "port": 443
+                                            }
+                                        ],
+                                        "targetUrls": [
+                                            "azure.microsoft.com/en-us/community/events",
+                                            "azure.microsoft.com/en-us/community/events/*"
+                                        ],
+                                        "sourceAddresses": [
+                                            "*"
+                                        ],
+                                        "terminateTLS": true
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DemoIdentity')]": {}
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "name": "DemoIdentity",
+            "apiVersion": "2018-11-30",
+            "location": "[variables('location')]"
+        },
+        {
+            "apiVersion": "2019-09-01",
+            "type": "Microsoft.KeyVault/vaults",
+            "name": "[variables('keyVaultName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DemoIdentity')]"
+            ],
+            "properties": {
+                "enabledForDeployment": true,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": true,
+                "tenantId": "[subscription().tenantId]",
+                "accessPolicies": [
+                    {
+                        "objectId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DemoIdentity'), '2018-11-30').principalId]",
+                        "tenantId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DemoIdentity'), '2018-11-30').tenantId]",
+                        "permissions": {
+                            "secrets": [
+                                "get",
+                                "list"
+                            ]
+                        }
+                    },
+                    {
+                        "objectId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DemoIdentity'), '2018-11-30').principalId]",
+                        "tenantId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DemoIdentity'), '2018-11-30').tenantId]",
+                        "permissions": {
+                            "secrets": [
+                                "get",
+                                "list"
+                            ]
+                        }
+                    }
+                ],
+                "sku": {
+                    "name": "Standard",
+                    "family": "A"
+                }
+            }
+        },
+        {
+            "apiVersion": "2019-09-01",
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "name": "[concat(variables('keyVaultName'), '/', variables('keyVaultCASecretName'))]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+            ],
+            "properties": {
+                "value": "[parameters('caPfxEncodedInBase64')]"
+            }
+        },
+        {
+            "apiVersion": "2020-07-01",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "name": "BastionPublicIP",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "apiVersion": "2020-07-01",
+            "type": "Microsoft.Network/bastionHosts",
+            "name": "DemoBastion",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIpAddresses', 'BastionPublicIP')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', 'DemoVnet')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "BastionIpConfiguration",
+                        "properties": {
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'DemoVnet', 'AzureBastionSubnet')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', 'BastionPublicIP')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
