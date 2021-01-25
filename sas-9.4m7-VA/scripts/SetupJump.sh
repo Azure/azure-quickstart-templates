@@ -96,9 +96,11 @@ setupSasShareMountRHEL() {
     # first step is to install the azure-cli
     yum install -y yum-utils
     echo "Creating the share on the storage account."
-    yum install -y rh-python36 gcc time
-    /opt/rh/rh-python36/root/usr/bin/pip3 install azure-cli
-    /opt/rh/rh-python36/root/usr/bin/az storage share create --name ${azure_storage_files_share} --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=${azure_storage_account};AccountKey=${azure_storage_files_password}"
+    yum install -y python3 gcc time
+    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+    python get-pip.py
+    /usr/local/bin/pip install azure-cli
+    az storage share create --name ${azure_storage_files_share} --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=${azure_storage_account};AccountKey=${azure_storage_files_password}"
 
     # second we install the cifs filesystem
     echo "setup cifs"
@@ -211,14 +213,11 @@ downloadAllFiles() {
 
 installAnsibleSUSE() {
     echo "Installing pip"
-    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-    python get-pip.py
     /usr/local/bin/pip install ansible==2.9.2
 }
 
 installAnsibleRHEL() {
-  curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-  sudo python get-pip.py
+  sudo python3 get-pip.py
   sudo pip install 'ansible==2.7.10'
 }
 
