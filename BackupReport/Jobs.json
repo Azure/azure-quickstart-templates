@@ -2,6 +2,9 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+         "workspaceResourceGroupId": {
+            "type":"string"
+        },
         "name_prefix": {
             "defaultValue": "BackupReport-LogicApp",
             "type": "String"
@@ -66,6 +69,16 @@
 		"aggregationType": {
 			"defaultValue": "\"Daily\"",
             "type": "String"
+        },
+        "resourceTags": {
+        "type": "object",
+        "defaultValue": {
+            "UsedByBackupReports": "true"
+        }
+    },
+    "emailSubject": {
+        "type":"string",
+        "defaultValue":"Backup Reports - Jobs"
         }
     },
     "variables": {},
@@ -97,8 +110,9 @@
 		{
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2017-07-01",
-            "name": "[concat(parameters('name_prefix'), '-Job')]",
+            "name": "[parameters('name_prefix')]",
             "location": "[parameters('location')]",            
+            "tags": "[parameters('resourceTags')]",        
             "properties": {
                 "state": "Enabled",
                 "definition": {
@@ -150,22 +164,22 @@
                         "Recurrence": {
                             "recurrence": {
 								"frequency": "[parameters('frequency')]",
-                                "interval": 10
+                                "interval": 1
                             },
                             "type": "Recurrence"
                         }
                     },
                     "actions": {
-                        "Create_CSV_table": {
+                        "Create_CSV_table-JobList": {
                             "runAfter": {
-                                "Run_query_and_list_results": [
+                                "Run_query_and_list_results-JobList": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Table",
                             "inputs": {
                                 "format": "CSV",
-                                "from": "@body('Run_query_and_list_results')?['value']"
+                                "from": "@body('Run_query_and_list_results-JobList')?['value']"
                             }
                         },
                         "For_each": {
@@ -241,15 +255,15 @@
                                 }
                             },
                             "runAfter": {
-                                "Initialize_variable_9": [
+                                "Initialize_variable-AddonAzureBackupStorage": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Foreach"
                         },
-                        "Initialize_variable": {
+                        "Initialize_variable-JobFunction": {
                             "runAfter": {
-                                "Initialize_variable_3": [
+                                "Initialize_variable-ReportFilterForHistoricalData": [
                                     "Succeeded"
                                 ]
                             },
@@ -264,9 +278,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_10": {
+                        "Initialize_variable-AddonAzureBackupProtectedInstance": {
                             "runAfter": {
-                                "Initialize_variable_8": [
+                                "Initialize_variable-AddonAzureBackupPolicy": [
                                     "Succeeded"
                                 ]
                             },
@@ -281,7 +295,7 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_17": {
+                        "Initialize_variable-UnionOfWorkspaces": {
                             "runAfter": {
                                 "For_each": [
                                     "Succeeded"
@@ -298,9 +312,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_2": {
+                        "Initialize_variable-EmailBody": {
                             "runAfter": {
-                                "Create_CSV_table": [
+                                "Create_CSV_table-JobList": [
                                     "Succeeded"
                                 ]
                             },
@@ -310,14 +324,14 @@
                                     {
                                         "name": "visual",
                                         "type": "string",
-                                        "value": "<div>\n<h3> Jobs by Status </h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Jobs by JobOperation </h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results_3')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Jobs by Failure Code</h3> \n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results_2')?['attachmentName']}\" width:\"50px\"/>\n<br>\n</div>"
+                                        "value": "<div>\n<h3> Jobs by Status </h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results-JobOperation')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Jobs by JobOperation </h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results-JobFailureCode')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Jobs by Failure Code</h3> \n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results-JobStatus')?['attachmentName']}\" width:\"50px\"/>\n<br>\n</div>"
                                     }
                                 ]
                             }
                         },
-                        "Initialize_variable_3": {
+                        "Initialize_variable-ReportFilterForHistoricalData": {
                             "runAfter": {
-                                "Initialize_variable_17": [
+                                "Initialize_variable-UnionOfWorkspaces": [
                                     "Succeeded"
                                 ]
                             },
@@ -332,7 +346,7 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_5": {
+                        "Initialize_variable-AzureDiagnostics": {
                             "runAfter": {},
                             "type": "InitializeVariable",
                             "inputs": {
@@ -345,9 +359,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_6": {
+                        "Initialize_variable-CoreAzureBackup": {
                             "runAfter": {
-                                "Initialize_variable_5": [
+                                "Initialize_variable-AzureDiagnostics": [
                                     "Succeeded"
                                 ]
                             },
@@ -362,9 +376,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_7": {
+                        "Initialize_variable-AddonAzureBackupJobs": {
                             "runAfter": {
-                                "Initialize_variable_6": [
+                                "Initialize_variable-CoreAzureBackup": [
                                     "Succeeded"
                                 ]
                             },
@@ -379,9 +393,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_8": {
+                        "Initialize_variable-AddonAzureBackupPolicy": {
                             "runAfter": {
-                                "Initialize_variable_7": [
+                                "Initialize_variable-AddonAzureBackupJobs": [
                                     "Succeeded"
                                 ]
                             },
@@ -396,9 +410,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_9": {
+                        "Initialize_variable-AddonAzureBackupStorage": {
                             "runAfter": {
-                                "Initialize_variable_10": [
+                                "Initialize_variable-AddonAzureBackupProtectedInstance": [
                                     "Succeeded"
                                 ]
                             },
@@ -413,9 +427,9 @@
                                 ]
                             }
                         },
-                        "Run_query_and_list_results": {
+                        "Run_query_and_list_results-JobList": {
                             "runAfter": {
-                                "Run_query_and_visualize_results_3": [
+                                "Run_query_and_visualize_results-JobFailureCode": [
                                     "Succeeded"
                                 ]
                             },
@@ -430,17 +444,17 @@
                                 "method": "post",
                                 "path": "/queryData",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query"
                                 }
                             }
                         },
-                        "Run_query_and_visualize_results": {
+                        "Run_query_and_visualize_results-JobStatus": {
                             "runAfter": {
-                                "Initialize_variable": [
+                                "Initialize_variable-JobFunction": [
                                     "Succeeded"
                                 ]
                             },
@@ -455,18 +469,18 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-									"resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
 									"resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-									"subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
 									"timerange": "Set in query",
                                     "visType": "Bar Chart"
                                 }
                             }
                         },
-                        "Run_query_and_visualize_results_2": {
+                        "Run_query_and_visualize_results-JobOperation": {
                             "runAfter": {
-                                "Run_query_and_visualize_results": [
+                                "Run_query_and_visualize_results-JobStatus": [
                                     "Succeeded"
                                 ]
                             },
@@ -481,18 +495,18 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-									"resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
 									"resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-									"subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
 									"timerange": "Set in query",
                                     "visType": "Pie Chart"
                                 }
                             }
                         },
-                        "Run_query_and_visualize_results_3": {
+                        "Run_query_and_visualize_results-JobFailureCode": {
                             "runAfter": {
-                                "Run_query_and_visualize_results_2": [
+                                "Run_query_and_visualize_results-JobOperation": [
                                     "Succeeded"
                                 ]
                             },
@@ -507,10 +521,10 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query",
                                     "visType": "Bar Chart"
                                 }
@@ -518,7 +532,7 @@
                         },
                         "Send_an_email_(V2)": {
                             "runAfter": {
-                                "Initialize_variable_2": [
+                                "Initialize_variable-EmailBody": [
                                     "Succeeded"
                                 ]
                             },
@@ -527,24 +541,24 @@
                                 "body": {
                                     "Attachments": [
                                         {
-                                            "ContentBytes": "@{body('Run_query_and_visualize_results')?['attachmentContent']}",
-                                            "Name": "@body('Run_query_and_visualize_results')?['attachmentName']"
+                                            "ContentBytes": "@{body('Run_query_and_visualize_results-JobOperation')?['attachmentContent']}",
+                                            "Name": "@body('Run_query_and_visualize_results-JobOperation')?['attachmentName']"
                                         },
                                         {
-                                            "ContentBytes": "@{body('Run_query_and_visualize_results_2')?['attachmentContent']}",
-                                            "Name": "@body('Run_query_and_visualize_results_2')?['attachmentName']"
+                                            "ContentBytes": "@{body('Run_query_and_visualize_results-JobStatus')?['attachmentContent']}",
+                                            "Name": "@body('Run_query_and_visualize_results-JobStatus')?['attachmentName']"
                                         },
                                         {
-                                            "ContentBytes": "@{base64(body('Create_CSV_table'))}",
+                                            "ContentBytes": "@{base64(body('Create_CSV_table-JobList'))}",
                                             "Name": "JobList.csv"
                                         },
                                         {
-                                            "ContentBytes": "@{body('Run_query_and_visualize_results_3')?['attachmentContent']}",
-                                            "Name": "@body('Run_query_and_visualize_results_3')?['attachmentName']"
+                                            "ContentBytes": "@{body('Run_query_and_visualize_results-JobFailureCode')?['attachmentContent']}",
+                                            "Name": "@body('Run_query_and_visualize_results-JobFailureCode')?['attachmentName']"
                                         }
                                     ],
                                     "Body": "<p><u><strong><br>\nJobs Report<br>\n<br>\n</strong></u><u><strong>@{variables('visual')}</strong></u><u><strong><br>\n<br>\n<br>\n</strong></u><br>\n<br>\n</p>",
-                                    "Subject": "Jobs Report",
+                                    "Subject": "[parameters('emailSubject')]",
 									"To": "[parameters('emailId')]"                                
                                 },
                                 "host": {

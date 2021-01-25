@@ -2,6 +2,9 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "workspaceResourceGroupId": {
+            "type":"string"
+        },
         "name_prefix": {
             "defaultValue": "BackupReport-LogicApp",
             "type": "String"
@@ -82,7 +85,17 @@
 		"aggregationType": {
 			"defaultValue": "\"Daily\"",
             "type": "String"
+        },
+        "resourceTags": {
+        "type": "object",
+        "defaultValue": {
+            "UsedByBackupReports": "true"
         }
+    },
+    "emailSubject": {
+        "type":"string",
+        "defaultValue":"Backup Reports - Detailed"
+    }
     },
     "variables": {},
     "resources": [
@@ -113,8 +126,9 @@
 		{
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2017-07-01",
-            "name": "[concat(parameters('name_prefix'), '-FullReport')]",
-            "location": "[parameters('location')]",            
+            "name": "[parameters('name_prefix')]",
+            "location": "[parameters('location')]",           
+            "tags": "[parameters('resourceTags')]", 
             "properties": {
                 "state": "Enabled",
                 "definition": {
@@ -182,94 +196,94 @@
                         "Recurrence": {
                             "recurrence": {
 								"frequency": "[parameters('frequency')]",
-                                "interval": 10
+                                "interval": 1
                             },
                             "type": "Recurrence"
                         }
                     },
                     "actions": {
-                        "Create_CSV_table": {
+                        "Create_CSV_table-OptimizeGrid1": {
                             "runAfter": {
-                                "Run_query_and_list_results_3": [
+                                "Run_query_and_list_results-OptimizeGrid3": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Table",
                             "inputs": {
                                 "format": "CSV",
-                                "from": "@body('Run_query_and_list_results')?['value']"
+                                "from": "@body('Run_query_and_list_results-OptimizeGrid1')?['value']"
                             }
                         },
-                        "Create_CSV_table_2": {
+                        "Create_CSV_table-OptimizeGrid2": {
                             "runAfter": {
-                                "Create_CSV_table": [
+                                "Create_CSV_table-OptimizeGrid1": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Table",
                             "inputs": {
                                 "format": "CSV",
-                                "from": "@body('Run_query_and_list_results_2')?['value']"
+                                "from": "@body('Run_query_and_list_results-OptimizeGrid2')?['value']"
                             }
                         },
-                        "Create_CSV_table_3": {
+                        "Create_CSV_table-OptimizeGrid3": {
                             "runAfter": {
-                                "Create_CSV_table_2": [
+                                "Create_CSV_table-OptimizeGrid2": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Table",
                             "inputs": {
                                 "format": "CSV",
-                                "from": "@body('Run_query_and_list_results_3')?['value']"
+                                "from": "@body('Run_query_and_list_results-OptimizeGrid3')?['value']"
                             }
                         },
-                        "Create_CSV_table_4": {
+                        "Create_CSV_table-BillingGroupList": {
                             "runAfter": {
-                                "Run_query_and_list_results_4": [
+                                "Run_query_and_list_results-BillingGroupList": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Table",
                             "inputs": {
                                 "format": "CSV",
-                                "from": "@body('Run_query_and_list_results_4')?['value']"
+                                "from": "@body('Run_query_and_list_results-BillingGroupList')?['value']"
                             }
                         },
-                        "Create_CSV_table_5": {
+                        "Create_CSV_table-JobList": {
                             "runAfter": {
-                                "Run_query_and_list_results_5": [
+                                "Run_query_and_list_results-JobList": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Table",
                             "inputs": {
                                 "format": "CSV",
-                                "from": "@body('Run_query_and_list_results_5')?['value']"
+                                "from": "@body('Run_query_and_list_results-JobList')?['value']"
                             }
                         },
-                        "Create_CSV_table_6": {
+                        "Create_CSV_table-BackupInstanceList": {
                             "runAfter": {
-                                "Run_query_and_list_results_6": [
+                                "Run_query_and_list_results-BackupInstanceList": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Table",
                             "inputs": {
                                 "format": "CSV",
-                                "from": "@body('Run_query_and_list_results_6')?['value']"
+                                "from": "@body('Run_query_and_list_results-BackupInstanceList')?['value']"
                             }
                         },
-                        "Create_CSV_table_7": {
+                        "Create_CSV_table-PolicyList": {
                             "runAfter": {
-                                "Run_query_and_list_results_7": [
+                                "Run_query_and_list_results-PolicyList": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Table",
                             "inputs": {
                                 "format": "CSV",
-                                "from": "@body('Run_query_and_list_results_7')?['value']"
+                                "from": "@body('Run_query_and_list_results-PolicyList')?['value']"
                             }
                         },
                         "For_each": {
@@ -345,15 +359,15 @@
                                 }
                             },
                             "runAfter": {
-                                "Initialize_variable_9": [
+                                "Initialize_variable-AddonAzureBackupStorage": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Foreach"
                         },
-                        "Initialize_variable": {
+                        "Initialize_variable-BackupInstanceFunction": {
                             "runAfter": {
-                                "Initialize_variable_2": [
+                                "Initialize_variable-ReportFilterForLatestData": [
                                     "Succeeded"
                                 ]
                             },
@@ -368,9 +382,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_10": {
+                        "Initialize_variable-AddonAzureBackupProtectedInstance": {
                             "runAfter": {
-                                "Initialize_variable_8": [
+                                "Initialize_variable-AddonAzureBackupPolicy": [
                                     "Succeeded"
                                 ]
                             },
@@ -385,9 +399,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_11": {
+                        "Initialize_variable-PolicyFunction": {
                             "runAfter": {
-                                "Initialize_variable_4": [
+                                "Initialize_variable-JobFunction": [
                                     "Succeeded"
                                 ]
                             },
@@ -402,9 +416,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_12": {
+                        "Initialize_variable-BillingGroupFunction": {
                             "runAfter": {
-                                "Initialize_variable_11": [
+                                "Initialize_variable-PolicyFunction": [
                                     "Succeeded"
                                 ]
                             },
@@ -419,9 +433,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_13": {
+                        "Initialize_variable-BillingGroupTrendFunction": {
                             "runAfter": {
-                                "Initialize_variable_12": [
+                                "Initialize_variable-BillingGroupFunction": [
                                     "Succeeded"
                                 ]
                             },
@@ -436,9 +450,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_14": {
+                        "Initialize_variable-BackupInstanceTrendFunction": {
                             "runAfter": {
-                                "Initialize_variable": [
+                                "Initialize_variable-BackupInstanceFunction": [
                                     "Succeeded"
                                 ]
                             },
@@ -453,9 +467,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_15": {
+                        "Initialize_variable-BillingGroupEmailBody": {
                             "runAfter": {
-                                "Create_CSV_table_4": [
+                                "Create_CSV_table-BillingGroupList": [
                                     "Succeeded"
                                 ]
                             },
@@ -465,14 +479,14 @@
                                     {
                                         "name": "BillingGroupVisual",
                                         "type": "string",
-                                        "value": "<div>\n<h3>Protected Instances Trend</h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results_2')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Cloud Storage Trend</h3> \n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results_3')?['attachmentName']}\" width:\"50px\"/>\n<br>\n</div>"
+                                        "value": "<div>\n<h3>Protected Instances Trend</h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results-BillingGroupTrend')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Cloud Storage Trend</h3> \n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results-BillingGroupTabCloudStorageTrend')?['attachmentName']}\" width:\"50px\"/>\n<br>\n</div>"
                                     }
                                 ]
                             }
                         },
-                        "Initialize_variable_16": {
+                        "Initialize_variable-JobEmailBody": {
                             "runAfter": {
-                                "Create_CSV_table_5": [
+                                "Create_CSV_table-JobList": [
                                     "Succeeded"
                                 ]
                             },
@@ -482,12 +496,12 @@
                                     {
                                         "name": "JobVisual",
                                         "type": "string",
-                                        "value": "<div>\n<h3> Jobs by Status </h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results_4')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Jobs by JobOperation </h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results_5')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Jobs by Failure Code</h3> \n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results_6')?['attachmentName']}\" width:\"50px\"/>\n<br>\n</div>"
+                                        "value": "<div>\n<h3> Jobs by Status </h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results-JobOperation')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Jobs by JobOperation </h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results-JobFailureCode')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Jobs by Failure Code</h3> \n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results-JobStatus')?['attachmentName']}\" width:\"50px\"/>\n<br>\n</div>"
                                     }
                                 ]
                             }
                         },
-                        "Initialize_variable_17": {
+                        "Initialize_variable-UnionOfWorkspaces": {
                             "runAfter": {
                                 "For_each": [
                                     "Succeeded"
@@ -504,9 +518,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_18": {
+                        "Initialize_variable-BackupInstanceEmailBody": {
                             "runAfter": {
-                                "Create_CSV_table_6": [
+                                "Create_CSV_table-BackupInstanceList": [
                                     "Succeeded"
                                 ]
                             },
@@ -516,14 +530,14 @@
                                     {
                                         "name": "BackupInstanceVisual",
                                         "type": "string",
-                                        "value": "<div>\n<h3>Backup Instances Trend</h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results_7')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Cloud Storage Trend</h3> \n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results_8')?['attachmentName']}\" width:\"50px\"/>\n<br>\n</div>"
+                                        "value": "<div>\n<h3>Backup Instances Trend</h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results-BackupInstanceTrend')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Cloud Storage Trend</h3> \n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results-BackupInstanceTabCloudStorageTrend')?['attachmentName']}\" width:\"50px\"/>\n<br>\n</div>"
                                     }
                                 ]
                             }
                         },
-                        "Initialize_variable_19": {
+                        "Initialize_variable-PolicyEmailBody": {
                             "runAfter": {
-                                "Create_CSV_table_7": [
+                                "Create_CSV_table-PolicyList": [
                                     "Succeeded"
                                 ]
                             },
@@ -533,14 +547,14 @@
                                     {
                                         "name": "PoliciesVisual",
                                         "type": "string",
-                                        "value": "<div>\n<h3>Active Policy Trend</h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results_9')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Cloud Storage Trend</h3> \n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results_10')?['attachmentName']}\" width:\"50px\"/>\n<br>\n</div>"
+                                        "value": "<div>\n<h3>Active Policy Trend</h3>\n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results-PolicyTrend')?['attachmentName']}\" width:\"50px\"/>\n<br>\n<h3> Cloud Storage Trend</h3> \n<br>\n<img src=\"cid:@{body('Run_query_and_visualize_results-PolicyTabCloudStorageTrend')?['attachmentName']}\" width:\"50px\"/>\n<br>\n</div>"
                                     }
                                 ]
                             }
                         },
-                        "Initialize_variable_2": {
+                        "Initialize_variable-ReportFilterForLatestData": {
                             "runAfter": {
-                                "Initialize_variable_3": [
+                                "Initialize_variable-ReportFilterForHistoricalData": [
                                     "Succeeded"
                                 ]
                             },
@@ -555,9 +569,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_3": {
+                        "Initialize_variable-ReportFilterForHistoricalData": {
                             "runAfter": {
-                                "Initialize_variable_17": [
+                                "Initialize_variable-UnionOfWorkspaces": [
                                     "Succeeded"
                                 ]
                             },
@@ -572,9 +586,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_4": {
+                        "Initialize_variable-JobFunction": {
                             "runAfter": {
-                                "Initialize_variable_14": [
+                                "Initialize_variable-BackupInstanceTrendFunction": [
                                     "Succeeded"
                                 ]
                             },
@@ -589,7 +603,7 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_5": {
+                        "Initialize_variable-AzureDiagnostics": {
                             "runAfter": {},
                             "type": "InitializeVariable",
                             "inputs": {
@@ -602,9 +616,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_6": {
+                        "Initialize_variable-CoreAzureBackup": {
                             "runAfter": {
-                                "Initialize_variable_5": [
+                                "Initialize_variable-AzureDiagnostics": [
                                     "Succeeded"
                                 ]
                             },
@@ -619,9 +633,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_7": {
+                        "Initialize_variable-AddonAzureBackupJobs": {
                             "runAfter": {
-                                "Initialize_variable_6": [
+                                "Initialize_variable-CoreAzureBackup": [
                                     "Succeeded"
                                 ]
                             },
@@ -636,9 +650,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_8": {
+                        "Initialize_variable-AddonAzureBackupPolicy": {
                             "runAfter": {
-                                "Initialize_variable_7": [
+                                "Initialize_variable-AddonAzureBackupJobs": [
                                     "Succeeded"
                                 ]
                             },
@@ -653,9 +667,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_9": {
+                        "Initialize_variable-AddonAzureBackupStorage": {
                             "runAfter": {
-                                "Initialize_variable_10": [
+                                "Initialize_variable-AddonAzureBackupProtectedInstance": [
                                     "Succeeded"
                                 ]
                             },
@@ -670,9 +684,9 @@
                                 ]
                             }
                         },
-                        "Run_query_and_list_results": {
+                        "Run_query_and_list_results-OptimizeGrid1": {
                             "runAfter": {
-                                "Initialize_variable_13": [
+                                "Initialize_variable-BillingGroupTrendFunction": [
                                     "Succeeded"
                                 ]
                             },
@@ -687,17 +701,17 @@
                                 "method": "post",
                                 "path": "/queryData",
                                 "queries": {
-									"resourcegroups": "[resourceGroup().name]",
-									"resourcename": "[parameters('workspace')]",
+									"resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
+                                    "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                   "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query"
                                 }
                             }
                         },
-                        "Run_query_and_list_results_2": {
+                        "Run_query_and_list_results-OptimizeGrid2": {
                             "runAfter": {
-                                "Run_query_and_list_results": [
+                                "Run_query_and_list_results-OptimizeGrid1": [
                                     "Succeeded"
                                 ]
                             },
@@ -712,17 +726,17 @@
                                 "method": "post",
                                 "path": "/queryData",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query"
                                 }
                             }
                         },
-                        "Run_query_and_list_results_3": {
+                        "Run_query_and_list_results-OptimizeGrid3": {
                             "runAfter": {
-                                "Run_query_and_list_results_2": [
+                                "Run_query_and_list_results-OptimizeGrid2": [
                                     "Succeeded"
                                 ]
                             },
@@ -737,17 +751,17 @@
                                 "method": "post",
                                 "path": "/queryData",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                   "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query"
                                 }
                             }
                         },
-                        "Run_query_and_list_results_4": {
+                        "Run_query_and_list_results-BillingGroupList": {
                             "runAfter": {
-                                "Run_query_and_visualize_results_3": [
+                                "Run_query_and_visualize_results-BillingGroupTabCloudStorageTrend": [
                                     "Succeeded"
                                 ]
                             },
@@ -762,17 +776,17 @@
                                 "method": "post",
                                 "path": "/queryData",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query"
                                 }
                             }
                         },
-                        "Run_query_and_list_results_5": {
+                        "Run_query_and_list_results-JobList": {
                             "runAfter": {
-                                "Run_query_and_visualize_results_6": [
+                                "Run_query_and_visualize_results-JobStatus": [
                                     "Succeeded"
                                 ]
                             },
@@ -787,17 +801,17 @@
                                 "method": "post",
                                 "path": "/queryData",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query"
                                 }
                             }
                         },
-                        "Run_query_and_list_results_6": {
+                        "Run_query_and_list_results-BackupInstanceList": {
                             "runAfter": {
-                                "Run_query_and_visualize_results_8": [
+                                "Run_query_and_visualize_results-BackupInstanceTabCloudStorageTrend": [
                                     "Succeeded"
                                 ]
                             },
@@ -812,17 +826,17 @@
                                 "method": "post",
                                 "path": "/queryData",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                  "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query"
                                 }
                             }
                         },
-                        "Run_query_and_list_results_7": {
+                        "Run_query_and_list_results-PolicyList": {
                             "runAfter": {
-                                "Run_query_and_visualize_results_10": [
+                                "Run_query_and_visualize_results-PolicyTabCloudStorageTrend": [
                                     "Succeeded"
                                 ]
                             },
@@ -837,17 +851,17 @@
                                 "method": "post",
                                 "path": "/queryData",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query"
                                 }
                             }
                         },
-                        "Run_query_and_visualize_results": {
+                        "Run_query_and_visualize_results-SummaryGrid": {
                             "runAfter": {
-                                "Initialize_variable_13": [
+                                "Initialize_variable-BillingGroupTrendFunction": [
                                     "Succeeded"
                                 ]
                             },
@@ -862,18 +876,18 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query",
                                     "visType": "Html Table"
                                 }
                             }
                         },
-                        "Run_query_and_visualize_results_10": {
+                        "Run_query_and_visualize_results-PolicyTabCloudStorageTrend": {
                             "runAfter": {
-                                "Run_query_and_visualize_results_9": [
+                                "Run_query_and_visualize_results-PolicyTrend": [
                                     "Succeeded"
                                 ]
                             },
@@ -888,18 +902,18 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query",
                                     "visType": "Time Chart"
                                 }
                             }
                         },
-                        "Run_query_and_visualize_results_2": {
+                        "Run_query_and_visualize_results-BillingGroupTrend": {
                             "runAfter": {
-                                "Run_query_and_visualize_results": [
+                                "Run_query_and_visualize_results-SummaryGrid": [
                                     "Succeeded"
                                 ]
                             },
@@ -914,18 +928,18 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query",
                                     "visType": "Time Chart"
                                 }
                             }
                         },
-                        "Run_query_and_visualize_results_3": {
+                        "Run_query_and_visualize_results-BillingGroupTabCloudStorageTrend": {
                             "runAfter": {
-                                "Run_query_and_visualize_results_2": [
+                                "Run_query_and_visualize_results-BillingGroupTrend": [
                                     "Succeeded"
                                 ]
                             },
@@ -940,18 +954,18 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                   "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query",
                                     "visType": "Time Chart"
                                 }
                             }
                         },
-                        "Run_query_and_visualize_results_4": {
+                        "Run_query_and_visualize_results-JobOperation": {
                             "runAfter": {
-                                "Initialize_variable_13": [
+                                "Initialize_variable-BillingGroupTrendFunction": [
                                     "Succeeded"
                                 ]
                             },
@@ -966,18 +980,18 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query",
                                     "visType": "Bar Chart"
                                 }
                             }
                         },
-                        "Run_query_and_visualize_results_5": {
+                        "Run_query_and_visualize_results-JobFailureCode": {
                             "runAfter": {
-                                "Run_query_and_visualize_results_4": [
+                                "Run_query_and_visualize_results-JobOperation": [
                                     "Succeeded"
                                 ]
                             },
@@ -992,18 +1006,18 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query",
                                     "visType": "Pie Chart"
                                 }
                             }
                         },
-                        "Run_query_and_visualize_results_6": {
+                        "Run_query_and_visualize_results-JobStatus": {
                             "runAfter": {
-                                "Run_query_and_visualize_results_5": [
+                                "Run_query_and_visualize_results-JobFailureCode": [
                                     "Succeeded"
                                 ]
                             },
@@ -1018,24 +1032,24 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query",
                                     "visType": "Bar Chart"
                                 }
                             }
                         },
-                        "Run_query_and_visualize_results_7": {
+                        "Run_query_and_visualize_results-BackupInstanceTrend": {
                             "runAfter": {
-                                "Initialize_variable_16": [
+                                "Initialize_variable-JobEmailBody": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "ApiConnection",
                             "inputs": {
-                                "body": "\nlet dummy = () {AzureDiagnostics\n| where TimeGenerated >= ago(5d)};\ndummy\n",
+                                "body": "@{variables('BackupInstanceTrendFunction')}\n// query to transform function output\n| summarize BackupItemCount = count(UniqueId) by startofday(TimeGenerated)\n",
                                 "host": {
                                     "connection": {
                                         "name": "@parameters('$connections')['azuremonitorlogs']['connectionId']"
@@ -1044,18 +1058,18 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                   "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query",
                                     "visType": "Time Chart"
                                 }
                             }
                         },
-                        "Run_query_and_visualize_results_8": {
+                        "Run_query_and_visualize_results-BackupInstanceTabCloudStorageTrend": {
                             "runAfter": {
-                                "Run_query_and_visualize_results_7": [
+                                "Run_query_and_visualize_results-BackupInstanceTrend": [
                                     "Succeeded"
                                 ]
                             },
@@ -1070,18 +1084,18 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query",
                                     "visType": "Time Chart"
                                 }
                             }
                         },
-                        "Run_query_and_visualize_results_9": {
+                        "Run_query_and_visualize_results-PolicyTrend": {
                             "runAfter": {
-                                "Create_CSV_table_3": [
+                                "Create_CSV_table-OptimizeGrid3": [
                                     "Succeeded"
                                 ]
                             },
@@ -1096,10 +1110,10 @@
                                 "method": "post",
                                 "path": "/visualizeQuery",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
+                                   "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
                                     "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query",
                                     "visType": "Time Chart"
                                 }
@@ -1107,13 +1121,13 @@
                         },
                         "Send_an_email_(V2)": {
                             "runAfter": {
-                                "Initialize_variable_15": [
+                                "Initialize_variable-BillingGroupEmailBody": [
                                     "Succeeded"
                                 ],
-                                "Initialize_variable_18": [
+                                "Initialize_variable-BackupInstanceEmailBody": [
                                     "Succeeded"
                                 ],
-                                "Initialize_variable_19": [
+                                "Initialize_variable-PolicyEmailBody": [
                                     "Succeeded"
                                 ]
                             },
@@ -1122,72 +1136,72 @@
                                 "body": {
                                     "Attachments": [
                                         {
-                                            "ContentBytes": "@{base64(body('Create_CSV_table'))}",
+                                            "ContentBytes": "@{base64(body('Create_CSV_table-OptimizeGrid1'))}",
                                             "Name": "InactiveResources.csv"
                                         },
                                         {
-                                            "ContentBytes": "@{base64(body('Create_CSV_table_2'))}",
+                                            "ContentBytes": "@{base64(body('Create_CSV_table-OptimizeGrid2'))}",
                                             "Name": "RetentionOptimizations.csv"
                                         },
                                         {
-                                            "ContentBytes": "@{base64(body('Create_CSV_table_3'))}",
+                                            "ContentBytes": "@{base64(body('Create_CSV_table-OptimizeGrid3'))}",
                                             "Name": "BackupScheduleOptimizations.csv"
                                         },
                                         {
-                                            "ContentBytes": "@{body('Run_query_and_visualize_results_2')?['attachmentContent']}",
-                                            "Name": "@body('Run_query_and_visualize_results_2')?['attachmentName']"
+                                            "ContentBytes": "@{body('Run_query_and_visualize_results-BillingGroupTrend')?['attachmentContent']}",
+                                            "Name": "@body('Run_query_and_visualize_results-BillingGroupTrend')?['attachmentName']"
                                         },
                                         {
-                                            "ContentBytes": "@{body('Run_query_and_visualize_results_3')?['attachmentContent']}",
-                                            "Name": "@body('Run_query_and_visualize_results_3')?['attachmentName']"
+                                            "ContentBytes": "@{body('Run_query_and_visualize_results-BillingGroupTabCloudStorageTrend')?['attachmentContent']}",
+                                            "Name": "@body('Run_query_and_visualize_results-BillingGroupTabCloudStorageTrend')?['attachmentName']"
                                         },
                                         {
-                                            "ContentBytes": "@{body('Run_query_and_visualize_results_4')?['attachmentContent']}",
-                                            "Name": "@body('Run_query_and_visualize_results_4')?['attachmentName']"
+                                            "ContentBytes": "@{body('Run_query_and_visualize_results-JobOperation')?['attachmentContent']}",
+                                            "Name": "@body('Run_query_and_visualize_results-JobOperation')?['attachmentName']"
                                         },
                                         {
-                                            "ContentBytes": "@{base64(body('Create_CSV_table_5'))}",
+                                            "ContentBytes": "@{base64(body('Create_CSV_table-JobList'))}",
                                             "Name": "JobList.csv"
                                         },
                                         {
-                                            "ContentBytes": "@{base64(body('Create_CSV_table_4'))}",
+                                            "ContentBytes": "@{base64(body('Create_CSV_table-BillingGroupList'))}",
                                             "Name": "BillingGroupList.csv"
                                         },
                                         {
-                                            "ContentBytes": "@{body('Run_query_and_visualize_results_5')?['attachmentContent']}",
-                                            "Name": "@body('Run_query_and_visualize_results_5')?['attachmentName']"
+                                            "ContentBytes": "@{body('Run_query_and_visualize_results-JobFailureCode')?['attachmentContent']}",
+                                            "Name": "@body('Run_query_and_visualize_results-JobFailureCode')?['attachmentName']"
                                         },
                                         {
-                                            "ContentBytes": "@{body('Run_query_and_visualize_results_6')?['attachmentContent']}",
-                                            "Name": "@body('Run_query_and_visualize_results_6')?['attachmentName']"
+                                            "ContentBytes": "@{body('Run_query_and_visualize_results-JobStatus')?['attachmentContent']}",
+                                            "Name": "@body('Run_query_and_visualize_results-JobStatus')?['attachmentName']"
                                         },
                                         {
-                                            "ContentBytes": "@{body('Run_query_and_visualize_results_8')?['attachmentContent']}",
-                                            "Name": "@body('Run_query_and_visualize_results_8')?['attachmentName']"
+                                            "ContentBytes": "@{body('Run_query_and_visualize_results-BackupInstanceTabCloudStorageTrend')?['attachmentContent']}",
+                                            "Name": "@body('Run_query_and_visualize_results-BackupInstanceTabCloudStorageTrend')?['attachmentName']"
                                         },
                                         {
-                                            "ContentBytes": "@{body('Run_query_and_visualize_results_7')?['attachmentContent']}",
-                                            "Name": "@body('Run_query_and_visualize_results_7')?['attachmentName']"
+                                            "ContentBytes": "@{body('Run_query_and_visualize_results-BackupInstanceTrend')?['attachmentContent']}",
+                                            "Name": "@body('Run_query_and_visualize_results-BackupInstanceTrend')?['attachmentName']"
                                         },
                                         {
-                                            "ContentBytes": "@{base64(body('Create_CSV_table_6'))}",
+                                            "ContentBytes": "@{base64(body('Create_CSV_table-BackupInstanceList'))}",
                                             "Name": "BackupInstanceList.csv"
                                         },
                                         {
-                                            "ContentBytes": "@{body('Run_query_and_visualize_results_10')?['attachmentContent']}",
-                                            "Name": "@body('Run_query_and_visualize_results_10')?['attachmentName']"
+                                            "ContentBytes": "@{body('Run_query_and_visualize_results-PolicyTabCloudStorageTrend')?['attachmentContent']}",
+                                            "Name": "@body('Run_query_and_visualize_results-PolicyTabCloudStorageTrend')?['attachmentName']"
                                         },
                                         {
-                                            "ContentBytes": "@{body('Run_query_and_visualize_results_9')?['attachmentContent']}",
-                                            "Name": "@body('Run_query_and_visualize_results_9')?['attachmentName']"
+                                            "ContentBytes": "@{body('Run_query_and_visualize_results-PolicyTrend')?['attachmentContent']}",
+                                            "Name": "@body('Run_query_and_visualize_results-PolicyTrend')?['attachmentName']"
                                         },
                                         {
-                                            "ContentBytes": "@{base64(body('Create_CSV_table_7'))}",
+                                            "ContentBytes": "@{base64(body('Create_CSV_table-PolicyList'))}",
                                             "Name": "PoliciesList.csv"
                                         }
                                     ],
-                                    "Body": "<p><u><strong>BackupReport</strong></u><br>\n<br>\n<strong>Summary</strong><br>\n<br>\n@{base64ToString(body('Run_query_and_visualize_results')?['body'])}<br>\n<br>\n<strong>BackupInstance</strong><br>\n<br>\n@{variables('BackupInstanceVisual')}<br>\n<br>\n<strong>BillingGroup</strong><br>\n<br>\n@{variables('BillingGroupVisual')}<br>\n<br>\n<strong>Job<br>\n<br>\n</strong><strong>@{variables('JobVisual')}</strong><strong><br>\n<br>\nPolicy</strong><br>\n<br>\n@{variables('PoliciesVisual')}</p>",
-                                    "Subject": "Backup Report",
+                                    "Body": "<p><u><strong>BackupReport</strong></u><br>\n<br>\n<strong>Summary</strong><br>\n<br>\n@{base64ToString(body('Run_query_and_visualize_results-SummaryGrid')?['body'])}<br>\n<br>\n<strong>BackupInstance</strong><br>\n<br>\n@{variables('BackupInstanceVisual')}<br>\n<br>\n<strong>BillingGroup</strong><br>\n<br>\n@{variables('BillingGroupVisual')}<br>\n<br>\n<strong>Job<br>\n<br>\n</strong><strong>@{variables('JobVisual')}</strong><strong><br>\n<br>\nPolicy</strong><br>\n<br>\n@{variables('PoliciesVisual')}</p>",
+                                    "Subject": "[parameters('emailSubject')]",
                                     "To": "[parameters('emailId')]"
                                 },
                                 "host": {

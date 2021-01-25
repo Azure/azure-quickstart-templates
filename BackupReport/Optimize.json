@@ -6,6 +6,9 @@
             "defaultValue": "BackupReport-LogicApp",
             "type": "String"
         },
+        "workspaceResourceGroupId": {
+            "type":"string"
+        },
         "connections_azuremonitorlogs_externalid": {
 			"defaultValue": "[concat(resourceGroup().id,'/providers/Microsoft.Web/connections/azuremonitorlogs')]",
             "type": "String"
@@ -82,7 +85,17 @@
 		"aggregationType": {
 			"defaultValue": "\"Daily\"",
             "type": "String"
+        },
+        "resourceTags": {
+        "type": "object",
+        "defaultValue": {
+            "UsedByBackupReports": "true"
         }
+    },
+    "emailSubject": {
+        "type":"string",
+        "defaultValue":"Backup Reports - Jobs"
+    }
     },
     "variables": {},
     "resources": [
@@ -114,7 +127,8 @@
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2017-07-01",
             "name": "[concat(parameters('name_prefix'), '-Optimize')]",
-            "location": "[parameters('location')]",            
+            "location": "[parameters('location')]",
+            "tags":"[parameters('resourceTags')]",         
             "properties": {
                 "state": "Enabled",
                 "definition": {
@@ -182,46 +196,46 @@
                         "Recurrence": {
                             "recurrence": {
 								"frequency": "[parameters('frequency')]",
-                                "interval": 10
+                                "interval": 1
                             },
                             "type": "Recurrence"
                         }
                     },
                     "actions": {
-                        "Create_CSV_table": {
+                        "Create_CSV_table-Grid1": {
                             "runAfter": {
-                                "Run_query_and_list_results_3": [
+                                "Run_query_and_list_results-Grid3": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Table",
                             "inputs": {
                                 "format": "CSV",
-                                "from": "@body('Run_query_and_list_results')?['value']"
+                                "from": "@body('Run_query_and_list_results-Grid1')?['value']"
                             }
                         },
-                        "Create_CSV_table_2": {
+                        "Create_CSV_table-Grid2": {
                             "runAfter": {
-                                "Create_CSV_table": [
+                                "Create_CSV_table-Grid1": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Table",
                             "inputs": {
                                 "format": "CSV",
-                                "from": "@body('Run_query_and_list_results_2')?['value']"
+                                "from": "@body('Run_query_and_list_results-Grid2')?['value']"
                             }
                         },
-                        "Create_CSV_table_3": {
+                        "Create_CSV_table-Grid3": {
                             "runAfter": {
-                                "Create_CSV_table_2": [
+                                "Create_CSV_table-Grid2": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Table",
                             "inputs": {
                                 "format": "CSV",
-                                "from": "@body('Run_query_and_list_results_3')?['value']"
+                                "from": "@body('Run_query_and_list_results-Grid3')?['value']"
                             }
                         },
                         "For_each": {
@@ -297,15 +311,15 @@
                                 }
                             },
                             "runAfter": {
-                                "Initialize_variable_9": [
+                                "Initialize_variable-AddonAzureBackupStorage": [
                                     "Succeeded"
                                 ]
                             },
                             "type": "Foreach"
                         },
-                        "Initialize_variable": {
+                        "Initialize_variable-BackupInstanceFunction": {
                             "runAfter": {
-                                "Initialize_variable_2": [
+                                "Initialize_variable-ReportFilterForLatestData": [
                                     "Succeeded"
                                 ]
                             },
@@ -320,9 +334,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_10": {
+                        "Initialize_variable-AddonAzureBackupProtectedInstance": {
                             "runAfter": {
-                                "Initialize_variable_8": [
+                                "Initialize_variable-AddonAzureBackupPolicy": [
                                     "Succeeded"
                                 ]
                             },
@@ -337,9 +351,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_11": {
+                        "Initialize_variable-PolicyFunction": {
                             "runAfter": {
-                                "Initialize_variable_4": [
+                                "Initialize_variable-JobFunction": [
                                     "Succeeded"
                                 ]
                             },
@@ -354,7 +368,7 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_17": {
+                        "Initialize_variable-UnionOfWorkspaces": {
                             "runAfter": {
                                 "For_each": [
                                     "Succeeded"
@@ -371,9 +385,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_2": {
+                        "Initialize_variable-ReportFilterForLatestData": {
                             "runAfter": {
-                                "Initialize_variable_3": [
+                                "Initialize_variable-ReportFilterForHistoricalData": [
                                     "Succeeded"
                                 ]
                             },
@@ -388,9 +402,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_3": {
+                        "Initialize_variable-ReportFilterForHistoricalData": {
                             "runAfter": {
-                                "Initialize_variable_17": [
+                                "Initialize_variable-UnionOfWorkspaces": [
                                     "Succeeded"
                                 ]
                             },
@@ -405,9 +419,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_4": {
+                        "Initialize_variable-JobFunction": {
                             "runAfter": {
-                                "Initialize_variable": [
+                                "Initialize_variable-BackupInstanceFunction": [
                                     "Succeeded"
                                 ]
                             },
@@ -422,7 +436,7 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_5": {
+                        "Initialize_variable-AzureDiagnostics": {
                             "runAfter": {},
                             "type": "InitializeVariable",
                             "inputs": {
@@ -435,9 +449,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_6": {
+                        "Initialize_variable-CoreAzureBackup": {
                             "runAfter": {
-                                "Initialize_variable_5": [
+                                "Initialize_variable-AzureDiagnostics": [
                                     "Succeeded"
                                 ]
                             },
@@ -452,9 +466,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_7": {
+                        "Initialize_variable-AddonAzureBackupJobs": {
                             "runAfter": {
-                                "Initialize_variable_6": [
+                                "Initialize_variable-CoreAzureBackup": [
                                     "Succeeded"
                                 ]
                             },
@@ -469,9 +483,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_8": {
+                        "Initialize_variable-AddonAzureBackupPolicy": {
                             "runAfter": {
-                                "Initialize_variable_7": [
+                                "Initialize_variable-AddonAzureBackupJobs": [
                                     "Succeeded"
                                 ]
                             },
@@ -486,9 +500,9 @@
                                 ]
                             }
                         },
-                        "Initialize_variable_9": {
+                        "Initialize_variable-AddonAzureBackupStorage": {
                             "runAfter": {
-                                "Initialize_variable_10": [
+                                "Initialize_variable-AddonAzureBackupProtectedInstance": [
                                     "Succeeded"
                                 ]
                             },
@@ -503,9 +517,9 @@
                                 ]
                             }
                         },
-                        "Run_query_and_list_results": {
+                        "Run_query_and_list_results-Grid1": {
                             "runAfter": {
-                                "Initialize_variable_11": [
+                                "Initialize_variable-PolicyFunction": [
                                     "Succeeded"
                                 ]
                             },
@@ -520,17 +534,17 @@
                                 "method": "post",
                                 "path": "/queryData",
                                 "queries": {
-									"resourcegroups": "[resourceGroup().name]",
-									"resourcename": "[parameters('workspace')]",
+									"resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
+                                    "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                   "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query"
                                 }
                             }
                         },
-                        "Run_query_and_list_results_2": {
+                        "Run_query_and_list_results-Grid2": {
                             "runAfter": {
-                                "Run_query_and_list_results": [
+                                "Run_query_and_list_results-Grid1": [
                                     "Succeeded"
                                 ]
                             },
@@ -545,17 +559,17 @@
                                 "method": "post",
                                 "path": "/queryData",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
-									"resourcename": "[parameters('workspace')]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
+                                    "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                   "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query"
                                 }
                             }
                         },
-                        "Run_query_and_list_results_3": {
+                        "Run_query_and_list_results-Grid3": {
                             "runAfter": {
-                                "Run_query_and_list_results_2": [
+                                "Run_query_and_list_results-Grid2": [
                                     "Succeeded"
                                 ]
                             },
@@ -570,17 +584,17 @@
                                 "method": "post",
                                 "path": "/queryData",
                                 "queries": {
-                                    "resourcegroups": "[resourceGroup().name]",
-									"resourcename": "[parameters('workspace')]",
+                                    "resourcegroups": "[split(parameters('workspaceResourceGroupId'),'/')[4]]",
+                                    "resourcename": "[parameters('workspace')]",
                                     "resourcetype": "Log Analytics Workspace",
-                                   "subscriptions": "[subscription().subscriptionId]",
+                                    "subscriptions": "[split(parameters('workspaceResourceGroupId'),'/')[2]]",
                                     "timerange": "Set in query"
                                 }
                             }
                         },
                         "Send_an_email_(V2)": {
                             "runAfter": {
-                                "Create_CSV_table_3": [
+                                "Create_CSV_table-Grid3": [
                                     "Succeeded"
                                 ]
                             },
@@ -589,15 +603,15 @@
                                 "body": {
                                     "Attachments": [
                                         {
-                                            "ContentBytes": "@{base64(body('Create_CSV_table'))}",
+                                            "ContentBytes": "@{base64(body('Create_CSV_table-Grid1'))}",
                                             "Name": "InactiveResources.csv"
                                         },
                                         {
-                                            "ContentBytes": "@{base64(body('Create_CSV_table_2'))}",
+                                            "ContentBytes": "@{base64(body('Create_CSV_table-Grid2'))}",
                                             "Name": "RetentionOptimizations.csv"
                                         },
                                         {
-                                            "ContentBytes": "@{base64(body('Create_CSV_table_3'))}",
+                                            "ContentBytes": "@{base64(body('Create_CSV_table-Grid3'))}",
                                             "Name": "BackupScheduleOptimizations.csv"
                                         }
                                     ],
