@@ -98,7 +98,7 @@ setupSasShareMountRHEL() {
     echo "Creating the share on the storage account."
     yum install -y python3 gcc time
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-    python get-pip.py
+    python3 get-pip.py
     /usr/local/bin/pip install azure-cli
     az storage share create --name ${azure_storage_files_share} --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=${azure_storage_account};AccountKey=${azure_storage_files_password}"
 
@@ -217,8 +217,7 @@ installAnsibleSUSE() {
 }
 
 installAnsibleRHEL() {
-  sudo python3 get-pip.py
-  sudo pip install 'ansible==2.7.10'
+  sudo /usr/local/pip install 'ansible==2.7.10'
 }
 
 makeAnsibleInventory() {
