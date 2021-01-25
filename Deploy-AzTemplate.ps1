@@ -250,8 +250,8 @@ else {
         }
         "managementGroup" {           
             New-AzManagementGroupDeployment -Name $DeploymentName `
-                -ManagementGroupId $managementGroupId 
-            -Location $Location `
+                -ManagementGroupId $managementGroupId `
+                -Location $Location `
                 @TemplateArgs `
                 @OptionalParameters `
                 -Verbose `
