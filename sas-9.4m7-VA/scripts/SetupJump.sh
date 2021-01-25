@@ -217,7 +217,7 @@ installAnsibleSUSE() {
 }
 
 installAnsibleRHEL() {
-  sudo /usr/local/pip install 'ansible==2.7.10'
+  sudo /usr/local/bin/pip install 'ansible==2.7.10'
 }
 
 makeAnsibleInventory() {
