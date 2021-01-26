@@ -1,5 +1,7 @@
 # SAS Viya Quickstart Template for Azure
 
+**As of 25JAN2021, we are investigating deployment failures due to a new version of pip, the package installer for Python.**
+
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/sas-viya/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/sas-viya/PublicDeployment.svg)
 
