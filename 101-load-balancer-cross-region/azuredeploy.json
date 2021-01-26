@@ -1,0 +1,172 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "region1-lbname": {
+            "type": "string",
+            "metadata": {
+              "description": "Enter name of load balancer in Region 1"
+            }
+        },
+        "region1-lbfename": {
+            "type": "string",
+            "metadata": {
+              "description": "Enter name of frontend of load balancer in Region 1"
+            }
+        },
+        "region1-rg": {
+            "type": "string",
+            "metadata": {
+              "description": "Enter name of resource group of load balancer in Region 1"
+            }
+        },
+        "cr-lbname": {
+            "type": "string",
+            "defaultValue": "mylb-cr",
+            "metadata": {
+              "description": "Enter name for cross-region load balancer"
+            }
+        },
+        "cr-pubipname": {
+            "type": "string",
+            "defaultValue": "myPublicIP-CR",
+            "metadata": {
+              "description": "Enter name for public IP for cross-region load balancer"
+            }
+        },
+         "cr-pubipdns": {
+            "type": "string",
+            "metadata": {
+              "description": "Enter DNS name for public IP of cross-region load balancer"
+            }
+        },
+        "cr-location": {
+            "type": "string",
+             "allowedValues": [
+                "eastus2",
+                "westus",
+                "westeurope",
+                "southeastasia",
+                "centralus",
+                "northeurope",
+                "eastasia"
+                ],
+            "metadata": {
+                "description": "Enter location for cross-region load balancer"
+            }
+        }
+    },
+    "variables": {
+        "publicIPAddressType": "Static",
+        "r1lbID": "[resourceId(parameters('region1-rg'),'Microsoft.Network/loadBalancers',parameters('region1-lbname'))]",
+        "r1lbfeID": "[concat(variables('r1lbID'),'/frontendIPConfigurations/',parameters('region1-lbfename'))]",
+        "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('cr-pubipname'))]",
+        "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('cr-lbname'))]",
+        "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
+        "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/BackendPool1')]",
+        "lbProbeID": "[concat(variables('lbID'),'/probes/tcpProbe')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-07-01",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[parameters('cr-pubipname')]",
+            "location": "[parameters('cr-location')]",
+            "sku": {
+              "name": "Standard",
+              "tier": "Global"  
+            },
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('cr-pubipdns')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2020-07-01",
+            "name": "[parameters('cr-lbname')]",
+            "type": "Microsoft.Network/loadBalancers",
+            "location": "[parameters('cr-location')]",
+            "sku": {
+              "name": "Standard",
+              "tier": "Global"  
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', parameters('cr-pubipname'))]"
+            ],
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "LoadBalancerFrontEnd",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[variables('publicIPAddressID')]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "BackendPool1"
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "LBRule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[variables('lbPoolID')]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPort": 50000,
+                            "backendPort": 50000,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 5,
+                            "probe": {
+                                "id": "[variables('lbProbeID')]"
+                            }
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "tcpProbe",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 50000,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(parameters('cr-lbname'),'/BackendPool1')]",
+            "type": "Microsoft.Network/loadBalancers/backendAddressPools",
+            "apiVersion": "2020-07-01",
+            "location": "[parameters('cr-location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/loadBalancers/', parameters('cr-lbname'))]"
+            ],
+            "properties": {
+                "loadBalancerBackendAddresses": [
+					{
+                        "name": "address1",
+                        "properties": {                                        
+                            "probeAdministrativeState": "InService",
+                            "loadBalancerFrontendIPConfiguration":
+                            {
+                                "id": "[variables('r1lbfeID')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
