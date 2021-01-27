@@ -67,7 +67,7 @@ setupSASShareMount() {
     # This will incur a performance hit, so only use it on metadata instances.
     ac_opts=""
     if [[ "${instance_type}" == "metadata" ]]; then
-        ac_opts=",acregmin=0,acregmax=1"
+        ac_opts=",acregmin=1,acregmax=4"
     fi
 
     sudo mount -t nfs $azure_storage_account.file.core.windows.net:/$azure_storage_account/sasshare ${NFS_MOUNT_POINT} -o "vers=4,minorversion=1,sec=sys${ac_opts}"

@@ -221,10 +221,10 @@ createCertificates() {
 startSASInstall() {
     su - ${INSTALL_USER}<<END
     pushd ${ANSIBLE_DIR}
-    export ANSIBLE_LOG_PATH=/tmp/step01_wait_for_servers.log
-    ansible-playbook -i ${INVENTORY_FILE} -vvv step01_wait_for_servers.yaml
-    export ANSIBLE_LOG_PATH=/tmp/step02_install_os_updates.log
-    ansible-playbook -i ${INVENTORY_FILE} -vvv step02_install_os_updates.yaml
+    export ANSIBLE_LOG_PATH=/tmp/wait_for_servers.log
+    ansible-playbook -i ${INVENTORY_FILE} -vvv wait_for_servers.yaml
+    export ANSIBLE_LOG_PATH=/tmp/install_os_updates.log
+    ansible-playbook -i ${INVENTORY_FILE} -vvv install_os_updates.yaml
     popd
     pushd ${INSTALL_DIR}/scripts/install_runner
     ./wrapper__base.sh

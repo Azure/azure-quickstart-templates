@@ -71,7 +71,7 @@ if [[ "${HARD}" == "hard" ]]; then
 #
 
 	export ANSIBLE_LOG_PATH=/tmp/swait_for_servers.log
-	ansible-playbook -i ${INVENTORY_FILE} -v step01_wait_for_servers.yaml
+	ansible-playbook -i ${INVENTORY_FILE} -v wait_for_servers.yaml
 fi
 
 LOG_FILE="start_sas.log"
