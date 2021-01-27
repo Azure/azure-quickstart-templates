@@ -5,47 +5,46 @@ set -v
 
 createEnvironmentFile() {
 cat << EOF > /tmp/sasinstall.env
-export INSTALL_USER="${1}"
-export azure_storage_account="${2}"
-export azure_storage_files_share="${3}"
-export azure_storage_files_password="${4}"
+export instance_type="${1}"
+export INSTALL_USER="${2}"
+export azure_storage_account="${3}"
+export azure_storage_files_share="${4}"
+export azure_storage_files_password="${5}"
+export endpoint_ip="${6}"
 
-export CIFS_MOUNT_POINT="/sasshare"
-export CIFS_SEMAPHORE_DIR="\${CIFS_MOUNT_POINT}/setup/readiness_flags"
-export CIFS_ANSIBLE_KEYS="\${CIFS_MOUNT_POINT}/setup/ansible_key"
+export NFS_MOUNT_POINT="/sasshare"
+export NFS_SEMAPHORE_DIR="\${NFS_MOUNT_POINT}/setup/readiness_flags"
+export NFS_ANSIBLE_KEYS="\${NFS_MOUNT_POINT}/setup/ansible_key"
 EOF
 }
 
 main() {
     echo "NON JUMP RUN"
     . /tmp/sasinstall.env
-    # find type of server
+    # find type of server and handle some OS-specific setups
     if [ -f /etc/redhat-release ]; then
-        OS_TYPE="RHEL"
-    else
-        OS_TYPE="SUSE"
-    fi
-    if [[ "$OS_TYPE" == "RHEL" ]]; then
-        mountSASRaidRHEL
-        setupSASShareMountRHEL
+            # Install necessary packages
+        yum install -y yum-utils
+        yum install -y rh-python36 gcc time
+        yum install -y nfs-utils
+        yum install -y mdadm
+
         disableSelinuxRHEL
     else
-        # Workaround for SUSE registration issue
-        sed -i.bak -e 's/dataProvider/#dataProvider/g' /etc/regionserverclnt.cfg
-        echo "dataProvider = /usr/bin/azuremetadata --api 2019-08-15 --subscriptionId --billingTag --xml" >>/etc/regionserverclnt.cfg
-        registercloudguest --force-new
-        # End workaround        
-        mountSASRaidSUSE
-        setupSASShareMountSUSE
+        zypper install -y mdadm
     fi
+
+    setupSASShareMount
+
+    # Sleep 30 seconds to allow network to stabilize
+    sleep 30
+
+    mountSASRaid
     setupSUDOForAnsible
     setupSSHKeysForAnsible
 }
 
-mountSASRaidSUSE() {
-    # Sleep 30 seconds to allow network to stabalize before attempting package install
-    sleep 30
-    zypper install -y mdadm
+mountSASRaid() {
     n=$(find /dev/disk/azure/scsi1/ -name "lun*"|wc -l)
     n="${n//\ /}"
     mdadm --create /dev/md0 --force --level=stripe --raid-devices=$n /dev/disk/azure/scsi1/lun*
@@ -55,79 +54,25 @@ mountSASRaidSUSE() {
     mount /sas
 }
 
-mountSASRaidRHEL() {
-    # Sleep 30 seconds to allow network to stabalize before attempting package install
-    sleep 30
-    yum install -y mdadm
-    n=$(find /dev/disk/azure/scsi1/ -name "lun*"|wc -l)
-    n="${n//\ /}"
-    mdadm --create /dev/md0 --force --level=stripe --raid-devices=$n /dev/disk/azure/scsi1/lun*
-    mkfs.xfs /dev/md0
-    mkdir /sas
-    echo "$(blkid /dev/md0 | cut -d ' ' -f 2) /sas xfs defaults 0 0" | tee -a /etc/fstab
-    mount /sas
-}
+setupSASShareMount() {
+    # Update /etc/hosts with private endpoint IP
+    echo "$endpoint_ip $azure_storage_account.file.core.windows.net" | tee -a /etc/hosts
 
-setupSASShareMountRHEL() {
-    yum install -y yum-utils
-    yum install -y cifs-utils time
+    # Create the share folder
+    mkdir -p "${NFS_MOUNT_POINT}"
 
-    cifs_server_fqdn="${azure_storage_account}.file.core.windows.net"
-
-    if [ ! -d "/etc/smbcredentials" ]; then
-        sudo mkdir /etc/smbcredentials
+    # Mount the share
+    # acregmin=0,acregmax=1 is necessary here for the metadata VMs. If not present, the NFS regular file attribute cache
+    # will (for some reason) not have accurate information, which can cause metadata backups to fail.
+    # This will incur a performance hit, so only use it on metadata instances.
+    ac_opts=""
+    if [[ "${instance_type}" == "metadata" ]]; then
+        ac_opts=",acregmin=0,acregmax=1"
     fi
-    chmod 700 /etc/smbcredentials
-    if [ ! -f "/etc/smbcredentials/${azure_storage_account}.cred" ]; then
-        echo "username=${azure_storage_account}" >> /etc/smbcredentials/${azure_storage_account}.cred
-        echo "password=${azure_storage_files_password}" >> /etc/smbcredentials/${azure_storage_account}.cred
-    fi
-    chmod 600 "/etc/smbcredentials/${azure_storage_account}.cred"
 
-    mkdir -p "${CIFS_MOUNT_POINT}"
-    echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${CIFS_MOUNT_POINT}  cifs defaults,vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,sec=ntlmssp 0 0" >> /etc/fstab
-    set +e
-    mount "${CIFS_MOUNT_POINT}"
-    RET=$?
-    while [ "$RET" -gt "0" ]; do
-        echo "Waiting 5 seconds for mount to be possible"
-        sleep 5
-        mount "${CIFS_MOUNT_POINT}"
-        RET=$?
-    done
-    set -e
+    sudo mount -t nfs $azure_storage_account.file.core.windows.net:/$azure_storage_account/sasshare ${NFS_MOUNT_POINT} -o "vers=4,minorversion=1,sec=sys${ac_opts}"
+
     echo "Mounting Successful"
-    mkdir -p "${CIFS_MOUNT_POINT}/backup"
-    ln -s "${CIFS_MOUNT_POINT}/backup" /backups
-}
-setupSASShareMountSUSE() {
-    cifs_server_fqdn="${azure_storage_account}.file.core.windows.net"
-
-    if [ ! -d "/etc/smbcredentials" ]; then
-        sudo mkdir /etc/smbcredentials
-    fi
-    chmod 700 /etc/smbcredentials
-    if [ ! -f "/etc/smbcredentials/${azure_storage_account}.cred" ]; then
-        echo "username=${azure_storage_account}" >> /etc/smbcredentials/${azure_storage_account}.cred
-        echo "password=${azure_storage_files_password}" >> /etc/smbcredentials/${azure_storage_account}.cred
-    fi
-    chmod 600 "/etc/smbcredentials/${azure_storage_account}.cred"
-
-    mkdir -p "${CIFS_MOUNT_POINT}"
-    echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${CIFS_MOUNT_POINT}  cifs defaults,vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,sec=ntlmssp 0 0" >> /etc/fstab
-    set +e
-    mount "${CIFS_MOUNT_POINT}"
-    RET=$?
-    while [ "$RET" -gt "0" ]; do
-        echo "Waiting 5 seconds for mount to be possible"
-        sleep 5
-        mount "${CIFS_MOUNT_POINT}"
-        RET=$?
-    done
-    set -e
-    echo "Mounting Successful"
-    mkdir -p "${CIFS_MOUNT_POINT}/backup"
-    ln -s "${CIFS_MOUNT_POINT}/backup" /backups
 }
 
 setupSUDOForAnsible() {
@@ -139,7 +84,7 @@ setupSUDOForAnsible() {
 setupSSHKeysForAnsible() {
     wait_count=0
     stop_waiting_count=600
-    ANSIBLE_AUTHORIZED_KEY_FILE="${CIFS_ANSIBLE_KEYS}/id_rsa.pub"
+    ANSIBLE_AUTHORIZED_KEY_FILE="${NFS_ANSIBLE_KEYS}/id_rsa.pub"
     while [ ! -e "$ANSIBLE_AUTHORIZED_KEY_FILE" ]; do
         echo "waiting 5 seconds for key to come around"
         sleep 1

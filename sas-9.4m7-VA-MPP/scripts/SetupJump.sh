@@ -27,6 +27,7 @@ export azure_resource_group="${16}"
 export planfile_uri="${17}"
 export HADOOP_VERSION="${18}"
 export HADOOP_HOME="${19}"
+export endpoint_ip="${20}"
 
 export DIRECTORY_NFS_SHARE="/sasshare"
 export INSTALL_DIR="/sas/install"
@@ -42,38 +43,38 @@ else
 fi
 
 main() {
-    echo "NON JUMP RUN"
+    echo "JUMP RUN"
     . /tmp/sasinstall.env
-    # find type of server
+    # find type of server and handle some OS-specific setups
     if [ -f /etc/redhat-release ]; then
-        OS_TYPE="RHEL"
+        # Install necessary packages
+        yum install -y yum-utils
+        yum install -y python3 gcc time
+        yum install -y nfs-utils
+        yum install -y mdadm
+
+        installAnsibleRHEL
     else
-        OS_TYPE="SUSE"
+        zypper install -y mdadm
+
+        installAnsibleSUSE
     fi
-    if [[ "$OS_TYPE" == "RHEL" ]]; then
-        setupSasShareMountRHEL
-        mountSASRaidRHEL
-    else
-        setupSasShareMountSUSE
-        mountSASRaidSUSE
-    fi
+
+    setupSASShareMount
+
+    # Sleep 30 seconds to allow network to stabilize
+    sleep 30
+
+    mountSASRaid
     setupSUDOForAnsible
     setupSSHKeysForAnsible
     downloadAllFiles
-    if [[ "$OS_TYPE" == "SUSE" ]]; then
-        installAnsibleSUSE
-    else
-        installAnsibleRHEL
-    fi
     makeAnsibleInventory
     createCertificates
     downloadHadoop
 }
 
-mountSASRaidSUSE() {
-    # Sleep 30 seconds to allow network to stabalize before attempting package install
-    sleep 30
-    zypper install -y mdadm
+mountSASRaid() {
     n=$(find /dev/disk/azure/scsi1/ -name "lun*"|wc -l)
     n="${n//\ /}"
     mdadm --create /dev/md0 --force --level=stripe --raid-devices=$n /dev/disk/azure/scsi1/lun*
@@ -83,89 +84,17 @@ mountSASRaidSUSE() {
     mount /sas
 }
 
-mountSASRaidRHEL() {
-    # Sleep 30 seconds to allow network to stabalize before attempting package install
-    sleep 30
-    yum install -y mdadm
-    n=$(find /dev/disk/azure/scsi1/ -name "lun*"|wc -l)
-    n="${n//\ /}"
-    mdadm --create /dev/md0 --force --level=stripe --raid-devices=$n /dev/disk/azure/scsi1/lun*
-    mkfs.xfs /dev/md0
-    mkdir /sas
-    echo "$(blkid /dev/md0 | cut -d ' ' -f 2) /sas xfs defaults 0 0" | tee -a /etc/fstab
-    mount /sas
-}
+setupSASShareMount() {
+    # Update /etc/hosts with private endpoint IP
+    echo "$endpoint_ip $azure_storage_account.file.core.windows.net" | tee -a /etc/hosts
 
-setupSasShareMountRHEL() {
-    # first step is to install the azure-cli
-    yum install -y yum-utils
-    echo "Creating the share on the storage account."
-    yum install -y rh-python36 gcc time
-    /opt/rh/rh-python36/root/usr/bin/pip3 install azure-cli
-    /opt/rh/rh-python36/root/usr/bin/az storage share create --name ${azure_storage_files_share} --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=${azure_storage_account};AccountKey=${azure_storage_files_password}"
-
-    # second we install the cifs filesystem
-    echo "setup cifs"
-    cifs_server_fqdn="${azure_storage_account}.file.core.windows.net"
-    yum install -y cifs-utils
-
-    # now we create a credentials file to do the mounting of the azure files store.
-    if [ ! -d "/etc/smbcredentials" ]; then
-        sudo mkdir /etc/smbcredentials
-    fi
-    chmod 700 /etc/smbcredentials
-    if [ ! -f "/etc/smbcredentials/${azure_storage_account}.cred" ]; then
-        echo "username=${azure_storage_account}" >> /etc/smbcredentials/${azure_storage_account}.cred
-        echo "password=${azure_storage_files_password}" >> /etc/smbcredentials/${azure_storage_account}.cred
-    fi
-    chmod 600 "/etc/smbcredentials/${azure_storage_account}.cred"
-
+    # Create the share folder
     mkdir -p "${DIRECTORY_NFS_SHARE}"
-    echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${DIRECTORY_NFS_SHARE}  cifs defaults,vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,sec=ntlmssp 0 0" >> /etc/fstab
 
-    mount "${DIRECTORY_NFS_SHARE}"
-    RET=$?
-    if [ "$RET" -ne "0" ]; then
-        exit $RET
-    fi
+    # Mount the share
+    sudo mount -t nfs $azure_storage_account.file.core.windows.net:/$azure_storage_account/sasshare ${DIRECTORY_NFS_SHARE} -o "vers=4,minorversion=1,sec=sys"
+
     echo "Mounting Successful"
-
-}
-
-setupSasShareMountSUSE() {
-    # first step is to install the azure-cli
-    sudo zypper install -y curl
-    sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-    sudo zypper addrepo --name 'Azure CLI' --check https://packages.microsoft.com/yumrepos/azure-cli azure-cli
-    sudo zypper install -y --from azure-cli azure-cli=2.10.1-1.el7
-    echo "Creating the share on the storage account."
-    az storage share create --name ${azure_storage_files_share} --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=${azure_storage_account};AccountKey=${azure_storage_files_password}"
-
-    # second we install the cifs filesystem
-    echo "setup cifs"
-    cifs_server_fqdn="${azure_storage_account}.file.core.windows.net"
-
-    # now we create a credentials file to do the mounting of the azure files store.
-    if [ ! -d "/etc/smbcredentials" ]; then
-        sudo mkdir /etc/smbcredentials
-    fi
-    chmod 700 /etc/smbcredentials
-    if [ ! -f "/etc/smbcredentials/${azure_storage_account}.cred" ]; then
-        echo "username=${azure_storage_account}" >> /etc/smbcredentials/${azure_storage_account}.cred
-        echo "password=${azure_storage_files_password}" >> /etc/smbcredentials/${azure_storage_account}.cred
-    fi
-    chmod 600 "/etc/smbcredentials/${azure_storage_account}.cred"
-
-    mkdir -p "${DIRECTORY_NFS_SHARE}"
-    echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${DIRECTORY_NFS_SHARE}  cifs defaults,vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,sec=ntlmssp 0 0" >> /etc/fstab
-
-    mount "${DIRECTORY_NFS_SHARE}"
-    RET=$?
-    if [ "$RET" -ne "0" ]; then
-        exit $RET
-    fi
-    echo "Mounting Successful"
-
 }
 
 setupSUDOForAnsible() {
@@ -177,8 +106,8 @@ setupSUDOForAnsible() {
 setupSSHKeysForAnsible() {
     echo "next we generate the ssh key for ansible"
     # now we create the ssh key and send it over the directory.
-    mkdir -p "${DIRECTORY_NFS_SHARE}/setup/ansible_key/"
     su - ${INSTALL_USER}<<END
+    mkdir -p "${DIRECTORY_NFS_SHARE}/setup/ansible_key/"
     ssh-keygen -f /home/${INSTALL_USER}/.ssh/id_rsa -t rsa -N ''
     cp /home/${INSTALL_USER}/.ssh/id_rsa.pub "${DIRECTORY_NFS_SHARE}/setup/ansible_key/id_rsa.pub"
     cat "/home/${INSTALL_USER}/.ssh/id_rsa.pub" >> "/home/${INSTALL_USER}/.ssh/authorized_keys"
@@ -216,7 +145,9 @@ downloadAllFiles() {
 downloadHadoop() {
     echo "Downloading Hadoop"
     curl "https://downloads.apache.org/hadoop/core/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz" --output "/tmp/hadoop-${HADOOP_VERSION}.tar.gz"
+    su - ${INSTALL_USER}<<END
     cp "/tmp/hadoop-${HADOOP_VERSION}.tar.gz" /sasshare
+END
 }
 
 installAnsibleSUSE() {
@@ -228,8 +159,8 @@ installAnsibleSUSE() {
 
 installAnsibleRHEL() {
   curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-  sudo python get-pip.py
-  sudo pip install 'ansible==2.7.10'
+  sudo python3 get-pip.py
+  sudo /usr/local/bin/pip install 'ansible==2.7.10'
 }
 
 makeAnsibleInventory() {
@@ -264,7 +195,7 @@ END
     echo "[metadata_head]" >> $INVENTORY_FILE
     echo "metadata-0" >> $INVENTORY_FILE
     echo "[metadata_nodes]" >> $INVENTORY_FILE
-    for (( i=0; i<$count_of_metadata; i++)); do
+    for (( i=1; i<$count_of_metadata; i++)); do
       echo "metadata-${i}" >> $INVENTORY_FILE
     done
     echo "[metadata_servers]" >> $INVENTORY_FILE

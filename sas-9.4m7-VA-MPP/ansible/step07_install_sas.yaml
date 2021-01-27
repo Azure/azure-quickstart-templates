@@ -1,13 +1,36 @@
 ---
-- name: install sas on metadata
+- name: Make sure necessary files are executable
+  hosts: [localhost]
+  become_user: root
+  become: yes
+  tasks:
+  - name: Make depot executable
+    file:
+      path: "/sasshare/depot"
+      state: directory
+      recurse: yes
+      mode: '0755'
+
+- name: install sas on metadata head
   hosts: [metadata_head]
   become: yes
   gather_facts: false
   tasks:
-     - name: Run metadata install response file
+     - name: Run metadata head install response file
        become: yes
        shell: >-
          /sasshare/scripts/run_install_as_user.sh sasinst /sasshare/responsefiles/mpp_metadata.txt
+
+- name: install sas on metadata nodes
+  hosts: [metadata_nodes]
+  serial: 1
+  become: yes
+  gather_facts: false
+  tasks:
+     - name: Run metadata node install response file(s)
+       become: yes
+       shell: >-
+         /sasshare/scripts/run_install_as_user.sh sasinst /sasshare/responsefiles/{{ inventory_hostname }}.txt
 
 - name: install sas on visual analytics controller
   hosts: [va_controllers]
@@ -19,7 +42,7 @@
        shell: >-
          /sasshare/scripts/run_install_as_user.sh sasinst /sasshare/responsefiles/mpp_va.txt
 
-- name: install sas on midtier
+- name: install sas on midtier head
   hosts: [midtier_head]
   become: yes
   gather_facts: false
@@ -47,3 +70,34 @@
        become: yes
        shell: >-
          /sasshare/scripts/run_install_as_user.sh sasinst /sasshare/responsefiles/mpp_midtier.txt
+
+- name: install sas on midtier node(s)
+  hosts: [midtier_nodes]
+  become: yes
+  gather_facts: false
+  tasks:
+     - name: create vfabric folders
+       file:
+         path: /etc/opt/vmware/vfabric
+         state: directory
+
+     - name: Change ownership of vmware folder
+       file:
+         path: /etc/opt/vmware
+         owner: sasinst
+         group: sas
+         mode: '0755'
+
+     - name: Change ownership of vfabric folder
+       file:
+         path: /etc/opt/vmware/vfabric
+         owner: sasinst
+         group: sas
+         mode: '0755'
+
+     - name: Run midtier node install response file
+       become: yes
+       shell: >-
+         /sasshare/scripts/run_install_as_user.sh sasinst /sasshare/responsefiles/{{ inventory_hostname }}.txt
+
+

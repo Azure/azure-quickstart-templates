@@ -6,7 +6,7 @@
 - name: download all the things
   hosts: [localhost]
   vars:
-    DEPOT_DIRECTORY: /sasshare/depot
+    DEPOT_DIRECTORY: /sasshare
     DEPOT_DOWNLOAD_LOCATION: ""
     LICENSE_LOCATION: /sasshare/depot/sid_files/
     LICENSE_DOWNLOAD_LOCATION: ""
@@ -15,6 +15,7 @@
   tasks:
   ############################################# Download the Depot folder ################################################
     - name: install azcopy prerequisites
+      become: yes
       yum:
           name: "{{ item }}"
           state: "latest"
@@ -22,7 +23,6 @@
       - libunwind
       - libicu
       - rsync
-      become: yes
 
     - name: create install folder
       file:
@@ -32,34 +32,20 @@
     - name: downloading azcopy from microsoft
       become: yes
       unarchive:
+          group: "{{ PRIMARY_USER }}"
+          owner: "{{ PRIMARY_USER }}"
           remote_src: yes
-          src: "https://aka.ms/downloadazcopylinux64"
+          src: "https://aka.ms/downloadazcopy-v10-linux"
           dest: "/tmp/azcopy_install"
       register: task_result
       until: task_result is success
       retries: 10
       delay: 5
 
-    - name: install azcopy
-      become: yes
-      shell: >-
-          /tmp/azcopy_install/install.sh
-
-    - name: remove install directory
-      ignore_errors: yes
-      file:
-          state: absent
-          path: /tmp/azcopy_install
-
-    - name: create storage folder
-      file:
-          path: "{{ DEPOT_DIRECTORY }}"
-          state: directory
-
     - name: use azcopy to download mirror
       become: yes
       shell: >-
-          timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
+          timeout -k 7140 7000 /tmp/azcopy_install/azcopy_linux_amd64_10.8.0/azcopy copy "{{ DEPOT_DOWNLOAD_LOCATION }}" "{{ DEPOT_DIRECTORY }}" --recursive
       async: 7200
       failed_when: false
       register: copy_ret1
@@ -67,7 +53,7 @@
     - name: use azcopy to download mirror retry 1
       become: yes
       shell: |-
-          timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
+          timeout -k 7140 7000 /tmp/azcopy_install/azcopy_linux_amd64_10.8.0/azcopy copy "{{ DEPOT_DOWNLOAD_LOCATION }}" "{{ DEPOT_DIRECTORY }}" --recursive
       async: 7200
       failed_when: false
       register: copy_ret2
@@ -76,7 +62,7 @@
     - name: use azcopy to download mirror retry 2
       become: yes
       shell: |-
-          timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
+          timeout -k 7140 7000 /tmp/azcopy_install/azcopy_linux_amd64_10.8.0/azcopy copy "{{ DEPOT_DOWNLOAD_LOCATION }}" "{{ DEPOT_DIRECTORY }}" --recursive
       async: 7200
       failed_when: false
       register: copy_ret3
@@ -85,7 +71,7 @@
     - name: use azcopy to download mirror retry 3
       become: yes
       shell: |-
-          timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
+          timeout -k 7140 7000 /tmp/azcopy_install/azcopy_linux_amd64_10.8.0/azcopy copy "{{ DEPOT_DOWNLOAD_LOCATION }}" "{{ DEPOT_DIRECTORY }}" --recursive
       async: 7200
       failed_when: false
       register: copy_ret4
@@ -94,7 +80,7 @@
     - name: use azcopy to download mirror retry 4
       become: yes
       shell: |-
-          timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
+          timeout -k 7140 7000 /tmp/azcopy_install/azcopy_linux_amd64_10.8.0/azcopy copy "{{ DEPOT_DOWNLOAD_LOCATION }}" "{{ DEPOT_DIRECTORY }}" --recursive
       async: 7200
       register: copy_ret5
       when: "copy_ret1.rc != 0 and copy_ret2.rc != 0 and copy_ret3.rc != 0 and copy_ret4.rc != 0"
@@ -102,5 +88,17 @@
     - name: use azcopy to download plan file, if PLANFILE_DOWNLOAD_LOCATION is not blank
       become: yes
       shell: |-
-          azcopy --source "{{ PLANFILE_DOWNLOAD_LOCATION }}" --destination "{{ PLANFILE_LOCATION }}" --quiet
+          timeout -k 7140 7000 "{{ item.path }}"/azcopy copy "{{ PLANFILE_DOWNLOAD_LOCATION }}" "{{ PLANFILE_LOCATION }}" --recursive
       when: PLANFILE_DOWNLOAD_LOCATION != ""
+
+- name: Make sure necessary files are executable
+  hosts: [localhost]
+  become_user: root
+  become: yes
+  tasks:
+  - name: Make depot executable
+    file:
+      path: "/sasshare/depot"
+      state: directory
+      recurse: yes
+      mode: '0755'

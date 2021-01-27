@@ -48,6 +48,7 @@ ansible-playbook -i ${INVENTORY_FILE} \
 	-e "DEPOT_DOWNLOAD_LOCATION=$depot_uri" \
 	-e "LICENSE_DOWNLOAD_LOCATION=$license_file_uri" \
 	-e "PLANFILE_DOWNLOAD_LOCATION=$planfile_uri" \
+   -e "PRIMARY_USER=$INSTALL_USER" \
 	-vvv step05_download_mirror_and_licenses.yaml
 
 # Get the path to the sid file in the depot
