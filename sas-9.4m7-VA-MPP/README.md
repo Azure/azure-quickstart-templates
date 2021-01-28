@@ -110,6 +110,8 @@ az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$S
 ```
 For more information about this command, see ["az storage blob upload-batch"](https://docs.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az_storage_blob_upload_batch).
 
+* If you are using Azure NFS file shares, you must enable your Azure subscription for NFS.  For more information, see the "Register the NFS 4.1 Protocol" section at [How to create an NFS File Share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal).
+
 <a name="best_practices"></a>
 ## Best Practices when Deploying SAS 9.4M7 VA/VS on Microsoft Azure
 
@@ -127,7 +129,7 @@ For more information about this command, see ["az storage blob upload-batch"](ht
 |--------------|-----------|
 |Subscription|Specifies what subscription to use for the deployment.|
 |Resource group|Specifies what resource group to use. Choose an existing group or click *Create new* and provide a name for the new group.|
-|Region|Defines the Azure region in which the deployment should run.
+|Region|Defines the Azure region in which the deployment should run. The available Azure regions are listed at [Azure Services that support Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-region). The available Azure regions if using Azure NFS file shares are listed in the "Available regions" section at [How to create an NFS share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal).  
 |Location|Defines the location in Microsoft Azure where these resources should be created. This is derived from the Resource group.|
 |SAS Depot Location|Specifies the URI of the Azure Blob Store where the software depot was uploaded.|
 |Use a New or Existing Virtual Network?|Specifies whether to use a new or existing network.|
