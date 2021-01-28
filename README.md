@@ -16,7 +16,7 @@ We are going to be making a few changes in the structure and practices of this r
 - Include samples for QuickStarts as well as Azure Applications (managed and unmanaged)
 - Provide samples for Azure Policy
 - Merging best practices with the Azure marketplace (there are some contradictory practices in place today)
-- Provide static analysis automation of templates (contributions welcome [here](/test/README.md))
+- Provide static analysis automation of templates (contributions welcome [here](https://github.com/Azure/arm-ttk/blob/master/README.md))
 - Updating documentation to reflect these changes
 
 ## Why is this important

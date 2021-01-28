@@ -1,4 +1,4 @@
-# Create and enable a DDOS protection plan
+# Create and enable a DDoS protection plan
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-create-and-enable-ddos-protection-plans/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-create-and-enable-ddos-protection-plans/PublicDeployment.svg)
@@ -13,4 +13,4 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-create-and-enable-ddos-protection-plans%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-create-and-enable-ddos-protection-plans%2Fazuredeploy.json)
 
-This template creates a DDOS protection plan and a virtual network. It also enabled the DDOS protection plan for the virtual network. For more information, see https://docs.microsoft.com/azure/ddos-protection/manage-ddos-protection.
+This template creates a DDoS protection plan and a virtual network. It also enables the DDoS protection plan for the virtual network. For more information, see the the [quickstart](https://docs.microsoft.com/azure/ddos-protection/manage-ddos-protection-template) article.
