@@ -41,9 +41,12 @@ setupForSASInstall() {
 		exit 0
 	fi
 
+	# Modify the depot URI by placing the /* wildcard on the end of the path
+	uriParts=(${depot_uri//\?/ })
+	depot_uri_mod="${uriParts[0]}/*?${uriParts[1]}"
 	export ANSIBLE_LOG_PATH=/tmp/download_mirror_and_licenses.log
 	ansible-playbook -i ${INVENTORY_FILE} \
-		-e "DEPOT_DOWNLOAD_LOCATION=$depot_uri" \
+		-e "DEPOT_DOWNLOAD_LOCATION=$depot_uri_mod" \
 		-e "LICENSE_DOWNLOAD_LOCATION=$license_file_uri" \
 		-e "PLANFILE_DOWNLOAD_LOCATION=$planfile_uri" \
 	-e "PRIMARY_USER=$INSTALL_USER" \
