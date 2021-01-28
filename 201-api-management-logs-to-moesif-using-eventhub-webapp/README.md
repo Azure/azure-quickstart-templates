@@ -56,9 +56,9 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
       <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="0">
       @{
           var body = context.Request.Body?.As<string>(true);
-          if (body != null && body.Length > 1024)
+          if (body != null && body.Length > 175000)
           {
-              body = body.Substring(0, 1024);
+              body = body.Substring(0, 175000);
           }
 
           var headers = context.Request.Headers
@@ -99,9 +99,9 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
       <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">
       @{
           var body = context.Response.Body?.As<string>(true);
-          if (body != null && body.Length > 1024)
+          if (body != null && body.Length > 175000)
           {
-              body = body.Substring(0, 1024);
+              body = body.Substring(0, 175000);
           }
 
           var headers = context.Response.Headers
