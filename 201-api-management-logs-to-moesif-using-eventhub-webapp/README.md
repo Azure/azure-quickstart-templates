@@ -55,10 +55,6 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
       <set-variable name="message-id" value="@(Guid.NewGuid())" />
       <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="0">
       @{
-          var requestLine = string.Format("{0} {1} HTTP/1.1\r\n",
-                                                      context.Request.Method,
-                                                      context.Request.Url.Path + context.Request.Url.QueryString);
-
           var body = context.Request.Body?.As<string>(true);
           if (body != null && body.Length > 175000)
           {
@@ -67,13 +63,32 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
 
           var headers = context.Request.Headers
                                .Where(h => h.Key != "Ocp-Apim-Subscription-Key")
-                               .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value)))
+                               .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value).Replace("\"", "\\\"")))
                                .ToArray<string>();
 
-          var headerString = (headers.Any()) ? string.Join("\r\n", headers) + "\r\n" : string.Empty;
+                               
 
-          return "request:"   + context.Variables["message-id"] + "\n"
-                              + requestLine + headerString + "\r\n" + body;
+          var headerString = (headers.Any()) ? string.Join(";;", headers) : string.Empty;
+          var messageId = context.Variables["message-id"];
+          var jwtToken = context.Request.Headers.GetValueOrDefault("Authorization","").AsJwt();
+          var userId = (context.User != null && context.User.Id != null) ? context.User.Id : (jwtToken != null && jwtToken.Subject != null ? jwtToken.Subject : null);
+          var companyId = "";
+          var requestBody = (body != null ? System.Convert.ToBase64String(Encoding.ASCII.GetBytes(body)) : null);
+          string metadata = $@"{{}}";
+
+          return $@"
+                    {{
+                        ""event_type"": ""request"",
+                        ""message-id"": ""{messageId}"",
+                        ""method"": ""{context.Request.Method}"",
+                        ""uri"": ""{context.Request.Url}"",
+                        ""user_id"": ""{userId}"",
+                        ""company_id"": ""{companyId}"",
+                        ""request_headers"": ""{headerString}"",
+                        ""request_body"": ""{requestBody}"",
+                        ""metadata"": {metadata}
+                    }}
+                ";
       }
   </log-to-eventhub>
   </inbound>
@@ -83,10 +98,6 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
   <outbound>
       <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">
       @{
-          var statusLine = string.Format("HTTP/1.1 {0} {1}\r\n",
-                                              context.Response.StatusCode,
-                                              context.Response.StatusReason);
-
           var body = context.Response.Body?.As<string>(true);
           if (body != null && body.Length > 175000)
           {
@@ -94,18 +105,38 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
           }
 
           var headers = context.Response.Headers
-                                          .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value)))
+                                          .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value).Replace("\"", "\\\"")))
                                           .ToArray<string>();
 
-          var headerString = (headers.Any()) ? string.Join("\r\n", headers) + "\r\n" : string.Empty;
+          var headerString = (headers.Any()) ? string.Join(";;", headers): string.Empty;
+          var messageId = context.Variables["message-id"];
+          var responseBody = (body != null ? System.Convert.ToBase64String(Encoding.ASCII.GetBytes(body)) : null);
 
-          return "response:"  + context.Variables["message-id"] + "\n"
-                              + statusLine + headerString + "\r\n" + body;
+          return $@"
+                    {{
+                        ""event_type"": ""response"",
+                        ""message-id"": ""{messageId}"",
+                        ""status_code"": ""{context.Response.StatusCode}"",
+                        ""response_headers"": ""{headerString}"",
+                        ""response_body"": ""{responseBody}""
+                    }}
+                ";
      }
   </log-to-eventhub>
   </outbound>
 </policies>
 ```
+
+## Config Options
+
+### UserId
+(optional) => string, A userId enables Moesif to attribute API requests to individual unique users so you can understand who calling your API. This can be used simultaneously with companyId to track both individual customers and the companies they're a part of.
+
+### CompanyId
+(optional) => string, If your business is B2B, this enables Moesif to attribute API requests to specific companies or organizations so you can understand which accounts are calling your API. This can be used simultaneously with userId to track both individual customers and the companies they're a part of.
+
+### Metadata
+(optional) => string, An object that allows you to add custom metadata that will be associated with the event. The metadata must be a dictionary that can be converted to JSON. For example, you may want to save a VM instance_id, a trace_id, or a tenant_id with the request.
 
 The [ARM Template `nested/microsoft.apimanagement/service/apis/policies.json`](nested/microsoft.apimanagement/service/apis/policies.json) can be used as a reference to set policy XML thru Azure deployment. This sample template, as implemented, will overwrite existing policy.xml
 That's it! API logs should start showing up after a few minutes.
