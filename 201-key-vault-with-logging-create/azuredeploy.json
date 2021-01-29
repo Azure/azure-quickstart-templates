@@ -97,32 +97,7 @@
             }
           }
         ]
-      },
-      "resources": [
-        {
-          "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings",
-          "name": "[concat(parameters('keyVaultName'), '/Microsoft.Insights/service')]",
-          "apiVersion": "2016-09-01",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
-            "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]"
-          ],
-          "properties": {
-            "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]",
-            "logs": [
-              {
-                "category": "AuditEvent",
-                "enabled": true,
-                "retentionPolicy": {
-                  "enabled": true,
-                  "days": "[parameters('LogsRetentionInDays')]"
-                }
-              }
-            ]
-          }
-        }
-      ]
+      }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
@@ -138,11 +113,38 @@
       }
     },
     {
+      "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+      "type": "Microsoft.Insights/diagnosticsettings",
+      "apiVersion": "2017-05-01-preview",
+      "name": "service",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]"
+      ],
+      "properties": {
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]",
+        "logs": [
+          {
+            "category": "AuditEvent",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": true,
+              "days": "[parameters('LogsRetentionInDays')]"
+            }
+          }
+        ]
+      }
+    },
+    {
       "condition": "[parameters('protectWithLocks')]",
       "scope": "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
       "type": "Microsoft.Authorization/locks",
       "apiVersion": "2017-04-01",
       "name": "keyVaultDoNotDelete",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
       "properties": {
         "level": "CannotDelete"
       }
@@ -153,6 +155,9 @@
       "type": "Microsoft.Authorization/locks",
       "apiVersion": "2017-04-01",
       "name": "storageDoNotDelete",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]"
+      ],
       "properties": {
         "level": "CannotDelete"
       }
