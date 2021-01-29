@@ -67,7 +67,7 @@ wait
 
 # download tableau server .deb or.rpm file
 # retry on fail
-if [ "$OS" == "Ubuntu 16.04 LTS" ]
+if [ "$(lsb_release -i|awk {'print $3'})" == "Ubuntu" ]
 then
   wget --tries=3 --output-document=tableau-installer.deb https://downloads.tableau.com/esdalt/2020.1.1/tableau-server-2020-1-1_amd64.deb
 else
@@ -94,14 +94,14 @@ wait
 # run automated installer (install trial if no license key)
 if [ -z "$LICENSE_KEY" ]
 then
-  if [ "$OS" == "Ubuntu 16.04 LTS" ]
+  if [ "$(lsb_release -i|awk {'print $3'})" == "Ubuntu" ]
   then
     sudo ./automated-installer.sh -s secrets -f config.json -r registration.json -a "$USER" --accepteula tableau-installer.deb --force
   else
     sudo ./automated-installer.sh -s secrets -f config.json -r registration.json -a "$USER" --accepteula tableau-installer.rpm --force
   fi
 else
-  if [ "$OS" == "Ubuntu 16.04 LTS" ]
+  if [ "$(lsb_release -i|awk {'print $3'})" == "Ubuntu" ]
   then
     sudo ./automated-installer.sh -s secrets -f config.json -r registration.json -a "$USER" -k "$LICENSE_KEY" --accepteula tableau-installer.deb --force
   else
@@ -112,7 +112,7 @@ fi
 wait
 
 # if on RHEL, open firewall
-if [ "$OS" == "RHEL 7.6" ] || [ "$OS" == "CentOS 7.5" ]
+if [[ $(grep -E 'CentOS|Red Hat' /etc/os-release 2>/dev/null) ]]
 then
   firewall-cmd --zone=public --add-port=80/tcp --permanent
   firewall-cmd --reload
@@ -121,7 +121,7 @@ fi
 # remove all install files
 rm registration.json
 rm secrets
-if [ "$OS" == "RHEL 7.6" ] || [ "$OS" == "CentOS 7.5" ]
+if [[ $(grep -E 'CentOS|Red Hat' /etc/os-release 2>/dev/null) ]]
 then
   rm tableau-installer.rpm
 else
