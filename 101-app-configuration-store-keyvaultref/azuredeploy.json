@@ -1,0 +1,63 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "configStoreName": {
+      "type": "string",
+      "defaultValue": "[concat('appconfig',uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the App Configuration store."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies the Azure location where the app configuration store should be created."
+      }
+    },
+    "keyValueName": {
+      "type": "string",
+      "defaultValue": "KeyVaultReferenceSample",
+      "metadata": {
+        "description": "Specifies the name of the key-value resource. The name is a combination of key and label with $ as delimiter."
+      }
+    },
+    "keyVaultSecretURL": {
+      "type": "string",
+      "metadata": {
+        "description": "Format should be https://{vault-name}.{vault-DNS-suffix}/secrets/{secret-name}/{secret-version}. Secret version is optional."
+      }
+    }
+  },
+  "variables": {
+    "keyVaultRef": {
+      "uri": "[parameters('keyVaultSecretURL')]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores",
+      "apiVersion": "2020-07-01-preview",
+      "name": "[parameters('configStoreName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "standard"
+      },
+      "resources": [
+        {
+          "type": "keyValues",
+          "apiVersion": "2020-07-01-preview",
+          "name": "[parameters('keyValueName')]",
+          "dependsOn": [
+            "[parameters('configStoreName')]"
+          ],
+          "properties": {
+            "value": "[string(variables('keyVaultRef'))]",
+            "contentType": "application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8"
+          }
+        }
+      ]
+    }
+  ]
+}
