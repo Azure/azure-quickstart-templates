@@ -30,7 +30,7 @@ Click the below button to start a Custom deployment with the Moesif Azure Resour
 
 Within the Azure Custom Deployment, set the following properties:
 
-![Create a Custom Deployment in Azure](https://www.moesif.com/docs/images/docs/integration/azure-api-management-create-custom-deployment.png)
+![Create a Custom Deployment in Azure](https://docs.moesif.com/images/docs/integration/azure-api-management-create-custom-deployment.png)
 
 * For the resource group, select the same resource group that your Azure APIM resides in. This ensures the APIM logger, `moesif-log-to-event-hub`, is automatically created for you. 
 
@@ -167,3 +167,27 @@ If an existing Azure Api Management is not specified, the `log-to-eventhub` logg
 - Review the logs of App Service Webjob named `azure-api-mgmt-logs-2-moesif` and ensure it is running. View your App Service/Settings/WebJobs 
 
 `Tags: Azure API Management, API Management, EventHub, Event Hub, API Gateway, Monitoring, Analytics, Observability, Logs, Logging, API Monitoring, API Analytics, API Logs, API Logging, Moesif, Kong, Tyk, Envoy, WebApp, WebJob, App`
+
+## Updating the integration
+
+If you need to update [Moesif/ApimEventProcessor](https://github.com/Moesif/ApimEventProcessor) and don't want to redeploy the entire template, you can follow these steps:
+
+Before starting, make sure you fork the repo [ApimEventProcessor](https://github.com/Moesif/ApimEventProcessor), so it's in your GitHub account. 
+
+1. Log into your Azure Portal and navigate to the resource group holding your Moesif resources. 
+
+2. Select the WebApp and then click the Deployment Center panel on the left side. 
+   
+3. This will open the deployment panel as shown below, you'll want to click on GitHub.
+
+![Redeploy Webjob GitHub](https://docs.moesif.com/images/docs/integration/azure-api-management-redeploy-github.png)
+   
+4. Click on _App Service build service_ (via Kudu) deployment
+
+![Redeploy Webjob Kudu](https://docs.moesif.com/images/docs/integration/azure-api-management-redeploy-kudu.png)
+
+5.  Select the repo you forked earlier and finish the walkthrough. 
+
+Deployment may take a few minutes. 
+
+> Double check your XML policy if there are any changes. 
