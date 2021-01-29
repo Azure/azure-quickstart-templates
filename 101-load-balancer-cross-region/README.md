@@ -1,4 +1,4 @@
-# Blank Template
+# Cross-region Azure Load Balancer
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-load-balancer-cross-region/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-load-balancer-cross-region/PublicDeployment.svg)
@@ -13,7 +13,15 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-load-balancer-cross-region%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-load-balancer-cross-region%2Fazuredeploy.json)
 
-This template creates a cross-region load balancer in a region of your choosing. The template requires an existing regional Azure load balancer for the cross-region backend pool.
+This template creates a:
+
+* Regional load balancer in a region of your choosing.
+
+* Cross-region load balancer in a region of your choosing.
+
+The template creates supporting public IP resources and a Azure Bastion host in the same region and virtual network as the regional load balancer.  
+
+The regional load balancer front-end is added as a member of the backend pool of the cross-region load balancer.
 
 > [!NOTE]
 > Cross-region load balancer is currently in preview.
