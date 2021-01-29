@@ -15,13 +15,17 @@
 
 This template creates a:
 
-* Regional load balancer in a region of your choosing.
+* Two regional load balancers in regions of your choosing.
 
-* Cross-region load balancer in a region of your choosing.
+* Cross-region load balancer
 
-The template creates supporting public IP resources and a Azure Bastion host in the same region and virtual network as the regional load balancer.  
+The template creates supporting public IP resources, virtual networks, and bastion hosts for management in each region.
 
-The regional load balancer front-end is added as a member of the backend pool of the cross-region load balancer.
+Three Windows Server virtual machines are deployed in each region. The virtual machines are members of the backend pool of each regional load balancer.
+
+IIS is installed with an extension. The default web page is replaced with a page displaying the computer name.
+
+The regional load balancer front-ends are added as a member of the backend pool of the cross-region load balancer.
 
 > [!NOTE]
 > Cross-region load balancer is currently in preview.
