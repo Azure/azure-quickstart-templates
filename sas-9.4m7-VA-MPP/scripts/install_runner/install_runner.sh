@@ -58,7 +58,7 @@ setupForSASInstall() {
 
 	# If no plan file is found after downloading mirror, use the default plan file provided by the quickstart
 	if [ ! -f "/sasshare/depot/plan.xml" ]; then
-		cp /sas/install/plan.xml /sasshare/depot/plan.xml
+		sudo cp /sas/install/plan.xml /sasshare/depot/plan.xml
 	fi
 
 	mkdir /sasshare/responsefiles
