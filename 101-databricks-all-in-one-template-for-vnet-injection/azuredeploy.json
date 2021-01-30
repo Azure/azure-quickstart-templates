@@ -6,7 +6,7 @@
       "type": "bool",
       "defaultValue": false,
       "metadata": {
-        "description": "Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not"
+        "description": "Specifies whether to deploy Azure Databricks workspace with secure cluster connectivity (SCC) enabled or not (No Public IP)"
       }
     },
     "location": {
@@ -14,20 +14,6 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
-      }
-    },
-    "natGatewayName": {
-      "defaultValue": "myNATgateway",
-      "type": "string",
-      "metadata": {
-        "description": "Name of the NAT gateway to be attached to the workspace subnets."
-      }
-    },
-    "natGatewayPublicIpName": {
-      "defaultValue": "myNATGatewayPublicIP",
-      "type": "string",
-      "metadata": {
-        "description": "Name of the NAT gateway public IP."
       }
     },
     "nsgName": {
@@ -113,46 +99,11 @@
       "properties": {}
     },
     {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-06-01",
-      "name": "[parameters('natGatewayPublicIpName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "Standard"
-      },
-      "properties": {
-        "publicIPAddressVersion": "IPv4",
-        "publicIPAllocationMethod": "Static",
-        "idleTimeoutInMinutes": 4
-      }
-    },
-    {
-      "type": "Microsoft.Network/natGateways",
-      "apiVersion": "2020-06-01",
-      "name": "[parameters('natGatewayName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "Standard"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('natGatewayPublicIpName'))]"
-      ],
-      "properties": {
-        "idleTimeoutInMinutes": 4,
-        "publicIpAddresses": [
-          {
-            "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('natGatewayPublicIpName'))]"
-          }
-        ]
-      }
-    },
-    {
       "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
       "name": "[parameters('vnetName')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]",
         "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('nsgName'))]"
       ],
       "properties": {
@@ -168,9 +119,6 @@
               "addressPrefix": "[parameters('publicSubnetCidr')]",
               "networkSecurityGroup": {
                 "id": "[variables('nsgId')]"
-              },
-              "natGateway": {
-                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
               },
               "delegations": [
                 {
@@ -188,9 +136,6 @@
               "addressPrefix": "[parameters('privateSubnetCidr')]",
               "networkSecurityGroup": {
                 "id": "[variables('nsgId')]"
-              },
-              "natGateway": {
-                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
               },
               "delegations": [
                 {
