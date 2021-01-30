@@ -9,7 +9,8 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-azurefirewall-premium%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-azurefirewall-premium%2Fazuredeploy.json)
 
 This template deploys an Azure Firewall Premium enabled with IDPS, TLS Inspection and Web Categories filtering.
-- The teplate deployes all dependencies including Key Vault, Managed Identity, Policy and will generate a self signed Root CA and Intermediate CA.
+
+- The template deploys all dependencies including Key Vault, Managed Identity, Policy and will generate a self signed Root CA and Intermediate CA.
 - For testing purposes a Bastion Host (BastionHost) is also deployed and can be used to connect to the Windows testing machine (ServerVM). The VM is installed with the generated Root CA certificate.
 - Policy is applied with TLS inspection and IDPS enabled
   - Go to https://www.microsoft.com and inspect the certificate in the browser
