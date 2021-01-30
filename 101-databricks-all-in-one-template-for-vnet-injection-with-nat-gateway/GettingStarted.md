@@ -13,6 +13,7 @@ Parameter         | Suggested value     | Description
 **WorkspaceName** |  | The name of your DataBricks Workspace.
 **Pricing Tier** | 14 Day Trial, Standard or Premium
 **Resource Group** The Resource Group which you wish to deploy your DataBricks Environment. 
+**Disable Public Ip** | Default is false | Set this to true to disable Public IP creation.
 
 All the other parameters can be left as default.
 
@@ -24,6 +25,8 @@ All the other parameters can be left as default.
 **Vnet Cidr** Cidr Range of the Vnet
 **Private Subnet Cidr** Cidr Range of the Private Subnet
 **Public Subnet Cidr** Cidr Range of the Public Subnet
+**NAT Gateway Name** Name of the NAT Gateway
+**NAT Gateway Public IP Name** Name of the NAT Gateway Public IP
 
 ## Deployment
 
