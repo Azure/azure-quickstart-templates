@@ -49,67 +49,7 @@
             "properties": {
                 "forceUpdateTag": "2",
                 "azPowerShellVersion": "3.0",
-                "scriptContent": "
-# Write the config to file
-$opensslConfig=@'
-[ req ]
-default_bits        = 4096
-distinguished_name  = req_distinguished_name
-string_mask         = utf8only
-default_md          = sha512
-
-[ req_distinguished_name ]
-countryName                     = Country Name (2 letter code)
-stateOrProvinceName             = State or Province Name
-localityName                    = Locality Name
-0.organizationName              = Organization Name
-organizationalUnitName          = Organizational Unit Name
-commonName                      = Common Name
-emailAddress                    = Email Address
-
-[ rootCA_ext ]
-subjectKeyIdentifier = hash
-authorityKeyIdentifier = keyid:always,issuer
-basicConstraints = critical, CA:true
-keyUsage = critical, digitalSignature, cRLSign, keyCertSign
-
-[ interCA_ext ]
-subjectKeyIdentifier = hash
-authorityKeyIdentifier = keyid:always,issuer
-basicConstraints = critical, CA:true, pathlen:1
-keyUsage = critical, digitalSignature, cRLSign, keyCertSign
-
-[ server_ext ]
-subjectKeyIdentifier = hash
-authorityKeyIdentifier = keyid:always,issuer
-basicConstraints = critical, CA:false
-keyUsage = critical, digitalSignature
-extendedKeyUsage = serverAuth
-'@
-
-Set-Content -Path openssl.cnf -Value $opensslConfig
-
-# Create root CA
-openssl req -x509 -new -nodes -newkey rsa:4096 -keyout rootCA.key -sha256 -days 3650 -out rootCA.crt -subj '/C=US/ST=US/O=Self Signed/CN=Self Signed Root CA' -config openssl.cnf -extensions rootCA_ext
-
-# Create intermediate CA request
-openssl req -new -nodes -newkey rsa:4096 -keyout interCA.key -sha256 -out interCA.csr -subj '/C=US/ST=US/O=Self Signed/CN=Self Signed Intermediate CA'
-
-# Sign on the intermediate CA
-openssl x509 -req -in interCA.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out interCA.crt -days 3650 -sha256 -extfile openssl.cnf -extensions interCA_ext
-
-# Export the intermediate CA into PFX
-openssl pkcs12 -export -out interCA.pfx -inkey interCA.key -in interCA.crt -password 'pass:'
-
-# Convert the PFX and public key into base64
-$interCa = [Convert]::ToBase64String((Get-Content -Path interCA.pfx -AsByteStream -Raw))
-$rootCa = [Convert]::ToBase64String((Get-Content -Path rootCA.crt -AsByteStream -Raw))
-
-# Assign outputs
-$DeploymentScriptOutputs = @{}
-$DeploymentScriptOutputs['interca'] = $interCa
-$DeploymentScriptOutputs['rootca'] = $rootCa
-                ",
+                "scriptContent": "# Write the config to file\n$opensslConfig=@'\n[ req ]\ndefault_bits        = 4096\ndistinguished_name  = req_distinguished_name\nstring_mask         = utf8only\ndefault_md          = sha512\n\n[ req_distinguished_name ]\ncountryName                     = Country Name (2 letter code)\nstateOrProvinceName             = State or Province Name\nlocalityName                    = Locality Name\n0.organizationName              = Organization Name\norganizationalUnitName          = Organizational Unit Name\ncommonName                      = Common Name\nemailAddress                    = Email Address\n\n[ rootCA_ext ]\nsubjectKeyIdentifier = hash\nauthorityKeyIdentifier = keyid:always,issuer\nbasicConstraints = critical, CA:true\nkeyUsage = critical, digitalSignature, cRLSign, keyCertSign\n\n[ interCA_ext ]\nsubjectKeyIdentifier = hash\nauthorityKeyIdentifier = keyid:always,issuer\nbasicConstraints = critical, CA:true, pathlen:1\nkeyUsage = critical, digitalSignature, cRLSign, keyCertSign\n\n[ server_ext ]\nsubjectKeyIdentifier = hash\nauthorityKeyIdentifier = keyid:always,issuer\nbasicConstraints = critical, CA:false\nkeyUsage = critical, digitalSignature\nextendedKeyUsage = serverAuth\n'@\n\nSet-Content -Path openssl.cnf -Value $opensslConfig\n\n# Create root CA\nopenssl req -x509 -new -nodes -newkey rsa:4096 -keyout rootCA.key -sha256 -days 3650 -out rootCA.crt -subj '/C=US/ST=US/O=Self Signed/CN=Self Signed Root CA' -config openssl.cnf -extensions rootCA_ext\n\n# Create intermediate CA request\nopenssl req -new -nodes -newkey rsa:4096 -keyout interCA.key -sha256 -out interCA.csr -subj '/C=US/ST=US/O=Self Signed/CN=Self Signed Intermediate CA'\n\n# Sign on the intermediate CA\nopenssl x509 -req -in interCA.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out interCA.crt -days 3650 -sha256 -extfile openssl.cnf -extensions interCA_ext\n\n# Export the intermediate CA into PFX\nopenssl pkcs12 -export -out interCA.pfx -inkey interCA.key -in interCA.crt -password 'pass:'\n\n# Convert the PFX and public key into base64\n$interCa = [Convert]::ToBase64String((Get-Content -Path interCA.pfx -AsByteStream -Raw))\n$rootCa = [Convert]::ToBase64String((Get-Content -Path rootCA.crt -AsByteStream -Raw))\n\n# Assign outputs\n$DeploymentScriptOutputs = @{}\n$DeploymentScriptOutputs['interca'] = $interCa\n$DeploymentScriptOutputs['rootca'] = $rootCa\n",
                 "timeout": "PT5M",
                 "cleanupPreference": "OnSuccess",
                 "retentionInterval": "P1D"
