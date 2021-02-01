@@ -13,6 +13,10 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-event-grid%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-event-grid%2Fazuredeploy.json)
 
-This template creates an Event Grid custom topic and webhook subscription on Azure. Template was authored by John Downs.
+This template creates an Event Grid custom topic and webhook subscription on Azure.
+
+This sample deploys an Azure Functions app with an [Event Grid trigger](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-event-grid-trigger) to act as a webhook. This is defined the `prereqs/prereq.azuredeploy.json` file. However, when you deploy your own Event Grid subscription you can use any valid webhook URL as long as it handles the [Event Grid subscription validation procedure](https://docs.microsoft.com/en-us/azure/event-grid/webhook-event-delivery).
+
+Template was authored by John Downs.
 
 `Tags: eventgrid`
