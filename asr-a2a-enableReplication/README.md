@@ -10,6 +10,7 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/asr-a2a-enableReplication/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fasr-a2a-enableReplication%2Fazuredeploy.json)
+[![Deploy To Azure Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fasr-a2a-enableReplication%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fasr-a2a-enableReplication%2Fazuredeploy.json)
 
 This ARM template enables Site Recovery customers to Enable Replication at scale for their Protected Azure VMs.
@@ -36,6 +37,7 @@ Prior to running this ARM template, following things need to be taken care:
 The template expects the following inputs:
 | Parameters| Description|
 |-|-|
+|resourceLocation|Location where the Deployment Script should be deployed.|
 |identity|ARM ID of a user managed identity that has contributor access to the resource group being deployed.|
 | vaultSubscriptionId| Subscription Id of the Subscription where Vault is present|
 | vaultResourceGroupName| Name of the Resource Group where the Vault is present|
