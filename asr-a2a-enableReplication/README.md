@@ -38,7 +38,8 @@ The template expects the following inputs:
 | Parameters| Description|
 |-|-|
 |resourceLocation|Location where the Deployment Script should be deployed.|
-|identity|ARM ID of a user managed identity that has contributor access to the resource group being deployed.|
+|identityResourceGroupName|Name of the resource group where the User Managed Identity is deployed.|
+|identity|Name of the user managed identity that has contributor access to the resource group being deployed.|
 | vaultSubscriptionId| Subscription Id of the Subscription where Vault is present|
 | vaultResourceGroupName| Name of the Resource Group where the Vault is present|
 | vaultName| Name of the Vault |
