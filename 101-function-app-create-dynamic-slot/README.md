@@ -1,4 +1,4 @@
-# Provision a function app on a Consumption plan with a Deployment Slot
+# Provision Consumption plan function with a Deployment Slot
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-function-app-create-dynamic/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-function-app-create-dynamic/PublicDeployment.svg)
