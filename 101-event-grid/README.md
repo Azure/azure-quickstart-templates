@@ -22,3 +22,4 @@ This sample deploys an Azure Functions app with an [Event Grid trigger](https://
 Template was authored by John Downs.
 
 `Tags: eventgrid`
+
