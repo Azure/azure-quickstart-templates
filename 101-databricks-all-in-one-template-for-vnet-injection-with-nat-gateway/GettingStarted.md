@@ -25,8 +25,6 @@ All the other parameters can be left as default.
 **Vnet Cidr** Cidr Range of the Vnet
 **Private Subnet Cidr** Cidr Range of the Private Subnet
 **Public Subnet Cidr** Cidr Range of the Public Subnet
-**NAT Gateway Name** Name of the NAT Gateway
-**NAT Gateway Public IP Name** Name of the NAT Gateway Public IP
 
 ## Deployment
 
