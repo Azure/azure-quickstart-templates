@@ -13,7 +13,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-databricks-all-in-one-template-for-vnet-injection-with-nat-gateway%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-databricks-all-in-one-template-for-vnet-injection-with-nat-gateway%2Fazuredeploy.json)
 
-This template allows you to create a network security group, a virtual network and an Azure Databricks workspace with the virtual network.
+This template allows you to create a nat gateway, network security group, a virtual network and an Azure Databricks workspace with the virtual network.
 For more information, see the [Azure Databricks Documentation](https://docs.microsoft.com/en-us/azure/azure-databricks/).
 
 ### What is Azure Databricks?
