@@ -15,7 +15,7 @@
 
 This template deploys an Azure Firewall Premium enabled with IDPS, TLS Inspection and Web Categories filtering.
 
-- The template deploys all dependencies including Key Vault, Managed Identity, Policy and will generate a self signed Root CA and Intermediate CA.
+- The template deploys all dependencies including Key Vault, Managed Identity, Policy and will generate a self signed Root CA and Intermediate CA. In a production environment these resources may already be created and not needed in the same template.
 - For testing purposes a Bastion Host (BastionHost) is also deployed and can be used to connect to the Windows testing machine (ServerVM). The VM is installed with the generated Root CA certificate.
 - Policy is applied with TLS inspection and IDPS enabled
   - Go to https://www.microsoft.com and inspect the certificate in the browser
