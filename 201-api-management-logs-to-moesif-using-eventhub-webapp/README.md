@@ -51,79 +51,71 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
 
 ```xml
 <policies>
-  <inbound>
-      <set-variable name="message-id" value="@(Guid.NewGuid())" />
-      <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="0">
-      @{
+    <inbound>
+        <set-variable name="message-id" value="@(Guid.NewGuid())" />
+        <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="0">@{
           var body = context.Request.Body?.As<string>(true);
-          if (body != null && body.Length > 175000)
-          {
-              body = body.Substring(0, 175000);
+          var MAX_BODY_SIZE_FOR_EH = 145000;
+          var origBodyLen = (null != body) ? body.Length : 0;
+          if (MAX_BODY_SIZE_FOR_EH < origBodyLen){
+              body = body.Remove(MAX_BODY_SIZE_FOR_EH);
           }
-
           var headers = context.Request.Headers
                                .Where(h => h.Key != "Ocp-Apim-Subscription-Key")
                                .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value).Replace("\"", "\\\"")))
                                .ToArray<string>();
-
-                               
-
           var headerString = (headers.Any()) ? string.Join(";;", headers) : string.Empty;
           var messageId = context.Variables["message-id"];
           var jwtToken = context.Request.Headers.GetValueOrDefault("Authorization","").AsJwt();
           var userId = (context.User != null && context.User.Id != null) ? context.User.Id : (jwtToken != null && jwtToken.Subject != null ? jwtToken.Subject : null);
           var companyId = "";
           var requestBody = (body != null ? System.Convert.ToBase64String(Encoding.ASCII.GetBytes(body)) : null);
-          string metadata = $@"{{}}";
-
-          return $@"
-                    {{
-                        ""event_type"": ""request"",
-                        ""message-id"": ""{messageId}"",
-                        ""method"": ""{context.Request.Method}"",
-                        ""uri"": ""{context.Request.Url}"",
-                        ""user_id"": ""{userId}"",
-                        ""company_id"": ""{companyId}"",
-                        ""request_headers"": ""{headerString}"",
-                        ""request_body"": ""{requestBody}"",
-                        ""metadata"": {metadata}
-                    }}
+          string metadata = $@"";
+          var request = $@"
+                    ""event_type"": ""request"",
+                    ""message-id"": ""{messageId}"",
+                    ""method"": ""{context.Request.Method}"",
+                    ""uri"": ""{context.Request.Url}"",
+                    ""user_id"": ""{userId}"",
+                    ""company_id"": ""{companyId}"",
+                    ""request_headers"": ""{headerString}"",
+                    ""request_body"": ""{requestBody}"",
+                    ""metadata"": ""{metadata}""
                 ";
-      }
-  </log-to-eventhub>
-  </inbound>
-  <backend>
-      <forward-request follow-redirects="true" />
-  </backend>
-  <outbound>
-      <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">
-      @{
+            return "{" + request + "}";
+      }</log-to-eventhub>
+    </inbound>
+    <backend>
+        <forward-request follow-redirects="true" />
+    </backend>
+    <outbound>
+        <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">@{
           var body = context.Response.Body?.As<string>(true);
-          if (body != null && body.Length > 175000)
-          {
-              body = body.Substring(0, 175000);
+          var MAX_BODY_SIZE_FOR_EH = 145000;
+          var origBodyLen = (null != body) ? body.Length : 0;
+          if (MAX_BODY_SIZE_FOR_EH < origBodyLen){
+              body = body.Remove(MAX_BODY_SIZE_FOR_EH);
           }
-
           var headers = context.Response.Headers
                                           .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value).Replace("\"", "\\\"")))
                                           .ToArray<string>();
-
           var headerString = (headers.Any()) ? string.Join(";;", headers): string.Empty;
           var messageId = context.Variables["message-id"];
           var responseBody = (body != null ? System.Convert.ToBase64String(Encoding.ASCII.GetBytes(body)) : null);
-
-          return $@"
-                    {{
-                        ""event_type"": ""response"",
-                        ""message-id"": ""{messageId}"",
-                        ""status_code"": ""{context.Response.StatusCode}"",
-                        ""response_headers"": ""{headerString}"",
-                        ""response_body"": ""{responseBody}""
-                    }}
-                ";
-     }
-  </log-to-eventhub>
-  </outbound>
+          var response = $@"
+                    ""event_type"": ""response"",
+                    ""orig_body_len"": ""{origBodyLen}"",
+                    ""message-id"": ""{messageId}"",
+                    ""status_code"": ""{context.Response.StatusCode}"",
+                    ""response_headers"": ""{headerString}"",
+                    ""response_body"": ""{responseBody}""
+                    ";
+          return "{" + response + "}";
+     }</log-to-eventhub>
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
 </policies>
 ```
 
