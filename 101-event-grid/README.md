@@ -15,7 +15,9 @@
 
 This template creates an Event Grid custom topic and webhook subscription on Azure.
 
-This sample deploys an Azure Functions app with an [Event Grid trigger](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-event-grid-trigger) to act as a webhook. This is defined the `prereqs/prereq.azuredeploy.json` file. However, when you deploy your own Event Grid subscription you can use any valid webhook URL as long as it handles the [Event Grid subscription validation procedure](https://docs.microsoft.com/en-us/azure/event-grid/webhook-event-delivery).
+This sample deploys an Azure Functions app with an [Event Grid trigger](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-event-grid-trigger) to act as a webhook. This is defined the `prereqs/prereq.azuredeploy.json` file. However, when you deploy your own Event Grid subscription you can use any valid webhook URL as long as it handles the [Event Grid subscription validation procedure](https://docs.microsoft.com/azure/event-grid/webhook-event-delivery).
+
+> Note: The `prereq.azuredeploy.json` file uses a [template deployment script](https://docs.microsoft.com/azure/azure-resource-manager/templates/deployment-script-template) to help to determine the webhook URL of the function. The reason it does this is that the `listKeys` API on the function app doesn't work consistently - sometimes it won't return the Event Grid webhook key when the app has just been created. If the `listKeys` API is used directly within the ARM template then the deployment often fails. Instead, the deployment script polls the `listKeys` API, and once it sees a valid response it then provides that back to the temmplate so that it can construct the full webhook URL.
 
 Template was authored by John Downs.
 
