@@ -30,7 +30,7 @@ Click the below button to start a Custom deployment with the Moesif Azure Resour
 
 Within the Azure Custom Deployment, set the following properties:
 
-![Create a Custom Deployment in Azure](https://www.moesif.com/docs/images/docs/integration/azure-api-management-create-custom-deployment.png)
+![Create a Custom Deployment in Azure](https://docs.moesif.com/images/docs/integration/azure-api-management-create-custom-deployment.png)
 
 * For the resource group, select the same resource group that your Azure APIM resides in. This ensures the APIM logger, `moesif-log-to-event-hub`, is automatically created for you. 
 
@@ -55,10 +55,6 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
       <set-variable name="message-id" value="@(Guid.NewGuid())" />
       <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="0">
       @{
-          var requestLine = string.Format("{0} {1} HTTP/1.1\r\n",
-                                                      context.Request.Method,
-                                                      context.Request.Url.Path + context.Request.Url.QueryString);
-
           var body = context.Request.Body?.As<string>(true);
           if (body != null && body.Length > 175000)
           {
@@ -67,13 +63,32 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
 
           var headers = context.Request.Headers
                                .Where(h => h.Key != "Ocp-Apim-Subscription-Key")
-                               .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value)))
+                               .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value).Replace("\"", "\\\"")))
                                .ToArray<string>();
 
-          var headerString = (headers.Any()) ? string.Join("\r\n", headers) + "\r\n" : string.Empty;
+                               
 
-          return "request:"   + context.Variables["message-id"] + "\n"
-                              + requestLine + headerString + "\r\n" + body;
+          var headerString = (headers.Any()) ? string.Join(";;", headers) : string.Empty;
+          var messageId = context.Variables["message-id"];
+          var jwtToken = context.Request.Headers.GetValueOrDefault("Authorization","").AsJwt();
+          var userId = (context.User != null && context.User.Id != null) ? context.User.Id : (jwtToken != null && jwtToken.Subject != null ? jwtToken.Subject : null);
+          var companyId = "";
+          var requestBody = (body != null ? System.Convert.ToBase64String(Encoding.ASCII.GetBytes(body)) : null);
+          string metadata = $@"{{}}";
+
+          return $@"
+                    {{
+                        ""event_type"": ""request"",
+                        ""message-id"": ""{messageId}"",
+                        ""method"": ""{context.Request.Method}"",
+                        ""uri"": ""{context.Request.Url}"",
+                        ""user_id"": ""{userId}"",
+                        ""company_id"": ""{companyId}"",
+                        ""request_headers"": ""{headerString}"",
+                        ""request_body"": ""{requestBody}"",
+                        ""metadata"": {metadata}
+                    }}
+                ";
       }
   </log-to-eventhub>
   </inbound>
@@ -83,10 +98,6 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
   <outbound>
       <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">
       @{
-          var statusLine = string.Format("HTTP/1.1 {0} {1}\r\n",
-                                              context.Response.StatusCode,
-                                              context.Response.StatusReason);
-
           var body = context.Response.Body?.As<string>(true);
           if (body != null && body.Length > 175000)
           {
@@ -94,18 +105,38 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
           }
 
           var headers = context.Response.Headers
-                                          .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value)))
+                                          .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value).Replace("\"", "\\\"")))
                                           .ToArray<string>();
 
-          var headerString = (headers.Any()) ? string.Join("\r\n", headers) + "\r\n" : string.Empty;
+          var headerString = (headers.Any()) ? string.Join(";;", headers): string.Empty;
+          var messageId = context.Variables["message-id"];
+          var responseBody = (body != null ? System.Convert.ToBase64String(Encoding.ASCII.GetBytes(body)) : null);
 
-          return "response:"  + context.Variables["message-id"] + "\n"
-                              + statusLine + headerString + "\r\n" + body;
+          return $@"
+                    {{
+                        ""event_type"": ""response"",
+                        ""message-id"": ""{messageId}"",
+                        ""status_code"": ""{context.Response.StatusCode}"",
+                        ""response_headers"": ""{headerString}"",
+                        ""response_body"": ""{responseBody}""
+                    }}
+                ";
      }
   </log-to-eventhub>
   </outbound>
 </policies>
 ```
+
+## Config Options
+
+### UserId
+(optional) => string, A userId enables Moesif to attribute API requests to individual unique users so you can understand who calling your API. This can be used simultaneously with companyId to track both individual customers and the companies they're a part of.
+
+### CompanyId
+(optional) => string, If your business is B2B, this enables Moesif to attribute API requests to specific companies or organizations so you can understand which accounts are calling your API. This can be used simultaneously with userId to track both individual customers and the companies they're a part of.
+
+### Metadata
+(optional) => string, An object that allows you to add custom metadata that will be associated with the event. The metadata must be a dictionary that can be converted to JSON. For example, you may want to save a VM instance_id, a trace_id, or a tenant_id with the request.
 
 The [ARM Template `nested/microsoft.apimanagement/service/apis/policies.json`](nested/microsoft.apimanagement/service/apis/policies.json) can be used as a reference to set policy XML thru Azure deployment. This sample template, as implemented, will overwrite existing policy.xml
 That's it! API logs should start showing up after a few minutes.
@@ -136,3 +167,27 @@ If an existing Azure Api Management is not specified, the `log-to-eventhub` logg
 - Review the logs of App Service Webjob named `azure-api-mgmt-logs-2-moesif` and ensure it is running. View your App Service/Settings/WebJobs 
 
 `Tags: Azure API Management, API Management, EventHub, Event Hub, API Gateway, Monitoring, Analytics, Observability, Logs, Logging, API Monitoring, API Analytics, API Logs, API Logging, Moesif, Kong, Tyk, Envoy, WebApp, WebJob, App`
+
+## Updating the integration
+
+If you need to update [Moesif/ApimEventProcessor](https://github.com/Moesif/ApimEventProcessor) and don't want to redeploy the entire template, you can follow these steps:
+
+Before starting, make sure you fork the repo [ApimEventProcessor](https://github.com/Moesif/ApimEventProcessor), so it's in your GitHub account. 
+
+1. Log into your Azure Portal and navigate to the resource group holding your Moesif resources. 
+
+2. Select the WebApp and then click the Deployment Center panel on the left side. 
+   
+3. This will open the deployment panel as shown below, you'll want to click on GitHub.
+
+![Redeploy Webjob GitHub](https://docs.moesif.com/images/docs/integration/azure-api-management-redeploy-github.png)
+   
+4. Click on _App Service build service_ (via Kudu) deployment
+
+![Redeploy Webjob Kudu](https://docs.moesif.com/images/docs/integration/azure-api-management-redeploy-kudu.png)
+
+5.  Select the repo you forked earlier and finish the walkthrough. 
+
+Deployment may take a few minutes. 
+
+> Double check your XML policy if there are any changes. 
