@@ -24,11 +24,9 @@ Azure Databricks is a fast, easy, and collaborative Apache Spark-based analytics
 
 This template allows you to install the following options
 
-<ul>
-<li>DataBricks 14 day trial</li>
-<li>DataBricks Standard</li>
-<li>DataBricks Premium</li>
-</ul>
++ DataBricks 14 day trial
++ DataBricks Standard
++ DataBricks Premium
 
 ### DataBricks Resources
 
@@ -55,17 +53,15 @@ Parameter         | Suggested value     | Description
 
 All the other parameters can be left as default.
 
-<ul>
-<li>**Nsg Name** Name of the network Security Group></li>
-<li>**Vnet Name** Name of the Virtual Network</li>
-<li>**Private Subnet Name** Name of the Private Subnet</li>
-<li>**Public Subnet Name** Name of the Public Subnet</li>
-<li>**Location** Location of Data Center</li>
-<li>**Vnet Cidr** Cidr Range of the Vnet</li>
-<li>**Private Subnet Cidr** Cidr Range of the Private Subnet</li>
-<li>**Public Subnet Cidr** Cidr Range of the Public Subnet</li>
-<li>**Load Balancer Backend Pool Name** Name of the Backend Pool of the Load Balancer</li>
-<li>**Load Balancer Frontend Config Name** Name of the Frontend Load Balancer configuration</li>
-<li>**Load Balancer Name** Name of the Load Balancer</li>
-<li>**Load Balancer Public IP Name** Name of the outbount Load Balancer Public IP</li>
-</ul>
++ **Nsg Name** Name of the network Security Group
++ **Vnet Name** Name of the Virtual Network
++ **Private Subnet Name** Name of the Private Subnet
++ **Public Subnet Name** Name of the Public Subnet
++ **Location** Location of Data Center
++ **Vnet Cidr** Cidr Range of the Vnet
++ **Private Subnet Cidr** Cidr Range of the Private Subnet
++ **Public Subnet Cidr** Cidr Range of the Public Subnet
++ **Load Balancer Backend Pool Name** Name of the Backend Pool of the Load Balancer
++ **Load Balancer Frontend Config Name** Name of the Frontend Load Balancer configuration
++ **Load Balancer Name** Name of the Load Balancer
++ **Load Balancer Public IP Name** Name of the outbount Load Balancer Public IP
