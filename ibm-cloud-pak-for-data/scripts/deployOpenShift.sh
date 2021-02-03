@@ -38,6 +38,8 @@ export PULLSECRET=${31}
 export FIPS=${32}
 export PUBLISH=${33}
 export OPENSHIFTUSER=${34}
+export ENABLEAUTOSCALER=${35}
+export OUTBOUNDTYPE=${36}
 
 #Var
 export INSTALLERHOME=/home/$SUDOUSER/.openshift
@@ -74,10 +76,10 @@ echo $(date) " - Install httpd-tools Complete"
 echo $(date) " - Download Binaries"
 runuser -l $SUDOUSER -c "mkdir -p /home/$SUDOUSER/.openshift"
 
-runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.5.18/openshift-install-linux-4.5.18.tar.gz"
-runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.5.18/openshift-client-linux-4.5.18.tar.gz"
-runuser -l $SUDOUSER -c "tar -xvf openshift-install-linux-4.5.18.tar.gz -C $INSTALLERHOME"
-runuser -l $SUDOUSER -c "sudo tar -xvf openshift-client-linux-4.5.18.tar.gz -C /usr/bin"
+runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.12/openshift-install-linux-4.6.12.tar.gz"
+runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.12/openshift-client-linux-4.6.12.tar.gz"
+runuser -l $SUDOUSER -c "tar -xvf openshift-install-linux-4.6.12.tar.gz -C $INSTALLERHOME"
+runuser -l $SUDOUSER -c "sudo tar -xvf openshift-client-linux-4.6.12.tar.gz -C /usr/bin"
 
 chmod +x /usr/bin/kubectl
 chmod +x /usr/bin/oc
@@ -144,6 +146,7 @@ platform:
     virtualNetwork: $VIRTUALNETWORKNAME
     controlPlaneSubnet: $MASTERSUBNETNAME
     computeSubnet: $WORKERSUBNETNAME
+    outboundType: $OUTBOUNDTYPE
 pullSecret: '$PULLSECRET'
 fips: $FIPS
 publish: $PUBLISH
@@ -161,6 +164,9 @@ echo $(date) " - Kube Config setup"
 runuser -l $SUDOUSER -c "mkdir -p /home/$SUDOUSER/.kube"
 runuser -l $SUDOUSER -c "cp $INSTALLERHOME/openshiftfourx/auth/kubeconfig /home/$SUDOUSER/.kube/config"
 echo $(date) "Kube Config setup done"
+
+#Switch to Machine API project
+runuser -l $SUDOUSER -c "oc project openshift-machine-api"
 
 echo $(date) " - Setting up Cluster Autoscaler"
 runuser -l $SUDOUSER -c "cat > $INSTALLERHOME/openshiftfourx/cluster-autoscaler.yaml <<EOF
@@ -185,8 +191,7 @@ spec:
     delayAfterFailure: '30s'
     unneededTime: '60s'
 EOF"
-runuser -l $SUDOUSER -c "oc project openshift-machine-api"
-runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/cluster-autoscaler.yaml"
+
 echo $(date) " - Cluster Autoscaler setup complete"
 
 echo $(date) " - Setting up Machine Autoscaler"
@@ -232,7 +237,7 @@ spec:
     kind: MachineSet
     name: ${clusterid}-worker-${LOCATION}3
 EOF"
-runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/machine-autoscaler.yaml"
+
 echo $(date) " - Machine Autoscaler setup complete"
 
 echo $(date) " - Setting up Machine health checks"
@@ -299,7 +304,14 @@ spec:
     status: \"Unknown\"
   maxUnhealthy: \"30%\"
 EOF"
-runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/machine-health-check.yaml"
+
+##Enable/Disable Autoscaler
+if [[ $ENABLEAUTOSCALER == "true" || $ENABLEAUTOSCALER == "True" ]]; then
+  runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/cluster-autoscaler.yaml"
+  runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/machine-autoscaler.yaml"
+  runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/machine-health-check.yaml"
+fi
+
 echo $(date) " - Machine Health Check setup complete"
 
 echo $(date) " - Setting up $STORAGEOPTION"
