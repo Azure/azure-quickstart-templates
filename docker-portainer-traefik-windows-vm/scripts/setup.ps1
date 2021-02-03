@@ -27,7 +27,6 @@ Restart-Service sshd
 
 # relocate docker data
 Stop-Service docker
-New-Item -Path 'f:\dockerdata' -ItemType Directory | Out-Null
 $dockerDaemonConfig = @"
 {
     `"data-root`": `"f:\\dockerdata`"
