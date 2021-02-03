@@ -2,7 +2,8 @@ param (
     $mail,
     $publicdnsname,
     $templateUrl,
-    $sshdConfigUrl
+    $sshdConfigUrl,
+    $adminPwd
 )
 # format disk and create folders
 Get-Disk | Where-Object OperationalStatus -eq 'Offline' | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -UseMaximumSize -DriveLetter F | Format-Volume -FileSystem NTFS -Confirm:$false -Force
@@ -23,6 +24,20 @@ choco install --no-progress --limit-output openssh -params '"/SSHServerFeature"'
 [DownloadWithRetry]::DoDownloadWithRetry("$sshdConfigUrl", 5, 10, $null, 'C:\ProgramData\ssh\sshd_config', $false)
 New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
 Restart-Service sshd
+
+# relocate docker data
+Stop-Service docker
+New-Item -Path 'f:\dockerdata' -ItemType Directory | Out-Null
+$dockerDaemonConfig = @"
+{
+    `"data-root`": `"f:\\dockerdata`"
+}
+"@
+$dockerDaemonConfig | Out-File "c:\programdata\docker\config\daemon.json" -Encoding ascii
+Start-Service docker
+
+# prepare password file for portainer
+$adminPwd | Out-File -NoNewline -Encoding ascii "f:\portainerdata\passwordfile"
 
 # download compose, the compose file and deploy it
 [DownloadWithRetry]::DoDownloadWithRetry("https://github.com/docker/compose/releases/download/1.28.2/docker-compose-Windows-x86_64.exe", 5, 10, $null, "$($Env:ProgramFiles)\Docker\docker-compose.exe", $false)
