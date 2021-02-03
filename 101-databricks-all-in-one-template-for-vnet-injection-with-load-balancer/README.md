@@ -64,4 +64,4 @@ All the other parameters can be left as default.
 + **Load Balancer Backend Pool Name** Name of the Backend Pool of the Load Balancer
 + **Load Balancer Frontend Config Name** Name of the Frontend Load Balancer configuration
 + **Load Balancer Name** Name of the Load Balancer
-+ **Load Balancer Public IP Name** Name of the outbount Load Balancer Public IP
++ **Load Balancer Public IP Name** Name of the outbound Load Balancer Public IP
