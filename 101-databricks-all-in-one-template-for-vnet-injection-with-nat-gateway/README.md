@@ -24,9 +24,9 @@ Azure Databricks is a fast, easy, and collaborative Apache Spark-based analytics
 
 This template allows you to install the following options
 
-DataBricks 14 day trial
-DataBricks Standard
-DataBricks Premium
++ DataBricks 14 day trial
++ DataBricks Standard
++ DataBricks Premium
 
 ### DataBricks Resources
 
@@ -52,13 +52,13 @@ Parameter         | Suggested value     | Description
 
 All the other parameters can be left as default.
 
-**Nsg Name** Name of the network Security Group
-**Vnet Name** Name of the Virtual Network
-**Private Subnet Name** Name of the Private Subnet
-**Public Subnet Name** Name of the Public Subnet
-**Location** Location of Data Center
-**Vnet Cidr** Cidr Range of the Vnet
-**Private Subnet Cidr** Cidr Range of the Private Subnet
-**Public Subnet Cidr** Cidr Range of the Public Subnet
-**NAT Gateway Name** Name of the NAT Gateway
-**NAT Gateway Public IP Name** Name of the NAT Gateway Public IP
++ **Nsg Name** Name of the network Security Group
++ **Vnet Name** Name of the Virtual Network
++ **Private Subnet Name** Name of the Private Subnet
++ **Public Subnet Name** Name of the Public Subnet
++ **Location** Location of Data Center
++ **Vnet Cidr** Cidr Range of the Vnet
++ **Private Subnet Cidr** Cidr Range of the Private Subnet
++ **Public Subnet Cidr** Cidr Range of the Public Subnet
++ **NAT Gateway Name** Name of the NAT Gateway
++ **NAT Gateway Public IP Name** Name of the NAT Gateway Public IP
