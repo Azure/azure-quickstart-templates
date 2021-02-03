@@ -1,0 +1,93 @@
+param (
+    $mail,
+    $publicdnsname,
+    $artifactsLocation,
+    $artifactsLocationSasToken
+)
+# format disk and create folders
+Get-Disk | Where-Object OperationalStatus -eq 'Offline' | Initialize-Disk -PartitionStyle GPT -PassThru | New-Volume -FileSystem NTFS -DriveLetter D -FriendlyName 'Data-Disk'
+New-Item -Path d:\le -ItemType Directory | Out-Null
+New-Item -Path d:\le\acme.json | Out-Null
+New-Item -Path d:\dockerdata -ItemType Directory | Out-Null
+New-Item -Path d:\portainerdata -ItemType Directory | Out-Null
+New-Item -Path d:\compose -ItemType Directory | Out-Null
+
+# install vim and openssh using chocolatey
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+[DownloadWithRetry]::DoDownloadWithRetry("https://chocolatey.org/install.ps1", 5, 10, $null, ".\chocoInstall.ps1", $false)
+& .\chocoInstall.ps1
+choco feature enable -n allowGlobalConfirmation
+choco install --no-progress --limit-output vim
+choco install --no-progress --limit-output openssh -params '"/SSHServerFeature"'
+
+# configure OpenSSH, make PS the default shell and restart sshd
+[DownloadWithRetry]::DoDownloadWithRetry("$artifactsLocation/configs/sshd_config_wpwd", 5, 10, $null, 'C:\ProgramData\ssh\sshd_config', $false)
+New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
+Restart-Service sshd
+
+# download compose, the compose file and deploy it
+[DownloadWithRetry]::DoDownloadWithRetry("https://github.com/docker/compose/releases/download/1.28.2/docker-compose-Windows-x86_64.exe", 5, 10, $null, "$($Env:ProgramFiles)\Docker\docker-compose.exe", $false)
+
+[DownloadWithRetry]::DoDownloadWithRetry("$artifactsLocation/configs/docker-compose.yml.template$artifactsLocationSasToken", 5, 10, $null, 'd:\compose\docker-compose.yml.template', $false)
+$template = Get-Content 'd:\compose\docker-compose.yml.template' -Raw
+$expanded = Invoke-Expression "@`"`r`n$template`r`n`"@"
+$expanded | Out-File "d:\compose\docker-compose.yml" -Encoding ASCII
+
+Set-Location "d:\compose"
+Invoke-Expression "docker-compose up -d"
+
+class DownloadWithRetry {
+    static [string] DoDownloadWithRetry([string] $uri, [int] $maxRetries, [int] $retryWaitInSeconds, [string] $authToken, [string] $outFile, [bool] $metadata) {
+        $retryCount = 0
+        $headers = @{}
+        if (-not ([string]::IsNullOrEmpty($authToken))) {
+            $headers = @{
+                'Authorization' = $authToken
+            }
+        }
+        if ($metadata) {
+            $headers.Add('Metadata', 'true')
+        }
+
+        while ($retryCount -le $maxRetries) {
+            try {
+                if ($headers.Count -ne 0) {
+                    if ([string]::IsNullOrEmpty($outFile)) {
+                        $result = Invoke-WebRequest -Uri $uri -Headers $headers -UseBasicParsing
+                        return $result.Content
+                    }
+                    else {
+                        $result = Invoke-WebRequest -Uri $uri -Headers $headers -UseBasicParsing -OutFile $outFile
+                        return ""
+                    }
+                }
+                else {
+                    throw;
+                }
+            }
+            catch {
+                if ($headers.Count -ne 0) {
+                    write-host "download of $uri failed"
+                }
+                try {
+                    if ([string]::IsNullOrEmpty($outFile)) {
+                        $result = Invoke-WebRequest -Uri $uri -UseBasicParsing
+                        return $result.Content
+                    }
+                    else {
+                        $result = Invoke-WebRequest -Uri $uri -UseBasicParsing -OutFile $outFile
+                        return ""
+                    }
+                }
+                catch {
+                    write-host "download of $uri failed"
+                    $retryCount++;
+                    if ($retryCount -le $maxRetries) {
+                        Start-Sleep -Seconds $retryWaitInSeconds
+                    }            
+                }
+            }
+        }
+        return ""
+    }
+}
