@@ -5,12 +5,13 @@ param (
     $sshdConfigUrl
 )
 # format disk and create folders
-Get-Disk | Where-Object OperationalStatus -eq 'Offline' | Initialize-Disk -PartitionStyle GPT -PassThru | New-Volume -FileSystem NTFS -DriveLetter D -FriendlyName 'Data-Disk'
-New-Item -Path d:\le -ItemType Directory | Out-Null
-New-Item -Path d:\le\acme.json | Out-Null
-New-Item -Path d:\dockerdata -ItemType Directory | Out-Null
-New-Item -Path d:\portainerdata -ItemType Directory | Out-Null
-New-Item -Path d:\compose -ItemType Directory | Out-Null
+Get-Disk | Where-Object OperationalStatus -eq 'Offline' | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -UseMaximumSize -DriveLetter F |
+Format-Volume -FileSystem NTFS -Confirm:$false -Force
+New-Item -Path f:\le -ItemType Directory | Out-Null
+New-Item -Path f:\le\acme.json | Out-Null
+New-Item -Path f:\dockerdata -ItemType Directory | Out-Null
+New-Item -Path f:\portainerdata -ItemType Directory | Out-Null
+New-Item -Path f:\compose -ItemType Directory | Out-Null
 
 # install vim and openssh using chocolatey
 Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
@@ -28,12 +29,12 @@ Restart-Service sshd
 # download compose, the compose file and deploy it
 [DownloadWithRetry]::DoDownloadWithRetry("https://github.com/docker/compose/releases/download/1.28.2/docker-compose-Windows-x86_64.exe", 5, 10, $null, "$($Env:ProgramFiles)\Docker\docker-compose.exe", $false)
 
-[DownloadWithRetry]::DoDownloadWithRetry("$templateUrl", 5, 10, $null, 'd:\compose\docker-compose.yml.template', $false)
-$template = Get-Content 'd:\compose\docker-compose.yml.template' -Raw
+[DownloadWithRetry]::DoDownloadWithRetry("$templateUrl", 5, 10, $null, 'f:\compose\docker-compose.yml.template', $false)
+$template = Get-Content 'f:\compose\docker-compose.yml.template' -Raw
 $expanded = Invoke-Expression "@`"`r`n$template`r`n`"@"
-$expanded | Out-File "d:\compose\docker-compose.yml" -Encoding ASCII
+$expanded | Out-File "f:\compose\docker-compose.yml" -Encoding ASCII
 
-Set-Location "d:\compose"
+Set-Location "f:\compose"
 Invoke-Expression "docker-compose up -d"
 
 class DownloadWithRetry {
