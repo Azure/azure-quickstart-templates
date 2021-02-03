@@ -37,4 +37,28 @@ DataBricks Premium
 
 [Data Bricks Microsoft Learn Modules](https://docs.microsoft.com/en-us/learn/browse/?term=Databricks)
 
+## The Template
 
+Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how much easier your life will be deploying resources to Azure.
+
+These are the parameters on the template, most of them already have values inserted, the ones that you need to inform are: **adminUsername**, **adminPassword** and **resourceGroup**.
+
+Parameter         | Suggested value     | Description
+:--------------- | :-------------      |:---------------------
+**WorkspaceName** |  | The name of your DataBricks Workspace.
+**Pricing Tier** | 14 Day Trial, Standard or Premium
+**Resource Group** The Resource Group which you wish to deploy your DataBricks Environment. 
+**Disable Public Ip** | Default is false | Set this to true to disable Public IP creation.
+
+All the other parameters can be left as default.
+
+**Nsg Name** Name of the network Security Group
+**Vnet Name** Name of the Virtual Network
+**Private Subnet Name** Name of the Private Subnet
+**Public Subnet Name** Name of the Public Subnet
+**Location** Location of Data Center
+**Vnet Cidr** Cidr Range of the Vnet
+**Private Subnet Cidr** Cidr Range of the Private Subnet
+**Public Subnet Cidr** Cidr Range of the Public Subnet
+**NAT Gateway Name** Name of the NAT Gateway
+**NAT Gateway Public IP Name** Name of the NAT Gateway Public IP
