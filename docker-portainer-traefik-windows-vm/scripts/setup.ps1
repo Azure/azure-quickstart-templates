@@ -5,8 +5,7 @@ param (
     $sshdConfigUrl
 )
 # format disk and create folders
-Get-Disk | Where-Object OperationalStatus -eq 'Offline' | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -UseMaximumSize -DriveLetter F |
-Format-Volume -FileSystem NTFS -Confirm:$false -Force
+Get-Disk | Where-Object OperationalStatus -eq 'Offline' | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -UseMaximumSize -DriveLetter F | Format-Volume -FileSystem NTFS -Confirm:$false -Force
 New-Item -Path f:\le -ItemType Directory | Out-Null
 New-Item -Path f:\le\acme.json | Out-Null
 New-Item -Path f:\dockerdata -ItemType Directory | Out-Null
