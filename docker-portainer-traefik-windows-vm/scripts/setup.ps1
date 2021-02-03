@@ -1,8 +1,8 @@
 param (
     $mail,
     $publicdnsname,
-    $artifactsLocation,
-    $artifactsLocationSasToken
+    $templateUrl,
+    $sshdConfigUrl
 )
 # format disk and create folders
 Get-Disk | Where-Object OperationalStatus -eq 'Offline' | Initialize-Disk -PartitionStyle GPT -PassThru | New-Volume -FileSystem NTFS -DriveLetter D -FriendlyName 'Data-Disk'
@@ -21,14 +21,14 @@ choco install --no-progress --limit-output vim
 choco install --no-progress --limit-output openssh -params '"/SSHServerFeature"'
 
 # configure OpenSSH, make PS the default shell and restart sshd
-[DownloadWithRetry]::DoDownloadWithRetry("$artifactsLocation/configs/sshd_config_wpwd", 5, 10, $null, 'C:\ProgramData\ssh\sshd_config', $false)
+[DownloadWithRetry]::DoDownloadWithRetry("$sshdConfigUrl", 5, 10, $null, 'C:\ProgramData\ssh\sshd_config', $false)
 New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
 Restart-Service sshd
 
 # download compose, the compose file and deploy it
 [DownloadWithRetry]::DoDownloadWithRetry("https://github.com/docker/compose/releases/download/1.28.2/docker-compose-Windows-x86_64.exe", 5, 10, $null, "$($Env:ProgramFiles)\Docker\docker-compose.exe", $false)
 
-[DownloadWithRetry]::DoDownloadWithRetry("$artifactsLocation/configs/docker-compose.yml.template$artifactsLocationSasToken", 5, 10, $null, 'd:\compose\docker-compose.yml.template', $false)
+[DownloadWithRetry]::DoDownloadWithRetry("$templateUrl", 5, 10, $null, 'd:\compose\docker-compose.yml.template', $false)
 $template = Get-Content 'd:\compose\docker-compose.yml.template' -Raw
 $expanded = Invoke-Expression "@`"`r`n$template`r`n`"@"
 $expanded | Out-File "d:\compose\docker-compose.yml" -Encoding ASCII
