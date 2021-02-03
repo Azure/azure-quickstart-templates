@@ -75,7 +75,7 @@
       "type": "string",
       "defaultValue": "none",
       "metadata": {
-        "description": "Specify an Availability Zone for the Virtual Machine Scale Set. All Virtual Machines added the the scale set will inherit this zone. Not all Azure regions support Availability zones. VMSS deployed into a zone must have a platformFaultDomainCount = 5. Learn more about maximum fault domain count by region: https://aka.ms/azurefdcountbyregion"
+        "description": "Specify an Availability Zone for the Virtual Machine Scale Set. All Virtual Machines added the the scale set will inherit this zone. Not all Azure regions support Availability zones. VMSS deployed into a zone must have a platformFaultDomainCount = 1. Learn more about maximum fault domain count by region: https://aka.ms/azurefdcountbyregion"
       },
       "allowedValues": [
         "none",
@@ -102,11 +102,10 @@
     }
   },
   "variables": {
-    "myVNETName": "myVNET",
+    "myVNETName": "myVMSS-VNET",
     "myVNETPrefix": "10.0.0.0/16",
-    "myVNETSubnet1Name": "Subnet1",
+    "myVNETSubnet1Name": "VMSS-Subnet1",
     "myVNETSubnet1Prefix": "10.0.0.0/24",
-    "diagnosticStorageAccountName": "[concat('diagst', uniqueString(resourceGroup().id))]",
     "operatingSystemValues": {
       "Win2019DataCenter": {
         "PublisherValue": "MicrosoftWindowsServer",
@@ -129,7 +128,7 @@
       "none": null
     },
     "fdCountOptions": {
-      "zonal": 5,
+      "zonal": 1,
       "nonzonal": 2
     },
     "selectedZone": "[if(equals(parameters('virtualMachineScaleSetAvailabilityZone'), 'none'), variables('noZoneObj').none, array(parameters('virtualMachineScaleSetAvailabilityZone')))]",
@@ -192,25 +191,12 @@
       }
     },
     {
-      "name": "[variables('diagnosticStorageAccountName')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "location": "[parameters('location')]",
-      "apiVersion": "2019-04-01",
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "tags": {
-        "displayName": "diagnosticStorageAccount"
-      },
-      "kind": "Storage"
-    },
-    {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[parameters('virtualMachineScaleSetName')]",
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "properties": {
-        "singlePlacementGroup": "true",
+        "singlePlacementGroup": "false",
         "platformFaultDomainCount": "[variables('virtualMachineScaleSetPlatformFaultDomainCount')]"
       },
       "zones": "[variables('selectedZone')]"
@@ -218,7 +204,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1))]",
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "VMcopy",
@@ -226,7 +212,6 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachineScaleSets/', parameters('virtualMachineScaleSetName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-NIC1'))]"
       ],
       "properties": {
@@ -266,8 +251,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName')), '2019-04-01').primaryEndpoints.blob]"
+            "enabled": true
           }
         }
       }
