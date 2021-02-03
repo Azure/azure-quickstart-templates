@@ -1,4 +1,4 @@
-# Container Development with Visual Studio 2019 Community Edition
+# Windows Docker Host with Portainer and Traefik pre-installed
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/docker-portainer-traefik-windows-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/docker-portainer-traefik-windows-vm/PublicDeployment.svg)
