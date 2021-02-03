@@ -219,8 +219,23 @@ createCertificates() {
 }
 
 startSASInstall() {
+    export uriParts=(${depot_uri//\?/ })
+    if [ "${depot_uri}" != "${DEPOT_DUMMY_FOR_QUICK_EXIT_VALUE}" ]; then
+        export depot_uri_mod="${uriParts[0]}/*?${uriParts[1]}"
+    else
+        export depot_uri_mod=""
+    fi
     su - ${INSTALL_USER}<<END
     pushd ${ANSIBLE_DIR}
+	if [ "${depot_uri_mod}" != "${DEPOT_DUMMY_FOR_QUICK_EXIT_VALUE}" ]; then
+    	export ANSIBLE_LOG_PATH=/tmp/download_mirror_and_licenses.log
+    	ansible-playbook -i ${INVENTORY_FILE} \
+    		-e "DEPOT_DOWNLOAD_LOCATION=$depot_uri_mod" \
+    		-e "LICENSE_DOWNLOAD_LOCATION=$license_file_uri" \
+    		-e "PLANFILE_DOWNLOAD_LOCATION=$planfile_uri" \
+    		-e "PRIMARY_USER=$INSTALL_USER" \
+    		-vvv download_mirror_and_licenses.yaml
+    fi
     export ANSIBLE_LOG_PATH=/tmp/wait_for_servers.log
     ansible-playbook -i ${INVENTORY_FILE} -vvv wait_for_servers.yaml
     export ANSIBLE_LOG_PATH=/tmp/install_os_updates.log
