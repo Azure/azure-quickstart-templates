@@ -14,7 +14,6 @@ New-Item -Path f:\portainerdata -ItemType Directory | Out-Null
 New-Item -Path f:\compose -ItemType Directory | Out-Null
 
 # install vim and openssh using chocolatey
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 [DownloadWithRetry]::DoDownloadWithRetry("https://chocolatey.org/install.ps1", 5, 10, $null, ".\chocoInstall.ps1", $false)
 & .\chocoInstall.ps1
 choco feature enable -n allowGlobalConfirmation
