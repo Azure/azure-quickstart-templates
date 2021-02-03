@@ -3,11 +3,10 @@ version: '3.7'
 services:
   traefik:
     image: tobiasfenster/french-reverse-proxy:2.3.4-windowsservercore
-    commanf:
+    command:
 #      - --log.level=DEBUG
       - --api.dashboard=true
-      - --providers.docker.swarmMode=true
-      - --providers.docker.network=traefik-public
+      - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --providers.docker.endpoint=npipe:////./pipe/docker_engine
       - --entrypoints.websecure.address=:443
@@ -24,19 +23,13 @@ services:
         type: npipe
     ports:
       - 443:443
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
-      labels:
-        - traefik.enable=false
-        - traefik.http.routers.api.entrypoints=websecure
-        - traefik.http.routers.api.tls.certresolver=myresolver
-        - traefik.http.routers.api.rule=Host(``$publicdnsname``) && (PathPrefix(``/api``) || PathPrefix(``/dashboard``))
-        - traefik.http.routers.api.service=api@internal
-        - traefik.http.services.api.loadBalancer.server.port=8080
-    networks:
-      - traefik-public
+    labels:
+      - traefik.enable=false
+      - traefik.http.routers.api.entrypoints=websecure
+      - traefik.http.routers.api.tls.certresolver=myresolver
+      - traefik.http.routers.api.rule=Host(``$publicdnsname``) && (PathPrefix(``/api``) || PathPrefix(``/dashboard``))
+      - traefik.http.routers.api.service=api@internal
+      - traefik.http.services.api.loadBalancer.server.port=8080
 
   agent:
     image: portainer/agent:2.0.0
@@ -51,44 +44,23 @@ services:
         type: bind
     networks:
       - agent-network
-    deploy:
-      mode: global
-      placement:
-        constraints:
-          - node.platform.os == windows
 
   portainer:
     image: portainer/portainer-ce:2.0.0
-    commanf: -H tcp://tasks.agent:9001 --tlsskipverify
+    restart: always
     volumes:
       - f:/portainerdata:c:/data
-    networks:
-      - agent-network
-      - traefik-public
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
-      labels:
-        - traefik.enable=true
-        - traefik.http.routers.portainer.rule=Host(``$publicdnsname``) && PathPrefix(``/portainer/``)
-        - traefik.http.routers.portainer.entrypoints=websecure
-        - traefik.http.routers.portainer.tls.certresolver=myresolver
-        - traefik.http.routers.portainer.service=portainer@docker
-        - traefik.http.services.portainer.loadBalancer.server.scheme=http
-        - traefik.http.services.portainer.loadBalancer.server.port=9000
-        - traefik.http.middlewares.portainer.stripprefix.prefixes=/portainer
-        - traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=500000000
-        - traefik.http.routers.portainer.middlewares=portainer@docker, limit@docker
-    depends_on:
-      - traefik
-
-networks:
-  agent-network:
-    attachable: true
-  traefik-public:
-    external: true
-
-secrets:
-  adminPwf:
-    external: true
+      - source: '\\.\pipe\docker_engine'
+        target: '\\.\pipe\docker_engine'
+        type: npipe
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.portainer.rule=Host(``$publicdnsname``) && PathPrefix(``/portainer/``)
+      - traefik.http.routers.portainer.entrypoints=websecure
+      - traefik.http.routers.portainer.tls.certresolver=myresolver
+      - traefik.http.routers.portainer.service=portainer@docker
+      - traefik.http.services.portainer.loadBalancer.server.scheme=http
+      - traefik.http.services.portainer.loadBalancer.server.port=9000
+      - traefik.http.middlewares.portainer.stripprefix.prefixes=/portainer
+      - traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=500000000
+      - traefik.http.routers.portainer.middlewares=portainer@docker, limit@docker
