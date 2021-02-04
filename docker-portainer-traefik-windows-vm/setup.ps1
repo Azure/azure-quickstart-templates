@@ -1,8 +1,6 @@
 param (
     $mail,
     $publicdnsname,
-    $templateUrl,
-    $sshdConfigUrl,
     $adminPwd
 )
 # format disk and create folders
@@ -21,7 +19,7 @@ choco install --no-progress --limit-output vim
 choco install --no-progress --limit-output openssh -params '"/SSHServerFeature"'
 
 # configure OpenSSH, make PS the default shell and restart sshd
-[DownloadWithRetry]::DoDownloadWithRetry("$sshdConfigUrl", 5, 10, $null, 'C:\ProgramData\ssh\sshd_config', $false)
+Copy-Item '.\sshd_config_wpwd' 'C:\ProgramData\ssh\sshd_config'
 New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
 Restart-Service sshd
 
@@ -41,8 +39,7 @@ $adminPwd | Out-File -NoNewline -Encoding ascii "f:\portainerdata\passwordfile"
 # download compose, the compose file and deploy it
 [DownloadWithRetry]::DoDownloadWithRetry("https://github.com/docker/compose/releases/download/1.28.2/docker-compose-Windows-x86_64.exe", 5, 10, $null, "$($Env:ProgramFiles)\Docker\docker-compose.exe", $false)
 
-[DownloadWithRetry]::DoDownloadWithRetry("$templateUrl", 5, 10, $null, 'f:\compose\docker-compose.yml.template', $false)
-$template = Get-Content 'f:\compose\docker-compose.yml.template' -Raw
+$template = Get-Content '.\docker-compose.yml.template' -Raw
 $expanded = Invoke-Expression "@`"`r`n$template`r`n`"@"
 $expanded | Out-File "f:\compose\docker-compose.yml" -Encoding ASCII
 
