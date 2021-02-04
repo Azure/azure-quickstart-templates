@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "logicAppName": {
@@ -101,11 +101,11 @@
     "aggregationType": {
       "type": "String",
       "allowedValues": [
-        "Daily",
-        "Weekly",
-        "Monthly"
+        "\"Daily\"",
+        "\"Weekly\"",
+        "\"Monthly\""
       ],
-      "defaultValue": "Daily",
+      "defaultValue": "\"Daily\"",
       "metadata": {
         "description": "Use to specify the granularity at which data is sampled in the case of trend graphs."
       }
@@ -127,12 +127,15 @@
       }
     }
   },
-  "variables": {},
+  "variables": {
+    "office365ConnectionName": "[concat(parameters('location'),'-','office365')]",
+    "azureMonitorLogsConnectionName": "[concat(parameters('location'),'-','azuremonitorlogs')]"
+  },
   "resources": [
     {
       "type": "Microsoft.Web/connections",
-      "apiVersion": "2016-06-01",
-      "name": "[concat(parameters('location'),'-','office365')]",
+      "apiVersion": "2018-07-01-preview",
+      "name": "[variables('office365ConnectionName')]",
       "location": "[parameters('location')]",
       "tags": "[parameters('resourceTags')]",
       "properties": {
@@ -144,8 +147,8 @@
     },
     {
       "type": "Microsoft.Web/connections",
-      "apiVersion": "2016-06-01",
-      "name": "[concat(parameters('location'),'-','azuremonitorlogs')]",
+      "apiVersion": "2018-07-01-preview",
+      "name": "[variables('azureMonitorLogsConnectionName')]",
       "location": "[parameters('location')]",
       "tags": "[parameters('resourceTags')]",
       "properties": {
@@ -157,13 +160,13 @@
     },
     {
       "type": "Microsoft.Logic/workflows",
-      "apiVersion": "2017-07-01",
+      "apiVersion": "2019-05-01",
       "name": "[parameters('logicAppName')]",
       "location": "[parameters('location')]",
       "tags": "[parameters('resourceTags')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/connections', concat(parameters('location'),'-','office365'))]",
-        "[resourceId('Microsoft.Web/connections', concat(parameters('location'),'-','azuremonitorlogs'))]"
+        "[resourceId('Microsoft.Web/connections', variables('office365ConnectionName'))]",
+        "[resourceId('Microsoft.Web/connections', variables('azureMonitorLogsConnectionName'))]"
       ],
       "properties": {
         "state": "Enabled",
@@ -175,11 +178,11 @@
               "defaultValue": {},
               "type": "Object"
             },
-            "DataToExport": {
+            "dataToExport": {
               "defaultValue": "Summary",
               "type": "String"
             },
-            "AggregationType": {
+            "aggregationType": {
               "defaultValue": "[parameters('aggregationType')]",
               "type": "String"
             },
@@ -187,7 +190,7 @@
               "defaultValue": "[parameters('backupSolutionListFilter')]",
               "type": "String"
             },
-            "ExcludeLegacyEvent": {
+            "excludeLegacyEvent": {
               "defaultValue": "[parameters('excludeLegacyEvent')]",
               "type": "Bool"
             },
@@ -230,7 +233,6 @@
               "foreach": "@parameters('workspacesToQuery')",
               "actions": {
                 "Append_to_string_variable": {
-                  "runAfter": {},
                   "type": "AppendToStringVariable",
                   "inputs": {
                     "name": "AzureDiagnostics_Incomplete",
@@ -308,7 +310,6 @@
             "If_Scope_Failed": {
               "actions": {
                 "Send_an_email_(V2)-FailureRun": {
-                  "runAfter": {},
                   "type": "ApiConnection",
                   "inputs": {
                     "body": {
@@ -337,7 +338,6 @@
               "else": {
                 "actions": {
                   "Send_an_email_(V2)-SuccessfulRun": {
-                    "runAfter": {},
                     "type": "ApiConnection",
                     "inputs": {
                       "body": {
@@ -455,7 +455,6 @@
               }
             },
             "Initialize_variable-AzureDiagnostics": {
-              "runAfter": {},
               "type": "InitializeVariable",
               "inputs": {
                 "variables": [
@@ -530,7 +529,7 @@
                   {
                     "name": "ReportFilter_Trend",
                     "type": "string",
-                    "value": "let _RangeStart = iff((datetime(@{parameters('startDate')}) == datetime(null)), startofday(ago(1d)), startofday(datetime(@{parameters('startDate')})));\nlet _RangeEnd = iff((datetime(@{parameters('endDate')})== datetime(null)), startofday(now()), startofday(datetime(@{parameters('endDate')})) + 1d);\nlet _VaultSubscriptionList = split(@{parameters('vaultSubscriptionListFilter')}, ',');\nlet _VaultLocationList = split(@{parameters('vaultLocationListFilter')}, ',');\nlet _VaultList = split(@{parameters('vaultListFilter')}, ',');\nlet _VaultTypeList = \"*\";\nlet _ExcludeLegacyEvent = @{parameters('ExcludeLegacyEvent')};\nlet _BackupSolutionList =  split(@{parameters('backupSolutionListFilter')}, ',');\nlet _AggregationType = @{parameters('AggregationType')};"
+                    "value": "let _RangeStart = iff((datetime(@{parameters('startDate')}) == datetime(null)), startofday(ago(1d)), startofday(datetime(@{parameters('startDate')})));\nlet _RangeEnd = iff((datetime(@{parameters('endDate')})== datetime(null)), startofday(now()), startofday(datetime(@{parameters('endDate')})) + 1d);\nlet _VaultSubscriptionList = split(@{parameters('vaultSubscriptionListFilter')}, ',');\nlet _VaultLocationList = split(@{parameters('vaultLocationListFilter')}, ',');\nlet _VaultList = split(@{parameters('vaultListFilter')}, ',');\nlet _VaultTypeList = \"*\";\nlet _ExcludeLegacyEvent = @{parameters('excludeLegacyEvent')};\nlet _BackupSolutionList =  split(@{parameters('backupSolutionListFilter')}, ',');\nlet _AggregationType = @{parameters('aggregationType')};"
                   }
                 ]
               }
@@ -547,7 +546,7 @@
                   {
                     "name": "ReportFilter_Latest",
                     "type": "string",
-                    "value": "let _RangeStart = iff(( datetime(@{parameters('endDate')})== datetime(null)), startofday(ago(1d)), startofday(datetime(@{parameters('endDate')})));\nlet _RangeEnd = iff((datetime(@{parameters('endDate')})== datetime(null)), startofday(now()), startofday(datetime(@{parameters('endDate')})) + 1d);\nlet _VaultSubscriptionList = split(@{parameters('vaultSubscriptionListFilter')}, ',');\nlet _VaultLocationList = split(@{parameters('vaultLocationListFilter')}, ',');\nlet _VaultList = split(@{parameters('vaultListFilter')}, ',');\nlet _VaultTypeList = \"*\";\nlet _ExcludeLegacyEvent = @{parameters('ExcludeLegacyEvent')};\nlet _BackupSolutionList  =  split(@{parameters('backupSolutionListFilter')}, ',');"
+                    "value": "let _RangeStart = iff(( datetime(@{parameters('endDate')})== datetime(null)), startofday(ago(1d)), startofday(datetime(@{parameters('endDate')})));\nlet _RangeEnd = iff((datetime(@{parameters('endDate')})== datetime(null)), startofday(now()), startofday(datetime(@{parameters('endDate')})) + 1d);\nlet _VaultSubscriptionList = split(@{parameters('vaultSubscriptionListFilter')}, ',');\nlet _VaultLocationList = split(@{parameters('vaultLocationListFilter')}, ',');\nlet _VaultList = split(@{parameters('vaultListFilter')}, ',');\nlet _VaultTypeList = \"*\";\nlet _ExcludeLegacyEvent = @{parameters('excludeLegacyEvent')};\nlet _BackupSolutionList  =  split(@{parameters('backupSolutionListFilter')}, ',');"
                   }
                 ]
               }
@@ -572,7 +571,6 @@
             "Scope": {
               "actions": {
                 "Run_query_and_visualize_results-SummaryGrid": {
-                  "runAfter": {},
                   "type": "ApiConnection",
                   "inputs": {
                     "body": "let BackupInstanceDetails = (){\n// calling LA System Function\n@{variables('BackupInstanceFunction')}\n// query to transform function output\n| summarize BackupInstances=count(UniqueId), CloudStorage=sum(VaultStore_StorageConsumptionInMBs)/(1024) by BackupSolution\n};\nlet JobSuccessPercentageTable = (){\n// calling LA System Function\n@{variables('JobFunction')}\n// query to transform function output\n| extend success=iff((Status == \"Completed\" or Status == \"CompletedWithWarnings\") , 1 , 0)\n| extend record = iff(UniqueId != \"\", 1, 0)  // to be used for total row count\n| summarize SuccessfulCount =sum(success), TotalCount=sum(record) by BackupSolution\n| extend JobSuccessPercentage = (SuccessfulCount*100)/todouble(TotalCount)\n| project-away SuccessfulCount, TotalCount\n};\nBackupInstanceDetails | join kind = leftouter (JobSuccessPercentageTable) on BackupSolution  | project-away BackupSolution1 | project BackupSolution, BackupInstances, JobSuccessPercentage=iff( (isnan( JobSuccessPercentage) or isinf( JobSuccessPercentage) or isempty( JobSuccessPercentage)), \"-\", strcat(tostring(round( JobSuccessPercentage,2)), \" %\")), CloudStorage",
@@ -608,13 +606,13 @@
           "$connections": {
             "value": {
               "azuremonitorlogs": {
-                "connectionId": "[concat(resourceGroup().id,'/providers/Microsoft.Web/connections/', concat(parameters('location'),'-','azuremonitorlogs'))]",
-                "connectionName": "[concat(parameters('location'),'-','azuremonitorlogs')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('azureMonitorLogsConnectionName'))]",
+                "connectionName": "[variables('azureMonitorLogsConnectionName')]",
                 "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azuremonitorlogs')]"
               },
               "office365": {
-                "connectionId": "[concat(resourceGroup().id, '/providers/Microsoft.Web/connections/', concat(parameters('location'),'-','office365'))]",
-                "connectionName": "[concat(parameters('location'),'-','office365')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('office365ConnectionName'))]",
+                "connectionName": "[variables('office365ConnectionName')]",
                 "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/office365')]"
               }
             }
