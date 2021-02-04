@@ -3,19 +3,35 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "stackName": {
-            "type": "String"
+            "type": "String",
+            "metadata": {
+                "description": "A generic name for all your resources created with this ARM Template."
+            }
         },
         "aadUserObjectId": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Object Id of your AAD user or whoever needs access to resources such as KeyVault."
+            }
         },
         "aadUsername": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Name of your AAD user or whoever needs access to resources such as Azure SQL."
+            }
         },
         "loginUser": {
-            "type": "string"
+            "type": "string",
+            "defaultValue": "appadmin",
+            "metadata": {
+                "description": "The administrator password of the VM and SQL Server."
+            }
         },
         "p2sRootCert": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Certificate used for the P2S VPN."
+            }
         },
         "loginPassword": {
             "type": "securestring",
@@ -24,30 +40,59 @@
             }
         },
         "privateDbDnsZoneName": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Private DNS zone name for database."
+            }
         },
         "location": {
             "type": "string",
-            "defaultValue": "[resourceGroup().location]"
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all the resources created."
+            }
         },
         "workerPool": {
             "type": "int",
             "defaultValue": 1,
             "minValue": 1,
-            "maxValue": 10
+            "maxValue": 10,
+            "metadata": {
+                "description": "Number of worker pool for App Service."
+            }
         },
         "vmSize": {
             "type": "string",
-            "defaultValue": "Standard_B2ms"
+            "defaultValue": "Standard_B2ms",
+            "metadata": {
+                "description": "Size of the Virtual Machine."
+            }
+        },
+        "frontendSubnet": {
+            "type": "string",
+            "defaultValue": "frontend",
+            "metadata": {
+                "description": "Name of frontend subnet."
+            }
+        },
+        "backendSubnet": {
+            "type": "string",
+            "defaultValue": "backend",
+            "metadata": {
+                "description": "Name of backend subnet."
+            }
+        },
+        "gatewaySubnet": {
+            "type": "string",
+            "defaultValue": "GatewaySubnet",
+            "metadata": {
+                "description": "Name of gateway subnet."
+            }
         }
     },
     "variables": {
         "location": "[parameters('location')]",
         "vnetName": "[concat(parameters('stackName'), '-vnet')]",
-        "frontendSubnet": "frontend",
-        "backendSubnet": "backend",
-        "gatewaySubnet": "GatewaySubnet",
-        "sqlAdministratorLogin": "appadmin",
         "databaseName": "appdb",
         "databaseEdition": "Basic",
         "databaseCollation": "SQL_Latin1_General_CP1_CI_AS",
@@ -62,7 +107,7 @@
         "gatewayPublicIPName": "[concat( parameters('stackName'),'gwpip')]",
         "gatewayName": "[concat( parameters('stackName'),'gw')]",
         "vpnClientAddressPoolPrefix": "172.15.0.0/24",
-        "vmName": "[if(greater(length(parameters('stackName')),12), substring(parameters('stackName'),0,12) , parameters('stackName'))]"
+        "vmName": "[substring(parameters('stackName'),0,10)]"
     },
     "resources": [
         {
@@ -80,7 +125,7 @@
                 "enableVmProtection": false,
                 "subnets": [
                     {
-                        "name": "[variables('frontendSubnet')]",
+                        "name": "[parameters('frontendSubnet')]",
                         "properties": {
                             "addressPrefix": "172.16.0.0/24",
                             "serviceEndpoints": [
@@ -93,7 +138,7 @@
                         }
                     },
                     {
-                        "name": "[variables('backendSubnet')]",
+                        "name": "[parameters('backendSubnet')]",
                         "properties": {
                             "addressPrefix": "172.16.1.0/24",
                             "privateEndpointNetworkPolicies": "Disabled",
@@ -101,7 +146,7 @@
                         }
                     },
                     {
-                        "name": "[variables('gatewaySubnet')]",
+                        "name": "[parameters('gatewaySubnet')]",
                         "properties": {
                             "addressPrefix": "172.16.255.0/27",
                             "privateEndpointNetworkPolicies": "Disabled",
@@ -114,7 +159,7 @@
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2020-06-01",
-            "name": "[concat(variables('vnetName'), '/',variables('frontendSubnet'))]",
+            "name": "[concat(variables('vnetName'), '/',parameters('frontendSubnet'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
             ],
@@ -132,7 +177,7 @@
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2020-06-01",
-            "name": "[concat(variables('vnetName'), '/',variables('backendSubnet'))]",
+            "name": "[concat(variables('vnetName'), '/',parameters('backendSubnet'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
             ],
@@ -145,7 +190,7 @@
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2020-06-01",
-            "name": "[concat(variables('vnetName'), '/',variables('gatewaySubnet'))]",
+            "name": "[concat(variables('vnetName'), '/',parameters('gatewaySubnet'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
             ],
@@ -163,12 +208,12 @@
             "location": "[variables('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), variables('frontendSubnet'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), parameters('frontendSubnet'))]"
             ],
             "properties": {
                 "internalLoadBalancingMode": 3,
                 "virtualNetwork": {
-                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('frontendSubnet'))]"
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), parameters('frontendSubnet'))]"
                 }
             }
         },
@@ -179,13 +224,13 @@
             "location": "[variables('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), variables('frontendSubnet'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), parameters('frontendSubnet'))]"
             ],
             "tags": {
                 "displayName": "SqlServer"
             },
             "properties": {
-                "administratorLogin": "[variables('sqlAdministratorLogin')]",
+                "administratorLogin": "[parameters('loginUser')]",
                 "administratorLoginPassword": "[parameters('loginPassword')]",
                 "version": "12.0",
                 "publicNetworkAccess": "Enabled"
@@ -204,26 +249,26 @@
                         "tier": "[variables('databaseEdition')]",
                         "capacity": 5
                     },
+                    "dependsOn": [
+                        "[parameters('stackName')]"
+                    ],
                     "properties": {
                         "edition": "[variables('databaseEdition')]",
                         "collation": "[variables('databaseCollation')]",
                         "requestedServiceObjectiveName": "[variables('databaseServiceObjectiveName')]"
                     },
-                    "dependsOn": [
-                        "[parameters('stackName')]"
-                    ],
                     "resources": [
                         {
                             "comments": "Transparent Data Encryption",
                             "name": "current",
                             "type": "transparentDataEncryption",
                             "apiVersion": "2017-03-01-preview",
-                            "properties": {
-                                "status": "Enabled"
-                            },
                             "dependsOn": [
                                 "[variables('databaseName')]"
-                            ]
+                            ],
+                            "properties": {
+                                "status": "Enabled"
+                            }
                         }
                     ]
                 },
@@ -232,21 +277,21 @@
                     "type": "firewallrules",
                     "apiVersion": "2020-08-01-preview",
                     "location": "[variables('location')]",
+                    "dependsOn": [
+                        "[parameters('stackName')]"
+                    ],
                     "properties": {
                         "endIpAddress": "0.0.0.0",
                         "startIpAddress": "0.0.0.0"
-                    },
-                    "dependsOn": [
-                        "[parameters('stackName')]"
-                    ]
+                    }
                 },
                 {
                     "type": "Microsoft.Sql/servers/virtualNetworkRules",
                     "apiVersion": "2020-08-01-preview",
-                    "name": "[concat(parameters('stackName'), '/allow-', variables('frontendSubnet'))]",
+                    "name": "[concat(parameters('stackName'), '/allow-', parameters('frontendSubnet'))]",
                     "dependsOn": [ "[resourceId('Microsoft.Sql/servers', parameters('stackName'))]" ],
                     "properties": {
-                        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), variables('frontendSubnet'))]",
+                        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), parameters('frontendSubnet'))]",
                         "ignoreMissingVnetServiceEndpoint": false
                     }
                 },
@@ -255,15 +300,15 @@
                     "name": "activeDirectory",
                     "apiVersion": "2020-08-01-preview",
                     "location": "[variables('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers/', parameters('stackName'))]"
+                    ],
                     "properties": {
                         "administratorType": "ActiveDirectory",
                         "login": "[parameters('aadUsername')]",
                         "sid": "[parameters('aadUserObjectId')]",
                         "tenantId": "[subscription().tenantId]"
-                    },
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Sql/servers/', parameters('stackName'))]"
-                    ]
+                    }
                 }
             ]
         },
@@ -346,6 +391,10 @@
             "identity": {
                 "type": "SystemAssigned"
             },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverFarms/',parameters('stackName'))]",
+                "[resourceId('Microsoft.Insights/components/', parameters('stackName'))]"
+            ],
             "properties": {
                 "name": "[parameters('stackName')]",
                 "serverFarmId": "[resourceId('Microsoft.Web/serverFarms',parameters('stackName'))]",
@@ -392,11 +441,7 @@
                         }
                     ]
                 }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/serverFarms/',parameters('stackName'))]",
-                "[resourceId('Microsoft.Insights/components/', parameters('stackName'))]"
-            ]
+            }
         },
         {
             "type": "Microsoft.Web/sites/config",
@@ -425,7 +470,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('backendSubnet'))]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), parameters('backendSubnet'))]"
                             }
                         }
                     }
@@ -481,7 +526,6 @@
                     "dependsOn": [
                         "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
                     ],
-
                     "properties": {
                         "publisher": "Microsoft.Azure.Security",
                         "type": "IaaSAntimalware",
@@ -518,7 +562,7 @@
             ],
             "properties": {
                 "subnet": {
-                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('backendSubnet'))]"
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), parameters('backendSubnet'))]"
                 },
                 "privateLinkServiceConnections": [
                     {
@@ -602,7 +646,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('gatewaySubnet'))]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), parameters('gatewaySubnet'))]"
                             },
                             "publicIPAddress": {
                                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('gatewayPublicIPName'))]"
