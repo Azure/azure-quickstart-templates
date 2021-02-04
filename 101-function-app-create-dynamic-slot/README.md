@@ -19,5 +19,5 @@ Azure Functions is a solution for running small pieces of code, or functions, in
 
 For more information about Azure Functions, see the following articles:
 
-- [Azure Functions Overview](https://azure.microsoft.com/documentation/articles/functions-overview/)
+- [Azure Functions Overview](https://docs.microsoft.com/azure/azure-functions/functions-overview/)
 - [Quickstart: Create and deploy Azure Functions resources from an ARM template](https://docs.microsoft.com/azure/azure-functions/functions-create-first-function-resource-manager)
