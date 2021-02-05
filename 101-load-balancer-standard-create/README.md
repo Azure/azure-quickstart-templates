@@ -24,6 +24,8 @@ The template creates and configures the following Azure resources:
 - An Azure Bastion host to manage the virtual machines
 - Create outbound rules and outbound pool for virtual machines
 
+The template deployment creates three availability zones. Availability zones are supported only in certain regions. For a list of supported regions, see https://docs.microsoft.com/azure/availability-zones/az-overview. If you aren't sure, enter centralus.
+
 For more information about this template, see the quickstart articles:
 
 - [Quickstart: Create a public load balancer to load balance VMs using the Azure portal](https://docs.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-public-portal)
