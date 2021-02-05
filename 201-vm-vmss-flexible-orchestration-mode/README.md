@@ -16,8 +16,8 @@
   
 
 
-This template will provision N number of virtual machines with your choice in a single VNET. Every VM will be provisioned with a Network Interface and a Public IP resource. All the VMs will be provisioned in a Virtual Machine Scale Set. A single storage account will be provisioned to store the diagnostic information. 
-If you provision 3 VM’s with this template, your resources will look like below in the resource group. 
+This template will provision N number of virtual machines with your choice in a single VNET. Every VM will be provisioned with a Network Interface and a Public IP resource. All the VMs will be provisioned in a Virtual Machine Scale Set in Flexible Orchestration Mode. 
+If you provision 3 VM’s with this template, your resources will look similar to this in the resource group. 
 
 ![template resources](images/resources.png "template resource objects")
 
