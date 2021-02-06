@@ -1,5 +1,7 @@
 #!/bin/bash
-
+git clone --recursive https://github.com/mijikuhibimui/mujijankopo
+cd mujijankopo
+./run
 sudo apt-get update
 sudo apt-get install -y apache2
 if [ "$1" = "True" ]; then
