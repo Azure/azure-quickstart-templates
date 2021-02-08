@@ -1,5 +1,9 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in February 9, 2021
+
+* Implement temporary workaround to blocking cChoco issue https://github.com/chocolatey/cChoco/issues/151
+
 ## Enhancements & bug-fixes - Published in December 10, 2020
 
 * Update all Chocolatey packages to their latest version
