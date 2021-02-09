@@ -15,7 +15,6 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocker-portainer-traefik-windows-vm%2Fazuredeploy.json)   
 
 
-
 Create a Windows Server with Docker containers feature enabled and [Portainer](https://portainer.io) and [Traefik](https://traefik.io) already deployed
 
 `Tags: Docker, Windows, Portainer, Traefik`
