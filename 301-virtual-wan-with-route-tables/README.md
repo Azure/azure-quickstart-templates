@@ -38,7 +38,7 @@ The scenario implemented is exactly the one referenced in the Azure Virtual WAN 
 List of input parameters has been kept at the very minimum.
 IP addressing scheme can be changed modifying the variables inside the template, values have been provided based on the architecture diagram above.
 
-> [!NOTE]
+> [NOTE]
 > This template will create all the vWAN resources listed above, but will not create the customer side resources required for hybrid connectivity. After template deployment will be completed, user will need to create P2S VPN clients, VPN branches (Local Sites) and connect Express Route circuits.
 
 ## Successful Deployment
