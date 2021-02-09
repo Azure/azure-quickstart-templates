@@ -189,14 +189,9 @@ configuration ConfigureSPVM
         #**********************************************************
         # Install applications using Chocolatey
         #**********************************************************
-        # cChocoInstaller InstallChoco
-        # {
-        #     InstallDir = "C:\Program Files\Choco"
-        # }
-        # Workaround for issue https://github.com/chocolatey/cChoco/issues/151
-        cChocoinstaller InstallChoco {
-            InstallDir            = "C:\Choco"
-            ChocoInstallScriptUrl = "https://github.com/Azure/azure-quickstart-templates/blob/master/sharepoint-adfs/dsc/InstallChocolatey.ps1"
+        cChocoInstaller InstallChoco
+        {
+            InstallDir = "C:\Choco"
         }
 
         cChocoPackageInstaller InstallEdge
