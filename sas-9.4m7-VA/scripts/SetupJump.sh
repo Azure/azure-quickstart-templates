@@ -120,7 +120,7 @@ setupSasShareMountRHEL() {
     chmod 600 "/etc/smbcredentials/${azure_storage_account}.cred"
 
     mkdir -p "${DIRECTORY_NFS_SHARE}"
-    echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${DIRECTORY_NFS_SHARE}  cifs defaults,vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,sec=ntlmssp 0 0" >> /etc/fstab
+    echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${DIRECTORY_NFS_SHARE}  cifs defaults,vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,actimeo=5,sec=ntlmssp 0 0" >> /etc/fstab
 
     mount "${DIRECTORY_NFS_SHARE}"
     RET=$?
@@ -156,7 +156,7 @@ setupSasShareMountSUSE() {
     chmod 600 "/etc/smbcredentials/${azure_storage_account}.cred"
 
     mkdir -p "${DIRECTORY_NFS_SHARE}"
-    echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${DIRECTORY_NFS_SHARE}  cifs defaults,vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,sec=ntlmssp 0 0" >> /etc/fstab
+    echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${DIRECTORY_NFS_SHARE}  cifs defaults,vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,actimeo=5,sec=ntlmssp 0 0" >> /etc/fstab
 
     mount "${DIRECTORY_NFS_SHARE}"
     RET=$?
@@ -267,6 +267,14 @@ createCertificates() {
 startSASInstall() {
     su - ${INSTALL_USER}<<END
     pushd ${ANSIBLE_DIR}
+    if [ "${depot_uri}" != "${DEPOT_DUMMY_FOR_QUICK_EXIT_VALUE}" ]; then
+       export ANSIBLE_LOG_PATH=/tmp/download_mirror_and_licenses.log
+        ansible-playbook -i ${INVENTORY_FILE} \
+	        -e "DEPOT_DOWNLOAD_LOCATION=$depot_uri" \
+	        -e "LICENCE_DOWNLOAD_LOCATION=$license_file_uri" \
+	        -e "PLANFILE_DOWNLOAD_LOCATION=$planfile_uri" \
+	        -vvv step04_download_mirror_and_licenses.yaml
+    fi
     export ANSIBLE_LOG_PATH=/tmp/step01_wait_for_servers.log
     ansible-playbook -i ${INVENTORY_FILE} -vvv step01_wait_for_servers.yaml
     export ANSIBLE_LOG_PATH=/tmp/step02_install_os_updates.log

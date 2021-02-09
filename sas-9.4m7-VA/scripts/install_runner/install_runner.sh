@@ -38,12 +38,12 @@ pushd ${INSTALL_DIR}/ansible
 export ANSIBLE_LOG_PATH=/tmp/step03_prereqs.log
 ansible-playbook -i ${INVENTORY_FILE} -vvv step03_prereqs.yaml
 
-export ANSIBLE_LOG_PATH=/tmp/step04_download_mirror_and_licenses.log
-ansible-playbook -i ${INVENTORY_FILE} \
-	-e "DEPOT_DOWNLOAD_LOCATION=$depot_uri" \
-	-e "LICENCE_DOWNLOAD_LOCATION=$license_file_uri" \
-	-e "PLANFILE_DOWNLOAD_LOCATION=$planfile_uri" \
-	-vvv step04_download_mirror_and_licenses.yaml
+#export ANSIBLE_LOG_PATH=/tmp/step04_download_mirror_and_licenses.log
+#ansible-playbook -i ${INVENTORY_FILE} \
+#	-e "DEPOT_DOWNLOAD_LOCATION=$depot_uri" \
+#	-e "LICENCE_DOWNLOAD_LOCATION=$license_file_uri" \
+#	-e "PLANFILE_DOWNLOAD_LOCATION=$planfile_uri" \
+#	-vvv step04_download_mirror_and_licenses.yaml
 
 # Get the path to the sid file in the depot
 SID_FILE=$(ls /sasshare/depot/sid_files)

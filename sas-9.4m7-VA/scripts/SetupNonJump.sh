@@ -86,7 +86,7 @@ setupSASShareMountRHEL() {
     chmod 600 "/etc/smbcredentials/${azure_storage_account}.cred"
 
     mkdir -p "${CIFS_MOUNT_POINT}"
-    echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${CIFS_MOUNT_POINT}  cifs defaults,vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,sec=ntlmssp 0 0" >> /etc/fstab
+    echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${CIFS_MOUNT_POINT}  cifs defaults,vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,actimeo=5,sec=ntlmssp 0 0" >> /etc/fstab
     set +e
     mount "${CIFS_MOUNT_POINT}"
     RET=$?
@@ -115,7 +115,7 @@ setupSASShareMountSUSE() {
     chmod 600 "/etc/smbcredentials/${azure_storage_account}.cred"
 
     mkdir -p "${CIFS_MOUNT_POINT}"
-    echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${CIFS_MOUNT_POINT}  cifs defaults,vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,sec=ntlmssp 0 0" >> /etc/fstab
+    echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${CIFS_MOUNT_POINT}  cifs defaults,vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,actimeo=5,sec=ntlmssp 0 0" >> /etc/fstab
     set +e
     mount "${CIFS_MOUNT_POINT}"
     RET=$?
