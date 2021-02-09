@@ -25,6 +25,7 @@ FORKS=5
 echo "LoadbalancerDNS: ${PUBLIC_DNS_NAME}" >/tmp/ansible_vars.yaml
 echo "AdminPassword: '{sas001}${sasPassword}'" >>/tmp/ansible_vars.yaml
 echo "ExternalPassword: '${azurePassword}'" >>/tmp/ansible_vars.yaml
+echo "SASFolder: '${sas_folder}'" >>/tmp/ansible_vars.yaml
 
 # in order to get around the azure ci testing, we need
 if [[ "$depot_uri" == "$DEPOT_DUMMY_FOR_QUICK_EXIT_VALUE" ]]; then

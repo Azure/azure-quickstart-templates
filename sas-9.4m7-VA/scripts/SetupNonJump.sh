@@ -9,6 +9,7 @@ export INSTALL_USER="${1}"
 export azure_storage_account="${2}"
 export azure_storage_files_share="${3}"
 export azure_storage_files_password="${4}"
+export sas_folder="${5}"
 
 export CIFS_MOUNT_POINT="/sasshare"
 export CIFS_SEMAPHORE_DIR="\${CIFS_MOUNT_POINT}/setup/readiness_flags"
@@ -50,9 +51,9 @@ mountSASRaidSUSE() {
     n="${n//\ /}"
     mdadm --create /dev/md0 --force --level=stripe --raid-devices=$n /dev/disk/azure/scsi1/lun*
     mkfs.xfs /dev/md0
-    mkdir /sas
-    echo "$(blkid /dev/md0 | cut -d ' ' -f 2) /sas xfs defaults 0 0" | tee -a /etc/fstab
-    mount /sas
+    mkdir "${sas_folder}"
+    echo "$(blkid /dev/md0 | cut -d ' ' -f 2) ${sas_folder} xfs defaults 0 0" | tee -a /etc/fstab
+    mount "${sas_folder}"
 }
 
 mountSASRaidRHEL() {
@@ -63,9 +64,9 @@ mountSASRaidRHEL() {
     n="${n//\ /}"
     mdadm --create /dev/md0 --force --level=stripe --raid-devices=$n /dev/disk/azure/scsi1/lun*
     mkfs.xfs /dev/md0
-    mkdir /sas
-    echo "$(blkid /dev/md0 | cut -d ' ' -f 2) /sas xfs defaults 0 0" | tee -a /etc/fstab
-    mount /sas
+    mkdir "${sas_folder}"
+    echo "$(blkid /dev/md0 | cut -d ' ' -f 2) ${sas_folder} xfs defaults 0 0" | tee -a /etc/fstab
+    mount "${sas_folder}"
 }
 
 setupSASShareMountRHEL() {
