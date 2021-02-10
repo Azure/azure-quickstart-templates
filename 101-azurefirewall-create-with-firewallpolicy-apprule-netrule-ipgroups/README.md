@@ -21,4 +21,3 @@ IP Groups is a top-level resource that allows you to group and manage IP address
 An IP Group can support individual or multiple IP addresses, ranges, or subnets.
 
 Learn more at https://docs.microsoft.com/azure/firewall/ip-groups.
-
