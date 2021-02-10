@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "virtualNetworkName": {
@@ -59,9 +59,7 @@
     "azurepublicIpname": "[variables('publicIPNamePrefix')]",    
     "azureFirewallSubnetName": "AzureFirewallSubnet",
     "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
-    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPNamePrefix'))]",
-    "av" : "",
-    "avzone": "[if(or(equals(parameters('location'), 'westus'),equals(parameters('location'), 'southcentralus')), variables('av') ,parameters('availabilityZones'))]",
+    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPNamePrefix'))]",    
     "azureFirewallSubnetJSON": "[json(format('{{\"id\": \"{0}\"}}', variables('azureFirewallSubnetId')))]",
     "copy": [
       {
@@ -109,7 +107,6 @@
       "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
-      "dependsOn": [],
       "tags": {
         "displayName": "[parameters('virtualNetworkName')]"
       },
@@ -153,11 +150,7 @@
       "name": "[parameters('firewallPolicyName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "threatIntelMode": "Deny",
-        "threatIntelWhitelist": {
-            "ipAddresses": [],
-            "fqdns": []
-        }
+        "threatIntelMode": "Alert"        
       }
     },
     {
@@ -178,6 +171,8 @@
                 "action": {
                     "type": "Allow"
                 },
+               "name": "azure-global-services-nrc",
+               "priority": 1250,  
                 "rules": [                
                 {
                     "ruleType": "NetworkRule",
@@ -185,7 +180,6 @@
                     "ipProtocols": [
                     "UDP"
                     ],
-                    "sourceAddresses": [ ],
                     "destinationAddresses": [
                         "13.86.101.172"
                     ],
@@ -193,15 +187,11 @@
                       "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
                       "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
                       ],
-                    "destinationIpGroups": [],
-                    "destinationFqdns": [],
                     "destinationPorts": [
                         "123"                   
                     ]
                 }
-              ],
-               "name": "azure-global-services-nrc",
-               "priority": 1250          
+              ]         
             }
           ]
         }
@@ -241,11 +231,7 @@
                         }
                         ],
                     "fqdnTags": ["WindowsUpdate"],
-                    "targetFqdns": [],
-                    "targetUrls": [],
                     "terminateTLS": false,
-                    "sourceAddresses": [],
-                    "destinationAddresses": [],
                     "sourceIpGroups": [
                       "[resourceId('Microsoft.Network/ipGroups',parameters('workloadipgroup'))]",
                       "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
@@ -270,17 +256,10 @@
                             "port": 443
                         }
                         ],
-                    "fqdnTags": [],
-                    "targetFqdns": [
-                            "login.windows.net",
-                            "login.microsoftonline.com",
-                            "www.microsoft.com",
-                            "crl.microsoft.com"                           
+                    "targetFqdns": [                                                   
+                            "www.microsoft.com"                                              
                         ],
-                    "targetUrls": [],
                     "terminateTLS": false,
-                    "sourceAddresses": [],
-                    "destinationAddresses": [],
                     "sourceIpGroups": [
                        "[resourceId('Microsoft.Network/ipGroups',parameters('workloadipgroup'))]",
                        "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
@@ -296,9 +275,9 @@
         "type": "Microsoft.Network/azureFirewalls",
         "name": "[parameters('firewallName')]",
         "location": "[parameters('location')]",
-        "zones": "[variables('avzone')]",
-        "dependsOn": [
-            "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+        "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), parameters('availabilityZones'))]",
+        "dependsOn": [            
+            "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
             "publicIpCopy",
             "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
             "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]",
