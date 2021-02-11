@@ -186,8 +186,7 @@
           "offer": "RHEL",
           "sku": "7-LVM",
           "version": "latest"
-        },
-        "diskscript": "scripts/RHEL_raid_azure_data.sh"
+        }
       },
       "SL12": {
         "image": {
@@ -195,8 +194,7 @@
           "offer": "sles-12-sp5-basic",
           "sku": "gen1",
           "version": "latest"
-        },
-        "diskscript": "scripts/SLES_raid_azure_data.sh"
+        }
       }
     },
     "resourceGroupUniqueString": "[uniqueString(resourceGroup().id)]",
@@ -223,10 +221,11 @@
     "vaWorkerCount": "[parameters('Visual Analytics Worker Count')]",
     "midtierSize": "[parameters('Mid-tier VM Size')]",
     "midtierCount": "[parameters('Mid-Tier VM Count')]",
+    "sasFolder": "/opt/sas",
     "sasDepot": "[parameters('SAS Depot Location')]",
     "sasPlanFile": "[parameters('SAS Plan File Location')]",
     "hadoopVersion": "3.1.4",
-    "hadoopHome": "/sas/hadoop",
+    "hadoopHome": "[concat(variables('sasFolder'), '/hadoop')]",
     "sasPassword": "[base64(parameters('SAS Administration Password'))]",
     "azurePassword": "[base64(parameters('Azure Administration Password'))]",
     "alternateDomain": "[concat('sas94-', variables('resourceGroupUniqueString'), '-', subscription().subscriptionId)]",
@@ -292,6 +291,21 @@
       "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
       "apiVersion": "2020-08-01-preview",
       "name": "[concat(variables('storageName'), '/default/sasshare')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
+      ],
+      "properties": {
+        "accessTier": "Premium",
+        "shareQuota": 100,
+        "enabledProtocols": "NFS",
+        "rootSquash": "RootSquash"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+      "apiVersion": "2020-08-01-preview",
+      "name": "[concat(variables('storageName'), '/default/backups')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageName'), 'default')]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
@@ -1212,7 +1226,7 @@
               "skipDos2Unix": false
             },
             "protectedSettings": {
-              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"metadata\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('metadataEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\"  2>&1 | tee /tmp/prerequisites.log')]",
+              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"metadata\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('metadataEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
               "fileUris": [
                 "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
               ]
@@ -1318,7 +1332,7 @@
               "skipDos2Unix": false
             },
             "protectedSettings": {
-              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"vacontroller\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('vaEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\"  2>&1 | tee /tmp/prerequisites.log')]",
+              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"vacontroller\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('vaEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
               "fileUris": [
                 "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
               ]
@@ -1419,7 +1433,7 @@
               "skipDos2Unix": false
             },
             "protectedSettings": {
-              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"vaworker\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('vaEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\"  2>&1 | tee /tmp/prerequisites.log')]",
+              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"vaworker\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('vaEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
               "fileUris": [
                 "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
               ]
@@ -1526,7 +1540,7 @@
               "skipDos2Unix":false
             },
             "protectedSettings": {
-              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"midtier\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('midtierEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\"  2>&1 | tee /tmp/prerequisites.log')]",
+              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"midtier\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('midtierEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
               "fileUris": [
                 "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
               ]
@@ -1560,7 +1574,7 @@
             "value": "jumpvm"
           },
           "commandToExecute": {
-            "value": "[concat('set -o pipefail; ./SetupJump.sh \"1\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'), '2019-06-01').keys[0].value, '\" \"', variables('artifactsLocation'), '\" \"', variables('sasToken'), '\" \"', variables('sasDepot'), '\" \"', variables('midtierCount'), '\" \"', variables('metadataCount'), '\" \"', variables('vaWorkerCount'), '\" \"', variables('sasPassword'), '\" \"', variables('azurePassword'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')).dnsSettings.fqdn, '\" \"', subscription().displayName, '\" \"', resourceGroup().name, '\" \"', variables('sasPlanFile'), '\" \"', variables('hadoopVersion'), '\" \"', variables('hadoopHome'), '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('jumpEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" 2>&1 | tee /tmp/prerequisites.log')]"
+            "value": "[concat('set -o pipefail; ./SetupJump.sh \"1\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'), '2019-06-01').keys[0].value, '\" \"', variables('artifactsLocation'), '\" \"', variables('sasToken'), '\" \"', variables('sasDepot'), '\" \"', variables('midtierCount'), '\" \"', variables('metadataCount'), '\" \"', variables('vaWorkerCount'), '\" \"', variables('sasPassword'), '\" \"', variables('azurePassword'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')).dnsSettings.fqdn, '\" \"', subscription().displayName, '\" \"', resourceGroup().name, '\" \"', variables('sasPlanFile'), '\" \"', variables('hadoopVersion'), '\" \"', variables('hadoopHome'), '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('jumpEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\" 2>&1 | tee /tmp/prerequisites.log')]"
           },
           "_artifactsLocation": {
             "value": "[variables('artifactsLocation')]"

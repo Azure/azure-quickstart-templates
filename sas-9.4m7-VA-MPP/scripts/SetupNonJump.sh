@@ -11,8 +11,10 @@ export azure_storage_account="${3}"
 export azure_storage_files_share="${4}"
 export azure_storage_files_password="${5}"
 export endpoint_ip="${6}"
+export sasFolder="${7}"
 
 export NFS_MOUNT_POINT="/sasshare"
+export BACKUP_NFS_MOUNT_POINT="/backups"
 export NFS_SEMAPHORE_DIR="\${NFS_MOUNT_POINT}/setup/readiness_flags"
 export NFS_ANSIBLE_KEYS="\${NFS_MOUNT_POINT}/setup/ansible_key"
 EOF
@@ -49,9 +51,9 @@ mountSASRaid() {
     n="${n//\ /}"
     mdadm --create /dev/md0 --force --level=stripe --raid-devices=$n /dev/disk/azure/scsi1/lun*
     mkfs.xfs /dev/md0
-    mkdir /sas
-    echo "$(blkid /dev/md0 | cut -d ' ' -f 2) /sas xfs defaults 0 0" | tee -a /etc/fstab
-    mount /sas
+    mkdir "${sasFolder}"
+    echo "$(blkid /dev/md0 | cut -d ' ' -f 2) ${sasFolder} xfs defaults 0 0" | tee -a /etc/fstab
+    mount "${sasFolder}"
 }
 
 setupSASShareMount() {
@@ -61,16 +63,14 @@ setupSASShareMount() {
     # Create the share folder
     mkdir -p "${NFS_MOUNT_POINT}"
 
-    # Mount the share
-    # acregmin=0,acregmax=1 is necessary here for the metadata VMs. If not present, the NFS regular file attribute cache
-    # will (for some reason) not have accurate information, which can cause metadata backups to fail.
-    # This will incur a performance hit, so only use it on metadata instances.
-    ac_opts=""
-    if [[ "${instance_type}" == "metadata" ]]; then
-        ac_opts=",acregmin=1,acregmax=4"
-    fi
+    # Mount the sasshare
+    sudo mount -t nfs $azure_storage_account.file.core.windows.net:/$azure_storage_account/sasshare ${NFS_MOUNT_POINT} -o "vers=4,minorversion=1,sec=sys,actimeo=5"
 
-    sudo mount -t nfs $azure_storage_account.file.core.windows.net:/$azure_storage_account/sasshare ${NFS_MOUNT_POINT} -o "vers=4,minorversion=1,sec=sys${ac_opts}"
+    # Create the backups folder for metadata nodes - this is a separate share only for metadata nodes
+    if [[ "${instance_type}" == "metadata" ]]; then
+       mkdir -p "${BACKUP_NFS_MOUNT_POINT}"
+       sudo mount -t nfs $azure_storage_account.file.core.windows.net:/$azure_storage_account/backups ${BACKUP_NFS_MOUNT_POINT} -o "vers=4,minorversion=1,sec=sys,noac"
+    fi
 
     echo "Mounting Successful"
 }
@@ -83,7 +83,7 @@ setupSUDOForAnsible() {
 
 setupSSHKeysForAnsible() {
     wait_count=0
-    stop_waiting_count=600
+    stop_waiting_count=900
     ANSIBLE_AUTHORIZED_KEY_FILE="${NFS_ANSIBLE_KEYS}/id_rsa.pub"
     while [ ! -e "$ANSIBLE_AUTHORIZED_KEY_FILE" ]; do
         echo "waiting 5 seconds for key to come around"

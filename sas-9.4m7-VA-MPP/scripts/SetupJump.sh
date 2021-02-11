@@ -28,6 +28,7 @@ export planfile_uri="${17}"
 export HADOOP_VERSION="${18}"
 export HADOOP_HOME="${19}"
 export endpoint_ip="${20}"
+export sasFolder="${21}"
 
 export DIRECTORY_NFS_SHARE="/sasshare"
 export INSTALL_DIR="/sas/install"
@@ -92,7 +93,7 @@ setupSASShareMount() {
     mkdir -p "${DIRECTORY_NFS_SHARE}"
 
     # Mount the share
-    sudo mount -t nfs $azure_storage_account.file.core.windows.net:/$azure_storage_account/sasshare ${DIRECTORY_NFS_SHARE} -o "vers=4,minorversion=1,sec=sys"
+    sudo mount -t nfs $azure_storage_account.file.core.windows.net:/$azure_storage_account/sasshare ${DIRECTORY_NFS_SHARE} -o "vers=4,minorversion=1,actimeo=5,sec=sys"
 
     echo "Mounting Successful"
 }
