@@ -54,13 +54,13 @@ The template sets up the following:
 
 1. You would need to create the following resources on your Azure account to use this deployment template:
   - Service Principal, with Contributor and User Access Administrator.
-  - App Service Domain.
+  - App Service Domain for a public facing cluster, OR Private DNS Zone for a private cluster
 
 These can be done by running the azure CLI commands from any host where azure CLI is installed.
 
-  * Create [App Service Domain](https://portal.azure.com/#create/Microsoft.Domain)
+  * Create [App Service Domain](https://portal.azure.com/#create/Microsoft.Domain) or [Private DNS Zone](https://portal.azure.com/#create/Microsoft.PrivateDNSZone)
     * This will also create a DNS Zone needed for this deployment.
-    * Note the DNS Zone name.
+    * Note the DNS Zone name and Resource Group it's in.
   * Create Azure Service Principal with `Contributor` and `User Access Administrator` roles.
     * **Option 1:** using the script provided in the `scripts` folder:
       ```bash
