@@ -14,14 +14,12 @@
 1. [Best Practices when Deploying SAS 9.4M7 VA/VS on Microsoft Azure](#best_practices) 
 1. [Deployment Steps](#Deployment)
     1. [Deploy Using the Azure Portal](#azureportal)
-    1. [Deploy Using Mercury Admin Tools](#mercuryadmintools)
 1. [Post Deployment Steps](#PostDeployment)
     1. [Accessing Resources in the Deployment](#accessresources)
     1. [Check Logs and Services Status](#logsandservices)
     1. [Restarting Services](#restartservices)
     1. [Running SAS Management Console (SMC)](#smc)
-1. [Troubleshooting](#Troubleshooting)
-1. [Appendix A:](#AppendixA)
+
 
 
 <a name="Overview"></a>
@@ -155,11 +153,6 @@ For more information about this command, see ["az storage blob upload-batch"](ht
 4. If the validation is successful,  click *Create*. When the *Deployment is in progress* window appears, the deployment will begin.
 Deployments typically take 2-3 hours to complete. 
 
-<a name="mercuryadmintools"></a>
-### Deploy Using the Mercury Admin Tools
-
-(content under development:  Do we still need this?  PD)
-
 <a name="PostDeployment"></a>
 ## Post Deployment Steps
 
@@ -243,8 +236,3 @@ cd /sas/SASHome/SASManagementConsole/9.4
 ./sasmc & 
 ```
 
-<a name="Troubleshooting"></a>
-## Troubleshooting
-
-<a name="AppendixA"></a>
-## Appendix A: 
