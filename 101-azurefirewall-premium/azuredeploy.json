@@ -31,12 +31,12 @@
     },
     "variables": {
         "vnetAddressSpace": "10.0.0.0/16",
-        "serverAddressSpace": "10.0.10.0/24",
-        "serverPrivateIPAddress": "10.0.10.10",
+        "workerAddressSpace": "10.0.10.0/24",
+        "workerPrivateIPAddress": "10.0.10.10",
         "bastionAddressSpace": "10.0.20.0/24",
         "firewallAddressSpace": "10.0.100.0/24",
         "firewallPrivateIPAddress": "10.0.100.4",
-        "keyVaultName": "[concat('fw-quick-', uniqueString(resourceGroup().id))]",
+        "keyVaultName": "[concat('fw-quick-', uniqueString(subscription().id, resourceGroup().id))]",
         "keyVaultCASecretName": "CACert"
     },
     "resources": [
@@ -108,12 +108,12 @@
         {
             "type": "Microsoft.Network/routeTables",
             "apiVersion": "2020-05-01",
-            "name": "ServerRoute",
+            "name": "WorkerRoute",
             "location": "[parameters('location')]",
             "properties": {
                 "routes": [
                     {
-                        "name": "ServerRouteFirewall",
+                        "name": "WorkerRouteFirewall",
                         "properties": {
                             "addressPrefix": "0.0.0.0/0",
                             "nextHopType": "VirtualAppliance",
@@ -130,7 +130,7 @@
             "name": "DemoVnet",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/routeTables', 'ServerRoute')]"
+                "[resourceId('Microsoft.Network/routeTables', 'WorkerRoute')]"
             ],
             "properties": {
                 "addressSpace": {
@@ -140,11 +140,11 @@
                 },
                 "subnets": [
                     {
-                        "name": "ServerSubnet",
+                        "name": "WorkerSubnet",
                         "properties": {
-                            "addressPrefix": "[variables('serverAddressSpace')]",
+                            "addressPrefix": "[variables('workerAddressSpace')]",
                             "routeTable": {
-                                "id": "[resourceId('Microsoft.Network/routeTables', 'ServerRoute')]"
+                                "id": "[resourceId('Microsoft.Network/routeTables', 'WorkerRoute')]"
                             }
                         }
                     },
@@ -166,7 +166,7 @@
         {
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2020-07-01",
-            "name": "ServerNIC",
+            "name": "WorkerNIC",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', 'DemoVnet')]"
@@ -174,13 +174,13 @@
             "properties": {
                 "ipConfigurations": [
                     {
-                        "name": "ServerIPConfiguration",
+                        "name": "WorkerIPConfiguration",
                         "properties": {
                             "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'DemoVnet', 'ServerSubnet')]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'DemoVnet', 'WorkerSubnet')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIPAddress": "[variables('serverPrivateIPAddress')]"
+                            "privateIPAddress": "[variables('workerPrivateIPAddress')]"
                         }
                     }
                 ]
@@ -189,10 +189,10 @@
         {
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2020-06-01",
-            "name": "ServerVM",
+            "name": "WorkerVM",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', 'ServerNIC')]"
+                "[resourceId('Microsoft.Network/networkInterfaces', 'WorkerNIC')]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -210,14 +210,14 @@
                     }
                 },
                 "osProfile": {
-                    "computerName": "ServerVM",
+                    "computerName": "WorkerVM",
                     "adminUsername": "[parameters('remoteAccessUsername')]",
                     "adminPassword": "[parameters('remoteAccessPassword')]"
                 },
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'ServerNIC')]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'WorkerNIC')]"
                         }
                     ]
                 }
@@ -226,10 +226,10 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "apiVersion": "2020-06-01",
-            "name": "ServerVM/Bootstrap",
+            "name": "WorkerVM/Bootstrap",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', 'ServerVM')]",
+                "[resourceId('Microsoft.Compute/virtualMachines', 'WorkerVM')]",
                 "[resourceId('Microsoft.Resources/deploymentScripts', 'CreateAndDeployCertificates')]"
             ],
             "properties": {
@@ -395,8 +395,6 @@
                                     }
                                 ],
                                 "webCategories": [
-                                    "sports",
-                                    "news",
                                     "business",
                                     "webbasedemail"
                                 ],
