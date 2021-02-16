@@ -27,8 +27,9 @@ export azure_resource_group="${16}"
 export planfile_uri="${17}"
 export HADOOP_VERSION="${18}"
 export HADOOP_HOME="${19}"
-export endpoint_ip="${20}"
-export sasFolder="${21}"
+export HDAT_HOME="${20}
+export endpoint_ip="${21}"
+export sasFolder="${22}"
 
 export DIRECTORY_NFS_SHARE="/sasshare"
 export INSTALL_DIR="/sas/install"
