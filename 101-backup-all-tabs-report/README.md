@@ -13,7 +13,6 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-all-tabs-report%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-all-tabs-report%2Fazuredeploy.json)
 
-
 This template deploys a Logic App that sends periodic reports on backups to a specified set of email addresses. The Logic App runs a set of queries on a specified set of Log Analytics workspaces and exports the returned data as inline charts and CSV attachments.
 
 Following is the information that is exported by this Logic App:
@@ -55,10 +54,3 @@ Using this view, you can identify the number of backup instances that had atleas
 Using this view, you can identify the days/weeks on which each backup instance did not have a successful backup. A cell containing '0' indicates that the backup instance did not have a successful backup on that day/week (depending on whether the item is configured for daily backup/weekly backup), while a cell containing '1' indicates that the item had atleast one successful backup in that period. Separate views are displayed for items with daily backup policy, and items with weekly backup policy.
 
 [Learn more](https://aka.ms/AzureBackupReportDoc) about Backup Reports
-
-
-
-
-
-
-
