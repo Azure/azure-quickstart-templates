@@ -19,18 +19,10 @@ You can use this template to view trends on protected instance count and backup 
 
 Following are the information that is exported by this Logic App:
 
-1. Inline 
-a. Trend of Protected Instance count over time 
-b. Trend of Backup Cloud Storage (GB) consumed over time
-
-2. Attachment
-List of all billing entities with details on protected instance count, backup cloud storage consumed, storage replication type etc. 
+* Inline 
+  * Trend of Protected Instance count over time 
+  * Trend of Backup Cloud Storage (GB) consumed over time
+* Attachment
+  * List of all billing entities with details on protected instance count, backup cloud storage consumed, storage replication type etc. 
 
 [Learn more](https://aka.ms/AzureBackupReportDoc) about Backup Reports
-
-
-
-
-
-
-
