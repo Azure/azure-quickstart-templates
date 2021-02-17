@@ -13,26 +13,17 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-jobs-report%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-jobs-report%2Fazuredeploy.json)
 
-
 This template deploys a Logic App that sends periodic reports on your backup and restore jobs to a specified set of email addresses. The Logic App runs a set of queries on a specified set of Log Analytics workspaces and exports the returned data as inline charts and CSV attachments.
 
 You can use this template to view key information and trends on each of the backup and restore jobs that were triggered in your environment in the specified time range. You can get information on the number of failed jobs per day, top causes of job failure, as well as a detailed list of all the backup and restore jobs as a CSV attachment.
 
 Following is the information that is exported by this Logic App:
 
-1. Inline 
-a. Jobs by Status over time
-b. Jobs by Operation
-c. Jobs by Failure Code
-
-2. Attachment
-a. List of backup and restore jobs in selected time range
+* Inline
+  * Jobs by Status over time
+  * Jobs by Operation
+  * Jobs by Failure Code
+* Attachment
+  * List of backup and restore jobs in selected time range
 
 [Learn more](https://aka.ms/AzureBackupReportDoc) about Backup Reports
-
-
-
-
-
-
-
