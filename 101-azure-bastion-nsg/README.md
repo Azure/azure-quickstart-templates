@@ -17,8 +17,6 @@ This template will deploy Azure Bastion in a new or existing Azure Virtual Netwo
 
 This template deploys resources in the same Resource Group and Azure region as the Virtual Network.
 
-Note that Azure Bastion is currently in Public Preview status.  As a result, please reference the <a href="https://docs.microsoft.com/en-us/azure/bastion/bastion-overview" target="_blank">Azure Bastion documentation to confirm that you are deploying to an enabled Azure region and that you have onboarded to participating in the Public Preview.
-
 ```
 Tags: ``bastion``
 
