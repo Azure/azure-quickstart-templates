@@ -13,7 +13,6 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-optimize-report%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-optimize-report%2Fazuredeploy.json)
 
-
 This template deploys a Logic App that sends periodic reports on cost optimization opportunities with Azure Backup to a specified set of email addresses. The Logic App runs a set of queries on a specified set of Log Analytics workspaces and exports the returned data as inline charts and CSV attachments.
 
 The 'Optimize' views allow you to gain visibility into potential cost-optimization opportunities for your backups. Following are the views available under this section:
@@ -28,10 +27,3 @@ Using this view, you can identify those items that have backups retained for a l
 Using this view, you can identify database workloads that have been configured for daily full backup. Often, using daily differential backup along with weekly full backup is more cost-effective.
 
 [Learn more](https://aka.ms/AzureBackupReportDoc) about Backup Reports
-
-
-
-
-
-
-
