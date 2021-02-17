@@ -27,7 +27,7 @@ export azure_resource_group="${16}"
 export planfile_uri="${17}"
 export HADOOP_VERSION="${18}"
 export HADOOP_HOME="${19}"
-export HDAT_HOME="${20}
+export HDAT_HOME="${20}"
 export endpoint_ip="${21}"
 export sasFolder="${22}"
 
