@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "sqlServerName": {
@@ -41,6 +41,13 @@
             "metadata": {
                 "description": "Enable Auditing to storage behind Virtual Network or firewall rules. the user deploying the template must have an administrator or owner permissions."
             }
+        },
+        "isMSDevOpsAuditEnabled": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Enable Auditing of Microsoft support operations (DevOps)"
+            }
         }
     },
     "variables": {
@@ -62,27 +69,29 @@
                     "bypass": "AzureServices",
                     "defaultAction": "[if(parameters('isStorageBehindVnet'), 'Deny', 'Allow')]"
                 }
-            }
-        },
-        {
-            "condition": "[parameters('isStorageBehindVnet')]",
-            "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "2020-03-01-preview",
-            "name": "[variables('uniqueRoleGuid')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
-            ],
-            "properties": {
-                "roleDefinitionId": "[variables('StorageBlobContributor')]",
-                "principalId": "[reference(resourceId('Microsoft.Sql/servers', parameters('sqlServerName')), '2019-06-01-preview', 'Full').identity.principalId]",
-                "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
-                "principalType": "ServicePrincipal"
-            }
+            },
+            "resources": [
+                {
+                    "condition": "[parameters('isStorageBehindVnet')]",
+                    "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+                    "apiVersion": "2020-03-01-preview",
+                    "name": "[concat(parameters('storageAccountName'), '/Microsoft.Authorization/', variables('uniqueRoleGuid'))]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]",
+                        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+                    ],
+                    "properties": {
+                        "roleDefinitionId": "[variables('StorageBlobContributor')]",
+                        "principalId": "[reference(resourceId('Microsoft.Sql/servers', parameters('sqlServerName')), '2020-08-01-preview', 'Full').identity.principalId]",
+                        "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                        "principalType": "ServicePrincipal"
+                    }
+                }
+            ]
         },
         {
             "type": "Microsoft.Sql/servers",
-            "apiVersion": "2019-06-01-preview",
+            "apiVersion": "2020-08-01-preview",
             "location": "[parameters('location')]",
             "name": "[parameters('sqlServerName')]",
             "identity": "[if(parameters('isStorageBehindVnet'), json('{\"type\":\"SystemAssigned\"}'), json('null'))]",
@@ -99,6 +108,24 @@
                     "type": "auditingSettings",
                     "apiVersion": "2017-03-01-preview",
                     "name": "DefaultAuditingSettings",
+                    "dependsOn": [
+                        "[parameters('sqlServerName')]",
+                        "[parameters('storageAccountName')]",
+                        "[variables('uniqueRoleGuid')]"
+                    ],
+                    "properties": {
+                        "state": "Enabled",
+                        "storageEndpoint": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').PrimaryEndpoints.Blob]",
+                        "storageAccountAccessKey": "[if(parameters('isStorageBehindVnet'), json('null'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value)]",
+                        "storageAccountSubscriptionId": "[subscription().subscriptionId]",
+                        "isStorageSecondaryKeyInUse": false
+                    }
+                },
+                {     
+                    "condition": "[parameters('isMSDevOpsAuditEnabled')]",     
+                    "type": "devOpsAuditingSettings",
+                    "apiVersion": "2020-08-01-preview",
+                    "name": "Default",
                     "dependsOn": [
                         "[parameters('sqlServerName')]",
                         "[parameters('storageAccountName')]",
