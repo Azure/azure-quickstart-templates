@@ -11,7 +11,6 @@
         1. [SAS 9.4M7 Metadata clustered server](#metadata)
 1. [Architecture](#architecture)
 1. [Prerequisites](#Prerequisites)
-1. [Best Practices when Deploying SAS 9.4M7 VA/VS on Microsoft Azure](#best_practices) 
 1. [Deployment Steps](#Deployment)
     1. [Deploy Using the Azure Portal](#azureportal)
 1. [Post Deployment Steps](#PostDeployment)
@@ -24,7 +23,7 @@
 
 <a name="Overview"></a>
 ## Overview
-This README for SAS 9.4 Visual Analytics (VA)/ Visual Statistics (VS) Quickstart Template for Azure is used to deploy the following SAS Viya products in the Azure cloud:
+This README for SAS 9.4 Visual Analytics (VA)/ Visual Statistics (VS) Quickstart Template for Azure is used to deploy the following SAS 9.4 products in the Azure cloud:
 
 * SAS Visual Analytics 7.5
 
@@ -45,7 +44,6 @@ The SAS 9.4 VA/VS Quickstart Template for Azure creates three instances, includi
 
 <a name="compute"></a>
 #### SAS 9.4 VA/VS server
-(content under development:  Need sizing recommendations for this QS.  These are from Azure Viya Quickstart.  PD)
 We  recommend that you use at least the memory optimized Standard E16s_v3 VM size.
 
 Here are some recommended example VM sizes based on the number of licensed cores:
@@ -58,12 +56,10 @@ Here are some recommended example VM sizes based on the number of licensed cores
 
 <a name="midtier"></a>
 #### SAS 9.4M7 Mid-Tier server
-(content under development:  Need sizing recommendation.  This came from architecture diagram. PD)
 We  recommend that you use one or two of the memory optimized Standard E16s_v3 VM size at least.
 
 <a name="metadata"></a>
 #### SAS 9.4M7 Metadata clustered server
-(content under development:  Need sizing recommendation.  This came from architecture diagram. PD)
 We  recommend that you use one or three of the memory optimized Standard E16s_v3 VM size at least.
 
 <a name="architecture"></a>
@@ -110,17 +106,14 @@ For more information about this command, see ["az storage blob upload-batch"](ht
 
 * If you are using Azure NFS file shares, you must enable your Azure subscription for NFS.  For more information, see the "Register the NFS 4.1 Protocol" section at [How to create an NFS File Share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal).
 
-<a name="best_practices"></a>
-## Best Practices when Deploying SAS 9.4M7 VA/VS on Microsoft Azure
-
 <a name="Deployment"></a>
 ## Deployment Steps
 
 <a name="azureportal"></a>
-### Deploy Using the Azure Portalt 
+### Deploy Using the Azure Portal 
 
 1. Log into the Azure portal [here](https://portal.azure.com/#home).  
-2. Navigate to the  [Custom Deployment page](https://portal.azure.com/#create/Microsoft.Template/uri/https%3a%2f%2fraw.githubusercontent.com%2fsassoftware%2fazure-quickstart-templates%2fdevelop-sas94m7-VAVS%2fsas-9.4m7-VA%2fazuredeploy.json).
+2. Navigate to the  [Custom Deployment page](https://portal.azure.com/#create/Microsoft.Template/uri/https%3a%2f%2fraw.githubusercontent.com%2fsassoftware%2fazure-quickstart-templates%2fdevelop-sas94m7-VAVS-MPP%2fsas-9.4m7-VA-MPP%2fazuredeploy.json).
 3. Specify the following parameters for your deployment:
 
 |Parameter Name|Value|
@@ -130,6 +123,7 @@ For more information about this command, see ["az storage blob upload-batch"](ht
 |Region|Defines the Azure region in which the deployment should run. The available Azure regions are listed at [Azure Services that support Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-region). The available Azure regions if using Azure NFS file shares are listed in the "Available regions" section at [How to create an NFS share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal).  
 |Location|Defines the location in Microsoft Azure where these resources should be created. This is derived from the Resource group.|
 |SAS Depot Location|Specifies the URI of the Azure Blob Store where the software depot was uploaded.|
+|SAS Plan File Location|Specifies the URI to download the plan file from as currently specified in the Azure Blob Store. Leave blank if the plan file is stored in the depot blob.
 |Use a New or Existing Virtual Network?|Specifies whether to use a new or existing network.|
 |Existing Virtual Network Resource Group|Specifies the resource group if using an existing virtual network. Leave blank if using a new network. Otherwise enter the resource group for the existing network|
 |Virtual Network Name|Use the default value (recommended).|
@@ -137,15 +131,14 @@ For more information about this command, see ["az storage blob upload-batch"](ht
 |Mid-Tier VM Count|Specifies the number of virtual machines (VMs) for the midtier server. Select 1 for a non-clustered midtier server.  Select 2 for a 2 node midtier cluster.
 |Mid-Tier VM Size|Specifies the VM size. Use the default size (recommended).|
 |Visual Analytics Worker Count|Specifies the number of worker instances created for the SAS Visual Analytics controller.| 
-|Visual Analytics Controller Size|(content under development PD)|
-|Visual Analytics Worker Size|(content under development PD)|
+|Visual Analytics Controller Size|Specifies the size of the Visual Analytics Controller.|
+|Visual Analytics Worker Size|Specifies the size of the Visual Analytics Worker.|
 |Proximity Placement Group Name| Specifies the proximity group for instances. For better performance, you might want to place all instances in the same proximity group. You supply the name.|
 |SSH Key for VM Access| Specfies the full SSH public key that will be added to the servers. Cut and paste a public SSH key into this field.|
 |SAS Administration Password|Specifies the password used for SAS authentication. Enter the password to be used for the sasadm@saspw account.|
 |Azure Administration Password|Specifies the password used for OS authentication.  Enter the password to be used for the sasinst account.|
 |Admin Ingress Location|Specifies to allow inbound SSH traffic to the Ansible Controller from this Classless Inter-Domain Routing (CIDR) block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x.|
 |Web Ingress Location| Specfies to allow inbound HTTP traffic to the SAS 9.4 environment from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x.|
-|Deploy Azure Bastion|Specifies to allow users to create a Windows Bastion instance in the deployment.|
 |\_artifacts Location SAS Token|Leave blank.|
 |\_artifacts Location|Use the default value (recommended).|
 
@@ -170,8 +163,7 @@ Deployments typically take 2-3 hours to complete.
 
 <a name="logsandservices"></a>
 ### Check Logs and Services Status
-
-Check the logs and services status by accessing the various VM instances from the jumpvm, as follows: (content under development: What are the correct steps for  checking logs and services status post deployment? Leaving these instructions for now. PD)
+Check the logs and services status by accessing the various VM instances from the jumpvm, as follows: 
 
 1. Obtain the Public IP Address of the jumpvm from the jumpvm’s details: 
 
@@ -204,35 +196,35 @@ Check the logs and services status by accessing the various VM instances from th
    ```
    The password for all accounts is set to the default: *Go4thsas*
    
-   SAS is installed in the /sas folder on all VMs. 
+   SAS is installed in the /opt/sas folder on all VMs. 
 
 <a name="restartservices"></a>
 ### Restarting Services
-(content under development: Do we still need this? Should it go in the Troubleshooting section?  PD)
+
 Some services may not successfully restart when the deployment completes. 
 
 To restart the midtier services, SSH to the midtier-0 VM instance and perform the following steps: 
 ```
-cd /sas/config/Lev1 
+cd /opt/sas/config/Lev1 
 ./sas.servers stop 
 ./sas.servers start 
 ```
 
 <a name="smc"></a>
 ### Running SAS Management Console (SMC)
-(content under development: Do we still need this?  PD)
+
 The easiest way to run SMC is to connect to the deployment using X11 port forwarding as follows:
 ```
 ssh -X -i <public key pem file> AzureUser@<jumpvm public IP address>
 ssh -X <vm name> 
-cd /sas/SASHome/SASManagementConsole/9.4 
+cd /opt/sas/SASHome/SASManagementConsole/9.4 
 ./sasmc & 
 ```
 For example, to run SMC on the *midtier-0* VM:
 ```
 ssh -X -i <public key pem file> AzureUser@<jumpvm public IP address>
 ssh -X midtier-0 
-cd /sas/SASHome/SASManagementConsole/9.4 
+cd /opt/sas/SASHome/SASManagementConsole/9.4 
 ./sasmc & 
 ```
 
