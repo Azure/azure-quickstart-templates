@@ -55,7 +55,7 @@
     },
     "resources": [
         {
-            "apiVersion": "2019-11-01",
+            "apiVersion": "2020-07-01",
             "type": "Microsoft.Network/publicIpAddresses",
             "name": "[variables('public-ip-address-name')]",
             "location": "[parameters('location')]",
@@ -67,14 +67,14 @@
             }
         },
         {
-            "apiVersion": "2019-11-01",
+            "apiVersion": "2020-07-01",
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "[variables('nsg-name')]",
             "location": "[parameters('location')]",
             "properties": {
                 "securityRules": [
                     {
-                        "name": "bastion-in-allow",
+                        "name": "AllowHttpsInBound",
                         "properties": {
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
@@ -87,11 +87,24 @@
                         }
                     },
                     {
-                        "name": "bastion-control-in-allow",
+                        "name": "AllowGatewayManagerInBound",
                         "properties": {
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
                             "sourceAddressPrefix": "GatewayManager",
+                            "destinationPortRange": "443",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowLoadBalancerInBound",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
                             "destinationPortRange": "443",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
@@ -100,15 +113,15 @@
                         }
                     },
                     {
-                        "name": "bastion-in-host",
+                        "name": "AllowBastionHostCommunicationInBound",
                         "properties": {
                             "protocol": "*",
                             "sourcePortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
                             "destinationPortRanges": [
                                 "8080",
                                 "5701"
                             ],
-                            "sourceAddressPrefix": "VirtualNetwork",
                             "destinationAddressPrefix": "VirtualNetwork",
                             "access": "Allow",
                             "priority": 130,
@@ -116,7 +129,20 @@
                         }
                     },
                     {
-                        "name": "bastion-vnet-out-allow",
+                        "name": "DenyAllInBound",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationPortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowSshRdpOutBound",
                         "properties": {
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
@@ -132,7 +158,7 @@
                         }
                     },
                     {
-                        "name": "bastion-azure-out-allow",
+                        "name": "AllowAzureCloudCommunicationOutBound",
                         "properties": {
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
@@ -140,28 +166,44 @@
                             "destinationPortRange": "443",
                             "destinationAddressPrefix": "AzureCloud",
                             "access": "Allow",
+                            "priority": 110,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AllowBastionHostCommunicationOutBound",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationPortRanges": [
+                                "8080",
+                                "5701"
+                            ],
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
                             "priority": 120,
                             "direction": "Outbound"
                         }
                     },
                     {
-                        "name": "bastion-out-host",
+                        "name": "AllowGetSessionInformationOutBound",
                         "properties": {
                             "protocol": "*",
                             "sourcePortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
                             "destinationPortRanges": [
-                                "8080",
-                                "5701"
+                                "80",
+                                "443"
                             ],
-                            "sourceAddressPrefix": "VirtualNetwork",
-                            "destinationAddressPrefix": "VirtualNetwork",
                             "access": "Allow",
                             "priority": 130,
                             "direction": "Outbound"
                         }
                     },
                     {
-                        "name": "bastion-out-deny",
+                        "name": "DenyAllOutBound",
                         "properties": {
                             "protocol": "*",
                             "sourcePortRange": "*",
@@ -178,7 +220,7 @@
         },
         {
             "condition": "[equals(parameters('vnet-new-or-existing'), 'new')]",
-            "apiVersion": "2019-11-01",
+            "apiVersion": "2020-07-01",
             "name": "[parameters('vnet-name')]",
             "type": "Microsoft.Network/virtualNetworks",
             "location": "[parameters('location')]",
@@ -206,7 +248,7 @@
         },
         {
             "condition": "[equals(parameters('vnet-new-or-existing'), 'existing')]",
-            "apiVersion": "2019-11-01",
+            "apiVersion": "2020-07-01",
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "name": "[concat(parameters('vnet-name'), '/', variables('bastion-subnet-name'))]",
             "location": "[parameters('location')]",
@@ -221,7 +263,7 @@
             }
         },
         {
-            "apiVersion": "2018-10-01",
+            "apiVersion": "2020-07-01",
             "type": "Microsoft.Network/bastionHosts",
             "name": "[parameters('bastion-host-name')]",
             "location": "[parameters('location')]",
