@@ -43,7 +43,7 @@
     },
     "vmImageSku": {
       "type": "string",
-      "defaultValue": "2016-Datacenter",
+      "defaultValue": "2019-Datacenter",
       "metadata": {
         "description": "VM image SKU"
       }
@@ -71,10 +71,10 @@
     },
     "certificateStoreValue": {
       "type": "string",
+      "defaultValue": "My",
       "allowedValues": [
         "My"
       ],
-      "defaultValue": "My",
       "metadata": {
         "description": "The store name where the cert will be deployed in the virtual machine"
       }
@@ -94,17 +94,17 @@
     "certificateUrlValue": {
       "type": "string",
       "metadata": {
-        "description": "Refers to the location URL in your key vault where the certificate was uploaded, it is should be in the format of https://<name of the vault>.vault.azure.net:443/secrets/<exact location>"
+        "description": "Refers to the location URL in your key vault where the certificate was uploaded"
       }
     },
     "clusterProtectionLevel": {
       "type": "string",
+      "defaultValue": "EncryptAndSign",
       "allowedValues": [
         "None",
         "Sign",
         "EncryptAndSign"
       ],
-      "defaultValue": "EncryptAndSign",
       "metadata": {
         "description": "Protection level.Three values are allowed - EncryptAndSign, Sign, None. It is best to keep the default of EncryptAndSign, unless you have a need not to"
       }
@@ -120,7 +120,8 @@
       "type": "string",
       "defaultValue": "Temp",
       "allowedValues": [
-        "OS", "Temp"
+        "OS",
+        "Temp"
       ],
       "metadata": {
         "description": "The drive to use to store data on a cluster node."
@@ -164,40 +165,44 @@
   },
   "resources": [
     {
-      "apiVersion": "2019-04-01",
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
       "name": "[variables('supportLogStorageAccountName')]",
       "location": "[parameters('location')]",
-      "properties": {},
-      "kind": "Storage",
       "sku": {
         "name": "Standard_LRS"
       },
+      "kind": "Storage",
       "tags": {
         "resourceType": "Service Fabric",
         "clusterName": "[parameters('clusterName')]"
-      }
+      },
+      "properties": {}
     },
     {
-      "apiVersion": "2019-04-01",
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
       "name": "[variables('applicationDiagnosticsStorageAccountName')]",
       "location": "[parameters('location')]",
-      "properties": {},
-      "kind": "Storage",
       "sku": {
         "name": "Standard_LRS"
       },
+      "kind": "Storage",
       "tags": {
         "resourceType": "Service Fabric",
         "clusterName": "[parameters('clusterName')]"
-      }
+      },
+      "properties": {}
     },
     {
-      "apiVersion": "2018-08-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-05-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
+      "tags": {
+        "resourceType": "Service Fabric",
+        "clusterName": "[parameters('clusterName')]"
+      },
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -212,36 +217,36 @@
             }
           }
         ]
-      },
-      "tags": {
-        "resourceType": "Service Fabric",
-        "clusterName": "[parameters('clusterName')]"
       }
     },
     {
-      "apiVersion": "2018-08-01",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-05-01",
       "name": "[variables('lbIPName')]",
       "location": "[parameters('location')]",
+      "tags": {
+        "resourceType": "Service Fabric",
+        "clusterName": "[parameters('clusterName')]"
+      },
       "properties": {
         "dnsSettings": {
           "domainNameLabel": "[variables('dnsName')]"
         },
         "publicIPAllocationMethod": "Dynamic"
-      },
-      "tags": {
-        "resourceType": "Service Fabric",
-        "clusterName": "[parameters('clusterName')]"
       }
     },
     {
-      "apiVersion": "2018-08-01",
       "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2020-05-01",
       "name": "[variables('lbName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('lbIPName')]"
       ],
+      "tags": {
+        "resourceType": "Service Fabric",
+        "clusterName": "[parameters('clusterName')]"
+      },
       "properties": {
         "frontendIPConfigurations": [
           {
@@ -389,23 +394,28 @@
             }
           }
         ]
-      },
-      "tags": {
-        "resourceType": "Service Fabric",
-        "clusterName": "[parameters('clusterName')]"
       }
-    },   
+    },
     {
-      "apiVersion": "2018-10-01",
       "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "apiVersion": "2020-06-01",
       "name": "[variables('vmNodeType0Name')]",
       "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('vmNodeType0Size')]",
+        "capacity": "[parameters('nt0InstanceCount')]",
+        "tier": "Standard"
+      },
       "dependsOn": [
-        "[variables('virtualNetworkName')]",        
+        "[variables('virtualNetworkName')]",
         "[variables('lbName')]",
         "[variables('supportLogStorageAccountName')]",
         "[variables('applicationDiagnosticsStorageAccountName')]"
       ],
+      "tags": {
+        "resourceType": "Service Fabric",
+        "clusterName": "[parameters('clusterName')]"
+      },
       "properties": {
         "overprovision": "[variables('overProvision')]",
         "upgradePolicy": {
@@ -428,7 +438,7 @@
                     "clusterEndpoint": "[reference(parameters('clusterName')).clusterEndpoint]",
                     "nodeTypeRef": "[variables('vmNodeType0Name')]",
                     "dataPath": "[concat(if(equals(parameters('nodeDataDrive'), 'OS'), 'C', 'D'), ':\\\\SvcFab')]",
-                    "durabilityLevel": "Bronze",
+                    "durabilityLevel": "Silver",
                     "nicPrefixOverride": "[variables('subnet0Prefix')]",
                     "certificate": {
                       "thumbprint": "[parameters('certificateThumbprint')]",
@@ -446,7 +456,7 @@
                   "protectedSettings": {
                     "storageAccountName": "[variables('applicationDiagnosticsStorageAccountName')]",
                     "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('applicationDiagnosticsStorageAccountName')),'2015-05-01-preview').key1]",
-                    "storageAccountEndPoint": "https://core.windows.net/"
+                    "storageAccountEndPoint": "[concat('https://', environment().suffixes.storage)]"
                   },
                   "publisher": "Microsoft.Azure.Diagnostics",
                   "settings": {
@@ -556,25 +566,20 @@
             }
           }
         }
-      },
-      "sku": {
-        "name": "[variables('vmNodeType0Size')]",
-        "capacity": "[parameters('nt0InstanceCount')]",
-        "tier": "Standard"
-      },
-      "tags": {
-        "resourceType": "Service Fabric",
-        "clusterName": "[parameters('clusterName')]"
       }
     },
     {
-      "apiVersion": "2018-02-01",
+      "apiVersion": "2019-03-01",
       "type": "Microsoft.ServiceFabric/clusters",
       "name": "[parameters('clusterName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('supportLogStorageAccountName')]"
       ],
+      "tags": {
+        "resourceType": "Service Fabric",
+        "clusterName": "[parameters('clusterName')]"
+      },
       "properties": {
         "certificate": {
           "thumbprint": "[parameters('certificateThumbprint')]",
@@ -608,7 +613,7 @@
               "startPort": "[variables('nt0applicationStartPort')]"
             },
             "clientConnectionEndpointPort": "[variables('nt0fabricTcpGatewayPort')]",
-            "durabilityLevel": "Bronze",
+            "durabilityLevel": "Silver",
             "ephemeralPorts": {
               "endPort": "[variables('nt0ephemeralEndPort')]",
               "startPort": "[variables('nt0ephemeralStartPort')]"
@@ -622,10 +627,6 @@
         "reliabilityLevel": "Silver",
         "upgradeMode": "Automatic",
         "vmImage": "Windows"
-      },
-      "tags": {
-        "resourceType": "Service Fabric",
-        "clusterName": "[parameters('clusterName')]"
       }
     }
   ],

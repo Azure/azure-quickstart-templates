@@ -120,6 +120,11 @@ Write-Verbose "new Path is: $($NewValue)" -verbose
 if (!(Test-Path -Path C:\Modules -ErrorAction SilentlyContinue))
 {	New-Item -ItemType Directory -Name Modules -Path C:\ -Verbose }
 
+# Install and set NuGet package provider for this session
+Install-PackageProvider NuGet -Force
+Import-PackageProvider NuGet -Force
+Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+
 # Installing New Modules and Removing Old
 Foreach ($Module in $Modules)
 {	Find-Module -Name $Module.Name -RequiredVersion $Module.Version -Repository PSGallery -Verbose | Save-Module -Path C:\Modules -Verbose	}

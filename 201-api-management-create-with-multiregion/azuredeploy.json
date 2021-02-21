@@ -2,11 +2,11 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "apiManagementServiceName":{
+    "apiManagementServiceName": {
       "type": "string",
       "defaultValue": "[concat('apiservice', uniqueString(resourceGroup().id))]",
       "metadata": {
-        "description" : "Name of the API Management service."
+        "description": "Name of the API Management service."
       }
     },
     "publisherEmail": {
@@ -37,11 +37,11 @@
         "description": "The instance size of this API Management service."
       }
     },
-    "location":{
+    "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description" : "Location of the primary region of API Management service."
+        "description": "Location of the primary region of API Management service."
       }
     },
     "additionalLocations": {
@@ -53,16 +53,34 @@
       "metadata": {
         "description": "Additional Locations to setup the ApiManagement gateway."
       }
+    },
+    "disableGatewayInAdditionalLocation": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Ability to enable/disable Gateway proxy in any region including primary region."
+      }
+    },
+    "minApiVersionToAllowOnControlPlane": {
+      "type": "string",
+      "allowedValues": [
+        "2019-01-01",
+        "2019-12-01",
+        "2020-06-01-preview"
+      ],
+      "defaultValue": "2019-12-01",
+      "metadata": {
+        "description": "Minimum Api-Version to allow on all clients to Control Plane to prevent users with read-only permissions from accessing service secrets."
+      }
     }
   },
-  "variables": {  },
+  "variables": {},
   "resources": [
     {
-      "apiVersion": "2018-01-01",
+      "apiVersion": "2019-12-01",
       "name": "[parameters('apiManagementServiceName')]",
       "type": "Microsoft.ApiManagement/service",
       "location": "[parameters('location')]",
-      "tags": {},
       "sku": {
         "name": "[parameters('sku')]",
         "capacity": "[parameters('skuCount')]"
@@ -70,6 +88,26 @@
       "properties": {
         "publisherEmail": "[parameters('publisherEmail')]",
         "publisherName": "[parameters('publisherName')]",
+        "apiVersionConstraint": {
+          "minApiVersion": "[parameters('minApiVersionToAllowOnControlPlane')]"
+        },
+        "customProperties": {
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_GCM_SHA256": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_256_CBC_SHA256": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA256": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_256_CBC_SHA": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Ssl30": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30": false,
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2": false
+        },
         "copy": [
           {
             "name": "additionalLocations",
@@ -79,7 +117,8 @@
               "sku": {
                 "name": "[parameters('sku')]",
                 "capacity": "[parameters('skuCount')]"
-              }
+              },
+              "disableGateway": "[parameters('disableGatewayInAdditionalLocation')]"
             }
           }
         ]

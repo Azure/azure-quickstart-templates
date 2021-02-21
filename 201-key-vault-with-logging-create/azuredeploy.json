@@ -4,6 +4,7 @@
   "parameters": {
     "keyVaultName": {
       "type": "string",
+      "defaultValue": "[concat('kv-', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Specifies the name of the key vault."
       }
@@ -13,46 +14,6 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Specifies the location for all resources."
-      }
-    },
-    "enableVaultForDeployment": {
-      "type": "bool",
-      "defaultValue": false,
-      "allowedValues": [
-        true,
-        false
-      ],
-      "metadata": {
-        "description": "Specifies whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault."
-      }
-    },
-    "enableVaultForTemplateDeployment": {
-      "type": "bool",
-      "defaultValue": false,
-      "allowedValues": [
-        true,
-        false
-      ],
-      "metadata": {
-        "description": "Specifies whether Azure Resource Manager is permitted to retrieve secrets from the key vault."
-      }
-    },
-    "enableVaultForDiskEncryption": {
-      "type": "bool",
-      "defaultValue": false,
-      "allowedValues": [
-        true,
-        false
-      ],
-      "metadata": {
-        "description": "Specifies whether Azure Disk Encryption is permitted to retrieve secrets from the vault and unwrap keys."
-      }
-    },
-    "tenantId": {
-      "type": "string",
-      "defaultValue": "[subscription().tenantId]",
-      "metadata": {
-        "description": "Specifies the Azure Active Directory tenant ID that should be used for authenticating requests to the key vault. Get it by using Get-AzSubscription cmdlet."
       }
     },
     "objectId": {
@@ -100,32 +61,14 @@
       }
     },
     "protectWithLocks": {
-      "type": "string",
-      "allowedValues": [
-        "enabled",
-        "disabled"
-      ],
-      "defaultValue": "disabled"
-    },
-    "_artifactsLocation": {
-        "type": "string",
-        "metadata": {
-          "description": "The location of resources, such as templates and DSC modules, that the template depends on"
-        },
-        "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-key-vault-with-logging-create/"
-      },
-      "_artifactsLocationSasToken": {
-        "type": "securestring",
-        "metadata": {
-          "description": "Auto-generated token to access _artifactsLocation"
-        },
-        "defaultValue": ""
-      }  
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Determines if the resources should be locked to prevent deletion."
+      }
+    }
   },
   "variables": {
-    "template": {
-      "protectWithLocks": "[concat('nestedtemplates/protectwithlocks', parameters('protectWithLocks'), '.json')]"
-    },
     "uniqueString": "[uniqueString(subscription().id, resourceGroup().id)]",
     "diagnosticStorageAccountName": "[toLower( substring( replace( concat( parameters('keyVaultName'), variables('uniqueString'), variables('uniqueString') ), '-', ''), 0, 23) )]"
   },
@@ -133,95 +76,91 @@
     {
       "type": "Microsoft.KeyVault/vaults",
       "name": "[parameters('keyVaultName')]",
-      "apiVersion": "2018-02-14",
+      "apiVersion": "2019-09-01",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "Key Vault with logging"
       },
       "properties": {
-        "enabledForDeployment": "[parameters('enableVaultForDeployment')]",
-        "enabledForTemplateDeployment": "[parameters('enableVaultForTemplateDeployment')]",
-        "enabledForDiskEncryption": "[parameters('enableVaultForDiskEncryption')]",
-        "tenantId": "[parameters('tenantId')]",
-        "accessPolicies": [
-          {
-            "objectId": "[parameters('objectId')]",
-            "tenantId": "[parameters('tenantId')]",
-            "permissions": {
-              "keys": "[parameters('keysPermissions')]",
-              "secrets": "[parameters('secretsPermissions')]"      
-            }
-          }
-        ],
         "sku": {
           "name": "[parameters('vaultSku')]",
           "family": "A"
-        }
-      },
-      "resources": [
-        {
-          "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings",
-          "name": "[concat(parameters('keyVaultName'), '/Microsoft.Insights/service')]",
-          "apiVersion": "2016-09-01",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
-            "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]"
-          ],
-          "properties": {
-            "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]",
-            "logs": [
-              {
-                "category": "AuditEvent",
-                "enabled": true,
-                "retentionPolicy": {
-                  "enabled": true,
-                  "days": "[parameters('LogsRetentionInDays')]"
-                }
-              }
-            ]
+        },
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+          {
+            "objectId": "[parameters('objectId')]",
+            "tenantId": "[subscription().tenantId]",
+            "permissions": {
+              "keys": "[parameters('keysPermissions')]",
+              "secrets": "[parameters('secretsPermissions')]"
+            }
           }
-        }
-      ]
+        ]
+      }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('diagnosticStorageAccountName')]",
-      "apiVersion": "2018-07-01",
+      "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
       },
-      "kind": "Storage",
+      "kind": "StorageV2",
       "tags": {
         "displayName": "concat('Key Vault ', parameters('keyVaultName'), ' diagnostics storage account')"
-      },
-      "properties": {}
+      }
     },
     {
-      "type": "Microsoft.Resources/deployments",
-      "name": "protectWithLocks",
-      "apiVersion": "2018-05-01",
+      "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+      "type": "Microsoft.Insights/diagnosticsettings",
+      "apiVersion": "2017-05-01-preview",
+      "name": "service",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]"
       ],
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('template').protectWithLocks, parameters('_artifactsLocationSasToken')))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "keyVaultName": {
-            "value": "[parameters('keyVaultName')]"
-          },
-          "diagnosticStorageAccountName": {
-            "value": "[variables('diagnosticStorageAccountName')]"
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]",
+        "logs": [
+          {
+            "category": "AuditEvent",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": true,
+              "days": "[parameters('LogsRetentionInDays')]"
+            }
           }
-        }
+        ]
+      }
+    },
+    {
+      "condition": "[parameters('protectWithLocks')]",
+      "scope": "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
+      "type": "Microsoft.Authorization/locks",
+      "apiVersion": "2017-04-01",
+      "name": "keyVaultDoNotDelete",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "level": "CannotDelete"
+      }
+    },
+    {
+      "condition": "[parameters('protectWithLocks')]",
+      "scope": "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticStorageAccountName'))]",
+      "type": "Microsoft.Authorization/locks",
+      "apiVersion": "2017-04-01",
+      "name": "storageDoNotDelete",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]"
+      ],
+      "properties": {
+        "level": "CannotDelete"
       }
     }
-  ],
-  "outputs": {}
+  ]
 }

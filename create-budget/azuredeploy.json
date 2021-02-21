@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "budgetName": {
@@ -14,17 +14,6 @@
       "defaultValue": "1000",
       "metadata": {
         "description": "The total amount of cost or usage to track with the budget"
-      }
-    },
-    "budgetCategory": {
-      "type": "string",
-      "defaultValue": "Cost",
-      "allowedValues": [
-        "Cost",
-        "Usage"
-      ],
-      "metadata": {
-        "description": "The category of the budget, whether the budget tracks cost or usage."
       }
     },
     "timeGrain": {
@@ -51,29 +40,18 @@
         "description": "The end date for the budget in YYYY-MM-DD format. If not provided, we default this to 10 years from the start date."
       }
     },
-    "operator": {
-      "type": "string",
-      "defaultValue": "GreaterThan",
-      "allowedValues": [
-        "EqualTo",
-        "GreaterThan",
-        "GreaterThanOrEqualTo"
-      ],
-      "metadata": {
-        "description": "The comparison operator."
-      }
-    },
-    "threshold": {
+    "firstThreshold": {
       "type": "string",
       "defaultValue": "90",
       "metadata": {
         "description": "Threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It is always percent and has to be between 0 and 1000."
       }
     },
-    "contactEmails": {
-      "type": "array",
+    "secondThreshold": {
+      "type": "string",
+      "defaultValue": "110",
       "metadata": {
-        "description": "The list of email addresses to send the budget notification to when the threshold is exceeded."
+        "description": "Threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It is always percent and has to be between 0 and 1000."
       }
     },
     "contactRoles": {
@@ -87,22 +65,28 @@
         "description": "The list of contact roles to send the budget notification to when the threshold is exceeded."
       }
     },
+    "contactEmails": {
+      "type": "array",
+      "metadata": {
+        "description": "The list of email addresses to send the budget notification to when the threshold is exceeded."
+      }
+    },
     "contactGroups": {
       "type": "array",
       "metadata": {
         "description": "The list of action groups to send the budget notification to when the threshold is exceeded. It accepts array of strings."
       }
     },
-    "resourcesFilter": {
+    "resourceGroupFilterValues": {
       "type": "array",
       "metadata": {
-        "description": "The list of filters on resources."
+        "description": "The set of values for the first filter"
       }
     },
-    "metersFilter": {
+    "meterCategoryFilterValues": {
       "type": "array",
       "metadata": {
-        "description": "The list of filters on meters, mandatory for budgets of usage category."
+        "description": "The set of values for the second filter"
       }
     }
   },
@@ -110,37 +94,53 @@
   "resources": [
     {
       "type": "Microsoft.Consumption/budgets",
-      "name": "[parameters('budgetName')]",
       "apiVersion": "2019-10-01",
+      "name": "[parameters('budgetName')]",
       "properties": {
-        "category": "[parameters('budgetCategory')]",
-        "amount": "[parameters('amount')]",
-        "timeGrain": "[parameters('timeGrain')]",
         "timePeriod": {
           "startDate": "[parameters('startDate')]",
           "endDate": "[parameters('endDate')]"
         },
+        "timeGrain": "[parameters('timeGrain')]",
+        "amount": "[parameters('amount')]",
+        "category": "Cost",
         "notifications": {
-          "First-Notification": {
+          "NotificationForExceededBudget1": {
             "enabled": true,
-            "operator": "[parameters('operator')]",
-            "threshold": "[parameters('threshold')]",
+            "operator": "GreaterThan",
+            "threshold": "[parameters('firstThreshold')]",
+            "contactEmails": "[parameters('contactEmails')]",
+            "contactRoles": "[parameters('contactRoles')]",
+            "contactGroups": "[parameters('contactGroups')]"
+          },
+          "NotificationForExceededBudget2": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": "[parameters('secondThreshold')]",
             "contactEmails": "[parameters('contactEmails')]",
             "contactRoles": "[parameters('contactRoles')]",
             "contactGroups": "[parameters('contactGroups')]"
           }
         },
-        "filters": {
-          "resources": "[parameters('resourcesFilter')]",
-          "meters": "[parameters('metersFilter')]"
+        "filter": {
+          "and": [
+            {
+              "dimensions": {
+                "name": "ResourceGroupName",
+                "operator": "In",
+                "values": "[parameters('resourceGroupFilterValues')]"
+              }
+            },
+            {
+              "dimensions": {
+                "name": "MeterCategory",
+                "operator": "In",
+                "values": "[parameters('meterCategoryFilterValues')]"
+              }
+            }
+          ]
         }
       }
     }
-  ],
-  "outputs": {
-    "budgetName": {
-      "type": "string",
-      "value": "[parameters('budgetName')]"
-    }
-  }
+  ]
 }

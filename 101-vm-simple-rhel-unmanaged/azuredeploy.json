@@ -37,15 +37,19 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A1_v2",
+      "metadata": {
+        "description": "description"
+      }
     }
   },
   "variables": {
     "storageAccountName": "[concat(uniquestring(parameters('vmName')), 'storage')]",
-    "dataDisk1VhdName": "[concat(uniquestring(parameters('vmName')), 'datadisk1')]",
-    "dataDisk2VhdName": "[concat(uniquestring(parameters('vmName')), 'datadisk2')]",
     "imagePublisher": "RedHat",
     "imageOffer": "RHEL",
-    "OSDiskName": "[concat(uniquestring(parameters('vmName')), 'osdisk')]",
     "nicName": "[concat(uniquestring(parameters('vmName')), 'nic')]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -53,8 +57,6 @@
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(uniquestring(parameters('vmName')), 'publicip')]",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
-    "vmSize": "Standard_DS2_v2",
     "virtualNetworkName": "[concat(uniquestring(parameters('vmName')), 'vnet')]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "linuxConfiguration": {
@@ -74,14 +76,15 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "StorageV2"
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -92,7 +95,7 @@
     {
       "comments": "Simple Network Security Group for subnet [variables('subnetName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-05-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -114,7 +117,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -141,13 +144,13 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -167,17 +170,17 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-06-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[parameters('vmName')]",
@@ -189,7 +192,7 @@
           "imageReference": {
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
-            "sku": "7.2",
+            "sku": "7.8",
             "version": "latest"
           },
           "osDisk": {
@@ -200,13 +203,13 @@
           "dataDisks": [
             {
               "name": "[concat(parameters('vmName'),'_DataDisk1')]",
-              "diskSizeGB": "100",
+              "diskSizeGB": 100,
               "lun": 0,
               "createOption": "Empty"
             },
             {
               "name": "[concat(parameters('vmName'),'_DataDisk2')]",
-              "diskSizeGB": "100",
+              "diskSizeGB": 100,
               "lun": 1,
               "createOption": "Empty"
             }
@@ -222,7 +225,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob]"
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2019-06-01').primaryEndpoints.blob]"
           }
         }
       }

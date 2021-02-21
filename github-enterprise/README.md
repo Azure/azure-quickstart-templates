@@ -9,7 +9,9 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/github-enterprise/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/github-enterprise/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fgithub-enterprise%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fgithub-enterprise%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fgithub-enterprise%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fgithub-enterprise%2Fazuredeploy.json) 
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fgithub-enterprise%2Fazuredeploy.json)
 
 This template deploys GitHub Enterprise on an Ubuntu virtual machine. GitHub Enterprise leverages Premium Storage, and attaches a replicated 512 GB data disk by default.
 
@@ -23,5 +25,3 @@ You can configure GitHub Enterprise by visiting the public IP address assigned t
 ### Learn More
 
 [GitHub Enterprise](https://enterprise.github.com)
-
-

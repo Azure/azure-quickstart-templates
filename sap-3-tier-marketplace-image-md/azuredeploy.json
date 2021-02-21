@@ -156,7 +156,7 @@
         "OSType": "Windows"
       },
       "SLES 12": {
-        "sku": "12-SP3",
+        "sku": "12-SP4",
         "offer": "SLES-SAP",
         "publisher": "SUSE",
         "OSType": "Linux"
@@ -180,14 +180,14 @@
         "Publisher": "Microsoft.Compute",
         "Name": "CustomScriptExtension",
         "Version": "1.7",
-        "script": "[uri(parameters('_artifactsLocation'), concat('scripts/diskConfig.ps1', parameters('_artifactsLocationSasToken')))]",
+        "script": "[uri(parameters('_artifactsLocation'), concat('diskConfig.ps1', parameters('_artifactsLocationSasToken')))]",
         "scriptCall": "powershell.exe -ExecutionPolicy bypass -File diskConfig.ps1"
       },
       "Linux": {
         "Publisher": "Microsoft.Azure.Extensions",
         "Name": "CustomScript",
         "Version": "2.0",
-        "script": "[uri(parameters('_artifactsLocation'), concat('scripts/diskConfig.sh', parameters('_artifactsLocationSasToken')))]",
+        "script": "[uri(parameters('_artifactsLocation'), concat('diskConfig.sh', parameters('_artifactsLocationSasToken')))]",
         "scriptCall": "sh diskConfig.sh"
       }
     },
@@ -1564,7 +1564,7 @@
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[concat(variables('nsgName'))]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
@@ -1574,10 +1574,10 @@
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
       ],
       "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
@@ -1602,7 +1602,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameASCS')]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
@@ -1616,7 +1616,7 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIpNameLBASCS')]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-05-01",
       "condition": "[and(greater(variables('ascsvmCount') , 1), greater(length(parameters('subnetId')), 0))]",
       "sku": {
         "name": "Standard"
@@ -1629,11 +1629,11 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerNamePubASCS')]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "condition": "[and(greater(variables('ascsvmCount') , 1), greater(length(parameters('subnetId')), 0))]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpNameLBASCS'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpNameLBASCS'))]"
       ],
       "sku": {
         "name": "Standard"
@@ -1678,10 +1678,10 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('publicIpNameASCS'), '-', copyIndex())]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-05-01",
       "condition": "[equals(length(parameters('subnetId')), 0)]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
       ],
       "sku": {
         "name": "Standard"
@@ -1698,11 +1698,11 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerNameASCS')]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "condition": "[greater(variables('ascsvmCount') , 1)]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
       ],
       "sku": {
         "name": "Standard"
@@ -1717,16 +1717,16 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicNameASCS'), '-', copyIndex())]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-05-01",
       "copy": {
         "name": "nicASCSLoop",
         "count": "[variables('ascsvmCount')]"
       },
       "dependsOn": [
         "pipLoop",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNameASCS'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNamePubASCS'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNamePubASCS'))]"
       ],
       "location": "[parameters('location')]",
       "properties": {
@@ -1754,9 +1754,9 @@
       },
       "dependsOn": [
         "nicASCSLoop",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameASCS'))]"
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameASCS'))]"
       ],
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), array(variables('azArray')[mod(copyIndex(), variables('azArrayLength'))]))]",
       "properties": {
@@ -1805,7 +1805,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmNameASCS'), '-', copyIndex(), '/', variables('csExtension')[variables('internalOSType')].Name)]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "xscsVMLoop"
@@ -1830,7 +1830,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameDB')]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
@@ -1844,7 +1844,7 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIpNameLBDB')]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-05-01",
       "sku": {
         "name": "Standard"
       },
@@ -1856,11 +1856,11 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerNamePubDB')]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "condition": "[greater(variables('ascsvmCount') , 1)]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpNameLBDB'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpNameLBDB'))]"
       ],
       "sku": {
         "name": "Standard"
@@ -1905,11 +1905,11 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerNameDB')]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "condition": "[greater(variables('dbvmCount') , 1)]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
       ],
       "sku": {
         "name": "Standard"
@@ -1924,15 +1924,15 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicNameDB'), '-', copyIndex())]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-05-01",
       "copy": {
         "name": "nicDBLoop",
         "count": "[variables('dbvmCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNameDB'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNamePubDB'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNamePubDB'))]"
       ],
       "location": "[parameters('location')]",
       "properties": {
@@ -1959,9 +1959,9 @@
       },
       "dependsOn": [
         "nicDBLoop",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameDB'))]"
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameDB'))]"
       ],
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), array(variables('azArray')[mod(copyIndex(), variables('azArrayLength'))]))]",
       "properties": {
@@ -2004,7 +2004,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmNameDB'), '-', copyIndex(), '/', variables('csExtension')[variables('internalOSType')].Name)]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "dbVMLoop"
@@ -2029,7 +2029,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameDI')]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
@@ -2043,9 +2043,9 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicNameDI'), '-', copyindex())]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-05-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
       ],
       "copy": {
         "name": "nicDILoop",
@@ -2075,9 +2075,9 @@
       },
       "dependsOn": [
         "nicDILoop",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameDI'))]"
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameDI'))]"
       ],
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), array(variables('azArray')[mod(copyIndex(), variables('azArrayLength'))]))]",
       "properties": {
@@ -2126,7 +2126,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmNameDI'), '-', copyIndex(), '/', variables('csExtension')[variables('internalOSType')].Name)]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "diVMLoop"

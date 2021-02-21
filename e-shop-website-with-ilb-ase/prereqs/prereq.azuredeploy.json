@@ -10,36 +10,9 @@
     },
     "location": {
       "type": "string",
-      "allowedValues": [
-        "Central US",
-        "East US",
-        "East US 2",
-        "North Central US",
-        "South Central US",
-        "West US",
-        "Canada Central",
-        "North Europe",
-        "West Europe",
-        "East Asia",
-        "Southeast Asia",
-        "Japan East",
-        "Japan West",
-        "Brazil South",
-        "Australia East",
-        "Australia Southeast",
-        "West India",
-        "Central India",
-        "South India"
-      ],
-      "defaultValue": "West US",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location of the App Service Environment."
-      }
-    },
-    "dnsSuffix": {
-      "type": "string",
-      "metadata": {
-        "description": "DNS Suffix used for Apps in ILB ASE"
       }
     }
   },
@@ -54,33 +27,32 @@
   },
   "resources": [
     {
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2019-08-01",
       "type": "Microsoft.Web/hostingEnvironments",
       "name": "[parameters('name')]",
       "location": "[parameters('location')]",
       "kind": "ASEV2",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
       ],
       "properties": {
         "name": "[parameters('name')]",
         "location": "[parameters('location')]",
         "virtualNetwork": {
-          "Id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+          "Id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('aseSubnetName'))]",
           "Subnet": "[variables('aseSubnetName')]"
         },
-        "dnsSuffix": "[parameters('dnsSuffix')]",
         "internalLoadBalancingMode": 3
       }
     },
     {
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('subnetNSGName'))]",
-        "[concat('Microsoft.Network/routeTables/', variables('subnetRouteTableName'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('subnetNSGName'))]",
+        "[resourceId('Microsoft.Network/routeTables/', variables('subnetRouteTableName'))]"
       ],
       "properties": {
         "addressSpace": {
@@ -119,7 +91,7 @@
       }
     },
     {
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/routeTables",
       "name": "[variables('subnetRouteTableName')]",
       "location": "[variables('location')]",
@@ -139,7 +111,7 @@
       }
     },
     {
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('subnetNSGName')]",
       "location": "[variables('location')]",
@@ -401,7 +373,7 @@
     },
     "existingASEDNSSuffix": {
       "type": "string",
-      "value": "[parameters('dnsSuffix')]"
+      "value": "[reference(resourceId('Microsoft.Web/hostingEnvironments', parameters('name')), '2019-08-01').dnsSuffix]"
     }
   }
 }

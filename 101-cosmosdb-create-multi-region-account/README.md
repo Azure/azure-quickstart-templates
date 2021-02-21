@@ -9,6 +9,10 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create-multi-region-account/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create-multi-region-account/CredScanResult.svg)
 
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-create-multi-region-account%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-create-multi-region-account%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-create-multi-region-account%2Fazuredeploy.json)
+
 This template will create an Azure Cosmos DB account and provides multiple different configurations including:
 
 - **API Type:** Select from any of the supported API types including: SQL, Cassandra, Gremlin, MongoDB, or Table.
@@ -16,9 +20,3 @@ This template will create an Azure Cosmos DB account and provides multiple diffe
 - **Multi-Region:** Select locations for primary and secondary regions.
 - **Multi-Master:** Select whether to enable multi-master support. Primary and Secondary regions, fully writable.
 - **Automatic Failover:** Select whether to enable automatic failover on the account (Ignored when Multi-Master is enabled).
-
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-create-multi-region-account%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-create-multi-region-account%2Fazuredeploy.json)
-
-    
-
-

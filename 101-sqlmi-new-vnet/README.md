@@ -1,4 +1,4 @@
-# Azure Sql Database Managed Instance (SQL MI) Creation inside New Virtual Network
+# Azure SQL Managed Instance (SQL MI) creation inside new virtual network
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-sqlmi-new-vnet/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-sqlmi-new-vnet/PublicDeployment.svg)
@@ -8,24 +8,28 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-sqlmi-new-vnet/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-sqlmi-new-vnet/CredScanResult.svg)
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-sqlmi-new-vnet%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-sqlmi-new-vnet%2Fazuredeploy.json)
 
-This template allows you to create a [Azure SQL Database Managed Instances](https://docs.microsoft.com/en-us/azure/sql-database/sql-database-managed-instance) inside a new virtual network.
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-sqlmi-new-vnet%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-sqlmi-new-vnet%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-sqlmi-new-vnet%2Fazuredeploy.json)
+
+This template allows you to create an [Azure SQL Managed Instance](https://docs.microsoft.com/azure/azure-sql/managed-instance/sql-managed-instance-paas-overview) inside a new virtual network. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/azure-sql/managed-instance/create-template-quickstart) article.
 
 `Tags: Azure, SqlDb, Managed Instance`
 
 ## Solution overview and deployed resources
 
-This deployment will create an Azure Virtual Network with properly configured _ManagedInstance_ subnet and deploy Managed Instance inside.
+This deployment creates an Azure Virtual Network with a properly configured _ManagedInstance_ subnet and deploys a Managed Instance inside.
 
 ## Deployment steps
 
-You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo, and populate following parameters:
- - Name of the Managed Instance that will be create including Managed Instance admin name and password
- - Name of the Azure Virtual Network that will be created and configured, including the address range that will be associated to this VNet. Default address range is 10.0.0.0/16 but you could change it to fit your needs.
- - Name of the subnet where Managed Instance will be created. The name will be _ManagedInstance_, if you don't want to change it. Default address range is 10.0.0.0/24 but you could change it to fit your needs.
- - Sku name that combines service tear and hardware generation, number of virtual cores and storage size in GB. The table below shows supported combinations.
- - License type that could be _BasePrice_ if you are eligable for [Azure Hybrid Use Benefit for SQL Server](https://azure.microsoft.com/en-us/pricing/hybrid-benefit/) or _LicenseIncluded_ otherwise
+You can select the **Deploy to Azure** button at the beginning of this document. Or, follow the instructions for command line deployment using the scripts in the root of this repository, and populate the following parameters:
+
+- Name of the Managed Instance that will be created including Managed Instance administrator name and password.
+- Name of the Azure Virtual Network that will be created and configured, including the address range that will be associated to this VNet. The default address range is `10.0.0.0/16` but you can change it to fit your needs.
+- Name of the subnet where the Managed Instance will be created. If you don't change the name, it will be _ManagedInstance_. The default address range is `10.0.0.0/24` but you can change it to fit your needs.
+- Sku name that combines service tier and hardware generation, number of virtual cores and storage size in GB. The table below shows supported combinations.
+- License type of _BasePrice_ if you're eligible for [Azure Hybrid Use Benefit for SQL Server](https://azure.microsoft.com/pricing/hybrid-benefit/) or _LicenseIncluded_.
 
 ||GP_Gen4|GP_Gen5|BC_Gen4|BC_Gen5|
 |----|------|-----|------|-----|
@@ -38,10 +42,6 @@ You can click the "Deploy to Azure" button at the beginning of this document or 
 
 ## Important
 
-During the public preview deployment might take up to 6h. This is because virtual cluster that hosts the instances needs some time to deploy. Each subsequent instance creation in the same virtual cluster takes just about a few minutes.
+During the public preview deployment might take up to six hours. This is because a virtual cluster that hosts the instances needs time to deploy. Each subsequent instance creation in the same virtual cluster takes a few minutes.
 
-After the last Managed Instance is deprovisioned, cluster stays a live for up to 24h. This is to avoid waiting for a new cluster to be provisioned in case that customer just wants to recreate the instance. During that period of time Resource Group and virtual network could not be deleted. This is a known issue and Managed Instance team is working on resolving it.
-
-
-
-
+After the last Managed Instance is deprovisioned, the cluster stays alive for up to 24 hours. This avoids waiting for a new cluster to be provisioned in case that customer just wants to recreate the instance. During that time period the resource group and virtual network can't be deleted. This is a known issue and the Managed Instance team is working on a resolution.

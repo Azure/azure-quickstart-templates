@@ -14,12 +14,28 @@ $key = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]
 $subKey =  $key.OpenSubKey("SOFTWARE\Microsoft\ConfigMgr10\Setup")
 $uiInstallPath = $subKey.GetValue("UI Installation Directory")
 $modulePath = $uiInstallPath+"bin\ConfigurationManager.psd1"
-Import-Module $modulePath
+# Import the ConfigurationManager.psd1 module 
+if((Get-Module ConfigurationManager) -eq $null) {
+    Import-Module $modulePath
+}
 $key = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry64)
 $subKey =  $key.OpenSubKey("SOFTWARE\Microsoft\SMS\Identification")
 $SiteCode =  $subKey.GetValue("Site Code")
 $MachineName = $DPMPName + "." + $DomainFullName
 $initParams = @{}
+
+$ProviderMachineName = $env:COMPUTERNAME+"."+$DomainFullName # SMS Provider machine name
+# Connect to the site's drive if it is not already present
+"[$(Get-Date -format HH:mm:ss)] Setting PS Drive..." | Out-File -Append $logpath
+New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
+
+while((Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyContinue) -eq $null) 
+{
+    "[$(Get-Date -format HH:mm:ss)] Retry in 10s to set PS Drive. Please wait." | Out-File -Append $logpath
+    Start-Sleep -Seconds 10
+    New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
+}
+
 Set-Location "$($SiteCode):\" @initParams
 
 $SystemServer = Get-CMSiteSystemServer -SiteSystemServerName $MachineName

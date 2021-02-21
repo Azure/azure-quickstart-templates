@@ -3,8 +3,8 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sqlServerName": {
-      "defaultValue": "[concat('sql', uniqueString(resourceGroup().id))]",
       "type": "string",
+      "defaultValue": "[concat('sql', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The SQL Logical Server name."
       }
@@ -28,8 +28,8 @@
       }
     },
     "transparentDataEncryption": {
-      "defaultValue": "Enabled",
       "type": "string",
+      "defaultValue": "Enabled",
       "allowedValues": [
         "Enabled",
         "Disabled"
@@ -39,15 +39,15 @@
       }
     },
     "serviceLevelObjective": {
-      "defaultValue": "DW400",
       "type": "string",
+      "defaultValue": "DW400c",
       "metadata": {
         "description": "Performance Level"
       }
     },
     "location": {
-      "defaultValue": "[resourceGroup().location]",
       "type": "string",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Resource location"
       }
@@ -56,9 +56,9 @@
   "variables": {},
   "resources": [
     {
-      "name": "[parameters('sqlServerName')]",
       "type": "Microsoft.Sql/servers",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[parameters('sqlServerName')]",
       "location": "[parameters('location')]",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
@@ -68,10 +68,13 @@
       "resources": [
         {
           "type": "databases",
-          "kind": "v12.0,user,datawarehouse",
+          "apiVersion": "2020-02-02-preview",
           "name": "[parameters('dataWarehouseName')]",
-          "apiVersion": "2015-05-01-preview",
           "location": "[parameters('location')]",
+          "kind": "v12.0,user,datawarehouse",
+          "dependsOn": [
+            "[parameters('sqlServerName')]"
+          ],
           "properties": {
             "edition": "DataWarehouse",
             "status": "Online",
@@ -81,21 +84,18 @@
             "zoneRedundant": false,
             "isUpgradeRequested": false
           },
-          "dependsOn": [
-            "[parameters('sqlServerName')]"
-          ],
           "resources": [
             {
               "comments": "Transparent Data Encryption",
-              "name": "current",
               "type": "transparentDataEncryption",
               "apiVersion": "2017-03-01-preview",
-              "properties": {
-                "status": "[parameters('transparentDataEncryption')]"
-              },
+              "name": "current",
               "dependsOn": [
                 "[parameters('dataWarehouseName')]"
-              ]
+              ],
+              "properties": {
+                "status": "[parameters('transparentDataEncryption')]"
+              }
             }
           ]
         }

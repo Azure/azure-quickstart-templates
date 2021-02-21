@@ -9,9 +9,13 @@
         [Parameter(Mandatory)]
         [String]$DPMPName,
         [Parameter(Mandatory)]
-        [String]$ClientName,
+        [String]$CSName,
         [Parameter(Mandatory)]
         [String]$PSName,
+        [Parameter(Mandatory)]
+        [String]$ClientName,
+        [Parameter(Mandatory)]
+        [String]$Configuration,
         [Parameter(Mandatory)]
         [String]$DNSIPAddress,
         [Parameter(Mandatory)]

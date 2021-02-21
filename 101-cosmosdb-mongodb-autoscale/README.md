@@ -9,6 +9,10 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb-autoscale/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb-autoscale/CredScanResult.svg)
 
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-mongodb-autoscale%2Fazuredeploy.json)
+[![Deploy To Azure Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-mongodb-autoscale%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-mongodb-autoscale%2Fazuredeploy.json)
+
 This template creates an Azure Cosmos account for MongoDB API, with replicas in two regions, then provision a database with autoscale throughput shared across 2 collections.
 
 Below are the parameters which can be user configured in the parameters file or template including:
@@ -21,8 +25,6 @@ Below are the parameters which can be user configured in the parameters file or 
 - **Database Name:** Enter the database name for the account.
 - **Collection 1 Name:** Enter the name for the first collection.
 - **Collection 2 Name:** Enter the name for the second collection.
-- **Throughput Policy:** Select Manual or Autoscale throughput policy.
-- **Manual Provisioned Throughput:** Enter the shared RU/s for the database when Throughput Policy is Manual (default 400).
-- **Autoscale Max Throughput:** Enter the shared maximum RU/s for the database when Throughput Policy is Autoscale (default 4000).
+- **Autoscale Max Throughput:** Enter the shared maximum autoscale RU/s for the database (default and minimum is 4000).
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-mongodb-autoscale%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-mongodb-autoscale%2Fazuredeploy.json)
+

@@ -10,9 +10,8 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/mysql-paas-replication/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-paas-replication%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-paas-replication%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-paas-replication%2Fazuredeploy.json)
-
-
 
 `Tags: MySQL, Replication, PaaS, Replicas, Read-Only`
 
@@ -35,5 +34,3 @@ Use this command line to connect to the MySQL PaaS instances, if using the Cloud
 ```bash
 mysql -h <fqdnOfTheMySQLInstance> -u <userCreatedForTheMySQLInstance>@<fqdnOfTheMySQLInstance> -p
 ```
-
-

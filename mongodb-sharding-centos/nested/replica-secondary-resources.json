@@ -37,7 +37,6 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
       }
@@ -48,12 +47,12 @@
     "adminPasswordOrKey": {
       "type": "securestring"
     },
-    "_artifactsLocationSasToken":{
+    "_artifactsLocationSasToken": {
       "type": "securestring"
     }
   },
   "variables": {
-    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('subnet').vnet, parameters('subnet').name)]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -68,7 +67,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-06-01",
       "name": "diskSelection",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -89,12 +88,15 @@
           },
           "DataDiskPrefix": {
             "value": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))]",
       "location": "[parameters('location')]",
@@ -113,13 +115,13 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm'))]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), parameters('vmbasename'), 'nic')]",
-        "[concat('Microsoft.Resources/deployments/', 'diskSelection')]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), parameters('vmbasename'), 'nic'))]",
+        "[resourceId('Microsoft.Resources/deployments/', 'diskSelection')]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -155,11 +157,11 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/replicaSecondaryInstall')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('namespace'), parameters('vmbasename'), 'vm')]",
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), parameters('vmbasename'), 'nic')]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('namespace'), parameters('vmbasename'), 'vm'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), parameters('vmbasename'), 'nic'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",

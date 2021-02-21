@@ -8,13 +8,6 @@
         "description": "Name of alert"
       }
     },
-    "alertDescription": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Description of alert"
-      }
-    },
     "status": {
       "type": "string",
       "defaultValue": "",
@@ -27,61 +20,68 @@
         "description": "Description of alert"
       }
     },
-    "isEnabled": {
-      "type": "bool",
-      "defaultValue": true,
-      "metadata": {
-        "description": "Specifies whether alerts are enabled"
-      }
-    },
-    "sendToServiceOwners": {
-      "type": "bool",
-      "defaultValue": true,
-      "metadata": {
-        "description": "Specifies whether alerts are sent to service owners"
-      }
-    },
-    "customEmailAddresses": {
+    "emailAddress": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "email@example.com",
       "metadata": {
-        "description": "Comma-delimited email addresses where the alerts are also sent"
+        "description": "Email address where the alerts are sent."
       }
     },
-    "location": {
+    "emailName": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
+      "defaultValue": "Example",
       "metadata": {
-        "description": "Location for all resources."
+        "description": "Email address where the alerts are sent."
       }
     }
   },
-  "variables": {
-    "customEmails": "[split(parameters('customEmailAddresses'), ',')]"
-  },
   "resources": [
     {
-      "type": "Microsoft.Insights/alertRules",
+      "type": "Microsoft.Insights/activityLogAlerts",
+      "apiVersion": "2017-04-01",
       "name": "[parameters('alertName')]",
-      "location": "[parameters('location')]",
-      "apiVersion": "2014-04-01",
+      "location": "global",
       "properties": {
-        "name": "[parameters('alertName')]",
-        "description": "[parameters('alertDescription')]",
-        "isEnabled": "[parameters('isEnabled')]",
+        "enabled": true,
+        "scopes": [
+          "[subscription().id]"
+        ],
         "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ManagementEventRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleManagementEventDataSource",
-            "resourceProviderName": "Azure.Health",
-            "status": "[parameters('status')]"
-          }
+          "allOf": [
+            {
+              "field": "category",
+              "equals": "ResourceHealth"
+            },
+            {
+              "field": "status",
+              "equals": "[parameters('status')]"
+            }
+          ]
         },
-        "action": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-          "sendToServiceOwners": "[parameters('sendToServiceOwners')]",
-          "customEmails": "[variables('customEmails')]"
+        "actions": {
+          "actionGroups": [
+            {
+              "actionGroupId": "[resourceId('microsoft.insights/actionGroups','emailActionGroup')]"
+            }
+          ]
         }
+      }
+    },
+    {
+      "name": "emailActionGroup",
+      "type": "microsoft.insights/actionGroups",
+      "apiVersion": "2019-06-01",
+      "location": "global",
+      "properties": {
+        "groupShortName": "string",
+        "enabled": true,
+        "emailReceivers": [
+          {
+            "name": "[parameters('emailName')]",
+            "emailAddress": "[parameters('emailAddress')]",
+            "useCommonAlertSchema": true
+          }
+        ]
       }
     }
   ]

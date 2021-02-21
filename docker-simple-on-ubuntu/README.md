@@ -14,5 +14,3 @@
 
 This template allows you to deploy an Ubuntu VM with Docker (using the Docker Extension) installed.
 You can run `docker` commands by connecting to the virtual machine with SSH.
-
-

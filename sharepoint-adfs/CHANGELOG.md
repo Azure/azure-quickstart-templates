@@ -1,4 +1,86 @@
-# Change log for Azure template for SharePoint 2019 / 2016 / 2013
+# Change log for Azure template SharePoint-ADFS
+
+## Enhancements & bug-fixes - Published in February 9, 2021
+
+* Update DSC module cChoco from 2.4 to 2.5 to fix issue <https://github.com/chocolatey/cChoco/issues/151> 
+
+## Enhancements & bug-fixes - Published in December 10, 2020
+
+* Update all Chocolatey packages to their latest version
+* Remove ADFS service account from Administrators group
+* Fix the duplicate SPN issue on MSSQLSvc service, which was on both the SQL computer and the SQL service account
+* Set the SPN of SharePoint sites on the SharePoint application pool account
+* Set property ProviderSignOutUri on resource SPTrustedIdentityTokenIssuer
+* Update DSC module SqlServerDsc from 14.2.1 to 15.0
+
+## Enhancements & bug-fixes - Published in October 13, 2020
+
+* Set FrontEnd VMs with SharePoint MinRole Front-End on SharePoint versions that support MinRoles configuration
+* Increase max numberOfAdditionalFrontEnd from 3 to 4
+* Install Edge Chromium in SharePoint VM and Front-End VMs through Chocolatey
+* Install Notepad++ in SharePoint VM and Front-End VMs through Chocolatey
+* Install 7-zip in SharePoint VM and Front-End VMs through Chocolatey
+* Install Fiddler in SharePoint VM and Front-End VMs through Chocolatey
+* Install ULS Viewer in SharePoint VM and Front-End VMs through Chocolatey
+* Install Chrome in Front-End VMs through Chocolatey
+* Install Everything in Front-End VM through Chocolatey
+* Define the list of all possible values for the time zone parameter vmsTimeZone
+* Update WaitToAvoidServersJoiningFarmSimultaneously to ensure it runs only 1 time, and updated the delay from 60 to 90 secs to improve reliability
+* Use a unique location for custom registry keys
+* Update parameters passed to ConfigureFE
+* Update DSC module SharePointDSC from 4.2 to 4.3
+* Update DSC module NetworkingDsc from 8.0 to 8.1
+* Update DSC module ActiveDirectoryCSDsc from 4.1 to 5.0
+* Update DSC module xWebAdministration from 3.1.1 to 3.2
+* Remove the workaround on the template validation error as the bug is fixed in the portal
+
+## Enhancements & bug-fixes - Published in October 5, 2020
+
+* Implement workaround to the template validation error when it is deployed from the portal and parameter numberOfAdditionalFrontEnd is set to 0
+
+## Enhancements & bug-fixes - Published in October 2, 2020
+
+* Replace parameter addFrontEndToFarm with numberOfAdditionalFrontEnd
+* Add parameter numberOfAdditionalFrontEnd to set between 0 to 3 FE VMs to add to SharePoint farm
+* Customize resource ComputerManagementDsc.Computer to trigger reboot of SharePoint VMs without error
+
+## Enhancements & bug-fixes - Published in September 18, 2020
+
+* Run SPDistributedCacheService as farm account instead of a different service account
+* Disable IE Enhanced Security Configuration (ESC) on SharePoint VMs
+* Disable the first run wizard of IE on SharePoint VMs
+* Set new tabs to open "about:blank" in IE on SharePoint VMs
+* Move resources to avoid error on ExtendMainWebApp
+* Remove customization of SPDiagnosticLoggingSettings
+* Update apiVersion of Microsoft.DevTestLab/schedules to 2018-10-15-preview
+
+## September 2020 update
+
+* Many modifications made to DSC scripts to improve their reliability, readability and consistency
+* Ensure compliance with policy CASG-DenyNSGRule100Allow
+
+## August 2020 update
+
+* Fix timeout issue / DSC not resuming after VM reboot: Update dependencies of DSC extensions of SP and SQL, so they no longer depend on DSC of DC
+
+## July 2020 update
+
+* Update SQL to SQL Server 2019 on Windows Server 2019
+* Add a network security group to Azure Bastion subnet
+* Rename some resources and variables with more meaningful names
+* Update apiVersion of each resource to latest version
+* Update VM sizes to more recent, powerful and cheaper ones (prices per month in West US as of 2020-08-11):
+  - DC: from [Standard_F4](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-previous-gen?toc=/azure/virtual-machines/linux/toc.json&bc=/azure/virtual-machines/linux/breadcrumb/toc.json) ($316.09) to [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) ($183.96)
+  - SQL: from [Standard_D2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) ($183.96) to [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series) ($185.42)
+  - SP: from [Standard_D11_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series-memory) ($192.72) to [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series) ($185.42)
+* Update DSC module NetworkingDsc from 7.4 to 8.0
+* Update DSC module xPSDesiredStateConfiguration from 8.10 to 9.1
+* Update DSC module ActiveDirectoryCSDsc from 4.1 to 5.0
+* Update DSC module xDnsServer from 1.15 to 1.16
+* Update DSC module ComputerManagementDsc from 7.0 to 8.3
+* Update DSC module SqlServerDsc from 13.2 to 14.1
+* Update DSC module xWebAdministration from 2.8 to 3.1.1
+* Update DSC module SharePointDSC from 3.6 to 4.2
 
 ## February 2020 update
 

@@ -117,6 +117,7 @@ The common properties should be authored consistently to provide for understanda
         {
             "comments": "if any",
             "condition": true,
+            "scope": "% parent scope %",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2017-12-01",
             "name": "[concat(parameters('virtualMachineName'), copyIndex(1))]",
@@ -384,12 +385,12 @@ The following code provides an example:
   "type": "Microsoft.Compute/virtualMachines",
   "name": "[parameters('vmName')]",
   "location": "[parameters('location')]",
+  "plan": {
+    "name": "ContosoSKU",
+    "publisher":"Contoso",
+    "product":"ContosoProduct"
+  },
   "properties": {
-    "plan": {
-      "name": "ContosoSKU",
-      "publisher":"Contoso",
-      "product":"ContosoProduct"
-    },
     "hardwareProfile": {
       "vmSize": "[parameters('vmSize')]"
     },

@@ -41,9 +41,10 @@
         }
     },
     "variables": {
-        "cliContainerName": "create-share",
-        "cliContainerGroupName": "create-share-group",
-        "cliContainerImage": "microsoft/azure-cli:latest",
+        "scriptName": "createFileShare",
+        "identityName": "scratch",
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "roleDefinitionName": "[guid(variables('identityName'), variables('roleDefinitionId'))]",
         "sftpContainerName": "sftp",
         "sftpContainerGroupName": "sftp-group",
         "sftpContainerImage": "atmoz/sftp:latest",
@@ -52,81 +53,72 @@
     },
     "resources": [
         {
-            "type": "Microsoft.Resources/deployments",
-            "name": "pid-18f281fe-d1e1-502c-8b87-d945383dc75b",
-            "apiVersion": "2015-01-01",
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "name": "[variables('identityName')]",
+            "apiVersion": "2018-11-30",
+            "location": "[parameters('location')]"
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[variables('roleDefinitionName')]",
+            "dependsOn": [
+                "[variables('identityName')]"
+            ],
             "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "resources": []
-                }
+                "roleDefinitionId": "[variables('roleDefinitionId')]",
+                "principalId": "[reference(variables('identityName')).principalId]",
+                "scope": "[resourceGroup().id]",
+                "principalType": "ServicePrincipal"
             }
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
-            "apiVersion": "2018-02-01",
+            "apiVersion": "2019-06-01",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "[parameters('storageAccountType')]"
             },
-            "kind": "Storage",
-            "properties": {}
+            "kind": "StorageV2",
+            "properties": {},
+            "dependsOn": [
+                "[variables('roleDefinitionName')]" // need to create a slight delay for the roleAssignment to replicate before the deployment script can run
+            ]
         },
         {
-            "type": "Microsoft.ContainerInstance/containerGroups",
-            "name": "[variables('cliContainerGroupName')]",
-            "apiVersion": "2018-04-01",
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "[variables('scriptName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[variables('storageAccountName')]"
             ],
-            "properties": {
-                "containers": [
-                    {
-                        "name": "[variables('cliContainerName')]",
-                        "properties": {
-                            "image": "[variables('cliContainerImage')]",
-                            "command": [
-                                "az",
-                                "storage",
-                                "share",
-                                "create",
-                                "--name",
-                                "[parameters('fileShareName')]"
-                            ],
-                            "environmentVariables": [
-                                {
-                                    "name": "AZURE_STORAGE_KEY",
-                                    "value": "[listKeys(variables('storageAccountName'),'2018-02-01').keys[0].value]"
-                                },
-                                {
-                                    "name": "AZURE_STORAGE_ACCOUNT",
-                                    "value": "[variables('storageAccountName')]"
-                                }
-                            ],
-                            "resources": {
-                                "requests": {
-                                    "cpu": 1,
-                                    "memoryInGB": 1
-                                }
-                            }
-                        }
+            "kind": "AzurePowerShell",
+            "identity": {
+                "type": "userAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]": { /*ttk bug*/
                     }
-                ],
-                "restartPolicy": "OnFailure",
-                "osType": "Linux"
+                }
+            },
+            "properties": {
+                "forceUpdateTag": "1",
+                "azPowerShellVersion": "3.0",
+                "arguments": "[format(' -storageAccountName {0} -fileShareName {1} -resourceGroupName {2}', variables('storageAccountName'), parameters('fileShareName'), resourceGroup().name)]",
+                "scriptContent": "param([string] $storageAccountName, [string] $fileShareName, [string] $resourceGroupName) Get-AzStorageAccount -StorageAccountName $storageAccountName -ResourceGroupName $resourceGroupName | New-AzStorageShare -Name $fileShareName",
+                "timeout": "PT5M",
+                "cleanupPreference": "OnSuccess",
+                "retentionInterval": "P1D"
             }
         },
         {
             "type": "Microsoft.ContainerInstance/containerGroups",
             "name": "[variables('sftpContainerGroupName')]",
-            "apiVersion": "2018-04-01",
+            "apiVersion": "2019-12-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[variables('cliContainerGroupName')]"
+                "[variables('scriptName')]"
             ],
             "properties": {
                 "containers": [

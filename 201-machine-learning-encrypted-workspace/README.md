@@ -11,6 +11,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-machine-learning-encrypted-workspace%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-machine-learning-encrypted-workspace%2Fazuredeploy.json)
+
 This template creates an Azure Machine Learning workspace with the following configurations:
 
 * confidential_data: Enabling this turns on the following behavior in your Azure Machine Learning workspace:
@@ -90,7 +91,7 @@ PowerShell
 
 ### Add a key for encryption
 
-To generate a key in an existing Azure Key Vault, use one of the following commands. Replace `<keyvault-name>` with the name of the key vault. Replace `<key-name>` with the name to use for the key:
+To generate a key in an existing Azure Key Vault, use the [prereq template](prereqs/prereq.azuredeploy.json) provide with this sample or one of the following commands. Replace `<keyvault-name>` with the name of the key vault. Replace `<key-name>` with the name to use for the key:
 
 Azure CLI
 
@@ -104,9 +105,9 @@ PowerShell
     Add-AzKeyVaultKey -VaultName <keyvault-name> -Name <key-name> -Destination 'Software'
 ```
 
-### Enable customer-managged keys for Azure Cosmos DB (preview)
+### Enable customer-managged keys for Azure Cosmos DB
 
-To enable your subscription for customer-managed keys, send mail to azurecosmosdbcmk@service.microsoft.com with your subscription ID. For more information, see [Configure customer-managed keys for your AzureCosmos account](https://docs.microsoft.com/azure/cosmos-db/how-to-setup-cmk).
+See data encryption section of [Enterprise Security for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security#data-encryption) and [Configure customer-managed keys for your AzureCosmos account](https://docs.microsoft.com/azure/cosmos-db/how-to-setup-cmk).
 
 ### Add an access policy to the key vault
 
@@ -141,6 +142,34 @@ PowerShell
 ```powershell
     Set-AzKeyVaultAccessPolicy -VaultName <keyvault-name> -ObjectId <object-ID> -PermissionsToKeys get, unwrapKey, wrapKey
 ```
+
+### Look up cmk_keyvault and resource_cmk_uri
+
+Use this command to see cmk_keyvault.
+
+Azure CLI: Id at the beginning of output is cmk_keyvault. Like this: /subscriptions/<subscripiton id>/resourceGroup/<rg name>/providers/Microsoft.KeyVault/vaults/<keyvault-name>.
+
+```bash
+    az keyvault show --name <keyvault-name>
+```
+
+PowerShell: Resource id  is cmk_keyvault. Like this: /subscriptions/<subscripiton id>/resourceGroup/<rg name>/providers/Microsoft.KeyVault/vaults/<keyvault-name>.
+
+```powershell
+    Get-AzureRMKeyVault -VaultName '<keyvault-name>'
+```
+Use this command to see resource_cmk_uri.
+
+Azure CLI: kid is resource_cmk_uri. Like this: https://<keyvault-name>.vault.azure.net/keys/<key-name>/******.
+
+```bash
+    az keyvault key show --vault-name <keyvault-name> --name <key-name> 
+```
+
+PowerShell: Id is resource_cmk_uri. Like this: https://<keyvault-name>.vault.azure.net/keys/<key-name>/******.
+
+```powershell
+    Get-AzureKeyVaultKey -VaultName '<keyvault-name>' -KeyName '<key-name>'
 
 ## More information
 

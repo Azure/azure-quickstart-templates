@@ -48,16 +48,10 @@
                 "description": "Password to be used for the SQL Server service account"
             }
         },
-        "nicVnetUri": {
+        "subnetId": {
             "type": "string",
             "metadata": {
                 "description": "Resource ID for existing vnet/subnet to which VM NICs should be attached"
-            }
-        },
-        "existingSubnetName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the existing subnet in the existing VNET to which the SQL Server VMs should be deployed"
             }
         },
         "enableOutboundInternet": {
@@ -129,40 +123,37 @@
         }
     },
     "variables": {
-        "apiVersionStorage": "2016-01-01",
         "witnessStorageName": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id),'cw')]",
         "witnessStorageType": "Standard_LRS",
         "vmNamePrefix": "[concat(parameters('namePrefix'),'-sql-')]",
         "clusterName": "[concat(variables('vmNamePrefix'),'c')]",
-        "vmLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/newVM.json',parameters('_artifactsLocationSasToken'))]",
-        "ipLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/getIpAddress.json',parameters('_artifactsLocationSasToken'))]",
-        "sqlPrepModulesURL": "[concat(parameters('_artifactsLocation'),'/dsc/prep-sqlao.ps1.zip',parameters('_artifactsLocationSasToken'))]",
+        "vmLoopTemplateURL": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/newVM.json',parameters('_artifactsLocationSasToken')))]",
+        "ipLoopTemplateURL": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/getIpAddress.json',parameters('_artifactsLocationSasToken')))]",
+        "sqlPrepModulesURL": "[uri(parameters('_artifactsLocation'), concat('dsc/prep-sqlao.ps1.zip',parameters('_artifactsLocationSasToken')))]",
         "sqlPrepFunction": "PrepSQLAO.ps1\\PrepSQLAO",
-        "sqlConfigModulesURL": "[concat(parameters('_artifactsLocation'),'/dsc/config-sqlao.ps1.zip',parameters('_artifactsLocationSasToken'))]",
+        "sqlConfigModulesURL": "[uri(parameters('_artifactsLocation'), concat('dsc/config-sqlao.ps1.zip',parameters('_artifactsLocationSasToken')))]",
         "sqlConfigFunction": "ConfigSQLAO.ps1\\ConfigSQLAO",
         "agName": "[concat(variables('vmNamePrefix'),'ag')]",
         "agListenerName": "[concat(variables('vmNamePrefix'),'agl')]",
         "agEpName": "[concat(variables('vmNamePrefix'),'ha')]",
         "albName": "[concat(variables('vmNamePrefix'),'alb')]",
-        "albID": "[resourceId('Microsoft.Network/loadBalancers',variables('albName'))]",
         "albPip": "[concat(variables('vmNamePrefix'),'albpip')]",
         "albPipID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('albPip'))]",
         "albFE1": "[concat(variables('vmNamePrefix'),'albfe1')]",
         "albBE": "[concat(variables('vmNamePrefix'),'albbe')]",
-        "albBEAddressPoolID": "[concat(variables('albID'),'/backendAddressPools/',variables('albBE'))]",
-        "albBEPoolTemplateURL": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/albBEPool.json',parameters('_artifactsLocationSasToken'))]",
-        "albFEConfigID1": "[concat(variables('albID'),'/frontendIPConfigurations/',variables('albFE1'))]",
+        "albBEAddressPoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('albName'), variables('albBE'))]",
+        "albBEPoolTemplateURL": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/albBEPool.json',parameters('_artifactsLocationSasToken')))]",
+        "albFEConfigID1": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('albName'),variables('albFE1'))]",
         "albProbe1": "[concat(variables('vmNamePrefix'),'albp1')]",
-        "albProbeID1": "[concat(variables('albID'),'/probes/',variables('albProbe1'))]",
+        "albProbeID1": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('albName'),variables('albProbe1'))]",
         "lbName": "[concat(variables('vmNamePrefix'),'ilb')]",
-        "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
         "lbFE1": "[concat(variables('vmNamePrefix'),'ilbfe1')]",
         "lbBE": "[concat(variables('vmNamePrefix'),'ilbbe')]",
-        "lbFEConfigID1": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('lbFE1'))]",
-        "lbBEAddressPoolID": "[concat(variables('lbID'),'/backendAddressPools/',variables('lbBE'))]",
+        "lbFEConfigID1": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),variables('lbFE1'))]",
+        "lbBEAddressPoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),variables('lbBE'))]",
         "lbProbe1": "[concat(variables('vmNamePrefix'),'ilbp1')]",
-        "lbProbeID1": "[concat(variables('lbID'),'/probes/',variables('lbProbe1'))]",
-        "lbBEPoolTemplateURL": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/lbBEPool.json',parameters('_artifactsLocationSasToken'))]",
+        "lbProbeID1": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'), variables('lbProbe1'))]",
+        "lbBEPoolTemplateURL": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/lbBEPool.json',parameters('_artifactsLocationSasToken')))]",
         "agListenerPort": 1433,
         "agProbePort": 59999,
         "snatTcpPort": 59998,
@@ -173,7 +164,7 @@
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('witnessStorageName')]",
-            "apiVersion": "2016-01-01",
+            "apiVersion": "2019-06-01",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "[variables('witnessStorageType')]"
@@ -181,7 +172,7 @@
             "kind": "Storage"
         },
         {
-            "apiVersion": "2017-08-01",
+            "apiVersion": "2020-08-01",
             "name": "[variables('lbName')]",
             "type": "Microsoft.Network/loadBalancers",
             "location": "[parameters('location')]",
@@ -195,7 +186,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
-                                "id": "[concat(parameters('nicVnetUri'),'/subnets/',parameters('existingSubnetName'))]"
+                                "id": "[parameters('subnetId')]"
                             }
                         }
                     }
@@ -239,7 +230,7 @@
             }
         },
         {
-            "apiVersion": "2017-08-01",
+            "apiVersion": "2020-08-01",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('albPip')]",
             "location": "[parameters('location')]",
@@ -252,7 +243,7 @@
             }
         },
         {
-            "apiVersion": "2017-08-01",
+            "apiVersion": "2020-08-01",
             "name": "[variables('albName')]",
             "type": "Microsoft.Network/loadBalancers",
             "location": "[parameters('location')]",
@@ -316,7 +307,7 @@
             "name": "[concat(variables('vmNamePrefix'), copyindex(), '-nic')]",
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[parameters('location')]",
-            "apiVersion": "2017-08-01",
+            "apiVersion": "2020-08-01",
             "copy": {
                 "name": "nicLoop",
                 "count": "[parameters('vmCount')]"
@@ -328,7 +319,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
-                                "id": "[concat(parameters('nicVnetUri'),'/subnets/',parameters('existingSubnetName'))]"
+                                "id": "[parameters('subnetId')]"
                             },           
                             "primary": true
                         }
@@ -338,7 +329,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
-                                "id": "[concat(parameters('nicVnetUri'),'/subnets/',parameters('existingSubnetName'))]"
+                                "id": "[parameters('subnetId')]"
                             }
                         }
                     }
@@ -347,7 +338,7 @@
         },
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2015-01-01",
+            "apiVersion": "2020-10-01",
             "name": "[concat(variables('vmNamePrefix'),'0-clusterIp')]",
             "dependsOn": [
                 "nicLoop"
@@ -359,14 +350,14 @@
                 },
                 "parameters": {
                     "ipConfig": {
-                        "value": "[reference(concat(variables('vmNamePrefix'), '0-nic')).ipConfigurations[1].properties.privateIPAddress]"
+                        "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmNamePrefix'), '0-nic'))).ipConfigurations[1].properties.privateIPAddress]"
                     }
                 }
             }
         },
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2015-01-01",
+            "apiVersion": "2020-10-01",
             "copy": {
                 "name": "clusterIpLoop",
                 "count": "[sub(parameters('vmCount'),1)]"
@@ -374,7 +365,7 @@
             "name": "[concat(variables('vmNamePrefix'),copyIndex(1),'-clusterIp')]",
             "dependsOn": [
                 "nicLoop",
-                "[concat(variables('vmNamePrefix'),'0-clusterIp')]"
+                "[resourceId('Microsoft.Resources/deployments', concat(variables('vmNamePrefix'),'0-clusterIp'))]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -383,17 +374,17 @@
                 },
                 "parameters": {
                     "ipConfig": {
-                        "value": "[reference(concat(variables('vmNamePrefix'), copyIndex(1), '-nic')).ipConfigurations[1].properties.privateIPAddress]"
+                        "value": "[reference(resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmNamePrefix'), copyIndex(1), '-nic'))).ipConfigurations[1].properties.privateIPAddress]"
                     },
                     "ipAddresses": {
-                        "value": "[reference(concat(variables('vmNamePrefix'),copyIndex(),'-clusterIp')).outputs.result.value]"
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', concat(variables('vmNamePrefix'),copyIndex(),'-clusterIp'))).outputs.result.value]"
                     }
                 }
             }
         },
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2015-01-01",
+            "apiVersion": "2020-10-01",
             "copy": {
                 "name": "virtualMachineLoop",
                 "count": "[parameters('vmCount')]"
@@ -429,12 +420,6 @@
                     "adminPassword": {
                         "value": "[parameters('adminPassword')]"
                     },
-                    "_artifactsLocation": {
-                        "value": "[parameters('_artifactsLocation')]"
-                    },
-                    "_artifactsLocationSasToken": {
-                        "value": "[parameters('_artifactsLocationSasToken')]"
-                    },
                     "imagePublisher": {
                         "value": "[parameters('imagePublisher')]"
                     },
@@ -456,7 +441,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('vmNamePrefix'),copyindex(1),'/sqlPrep')]",
-            "apiVersion": "2017-03-30",
+            "apiVersion": "2020-12-01",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "virtualMachineLoop"
@@ -500,7 +485,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('vmNamePrefix'),'0/sqlConfig')]",
-            "apiVersion": "2017-03-30",
+            "apiVersion": "2020-12-01",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "virtualMachineLoop",
@@ -524,8 +509,8 @@
                         "sqlAlwaysOnAvailabilityGroupListenerName": "[variables('agListenerName')]",
                         "sqlAlwaysOnEndpointName": "[variables('agEpName')]",
                         "vmCount": "[parameters('vmCount')]",
-                        "clusterIpAddresses": "[reference(concat(variables('vmNamePrefix'),sub(parameters('vmCount'),1),'-clusterIp')).outputs.result.value]",
-                        "agListenerIpAddress": "[reference(variables('lbName')).frontendIPConfigurations[0].properties.privateIPAddress]",
+                        "clusterIpAddresses": "[reference(resourceId('Microsoft.Resources/deployments', concat(variables('vmNamePrefix'),sub(parameters('vmCount'),1),'-clusterIp'))).outputs.result.value]",
+                        "agListenerIpAddress": "[reference(resourceId('Microsoft.Network/loadbalancers', variables('lbName'))).frontendIPConfigurations[0].properties.privateIPAddress]",
                         "numberOfDisks": "[parameters('vmDiskCount')]",
                         "workloadType": "[parameters('workloadType')]",
                         "databaseEnginePort": "[variables('agListenerPort')]",
@@ -549,14 +534,14 @@
                     "items": {
                         "adminPassword": "[parameters('adminPassword')]",
                         "sqlServicePassword": "[parameters('sqlServicePassword')]",
-                        "witnessStorageKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts',variables('witnessStorageName')),variables('apiVersionStorage')).keys[0].value]"
+                        "witnessStorageKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts',variables('witnessStorageName')), '2019-06-01').keys[0].value]"
                     }
                 }
             }
         },
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2015-01-01",
+            "apiVersion": "2020-10-01",
             "name": "[concat(variables('vmNamePrefix'),'lbbepool')]",
             "condition": "[equals(parameters('enableOutboundInternet'),'No')]",
             "dependsOn": [
@@ -577,11 +562,8 @@
                     "vmCount": {
                         "value": "[parameters('vmCount')]"
                     },
-                    "nicVnetUri": {
-                        "value": "[parameters('nicVnetUri')]"
-                    },
-                    "existingSubnetName": {
-                        "value": "[parameters('existingSubnetName')]"
+                    "subnetId": {
+                        "value": "[parameters('subnetId')]"
                     },
                     "lbBEAddressPoolID": {
                         "value": "[variables('lbBEAddressPoolID')]"
@@ -591,7 +573,7 @@
         },
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2015-01-01",
+            "apiVersion": "2020-10-01",
             "name": "[concat(variables('vmNamePrefix'),'albbepool')]",
             "condition": "[equals(parameters('enableOutboundInternet'),'Yes')]",
             "dependsOn": [
@@ -612,11 +594,8 @@
                     "vmCount": {
                         "value": "[parameters('vmCount')]"
                     },
-                    "nicVnetUri": {
-                        "value": "[parameters('nicVnetUri')]"
-                    },
-                    "existingSubnetName": {
-                        "value": "[parameters('existingSubnetName')]"
+                    "subnetId": {
+                        "value": "[parameters('subnetId')]"
                     },
                     "lbBEAddressPoolID": {
                         "value": "[variables('lbBEAddressPoolID')]"

@@ -1,480 +1,360 @@
 #!/bin/bash
 
-echo $(date) " - Starting Script"
+echo $(date) " - ############## Starting Script ####################"
 
 set -e
 
 export SUDOUSER=$1
-export PASSWORD="$2"
-export PRIVATEKEY=$3
-export MASTER=$4
-export MASTERPUBLICIPHOSTNAME=$5
-export MASTERPUBLICIPADDRESS=$6
-export INFRA=$7
-export NODE=$8
-export NODECOUNT=$9
-export INFRACOUNT=${10}
-export MASTERCOUNT=${11}
-export ROUTING=${12}
-export REGISTRYSA=${13}
-export ACCOUNTKEY="${14}"
-export TENANTID=${15}
-export SUBSCRIPTIONID=${16}
-export AADCLIENTID=${17}
-export AADCLIENTSECRET="${18}"
-export RESOURCEGROUP=${19}
-export LOCATION=${20}
-export METRICS=${21}
-export LOGGING=${22}
-export AZURE=${23}
-export STORAGEKIND=${24}
-export RHEL_USERNAME=${25}
-export RHEL_PASSWORD=${26}
-export DATA_STORAGEACCOUNT=${27}
-export VNETNAME=${28}
-export NODESECURITYGROUP=${29}
-export NODEAVAILABILITYSET=${30}
-export RHELPOOLID=${31}
-export STORAGEOPTION=${32}
-export NFSHOST=${33}
-export SINGLEMULTI=${34}
-export ARTIFACTSLOCATIONTOKEN="${35}"
-export ARTIFACTSLOCATION=${36::-1}
-export INFRAPUBLICIP=${37}
-#TEMPPASSWORD=${38}
-export OCUSER=$1
-export OCPASSWORD="$2"
+export OPENSHIFTPASSWORD=$2
+export SSHKEY=$3
+export WORKERCOUNT=$4
+export MASTERCOUNT=$5
+export SUBSCRIPTIONID=$6
+export TENANTID=$7
+export AADCLIENTID=$8
+export AADSECRET=$9
+export RESOURCEGROUPNAME=${10}
+export LOCATION=${11}
+export VIRTUALNETWORKNAME=${12}
+export PXSPECURL=${13}
+export STORAGEOPTION=${14}
+export NFSIPADDRESS=${15}
+export SINGLEORMULTI=${16}
+export ARTIFACTSLOCATION=${17::-1}
+export ARTIFACTSTOKEN=\"${18}\"
+export BASEDOMAIN=${19}
+export MASTERINSTANCETYPE=${20}
+export WORKERINSTANCETYPE=${21}
+export CLUSTERNAME=${22}
+export CLUSTERNETWORKCIDR=${23}
+export HOSTADDRESSPREFIX=${24}
+export VIRTUALNETWORKCIDR=${25}
+export SERVICENETWORKCIDR=${26}
+export BASEDOMAINRG=${27}
+export NETWORKRG=${28}
+export MASTERSUBNETNAME=${29}
+export WORKERSUBNETNAME=${30}
+export PULLSECRET=${31}
+export FIPS=${32}
+export PUBLISH=${33}
+export OPENSHIFTUSER=${34}
+export ENABLEAUTOSCALER=${35}
+export OUTBOUNDTYPE=${36}
 
-# Determine if Commercial Azure or Azure Government
-CLOUD=$( curl -H Metadata:true "http://169.254.169.254/metadata/instance/compute/location?api-version=2017-04-02&format=text" | cut -c 1-2 )
-export CLOUD=${CLOUD^^}
+#Var
+export INSTALLERHOME=/home/$SUDOUSER/.openshift
 
-export MASTERLOOP=$((MASTERCOUNT - 1))
-export INFRALOOP=$((INFRACOUNT - 1))
-export NODELOOP=$((NODECOUNT - 1))
+# Grow Root File System
+yum -y install cloud-utils-growpart.noarch
+echo $(date) " - Grow Root FS"
 
-# Generate private keys for use by Ansible
-echo $(date) " - Generating Private keys for use by Ansible for OpenShift Installation"
+rootdev=`findmnt --target / -o SOURCE -n`
+rootdrivename=`lsblk -no pkname $rootdev`
+rootdrive="/dev/"$rootdrivename
+name=`lsblk  $rootdev -o NAME | tail -1`
+part_number=${name#*${rootdrivename}}
 
-runuser -l $SUDOUSER -c "echo \"$PRIVATEKEY\" > /home/$SUDOUSER/.ssh/id_rsa"
-runuser -l $SUDOUSER -c "chmod 600 /home/$SUDOUSER/.ssh/id_rsa*"
+growpart $rootdrive $part_number -u on
+xfs_growfs $rootdev
 
-echo $(date) "- Configuring SSH ControlPath to use shorter path name"
-
-sed -i -e "s/^# control_path = %(directory)s\/%%h-%%r/control_path = %(directory)s\/%%h-%%r/" /etc/ansible/ansible.cfg
-sed -i -e "s/^#host_key_checking = False/host_key_checking = False/" /etc/ansible/ansible.cfg
-sed -i -e "s/^#pty=False/pty=False/" /etc/ansible/ansible.cfg
-sed -i -e "s/^#stdout_callback = skippy/stdout_callback = skippy/" /etc/ansible/ansible.cfg
-
-# Cloning Ansible playbook repository
-((cd /home/$SUDOUSER && git clone https://github.com/Microsoft/openshift-container-platform-playbooks.git) || (cd /home/$SUDOUSER/openshift-container-platform-playbooks && git pull))
-if [ -d /home/$SUDOUSER/openshift-container-platform-playbooks ]
+if [ $? -eq 0 ]
 then
-  echo " - Retrieved playbooks successfully"
+    echo $(date) " - Root File System successfully extended"
 else
-  echo " - Retrieval of playbooks failed"
-  exit 99
+    echo $(date) " - Root File System failed to be grown"
+	exit 20
 fi
 
-# Create docker registry config based on Commercial Azure or Azure Government
-if [[ $CLOUD == "US" ]]
-then
-  DOCKERREGISTRYYAML=dockerregistrygov.yaml
-  export CLOUDNAME="AzureUSGovernmentCloud"
-else
-  DOCKERREGISTRYYAML=dockerregistrypublic.yaml
-  export CLOUDNAME="AzurePublicCloud"
-fi
+echo $(date) " - Install Podman"
+yum install -y podman
+echo $(date) " - Install Podman Complete"
 
-# Create Master nodes grouping
-echo $(date) " - Creating Master nodes grouping"
+echo $(date) " - Install httpd-tools"
+yum install -y httpd-tools
+echo $(date) " - Install httpd-tools Complete"
 
-if [[ $INFRACOUNT == 0 ]];then
-masterinfra="node-config-master-infra"
-else
-masterinfra="node-config-master"
-fi
+echo $(date) " - Download Binaries"
+runuser -l $SUDOUSER -c "mkdir -p /home/$SUDOUSER/.openshift"
 
-for (( c=0; c<$MASTERCOUNT; c++ ))
-do
-  mastergroup="$mastergroup
-$MASTER-$c openshift_node_group_name=\"$masterinfra\""
-done
+runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.12/openshift-install-linux-4.6.12.tar.gz"
+runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.12/openshift-client-linux-4.6.12.tar.gz"
+runuser -l $SUDOUSER -c "tar -xvf openshift-install-linux-4.6.12.tar.gz -C $INSTALLERHOME"
+runuser -l $SUDOUSER -c "sudo tar -xvf openshift-client-linux-4.6.12.tar.gz -C /usr/bin"
 
-# Create Infra nodes grouping 
-echo $(date) " - Creating Infra nodes grouping"
+chmod +x /usr/bin/kubectl
+chmod +x /usr/bin/oc
+chmod +x $INSTALLERHOME/openshift-install
+echo $(date) " - Download Binaries Done."
 
-for (( c=0; c<$INFRACOUNT; c++ ))
-do
-  infragroup="$infragroup
-$INFRA-$c openshift_node_group_name=\"node-config-infra\""
-done
-
-# Create Nodes grouping
-echo $(date) " - Creating Nodes grouping"
-
-for (( c=0; c<$NODECOUNT; c++ ))
-do
-  nodegroup="$nodegroup
-$NODE-$c openshift_node_group_name=\"node-config-compute\""
-done
-
-#Storage grouping
-echo $(date) " - Creating Storage Nodes grouping"
-
-if [[ $STORAGEOPTION == "glusterfs" ]]
-then
-  for (( c=0; c<$NODECOUNT; c++ ))
-  do
-    storagegroup="$storagegroup
-$NODE-$c glusterfs_devices='[\"/dev/sdc\"]'"
-  done
-
-  if [[ $NODECOUNT < 3 ]]
-  then
-  for (( c=0; c<$INFRACOUNT; c++ ))
-  do
-    storagegroup="$storagegroup
-$INFRA-$c glusterfs_devices='[\"/dev/sdc\"]'"
-  done
-  fi
-  glustercount=$(($NODECOUNT + $INFRACOUNT))
-  if [[ $glustercount < 3 ]]
-  then
-  for (( c=1; c<$MASTERCOUNT; c++ ))
-  do
-    storagegroup="$storagegroup
-$MASTER-$c glusterfs_devices='[\"/dev/sdc\"]'"
-  done
-  fi
-else
-  storagegroup="$NFSHOST-0"
-fi
-
-# Set HA mode if 3 or 5 masters chosen
-if [[ $MASTERCOUNT != 1 ]]
-then
-	export HAMODE="openshift_master_cluster_method=native"
-fi
-
-if [[ $ROUTING == "nipio" ]];then
-export PUBLICDEPLOY="openshift_master_default_subdomain=$INFRAPUBLICIP.nip.io
-openshift_master_cluster_hostname=$MASTERPUBLICIPHOSTNAME
-openshift_master_cluster_public_hostname=$MASTERPUBLICIPHOSTNAME
-openshift_master_cluster_public_vip=$MASTERPUBLICIPADDRESS
-openshift_master_logging_public_url=https://kibana.$INFRAPUBLICIP.nip.io
-openshift_logging_master_public_url=https://$MASTERPUBLICIPHOSTNAME:443"
-fi
-
-#GlusterFS Vars
-if [[ $STORAGEOPTION == "glusterfs" ]]
-then
-  export STORAGEVARS="openshift_storage_glusterfs_image=registry.redhat.io/rhgs3/rhgs-server-rhel7:v3.11
-openshift_storage_glusterfs_block_image=registry.redhat.io/rhgs3/rhgs-gluster-block-prov-rhel7:v3.11
-openshift_storage_glusterfs_heketi_image=registry.redhat.io/rhgs3/rhgs-volmanager-rhel7:v3.11
-
-openshift_storage_glusterfs_namespace=glusterfs
-openshift_storage_glusterfs_storageclass=true
-openshift_storage_glusterfs_storageclass_default=true
-openshift_storage_glusterfs_block_deploy=false"
-fi
-
-# Single or Multi Zone
-if [[ $SINGLEMULTI == 'single' ]]
-then
-	export AZORAS="openshift_cloudprovider_azure_availability_set_name=$NODEAVAILABILITYSET"
-fi
-
-# Setting the default openshift_cloudprovider_kind if Azure enabled
-if [[ $AZURE == "true" ]]
-then
-	export CLOUDKIND="openshift_cloudprovider_azure_client_id=$AADCLIENTID
-openshift_cloudprovider_azure_client_secret=$AADCLIENTSECRET
-openshift_cloudprovider_azure_tenant_id=$TENANTID
-openshift_cloudprovider_azure_subscription_id=$SUBSCRIPTIONID
-openshift_cloudprovider_azure_cloud=$CLOUDNAME
-openshift_cloudprovider_azure_vnet_name=$VNETNAME
-openshift_cloudprovider_azure_security_group_name=$NODESECURITYGROUP
-openshift_cloudprovider_azure_resource_group=$RESOURCEGROUP
-openshift_cloudprovider_azure_location=$LOCATION
-  CNS_DEFAULT_STORAGE=false"
-	if [[ $STORAGEKIND == "managed" ]]
-	then
-		SCKIND="openshift_storageclass_parameters={'kind': 'managed', 'storageaccounttype': 'Premium_LRS'}"
-	else
-		SCKIND="openshift_storageclass_parameters={'kind': 'shared', 'storageaccounttype': 'Premium_LRS'}"
-	fi
-fi
-
-# Create Ansible Hosts File
-echo $(date) " - Create Ansible Hosts file"
-
-cat > /etc/ansible/hosts <<EOF
-# Create an OSEv3 group that contains the masters and nodes groups
-[OSEv3:children]
-masters
-nodes
-etcd
-master0
-new_nodes
-new_masters
-$STORAGEOPTION
-
-# Set variables common for all OSEv3 hosts
-[OSEv3:vars]
-ansible_ssh_user=$SUDOUSER
-ansible_become=yes
-ansible_ssh_pass=${38}
-oreg_auth_user=$RHEL_USERNAME
-oreg_auth_password=$RHEL_PASSWORD
-openshift_deployment_type=openshift-enterprise
-openshift_override_hostname_check=true
-openshift_master_api_port=443
-openshift_master_console_port=443
-
-openshift_disable_check=docker_storage,disk_availability,memory_availability,docker_image_availability
-$CLOUDKIND
-$AZORAS
-
-$HAMODE
-$PUBLICDEPLOY
-
-# Enable HTPasswdPasswordIdentityProvider
-openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
-
-# Disable service catalog - Install after cluster is up if Azure Cloud Provider is enabled
-openshift_enable_service_catalog=false
-
-# Disable the OpenShift SDN plugin
-# openshift_use_openshift_sdn=true
-
-# Variables if GlusterFS is selected
-$STORAGEVARS
-
-# Setup metrics
-openshift_metrics_install_metrics=false
-openshift_metrics_start_cluster=true
-openshift_metrics_hawkular_nodeselector={"node-role.kubernetes.io/infra":"true"}
-openshift_metrics_cassandra_nodeselector={"node-role.kubernetes.io/infra":"true"}
-openshift_metrics_heapster_nodeselector={"node-role.kubernetes.io/infra":"true"}
-# openshift_metrics_hawkular_hostname=https://hawkular-metrics.$INFRAPUBLICIP.nip.io/hawkular/metrics
-
-# Setup logging
-openshift_logging_install_logging=false
-openshift_logging_fluentd_nodeselector={"logging":"true"}
-openshift_logging_es_nodeselector={"node-role.kubernetes.io/infra":"true"}
-openshift_logging_kibana_nodeselector={"node-role.kubernetes.io/infra":"true"}
-openshift_logging_curator_nodeselector={"node-role.kubernetes.io/infra":"true"}
-openshift_logging_elasticsearch_memory_limit=1Gi
-#openshift_logging_es_number_of_shards=3
-
-# host group for masters
-[masters]
-$MASTER-[0:${MASTERLOOP}]
-
-# host group for etcd
-[etcd]
-$MASTER-[0:${MASTERLOOP}]
-
-[master0]
-$MASTER-0
-
-[$STORAGEOPTION]
-$storagegroup
-
-# host group for nodes
-[nodes]
-$mastergroup
-$infragroup
-$nodegroup
-
-# host group for new nodes
-[new_nodes]
-
-# host group for new masters
-[new_masters]
+echo $(date) " - Setup Azure Credentials for OCP"
+runuser -l $SUDOUSER -c "mkdir -p /home/$SUDOUSER/.azure"
+runuser -l $SUDOUSER -c "touch /home/$SUDOUSER/.azure/osServicePrincipal.json"
+cat > /home/$SUDOUSER/.azure/osServicePrincipal.json <<EOF
+{"subscriptionId":"$SUBSCRIPTIONID","clientId":"$AADCLIENTID","clientSecret":"$AADSECRET","tenantId":"$TENANTID"}
 EOF
+echo $(date) " - Setup Azure Credentials for OCP - Complete"
 
-echo $(date) " - Download ansible config files"
-echo $(date) " - Cloning openshift-ansible repo for use in installation"
-
-runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/config.yml\"$ARTIFACTSLOCATIONTOKEN\" -O config.yml)"
-
-if [ ! -d /home/$SUDOUSER/openshift-ansible ]
-then
-  (cd /home/$SUDOUSER && git clone -b release-3.11 https://github.com/openshift/openshift-ansible)
+echo $(date) " - Setup Install config"
+runuser -l $SUDOUSER -c "mkdir -p $INSTALLERHOME/openshiftfourx"
+runuser -l $SUDOUSER -c "touch $INSTALLERHOME/openshiftfourx/install-config.yaml"
+zones=""
+if [[ $SINGLEORMULTI == "az" ]]; then
+zones="zones:
+      - '1'
+      - '2'
+      - '3'"
 fi
-
-chmod -R 777 /home/$SUDOUSER/openshift-ansible
-echo $(date) " - Cloning openshift-ansible repo for use in installation - COMPLETED"
-
-# Create Azure File Storage Class
-cat > /home/$SUDOUSER/azure-file.yml <<EOF
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
+cat > $INSTALLERHOME/openshiftfourx/install-config.yaml <<EOF
+apiVersion: v1
+baseDomain: $BASEDOMAIN
+compute:
+- hyperthreading: Enabled
+  name: worker
+  platform: 
+    azure:
+      type: $WORKERINSTANCETYPE
+      osDisk:
+        diskSizeGB: 256
+      $zones
+  replicas: $WORKERCOUNT
+controlPlane:
+  hyperthreading: Enabled
+  name: master
+  platform: 
+    azure:
+      type: $MASTERINSTANCETYPE
+      osDisk:
+        diskSizeGB: 256
+      $zones
+  replicas: $MASTERCOUNT
 metadata:
-  name: azurefile
-provisioner: kubernetes.io/azure-file
-mountOptions:
-  - dir_mode=0777
-  - file_mode=0777
-parameters:
-  skuName: Premium_LRS
-  location: $LOCATION
-  storageAccount: $DATA_STORAGEACCOUNT
+  creationTimestamp: null
+  name: $CLUSTERNAME
+networking:
+  clusterNetwork:
+  - cidr: $CLUSTERNETWORKCIDR
+    hostPrefix: $HOSTADDRESSPREFIX
+  machineCIDR: $VIRTUALNETWORKCIDR
+  networkType: OpenShiftSDN
+  serviceNetwork:
+  - $SERVICENETWORKCIDR
+platform:
+  azure:
+    baseDomainResourceGroupName: $BASEDOMAINRG
+    region: $LOCATION
+    networkResourceGroupName: $NETWORKRG
+    virtualNetwork: $VIRTUALNETWORKNAME
+    controlPlaneSubnet: $MASTERSUBNETNAME
+    computeSubnet: $WORKERSUBNETNAME
+    outboundType: $OUTBOUNDTYPE
+pullSecret: '$PULLSECRET'
+fips: $FIPS
+publish: $PUBLISH
+sshKey: |
+  $SSHKEY
 EOF
+echo $(date) " - Setup Install config - Complete"
 
-# Create /etc/origin/cloudprovider/azure.conf on all hosts if Azure is enabled
-if [[ $AZURE == "true" ]]
-then
-	runuser $SUDOUSER -c "ansible-playbook -f 10 /home/$SUDOUSER/openshift-container-platform-playbooks/create-azure-conf.yaml"
-	if [ $? -eq 0 ]
-	then
-		echo $(date) " - Creation of Cloud Provider Config (azure.conf) completed on all nodes successfully"
-	else
-		echo $(date) " - Creation of Cloud Provider Config (azure.conf) completed on all nodes failed to complete"
-		exit 13
-	fi
-fi
+echo $(date) " - Install OCP"
+runuser -l $SUDOUSER -c "$INSTALLERHOME/openshift-install create cluster --dir=$INSTALLERHOME/openshiftfourx --log-level=debug"
+runuser -l $SUDOUSER -c "sleep 120"
+echo $(date) " - OCP Install Complete"
 
-# Configure Cluster
-echo $(date) " - Configure Cluster"
-runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/config.yml --extra-vars \"poolid=$RHELPOOLID\""
+echo $(date) " - Kube Config setup"
+runuser -l $SUDOUSER -c "mkdir -p /home/$SUDOUSER/.kube"
+runuser -l $SUDOUSER -c "cp $INSTALLERHOME/openshiftfourx/auth/kubeconfig /home/$SUDOUSER/.kube/config"
+echo $(date) "Kube Config setup done"
 
-if [[ $STORAGEOPTION != "portworx" ]]
-then
-	runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/$STORAGEOPTION.yml\"$ARTIFACTSLOCATIONTOKEN\" -O $STORAGEOPTION.yml)"
-	runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/$STORAGEOPTION.yml"
-fi
+#Switch to Machine API project
+runuser -l $SUDOUSER -c "oc project openshift-machine-api"
 
-# Initiating installation of OpenShift Origin prerequisites using Ansible Playbook
-echo $(date) " - Running Prerequisites via Ansible Playbook"
-runuser -l $SUDOUSER -c "ansible-playbook -f 10 /home/$SUDOUSER/openshift-ansible/playbooks/prerequisites.yml"
-
-echo $(date) " - Prerequisites check complete"
-
-# Initiating installation of OpenShift Origin using Ansible Playbook
-echo $(date) " - Installing OpenShift Container Platform via Ansible Playbook"
-
-runuser -l $SUDOUSER -c "ansible-playbook -f 10 /home/$SUDOUSER/openshift-ansible/playbooks/deploy_cluster.yml"
-echo $(date) " - OpenShift Origin Cluster install complete"
-
-# echo $(date) " - Running additional playbooks to finish configuring and installing other components"
-
-echo $(date) "Create OC Credentials"
-runuser -l $SUDOUSER -c "ansible master0 -m command -a \"oc create user '$OCUSER'\""
-runuser -l $SUDOUSER -c "ansible masters -m command -a \"htpasswd -b /etc/origin/master/htpasswd '$OCUSER' '$OCPASSWORD'\""
-runuser -l $SUDOUSER -c "ansible master0 -m command -a \"oc adm policy add-cluster-role-to-user cluster-admin '$OCUSER'\""
-echo $(date) "OC Credentials create complete"
-
-# Configure Docker Registry to use Azure Storage Account
-echo $(date) "- Configuring Docker Registry to use Azure Storage Account"
-runuser $SUDOUSER -c "ansible-playbook -f 10 /home/$SUDOUSER/openshift-container-platform-playbooks/$DOCKERREGISTRYYAML"
-echo $(date) "- Configuring Docker Registry Completed"
-
-# Login User
-echo $(date) "Login User"
-runuser -l $SUDOUSER -c "oc login https://$MASTERPUBLICIPADDRESS:443 -u '$OCUSER' -p '$OCPASSWORD' --insecure-skip-tls-verify=true"
-########################## POST INSTALL ###################
-
-echo $(date) "Installing helm"
-runuser -l $SUDOUSER -c "curl -L https://git.io/get_helm.sh | bash"
-
-if [ $STORAGEOPTION == "portworx" ]
-then
-	echo $(date) "Portworx Cluster Authorization"
-	# Portworx runs as a privileged container. Hence you need to add the Portworx service accounts to the privileged security context.
-	runuser -l $SUDOUSER -c "oc adm policy add-scc-to-user privileged system:serviceaccount:kube-system:px-account"
-	runuser -l $SUDOUSER -c "oc adm policy add-scc-to-user privileged system:serviceaccount:kube-system:portworx-pvc-controller-account"
-	runuser -l $SUDOUSER -c "oc adm policy add-scc-to-user privileged system:serviceaccount:kube-system:px-lh-account"
-	runuser -l $SUDOUSER -c "oc adm policy add-scc-to-user anyuid system:serviceaccount:kube-system:px-lh-account"
-	runuser -l $SUDOUSER -c "oc adm policy add-scc-to-user anyuid system:serviceaccount:default:default"
-	runuser -l $SUDOUSER -c "oc adm policy add-scc-to-user privileged system:serviceaccount:kube-system:px-csi-account"
-
-	#Create Secrets for PX
-	runuser -l $SUDOUSER -c "kubectl create secret generic -n kube-system px-azure --from-literal=AZURE_TENANT_ID=$TENANTID \
-														--from-literal=AZURE_CLIENT_ID=$AADCLIENTID \
-														--from-literal=AZURE_CLIENT_SECRET=$AADCLIENTSECRET"
-
-	# Deploy Portworx
-	runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/px-spec.yaml\"$ARTIFACTSLOCATIONTOKEN\" -O px-spec.yaml)"
-	runuser -l $SUDOUSER -c "oc create -f /home/$SUDOUSER/px-spec.yaml"
-
-cat > /home/$SUDOUSER/px-sc.yaml << EOF
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
+echo $(date) " - Setting up Cluster Autoscaler"
+runuser -l $SUDOUSER -c "cat > $INSTALLERHOME/openshiftfourx/cluster-autoscaler.yaml <<EOF
+apiVersion: 'autoscaling.openshift.io/v1'
+kind: 'ClusterAutoscaler'
 metadata:
-  name: portworx-sc
-provisioner: com.openstorage.pxd
-parameters:
-  repl: "3"
-  priority_io: "high"
-  shared: "true"
-EOF
-	runuser -l $SUDOUSER -c "oc create -f /home/$SUDOUSER/px-sc.yaml"
-	echo $(date) "Set PX as default"
-	runuser -l $SUDOUSER -c "kubectl patch storageclass portworx-sc -p '{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}'"
-	echo $(date) "Set PX as default complete"
+  name: 'default'
+spec:
+  podPriorityThreshold: -10
+  resourceLimits:
+    maxNodesTotal: 24
+    cores:
+      min: 48
+      max: 128
+    memory:
+      min: 128
+      max: 512
+  scaleDown: 
+    enabled: true
+    delayAfterAdd: '3m'
+    delayAfterDelete: '2m'
+    delayAfterFailure: '30s'
+    unneededTime: '60s'
+EOF"
+
+echo $(date) " - Cluster Autoscaler setup complete"
+
+echo $(date) " - Setting up Machine Autoscaler"
+clusterid=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.labels.machine\.openshift\.io/cluster-api-cluster}' --kubeconfig /home/$SUDOUSER/.kube/config)
+runuser -l $SUDOUSER -c "cat > $INSTALLERHOME/openshiftfourx/machine-autoscaler.yaml <<EOF
+---
+kind: MachineAutoscaler
+apiVersion: autoscaling.openshift.io/v1beta1
+metadata:
+  name: ${clusterid}-worker-${LOCATION}1
+  namespace: 'openshift-machine-api'
+spec:
+  minReplicas: 1
+  maxReplicas: 12
+  scaleTargetRef:
+    apiVersion: machine.openshift.io/v1beta1
+    kind: MachineSet
+    name: ${clusterid}-worker-${LOCATION}1
+---
+kind: MachineAutoscaler
+apiVersion: autoscaling.openshift.io/v1beta1
+metadata:
+  name: ${clusterid}-worker-${LOCATION}2
+  namespace: openshift-machine-api
+spec:
+  minReplicas: 1
+  maxReplicas: 12
+  scaleTargetRef:
+    apiVersion: machine.openshift.io/v1beta1
+    kind: MachineSet
+    name: ${clusterid}-worker-${LOCATION}2
+---
+kind: MachineAutoscaler
+apiVersion: autoscaling.openshift.io/v1beta1
+metadata:
+  name: ${clusterid}-worker-${LOCATION}3
+  namespace: openshift-machine-api
+spec:
+  minReplicas: 1
+  maxReplicas: 12
+  scaleTargetRef:
+    apiVersion: machine.openshift.io/v1beta1
+    kind: MachineSet
+    name: ${clusterid}-worker-${LOCATION}3
+EOF"
+
+echo $(date) " - Machine Autoscaler setup complete"
+
+echo $(date) " - Setting up Machine health checks"
+clusterid=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.labels.machine\.openshift\.io/cluster-api-cluster}' --kubeconfig /home/$SUDOUSER/.kube/config)
+runuser -l $SUDOUSER -c "cat > $INSTALLERHOME/openshiftfourx/machine-health-check.yaml <<EOF
+---
+apiVersion: machine.openshift.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  name: health-check-worker-${LOCATION}1
+  namespace: openshift-machine-api
+spec:
+  selector:
+    matchLabels:
+      machine.openshift.io/cluster-api-machine-role: worker
+      machine.openshift.io/cluster-api-machine-type: worker
+      machine.openshift.io/cluster-api-machineset: ${clusterid}-worker-${LOCATION}1
+  unhealthyConditions:
+  - type:    \"Ready\"
+    timeout: \"300s\"
+    status: \"False\"
+  - type:    \"Ready\"
+    timeout: \"300s\"
+    status: \"Unknown\"
+  maxUnhealthy: \"30%\"
+---
+apiVersion: machine.openshift.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  name: health-check-worker-${LOCATION}2 
+  namespace: openshift-machine-api
+spec:
+  selector:
+    matchLabels:
+      machine.openshift.io/cluster-api-machine-role: worker
+      machine.openshift.io/cluster-api-machine-type: worker
+      machine.openshift.io/cluster-api-machineset: ${clusterid}-worker-${LOCATION}2
+  unhealthyConditions:
+  - type:    \"Ready\"
+    timeout: \"300s\"
+    status: \"False\"
+  - type:    \"Ready\"
+    timeout: \"300s\"
+    status: \"Unknown\"
+  maxUnhealthy: \"30%\"
+---
+apiVersion: machine.openshift.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  name: health-check-worker-${LOCATION}3 
+  namespace: openshift-machine-api
+spec:
+  selector:
+    matchLabels:
+      machine.openshift.io/cluster-api-machine-role: worker
+      machine.openshift.io/cluster-api-machine-type: worker
+      machine.openshift.io/cluster-api-machineset: ${clusterid}-worker-${LOCATION}3
+  unhealthyConditions:
+  - type:    \"Ready\"
+    timeout: \"300s\"
+    status: \"False\"
+  - type:    \"Ready\"
+    timeout: \"300s\"
+    status: \"Unknown\"
+  maxUnhealthy: \"30%\"
+EOF"
+
+##Enable/Disable Autoscaler
+if [[ $ENABLEAUTOSCALER == "true" || $ENABLEAUTOSCALER == "True" ]]; then
+  runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/cluster-autoscaler.yaml"
+  runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/machine-autoscaler.yaml"
+  runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/machine-health-check.yaml"
+fi
+
+echo $(date) " - Machine Health Check setup complete"
+
+echo $(date) " - Setting up $STORAGEOPTION"
+if [[ $STORAGEOPTION == "portworx" ]]; then
+  runuser -l $SUDOUSER -c "wget $ARTIFACTSLOCATION/scripts/px-install.yaml$ARTIFACTSTOKEN -O $INSTALLERHOME/openshiftfourx/px-install.yaml"
+  runuser -l $SUDOUSER -c "wget $ARTIFACTSLOCATION/scripts/px-storageclasses.yaml$ARTIFACTSTOKEN -O $INSTALLERHOME/openshiftfourx/px-storageclasses.yaml"
+  runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/px-install.yaml"
+  runuser -l $SUDOUSER -c "echo 'sleep 3mins'"
+  runuser -l $SUDOUSER -c "sleep 180"
+  runuser -l $SUDOUSER -c "oc apply -f '$PXSPECURL'"
+  runuser -l $SUDOUSER -c "oc create -f $INSTALLERHOME/openshiftfourx/px-storageclasses.yaml"
 fi
 
 if [[ $STORAGEOPTION == "nfs" ]]; then
   runuser -l $SUDOUSER -c "oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:kube-system:nfs-client-provisioner"
-  runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/nfs-template.yaml\"$ARTIFACTSLOCATIONTOKEN\" -O nfs-template.yaml)"
-  runuser -l $SUDOUSER -c "oc process -f /home/$SUDOUSER/nfs-template.yaml -p NFS_SERVER=$(getent hosts $storagegroup | awk '{ print $1 }') -p NFS_PATH=/exports/home | oc create -n kube-system -f -"
-  echo $(date) "Set NFS as default"
-  runuser -l $SUDOUSER -c "kubectl patch storageclass nfs -p '{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}'"
-  echo $(date) "Set NFS as default complete"
+  runuser -l $SUDOUSER -c "wget $ARTIFACTSLOCATION/scripts/nfs-template.yaml$ARTIFACTSTOKEN -O  $INSTALLERHOME/openshiftfourx/nfs-template.yaml"
+  runuser -l $SUDOUSER -c "oc process -f $INSTALLERHOME/openshiftfourx/nfs-template.yaml -p NFS_SERVER=$NFSIPADDRESS -p NFS_PATH=/exports/home | oc create -n kube-system -f -"
 fi
+echo $(date) " - Setting up $STORAGEOPTION - Done"
 
-# Configure Default Storage
-echo $(date) "Creating Azure File Storage Class"
-runuser -l $SUDOUSER -c "oc create -f /home/$SUDOUSER/azure-file.yml"
-echo $(date) "Azure File StorageClass Create Complete"
+echo $(date) " - Creating $OPENSHIFTUSER user"
+runuser -l $SUDOUSER -c "htpasswd -c -B -b /tmp/.htpasswd '$OPENSHIFTUSER' '$OPENSHIFTPASSWORD'"
+runuser -l $SUDOUSER -c "sleep 5"
+runuser -l $SUDOUSER -c "oc create secret generic htpass-secret --from-file=htpasswd=/tmp/.htpasswd -n openshift-config"
+runuser -l $SUDOUSER -c "cat >  $INSTALLERHOME/openshiftfourx/auth.yaml <<EOF
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: cluster
+spec:
+  tokenConfig:
+    accessTokenMaxAgeSeconds: 172800
+  identityProviders:
+  - name: htpasswdProvider 
+    challenge: true 
+    login: true 
+    mappingMethod: claim 
+    type: HTPasswd
+    htpasswd:
+      fileData:
+        name: htpass-secret
+EOF"
+runuser -l $SUDOUSER -c "oc apply -f $INSTALLERHOME/openshiftfourx/auth.yaml"
+runuser -l $SUDOUSER -c "oc adm policy add-cluster-role-to-user cluster-admin '$OPENSHIFTUSER'"
 
-# Configure Metrics
-if [ $METRICS == "true" ]
-then
-	sleep 30	
-	echo $(date) "- Deploying Metrics"
-	if [ $AZURE == "true" ]
-	then
-		runuser -l $SUDOUSER -c "ansible-playbook -f 10 /home/$SUDOUSER/openshift-ansible/playbooks/openshift-metrics/config.yml -e openshift_metrics_install_metrics=True -e openshift_metrics_cassandra_storage_type=dynamic -e openshift_metrics_image_version=v3.11"
-	else
-		runuser -l $SUDOUSER -c "ansible-playbook -f 10 /home/$SUDOUSER/openshift-ansible/playbooks/openshift-metrics/config.yml -e openshift_metrics_install_metrics=True -e openshift_metrics_image_version=v3.11"
-	fi
-	if [ $? -eq 0 ]
-	then
-	   echo $(date) " - Metrics configuration completed successfully"
-	else
-	   echo $(date) "- Metrics configuration failed"
-	   exit 11
-	fi
-fi
-
-# Configure Logging
-
-if [ $LOGGING == "true" ] 
-then
-	sleep 60
-	echo $(date) "- Deploying Logging"
-	if [ $AZURE == "true" ]
-	then
-		runuser -l $SUDOUSER -c "ansible-playbook -f 10 /home/$SUDOUSER/openshift-ansible/playbooks/openshift-logging/config.yml -e openshift_logging_install_logging=True -e openshift_logging_es_pvc_dynamic=true -e openshift_master_dynamic_provisioning_enabled=True"
-	else
-		runuser -l $SUDOUSER -c "ansible-playbook -f 10 /home/$SUDOUSER/openshift-ansible/playbooks/openshift-logging/config.yml -e openshift_logging_install_logging=True"
-	fi
-	if [ $? -eq 0 ]
-	then
-	   echo $(date) " - Logging configuration completed successfully"
-	else
-	   echo $(date) "- Logging configuration failed"
-	   exit 12
-	fi
-fi
-
-# Delete yaml files
-echo $(date) "- Deleting unecessary files"
-rm -rf /home/$SUDOUSER/openshift-container-platform-playbooks
-rm -rf /home/$SUDOUSER/*.yml
-
-echo $(date) " - Script complete"
+echo $(date) " - ############## Script Complete ####################"

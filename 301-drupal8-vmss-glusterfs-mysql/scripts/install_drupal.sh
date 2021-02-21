@@ -76,8 +76,6 @@ then
     exit 3
 fi
 
-
-
 # Parse script parameters
 while getopts :d:u:p:g:v:s:n:P:k:z:S:h optname; do
 
@@ -131,13 +129,19 @@ while getopts :d:u:p:g:v:s:n:P:k:z:S:h optname; do
   esac
 done
 
-# Validate parameters
+
+#TODO: everything after this needs to be fixed
+echo "installing drupal $HOSTNAME" >> /mnt/azurefiles-drupal/$HOSTNAME.txt
+exit
+
+# Validate parameters - GLUSTER params have been removed
 if [ "$GLUSTER_FIRST_NODE_NAME" == "" ] || [ "$GLUSTER_VOLUME_NAME" == "" ] || [ "$MYSQL_PASSWORD" == "" ];
 then
     log "Script executed without required parameters"
     echo "You must provide all required parameters." >&2
     exit 3
 fi
+
 
 # set mysql server FQDN to be used (existing or new), and the mysql username to used (existing or "admin")
 if [ "$CREATE_NEW_MYSQL_SERVER" == "no" ]; then

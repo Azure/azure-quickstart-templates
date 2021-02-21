@@ -15,24 +15,25 @@
     },
     "vmName": {
       "type": "string",
+      "defaultValue": "iis",
       "metadata": {
         "description": "Name of the VM"
       }
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A2",
+      "defaultValue": "Standard_A2_v2",
       "metadata": {
         "description": "Size of the VM"
       }
     },
     "imageSKU": {
       "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
+      "defaultValue": "2019-Datacenter",
       "allowedValues": [
-        "2008-R2-SP1",
-        "2012-Datacenter",
-        "2012-R2-Datacenter"
+        "2012-R2-Datacenter",
+        "2016-Datacenter",
+        "2019-Datacenter"
       ],
       "metadata": {
         "description": "Image SKU"
@@ -50,11 +51,12 @@
         "description": "Admin password"
       }
     },
-    "modulesUrl": {
+    "moduleFilePath": {
       "type": "string",
       "metadata": {
-        "description": "URL for the DSC configuration module. NOTE: Can be a Github url(raw) to the zip file"
-      }
+        "description": "Relative path for the DSC configuration module."
+      },
+      "defaultValue": "ContosoWebsite.ps1.zip"
     },
     "configurationFunction": {
       "type": "string",
@@ -62,6 +64,20 @@
       "metadata": {
         "description": "DSC configuration function to call"
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     },
     "location": {
       "type": "string",
@@ -73,11 +89,10 @@
   },
   "variables": {
     "virtualNetworkName": "dscVNET",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "vnetAddressPrefix": "10.0.0.0/16",
     "subnet1Name": "dscSubnet-1",
     "subnet1Prefix": "10.0.0.0/24",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
+    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]",
     "publicIPAddressType": "Dynamic",
     "publicIPAddressName": "dscPubIP",
     "nicName": "dscNIC",
@@ -88,7 +103,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -97,9 +112,8 @@
       }
     },
     {
-      "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-05-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -118,9 +132,22 @@
             }
           },
           {
-            "name": "default-allow-3389",
+            "name": "default-allow-443",
             "properties": {
               "priority": 1001,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "443",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1002,
               "access": "Allow",
               "direction": "Inbound",
               "destinationPortRange": "3389",
@@ -134,7 +161,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -161,13 +188,13 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -187,12 +214,12 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -231,10 +258,10 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/', variables('vmExtensionName'))]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -242,13 +269,12 @@
         "typeHandlerVersion": "2.19",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "ModulesUrl": "[parameters('modulesUrl')]",
+          "ModulesUrl": "[uri(parameters('_artifactsLocation'), concat(parameters('moduleFilePath'), parameters('_artifactsLocationSasToken')))]",
           "ConfigurationFunction": "[parameters('configurationFunction')]",
           "Properties": {
             "MachineName": "[parameters('vmName')]"
           }
-        },
-        "protectedSettings": null
+        }
       }
     }
   ]

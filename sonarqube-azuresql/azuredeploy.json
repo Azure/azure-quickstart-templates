@@ -12,6 +12,7 @@
     },
     "sq_PublicIP_DnsPrefix": {
       "type": "string",
+      "defaultValue": "[concat('sonar-', uniqueString(resourceGroup().id))]",
       "minLength": 1,
       "maxLength": 32,
       "metadata": {
@@ -20,7 +21,7 @@
     },
     "sqVM_AppAdmin_UserName": {
       "type": "string",
-      "minLength": 1,
+      "minLength": 3,
       "metadata": {
         "description": "Admin account name for the SonarQube VM"
       }
@@ -63,6 +64,7 @@
     },
     "sqDB_DBEdition": {
       "type": "string",
+      "defaultValue": "Basic",
       "allowedValues": [
         "Basic",
         "Standard",
@@ -74,8 +76,9 @@
     },
     "diskType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "StandardSSD_LRS",
       "allowedValues": [
+        "StandardSSD_LRS",
         "Standard_LRS",
         "Premium_LRS"
       ],
@@ -106,16 +109,16 @@
     },
     "sqVM_LTS_Version": {
       "type": "string",
-      "defaultValue": "sonarqube-7.5",
+      "defaultValue": "sonarqube-8.4.1.35646",
       "allowedValues": [
-        "sonarqube-7.5",
-        "sonarqube-7.4",
-        "sonarqube-7.3",
-        "sonarqube-7.2",
-        "sonarqube-7.1",
-        "sonarqube-7.0",  
-        "sonarqube-6.7.4",      
-        "sonarqube-5.6.4"
+        "sonarqube-8.4.1.35646",
+        "sonarqube-8.3.1.34397",
+        "sonarqube-8.2.0.32929",
+        "sonarqube-8.1.0.31237",
+        "sonarqube-8.0",
+        "sonarqube-7.9.3",
+        "sonarqube-6.7.7",
+        "sonarqube-5.6.7"
       ],
       "metadata": {
         "description": "Version of SonarQube to install"
@@ -141,7 +144,22 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "SQvmAppVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS1_v2",
+      "metadata": {
+        "description": "Size fo the VM"
+      }
     }
+
   },
   "variables": {
     "SQvnetPrefix": "10.0.0.0/16",
@@ -150,21 +168,18 @@
     "SQvnetInternalSubnetPrefix": "10.0.1.0/24",
     "SQvmAppImagePublisher": "MicrosoftWindowsServer",
     "SQvmAppImageOffer": "WindowsServer",
-    "SQvmAppWindowsOSVersion": "2012-R2-Datacenter",
-    "SQvmAppVmSize": "Standard_DS1_v2",
+    "SQvmAppWindowsOSVersion": "2019-Datacenter",
     "SQvmAppSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'SQvnet', variables('SQvnetExternalSubnetName'))]",
     "SQvmAppNicName": "[concat(parameters('sqVM_AppName'), 'NetworkInterface')]",
     "SQpublicIPName": "SQpublicIP",
-    "dscZipFile": "SQdscAppConfiguration.ps1.zip",
+    "dscZipFile": "DSC/SQdscAppConfiguration.ps1.zip",
     "SQdscAppConfigurationFunction": "SQdscAppConfiguration.ps1\\Main",
-    "SQDSCFileLocation": "[concat(parameters('_artifactsLocation'), '/', 'scripts')]",
     "AzureSqlServerName": "[concat(parameters('sqDB_ServerName'), uniqueString(resourceGroup().id))]",
-    "SQDBTemplate": "azureDBDeploy.json",
-    "SQDBTemplateLocation": "[concat(parameters('_artifactsLocation'), '/', 'nested', '/', variables('SQDBTemplate'))]"
+    "SQDBTemplateLocation": "[uri(parameters('_artifactsLocation'), concat('nested/azureDBDeploy.json', parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2019-10-01",
       "name": "deploySQLDB",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -188,6 +203,9 @@
           },
           "sonarEdition": {
             "value": "[parameters('sqDB_DBEdition')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -196,9 +214,9 @@
       "name": "SQvnet",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', 'SQnsgApp')]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'SQnsgApp')]"
       ],
       "tags": {
         "displayName": "SQvnet"
@@ -226,10 +244,10 @@
       "name": "[variables('SQvmAppNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', 'SQvnet')]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('SQpublicIPName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', 'SQvnet')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('SQpublicIPName'))]"
       ],
       "tags": {
         "displayName": "SQvmAppNic"
@@ -255,16 +273,16 @@
       "name": "[parameters('sqVM_AppName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-06-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('SQvmAppNicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('SQvmAppNicName'))]"
       ],
       "tags": {
         "displayName": "SQvmApp"
       },
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('SQvmAppVmSize')]"
+          "vmSize": "[parameters('SQvmAppVmSize')]"
         },
         "osProfile": {
           "computerName": "[parameters('sqVM_AppName')]",
@@ -283,9 +301,9 @@
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
-                "storageAccountType": "[parameters('diskType')]"                
+              "storageAccountType": "[parameters('diskType')]"
             }
-        }
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -300,17 +318,17 @@
           "name": "configureAppVM_DSC",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2017-03-30",
+          "apiVersion": "2020-06-01",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('sqVM_AppName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('sqVM_AppName'))]"
           ],
           "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
             "typeHandlerVersion": "2.9",
             "autoUpgradeMinorVersion": true,
-            "settings": {
-              "modulesUrl": "[concat(variables('SQDSCFileLocation'), '/', variables('dscZipFile'))]",
+            "protectedSettings": {
+              "modulesUrl": "[uri(parameters('_artifactsLocation'), concat(variables('dscZipFile'), parameters('_artifactsLocationSasToken')))]",
               "configurationFunction": "[variables('SQdscAppConfigurationFunction')]",
               "properties": {
                 "nodeName": "[parameters('sqVM_AppName')]",
@@ -319,21 +337,20 @@
                 "connectionUsername": "[parameters('sqDB_Admin_UserName')]",
                 "connectionPassword": "[parameters('sqDB_Admin_Password')]",
                 "sqVmAdminPwd": "[parameters('sqVM_AppAdmin_Password')]",
-                "sqLtsVersion": "[parameters('sqVM_LTS_Version')]",                
-	              "sonarQubeDownloadRoot": "[parameters('sonarQubeDownloadRoot')]"
+                "sqLtsVersion": "[parameters('sqVM_LTS_Version')]",
+                "sonarQubeDownloadRoot": "[parameters('sonarQubeDownloadRoot')]"
               }
-            },
-            "protectedSettings": {}
+            }
           }
         },
         {
           "name": "secureSonarQube",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2017-03-30",
+          "apiVersion": "2020-06-01",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('sqVM_AppName'))]",
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('sqVM_AppName'),'/extensions/configureAppVM_DSC')]"
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('sqVM_AppName'))]",
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('sqVM_AppName'), 'configureAppVM_DSC')]"
           ],
           "tags": {
             "displayName": "secureSonarQube"
@@ -345,14 +362,9 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(variables('SQDSCFileLocation'), '/','secureSonarQube.ps1')]"
+                "[uri(parameters('_artifactsLocation'), concat('secureSonarQube.ps1', parameters('_artifactsLocationSasToken')))]"
               ],
               "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File secureSonarQube.ps1', ' -serverName ' , reference(variables('SQpublicIPName')).dnsSettings.fqdn, ' -websiteName SonarQubeProxy', ' -installationType ', parameters('sqVM_Installation_Type'),' -reverseProxyType ', parameters('sqVM_ReverseProxy_Type'))]"
-            },
-            "protectedSettings": {
-              "serverName": "reference(variables('SQpublicIPName')).dnsSettings.fqdn",
-              "installationType": "parameters('sqVM_Installation_Type')",
-              "reverseProxyType": "parameters('sqVM_ReverseProxy_Type')"
             }
           }
         }
@@ -362,8 +374,7 @@
       "name": "[variables('SQpublicIPName')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
+      "apiVersion": "2020-05-01",
       "tags": {
         "displayName": "SQpublicIP"
       },
@@ -378,8 +389,7 @@
       "name": "SQnsgApp",
       "type": "Microsoft.Network/networkSecurityGroups",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
+      "apiVersion": "2020-05-01",
       "tags": {
         "displayName": "SQnsgApp"
       },

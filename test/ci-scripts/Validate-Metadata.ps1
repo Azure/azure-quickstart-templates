@@ -50,6 +50,14 @@ else {
     $supportedEnvironments = @("AzureCloud", "AzureUSGovernment") # Default is all clouds are supported
 }
 
+# if there is a docOwner, we need to notify that owner via a PR comment
+$docOwner = ($metadata | convertfrom-json).docOwner
+Write-Host "docOwner: $docOwner"
+if ($null -ne $docOwner){
+    $msg = "@$docOwner - check this PR for updates that may be needed to documentation that references this sample.  [this is an automated message]"
+    Write-Host "##vso[task.setvariable variable=docOwner.message]$msg"    
+}
+
 $s = $supportedEnvironments | ConvertTo-Json -Compress
 Write-Host "##vso[task.setvariable variable=supported.environments]$s"
 # Set-Item -path "env:supported_environments" -value "$s"
@@ -62,7 +70,7 @@ if (!$IsCloudSupported) {
 }
 
 $validationType = ($metadata | convertfrom-json).validationType
-Write-Output "Sample type from metadata.json: $validationType"
+Write-Output "Validation type from metadata.json: $validationType"
 
 if($validationType -eq "Manual"){
     Write-Host "##vso[task.setvariable variable=validation.type]$validationType"

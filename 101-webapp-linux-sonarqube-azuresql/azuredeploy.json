@@ -11,28 +11,29 @@
         },
         "sonarqubeImageVersion": {
             "type": "string",
-            "defaultValue": "lts",
+            "defaultValue": "7.7-community",
             "allowedValues": [
-                "latest",
-                "lts",
-                "7.9-community",
-                "7.8-community",
                 "7.7-community",
                 "7.6-community",
                 "7.5-community",
                 "7.4-community",
                 "7.1",
+                "7.1-alpine",
                 "7.0",
-                "alpine",
-                "lts-alpine",
+                "7.0-alpine",
                 "6.7.5",
+                "6.7.5-alpine",
                 "6.7.4",
+                "6.7.4-alpine",
                 "6.7.3",
+                "6.7.3-alpine",
                 "6.7.2",
-                "6.7.1"
+                "6.7.2-alpine",
+                "6.7.1",
+                "6.7.1-alpine"
             ],
             "metadata": {
-                "description": "The version of the Sonarqube container image to use"
+                "description": "The version of the Sonarqube container image to use. Only versions of Sonarqube known to be compatible with Azure App Service Web App for Containers are available."
             }
         },
         "servicePlanPricingTier": {
@@ -177,7 +178,7 @@
     "resources": [
         {
             "type": "Microsoft.Web/serverfarms",
-            "apiVersion": "2018-02-01",
+            "apiVersion": "2020-06-01",
             "name": "[variables('servicePlanName')]",
             "location": "[parameters('location')]",
             "properties": {
@@ -195,7 +196,7 @@
         },
         {
             "type": "Microsoft.Web/sites",
-            "apiVersion": "2018-02-01",
+            "apiVersion": "2020-06-01",
             "name": "[parameters('siteName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -209,26 +210,29 @@
                 "name": "[parameters('siteName')]",
                 "serverFarmId": "[variables('servicePlanName')]"
             },
-            "resources": [{
-                "type": "config",
-                "apiVersion": "2018-02-01",
-                "name": "appsettings",
-                "dependsOn": [
-                    "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
-                ],
-                "tags": {
-                    "displayName": "SonarappSettings"
-                },
-                "properties": {
-                    "SONARQUBE_JDBC_URL": "[concat('jdbc:sqlserver://', reference(resourceId('Microsoft.Sql/servers',variables('sqlServerName'))).fullyQualifiedDomainName ,';databaseName=',variables('databaseName'))]",
-                    "SONARQUBE_JDBC_USERNAME": "[parameters('sqlServerAdministratorUsername')]",
-                    "SONARQUBE_JDBC_PASSWORD": "[parameters('sqlServerAdministratorPassword')]"
+            "resources": [
+                {
+                    "type": "config",
+                    "apiVersion": "2020-06-01",
+                    "name": "appsettings",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "SonarappSettings"
+                    },
+                    "properties": {
+                        "SONARQUBE_JDBC_URL": "[concat('jdbc:sqlserver://', reference(resourceId('Microsoft.Sql/servers',variables('sqlServerName'))).fullyQualifiedDomainName, ';databaseName=', variables('databaseName'), ';encrypt=true;trustServerCertificate=false;hostNameInCertificate=', replace(reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName'))).fullyQualifiedDomainName, concat(variables('sqlServerName'), '.'), '*.'), ';loginTimeout=30;')]",
+                        "SONARQUBE_JDBC_USERNAME": "[parameters('sqlServerAdministratorUsername')]",
+                        "SONARQUBE_JDBC_PASSWORD": "[parameters('sqlServerAdministratorPassword')]",
+                        "sonar.path.data": "/home/sonarqube/data"
+                    }
                 }
-            }]
+            ]
         },
         {
             "type": "Microsoft.Sql/servers",
-            "apiVersion": "2018-06-01-preview",
+            "apiVersion": "2020-02-02-preview",
             "location": "[parameters('location')]",
             "name": "[variables('sqlServerName')]",
             "kind": "v12.0",
@@ -240,12 +244,12 @@
             "resources": [
                 {
                     "type": "firewallrules",
-                    "apiVersion": "2018-06-01-preview",
+                    "apiVersion": "2020-02-02-preview",
                     "location": "[parameters('location')]",
                     "name": "[concat(variables('sqlServerName'),'firewall')]",
                     "properties": {
                         "startIpAddress": "0.0.0.0",
-                        "endIpAddress": "255.255.255.255"
+                        "endIpAddress": "0.0.0.0"
                     },
                     "dependsOn": [
                         "[variables('sqlServerName')]"
@@ -253,7 +257,7 @@
                 },
                 {
                     "type": "databases",
-                    "apiVersion": "2018-06-01-preview",
+                    "apiVersion": "2020-02-02-preview",
                     "name": "[variables('databaseName')]",
                     "location": "[parameters('location')]",
                     "sku": {

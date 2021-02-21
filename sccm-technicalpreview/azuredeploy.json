@@ -10,6 +10,13 @@
         "description": "The prefix name of machines. "
       }
     },
+    "createclient": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Do you want to create a client for this environment?"
+      }
+    },
     "adminUsername": {
       "type": "string",
       "minLength": 2,
@@ -60,8 +67,8 @@
       "privateIPAllocationMethod": "Static",
       "publicIpAllocationMethod": "Dynamic"
     },
+    "securityGroupRuleName": "default-allow-rdp",
     "securityGroupRule": {
-      "name": "default-allow-rdp",
       "priority": 1000,
       "sourceAddressPrefix": "*",
       "protocol": "Tcp",
@@ -71,91 +78,127 @@
       "sourcePortRange": "*",
       "destinationAddressPrefix": "*"
     },
-    "vmrole": [
-      "DC",
-      "DPMP",
-      "PS"
-    ],
-    "vmname": [
-      "DC01",
-      "DPMP01",
-      "PS01"
-    ],
-    "vmDiskType": [
-      "Premium_LRS",
-      "Premium_LRS",
-      "Premium_LRS"
-    ],
-    "vmSize": [
-      "Standard_B2s",
-      "Standard_B2s",
-      "Standard_B2ms"
-    ],
-    "imageReference": {
+    "vmInfoNoClient": {
       "DC": {
-        "publisher": "MicrosoftWindowsServer",
-        "offer": "WindowsServer",
-        "sku": "2019-Datacenter",
-        "version": "latest"
+        "name": "DC01",
+        "disktype": "Premium_LRS",
+        "size": "Standard_B2s",
+        "imageReference": {
+          "publisher": "MicrosoftWindowsServer",
+          "offer": "WindowsServer",
+          "sku": "2019-Datacenter",
+          "version": "latest"
+        }
       },
       "DPMP": {
-        "publisher": "MicrosoftWindowsServer",
-        "offer": "WindowsServer",
-        "sku": "2019-Datacenter",
-        "version": "latest"
+        "name": "DPMP01",
+        "disktype": "Premium_LRS",
+        "size": "Standard_B2s",
+        "imageReference": {
+          "publisher": "MicrosoftWindowsServer",
+          "offer": "WindowsServer",
+          "sku": "2019-Datacenter",
+          "version": "latest"
+        }
+      }
+    },
+    "vmInfoWithClient": {
+      "DC": {
+        "name": "DC01",
+        "disktype": "Premium_LRS",
+        "size": "Standard_B2s",
+        "imageReference": {
+          "publisher": "MicrosoftWindowsServer",
+          "offer": "WindowsServer",
+          "sku": "2019-Datacenter",
+          "version": "latest"
+        }
       },
+      "DPMP": {
+        "name": "DPMP01",
+        "disktype": "Premium_LRS",
+        "size": "Standard_B2s",
+        "imageReference": {
+          "publisher": "MicrosoftWindowsServer",
+          "offer": "WindowsServer",
+          "sku": "2019-Datacenter",
+          "version": "latest"
+        }
+      },
+      "Client": {
+        "name": "CL01",
+        "disktype": "Premium_LRS",
+        "size": "Standard_B2s",
+        "imageReference": {
+          "publisher": "MicrosoftWindowsDesktop",
+          "offer": "Windows-10",
+          "sku": "20h1-pro",
+          "version": "latest"
+        }
+      }
+    },
+    "vmrole": "[if(parameters('createclient'),createarray('DC','DPMP','Client'),createarray('DC','DPMP'))]",
+    "vmInfo": "[if(parameters('createclient'),variables('vmInfoWithClient'),variables('vmInfoNoClient'))]",
+    "siterole": [
+      "PS"
+    ],
+    "siteInfo": {
       "PS": {
-        "publisher": "MicrosoftSQLServer",
-        "offer": "SQL2017-WS2016",
-        "sku": "Standard",
-        "version": "latest"
+        "name": "PS01",
+        "disktype": "Premium_LRS",
+        "size": "Standard_B2ms",
+        "imageReference": {
+          "publisher": "MicrosoftSQLServer",
+          "offer": "SQL2019-WS2019",
+          "sku": "Standard",
+          "version": "latest"
+        }
       }
     }
   },
   "resources": [
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2018-06-01",
-      "name": "[concat(toLower(parameters('prefix')),toLower(variables('vmname')[copyIndex()]))]",
+      "apiVersion": "2019-12-01",
+      "name": "[concat(toLower(parameters('prefix')),toLower(variables('vmInfo')[variables('vmRole')[copyIndex()]].name))]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "vmcopy",
-        "count": 2
+        "count": "[length(variables('vmInfo'))]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/',toLower(parameters('prefix')),toLower(variables('vmname')[copyIndex()]), '-ni')]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(toLower(parameters('prefix')), toLower(variables('vmInfo')[variables('vmRole')[copyIndex()]].name), '-ni'))]"
       ],
       "properties": {
         "osProfile": {
-          "computerName": "[concat(toLower(parameters('prefix')),toLower(variables('vmname')[copyIndex()]))]",
+          "computerName": "[concat(toLower(parameters('prefix')),toLower(variables('vmInfo')[variables('vmRole')[copyIndex()]].name))]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
-            "provisionVmAgent": "true",
+            "provisionVmAgent": true,
             "timeZone": "[variables('timeZone')]"
           }
         },
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')[copyIndex()]]"
+          "vmSize": "[variables('vmInfo')[variables('vmRole')[copyIndex()]].size]"
         },
         "storageProfile": {
-          "imageReference": "[variables('imageReference')[variables('vmrole')[copyIndex()]]]",
+          "imageReference": "[variables('vmInfo')[variables('vmRole')[copyIndex()]].imageReference]",
           "osDisk": {
             "osType": "Windows",
-            "name": "[concat(toLower(parameters('prefix')),toLower(variables('vmname')[copyIndex()]),'-OsDisk')]",
+            "name": "[concat(toLower(parameters('prefix')),toLower(variables('vmInfo')[variables('vmRole')[copyIndex()]].name),'-OsDisk')]",
             "createOption": "FromImage",
             "caching": "ReadWrite",
             "managedDisk": {
-              "storageAccountType": "[variables('vmDiskType')[copyIndex()]]"
+              "storageAccountType": "[variables('vmInfo')[variables('vmRole')[copyIndex()]].disktype]"
             },
             "diskSizeGB": 150
-          },
-          "dataDisks": []
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(toLower(parameters('prefix')),toLower(variables('vmname')[copyIndex()]), '-ni'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(toLower(parameters('prefix')),toLower(variables('vmInfo')[variables('vmRole')[copyIndex()]].name), '-ni'))]"
             }
           ]
         },
@@ -168,15 +211,15 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2018-06-01",
-      "name": "[concat(toLower(parameters('prefix')),variables('vmname')[copyIndex()],'/WorkFlow')]",
+      "apiVersion": "2019-12-01",
+      "name": "[concat(toLower(parameters('prefix')),variables('vmInfo')[variables('vmRole')[copyIndex()]].name,'/WorkFlow')]",
       "location": "[parameters('location')]",
       "copy": {
-        "name": "dscextensioncopy",
-        "count": 3
+        "name": "dscvmextensioncopy",
+        "count": "[length(variables('vmInfo'))]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',toLower(parameters('prefix')),variables('vmname')[copyIndex()])]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(toLower(parameters('prefix')),variables('vmInfo')[variables('vmRole')[copyIndex()]].name))]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -185,12 +228,53 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "modulesUrl": "[Uri(parameters('_artifactsLocation'),concat(variables('dscScript'),parameters('_artifactsLocationSasToken')))]",
-          "configurationFunction": "[concat(variables('vmrole')[copyIndex()],'Configuration.ps1\\Configuration')]",
+          "configurationFunction": "[concat(variables('vmRole')[copyIndex()],'Configuration.ps1\\Configuration')]",
           "Properties": {
             "DomainName": "[variables('domainName')]",
-            "DCName": "[concat(parameters('prefix'),variables('vmname')[0])]",
-            "DPMPName": "[concat(parameters('prefix'),variables('vmname')[1])]",
-            "PSName": "[concat(parameters('prefix'),variables('vmname')[2])]",
+            "DCName": "[concat(parameters('prefix'),variables('vmInfo')['DC'].name)]",
+            "DPMPName": "[concat(parameters('prefix'),variables('vmInfo')['DPMP'].name)]",
+            "PSName": "[concat(parameters('prefix'),variables('siteInfo')['PS'].name)]",
+            "ClientName": "[if(parameters('createclient'),concat(parameters('prefix'),variables('vmInfo')['Client'].name),'Empty')]",
+            "DNSIPAddress": "[concat(variables('networkSettings').virtualMachinesIPAddress,add(int('0'),int('4')))]",
+            "AdminCreds": {
+              "UserName": "[parameters('adminUsername')]",
+              "Password": "PrivateSettingsRef:AdminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "Items": {
+            "AdminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2019-12-01",
+      "name": "[concat(toLower(parameters('prefix')),variables('siteInfo')[variables('siteRole')[copyIndex()]].name,'/WorkFlow')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "dscsiteextensioncopy",
+        "count": "[length(variables('siteInfo'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(toLower(parameters('prefix')),variables('siteInfo')[variables('siteRole')[copyIndex()]].name))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.21",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "modulesUrl": "[Uri(parameters('_artifactsLocation'),concat(variables('dscScript'),parameters('_artifactsLocationSasToken')))]",
+          "configurationFunction": "[concat(variables('siteRole')[copyIndex()],'Configuration.ps1\\Configuration')]",
+          "Properties": {
+            "DomainName": "[variables('domainName')]",
+            "DCName": "[concat(parameters('prefix'),variables('vmInfo')['DC'].name)]",
+            "DPMPName": "[concat(parameters('prefix'),variables('vmInfo')['DPMP'].name)]",
+            "PSName": "[concat(parameters('prefix'),variables('siteInfo')['PS'].name)]",
+            "ClientName": "[if(parameters('createclient'),concat(parameters('prefix'),variables('vmInfo')['Client'].name),'Empty')]",
             "DNSIPAddress": "[concat(variables('networkSettings').virtualMachinesIPAddress,add(int('0'),int('4')))]",
             "AdminCreds": {
               "UserName": "[parameters('adminUsername')]",
@@ -207,7 +291,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-05-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -228,17 +312,17 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(toLower(parameters('prefix')),toLower(variables('vmname')[copyIndex()]), '-ni')]",
-      "apiVersion": "2018-08-01",
+      "name": "[concat(toLower(parameters('prefix')),toLower(variables('vmInfo')[variables('vmRole')[copyIndex()]].name), '-ni')]",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "copy": {
-        "name": "nicopy",
-        "count": 3
+        "name": "nivmcopy",
+        "count": "[length(variables('vmInfo'))]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIpAddresses/',toLower(parameters('prefix')),toLower(variables('vmname')[copyIndex()]), '-ip')]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', toLower(toLower(parameters('prefix'))), '-nsg')]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIpAddresses/', concat(toLower(parameters('prefix')),toLower(variables('vmInfo')[variables('vmRole')[copyIndex()]].name), '-ip'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', concat(toLower(toLower(parameters('prefix'))), '-nsg'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -251,24 +335,72 @@
               "privateIPAllocationMethod": "[variables('networkSettings').privateIPAllocationMethod]",
               "privateIPAddress": "[concat(variables('networkSettings').virtualMachinesIPAddress,add(copyIndex(),int('4')))]",
               "publicIpAddress": {
-                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(toLower(parameters('prefix')),toLower(variables('vmname')[copyIndex()]), '-ip'))]"
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', concat(toLower(parameters('prefix')),toLower(variables('vmInfo')[variables('vmRole')[copyIndex()]].name), '-ip'))]"
               }
             }
           }
         ],
         "networkSecurityGroup": {
-          "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', concat(toLower(parameters('prefix')), '-nsg'))]"
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(toLower(parameters('prefix')), '-nsg'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(toLower(parameters('prefix')),toLower(variables('siteInfo')[variables('siteRole')[copyIndex()]].name), '-ni')]",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nisitecopy",
+        "count": "[length(variables('siteInfo'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIpAddresses/', concat(toLower(parameters('prefix')),toLower(variables('siteInfo')[variables('siteRole')[copyIndex()]].name), '-ip'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', concat(toLower(toLower(parameters('prefix'))), '-nsg'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('networkSettings').subnetRef]"
+              },
+              "privateIPAllocationMethod": "[variables('networkSettings').privateIPAllocationMethod]",
+              "privateIPAddress": "[concat(variables('networkSettings').virtualMachinesIPAddress,add(length(variables('vmInfo')),add(copyIndex(),int('4'))))]",
+              "publicIpAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', concat(toLower(parameters('prefix')),toLower(variables('siteInfo')[variables('siteRole')[copyIndex()]].name), '-ip'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(toLower(parameters('prefix')), '-nsg'))]"
         }
       }
     },
     {
       "type": "Microsoft.Network/publicIpAddresses",
-      "apiVersion": "2018-08-01",
-      "name": "[concat(toLower(parameters('prefix')),toLower(variables('vmname')[copyIndex()]), '-ip')]",
+      "apiVersion": "2020-05-01",
+      "name": "[concat(toLower(parameters('prefix')),toLower(variables('vmInfo')[variables('vmRole')[copyIndex()]].name), '-ip')]",
       "location": "[parameters('location')]",
       "copy": {
-        "name": "ipcopy",
-        "count": 3
+        "name": "ipvmcopy",
+        "count": "[length(variables('vmInfo'))]"
+      },
+      "properties": {
+        "publicIpAllocationMethod": "[variables('networkSettings').publicIpAllocationMethod]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIpAddresses",
+      "apiVersion": "2020-05-01",
+      "name": "[concat(toLower(parameters('prefix')),toLower(variables('siteInfo')[variables('siteRole')[copyIndex()]].name), '-ip')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "ipsitecopy",
+        "count": "[length(variables('siteInfo'))]"
       },
       "properties": {
         "publicIpAllocationMethod": "[variables('networkSettings').publicIpAllocationMethod]"
@@ -276,63 +408,57 @@
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2020-05-01",
       "name": "[concat(toLower(parameters('prefix')), '-nsg')]",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
-            "name": "[variables('securityGroupRule').name]",
-            "properties": {
-              "priority": "[variables('securityGroupRule').priority]",
-              "sourceAddressPrefix": "[variables('securityGroupRule').sourceAddressPrefix]",
-              "protocol": "[variables('securityGroupRule').protocol]",
-              "destinationPortRange": "[variables('securityGroupRule').destinationPortRange]",
-              "access": "[variables('securityGroupRule').access]",
-              "direction": "[variables('securityGroupRule').direction]",
-              "sourcePortRange": "[variables('securityGroupRule').sourcePortRange]",
-              "destinationAddressPrefix": "[variables('securityGroupRule').destinationAddressPrefix]"
-            }
+            "name": "[variables('securityGroupRuleName')]",
+            "properties": "[variables('securityGroupRule')]"
           }
         ]
       }
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2018-06-01",
-      "name": "[concat(toLower(parameters('prefix')),toLower(variables('vmname')[2]))]",
+      "apiVersion": "2019-12-01",
+      "name": "[concat(toLower(parameters('prefix')),toLower(variables('siteInfo')[variables('siteRole')[copyIndex()]].name))]",
       "location": "[parameters('location')]",
+      "copy": {
+        "name": "vmcopy",
+        "count": "[length(variables('siteInfo'))]"
+      },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/',toLower(parameters('prefix')),toLower(variables('vmname')[2]), '-ni')]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(toLower(parameters('prefix')),toLower(variables('siteInfo')[variables('siteRole')[copyIndex()]].name), '-ni'))]"
       ],
       "properties": {
         "osProfile": {
-          "computerName": "[concat(toLower(parameters('prefix')),toLower(variables('vmname')[2]))]",
+          "computerName": "[concat(toLower(parameters('prefix')),toLower(variables('siteInfo')[variables('siteRole')[copyIndex()]].name))]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
-            "provisionVmAgent": "true",
+            "provisionVmAgent": true,
             "timeZone": "[variables('timeZone')]"
           }
         },
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')[2]]"
+          "vmSize": "[variables('siteInfo')[variables('siteRole')[copyIndex()]].size]"
         },
         "storageProfile": {
-          "imageReference": "[variables('imageReference')[variables('vmrole')[2]]]",
+          "imageReference": "[variables('siteInfo')[variables('siteRole')[copyIndex()]].imageReference]",
           "osDisk": {
-            "name": "[concat(toLower(parameters('prefix')),toLower(variables('vmname')[2]),'-OsDisk')]",
+            "name": "[concat(toLower(parameters('prefix')),toLower(variables('siteInfo')[variables('siteRole')[copyIndex()]].name),'-OsDisk')]",
             "createOption": "FromImage",
             "managedDisk": {
-              "storageAccountType": "[variables('vmDiskType')[2]]"
+              "storageAccountType": "[variables('siteInfo')[variables('siteRole')[copyIndex()]].disktype]"
             }
-          },
-          "dataDisks": []
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(toLower(parameters('prefix')),toLower(variables('vmname')[2]), '-ni'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(toLower(parameters('prefix')),toLower(variables('siteInfo')[variables('siteRole')[copyIndex()]].name), '-ni'))]"
             }
           ]
         },

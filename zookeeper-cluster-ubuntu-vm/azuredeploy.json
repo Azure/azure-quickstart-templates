@@ -42,7 +42,7 @@
     },
     "imageSKU": {
       "type": "string",
-      "defaultValue": "14.04.5-LTS",
+      "defaultValue": "18.04-LTS",
       "metadata": {
         "description": "Image SKU"
       }
@@ -104,11 +104,10 @@
     "virtualNetworkName": "zookeeperVNET",
     "vnetAddressPrefix": "10.0.0.0/16",
     "publicIPAddressType": "Dynamic",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/24",
     "nicName": "zookeeperNIC",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
+    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]",
     "customScriptFilePath": "[uri(parameters('_artifactsLocation'), concat('zookeeper.sh', parameters('_artifactsLocationSasToken')))]",
     "customScriptCommandToExecute": "sh zookeeper.sh",
     "vmExtensionName": "zookeeperExtension",
@@ -126,7 +125,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-06-01",
       "type": "Microsoft.Compute/availabilitySets",
       "location": "[parameters('location')]",
       "name": "[variables('availabilitySetName')]",
@@ -139,7 +138,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat('publicIP', copyIndex())]",
       "location": "[parameters('location')]",
@@ -152,7 +151,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -173,7 +172,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -182,8 +181,8 @@
         "count": "[parameters('scaleNumber')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP', copyIndex())]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat('publicIP', copyIndex()))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -204,7 +203,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-06-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('vmName'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -213,8 +212,8 @@
         "count": "[parameters('scaleNumber')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), copyIndex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -257,14 +256,14 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'), copyIndex(),'/', variables('vmExtensionName'))]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "foo",
         "count": "[parameters('scaleNumber')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'), copyIndex())]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('vmName'), copyIndex()))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",

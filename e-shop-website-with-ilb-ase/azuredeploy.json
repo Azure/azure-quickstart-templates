@@ -49,17 +49,20 @@
       "metadata": {
         "description": "Application ID of the Admin App Registration."
       }
+    },
+    "appInsightsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "description"
+      }
     }
   },
   "variables": {
     "location": "[parameters('existingAseLocation')]",
-    "appInsightsLocation": "East US",
     "vnetName": "[concat(parameters('existingAseName'), '-vnet')]",
     "aseSubnetName": "[concat(parameters('existingAseName'), '-subnet')]",
     "aseSubnetAddressPrefix": "192.168.251.64/26",
     "agSubnetName": "app-gateway-subnet",
-    "subnetRouteTableName": "[concat(parameters('existingAseName'), '-route-table')]",
-    "subnetNSGName": "[concat(parameters('existingAseName'), '-nsg')]",
     "aspName": "[concat(parameters('existingAseName'), '-asp')]",
     "webAppName": "[concat(parameters('existingAseName'), '-web')]",
     "contentAppName": "[concat(parameters('existingAseName'), '-content')]",
@@ -73,7 +76,6 @@
     "redisCacheSubnetAddressPrefix": "192.168.251.0/26",
     "redisCacheStaticIP": "192.168.251.62",
     "appGatewayName": "[concat(parameters('existingAseName'), '-waf')]",
-    "appGatewayID": "[resourceId('Microsoft.Network/applicationGateways', variables('appGatewayName'))]",
     "appGatewayPublicIPName": "[concat(parameters('existingAseName'), '-waf-ip')]",
     "appGatewayPublicIPDnsPrefix": "[concat(parameters('existingAseName'), '-waf')]",
     "cdnName": "[concat(parameters('existingAseName'), '-cdn')]",
@@ -90,7 +92,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "name": "[concat(variables('vnetName'), '/', variables('redisCacheSubnetName'))]",
       "properties": {
@@ -98,7 +100,7 @@
       }
     },
     {
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "name": "[concat(variables('vnetName'), '/', variables('agSubnetName'))]",
       "dependsOn": [
@@ -109,17 +111,17 @@
       }
     },
     {
-      "apiVersion": "2015-05-01",
+      "apiVersion": "2020-02-02-preview",
       "type": "microsoft.insights/components",
       "name": "[variables('appInsightsName')]",
-      "location": "[variables('appInsightsLocation')]",
+      "location": "[parameters('appInsightsLocation')]",
       "properties": {
         "ApplicationId": "[variables('appInsightsName')]",
         "Request_Source": "IbizaWebAppExtensionCreate"
       }
     },
     {
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2019-06-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
       "location": "[variables('location')]",
@@ -144,7 +146,7 @@
       }
     },
     {
-      "apiVersion": "2018-03-01",
+      "apiVersion": "2019-07-01",
       "type": "Microsoft.Cache/Redis",
       "name": "[variables('redisCacheName')]",
       "location": "[variables('location')]",
@@ -159,12 +161,11 @@
         },
         "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]",
         "staticIP": "[variables('redisCacheStaticIP')]",
-        "redisConfiguration": {},
         "enableNonSslPort": true
       }
     },
     {
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2019-08-01",
       "type": "Microsoft.Web/serverfarms",
       "name": "[variables('aspName')]",
       "location": "[variables('location')]",
@@ -183,7 +184,7 @@
       }
     },
     {
-      "apiVersion": "2016-08-01",
+      "apiVersion": "2019-08-01",
       "type": "Microsoft.Web/sites",
       "name": "[variables('contentAppName')]",
       "location": "[variables('location')]",
@@ -202,15 +203,11 @@
               "value": "src/Web/wwwroot"
             }
           ]
-        },
-        "hostNames": [
-          "[variables('contentAppExternalHostName')]",
-          "[variables('contentAppInternalHostName')]"
-        ]
+        }
       },
       "resources": [
         {
-          "apiVersion": "2016-08-01",
+          "apiVersion": "2019-08-01",
           "name": "web",
           "type": "sourcecontrols",
           "dependsOn": [
@@ -225,7 +222,7 @@
       ]
     },
     {
-      "apiVersion": "2016-08-01",
+      "apiVersion": "2019-08-01",
       "type": "Microsoft.Web/sites",
       "name": "[variables('apiAppName')]",
       "location": "[variables('location')]",
@@ -242,7 +239,7 @@
           "appSettings": [
             {
               "name": "ApplicationInsights:InstrumentationKey",
-              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
+              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2020-02-02-preview').InstrumentationKey]"
             },
             {
               "name": "project",
@@ -260,7 +257,7 @@
       },
       "resources": [
         {
-          "apiVersion": "2016-08-01",
+          "apiVersion": "2019-08-01",
           "name": "web",
           "type": "sourcecontrols",
           "dependsOn": [
@@ -275,7 +272,7 @@
       ]
     },
     {
-      "apiVersion": "2016-08-01",
+      "apiVersion": "2019-08-01",
       "type": "Microsoft.Web/sites",
       "name": "[variables('adminAppName')]",
       "location": "[variables('location')]",
@@ -308,22 +305,18 @@
             },
             {
               "name": "ApplicationInsights:InstrumentationKey",
-              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
+              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2020-02-02-preview').InstrumentationKey]"
             },
             {
               "name": "project",
               "value": "src/Admin/Admin.csproj"
             }
           ]
-        },
-        "hostNames": [
-          "[variables('adminAppExternalHostName')]",
-          "[variables('adminAppInternalHostName')]"
-        ]
+        }
       },
       "resources": [
         {
-          "apiVersion": "2016-08-01",
+          "apiVersion": "2019-08-01",
           "name": "web",
           "type": "sourcecontrols",
           "dependsOn": [
@@ -339,7 +332,7 @@
       ]
     },
     {
-      "apiVersion": "2016-08-01",
+      "apiVersion": "2019-08-01",
       "type": "Microsoft.Web/sites",
       "name": "[variables('webAppName')]",
       "location": "[variables('location')]",
@@ -370,7 +363,7 @@
             },
             {
               "name": "ApplicationInsights:InstrumentationKey",
-              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
+              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2020-02-02-preview').InstrumentationKey]"
             },
             {
               "name": "project",
@@ -396,7 +389,7 @@
             {
               "name": "StorageConnection",
               "type": "Custom",
-              "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-05-01-preview').key1,';')]"
+              "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2019-06-01').keys[0].value,';')]"
             },
             {
               "name": "RedisConnection",
@@ -404,15 +397,11 @@
               "connectionString": "[concat(variables('redisCacheName'), '.redis.cache.windows.net:6380,password=', listKeys(resourceId('Microsoft.Cache/Redis/', variables('redisCacheName')), '2016-04-01').primaryKey, ',ssl=True,abortConnect=False')]"
             }
           ]
-        },
-        "hostNames": [
-          "[variables('webAppExternalHostName')]",
-          "[variables('webAppInternalHostName')]"
-        ]
+        }
       },
       "resources": [
         {
-          "apiVersion": "2016-08-01",
+          "apiVersion": "2019-08-01",
           "name": "web",
           "type": "sourcecontrols",
           "dependsOn": [
@@ -428,7 +417,7 @@
       ]
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-02-02-preview",
       "type": "Microsoft.Sql/servers",
       "location": "[variables('location')]",
       "name": "[variables('sqlServerName')]",
@@ -439,7 +428,7 @@
       },
       "resources": [
         {
-          "apiVersion": "2015-05-01-preview",
+          "apiVersion": "2020-02-02-preview",
           "type": "databases",
           "location": "[variables('location')]",
           "name": "Catalog",
@@ -449,12 +438,11 @@
           "properties": {
             "collation": "SQL_Latin1_General_CP1_CI_AS",
             "edition": "Basic",
-            "maxSizeBytes": "104857600",
             "zoneRedundant": false
           }
         },
         {
-          "apiVersion": "2015-05-01-preview",
+          "apiVersion": "2020-02-02-preview",
           "type": "databases",
           "location": "[variables('location')]",
           "name": "Sales",
@@ -464,12 +452,11 @@
           "properties": {
             "collation": "SQL_Latin1_General_CP1_CI_AS",
             "edition": "Basic",
-            "maxSizeBytes": "104857600",
             "zoneRedundant": false
           }
         },
         {
-          "apiVersion": "2015-05-01-preview",
+          "apiVersion": "2020-02-02-preview",
           "type": "databases",
           "location": "[variables('location')]",
           "name": "Identity",
@@ -479,12 +466,11 @@
           "properties": {
             "collation": "SQL_Latin1_General_CP1_CI_AS",
             "edition": "Basic",
-            "maxSizeBytes": "104857600",
             "zoneRedundant": false
           }
         },
         {
-          "apiVersion": "2015-05-01-preview",
+          "apiVersion": "2020-02-02-preview",
           "type": "virtualNetworkRules",
           "name": "[concat('allow-access-from-', variables('aseSubnetName'))]",
           "dependsOn": [
@@ -497,7 +483,7 @@
       ]
     },
     {
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/applicationGateways",
       "name": "[variables('appGatewayName')]",
       "location": "[variables('location')]",
@@ -580,7 +566,7 @@
               "CookieBasedAffinity": "Disabled",
               "PickHostNameFromBackendAddress": false,
               "probe": {
-                "id": "[concat(variables('appGatewayID'), '/probes/webAppProbe')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/probes', variables('appGatewayName'), 'webAppProbe')]"
               }
             }
           },
@@ -592,7 +578,7 @@
               "CookieBasedAffinity": "Disabled",
               "PickHostNameFromBackendAddress": false,
               "probe": {
-                "id": "[concat(variables('appGatewayID'), '/probes/contentAppProbe')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/probes', variables('appGatewayName'), 'contentAppProbe')]"
               }
             }
           },
@@ -604,7 +590,7 @@
               "CookieBasedAffinity": "Disabled",
               "PickHostNameFromBackendAddress": false,
               "probe": {
-                "id": "[concat(variables('appGatewayID'), '/probes/adminAppProbe')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/probes', variables('appGatewayName'), 'adminAppProbe')]"
               }
             }
           }
@@ -614,13 +600,12 @@
             "name": "webAppHttpListener",
             "properties": {
               "FrontendIPConfiguration": {
-                "Id": "[concat(variables('appGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('appGatewayName'), 'appGatewayFrontendIP')]"
               },
               "FrontendPort": {
-                "Id": "[concat(variables('appGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('appGatewayName'), 'appGatewayFrontendPort')]"
               },
               "Protocol": "Http",
-              "SslCertificate": null,
               "HostName": "[variables('webAppExternalHostName')]"
             }
           },
@@ -628,13 +613,12 @@
             "name": "contentAppHttpListener",
             "properties": {
               "FrontendIPConfiguration": {
-                "Id": "[concat(variables('appGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('appGatewayName'), 'appGatewayFrontendIP')]"
               },
               "FrontendPort": {
-                "Id": "[concat(variables('appGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('appGatewayName'), 'appGatewayFrontendPort')]"
               },
               "Protocol": "Http",
-              "SslCertificate": null,
               "HostName": "[variables('contentAppExternalHostName')]"
             }
           },
@@ -642,13 +626,12 @@
             "name": "adminAppHttpListener",
             "properties": {
               "FrontendIPConfiguration": {
-                "Id": "[concat(variables('appGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('appGatewayName'), 'appGatewayFrontendIP')]"
               },
               "FrontendPort": {
-                "Id": "[concat(variables('appGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('appGatewayName'), 'appGatewayFrontendPort')]"
               },
               "Protocol": "Http",
-              "SslCertificate": null,
               "HostName": "[variables('adminAppExternalHostName')]"
             }
           }
@@ -659,13 +642,13 @@
             "properties": {
               "RuleType": "Basic",
               "httpListener": {
-                "id": "[concat(variables('appGatewayID'), '/httpListeners/webAppHttpListener')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('appGatewayName'), 'webAppHttpListener')]"
               },
               "backendAddressPool": {
-                "id": "[concat(variables('appGatewayID'), '/backendAddressPools/webAppBackendPool')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('appGatewayName'), 'webAppBackendPool')]"
               },
               "backendHttpSettings": {
-                "id": "[concat(variables('appGatewayID'), '/backendHttpSettingsCollection/webAppBackendHttpSettings')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('appGatewayName'), 'webAppBackendHttpSettings')]"
               }
             }
           },
@@ -674,13 +657,13 @@
             "properties": {
               "RuleType": "Basic",
               "httpListener": {
-                "id": "[concat(variables('appGatewayID'), '/httpListeners/contentAppHttpListener')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('appGatewayName'), 'contentAppHttpListener')]"
               },
               "backendAddressPool": {
-                "id": "[concat(variables('appGatewayID'), '/backendAddressPools/contentAppBackendPool')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('appGatewayName'), 'contentAppBackendPool')]"
               },
               "backendHttpSettings": {
-                "id": "[concat(variables('appGatewayID'), '/backendHttpSettingsCollection/contentAppBackendHttpSettings')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('appGatewayName'), 'contentAppBackendHttpSettings')]"
               }
             }
           },
@@ -689,13 +672,15 @@
             "properties": {
               "RuleType": "Basic",
               "httpListener": {
-                "id": "[concat(variables('appGatewayID'), '/httpListeners/adminAppHttpListener')]"
+
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('appGatewayName'), 'adminAppHttpListener')]"
               },
               "backendAddressPool": {
-                "id": "[concat(variables('appGatewayID'), '/backendAddressPools/adminAppBackendPool')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('appGatewayName'), 'adminAppBackendPool')]"
               },
               "backendHttpSettings": {
-                "id": "[concat(variables('appGatewayID'), '/backendHttpSettingsCollection/adminAppBackendHttpSettings')]"
+
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('appGatewayName'), 'adminAppBackendHttpSettings')]"
               }
             }
           }
@@ -738,7 +723,6 @@
             }
           }
         ],
-        "sslCertificates": [],
         "webApplicationFirewallConfiguration": {
           "enabled": true,
           "firewallMode": "Prevention",
@@ -769,7 +753,7 @@
       }
     },
     {
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('appGatewayPublicIPName')]",
       "location": "[variables('location')]",
@@ -781,7 +765,7 @@
       }
     },
     {
-      "apiVersion": "2017-10-12",
+      "apiVersion": "2020-04-15",
       "type": "microsoft.cdn/profiles",
       "name": "[variables('cdnName')]",
       "location": "[variables('location')]",
@@ -790,7 +774,7 @@
       },
       "resources": [
         {
-          "apiVersion": "2017-10-12",
+          "apiVersion": "2020-04-15",
           "type": "endpoints",
           "name": "[variables('cdnWebAppEndpointName')]",
           "location": "[variables('location')]",
@@ -820,12 +804,11 @@
               "application/xml"
             ],
             "optimizationType": "GeneralWebDelivery",
-            "probePath": null,
             "originHostHeader": "[variables('contentAppExternalHostName')]"
           }
         },
         {
-          "apiVersion": "2017-10-12",
+          "apiVersion": "2020-04-15",
           "type": "endpoints",
           "name": "[variables('cdnStorageEndpointName')]",
           "location": "[variables('location')]",
@@ -840,7 +823,7 @@
               {
                 "name": "Storage",
                 "properties": {
-                  "hostName": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2017-10-01').primaryEndpoints.blob, 'https://', ''), '/', '')]"
+                  "hostName": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').primaryEndpoints.blob, 'https://', ''), '/', '')]"
                 }
               }
             ],
@@ -856,8 +839,7 @@
               "application/xml"
             ],
             "optimizationType": "GeneralWebDelivery",
-            "probePath": null,
-            "originHostHeader": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2017-10-01').primaryEndpoints.blob, 'https://', ''), '/', '')]"
+            "originHostHeader": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').primaryEndpoints.blob, 'https://', ''), '/', '')]"
           }
         }
       ]

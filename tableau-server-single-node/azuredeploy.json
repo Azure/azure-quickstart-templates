@@ -19,22 +19,38 @@
     "location": {
       "type": "string",
       "metadata": {
-        "description": "The location where these resources will be deployed."
+        "description": "The location where these resources will be deployed.  By default this will be the location of the resource group."
       },
       "defaultValue": "[resourceGroup().location]"
     },
     "OS": {
       "type": "string",
-      "allowedValues": ["Ubuntu 16.04 LTS", "CentOS 7.5", "RHEL 7.6"],
+      "allowedValues": [
+        "Ubuntu 16.04 LTS",
+        "CentOS 7.5", 
+        "RHEL 7.7", 
+        "Windows 2019-Datacenter",
+        "Windows 2016-Datacenter",
+        "Windows 2012-R2-Datacenter",
+        "Windows 2012-Datacenter"
+      ],
       "metadata": {
         "description": "The operating system of the VM."
       }
     },
+    "tableau_version": {
+      "type": "string",
+      "allowedValues": ["2020.1.3","2019.4.6","2019.3.7","2019.2.11","2019.1.15"],
+      "metadata": {
+        "description": "The version of Tableau Server to install."
+      },
+      "defaultValue": "2020.1.3"
+    },
     "VMSize": {
       "type": "string",
-      "allowedValues": ["Standard_D16s_v3","Standard_E16s_v3","Standard_F16s_v2","Standard_D4s_v3"],
+      "allowedValues": ["Standard_D16s_v3","Standard_D32s_v3","Standard_D48s_v3","Standard_D4s_v3"],
       "metadata": {
-        "description": "Please select the size of the VM you wish to deploy.  Tableau Server should be deployed on a machine with at least 16 vCPUs.  Standard_D4s_v3 is provided for testing only.  Read more about sizing options here: https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-general"
+        "description": "Please select the size of the VM you wish to deploy.  Tableau Server should be deployed on a machine with at least 16 vCPUs.  Standard_D4s_v3 is provided for testing only.  Read more about sizing options here: https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-general"
       },
       "defaultValue": "Standard_D16s_v3"
     },
@@ -142,9 +158,9 @@
     },
     "license_key": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "trial",
       "metadata": {
-        "description": "Enter Tableau Server License key.  ** If you would like to run a 2-week free trial please leave BLANK."
+        "description": "Enter Tableau Server License key.  ** If you would like to run a 2-week free trial please leave as 'trial'"
       }
     },
     "accept_eula": {
@@ -166,9 +182,13 @@
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/24",
     "numberOfInstances": 1,
-    "linuxscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/config-linux.sh', parameters('_artifactsLocationSasToken')))]",
-    "installscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/automated-installer', parameters('_artifactsLocationSasToken')))]",
     "virtualMachineSize": "[parameters('VMSize')]",
+    "linux_os": [
+      "Ubuntu 16.04 LTS",
+      "CentOS 7.5", 
+      "RHEL 7.7"
+    ],
+    "os_is_linux": "[contains(variables('linux_os'),parameters('OS'))]", //true if linux
     "imageReference": {
       "Ubuntu 16.04 LTS": {
         "publisher": "Canonical",
@@ -182,16 +202,75 @@
         "sku": "7.5",
         "version": "latest"
       },
-      "RHEL 7.6": {
+      "RHEL 7.7": {
         "publisher": "RedHat",
         "offer": "RHEL",
         "sku": "7-RAW",
         "version": "latest"
+      },
+      "Windows 2016-Datacenter": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2016-Datacenter",
+        "version": "latest"
+      },
+      "Windows 2019-Datacenter": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2019-Datacenter",
+        "version": "latest"
+      },
+      "Windows 2012-Datacenter": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2012-Datacenter",
+        "version": "latest"
+      },
+      "Windows 2012-R2-Datacenter": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2012-R2-Datacenter",
+        "version": "latest"
       }
     },
     "publicIpName": "[substring(concat(uniqueString(resourceGroup().id, deployment().name)), 0, 6)]",
-    "LinuxExecute": "[concat('-u ''', parameters('adminUsername'), ''' -p ''', parameters('adminPassword'), ''' -h ''', parameters('tableau_admin_username'), ''' -i ''', parameters('tableau_admin_password'), ''' -j ''', parameters('registration_zip'), ''' -k ''', parameters('registration_country'), ''' -l ''', parameters('registration_city'), ''' -m ''', parameters('registration_last_name'), ''' -n ''', parameters('registration_industry'), ''' -o yes -q ''', parameters('registration_title'),''' -r ''', parameters('registration_phone'),''' -s ''', parameters('registration_company'), ''' -t ''', parameters('registration_state'), ''' -x ''', parameters('registration_email'), ''' -v ''', parameters('registration_department'), ''' -g ''', variables('installscripturi'), ''' -y ''', parameters('license_key'), ''' -f ''', parameters('OS'), ''' -w ''', parameters('registration_first_name'), '''')]",
-    "LiCmdWrapper": "[concat('bash ./config-linux.sh ', variables('LinuxExecute'))]",
+    "LinuxExecute": "[concat('-u ''', parameters('adminUsername'), ''' -p ''', parameters('adminPassword'), ''' -h ''', parameters('tableau_admin_username'), ''' -e ''', parameters('tableau_version'), ''' -i ''', parameters('tableau_admin_password'), ''' -j ''', parameters('registration_zip'), ''' -k ''', parameters('registration_country'), ''' -l ''', parameters('registration_city'), ''' -m ''', parameters('registration_last_name'), ''' -n ''', parameters('registration_industry'), ''' -o yes -q ''', parameters('registration_title'),''' -r ''', parameters('registration_phone'),''' -s ''', parameters('registration_company'), ''' -t ''', parameters('registration_state'), ''' -x ''', parameters('registration_email'), ''' -v ''', parameters('registration_department'), ''' -g ''', variables('installscripturi'), ''' -y ''', parameters('license_key'), ''' -f ''', parameters('OS'), ''' -w ''', parameters('registration_first_name'), '''')]",
+    "LinCmdWrapper": "[concat('bash ./config-linux.sh ', variables('LinuxExecute'))]",
+    "linuxscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/config-linux.sh', parameters('_artifactsLocationSasToken')))]",
+    "installscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/automated-installer', parameters('_artifactsLocationSasToken')))]",
+    "winscriptfile":"config-win.ps1",
+    "winscripturi": "[concat(parameters('_artifactsLocation'), concat('scripts/config-win.ps1', parameters('_artifactsLocationSasToken')))]",
+    "WinExecute" : "[concat('-local_admin_user ', parameters('adminUsername'), ' -local_admin_pass ', parameters('adminPassword'), ' -ts_admin_un ', parameters('tableau_admin_username'), ' -ts_admin_pass ', parameters('tableau_admin_password'), ' -reg_zip ', parameters('registration_zip'), ' -reg_country ', parameters('registration_country'), ' -reg_city ', parameters('registration_city'), ' -reg_last_name ', parameters('registration_last_name'), ' -reg_industry ', parameters('registration_industry'), ' -eula ', parameters('accept_eula') ,' -reg_title ', parameters('registration_title'),' -reg_phone ', parameters('registration_phone'),' -reg_company ', parameters('registration_company'), ' -reg_state ', parameters('registration_state'), ' -reg_email ', parameters('registration_email'), ' -reg_department ', parameters('registration_department'), ' -install_script_url ', variables('winscripturi'), ' -license_key ', parameters('license_key'), ' -reg_first_name ', parameters('registration_first_name'), ' -ts_build ', parameters('tableau_version'), '')]",
+    "WinCmdWrapper" : "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('winscriptfile'), ' ', variables('WinExecute'))]",
+    "win_CSE_properties": {
+      "publisher": "Microsoft.Compute",
+      "type": "CustomScriptExtension",
+      "typeHandlerVersion": "1.7",
+      "autoUpgradeMinorVersion": true,
+      "settings": {
+        "fileUris": "[split(variables('winscripturi'), ' ')]"
+        },
+      "protectedSettings": {
+        "commandToExecute": "[variables('WinCmdWrapper')]"
+      }
+    },
+    "lin_CSE_properties": {
+      "publisher": "Microsoft.Azure.Extensions",
+      "type": "CustomScript",
+      "typeHandlerVersion": "2.0",
+      "autoUpgradeMinorVersion": true,
+      "settings": {
+        "skipDos2Unix": false,
+        "timestamp": 123456789
+      },
+        "protectedSettings": {
+        "commandToExecute": 
+          "[variables('LinCmdWrapper')]",
+        "fileUris": [
+          "[variables('linuxscripturi')]"
+        ]
+      }
+    },
     "LinuxsecurityRules": [
       {
         "name": "ssh-rule",
@@ -217,7 +296,7 @@
           "sourceAddressPrefix": "[parameters('source_CIDR')]",
           "destinationAddressPrefix": "*",
           "access": "Allow",
-          "priority": 101,
+          "priority": 110,
           "direction": "Inbound"
         }
       },
@@ -231,7 +310,51 @@
           "sourceAddressPrefix": "Internet",
           "destinationAddressPrefix": "*",
           "access": "Allow",
-          "priority": 102,
+          "priority": 120,
+          "direction": "Inbound"
+        }
+      }
+    ],
+    "WindowssecurityRules": [
+      {
+        "name": "rdp-rule",
+        "properties": {
+          "description": "Allow RDP",
+          "protocol": "Tcp",
+          "sourcePortRange": "*",
+          "destinationPortRange": "3389",
+          "sourceAddressPrefix": "[parameters('source_CIDR')]",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 100,
+          "direction": "Inbound"
+        }
+      },
+      {
+        "name": "mngagent-rule",
+        "properties": {
+          "description": "Allow Management",
+          "protocol": "Tcp",
+          "sourcePortRange": "*",
+          "destinationPortRange": "8850",
+          "sourceAddressPrefix": "[parameters('source_CIDR')]",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 110,
+          "direction": "Inbound"
+        }
+      },
+      {
+        "name": "web-rule",
+        "properties": {
+          "description": "Allow WEB",
+          "protocol": "Tcp",
+          "sourcePortRange": "*",
+          "destinationPortRange": "80",
+          "sourceAddressPrefix": "Internet",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 120,
           "direction": "Inbound"
         }
       }
@@ -245,7 +368,7 @@
       "properties": {
         "mode": "Incremental",
         "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
           "resources": []
         }
@@ -287,7 +410,7 @@
         "displayName": "[variables('NSGName')]"
       },
       "properties": {
-        "securityRules": "[variables('LinuxsecurityRules')]"
+        "securityRules": "[if(variables('os_is_linux'),variables('LinuxsecurityRules'),variables('WindowssecurityRules'))]"
       }
     },
     {
@@ -320,7 +443,7 @@
       },
       "dependsOn": [
         "[variables('virtualNetworkName')]",
-        "[concat('tabpip', copyIndex(1))]"
+        "PipLoop"
       ],
       "properties": {
         "ipConfigurations": [
@@ -397,24 +520,10 @@
             "[resourceId('Microsoft.Compute/virtualMachines', concat('tableau', copyIndex(1)))]"
           ],
           "tags": {
-            "displayName": "linuxappdeploy"
+            "displayName": "customscriptextension"
           },
-          "properties": {
-            "publisher": "Microsoft.Azure.Extensions",
-            "type": "CustomScript",
-            "typeHandlerVersion": "2.0",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "skipDos2Unix": false,
-              "timestamp": 123456789
-            },
-            "protectedSettings": {
-              "commandToExecute": "[variables('LiCmdWrapper')]",
-              "fileUris": [
-                "[variables('linuxscripturi')]"
-              ]
-            }
-          }
+          "properties":
+            "[if(variables('os_is_linux'),variables('lin_CSE_properties'),variables('win_CSE_properties'))]"
         }
       ]
     }
