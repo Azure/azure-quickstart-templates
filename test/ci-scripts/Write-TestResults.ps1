@@ -18,6 +18,7 @@ param(
     [string]$BuildReason = "$ENV:BUILD_REASON",
     [string]$AgentJobStatus = "$ENV:AGENT_JOBSTATUS",
     [string]$ValidationType = "$ENV:VALIDATION_TYPE",
+    [string]$supportedEnvironmentsJson = "$ENV:SUPPORTED_ENVIRONMENTS", # the minified json array from metadata.json
     [string]$ResultDeploymentParameter = "$ENV:RESULT_DEPLOYMENT_PARAMETER", #also cloud specific
     [string]$FairfaxDeployment = "",
     [string]$FairfaxLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
@@ -73,9 +74,16 @@ $FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("false"), "FAI
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("true"), "PASS"
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("false"), "FAIL"
 
-if($ValidationType -eq "Manual"){
-    $FairfaxDeployment = "Manual Test"
-    $PublicDeployment = "Manual Test"
+Write-Host "Supported Environments Found: $supportedEnvironmentsJson"
+$supportedEnvironments = ($supportedEnvironmentsJson | ConvertFrom-JSON -AsHashTable)
+
+if($ValidationType -eq "Manual") { # otherwise this is already set to "Not Supported"
+    if($supportedEnvironments.Contains("AzureUSGovernment")){
+        $FairfaxDeployment = "Manual Test" 
+    }
+    if($supportedEnvironments.Contains("AzureCloud")){
+        $PublicDeployment = "Manual Test"
+    }
 }
 
 # if the record doesn't exist, this is probably a new sample and needs to be added (or we just cleaned the table)

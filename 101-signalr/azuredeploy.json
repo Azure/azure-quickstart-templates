@@ -54,27 +54,91 @@
       "metadata": {
         "description": "Visit https://github.com/Azure/azure-signalr/blob/dev/docs/faq.md#service-mode to understand SignalR Service Mode."
       }
+    },
+    "enableConnectivityLogs": {
+      "type": "string",
+      "defaultValue": "true",
+      "allowedValues": [
+        "true",
+        "false"
+      ]
+    },
+    "enableMessagingLogs": {
+      "type": "string",
+      "defaultValue": "true",
+      "allowedValues": [
+        "true",
+        "false"
+      ]
+    },
+    "allowedOrigins": {
+      "type": "array",
+      "defaultValue": [
+        "https://foo.com",
+        "https://bar.com"
+      ],
+      "metadata": {
+        "description": "Set the list of origins that should be allowed to make cross-origin calls."
+      }
     }
   },
   "resources": [
     {
-      "apiVersion": "2018-10-01",
-      "location": "[parameters('location')]",
+      "type": "Microsoft.SignalRService/SignalR",
+      "apiVersion": "2020-07-01-preview",
       "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "capacity": "[parameters('capacity')]",
+        "name": "[parameters('pricingTier')]"
+      },
+      "kind": "SignalR",
       "properties": {
         "hostNamePrefix": "[parameters('name')]",
         "features": [
           {
             "flag": "ServiceMode",
             "value": "[parameters('serviceMode')]"
+          },
+          {
+            "flag": "EnableConnectivityLogs",
+            "value": "[parameters('enableConnectivityLogs')]"
+          },
+          {
+            "flag": "EnableMessagingLogs",
+            "value": "[parameters('enableMessagingLogs')]"
           }
-        ]
-      },
-      "sku": {
-        "capacity": "[parameters('capacity')]",
-        "name": "[parameters('pricingTier')]"
-      },
-      "type": "Microsoft.SignalRService/SignalR"
+        ],
+        "cors": {
+          "allowedOrigins": "[parameters('allowedOrigins')]"
+        },
+        "networkACLs": {
+          "defaultAction": "deny",
+          "publicNetwork": {
+            "allow": [
+              "ClientConnection"
+            ]
+          },
+          "privateEndpoints": [
+            {
+              "name": "mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e",
+              "allow": [
+                "ServerConnection"
+              ]
+            }
+          ]
+        },
+        "upstream": {
+          "templates": [
+            {
+              "categoryPattern": "*",
+              "eventPattern": "connect,disconnect",
+              "hubPattern": "*",
+              "urlTemplate": "https://example.com/chat/api/connect"
+            }
+          ]
+        }
+      }
     }
   ]
 }

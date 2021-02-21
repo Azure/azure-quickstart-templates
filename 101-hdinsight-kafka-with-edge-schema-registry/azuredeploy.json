@@ -4,7 +4,7 @@
     "parameters": {
       "clusterName": {
         "type": "string",
-        "defaultValue": "[uniqueString('resourceGroup().id')]",
+        "defaultValue": "[uniqueString(resourceGroup().id)]",
         "metadata": {
           "description": "The name of the Kafka cluster to create. This must be a unique name."
         }
@@ -17,8 +17,9 @@
       },
       "clusterLoginPassword": {
         "type": "securestring",
+        "minLength": 10,
         "metadata": {
-          "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+          "description": "The password must be at least 10 characters in length and must contain at least one digit, one upper case letter, one lower case letter, and one non-alphanumeric character except (single-quote, double-quote, backslash, right-bracket, full-stop). Also, the password must not contain 3 consecutive characters from the cluster username or SSH username."
         }
       },
       "sshUserName": {
@@ -29,8 +30,10 @@
       },
       "sshPassword": {
         "type": "securestring",
+        "minLength": 6,
+        "maxLength": 72,
         "metadata": {
-          "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+          "description": "SSH password must be 6-72 characters long and must contain at least one digit, one upper case letter, and one lower case letter.  It must not contain any 3 consecutive characters from the cluster login name."
         }
       },
       "_artifactsLocation": {
@@ -67,7 +70,58 @@
         "metadata": {
           "description": "Location for all resources."
         }
+      },
+        "HeadNodeVirtualMachineSize": {
+        "type": "string",
+        "defaultValue": "Standard_D3_v2",
+        "allowedValues": [
+          "Standard_A4_v2",
+          "Standard_A8_v2",
+          "Standard_D2_v2",
+          "Standard_D3_v2",
+          "Standard_D4_v2",
+          "Standard_D5_v2",
+          "Standard_D12_v2",
+          "Standard_D13_v2",
+          "Standard_E4_v3",
+          "Standard_E8_v3"
+        ],
+        "metadata": {
+          "description": "This is the headnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
+        }
+      },
+      "WorkerNodeVirtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_D3_v2",
+      "allowedValues": [
+        "Standard_A4_v2",
+        "Standard_A8_v2",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2"
+      ],
+      "metadata": {
+        "description": "This is the worerdnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
       }
+    },
+      "ZookeeperNodeVirtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_D3_v2",
+      "allowedValues": [
+        "Standard_A4_v2",
+        "Standard_A8_v2",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2"
+      ],
+      "metadata": {
+        "description": "This is the Zookeepernode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
+      }    
+    }
     },
     "variables": {
       "clStgAcnt": "[concat(parameters('clusterName'),'store')]",
@@ -79,7 +133,7 @@
         "type": "Microsoft.Storage/storageAccounts",
         "name": "[variables('clStgAcnt')]",
         "location": "[parameters('location')]",
-        "apiVersion": "2019-04-01",
+        "apiVersion": "2019-06-01",
         "sku": {
           "name": "[variables('storageAccountType')]"
         },
@@ -92,7 +146,7 @@
         "location": "[parameters('location')]",
         "apiVersion": "2018-06-01-preview",
         "dependsOn": [
-          "[concat('Microsoft.Storage/storageAccounts/',variables('clStgAcnt'))]"
+          "[resourceId('Microsoft.Storage/storageAccounts',variables('clStgAcnt'))]"
         ],
         "properties": {
           "clusterVersion": "3.6",
@@ -110,10 +164,10 @@
           "storageProfile": {
             "storageaccounts": [
               {
-                "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('clStgAcnt')), '2016-01-01').primaryEndpoints.blob,'https://',''),'/','')]",
+                "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('clStgAcnt')), '2019-06-01').primaryEndpoints.blob,'https://',''),'/','')]",
                 "isDefault": true,
                 "container": "[parameters('clusterName')]",
-                "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clStgAcnt')), '2017-10-01').keys[0].value]"
+                "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clStgAcnt')), '2019-06-01').keys[0].value]"
               }
             ]
           },
@@ -123,7 +177,7 @@
                 "name": "headnode",
                 "targetInstanceCount": 2,
                 "hardwareProfile": {
-                  "vmSize": "Standard_D3_v2"
+                "vmSize": "[parameters('HeadNodeVirtualMachineSize')]"
                 },
                 "osProfile": {
                   "linuxOperatingSystemProfile": {
@@ -136,7 +190,7 @@
                 "name": "workernode",
                 "targetInstanceCount": 4,
                 "hardwareProfile": {
-                  "vmSize": "Standard_D3_v2"
+                "vmSize": "[parameters('WorkerNodeVirtualMachineSize')]"
                 },
                 "dataDisksGroups": [
                   {
@@ -154,7 +208,7 @@
                 "name": "zookeepernode",
                 "targetInstanceCount": 3,
                 "hardwareProfile": {
-                  "vmSize": "Standard_A3"
+                "vmSize": "[parameters('ZookeeperNodeVirtualMachineSize')]"
                 },
                 "osProfile": {
                   "linuxOperatingSystemProfile": {
@@ -172,7 +226,7 @@
         "type": "Microsoft.HDInsight/clusters/applications",
         "apiVersion": "2018-06-01-preview",
         "dependsOn": [
-          "[concat('Microsoft.HDInsight/clusters/',parameters('clusterName'))]"
+          "[resourceId('Microsoft.HDInsight/clusters',parameters('clusterName'))]"
         ],
         "properties": {
           "computeProfile": {

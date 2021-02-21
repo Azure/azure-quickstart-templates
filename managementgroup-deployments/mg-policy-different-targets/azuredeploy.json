@@ -1,0 +1,99 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "targetMGs": {
+      "type": "array",
+      "metadata": {
+        "description": "An Array of Target Management Group"
+      }
+    },
+    "allowedLocations": {
+      "type": "array",
+      "defaultValue": [
+        "australiaeast",
+        "australiasoutheast",
+        "australiacentral"
+      ],
+      "metadata": {
+        "description": "An array of the allowed locations, all other locations will be denied by the created policy."
+      }
+    }
+  },
+  "variables": {
+    "policyDefinitionName": "LocationRestriction"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/policyDefinitions",
+      "name": "[variables('policyDefinitionName')]",
+      "apiVersion": "2020-09-01",
+      "properties": {
+        "policyType": "Custom",
+        "mode": "All",
+        "parameters": {
+        },
+        "policyRule": {
+          "if": {
+            "not": {
+              "field": "location",
+              "in": "[parameters('allowedLocations')]"
+            }
+          },
+          "then": {
+            "effect": "deny"
+          }
+        }
+      }
+    },
+    {
+      // this is a no-op to get the name of the managementGroup for the policyDefintion, i.e. the name of the mg for this deployment
+      "name": "getManagementGroupName",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "location": "[deployment().location]",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": []
+        }
+      }
+    },
+    {
+      "scope": "[concat('Microsoft.Management/managementGroups/', parameters('targetMGs')[copyIndex()])]",
+      "name": "[concat('deploy-assignment-to-', parameters('targetMGs')[copyIndex()])]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "location": "[deployment().location]",
+      "dependsOn": [
+        "[variables('policyDefinitionName')]"
+      ],
+      "copy":{
+        "count": "[length(parameters('targetMGs'))]",
+        "name": "assignment-loop"
+      },
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "outer"
+        },
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/policyAssignments",
+              "name": "location-lock",
+              "apiVersion": "2020-09-01",
+              "properties": {
+                "policyDefinitionId": "[extensionResourceId(tenantResourceId('Microsoft.Management/managementGroups', split(reference('getManagementGroupName', '2020-10-01', 'Full').scope, '/')[2]), 'Microsoft.Authorization/policyDefinitions', variables('policyDefinitionName'))]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

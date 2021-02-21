@@ -15,6 +15,6 @@ This template allows you to create 1 to 10 Virtual Machines in Availability Zone
 
 In this template, we use the resource loops capability to create the network interfaces and virtual machines.
 
-The virtual machines are spread out into differnt availability zones.
+The virtual machines are spread out into different availability zones.
 
 

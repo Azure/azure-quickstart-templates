@@ -34,7 +34,7 @@
                 32
             ],
             "metadata": {
-                "description": "Azure database for PostgreSQL compute capacity in vCores (2,4,8,16,32)"
+                "description": "Azure database for MySQL compute capacity in vCores (2,4,8,16,32)"
             }
         },
         "databaseSkuName": {
@@ -53,7 +53,7 @@
                 "MO_Gen5_32"
             ],
             "metadata": {
-                "description": "Azure database for PostgreSQL sku name "
+                "description": "Azure database for MySQL sku name "
             }
         },
         "databaseSkuSizeMB": {
@@ -64,7 +64,7 @@
             ],
             "defaultValue": 51200,
             "metadata": {
-                "description": "Azure database for PostgreSQL Sku Size "
+                "description": "Azure database for MySQL Sku Size "
             }
         },
         "databaseSkuTier": {
@@ -75,7 +75,7 @@
                 "MemoryOptimized"
             ],
             "metadata": {
-                "description": "Azure database for PostgreSQL pricing tier"
+                "description": "Azure database for MySQL pricing tier"
             }
         },
         "mysqlVersion": {
@@ -100,18 +100,18 @@
             "type": "string",
             "defaultValue": "Gen5",
             "metadata": {
-                "description": "Azure database for PostgreSQL sku family"
+                "description": "Azure database for MySQL sku family"
             }
         }
     },
     "variables": {
         "databaseName": "[concat(parameters('siteName'), 'database')]",
-        "serverName": "[concat(parameters('siteName'), 'pgserver')]",
+        "serverName": "[concat(parameters('siteName'), 'myserver')]",
         "hostingPlanName": "[concat(parameters('siteName'), 'serviceplan')]"
     },
     "resources": [
         {
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2020-06-01",
             "name": "[variables('hostingPlanName')]",
             "type": "Microsoft.Web/serverfarms",
             "location": "[parameters('location')]",
@@ -119,8 +119,7 @@
                 "name": "[variables('hostingPlanName')]",
                 "workerSizeId": "1",
                 "reserved": true,
-                "numberOfWorkers": 0,
-                "hostingEnvironment": ""
+                "numberOfWorkers": 0
             },
             "sku": {
                 "Tier": "Standard",
@@ -128,25 +127,24 @@
             }
         },
         {
-            "apiVersion": "2016-08-01",
+            "apiVersion": "2020-06-01",
             "name": "[parameters('siteName')]",
             "type": "Microsoft.Web/sites",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+                "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
             ],
             "properties": {
                 "name": "[parameters('siteName')]",
-                "serverFarmId": "[variables('hostingPlanName')]",
-                "hostingEnvironment": ""
+                "serverFarmId": "[variables('hostingPlanName')]"
             },
             "resources": [
                 {
-                    "apiVersion": "2016-08-01",
+                    "apiVersion": "2020-06-01",
                     "name": "connectionstrings",
                     "type": "config",
                     "dependsOn": [
-                        "[concat('Microsoft.Web/sites/', parameters('siteName'))]"
+                        "[resourceId('Microsoft.Web/sites/', parameters('siteName'))]"
                     ],
                     "properties": {
                         "defaultConnection": {
@@ -170,12 +168,13 @@
                 "family": "[parameters('databaseSkuFamily')]"
             },
             "properties": {
+                "createMode": "Default",
                 "version": "[parameters('mysqlVersion')]",
                 "administratorLogin": "[parameters('administratorLogin')]",
                 "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
                 "storageProfile": {
                     "storageMB": "[parameters('databaseSkuSizeMB')]",
-                    "backupRetentionDays": "7",
+                    "backupRetentionDays": 7,
                     "geoRedundantBackup": "Disabled"
                 },
                 "sslEnforcement": "Disabled"
@@ -185,8 +184,8 @@
                     "type": "firewallrules",
                     "apiVersion": "2017-12-01",
                     "dependsOn": [
-                        "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'),'/databases/' , variables('databaseName'))]",
-                        "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
+                        "[resourceId('Microsoft.DBforMySQL/servers/databases', variables('serverName'), variables('databaseName'))]",
+                        "[resourceId('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
                     ],
                     "location": "[parameters('location')]",
                     "name": "AllowAzureIPs",
@@ -204,7 +203,7 @@
                         "collation": "utf8_general_ci"
                     },
                     "dependsOn": [
-                        "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
+                        "[resourceId('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
                     ]
                 }
             ]

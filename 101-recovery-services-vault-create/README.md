@@ -1,4 +1,4 @@
-# Create Recovery Services Vault
+# Create a Recovery Services vault
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-recovery-services-vault-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-recovery-services-vault-create/PublicDeployment.svg)
@@ -9,9 +9,11 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-recovery-services-vault-create/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-recovery-services-vault-create/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-recovery-services-vault-create%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-recovery-services-vault-create%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-recovery-services-vault-create%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-recovery-services-vault-create%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-recovery-services-vault-create%2Fazuredeploy.json)
 
-### This template creates a Recovery Services Vault which will be used further for Backup and SiteRecovery.
+This template creates a Recovery Services Vault which will be used further for Backup and SiteRecovery. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/site-recovery/quickstart-create-vault-template) article.
 
 A disaster recovery and data protection strategy keeps your business running when unexpected events occur.
 
@@ -19,7 +21,6 @@ The Backup service is Microsoft's born in the cloud backup solution to backup da
 
 The Site Recovery service ensures your servers, virtual machines, and apps are resilient by replicating them so that when disasters and outages occur you can easily fail over to your replicated environment and continue working. When services are resumed you simply failback to your primary location with uninterrupted access. Site Recovery helps protect a wide range of Microsoft and third-party workloads. [Learn more](http://aka.ms/asr-learn-more/).
 
-#### Storage Type Selection
-A Recovery Services vault can only change storage options before any backups have been configured. Once any backup is configured, the storage type cannot be changed. Hence use the conditional parameter to opt-in or opt-out change the storage type [Learn more](https://docs.microsoft.com/en-us/azure/backup/backup-azure-backup-faq#can-i-change-from-grs-to-lrs-after-a-backup)
+## Storage Type Selection
 
-
+A Recovery Services vault can only change storage options before any backups have been configured. Once any backup is configured, the storage type cannot be changed. Use the conditional parameter to opt-in or opt-out to change the storage type. [Learn more](https://docs.microsoft.com/azure/backup/backup-azure-backup-faq#can-i-change-the-storage-redundancy-setting-after-a-backup).

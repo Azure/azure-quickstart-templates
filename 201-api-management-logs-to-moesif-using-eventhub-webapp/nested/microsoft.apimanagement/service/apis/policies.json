@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "existingApiManagementResourceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of existing Api Management service"
+            }
+        },
+        "apiName": {
+            "type": "string",
+            "metadata": {
+                "description": "The Api Name within the Api Management to apply policy to. eg: 'my-billing-apis'. This template does not apply policy globally"
+            }
+        },
+        "logToEventhubLoggerName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of 'log-to-eventhub' logger"
+            }
+        },
+        "log2EHPolicyXml": {
+            "type": "string",
+            "defaultValue": "[concat('<policies>\r\n  <inbound>\r\n    <set-variable name=\"message-id\" value=\"@(Guid.NewGuid())\" />\r\n    <log-to-eventhub logger-id=\"', parameters('logToEventhubLoggerName'), '\" partition-id=\"0\">\r\n      @{\r\n          var requestLine = string.Format(\"{0} {1} HTTP/1.1\\r\\n\",\r\n                                                      context.Request.Method,\r\n                                                      context.Request.Url.Path + context.Request.Url.QueryString);\r\n\r\n          var body = context.Request.Body?.As&lt;string&gt;(true);\r\n          if (body != null &amp;&amp; body.Length &gt; 1024)\r\n          {\r\n              body = body.Substring(0, 1024);\r\n          }\r\n\r\n          var headers = context.Request.Headers\r\n                               .Where(h =&gt; h.Key != \"Authorization\" &amp;&amp; h.Key != \"Ocp-Apim-Subscription-Key\")\r\n                               .Select(h =&gt; string.Format(\"{0}: {1}\", h.Key, String.Join(\", \", h.Value)))\r\n                               .ToArray&lt;string&gt;();\r\n\r\n          var headerString = (headers.Any()) ? string.Join(\"\\r\\n\", headers) + \"\\r\\n\" : string.Empty;\r\n\r\n          return \"request:\"   + context.Variables[\"message-id\"] + \"\\n\"\r\n                              + requestLine + headerString + \"\\r\\n\" + body;\r\n      }\r\n  </log-to-eventhub>\r\n  </inbound>\r\n  <backend>\r\n    <forward-request follow-redirects=\"true\" />\r\n  </backend>\r\n  <outbound>\r\n    <log-to-eventhub logger-id=\"', parameters('logToEventhubLoggerName'), '\" partition-id=\"1\">\r\n      @{\r\n          var statusLine = string.Format(\"HTTP/1.1 {0} {1}\\r\\n\",\r\n                                              context.Response.StatusCode,\r\n                                              context.Response.StatusReason);\r\n\r\n          var body = context.Response.Body?.As&lt;string&gt;(true);\r\n          if (body != null &amp;&amp; body.Length &gt; 1024)\r\n          {\r\n              body = body.Substring(0, 1024);\r\n          }\r\n\r\n          var headers = context.Response.Headers\r\n                                          .Select(h =&gt; string.Format(\"{0}: {1}\", h.Key, String.Join(\", \", h.Value)))\r\n                                          .ToArray&lt;string&gt;();\r\n\r\n          var headerString = (headers.Any()) ? string.Join(\"\\r\\n\", headers) + \"\\r\\n\" : string.Empty;\r\n\r\n          return \"response:\"  + context.Variables[\"message-id\"] + \"\\n\"\r\n                              + statusLine + headerString + \"\\r\\n\" + body;\r\n     }\r\n  </log-to-eventhub>\r\n  </outbound>\r\n</policies>')]",
+            "metadata": {
+                "description": "The <policies> xml blob that will completely overwrite existing value"
+            }
+        },
+        "tags": {
+            "type": "Object",
+            "defaultValue": {}
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.ApiManagement/service/apis/policies",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(parameters('existingApiManagementResourceName'), '/', parameters('apiName'), '/policy')]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "value": "[parameters('log2EHPolicyXml')]",
+                "format": "xml"
+            }
+        }
+    ]
+}

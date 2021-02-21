@@ -13,46 +13,55 @@
       "metadata": {
         "description": "Relative DNS name for the WebApps, must be globally unique.  An index will be appended for each Web App."
       }
+    },
+    "webServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the App Service Plan that is being created"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "trafficManagerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the trafficManager being created"
+      }
     }
   },
 
-  "variables": {
-    "webAppLocations": [ "West US", "East US" ]
-  },
+  "variables": {},
 
   "resources": [
     {
-      "apiVersion": "2015-08-01",
-      "name": "[concat('DemoAppServicePlan', copyIndex())]",
       "type": "Microsoft.Web/serverfarms",
-      "copy": {
-        "name": "farmloop",
-        "count": "[length(variables('webAppLocations'))]"
-      },
-      "location": "[variables('webAppLocations')[copyIndex()]]",
+      "apiVersion": "2019-08-01",
+      "name": "[parameters('webServerName')]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "S1",
         "tier": "Standard"
       }
     },
     {
-      "apiVersion": "2015-08-01",
-      "name": "[concat(parameters('uniqueDnsNameForWebApp'), copyIndex())]",
       "type": "Microsoft.Web/sites",
-      "copy": {
-        "name": "siteloop",
-        "count": "[length(variables('webAppLocations'))]"
-      },
-      "location": "[variables('webAppLocations')[copyIndex()]]",
-      "dependsOn": [ "[concat('DemoAppServicePlan', copyIndex())]" ],
+      "apiVersion": "2019-08-01",
+      "name": "[parameters('uniqueDnsNameForWebApp')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/',parameters('webServerName'))]"
+
+      ],
       "properties": {
-        "serverFarmId": "[concat('DemoAppServicePlan', copyIndex())]"
+        "serverFarmId": "[parameters('webServerName')]"
       }
     },
     {
-      "apiVersion": "2015-11-01",
       "type": "Microsoft.Network/trafficManagerProfiles",
-      "name": "ExampleTMProfile",
+      "apiVersion": "2018-08-01",
+      "name": "[parameters('trafficManagerName')]",
       "location": "global",
       "properties": {
         "profileStatus": "Enabled",
@@ -62,27 +71,23 @@
           "ttl": 30
         },
         "monitorConfig": {
-          "protocol": "HTTP",
-          "port": 80,
+          "protocol": "HTTPS",
+          "port": 443,
           "path": "/"
         }
       }
     },
     {
-      "apiVersion": "2015-11-01",
       "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
-      "dependsOn": [
-        "Microsoft.Network/trafficManagerProfiles/ExampleTMProfile",
-        "[concat('Microsoft.Web/sites/', parameters('uniqueDnsNameForWebApp'), copyindex())]"
-      ],
+      "apiVersion": "2018-08-01",
+      "name": "[concat(parameters('trafficManagerName'),'/',parameters('uniqueDnsNameForWebApp'))]",
       "location": "global",
-      "name": "[concat('ExampleTMProfile/Endpoint', copyIndex())]",
-      "copy": {
-        "name": "endpointloop",
-        "count": "[length(variables('webAppLocations'))]"
-      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/trafficManagerProfiles/',parameters('trafficManagerName'))]",
+        "[resourceId('Microsoft.Web/sites/',parameters('uniqueDnsNameForWebApp'))]"
+      ],
       "properties": {
-        "targetResourceId": "[resourceId('Microsoft.Web/sites/', concat(parameters('uniqueDnsNameForWebApp'), copyIndex()))]",
+        "targetResourceId": "[resourceId('Microsoft.Web/sites/', parameters('uniqueDnsNameForWebApp'))]",
         "endpointStatus": "Enabled"
       }
     }

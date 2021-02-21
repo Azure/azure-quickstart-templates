@@ -47,6 +47,20 @@
       "metadata": {
         "description": "Number of public IP addresses for the Azure Firewall"
       }
+    },
+    "jumpBoxSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS1_v2",
+      "metadata": {
+        "description": "Size of the virtual machine."
+      }
+    },
+    "serverSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS1_v2",
+      "metadata": {
+        "description": "Size of the virtual machine."
+      }
     }
   },
   "variables": {
@@ -69,7 +83,6 @@
     "firewallName": "firewall1",
     "publicIPNamePrefix": "publicIP",
     "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
-    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPNamePrefix'))]",
     "azureFirewallSubnetJSON": "[json(format('{{\"id\": \"{0}\"}}', variables('azureFirewallSubnetId')))]",
     "copy": [
       {
@@ -80,7 +93,7 @@
           "properties": {
             "subnet": "[if(equals(copyIndex('azureFirewallIpConfigurations'), 0), variables('azureFirewallSubnetJSON'), json('null'))]",
             "publicIPAddress": {
-              "id": "[concat(variables('azureFirewallPublicIpId'), add(copyIndex('azureFirewallIpConfigurations'), 1))]"
+              "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPNamePrefix'), add(copyIndex('azureFirewallIpConfigurations'), 1)))]"
             }
           }
         }
@@ -91,8 +104,8 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -102,8 +115,8 @@
     },
     {
       "type": "Microsoft.Network/routeTables",
+      "apiVersion": "2020-06-01",
       "name": "[variables('azfwRouteTableName')]",
-      "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
       "properties": {
         "disableBgpRoutePropagation": false,
@@ -122,15 +135,15 @@
     {
       "comments": "Simple Network Security Group for subnet [variables('serversSubnetName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-06-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {}
     },
     {
-      "name": "[parameters('virtualNetworkName')]",
-      "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/routeTables', variables('azfwRouteTableName'))]",
@@ -174,9 +187,9 @@
       }
     },
     {
-      "name": "[concat(variables('publicIPNamePrefix'), add(copyIndex(), 1))]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('publicIPNamePrefix'), add(copyIndex(), 1))]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
@@ -191,18 +204,18 @@
       }
     },
     {
-      "name": "[variables('jumpBoxPublicIPAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('jumpBoxPublicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
-      "name": "[variables('jumpBoxNsgName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('jumpBoxNsgName')]",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -223,8 +236,8 @@
       }
     },
     {
-      "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-06-01",
       "name": "[variables('JumpBoxNicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -253,8 +266,8 @@
       }
     },
     {
-      "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-06-01",
       "name": "[variables('ServerNicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -275,9 +288,9 @@
       }
     },
     {
-      "name": "JumpBox",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2020-06-01",
+      "name": "JumpBox",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
@@ -285,13 +298,13 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_DS1_v2"
+          "vmSize": "[parameters('jumpBoxSize')]"
         },
         "storageProfile": {
           "imageReference": {
             "publisher": "MicrosoftWindowsServer",
             "offer": "WindowsServer",
-            "sku": "2012-R2-Datacenter",
+            "sku": "2019-Datacenter",
             "version": "latest"
           },
           "osDisk": {
@@ -321,9 +334,9 @@
       }
     },
     {
-      "name": "Server",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2020-06-01",
+      "name": "Server",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
@@ -331,13 +344,13 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_DS1_v2"
+          "vmSize": "[parameters('serverSize')]"
         },
         "storageProfile": {
           "imageReference": {
             "publisher": "MicrosoftWindowsServer",
             "offer": "WindowsServer",
-            "sku": "2012-R2-Datacenter",
+            "sku": "2019-Datacenter",
             "version": "latest"
           },
           "osDisk": {
@@ -367,8 +380,8 @@
       }
     },
     {
-      "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/azureFirewalls",
+      "apiVersion": "2020-06-01",
       "name": "[variables('firewallName')]",
       "location": "[parameters('location')]",
       "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), parameters('availabilityZones'))]",
@@ -391,11 +404,11 @@
                   "name": "appRule1",
                   "protocols": [
                     {
-                      "port": "80",
+                      "port": 80,
                       "protocolType": "http"
                     },
                     {
-                      "port": "443",
+                      "port": 443,
                       "protocolType": "https"
                     }
                   ],
