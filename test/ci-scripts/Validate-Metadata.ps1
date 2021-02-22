@@ -51,6 +51,17 @@ else {
     $supportedEnvironments = @("AzureCloud", "AzureUSGovernment") # Default is all clouds are supported
 }
 
+# check to see what languages are supported, for now we only support json & bicep
+$languages = ($metadata | convertfrom-json).languages
+Write-Host "languages: $languages"
+
+$IsBicepSupported = $false
+if ($null -ne $languages) {
+    Write-Host "Checking languages..."
+    $IsBicepSupported = ($languages -contains 'bicep')
+}
+Write-Host "##vso[task.setvariable variable=is.bicep.in.metadata]$IsBicepSupported"    
+
 # if there is a docOwner, we need to notify that owner via a PR comment
 $docOwner = ($metadata | convertfrom-json).docOwner
 Write-Host "docOwner: $docOwner"

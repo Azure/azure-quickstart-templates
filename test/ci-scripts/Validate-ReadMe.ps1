@@ -2,7 +2,8 @@ param(
     [string] $SampleFolder = $ENV:SAMPLE_FOLDER, # this is the path to the sample
     [string] $SampleName = $ENV:SAMPLE_NAME,  # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
     [string] $ReadMeFileName = "README.md",
-    [string] $supportedEnvironmentsJson = $ENV:SUPPORTED_ENVIRONMENTS # the minified json array from metadata.json
+    [string] $supportedEnvironmentsJson = $ENV:SUPPORTED_ENVIRONMENTS, # the minified json array from metadata.json
+    [string] $isBicep = $ENV:IS_BICEP_IN_METADATA
 )
 
 $ErrorView = "NormalView" # this is working around a bug in Azure DevOps with PS Core and inline scripts https://github.com/microsoft/azure-pipelines-agent/issues/2853
@@ -11,7 +12,7 @@ $ErrorView = "NormalView" # this is working around a bug in Azure DevOps with PS
 TODO linting - is there a pipeline tool for this ?
 #>
 
-$s = $sampleName.Replace("\", "/")
+$s        = $sampleName.Replace("\", "/")
 $sEncoded = $sampleName.Replace("\", "%2F")
 
 $PublicLinkMarkDown=@(
@@ -100,8 +101,10 @@ if(!$supportedEnvironments.Contains("AzureCloud") -and $readme -like "*$($Public
 }
 
 if( $dumpHelp ){
-    
-    $md = @"
+  
+# TODO: add bicep badge (whatever that may be if isBicep flag is set)
+
+$md = @"
 
 ![Azure Public Test Date]($($BadgeLinks[0]))
 ![Azure Public Test Result]($($BadgeLinks[1]))
