@@ -23,4 +23,7 @@ Below are the parameters which can be user configured in the parameters file inc
 - **delegatedSubnetId:** ARM resource id of a subnet that this cluster's NICs should be attached to.
 - **cassandraVersion:** The Apache Cassandra version across the cluster (should be the same major version as your existing cluster)
 - **hoursBetweenBackups:** The number of hours between backups that the service will take of your managed Cassandra data-centers
+- **externalSeedNodes** An array of seed nodes from the existing cluster.
 - **overrideClusterName:** Name of your existing on-premises or self-hosted cluster (you should always add this value, but in the case where your cluster name is not a valid name for Azure resources, the full name of your existing cluster will be here)
+- **clientCertificates** Public certificates that are present on nodes in the existing cluster.
+- **externalGossipCertificates** Gossip certificates that are present on nodes in the existing cluster.
