@@ -12,6 +12,8 @@ If(!$RepoRoot.EndsWith("\")){
     $RepoRoot = "$RepoRoot\"
 }
 
+# TODO - this could now be updated to use Invoke-AzRestMethod that handles authn, so token steps could be removed.
+
 # Set values for the REST call to get the templateHash - this is only needed once during execution since it's the same for all REST calls
 if ($bearerToken -eq "") {
     Write-Host "Getting token..."
@@ -91,7 +93,7 @@ foreach ($SourcePath in $ArtifactFilePaths) {
                     -partitionKey $partitionKey `
                     -rowKey $templateHash `
                     -property @{
-                    "version"  = "$templateHash-$(Get-Date -Format 'yyyy-MM-dd')"; `
+                        "version"  = "$templateHash-$(Get-Date -Format 'yyyy-MM-dd')"; `
                         "file" = "$($file -ireplace [regex]::Escape("$RepoRoot$sampleName\"), '')"
                     }
             }

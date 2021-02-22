@@ -19,11 +19,12 @@ param(
     [string]$AgentJobStatus = "$ENV:AGENT_JOBSTATUS",
     [string]$ValidationType = "$ENV:VALIDATION_TYPE",
     [string]$supportedEnvironmentsJson = "$ENV:SUPPORTED_ENVIRONMENTS", # the minified json array from metadata.json
-    [string]$ResultDeploymentParameter = "$ENV:RESULT_DEPLOYMENT_PARAMETER", #also cloud specific
+    [string]$ResultDeploymentParameter = "$ENV:RESULT_DEPLOYMENT_PARAMETER", # also cloud specific
     [string]$FairfaxDeployment = "",
     [string]$FairfaxLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
     [string]$PublicDeployment = "",
-    [string]$PublicLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString()
+    [string]$PublicLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
+    [string]$templateFileName = $ENV:TEMPLATE_FILENAME # this determines which pipeline we're in - json or bicep
 )
 
 
