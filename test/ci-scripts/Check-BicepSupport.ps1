@@ -46,7 +46,7 @@ if ($isBicepPipeline) {
         # (3) metadata indicates this is a bicep sample, but the file was not found
         Write-Error "bicep language is specified in metadata.json but ($templateFullPath) was not found."
     }
-    else {
+    else { # this is the bicep pipeline but there's no bicep file or metadata set, so just skip the rest of the pipeline and update the badge & metadata table
         # (4) abort the pipeline but don't fail it (we want a green checkmark)
         Write-Host "##vso[task.setvariable variable=run.deployment]$false"
         # for the readme we need to say that deployment is not supported (or available?)
