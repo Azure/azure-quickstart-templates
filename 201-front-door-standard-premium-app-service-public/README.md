@@ -50,4 +50,5 @@ You can also attempt to access the App Service hostname directly. The hostname i
 ## Notes
 
 - Front Door Standard/Premium is currently in preview.
+- Front Door Standard/Premium is not currently available in the US Government regions.
 - App Service access restrictions rules for service tags and headers are currently in preview.
