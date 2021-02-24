@@ -1,52 +1,35 @@
 ---
-- name: install sas on metadata servers
-  hosts: [metadata_servers,va_controllers,midtier_servers]
-  become: yes
-  gather_facts: false
-  tasks:
-     - name: Run metadata server and vacontroller install response file(s)
-       become: yes
-       shell: >-
-         /sasshare/scripts/run_install_as_user.sh sasinst /sasshare/responsefiles/{{ inventory_hostname }}_install.txt
-
-- name: Run setuid
-  hosts: [metadata_servers]
+- name: install sas on midtier, metadata head and vacontroller nodes
+  hosts: [va_controllers,midtier_servers,metadata_head]
   become: yes
   gather_facts: false
   vars_files:
     - /tmp/ansible_vars.yaml
   tasks:
-     - name: Run setuid.sh on the metadata nodes
+     - name: Run metadata head, midtier and vacontroller install response file(s)
        become: yes
-       shell: >-
-         {{ sasFolder }}/SASHome/SASFoundation/9.4/utilities/bin/setuid.sh
+       shell: |
+         /sasshare/scripts/run_install_as_user.sh sasinst /sasshare/responsefiles/{{ inventory_hostname }}_install.txt
+         # For metadata head node, run config step as well
+         if [[ "{{ inventory_hostname }}" == *"metadata"* ]]; then
+           {{ sasFolder }}/SASHome/SASFoundation/9.4/utilities/bin/setuid.sh
+           /sasshare/scripts/run_install_as_user.sh sasinst /sasshare/responsefiles/{{ inventory_hostname }}_config.txt
+         fi
 
-- name: configure sas on metadata head
-  hosts: [metadata_head]
-  become: yes
-  gather_facts: false
-  tasks:
-     - name: Run metadata head config response file
-       become: yes
-       shell: >-
-         /sasshare/scripts/run_install_as_user.sh sasinst /sasshare/responsefiles/{{ inventory_hostname }}_config.txt
-     - name: Pause for 5 minutes between metadata server configurations
-       pause:
-         minutes: 5
-
-- name: configure sas on metadata nodes
+- name: install and configure sas on metadata nodes
   hosts: [metadata_nodes]
   serial: 1
   become: yes
   gather_facts: false
+  vars_files:
+    - /tmp/ansible_vars.yaml
   tasks:
-     - name: Run metadata node config response file
-       become: yes
-       shell: >-
-         /sasshare/scripts/run_install_as_user.sh sasinst /sasshare/responsefiles/{{ inventory_hostname }}_config.txt
-     - name: Pause for 5 minutes between metadata server configurations
-       pause:
-         minutes: 5
+    - name: Run metadata install and config response files
+      become: yes
+      shell: |
+        /sasshare/scripts/run_install_as_user.sh sasinst /sasshare/responsefiles/{{ inventory_hostname }}_install.txt
+        {{ sasFolder }}/SASHome/SASFoundation/9.4/utilities/bin/setuid.sh
+        /sasshare/scripts/run_install_as_user.sh sasinst /sasshare/responsefiles/{{ inventory_hostname }}_config.txt
 
 - name: configure sas on visual analytics controller
   hosts: [va_controllers]
