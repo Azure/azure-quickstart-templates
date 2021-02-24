@@ -2,7 +2,13 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "dnsLabelForLbIp": {
+    "vmAndLoadbalancerExposure": {
+      "type": "string",
+      "metadata": {
+        "description": "Either 'Public' or 'Internal'. Internal Load balancer is only available from the virtual network, no public IP created"
+      }
+    },
+    "dnsLabelForPublicLoadBalancer": {
       "type": "string",
       "metadata": {
         "description": "Unique DNS Label for the Public IP used to access the Load Balancer."
@@ -36,6 +42,13 @@
         "description": "Load Balancer Backend Address Pool Name."
       }
     },
+    "subnetRef": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Load Balancer Private IP subnet."
+      }
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -49,10 +62,13 @@
     "frontEndIPConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',parameters('lbName'),variables('frontEndIPConfigName'))]",
     "lbPoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',parameters('lbName'),parameters('lbPoolName'))]",
     "lbProbeName": "solace-ha-ad-health-check",
-    "lbProbeID": "[resourceId('Microsoft.Network/loadBalancers/probes',parameters('lbName'),variables('lbProbeName'))]"
+    "lbProbeID": "[resourceId('Microsoft.Network/loadBalancers/probes',parameters('lbName'),variables('lbProbeName'))]",
+    "publicIPAddressJSON": { "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressNameLB'))]" },
+    "subnetJSON": { "id": "[parameters('subnetRef')]" }
   },
   "resources": [
     {
+      "condition": "[equals(parameters('vmAndLoadbalancerExposure'),'Public')]",
       "apiVersion": "2020-04-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[parameters('publicIPAddressNameLB')]",
@@ -60,7 +76,7 @@
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsLabelForLbIp')]"
+          "domainNameLabel": "[parameters('dnsLabelForPublicLoadBalancer')]"
         }
       }
     },
@@ -77,9 +93,8 @@
           {
             "name": "[variables('frontEndIPConfigName')]",
             "properties": {
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressNameLB'))]"
-              }
+              "publicIPAddress": "[if(equals(parameters('vmAndLoadbalancerExposure'),'Public'), variables('publicIPAddressJSON'), json('null'))]",
+              "subnet": "[if(equals(parameters('vmAndLoadbalancerExposure'),'Internal'), variables('subnetJSON'), json('null'))]"
             }
           }
         ],

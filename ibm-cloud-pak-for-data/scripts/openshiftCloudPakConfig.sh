@@ -5,7 +5,6 @@ export SUDOUSER=$3
 export WORKERNODECOUNT=$4
 export NAMESPACE=$5
 export APIKEY=$6
-export FIPSENABLED=$7
 
 export INSTALLERHOME=/home/$SUDOUSER/.ibm
 export OCPTEMPLATES=/home/$SUDOUSER/.openshift/templates
@@ -19,7 +18,7 @@ cp /home/$SUDOUSER/.kube/config /root/.kube/config
 
 # Create Registry Route
 runuser -l $SUDOUSER -c "oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"defaultRoute\":true, \"replicas\":$WORKERNODECOUNT}}'"
-runuser -l $SUDOUSER -c "sleep 10"
+runuser -l $SUDOUSER -c "sleep 20"
 runuser -l $SUDOUSER -c "oc project kube-system"
 registryRoute=$(oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}' --kubeconfig /home/$SUDOUSER/.kube/config)
 runuser -l $SUDOUSER -c "cat > $OCPTEMPLATES/registries.conf <<EOF
@@ -163,18 +162,36 @@ runuser -l $SUDOUSER -c "echo 'Sleeping for 12mins while MCs apply and the clust
 runuser -l $SUDOUSER -c "sleep 12m"
 
 #CPD Config
-runuser -l $SUDOUSER -c "wget https://github.com/IBM/cpd-cli/releases/download/v3.5.0/cpd-cli-linux-EE-3.5.1.tgz -O $INSTALLERHOME/cpd-cli-linux-EE-3.5.1.tgz"
-runuser -l $SUDOUSER -c "(cd $INSTALLERHOME && tar -xf cpd-cli-linux-EE-3.5.1.tgz)"
-runuser -l $SUDOUSER -c "(cd $INSTALLERHOME/cpd-cli-linux-EE-3.5.1* && mv * $INSTALLERHOME/)"
-runuser -l $SUDOUSER -c "chmod +x $INSTALLERHOME/cpd-cli"
+runuser -l $SUDOUSER -c "wget https://raw.githubusercontent.com/IBM/cloud-pak/master/repo/case/ibm-cp-datacore-1.3.3.tgz -O $INSTALLERHOME/ibm-cp-datacore-1.3.3.tgz"
+runuser -l $SUDOUSER -c "wget https://github.com/IBM/cloud-pak-cli/releases/download/v3.6.1-2002/cloudctl-linux-amd64.tar.gz -O $INSTALLERHOME/cloudctl-linux-amd64.tar.gz"
+runuser -l $SUDOUSER -c "wget https://github.com/IBM/cloud-pak-cli/releases/download/v3.6.1-2002/cloudctl-linux-amd64.tar.gz.sig -O $INSTALLERHOME/cloudctl-linux-amd64.tar.gz.sig"
+runuser -l $SUDOUSER -c "(cd $INSTALLERHOME && tar -xf cloudctl-linux-amd64.tar.gz)"
+runuser -l $SUDOUSER -c "(cd $INSTALLERHOME && tar -xf ibm-cp-datacore-1.3.3.tgz)"
+runuser -l $SUDOUSER -c "chmod +x $INSTALLERHOME/cloudctl-linux-amd64"
 
 # Service Account Token for COD installation
 runuser -l $SUDOUSER -c "oc new-project $NAMESPACE"
 runuser -l $SUDOUSER -c "oc create serviceaccount cpdtoken"
 runuser -l $SUDOUSER -c "oc policy add-role-to-user admin system:serviceaccount:$NAMESPACE:cpdtoken"
 
-# Download repo.yaml
-runuser -l $SUDOUSER -c "wget $ARTIFACTSLOCATION/scripts/repo.yaml$ARTIFACTSTOKEN -O $INSTALLERHOME/repo.yaml"
-runuser -l $SUDOUSER -c "sed -i s/APIKEYSECRET/\"$APIKEY\"/g $INSTALLERHOME/repo.yaml"
+#Install operator
+export CPD_REGISTRY=cp.icr.io/cp/cpd
+export CPD_REGISTRY_USER=cp
+export CPD_REGISTRY_PASSWORD=$APIKEY
+export OPT_NAMESPACE="cpd-meta-ops"
 
+runuser -l $SUDOUSER -c "oc new-project $OPT_NAMESPACE"
+runuser -l $SUDOUSER -c "$INSTALLERHOME/cloudctl-linux-amd64 case launch              \
+    --case $INSTALLERHOME/ibm-cp-datacore     \
+    --namespace ${OPT_NAMESPACE}              \
+    --inventory cpdMetaOperatorSetup          \
+    --action install-operator                 \
+    --tolerance=1                             \
+    --args \"--entitledRegistry ${CPD_REGISTRY} --entitledUser ${CPD_REGISTRY_USER} --entitledPass ${CPD_REGISTRY_PASSWORD}\""
+
+runuser -l $SUDOUSER -c "echo 'Sleeping 7m for operator to install'"
+runuser -l $SUDOUSER -c "sleep 7m"
+runuser -l $SUDOUSER -c "OP_STATUS=$(oc get pods -n $OPT_NAMESPACE -l name=ibm-cp-data-operator --no-headers --kubeconfig /home/$SUDOUSER/.kube/config | awk '{print $3}')"
+runuser -l $SUDOUSER -c "echo OP_STATUS is {$OP_STATUS}"
+runuser -l $SUDOUSER -c "if [ $OP_STATUS != 'Running' ]; then echo \"CPD Operator Installation Failed\" ; exit 1 ; fi"
 echo "$(date) - ############### Script Complete #############"

@@ -40,15 +40,15 @@
     },
     "resources": [
         {
-            "name": "[parameters('topicName')]",
             "type": "Microsoft.EventGrid/topics",
-            "location": "[parameters('location')]",
-            "apiVersion": "2018-01-01"
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('topicName')]",
+            "location": "[parameters('location')]"
         },
         {
-            "apiVersion": "2017-04-01",
-            "name": "[parameters('eventHubNamespace')]",
             "type": "Microsoft.EventHub/namespaces",
+            "apiVersion": "2018-01-01-preview",
+            "name": "[parameters('eventHubNamespace')]",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "Standard"
@@ -59,11 +59,11 @@
             },
             "resources": [
                 {
+                    "type": "EventHubs",
                     "apiVersion": "2017-04-01",
                     "name": "[parameters('eventHubName')]",
-                    "type": "EventHubs",
                     "dependsOn": [
-                        "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespace'))]"
+                        "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNamespace'))]"
                     ],
                     "properties": {
                         "messageRetentionInDays": 1,
@@ -73,12 +73,13 @@
             ]
         },
         {
-            "type": "Microsoft.EventGrid/topics/providers/eventSubscriptions",
-            "name": "[concat(parameters('topicName'), '/Microsoft.EventGrid/', parameters('subscriptionName'))]",
-            "apiVersion": "2018-01-01",
+            "scope": "[format('Microsoft.EventGrid/topics/{0}', parameters('topicName'))]",
+            "type": "Microsoft.EventGrid/eventSubscriptions",
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('subscriptionName')]",
             "dependsOn": [
-                "[parameters('topicName')]",
-                "[parameters('eventHubName')]"
+                "[resourceId('Microsoft.EventGrid/topics', parameters('topicName'))]",
+                "[resourceId('Microsoft.EventHub/namespaces/eventHubs', parameters('eventHubNamespace'), parameters('eventHubName'))]"
             ],
             "properties": {
                 "destination": {
@@ -88,12 +89,7 @@
                     }
                 },
                 "filter": {
-                    "subjectBeginsWith": "",
-                    "subjectEndsWith": "",
-                    "isSubjectCaseSensitive": false,
-                    "includedEventTypes": [
-                        "All"
-                    ]
+                    "isSubjectCaseSensitive": false
                 }
             }
         }
@@ -102,10 +98,6 @@
         "endpoint": {
             "type": "string",
             "value": "[reference(parameters('topicName')).endpoint]"
-        },
-        "key": {
-            "type": "string",
-            "value": "[listKeys(parameters('topicName'), '2018-01-01').key1]"
         }
     }
 }

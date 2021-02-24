@@ -191,7 +191,7 @@ configuration ConfigureSPVM
         #**********************************************************
         cChocoInstaller InstallChoco
         {
-            InstallDir = "C:\Program Files\Choco"
+            InstallDir = "C:\Choco"
         }
 
         cChocoPackageInstaller InstallEdge
