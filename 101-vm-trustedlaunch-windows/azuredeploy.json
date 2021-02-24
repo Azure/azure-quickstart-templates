@@ -9,7 +9,7 @@
         "description": "Name of the virtual machine."
       }
     },
-    "OSVersion": {
+    "sku": {
       "type": "string",
       "defaultValue": "2019-DATACENTER-GENSECOND",
       "allowedValues": [
@@ -57,7 +57,7 @@
         "2019-DATACENTER-WITH-CONTAINERS-G2"
       ],
       "metadata": {
-        "description": "The Windows version for the virtual machine. This will pick a fully patched image of this given Windows version."
+        "description": "The OS SKU for the virtual machine. This will pick a fully patched image of the given OS SKU."
       }
     },
     "vmSize": {
@@ -111,7 +111,7 @@
     },
     "dnsLabelPrefix": {
       "type": "string",
-      "defaultValue": "[toLower(concat(parameters('vmName'),'-', uniqueString(resourceGroup().id, parameters('vmName'))))]",
+      "defaultValue": "[toLower(concat(parameters('vmName'), '-', uniqueString(resourceGroup().id)))]",
       "metadata": {
         "description": "Unique DNS Name for the Public IP used to access the virtual machine."
       }
@@ -147,7 +147,7 @@
     }
   },
   "variables": {
-    "osPublisherMap": {
+    "skuPublisherMap": {
       "RS1-ENTERPRISEN-G2": "MicrosoftWindowsDesktop",
       "RS5-ENTERPRISEN-STANDARD-G2": "MicrosoftWindowsDesktop",
       "RS5-ENTERPRISEN-G2": "MicrosoftWindowsDesktop",
@@ -191,7 +191,7 @@
       "2019-DATACENTER-WITH-CONTAINERS-SMALLDISK-G2": "MicrosoftWindowsServer",
       "2019-DATACENTER-WITH-CONTAINERS-G2": "MicrosoftWindowsServer"
     },
-    "osOfferMap": {
+    "skuOfferMap": {
       "RS1-ENTERPRISEN-G2": "Windows-10",
       "RS5-ENTERPRISEN-STANDARD-G2": "Windows-10",
       "RS5-ENTERPRISEN-G2": "Windows-10",
@@ -235,7 +235,6 @@
       "2019-DATACENTER-WITH-CONTAINERS-SMALLDISK-G2": "WindowsServer",
       "2019-DATACENTER-WITH-CONTAINERS-G2": "WindowsServer"
     },
-    "storageAccountName": "[concat('bootdiags', uniquestring(resourceGroup().id))]",
     "nicName": "myVMNic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -245,17 +244,6 @@
     "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
-      "name": "[variables('storageAccountName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2020-06-01",
@@ -353,7 +341,6 @@
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],
       "properties": {
@@ -367,9 +354,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[variables('osPublisherMap')[parameters('OSVersion')]]",
-            "offer": "[variables('osOfferMap')[parameters('OSVersion')]]",
-            "sku": "[parameters('OSVersion')]",
+            "publisher": "[variables('skuPublisherMap')[parameters('sku')]]",
+            "offer": "[variables('skuOfferMap')[parameters('sku')]]",
+            "sku": "[parameters('sku')]",
             "version": "latest"
           },
           "osDisk": {
@@ -377,14 +364,7 @@
             "managedDisk": {
               "storageAccountType": "StandardSSD_LRS"
             }
-          },
-          "dataDisks": [
-            {
-              "diskSizeGB": 1023,
-              "lun": 0,
-              "createOption": "Empty"
-            }
-          ]
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -392,12 +372,6 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
-        },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints.blob]"
-          }
         },
         "securityProfile": {
           "uefiSettings": {
