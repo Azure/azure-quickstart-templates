@@ -1,6 +1,6 @@
 # SAS 9.4 Visual Analytics and SAS 9.4 Visual Statistics Quickstart Template for Azure 
 
-**Note:** The SAS 9.4 Visual Analytics (VA) and SAS 9.4 Visual Statistics (VS) Quickstart Template for Azure is an example architecture only, and is not intended for production use. Specifically, the quickstart provides an example of how SAS 9.4 VA and SAS 9.4 VS workloads running in a massively parallel processing (MPP) environment with SAS LASR Analytic Server can be run on Azure.  When running in an MPP environment, the SAS 9.4 VA and SAS 9.4 VS Quickstart Template for Azure deploys Apache Hadoop.  As stated in our [SAS 9.4 Support for Hadoop policy](https://support.sas.com/en/documentation/third-party-software-reference/9-4/support-for-hadoop.html), SAS does not provide support for the installation or administration of Apache Hadoop.  For support with these issues, please refer to the Apache Hadoop open source community.  The intent of the SAS 9.4 VA and SAS 9.4 VS Quickstart Template for Azure is to provide customers an opportunity to test deployments on the cloud before committing to a lift and shift from their current on-premise deployments.
+**Note:** The SAS 9.4 Visual Analytics (VA) and SAS 9.4 Visual Statistics (VS) Quickstart Template for Azure is an example architecture only, and is not intended for production use. Specifically, the Quickstart provides an example of how SAS 9.4 VA and SAS 9.4 VS workloads running in a massively parallel processing (MPP) environment with SAS LASR Analytic Server can be run on Azure.  When running in an MPP environment, the SAS 9.4 VA and SAS 9.4 VS Quickstart Template for Azure deploys Apache Hadoop.  As stated in our [SAS 9.4 Support for Hadoop policy](https://support.sas.com/en/documentation/third-party-software-reference/9-4/support-for-hadoop.html), SAS does not provide support for the installation or administration of Apache Hadoop.  For support with these issues, please refer to the Apache Hadoop open-source community.  The intent of the SAS 9.4 VA and SAS 9.4 VS Quickstart Template for Azure is to provide customers an opportunity to test deployments on the cloud before committing to a lift and shift from their current on-premises deployments.
 
 <a name="Deploybutton"></a>
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsas-viya%2Fazuredeploy.json)
@@ -20,13 +20,13 @@
     1. [Accessing Resources in the Deployment](#accessresources)
     1. [Check Logs and Services Status](#logsandservices)
     1. [Restarting Services](#restartservices)
-    1. [Running SAS Management Console (SMC)](#smc)
+    1. [Running SAS Management Console](#smc)
 
 
 
 <a name="Overview"></a>
 ## Overview
-This README for SAS 9.4 Visual Analytics (VA) and SAS 9.4 Visual Statistics (VS) Quickstart Template for Azure is used to deploy the following SAS 9.4 products in the Azure cloud:
+This README for the SAS 9.4 Visual Analytics (VA) and SAS 9.4 Visual Statistics (VS) Quickstart Template for Azure is used to deploy the following SAS 9.4 products in the Azure cloud:
 
 * SAS Visual Analytics 7.5
 
@@ -51,7 +51,7 @@ We  recommend that you use at least the memory optimized Standard E16s_v3 VM siz
 
 Here are some recommended example VM sizes based on the number of licensed cores:
 
-| Licensed Cores  | Virtual Machine| SKU	Memory(RAM) | Maximum Dataset Size | Cache Size |
+| Licensed Cores  | Virtual Machine| SKU	Memory(RAM) | Maximum Data Set Size | Cache Size |
 | ------------- | ------------- | ------------- | ------------- | ------------- |
 |4  | Standard_E8s_v3   | 64 GB  | 20-40 GB	  |128 GB  |
 | 8 | Standard_E16s_v3  | 128 GB  |20-40 GB	  |256 GB  |
@@ -91,7 +91,7 @@ Before deploying the SAS 9.4 VA and SAS 9.4 VS Quickstart Template for Azure, yo
 
         SAS Visual Statistics 7.5 on Linux 
 
-* A software depot that has been downloaded with the SAS Download Manager (per the instructions in the Software Order Email) to a folder similiar to this: /<download_folder_name>/nondist/depot.
+* A software depot that has been downloaded with the SAS Download Manager (per the instructions in the Software Order Email) to a folder similar to this: /<download_folder_name>/nondist/depot.
 
 * Sufficient quota of at least ## Cores, based on four licensed SAS cores in an SMP environment.  In MPP environments, apply this sizing to the CAS workers as well as the CAS controller.
 
@@ -203,7 +203,7 @@ Check the logs and services status by accessing the various VM instances from th
 <a name="restartservices"></a>
 ### Restarting Services
 
-Some services may not successfully restart when the deployment completes. 
+Some services might not successfully restart when the deployment completes. 
 
 To restart the middle tier services, SSH to the midtier-0 VM instance and perform the following steps: 
 ```
