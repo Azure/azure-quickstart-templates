@@ -15,9 +15,11 @@
 
 This template creates an AS2 Send Receive workflow by using Azure Logic Apps to create the following Azure resources:
 
-* Integration accounts for two partners, Contoso and Fabrikam, along with the necessary artifacts, partners and agreements.
-* Logic apps between Fabrikam Sales and Contoso, which demonstrate Sync AS2 Send Receive.
-* Logic apps between Fabrikam Finance and Contoso, which demonstrate ASync AS2 Send Receive.
+- Integration accounts for two partners, Contoso and Fabrikam, along with the necessary artifacts, partners and agreements.
+
+- Logic apps between Fabrikam Sales and Contoso, which demonstrate Sync AS2 Send Receive.
+
+- Logic apps between Fabrikam Finance and Contoso, which demonstrate ASync AS2 Send Receive.
 
 > [!IMPORTANT]
 > This template creates and deploys two Standard-tier integration accounts, which incur costs. For more information, 
