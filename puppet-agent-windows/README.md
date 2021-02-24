@@ -13,6 +13,6 @@
 
 This template provisions a Windows VM on Azure with the Puppet Agent installed using a VM Extension.
 
-The pre-requiste for deploying this template is to having a running Puppet server. You can host your own Puppet server in Azure or on-prem or create a Puppet Server in Azure using the Azure Marketplace image and following the guidelines for: <a href="https://puppetlabs.com/sites/default/files/Microsoft-Powershell-cmdlets.pdf" target="_blank">Getting Started Guide for Deploying Puppet Enterprise in Azure
+The pre-requiste for deploying this template is to having a running Puppet server. You can host your own Puppet server in Azure or on-prem or create a Puppet Server in Azure using the Azure Marketplace image and following the guidelines for: <a href="https://puppet.com/resources/whitepaper/getting-started-deploying-puppet-enterprise-microsoft-azure/" target="_blank">Getting Started Guide for Deploying Puppet Enterprise in Azure
 
 
