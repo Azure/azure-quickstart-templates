@@ -39,7 +39,7 @@ resource app 'Microsoft.Web/sites@2020-06-01' = {
 
 resource frontDoorProfile 'Microsoft.Cdn/profiles@2020-09-01' = {
   name: frontDoorProfileName
-  location: location
+  location: 'global'
   sku: {
     name: frontDoorSkuName
   }
@@ -48,7 +48,7 @@ resource frontDoorProfile 'Microsoft.Cdn/profiles@2020-09-01' = {
 
 resource frontDoorEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
   name: '${frontDoorProfile.name}/${frontDoorEndpointName}'
-  location: location
+  location: 'global'
   properties: {
     originResponseTimeoutSeconds: 240
     enabledState: 'Enabled'
