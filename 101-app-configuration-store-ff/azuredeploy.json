@@ -1,0 +1,66 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "configStoreName": {
+      "type": "string",
+      "defaultValue": "[concat('appconfig',uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the App Configuration store."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies the Azure location where the app configuration store should be created."
+      }
+    },
+    "featureFlagKey": {
+      "type": "string",
+      "defaultValue": "FeatureFlagSample",
+      "metadata": {
+        "description": "Specifies the key of the feature flag."
+      }
+    },
+    "featureFlagLabel": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specifies the label of the feature flag. The label is optional and can be left as empty."
+      }
+    }
+  },
+  "variables": {
+    "featureFlagValue": {
+      "id": "[parameters('featureFlagKey')]",
+      "description": "Your description.",
+      "enabled": true
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores",
+      "apiVersion": "2020-07-01-preview",
+      "name": "[parameters('configStoreName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "standard"
+      },
+      "resources": [
+        {
+          "type": "keyValues",
+          "apiVersion": "2020-07-01-preview",
+          "name": "[concat('.appconfig.featureflag~2F', parameters('featureFlagKey'), '$', parameters('featureFlagLabel'))]",
+          "dependsOn": [
+            "[parameters('configStoreName')]"
+          ],
+          "properties": {
+            "value": "[string(variables('featureFlagValue'))]",
+            "contentType": "application/vnd.microsoft.appconfig.ff+json;charset=utf-8"
+          }
+        }
+      ]
+    }
+  ]
+}
