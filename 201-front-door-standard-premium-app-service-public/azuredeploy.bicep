@@ -1,14 +1,13 @@
-param location string = 'eastus'
-param appName string = 'app-${uniqueString(resourceGroup().id)}'
-param appServicePlanSkuName string = 'S1'
-param appServicePlanCapacity int = 1
-param frontDoorEndpointName string = 'myappsvc-${uniqueString(resourceGroup().id)}'
+param location string = resourceGroup().location
+param appName string
+param appServicePlanSkuName string
+param appServicePlanCapacity int
+param frontDoorEndpointName string
 param frontDoorSkuName string {
   allowed: [
     'Standard_AzureFrontDoor'
     'Premium_AzureFrontDoor'
   ]
-  default: 'Standard_AzureFrontDoor'
 }
 
 var appServicePlanName = 'AppServicePlan'
@@ -21,7 +20,7 @@ var frontDoorRouteName = 'MyRoute'
 
 resource frontDoorProfile 'Microsoft.Cdn/profiles@2020-09-01' = {
   name: frontDoorProfileName
-  location: location
+  location: 'global'
   sku: {
     name: frontDoorSkuName
   }
@@ -66,7 +65,7 @@ resource app 'Microsoft.Web/sites@2020-06-01' = {
 
 resource frontDoorEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
   name: '${frontDoorProfile.name}/${frontDoorEndpointName}'
-  location: location
+  location: 'global'
   properties: {
     originResponseTimeoutSeconds: 240
     enabledState: 'Enabled'
