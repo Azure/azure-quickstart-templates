@@ -1,6 +1,9 @@
-# SAS 9.4 Visual Analytics/Visual Statistics Quickstart Template for Azure 
+# SAS 9.4 Visual Analytics and SAS 9.4 Visual Statistics Quickstart Template for Azure 
 
-**Note:** The SAS 9.4 Visual Analytics/Visual Statistics Quickstart Template for Azure is an example architecture only, and is not intended for production use. Specifically, the quickstart provides an example of how SAS 9.4 VA/VS workloads running in a massively parallel processing (MPP) environment with SAS LASR Analytic Server can be run on Azure.  When running in an MPP environment, the SAS 9.4 VA/VS Quickstart Template for Azure deploys Apache Hadoop.  As stated in our [SAS 9.4 Support for Hadoop policy](https://support.sas.com/en/documentation/third-party-software-reference/9-4/support-for-hadoop.html), SAS does not provide support for the installation or administration of Apache Hadoop.  For support with these issues, please refer to the Apache Hadoop open source community.  The intent of the SAS 9.4 VA/VS Quickstart Template for Azure is to provide customers an opportunity to test deployments on the cloud before committing to a lift and shift from their current on-premise deployments.
+**Note:** The SAS 9.4 Visual Analytics (VA) and SAS 9.4 Visual Statistics (VS) Quickstart Template for Azure is an example architecture only, and is not intended for production use. Specifically, the quickstart provides an example of how SAS 9.4 VA and SAS 9.4 VS workloads running in a massively parallel processing (MPP) environment with SAS LASR Analytic Server can be run on Azure.  When running in an MPP environment, the SAS 9.4 VA and SAS 9.4 VS Quickstart Template for Azure deploys Apache Hadoop.  As stated in our [SAS 9.4 Support for Hadoop policy](https://support.sas.com/en/documentation/third-party-software-reference/9-4/support-for-hadoop.html), SAS does not provide support for the installation or administration of Apache Hadoop.  For support with these issues, please refer to the Apache Hadoop open source community.  The intent of the SAS 9.4 VA and SAS 9.4 VS Quickstart Template for Azure is to provide customers an opportunity to test deployments on the cloud before committing to a lift and shift from their current on-premise deployments.
+
+<a name="Deploybutton"></a>
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsas-viya%2Fazuredeploy.json)
 
 
 ## Contents
@@ -23,13 +26,13 @@
 
 <a name="Overview"></a>
 ## Overview
-This README for SAS 9.4 Visual Analytics (VA)/ Visual Statistics (VS) Quickstart Template for Azure is used to deploy the following SAS 9.4 products in the Azure cloud:
+This README for SAS 9.4 Visual Analytics (VA) and SAS 9.4 Visual Statistics (VS) Quickstart Template for Azure is used to deploy the following SAS 9.4 products in the Azure cloud:
 
 * SAS Visual Analytics 7.5
 
 * SAS Visual Statistics 7.5
 
-This Quickstart is a reference architecture for users who want to deploy the SAS 9.4 VA/VS  platform using cloud-friendly technologies. By deploying the SAS platform in Azure, you get access to SAS analytics visualization and the ability to create powerful statistical models in an Azure-validated environment. 
+This Quickstart is a reference architecture for users who want to deploy the SAS 9.4 VA and SAS 9.4 VS  platform using cloud-friendly technologies. By deploying SAS 9.4 in Azure, you get access to SAS analytics visualization and the ability to create powerful statistical models in an Azure-validated environment. 
 
 For assistance with SAS software, contact  [SAS Technical Support](https://support.sas.com/en/technical-support.html).   When you contact support, you will be required to provide information, such as your SAS site number, company name, email address, and phone number, that identifies you as a licensed SAS software customer. 
 
@@ -37,13 +40,13 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
 ### Costs and Licenses
 You are responsible for the cost of the Azure services used while running this Quickstart deployment. There is no additional cost for using the Quickstart.
 You will need a SAS license to launch this Quickstart. Your SAS account team and the SAS Enterprise Excellence Center can advise on the appropriate software licensing and sizing to meet your workload and performance needs.
-The SAS 9.4 VA/VS Quickstart Template for Azure creates three instances, including: 
-* 1 compute server virtual machine (VM), the SAS VA/VS server
-* 1 middle tier VM, the SAS 9.4M7 Mid-Tier server
-* 1 metadata server VM, the SAS 9.4M7 Metadata clustered server
+The SAS 9.4M7 VA and SAS 9.4M7 VS Quickstart Template for Azure creates instances as follows: 
+* 1 compute server virtual machine (VM) for the SAS 9.4M7 VA and SAS 9.4M7 VS server head node, plus the number of VMs for the SAS 9.4M7 VA and SAS 9.4M7 VS workers (as specified in the Visual Analytics Worker Count parameter)
+* the number of middle tier VMs for the SAS 9.4M7 Mid-Tier server (as specified in the Mid-Tier VM Count parameter)
+* the number of metadata server VMs for the SAS 9.4M7 Metadata clustered server (as specified in the Metadata VM Count parameter)
 
 <a name="compute"></a>
-#### SAS 9.4 VA/VS server
+#### SAS 9.4M7 VA and SAS 9.4M7 VS server
 We  recommend that you use at least the memory optimized Standard E16s_v3 VM size.
 
 Here are some recommended example VM sizes based on the number of licensed cores:
@@ -55,7 +58,7 @@ Here are some recommended example VM sizes based on the number of licensed cores
 | 16  | Standard_E32s_v3| 256 GB  | 90-170 GB |512 GB  |
 
 <a name="midtier"></a>
-#### SAS 9.4M7 Mid-Tier server
+#### SAS 9.4M7 Middle Tier server
 We  recommend that you use one or two of the memory optimized Standard E16s_v3 VM size at least.
 
 <a name="metadata"></a>
@@ -65,24 +68,24 @@ We  recommend that you use one or three of the memory optimized Standard E16s_v3
 <a name="architecture"></a>
 ## Architecture
 
-This SAS 9.4 VA/VS Quickstart Template for Azure takes a generic license for SAS 9.4 and deploys SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS 9.4 deployment on recommended virtual machines (VMs).  
+This SAS 9.4 VA and SAS 9.4 VS Quickstart Template for Azure takes a generic license for SAS 9.4 and deploys SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS 9.4 deployment on recommended virtual machines (VMs).  
 
 For details, see [SAS 9.4 Intelligence Platform: Installation and Configuration Guide](https://go.documentation.sas.com/?cdcId=bicdc&cdcVersion=9.4&docsetId=biig&docsetTarget=titlepage.htm&locale=en). 
 
 By default, Quickstart deployments enable Transport Layer Security (TLS) to help ensure that communication between external clients (on the internet) and the load balancer is secure. Likewise, TLS is enabled between the load balancer and the private subnet that contains the SAS 9.4 components. 
 
-Deploying this Quickstart for a new virtual private cloud (VPC) with default parameters in a massively parallel processing (MPP) environment builds the following SAS 9.4 environment in the Microsoft Azure cloud, shown in Figure 1.   In MMP environments, the CASInstanceCount parameter is set to one, indicating that only one CAS controller is configured.
+Deploying this Quickstart for a new virtual private cloud (VPC) with default parameters in a massively parallel processing (MPP) environment builds the following SAS 9.4 environment in the Microsoft Azure cloud, shown in Figure 1.   In MPP environments, the CASInstanceCount parameter is set to one, indicating that only one CAS controller is configured.
 
 ![Network Diagram](Azure_9_vavs_quickstart.svg)
-Figure 1: Quickstart architecture for SAS 9.4 VA/VS on Azure in an MPP Environment
+Figure 1: Quickstart architecture for SAS 9.4 VA and SAS 9.4 VS on Azure in an MPP Environment
 
 <a name="Prerequisites"></a>
 ## Prerequisites
 
-Before deploying SAS 9.4 VA/VS Quickstart Template for Azure, you must have the following:
+Before deploying the SAS 9.4 VA and SAS 9.4 VS Quickstart Template for Azure, you must have the following:
 * A Microsoft Azure account with Contributor and Admin Roles if you do not already have one. Request an Azure account at ["CIS Cloud Services"](http://sww.sas.com/sites/it/cloud-services/).
         
-* A SAS 9.4M7 VA/VS software order that contains the following supported Quickstart products: 
+* A SAS 9.4M7 VA and SAS 9.4M7 VS software order that contains the following supported Quickstart products: 
 
         SAS Visual Analytics 7.5 on Linux 
 
@@ -111,10 +114,9 @@ For more information about this command, see ["az storage blob upload-batch"](ht
 
 <a name="azureportal"></a>
 ### Deploy Using the Azure Portal 
-
-1. Log into the Azure portal [here](https://portal.azure.com/#home).  
-2. Navigate to the  [Custom Deployment page](https://portal.azure.com/#create/Microsoft.Template/uri/https%3a%2f%2fraw.githubusercontent.com%2fsassoftware%2fazure-quickstart-templates%2fdevelop-sas94m7-VAVS-MPP%2fsas-9.4m7-VA-MPP%2fazuredeploy.json).
-3. Specify the following parameters for your deployment:
+ 
+1. Click the "Deploy to Azure" button at the beginning of this document [here](#Deploybutton). 
+2. Specify the following parameters for your deployment:
 
 |Parameter Name|Value|
 |--------------|-----------|
@@ -128,17 +130,17 @@ For more information about this command, see ["az storage blob upload-batch"](ht
 |Existing Virtual Network Resource Group|Specifies the resource group if using an existing virtual network. Leave blank if using a new network. Otherwise enter the resource group for the existing network|
 |Virtual Network Name|Use the default value (recommended).|
 |Operating System Image|Specifies the operating system to use.  Currently, only SUSE is supported.|
-|Mid-Tier VM Count|Specifies the number of virtual machines (VMs) for the midtier server. Select 1 for a non-clustered midtier server.  Select 2 for a 2 node midtier cluster.
+|Mid-Tier VM Count|Specifies the number of virtual machines (VMs) for the middle tier server. Select 1 for a non-clustered middle tier server.  Select 2 for a 2 node middle tier cluster.
 |Mid-Tier VM Size|Specifies the VM size. Use the default size (recommended).|
 |Visual Analytics Worker Count|Specifies the number of worker instances created for the SAS Visual Analytics controller.| 
 |Visual Analytics Controller Size|Specifies the size of the Visual Analytics Controller.|
 |Visual Analytics Worker Size|Specifies the size of the Visual Analytics Worker.|
 |Proximity Placement Group Name| Specifies the proximity group for instances. For better performance, you might want to place all instances in the same proximity group. You supply the name.|
-|SSH Key for VM Access| Specfies the full SSH public key that will be added to the servers. Cut and paste a public SSH key into this field.|
+|SSH Key for VM Access| Specifies the full SSH public key that will be added to the servers. Cut and paste a public SSH key into this field.|
 |SAS Administration Password|Specifies the password used for SAS authentication. Enter the password to be used for the sasadm@saspw account.|
 |Azure Administration Password|Specifies the password used for OS authentication.  Enter the password to be used for the sasinst account.|
 |Admin Ingress Location|Specifies to allow inbound SSH traffic to the Ansible Controller from this Classless Inter-Domain Routing (CIDR) block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x.|
-|Web Ingress Location| Specfies to allow inbound HTTP traffic to the SAS 9.4 environment from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x.|
+|Web Ingress Location| Specifies to allow inbound HTTP traffic to the SAS 9.4 environment from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x.|
 |\_artifacts Location SAS Token|Leave blank.|
 |\_artifacts Location|Use the default value (recommended).|
 
@@ -171,7 +173,7 @@ Check the logs and services status by accessing the various VM instances from th
    
    b. Select the *jumpvm* resource from the list of resources in the *Resource Group*. The public IP address is displayed in the *Resource Overview*. 
 
-2. Using the Public IP address, ssh to the jumpvm: 
+2. Using the Public IP address, SSH to the jumpvm: 
 
     ```
    ssh -I <public key pem file> AzureUser@<jumpvm public IP address>
@@ -203,7 +205,7 @@ Check the logs and services status by accessing the various VM instances from th
 
 Some services may not successfully restart when the deployment completes. 
 
-To restart the midtier services, SSH to the midtier-0 VM instance and perform the following steps: 
+To restart the middle tier services, SSH to the midtier-0 VM instance and perform the following steps: 
 ```
 cd /opt/sas/config/Lev1 
 ./sas.servers stop 
@@ -211,16 +213,16 @@ cd /opt/sas/config/Lev1
 ```
 
 <a name="smc"></a>
-### Running SAS Management Console (SMC)
+### Running SAS Management Console 
 
-The easiest way to run SMC is to connect to the deployment using X11 port forwarding as follows:
+The easiest way to run SAS Management Console is to connect to the deployment using X11 port forwarding as follows:
 ```
 ssh -X -i <public key pem file> AzureUser@<jumpvm public IP address>
 ssh -X <vm name> 
 cd /opt/sas/SASHome/SASManagementConsole/9.4 
 ./sasmc & 
 ```
-For example, to run SMC on the *midtier-0* VM:
+For example, to run SAS Management Console on the *midtier-0* VM:
 ```
 ssh -X -i <public key pem file> AzureUser@<jumpvm public IP address>
 ssh -X midtier-0 
