@@ -1,4 +1,13 @@
-param location string = resourceGroup().location
+param location string {
+  allowed:[
+    'eastus'
+    'westus2'
+    'southcentralus'
+  ]
+  metadata: {
+    description: 'When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details.'
+  }
+}
 param appName string
 param appServicePlanSkuName string {
   metadata: {

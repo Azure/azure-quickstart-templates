@@ -54,4 +54,5 @@ You can also attempt to access the App Service hostname directly. The hostname i
 ## Notes
 
 - Front Door Standard/Premium is currently in preview.
+- When using Private Link origins with Front Door Premium during the preview period, [there is a limited set of regions available for use](https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations). These have been enforced in the template. Once the service is generally available this restriction will likely be removed.
 - Front Door Standard/Premium is not currently available in the US Government regions.
