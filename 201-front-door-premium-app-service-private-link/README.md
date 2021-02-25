@@ -25,7 +25,7 @@ The following resources are deployed as part of the solution:
 
 ### Front Door Standard/Premium (Preview)
 - Front Door profile, endpoint, origin group, origin, and route to direct traffic to the App Service application.
-  - This sample must be deployed using the premium Front Door SKU, , since this is required for Private Link integration.
+  - This sample must be deployed using the premium Front Door SKU, since this is required for Private Link integration.
   - The Front Door origin is configured to use Private Link. Once a private endpoint is configured on an App Service instance, [that App Service application will no longer accept connections directly from the internet](https://docs.microsoft.com/azure/app-service/networking/private-endpoint). Traffic must flow through Front Door for it to be accepted by App Service.
 
 The following diagram illustrates the components of this sample.
