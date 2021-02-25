@@ -22,6 +22,7 @@ The following resources are deployed as part of the solution:
 
 ### App Service
 - App Service plan and application.
+  - The App Service plan must use a [SKU that supports private endpoints](https://docs.microsoft.com/azure/app-service/networking/private-endpoint).
 
 ### Front Door Standard/Premium (Preview)
 - Front Door profile, endpoint, origin group, origin, and route to direct traffic to the App Service application.
