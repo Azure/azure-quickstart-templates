@@ -2,13 +2,24 @@
   "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
   "contentVersion": "1.0.0.1",
   "variables": {
-    "templatesBaseURI": "[if(contains(deployment().properties, 'templateLink'), deployment().properties.templateLink.uri, 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-asc-trustedlaunch-policies/')]",
-    "linuxLinuxAzureSecurityAgentPolicy": {
+    "templatesBaseURI": "[if(contains(deployment().properties, 'templateLink'), deployment().properties.templateLink.uri, 'https://raw.githubusercontent.com/prash200/azure-quickstart-templates/master/101-asc-trustedlaunch-policies/')]",
+    "systemAssignedIdentityPolicy": {
+      "definitionDeploymentName": "[concat('SystemAssignedIdentityPolicyDefinitionDeployment-', uniqueString(deployment().name))]",
+      "definitionDeploymentURI": "[uri(variables('templatesBaseURI'), 'nested/systemAssignedIdentity-modify.json')]",
+      "definitionName": "3cf2ab00-13f1-4d0c-8971-2ac933341a7e",
+      "assignmentName": "SystemAssignedIdentityPolicyAssignment",
+      "assignmentDisplayName": "Add system-assigned managed identity to enable Guest Attestation",
+      "assignmentRoleDefinitionName": "SystemAssignedIdentityPolicyAssignmentRoleDefinition",
+      "assignmentRoleDefinitionGUIDs": [
+        "b24988ac-6180-42a0-ab88-20f7382dd24c"
+      ]
+    },
+    "linuxAzureSecurityAgentPolicy": {
       "definitionDeploymentName": "[concat('LinuxAzureSecurityAgentPolicyDefinitionDeployment-', uniqueString(deployment().name))]",
       "definitionDeploymentURI": "[uri(variables('templatesBaseURI'), 'nested/linuxAzureSecurityAgent-deployIfNotExists.json')]",
       "definitionName": "5f8eb305-9c9f-4abe-9bb0-df220d9faba2",
       "assignmentName": "LinuxAzureSecurityAgentPolicyAssignment",
-      "assignmentDisplayName": "Deploy - Configure Linux machines to automatically install the Azure Security agent",
+      "assignmentDisplayName": "Deploy One Agent monitor onboarding to Azure Security Center for Linux virtual machine",
       "assignmentRoleDefinitionName": "LinuxAzureSecurityAgentPolicyAssignmentRoleDefinition",
       "assignmentRoleDefinitionGUIDs": [
         "b24988ac-6180-42a0-ab88-20f7382dd24c",
@@ -57,21 +68,21 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-10-01",
-      "name": "[variables('linuxLinuxAzureSecurityAgentPolicy')['definitionDeploymentName']]",
+      "name": "[variables('systemAssignedIdentityPolicy')['definitionDeploymentName']]",
       "location": "[deployment().location]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('linuxLinuxAzureSecurityAgentPolicy')['definitionDeploymentURI']]"
+          "uri": "[variables('systemAssignedIdentityPolicy')['definitionDeploymentURI']]"
         }
       }
     },
     {
       "type": "Microsoft.Authorization/policyAssignments",
       "apiVersion": "2019-09-01",
-      "name": "[variables('linuxLinuxAzureSecurityAgentPolicy')['assignmentName']]",
+      "name": "[variables('systemAssignedIdentityPolicy')['assignmentName']]",
       "dependsOn": [
-        "[variables('linuxLinuxAzureSecurityAgentPolicy')['definitionDeploymentName']]"
+        "[variables('systemAssignedIdentityPolicy')['definitionDeploymentName']]"
       ],
       "location": "[deployment().location]",
       "identity": {
@@ -79,27 +90,75 @@
       },
       "properties": {
         "enforcementMode": "Default",
-        "displayName": "[variables('linuxLinuxAzureSecurityAgentPolicy')['assignmentDisplayName']]",
+        "displayName": "[variables('systemAssignedIdentityPolicy')['assignmentDisplayName']]",
         "scope": "[subscription().id]",
-        "policyDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', variables('linuxLinuxAzureSecurityAgentPolicy')['definitionName'])]"
+        "policyDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', variables('systemAssignedIdentityPolicy')['definitionName'])]"
       }
     },
     {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2018-09-01-preview",
-      "name": "[guid(subscription().id, variables('linuxLinuxAzureSecurityAgentPolicy')['assignmentRoleDefinitionName'], variables('linuxLinuxAzureSecurityAgentPolicy')['assignmentRoleDefinitionGUIDs'][copyIndex()])]",
+      "name": "[guid(subscription().id, variables('systemAssignedIdentityPolicy')['assignmentRoleDefinitionName'], variables('systemAssignedIdentityPolicy')['assignmentRoleDefinitionGUIDs'][copyIndex()])]",
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Authorization/policyAssignments', variables('linuxLinuxAzureSecurityAgentPolicy')['assignmentName'])]"
+        "[subscriptionResourceId('Microsoft.Authorization/policyAssignments', variables('systemAssignedIdentityPolicy')['assignmentName'])]"
       ],
       "properties": {
-        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('linuxLinuxAzureSecurityAgentPolicy')['assignmentRoleDefinitionGUIDs'][copyIndex()])]",
-        "principalId": "[reference(subscriptionResourceId('Microsoft.Authorization/policyAssignments', variables('linuxLinuxAzureSecurityAgentPolicy')['assignmentName']), '2019-09-01', 'full').identity.principalId]",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('systemAssignedIdentityPolicy')['assignmentRoleDefinitionGUIDs'][copyIndex()])]",
+        "principalId": "[reference(subscriptionResourceId('Microsoft.Authorization/policyAssignments', variables('systemAssignedIdentityPolicy')['assignmentName']), '2019-09-01', 'full').identity.principalId]",
         "scope": "[subscription().id]",
         "principalType": "ServicePrincipal"
       },
       "copy": {
-        "name": "[variables('linuxLinuxAzureSecurityAgentPolicy')['assignmentRoleDefinitionName']]",
-        "count": "[length(variables('linuxLinuxAzureSecurityAgentPolicy')['assignmentRoleDefinitionGUIDs'])]"
+        "name": "[variables('systemAssignedIdentityPolicy')['assignmentRoleDefinitionName']]",
+        "count": "[length(variables('systemAssignedIdentityPolicy')['assignmentRoleDefinitionGUIDs'])]"
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "[variables('linuxAzureSecurityAgentPolicy')['definitionDeploymentName']]",
+      "location": "[deployment().location]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('linuxAzureSecurityAgentPolicy')['definitionDeploymentURI']]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/policyAssignments",
+      "apiVersion": "2019-09-01",
+      "name": "[variables('linuxAzureSecurityAgentPolicy')['assignmentName']]",
+      "dependsOn": [
+        "[variables('linuxAzureSecurityAgentPolicy')['definitionDeploymentName']]"
+      ],
+      "location": "[deployment().location]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "enforcementMode": "Default",
+        "displayName": "[variables('linuxAzureSecurityAgentPolicy')['assignmentDisplayName']]",
+        "scope": "[subscription().id]",
+        "policyDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', variables('linuxAzureSecurityAgentPolicy')['definitionName'])]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2018-09-01-preview",
+      "name": "[guid(subscription().id, variables('linuxAzureSecurityAgentPolicy')['assignmentRoleDefinitionName'], variables('linuxAzureSecurityAgentPolicy')['assignmentRoleDefinitionGUIDs'][copyIndex()])]",
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Authorization/policyAssignments', variables('linuxAzureSecurityAgentPolicy')['assignmentName'])]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('linuxAzureSecurityAgentPolicy')['assignmentRoleDefinitionGUIDs'][copyIndex()])]",
+        "principalId": "[reference(subscriptionResourceId('Microsoft.Authorization/policyAssignments', variables('linuxAzureSecurityAgentPolicy')['assignmentName']), '2019-09-01', 'full').identity.principalId]",
+        "scope": "[subscription().id]",
+        "principalType": "ServicePrincipal"
+      },
+      "copy": {
+        "name": "[variables('linuxAzureSecurityAgentPolicy')['assignmentRoleDefinitionName']]",
+        "count": "[length(variables('linuxAzureSecurityAgentPolicy')['assignmentRoleDefinitionGUIDs'])]"
       }
     },
     {
