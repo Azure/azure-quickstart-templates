@@ -27,7 +27,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
 resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2020-08-01-preview' = {
   name: '${storageAccount.name}/default/${blobContainerName}'
   properties:{
-    publicAccess: 'Blob' // TODO check how this works with PL
+    publicAccess: 'None'
   }
 }
 
