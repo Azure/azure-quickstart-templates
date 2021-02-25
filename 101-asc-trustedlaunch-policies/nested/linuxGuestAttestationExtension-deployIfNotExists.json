@@ -1,0 +1,164 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {
+    "effect": {
+      "type": "string",
+      "defaultValue": "DeployIfNotExists",
+      "allowedValues": [
+        "DeployIfNotExists",
+        "Disabled"
+      ],
+      "metadata": {
+        "displayName": "Effect",
+        "description": "Enable or disable the execution of the policy"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/policyDefinitions",
+      "apiVersion": "2018-05-01",
+      "name": "6074e9a3-c711-4856-976d-24d51f9e065b",
+      "properties": {
+        "displayName": "Deploy Guest Attestation extension on Linux virtual machines",
+        "policyType": "Custom",
+        "mode": "All",
+        "description": "Install the Guest Attestation extension to allow Azure Security Center to proactively attest and monitor the boot integrity of Linux virtual machines.",
+        "metadata": {
+          "version": "1.0.0-preview",
+          "category": "Compute",
+          "preview": true
+        },
+        "policyRule": {
+          "if": {
+            "allOf": [
+              {
+                "field": "type",
+                "equals": "Microsoft.Compute/virtualMachines"
+              },
+              {
+                "field": "Microsoft.Compute/virtualMachines/storageProfile.imageReference.offer",
+                "notlike": "windows*"
+              },
+              {
+                "field": "Microsoft.Compute/virtualMachines/securityProfile.uefiSettings",
+                "exists": "true"
+              },
+              {
+                "field": "Microsoft.Compute/virtualMachines/securityProfile.uefiSettings.vTpmEnabled",
+                "equals": "true"
+              },
+              {
+                "field": "Microsoft.Compute/virtualMachines/securityProfile.uefiSettings.secureBootEnabled",
+                "equals": "true"
+              }
+            ]
+          },
+          "then": {
+            "effect": "[parameters('effect')]",
+            "details": {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "roleDefinitionIds": [
+                "/providers/microsoft.authorization/roleDefinitions/9980e02c-c2be-4d73-94e8-173b1dc7cf3c"
+              ],
+              "existenceCondition": {
+                "allOf": [
+                  {
+                    "field": "Microsoft.Compute/virtualMachines/extensions/publisher",
+                    "in": [
+                      "Microsoft.Azure.Security.LinuxAttestation"
+                    ]
+                  },
+                  {
+                    "field": "Microsoft.Compute/virtualMachines/extensions/type",
+                    "in": [
+                      "GuestAttestation"
+                    ]
+                  },
+                  {
+                    "field": "Microsoft.Compute/virtualMachines/extensions/provisioningState",
+                    "in": [
+                      "Succeeded",
+                      "Provisioning succeeded"
+                    ]
+                  }
+                ]
+              },
+              "deployment": {
+                "properties": {
+                  "mode": "incremental",
+                  "template": {
+                    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                      "vmName": {
+                        "type": "string"
+                      },
+                      "location": {
+                        "type": "string"
+                      }
+                    },
+                    "variables": {
+                      "extensionName": "GuestAttestation",
+                      "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
+                      "extensionVersion": "1.0",
+                      "maaTenantName": "GuestAttestation",
+                      "ascReportingEndpoint": "https://eus2.service.attest.azure.net/",
+                      "maaEndpoint": "https://sharedeus2.eus2.attest.azure.net/"
+                    },
+                    "resources": [
+                      {
+                        "type": "Microsoft.Compute/virtualMachines/extensions",
+                        "name": "[[concat(parameters('vmName'), '/', variables('extensionName'))]",
+                        "location": "[[parameters('location')]",
+                        "apiVersion": "2018-10-01",
+                        "properties": {
+                          "publisher": "[[variables('extensionPublisher')]",
+                          "type": "[[variables('extensionName')]",
+                          "typeHandlerVersion": "[[variables('extensionVersion')]",
+                          "autoUpgradeMinorVersion": true,
+                          "settings": {
+                            "AttestationConfig": {
+                              "MaaSettings": {
+                                "maaEndpoint": "[[variables('maaEndpoint')]",
+                                "maaTenantName": "[[variables('maaTenantName')]"
+                              },
+                              "AscSettings": {
+                                "ascReportingEndpoint": "[[variables('ascReportingEndpoint')]",
+                                "ascReportingFrequency": ""
+                              },
+                              "useCustomToken": "false",
+                              "disableAlerts": "false"
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "Microsoft.Compute/virtualMachines",
+                        "apiVersion": "2018-06-01",
+                        "name": "[[parameters('vmName')]",
+                        "location": "[[parameters('location')]",
+                        "identity": {
+                          "type": "SystemAssigned"
+                        }
+                      }
+                    ]
+                  },
+                  "parameters": {
+                    "vmName": {
+                      "value": "[[field('name')]"
+                    },
+                    "location": {
+                      "value": "[[field('location')]"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

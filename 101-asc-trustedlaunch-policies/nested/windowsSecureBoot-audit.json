@@ -1,0 +1,63 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {
+    "effect": {
+      "type": "string",
+      "defaultValue": "Audit",
+      "allowedValues": [
+        "Audit",
+        "Disabled"
+      ],
+      "metadata": {
+        "displayName": "Effect",
+        "description": "Enable or disable the execution of the policy"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/policyDefinitions",
+      "apiVersion": "2018-05-01",
+      "name": "97566dd7-78ae-4997-8b36-1c7bfe0d8121",
+      "properties": {
+        "displayName": "Secure Boot should be enabled on your Windows virtual machines",
+        "policyType": "Custom",
+        "mode": "All",
+        "description": "Enable Secure Boot to mitigate against malicious and unauthorized changes to the boot chain. It only allows signed code to run on your virtual machines.",
+        "metadata": {
+          "securityCenter": {
+            "remediationDescription": "To enable Secure Boot: 0. Enabling Secure Boot will trigger an immediate SYSTEM REBOOT. 1. Select the VM. 2. On the VM page, navigate to the 'Configuration' tab. 3. On the 'Configuration' page, check 'Secure boot'. 4. Click 'Save'.",
+            "severity": "Low"
+          },
+          "category": "Compute"
+        },
+        "policyRule": {
+          "if": {
+            "allOf": [
+              {
+                "field": "type",
+                "equals": "Microsoft.Compute/virtualMachines"
+              },
+              {
+                "field": "Microsoft.Compute/virtualMachines/storageProfile.imageReference.offer",
+                "like": "windows*"
+              },
+              {
+                "field": "Microsoft.Compute/virtualMachines/securityProfile.uefiSettings",
+                "exists": "true"
+              },
+              {
+                "field": "Microsoft.Compute/virtualMachines/securityProfile.uefiSettings.secureBootEnabled",
+                "equals": "false"
+              }
+            ]
+          },
+          "then": {
+            "effect": "[parameters('effect')]"
+          }
+        }
+      }
+    }
+  ]
+}
