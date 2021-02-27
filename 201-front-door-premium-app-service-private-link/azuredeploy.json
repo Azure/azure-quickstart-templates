@@ -5,8 +5,9 @@
     "location": {
       "type": "string",
       "metadata": {
-        "description": "When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details."
+        "description": "The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource. When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details."
       },
+      "defaultValue": "eastus",
       "allowedValues": [
         "eastus",
         "westus2",
@@ -14,19 +15,32 @@
       ]
     },
     "appName": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "The name of the App Service application to create. This must be globally unique."
+      },
+      "defaultValue": "[format('myapp-{0}', uniqueString(resourceGroup().id))]"
     },
     "appServicePlanSkuName": {
       "type": "string",
       "metadata": {
-        "description": "The SKU name to use for App Service. This must be a SKU that is compatible with private endpoints, i.e. P1v2 or better."
-      }
+        "description": "The name of the SKU to use when creating the App Service plan. This must be a SKU that is compatible with private endpoints, i.e. P1v2 or better."
+      },
+      "defaultValue": "P1v2"
     },
     "appServicePlanCapacity": {
-      "type": "int"
+      "type": "int",
+      "metadata": {
+        "description": "The number of worker instances of your App Service plan that should be provisioned."
+      },
+      "defaultValue": 1
     },
     "frontDoorEndpointName": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Front Door endpoint to create. This must be globally unique."
+      },
+      "defaultValue": "[format('afd-{0}', uniqueString(resourceGroup().id))]"
     }
   },
   "functions": [],
@@ -62,16 +76,34 @@
           "contentVersion": "1.0.0.0",
           "parameters": {
             "location": {
-              "type": "string"
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the App Service resources should be deployed. When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details."
+              },
+              "defaultValue": "eastus",
+              "allowedValues": [
+                "eastus",
+                "westus2",
+                "southcentralus"
+              ]
             },
             "appName": {
-              "type": "string"
+              "type": "string",
+              "metadata": {
+                "description": "The name of the App Service application to create. This must be globally unique."
+              }
             },
             "appServicePlanSkuName": {
-              "type": "string"
+              "type": "string",
+              "metadata": {
+                "description": "The name of the SKU to use when creating the App Service plan. This must be a SKU that is compatible with private endpoints, i.e. P1v2 or better."
+              }
             },
             "appServicePlanCapacity": {
-              "type": "int"
+              "type": "int",
+              "metadata": {
+                "description": "The number of worker instances of your App Service plan that should be provisioned."
+              }
             }
           },
           "functions": [],
@@ -155,17 +187,29 @@
           "contentVersion": "1.0.0.0",
           "parameters": {
             "originHostName": {
-              "type": "string"
+              "type": "string",
+              "metadata": {
+                "description": "The host name that should be used when connecting to the origin."
+              }
             },
             "originPath": {
               "type": "string",
+              "metadata": {
+                "description": "The path that should be used when connecting to the origin."
+              },
               "defaultValue": ""
             },
             "endpointName": {
-              "type": "string"
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Front Door endpoint to create. This must be globally unique."
+              }
             },
             "skuName": {
               "type": "string",
+              "metadata": {
+                "description": "The name of the SKU to use when creating the Front Door profile. If you use Private Link this must be set to `Premium_AzureFrontDoor`."
+              },
               "allowedValues": [
                 "Standard_AzureFrontDoor",
                 "Premium_AzureFrontDoor"
@@ -173,6 +217,9 @@
             },
             "originForwardingProtocol": {
               "type": "string",
+              "metadata": {
+                "description": "The protocol that should be used when connecting from Front Door to the origin."
+              },
               "defaultValue": "HttpsOnly",
               "allowedValues": [
                 "HttpOnly",
@@ -182,14 +229,23 @@
             },
             "privateEndpointResourceId": {
               "type": "string",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the resource ID of the Private Link resource (e.g. an App Service application, Azure Storage account, etc). If you are not using Private Link then this should be empty."
+              },
               "defaultValue": ""
             },
             "privateLinkResourceType": {
               "type": "string",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the resource type of the Private Link resource. The allowed value will depend on the specific Private Link resource type you are using. If you are not using Private Link then this should be empty."
+              },
               "defaultValue": ""
             },
             "privateEndpointLocation": {
               "type": "string",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the location of the Private Link resource. If you are not using Private Link then this should be empty."
+              },
               "defaultValue": ""
             }
           },
@@ -217,8 +273,7 @@
               "location": "global",
               "sku": {
                 "name": "[parameters('skuName')]"
-              },
-              "properties": {}
+              }
             },
             {
               "type": "Microsoft.Cdn/profiles/afdEndpoints",
@@ -247,8 +302,7 @@
                   "probeRequestType": "HEAD",
                   "probeProtocol": "Http",
                   "probeIntervalInSeconds": 100
-                },
-                "trafficRestorationTimeToHealedOrNewEndpointsInMinutes": null
+                }
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
@@ -276,12 +330,10 @@
               "apiVersion": "2020-09-01",
               "name": "[format('{0}/{1}', format('{0}/{1}', variables('profileName'), parameters('endpointName')), variables('routeName'))]",
               "properties": {
-                "customDomains": [],
                 "originGroup": {
                   "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[0], split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[1])]"
                 },
                 "originPath": "[if(not(equals(parameters('originPath'), '')), parameters('originPath'), null())]",
-                "ruleSets": null,
                 "supportedProtocols": [
                   "Http",
                   "Https"
@@ -376,8 +428,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.2.475.23450",
-      "templateHash": "11408358972705852396"
+      "version": "0.2.477.15454",
+      "templateHash": "5523856293188944199"
     }
   }
 }
