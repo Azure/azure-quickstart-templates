@@ -4,7 +4,6 @@ param location string {
     'westus2'
     'southcentralus'
   ]
-  default: 'eastus'
   metadata: {
     description: 'The location into which the App Service resources should be deployed. When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details.'
   }
