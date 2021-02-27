@@ -44,7 +44,6 @@ var appServicePlanName = 'AppServicePlan'
 var frontDoorProfileName = 'MyFrontDoor'
 var frontDoorOriginGroupName = 'MyOriginGroup'
 var frontDoorOriginName = 'MyAppServiceOrigin'
-var frontDoorOriginPath = ''
 var frontDoorRouteName = 'MyRoute'
 
 resource frontDoorProfile 'Microsoft.Cdn/profiles@2020-09-01' = {
@@ -113,7 +112,6 @@ resource frontDoorOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' =
       probeProtocol: 'Http'
       probeIntervalInSeconds: 100
     }
-    trafficRestorationTimeToHealedOrNewEndpointsInMinutes: null
   }
 }
 
@@ -126,7 +124,6 @@ resource frontDoorOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01
     originHostHeader: app.properties.defaultHostName
     priority: 1
     weight: 1000
-    sharedPrivateLinkResource: null
   }
 }
 
@@ -136,8 +133,6 @@ resource frontDoorRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' 
     originGroup: {
       id: frontDoorOriginGroup.id
     }
-    originPath: frontDoorOriginPath != '' ? frontDoorOriginPath : null
-    ruleSets: null
     supportedProtocols: [
       'Http'
       'Https'
