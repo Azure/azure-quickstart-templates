@@ -1,5 +1,15 @@
-param location string = resourceGroup().location
-param storageAccountName string
+param location string {
+  default: resourceGroup().location
+  metadata: {
+    description: 'The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource.'
+  }
+}
+param storageAccountName string{
+  default: 'stor${uniqueString(resourceGroup().id)}'
+  metadata: {
+    description: 'The name of the Azure Storage account to create. This must be globally unique.'
+  }
+}
 param storageSkuName string {
   allowed: [
     'Standard_LRS'
@@ -8,11 +18,24 @@ param storageSkuName string {
     'Premium_LRS'
   ]
   default: 'Standard_LRS'
+  metadata: {
+    description: 'The name of the SKU to use when creating the Azure Storage account.'
+  }
 }
-param storageBlobContainerName string
-param frontDoorEndpointName string
+param storageBlobContainerName string {
+  default: 'mycontainer'
+  metadata: {
+    description: 'The name of the Azure Storage blob container to create.'
+  }
+}
+param frontDoorEndpointName string {
+  default: 'afd-${uniqueString(resourceGroup().id)}'
+  metadata: {
+    description: 'The name of the Front Door endpoint to create. This must be globally unique.'
+  }
+}
 
-var frontDoorSkuName = 'Premium_AzureFrontDoor'
+var frontDoorSkuName = 'Premium_AzureFrontDoor' // This sample uses Private Link, which requires the premium SKU of Front Door.
 
 module storage 'modules/storage.bicep' = {
   name: 'storage'
