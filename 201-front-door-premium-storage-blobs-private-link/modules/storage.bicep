@@ -1,5 +1,13 @@
-param location string
-param accountName string
+param location string {
+  metadata: {
+    description: 'The location into which the storage account should be deployed.'
+  }
+}
+param accountName string {
+  metadata: {
+    description: 'The name of the Azure Storage account to create. This must be globally unique.'
+  }
+}
 param skuName string {
   allowed: [
     'Standard_LRS'
@@ -7,8 +15,15 @@ param skuName string {
     'Standard_ZRS'
     'Premium_LRS'
   ]
+  metadata: {
+    description: 'The name of the SKU to use when creating the Azure Storage account.'
+  }
 }
-param blobContainerName string
+param blobContainerName string {
+  metadata: {
+    description: 'The name of the Azure Storage blob container to create.'
+  }
+}
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   name: accountName
