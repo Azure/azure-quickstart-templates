@@ -1,13 +1,42 @@
-param location string = resourceGroup().location
-param appName string
-param appServicePlanSkuName string
-param appServicePlanCapacity int
-param frontDoorEndpointName string
+param location string {
+  default: resourceGroup().location
+  metadata: {
+    description: 'The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource.'
+  }
+}
+param appName string {
+  default: 'myapp-${uniqueString(resourceGroup().id)}'
+  metadata: {
+    description: 'The name of the App Service application to create. This must be globally unique.'
+  }
+}
+param appServicePlanSkuName string {
+  default: 'S1'
+  metadata: {
+    description: 'The name of the SKU to use when creating the App Service plan.'
+  }
+}
+param appServicePlanCapacity int {
+  default: 1
+  metadata: {
+    description: 'The number of worker instances of your App Service plan that should be provisioned.'
+  }
+}
+param frontDoorEndpointName string {
+  default: 'afd-${uniqueString(resourceGroup().id)}'
+  metadata: {
+    description: 'The name of the Front Door endpoint to create. This must be globally unique.'
+  }
+}
 param frontDoorSkuName string {
   allowed: [
     'Standard_AzureFrontDoor'
     'Premium_AzureFrontDoor'
   ]
+  default: 'Standard_AzureFrontDoor'
+  metadata: {
+    description: 'The name of the SKU to use when creating the Front Door profile.'
+  }
 }
 
 var appServicePlanName = 'AppServicePlan'
@@ -24,7 +53,6 @@ resource frontDoorProfile 'Microsoft.Cdn/profiles@2020-09-01' = {
   sku: {
     name: frontDoorSkuName
   }
-  properties: {}
 }
 
 resource appServicePlan 'Microsoft.Web/serverFarms@2020-06-01' = {
@@ -105,7 +133,6 @@ resource frontDoorOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01
 resource frontDoorRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
   name: '${frontDoorEndpoint.name}/${frontDoorRouteName}'
   properties: {
-    customDomains: []
     originGroup: {
       id: frontDoorOriginGroup.id
     }
