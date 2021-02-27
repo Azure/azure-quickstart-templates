@@ -1,11 +1,27 @@
-param originHostName string
-param originPath string = ''
-param endpointName string
+param originHostName string {
+  metadata: {
+    description: 'The host name that should be used when connecting to the origin.'
+  }
+}
+param originPath string {
+  default: ''
+  metadata: {
+    description: 'The path that should be used when connecting to the origin.'
+  }
+}
+param endpointName string {
+  metadata: {
+    description: 'The name of the Front Door endpoint to create. This must be globally unique.'
+  }
+}
 param skuName string {
   allowed: [
     'Standard_AzureFrontDoor'
     'Premium_AzureFrontDoor'
   ]
+  metadata: {
+    description: 'The name of the SKU to use when creating the Front Door profile. If you use Private Link this must be set to `Premium_AzureFrontDoor`.'
+  }
 }
 param originForwardingProtocol string {
   allowed: [
@@ -14,11 +30,30 @@ param originForwardingProtocol string {
     'MatchRequest'
   ]
   default: 'HttpsOnly'
+  metadata: {
+    description: 'The protocol that should be used when connecting from Front Door to the origin.'
+  }
 }
-param privateEndpointResourceId string = ''
-param privateLinkResourceType string = ''
-param privateEndpointLocation string = ''
+param privateEndpointResourceId string {
+  default: ''
+  metadata: {
+    description: 'If you are using Private Link to connect to the origin, this should specify the resource ID of the Private Link resource (e.g. an App Service application, Azure Storage account, etc). If you are not using Private Link then this should be empty.'
+  }
+}
+param privateLinkResourceType string {
+  default: ''
+  metadata: {
+    description: 'If you are using Private Link to connect to the origin, this should specify the resource type of the Private Link resource. The allowed value will depend on the specific Private Link resource type you are using. If you are not using Private Link then this should be empty.'
+  }
+}
+param privateEndpointLocation string {
+  default: ''
+  metadata: {
+    description: 'If you are using Private Link to connect to the origin, this should specify the location of the Private Link resource. If you are not using Private Link then this should be empty.'
+  }
+}
 
+// When connecting to Private Link origins, we need to assemble the privateLinkOriginDetails object with various pieces of data.
 var isPrivateLinkOrigin = (privateEndpointResourceId != '')
 var privateLinkOriginDetails = {
   privateLink: {
@@ -40,7 +75,6 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
   sku: {
     name: skuName
   }
-  properties: {}
 }
 
 resource endpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
@@ -65,7 +99,6 @@ resource originGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
       probeProtocol: 'Http'
       probeIntervalInSeconds: 100
     }
-    trafficRestorationTimeToHealedOrNewEndpointsInMinutes: null
   }
 }
 
@@ -85,12 +118,10 @@ resource origin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
 resource route 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
   name: '${endpoint.name}/${routeName}'
   properties: {
-    customDomains: []
     originGroup: {
       id: originGroup.id
     }
     originPath: originPath != '' ? originPath : null
-    ruleSets: null
     supportedProtocols: [
       'Http'
       'Https'
