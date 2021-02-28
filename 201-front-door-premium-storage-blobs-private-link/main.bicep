@@ -1,44 +1,28 @@
-param location string {
-  allowed:[
-    'eastus'
-    'westus2'
-    'southcentralus'
-  ]
-  default: 'eastus'
-  metadata: {
-    description: 'The location into which the Azure Storage resources should be deployed. When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details.'
-  }
-}
-param storageAccountName string{
-  default: 'stor${uniqueString(resourceGroup().id)}'
-  metadata: {
-    description: 'The name of the Azure Storage account to create. This must be globally unique.'
-  }
-}
-param storageSkuName string {
-  allowed: [
-    'Standard_LRS'
-    'Standard_GRS'
-    'Standard_ZRS'
-    'Premium_LRS'
-  ]
-  default: 'Standard_LRS'
-  metadata: {
-    description: 'The name of the SKU to use when creating the Azure Storage account.'
-  }
-}
-param storageBlobContainerName string {
-  default: 'mycontainer'
-  metadata: {
-    description: 'The name of the Azure Storage blob container to create.'
-  }
-}
-param frontDoorEndpointName string {
-  default: 'afd-${uniqueString(resourceGroup().id)}'
-  metadata: {
-    description: 'The name of the Front Door endpoint to create. This must be globally unique.'
-  }
-}
+@description('The location into which the Azure Storage resources should be deployed. When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details.')
+@allowed([
+  'eastus'
+  'westus2'
+  'southcentralus'
+])
+param location string = 'eastus'
+
+@description('The name of the Azure Storage account to create. This must be globally unique.')
+param storageAccountName string = 'stor${uniqueString(resourceGroup().id)}'
+
+@description('The name of the SKU to use when creating the Azure Storage account.')
+@allowed([
+  'Standard_LRS'
+  'Standard_GRS'
+  'Standard_ZRS'
+  'Premium_LRS'
+])
+param storageSkuName string = 'Standard_LRS'
+
+@description('The name of the Azure Storage blob container to create.')
+param storageBlobContainerName string = 'mycontainer'
+
+@description('The name of the Front Door endpoint to create. This must be globally unique.')
+param frontDoorEndpointName string = 'afd-${uniqueString(resourceGroup().id)}'
 
 var frontDoorSkuName = 'Premium_AzureFrontDoor' // This sample uses Private Link, which requires the premium SKU of Front Door.
 
