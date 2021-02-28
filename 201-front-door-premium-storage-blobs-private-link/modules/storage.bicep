@@ -1,34 +1,25 @@
-param location string {
-  allowed:[
-    'eastus'
-    'westus2'
-    'southcentralus'
-  ]
-  metadata: {
-    description: 'The location into which the Azure Storage resources should be deployed. When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details.'
-  }
-}
-param accountName string {
-  metadata: {
-    description: 'The name of the Azure Storage account to create. This must be globally unique.'
-  }
-}
-param skuName string {
-  allowed: [
-    'Standard_LRS'
-    'Standard_GRS'
-    'Standard_ZRS'
-    'Premium_LRS'
-  ]
-  metadata: {
-    description: 'The name of the SKU to use when creating the Azure Storage account.'
-  }
-}
-param blobContainerName string {
-  metadata: {
-    description: 'The name of the Azure Storage blob container to create.'
-  }
-}
+@description('The location into which the Azure Storage resources should be deployed. When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details.')
+@allowed([
+  'eastus'
+  'westus2'
+  'southcentralus'
+])
+param location string
+
+@description('The name of the Azure Storage account to create. This must be globally unique.')
+param accountName string
+
+@description('The name of the SKU to use when creating the Azure Storage account.')
+@allowed([
+  'Standard_LRS'
+  'Standard_GRS'
+  'Standard_ZRS'
+  'Premium_LRS'
+])
+param skuName string
+
+@description('The name of the Azure Storage blob container to create.')
+param blobContainerName string
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   name: accountName
