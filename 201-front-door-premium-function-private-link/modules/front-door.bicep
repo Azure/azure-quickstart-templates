@@ -1,57 +1,35 @@
-param originHostName string {
-  metadata: {
-    description: 'The host name that should be used when connecting to the origin.'
-  }
-}
-param originPath string {
-  default: ''
-  metadata: {
-    description: 'The path that should be used when connecting to the origin.'
-  }
-}
-param endpointName string {
-  metadata: {
-    description: 'The name of the Front Door endpoint to create. This must be globally unique.'
-  }
-}
-param skuName string {
-  allowed: [
-    'Standard_AzureFrontDoor'
-    'Premium_AzureFrontDoor'
-  ]
-  metadata: {
-    description: 'The name of the SKU to use when creating the Front Door profile. If you use Private Link this must be set to `Premium_AzureFrontDoor`.'
-  }
-}
-param originForwardingProtocol string {
-  allowed: [
-    'HttpOnly'
-    'HttpsOnly'
-    'MatchRequest'
-  ]
-  default: 'HttpsOnly'
-  metadata: {
-    description: 'The protocol that should be used when connecting from Front Door to the origin.'
-  }
-}
-param privateEndpointResourceId string {
-  default: ''
-  metadata: {
-    description: 'If you are using Private Link to connect to the origin, this should specify the resource ID of the Private Link resource (e.g. an App Service application, Azure Storage account, etc). If you are not using Private Link then this should be empty.'
-  }
-}
-param privateLinkResourceType string {
-  default: ''
-  metadata: {
-    description: 'If you are using Private Link to connect to the origin, this should specify the resource type of the Private Link resource. The allowed value will depend on the specific Private Link resource type you are using. If you are not using Private Link then this should be empty.'
-  }
-}
-param privateEndpointLocation string {
-  default: ''
-  metadata: {
-    description: 'If you are using Private Link to connect to the origin, this should specify the location of the Private Link resource. If you are not using Private Link then this should be empty.'
-  }
-}
+@description('The host name that should be used when connecting to the origin.')
+param originHostName string
+
+@description('The path that should be used when connecting to the origin.')
+param originPath string = ''
+
+@description('The name of the Front Door endpoint to create. This must be globally unique.')
+param endpointName string
+
+@description('The name of the SKU to use when creating the Front Door profile. If you use Private Link this must be set to `Premium_AzureFrontDoor`.')
+@allowed([
+  'Standard_AzureFrontDoor'
+  'Premium_AzureFrontDoor'
+])
+param skuName string
+
+@description('The protocol that should be used when connecting from Front Door to the origin.')
+@allowed([
+  'HttpOnly'
+  'HttpsOnly'
+  'MatchRequest'
+])
+param originForwardingProtocol string = 'HttpsOnly'
+
+@description('If you are using Private Link to connect to the origin, this should specify the resource ID of the Private Link resource (e.g. an App Service application, Azure Storage account, etc). If you are not using Private Link then this should be empty.')
+param privateEndpointResourceId string = ''
+
+@description('If you are using Private Link to connect to the origin, this should specify the resource type of the Private Link resource. The allowed value will depend on the specific Private Link resource type you are using. If you are not using Private Link then this should be empty.')
+param privateLinkResourceType string = ''
+
+@description('If you are using Private Link to connect to the origin, this should specify the location of the Private Link resource. If you are not using Private Link then this should be empty.')
+param privateEndpointLocation string = ''
 
 // When connecting to Private Link origins, we need to assemble the privateLinkOriginDetails object with various pieces of data.
 var isPrivateLinkOrigin = (privateEndpointResourceId != '')
