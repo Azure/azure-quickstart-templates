@@ -1,37 +1,21 @@
-param location string {
-  default: resourceGroup().location
-  metadata: {
-    description: 'The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource.'
-  }
-}
-param functionAppName string {
-  default: 'fn-${uniqueString(resourceGroup().id)}'
-  metadata: {
-    description: 'The name of the Azure Functions application to create. This must be globally unique.'
-  }
-}
-param functionPlanSkuName string {
-  default: 'EP1'
-  metadata: {
-    description: 'The name of the SKU to use when creating the Azure Functions plan.'
-  }
-}
-param frontDoorEndpointName string {
-  default: 'afd-${uniqueString(resourceGroup().id)}'
-  metadata: {
-    description: 'The name of the Front Door endpoint to create. This must be globally unique.'
-  }
-}
-param frontDoorSkuName string {
-  allowed: [
-    'Standard_AzureFrontDoor'
-    'Premium_AzureFrontDoor'
-  ]
-  default: 'Standard_AzureFrontDoor'
-  metadata: {
-    description: 'The name of the SKU to use when creating the Front Door profile.'
-  }
-}
+@description('The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource.')
+param location string = resourceGroup().location
+
+@description('The name of the Azure Functions application to create. This must be globally unique.')
+param functionAppName string = 'fn-${uniqueString(resourceGroup().id)}'
+
+@description('The name of the SKU to use when creating the Azure Functions plan.')
+param functionPlanSkuName string = 'EP1'
+
+@description('The name of the Front Door endpoint to create. This must be globally unique.')
+param frontDoorEndpointName string = 'afd-${uniqueString(resourceGroup().id)}'
+
+@description('The name of the SKU to use when creating the Front Door profile.')
+@allowed([
+  'Standard_AzureFrontDoor'
+  'Premium_AzureFrontDoor'
+])
+param frontDoorSkuName string = 'Standard_AzureFrontDoor'
 
 var frontDoorProfileName = 'MyFrontDoor'
 var frontDoorOriginGroupName = 'MyOriginGroup'

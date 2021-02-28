@@ -1,29 +1,17 @@
-param location string {
-  metadata: {
-    description: 'The location into which the Azure Functions resources should be deployed.'
-  }
-}
-param appName string {
-  metadata: {
-    description: 'The name of the Azure Functions application to create. This must be globally unique.'
-  }
-}
-param functionRuntime string {
-  default: 'dotnet'
-  metadata: {
-    description: 'The runtime to deploy onto the Azure Functions application.'
-  }
-}
-param functionPlanSkuName string {
-  metadata: {
-    description: 'The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium).'
-  }
-}
-param frontDoorId string {
-  metadata: {
-    description: 'The unique ID associated with the Front Door profile that will send traffic to this application. Access restricitons will be configured to disallow traffic that hasn\'t had this ID attached to it.'
-  }
-}
+@description('The location into which the Azure Functions resources should be deployed.')
+param location string
+
+@description('The name of the Azure Functions application to create. This must be globally unique.')
+param appName string
+
+@description('The runtime to deploy onto the Azure Functions application.')
+param functionRuntime string = 'dotnet'
+
+@description('The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium).')
+param functionPlanSkuName string
+
+@description('The unique ID associated with the Front Door profile that will send traffic to this application. Access restricitons will be configured to disallow traffic that hasn\'t had this ID attached to it.')
+param frontDoorId string
 
 var appServicePlanName = 'FunctionPlan'
 var appInsightsName = 'AppInsights'
