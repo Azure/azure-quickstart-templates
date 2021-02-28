@@ -1,24 +1,14 @@
-param location string {
-  metadata: {
-    description: 'The location into which the Azure Functions resources should be deployed.'
-  }
-}
-param appName string {
-  metadata: {
-    description: 'The name of the Azure Functions application to create. This must be globally unique.'
-  }
-}
-param functionRuntime string {
-  default: 'dotnet'
-  metadata: {
-    description: 'The application runtime that the function app uses.'
-  }
-}
-param functionPlanSkuName string {
-  metadata: {
-    description: 'The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium).'
-  }
-}
+@description('The location into which the Azure Functions resources should be deployed.')
+param location string
+
+@description('The name of the Azure Functions application to create. This must be globally unique.')
+param appName string
+
+@description('The application runtime that the function app uses.')
+param functionRuntime string = 'dotnet'
+
+@description('The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium).')
+param functionPlanSkuName string
 
 var appServicePlanName = 'FunctionPlan'
 var appInsightsName = 'AppInsights'
