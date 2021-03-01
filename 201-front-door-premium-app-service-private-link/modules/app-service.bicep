@@ -38,4 +38,3 @@ resource app 'Microsoft.Web/sites@2020-06-01' = {
 
 output appHostName string = app.properties.defaultHostName
 output appServiceResourceId string = app.id
-output appServiceLocation string = app.location
