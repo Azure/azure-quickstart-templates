@@ -29,7 +29,6 @@ resource appServiceEnvironment 'Microsoft.Web/hostingEnvironments@2020-06-01' = 
   properties: {
     location: location
     name: appServiceEnvironmentName
-    workerPools: []
     internalLoadBalancingMode: appServiceEnvironmentInternalLoadBalancingMode
     virtualNetwork: {
       id: subnetResourceId
