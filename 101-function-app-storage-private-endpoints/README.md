@@ -74,9 +74,9 @@ The script will change the size of the plan, and then retrieve the site-level cr
 
 #### Prerequisites to run the in-line deployment script
 
-You will need a user-assigned managed identity to run the script because the script performs actions upon a Azure resources, 
+You will need a user-assigned managed identity to run the script because the script performs actions upon Azure resources.
 
-The principal that is used to deploy the ARM template will need Managed Identity Operator permissions in order to use the managed identity. The deployment principal will also need the permissions described in [this document]. If you are using a deployment principal is assigned the Contributor role to the resource group, then the principal would already have these permissions and you shouldn't need to assign the Managed Identity Operator role or create a custom role for these actions. By default, the template assumes that the principal is a Contributor and does not assign permissions to the principal.
+The principal that is used to deploy the ARM template will need Managed Identity Operator permissions in order to use the managed identity. The deployment principal will also need the permissions described in [this document]. If you are using a deployment principal is assigned the Contributor role to the resource group, then the principal would already have these permissions and you shouldn't need to assign the Managed Identity Operator role or create a custom role for these actions.
 
 The prereqs template does the following:
 - Creates a user-assigned managed identity.
@@ -86,7 +86,7 @@ The prereqs template does the following:
 
 In order to run the prereq template, you must have Owner permissions in the scope that you are assigning roles in. For example, if using the default scope of resource group, you must have Owner permissions on the resource group.
 
-You will also need to provide the object id of an existing deployment principal, as well as the user-assigned managed identity name.
+By default, the template assumes that the principal is a Contributor and does not assign permissions to the principal and you don't need to specify a value for the principleId parameter. If you set the isContributor parameter to false, you will need to provide the object id of an existing deployment principal for the principleId parameter.
 Note: The object id of a service principal is different from the object id of the AAD App registration. 
 You can get the object id of a service principal via [PowerShell](https://docs.microsoft.com/en-us/powershell/module/azuread/get-azureadserviceprincipal?view=azureadps-2.0#example-2--retrieve-a-service-principal-by-id
 ) or [CLI](https://docs.microsoft.com/en-us/cli/azure/ad/sp?view=azure-cli-latest#az_ad_sp_show-examples).
