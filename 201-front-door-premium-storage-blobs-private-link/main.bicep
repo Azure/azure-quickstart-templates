@@ -4,7 +4,7 @@
   'westus2'
   'southcentralus'
 ])
-param location string = 'eastus'
+param location string
 
 @description('The name of the Azure Storage account to create. This must be globally unique.')
 param storageAccountName string = 'stor${uniqueString(resourceGroup().id)}'
