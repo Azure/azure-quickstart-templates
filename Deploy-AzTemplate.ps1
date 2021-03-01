@@ -18,7 +18,8 @@ Param(
     [string] $Mode = "Incremental",
     [string] $DeploymentName = ((Split-Path $TemplateFile -LeafBase) + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')),
     [string] $ManagementGroupId,
-    [switch] $Dev
+    [switch] $Dev,
+    [switch] $bicep
 )
 
 try {
@@ -39,9 +40,24 @@ $OptionalParameters = New-Object -TypeName Hashtable
 $TemplateArgs = New-Object -TypeName Hashtable
 $ArtifactStagingDirectory = ($ArtifactStagingDirectory.TrimEnd('/')).TrimEnd('\')
 
-# if the template file isn't found, try the another default
+# if the bicep switch is set, and the templateFile arg was the default, swap .json for .bicep
+$isBicep = ($bicep -or $TemplateFile.EndsWith('.bicep'))
+if ($isBicep){
+    $defaultTemplateFile = '\main.bicep'
+} else {
+    $defaultTemplateFile = '\azuredeploy.json'
+}
+
+# if the template file isn't found, try another default
 if (!(Test-Path $TemplateFile)) { 
-    $TemplateFile = $ArtifactStagingDirectory + '\azuredeploy.json'
+    $TemplateFile = $ArtifactStagingDirectory + $defaultTemplateFile
+}
+
+# build the bicep file
+if ($isBicep){
+    bicep build $TemplateFile
+    # now point the deployment to the json file that was just build
+    $TemplateFile = $TemplateFile.Replace('.bicep', '.json')
 }
 
 Write-Host "Using template file:  $TemplateFile"
