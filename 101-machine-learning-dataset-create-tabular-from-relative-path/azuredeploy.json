@@ -1,0 +1,151 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": {
+				"description": "Specifies the name of the Azure Machine Learning workspace which will hold this datastore target."
+			}
+		},
+		"datasetName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the dataset."
+			}
+		},
+		"datasetDescription": {
+			"type": "string",
+			"defaultValue": "",
+			"metadata": {
+				"description": "Optional : The description for the dataset."
+			}
+		},
+		"datastoreName": {
+			"type": "string",
+			"metadata": {
+				"description": "The datastore name."
+			}
+		},
+		"relativePath": {
+			"type": "string",
+			"metadata": {
+				"description": "Path within the datastore"
+			}
+		},
+		"sourceType": {
+			"type": "string",
+			"defaultValue": "delimited_files",
+			"allowedValues": [
+				"delimited_files",
+				"json_lines_files",
+				"parquet_files"
+			],
+			"metadata": {
+				"description": "Data source type"
+			}
+		},
+		"separator": {
+			"type": "string",
+			"defaultValue": "",
+			"metadata": {
+				"description": "Optional: The separator used to split columns for 'delimited_files' sourceType, default to ',' for 'delimited_files'"
+			}
+		},
+		"header": {
+			"type": "string",
+			"defaultValue": "all_files_have_same_headers",
+			"allowedValues": [
+				"all_files_have_same_headers",
+				"only_first_file_has_headers",
+				"no_headers",
+				"combine_all_files_headers"
+			],
+			"metadata": {
+				"description": "Optional :  Header type. Defaults to 'all_files_have_same_headers'"
+			}
+		},
+		"partitionFormat": {
+			"type": "string",
+			"defaultValue": "",
+			"metadata": {
+				"description": " Optional : The partition information of each path will be extracted into columns based on the specified format. Format part '{column_name}' creates string column, and '{column_name:yyyy/MM/dd/HH/mm/ss}' creates datetime column, where 'yyyy', 'MM', 'dd', 'HH', 'mm' and 'ss' are used to extract year, month, day, hour, minute and second for the datetime type. The format should start from the position of first partition key until the end of file path. For example, given the path '../USA/2019/01/01/data.parquet' where the partition is by country/region and time, partition_format='/{CountryOrRegion}/{PartitionDate:yyyy/MM/dd}/data.csv' creates a string column'CountryOrRegion' with the value 'USA' and a datetime column 'PartitionDate' with the value '2019-01-01"
+			}
+		},
+		"fineGrainTimestamp": {
+			"type": "string",
+			"defaultValue": "",
+			"metadata": {
+				"description": "Optional : Column name to be used as FineGrainTimestamp"
+			}
+		},
+		"coarseGrainTimestamp": {
+			"type": "string",
+			"defaultValue": "",
+			"metadata": {
+				"description": "Optional : Column name to be used as CoarseGrainTimestamp. Can only be used if 'fineGrainTimestamp' is specified and cannot be same as 'fineGrainTimestamp'."
+			}
+		},
+		"tags": {
+			"type": "object",
+			"defaultValue": {},
+			"metadata": {
+				"description": "Optional : Provide JSON object with 'key,value' pairs to add as tags on dataset. Example- {\"sampleTag1\": \"tagValue1\", \"sampleTag2\": \"tagValue2\"}"
+			}
+		},
+		"skipValidation": {
+			"type": "bool",
+			"defaultValue": false,
+			"metadata": {
+				"description": "Optional :  Skip validation that ensures data can be loaded from the dataset before registration."
+			}
+		},
+		"includePath": {
+			"type": "bool",
+			"defaultValue": false,
+			"metadata": {
+				"description": "Optional :  Boolean to keep path information as column in the dataset. Defaults to False. This is useful when reading multiple files, and want to know which file a particular record originated from, or to keep useful information in file path."
+			}
+		},
+		"location": {
+			"type": "string",
+			"defaultValue": "[resourceGroup().location]",
+			"metadata": {
+				"description": "The location of the Azure Machine Learning Workspace."
+			}
+		}
+	},
+	"resources": [
+		{
+			"type": "Microsoft.MachineLearningServices/workspaces/datasets",
+			"name": "[concat(parameters('workspaceName'), '/', parameters('datasetName'))]",
+			"apiVersion": "2020-05-01-preview",
+			"location": "[parameters('location')]",
+			"properties": {
+				"SkipValidation": "[parameters('skipValidation')]",
+				"DatasetType": "tabular",
+				"Parameters": {
+					"Header": "[parameters('header')]",
+					"IncludePath": "[parameters('includePath')]",
+					"PartitionFormat": "[parameters('partitionFormat')]",
+					"Path": {
+						"DataPath": {
+							"RelativePath": "[parameters('relativePath')]",
+							"DatastoreName": "[parameters('datastoreName')]"
+						}
+					},
+					"Separator": "[parameters('separator')]",
+					"SourceType": "[parameters('sourceType')]"
+				},
+				"Registration": {
+					"Description": "[parameters('datasetDescription')]",
+					"Tags": "[parameters('tags')]"
+				},
+				"TimeSeries": {
+					"FineGrainTimestamp": "[parameters('fineGrainTimestamp')]",
+					"CoarseGrainTimestamp": "[parameters('coarseGrainTimestamp')]"
+				}
+			}
+		}
+	]
+}

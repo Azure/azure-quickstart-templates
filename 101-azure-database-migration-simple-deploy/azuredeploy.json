@@ -1,0 +1,78 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "serviceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the new migration service."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location where the resources will be deployed."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the new virtual network."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the new subnet associated with the virtual network."
+      }
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2020-06-01",
+      "name": "[concat(parameters('vnetName'), '/', parameters('subnetName'))]",
+      "dependsOn": [
+        "[parameters('vnetName')]"
+      ],
+      "properties": {
+        "addressPrefix": "10.0.0.0/24"
+      }
+    },
+    {
+      "type": "Microsoft.DataMigration/services",
+      "apiVersion": "2018-07-15-preview",
+      "name": "[parameters('serviceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "tier": "Standard",
+        "size": "1 vCores",
+        "name": "Standard_1vCores"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+      ],
+      "properties": {
+        "virtualSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+      }
+    }
+  ],
+  "outputs": {
+  }
+}

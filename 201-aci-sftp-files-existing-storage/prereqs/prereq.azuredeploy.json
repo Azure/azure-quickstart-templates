@@ -1,0 +1,101 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        }
+    },
+    "variables": {
+        "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
+        "scriptName": "createFileShare",
+        "fileShareName": "sftpshare",
+        "identityName": "scratch",
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "roleDefinitionName": "[guid(variables('identityName'), variables('roleDefinitionId'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "name": "[variables('identityName')]",
+            "apiVersion": "2018-11-30",
+            "location": "[parameters('location')]"
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-03-01-preview",
+            "name": "[variables('roleDefinitionName')]",
+            "dependsOn": [
+                "[variables('identityName')]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('roleDefinitionId')]",
+                "principalId": "[reference(variables('identityName')).principalId]",
+                "scope": "[resourceGroup().id]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "2019-06-01",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "dependsOn": [
+                "[variables('roleDefinitionName')]" // need to create a slight delay for the roleAssignment to replicate before the deployment script can run
+            ],
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "[variables('scriptName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('storageAccountName')]"
+            ],
+            "kind": "AzurePowerShell",
+            "identity": {
+                "type": "userAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]": { /*ttk bug*/
+                    }
+                }
+            },
+            "properties": {
+                "forceUpdateTag": "1",
+                "azPowerShellVersion": "3.0",
+                "arguments": "[format(' -storageAccountName {0} -fileShareName {1} -resourceGroupName {2}', variables('storageAccountName'), variables('fileShareName'), resourceGroup().name)]",
+                "scriptContent": "
+                param(
+                    [string] $storageAccountName,
+                    [string] $fileShareName,
+                    [string] $resourceGroupName
+                )
+                Get-AzStorageAccount -StorageAccountName $storageAccountName -ResourceGroupName $resourceGroupName | New-AzStorageShare -Name $fileShareName
+                ",
+                "timeout": "PT5M",
+                "cleanupPreference": "OnSuccess",
+                "retentionInterval": "P1D"
+            }
+        }
+    ],
+    "outputs": {
+        "existingStgAcctName": {
+            "type": "string",
+            "value": "[variables('storageAccountName')]"
+        },
+        "existingStgAcctRGName": {
+            "type": "string",
+            "value": "[resourceGroup().name]"
+        },
+        "existingFileShareName": {
+            "type": "string",
+            "value": "[variables('fileShareName')]"
+        }
+    }
+}

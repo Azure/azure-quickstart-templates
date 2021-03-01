@@ -1,0 +1,170 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the VNet."
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Address space for the VNet."
+      }
+    },
+    "gatewaySubnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The prefix for the GatewaySubnet where the VirtualNetworkGateway will be deployed. This must be at least /29."
+      }
+    },
+    "gatewayPublicIPName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the PublicIP attached to the VirtualNetworkGateway."
+      }
+    },
+    "gatewayName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the VirtualNetworkGateway."
+      }
+    },
+    "gatewaySku": {
+      "type": "string",
+      "metadata": {
+        "description": "The Sku of the Gateway. This must be one of Basic, Standard or HighPerformance."
+      }
+    },
+    "vpnClientAddressPoolPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address range from which VPN clients will receive an IP address when connected. Range specified must not overlap with on-premise network."
+      }
+    },
+    "clientRootCertName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the client root certificate used to authenticate VPN clients. This is a common name used to identify the root cert."
+      }
+    },
+    "clientRootCertData": {
+      "type": "string",
+      "metadata": {
+        "description": "Client root certificate data used to authenticate VPN clients."
+      }
+    },
+    "revokedCertName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of revoked certificate, if any. This is a common name used to identify a given revoked certificate."
+      }
+    },
+    "revokedCertThumbprint": {
+      "type": "string",
+      "metadata": {
+        "description": "Thumbprint of the revoked certificate. This would revoke VPN client certificates matching this thumbprint from connecting to the VNet."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'GatewaySubnet')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "GatewaySubnet",
+            "properties": {
+              "addressPrefix": "[parameters('gatewaySubnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('gatewayPublicIPName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "name": "[parameters('gatewayName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', parameters('gatewayPublicIPName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('gatewaySubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('gatewayPublicIPName'))]"
+              }
+            },
+            "name": "vnetGatewayConfig"
+          }
+        ],
+        "sku": {
+          "name": "[parameters('gatewaySku')]",
+          "tier": "[parameters('gatewaySku')]"
+        },
+        "gatewayType": "Vpn",
+        "vpnType": "RouteBased",
+        "enableBgp": false,
+        "vpnClientConfiguration": {
+          "vpnClientAddressPool": {
+            "addressPrefixes": [
+              "[parameters('vpnClientAddressPoolPrefix')]"
+            ]
+          },
+          "vpnClientRootCertificates": [
+            {
+              "name": "[parameters('clientRootCertName')]",
+              "properties": {
+                "PublicCertData": "[parameters('clientRootCertData')]"
+              }
+            }
+          ],
+          "vpnClientRevokedCertificates": [
+            {
+              "name": "[parameters('revokedCertName')]",
+              "properties": {
+                "Thumbprint": "[parameters('revokedCertThumbprint')]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

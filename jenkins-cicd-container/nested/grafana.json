@@ -1,0 +1,204 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "grafanaVMName": {
+      "type": "string"
+    },
+    "grafanaVMSize": {
+      "type":"string"
+    },
+    "spClientId": {
+      "type": "string"
+    },
+    "spClientSecret": {
+      "type": "securestring"
+    },
+    "linuxAdminUsername": {
+      "type": "string"
+    },
+    "linuxAdminPassword": {
+      "type": "securestring"
+    },
+    "dnsPrefix": {
+      "type": "string"
+    },
+    "subnetId": {
+      "type": "string"
+    },
+    "cosmosDbName": {
+      "type": "string"
+    },
+    "kubernetesClusterName": {
+      "type": "string"
+    },
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring"
+    },
+    "location": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "installOpts": "[concat('-A \"', parameters('linuxAdminPassword'), '\"')]",
+    "configureOpts": "[concat('-A \"', uriComponent(parameters('linuxAdminPassword')), '\" -p \"3000\" -S \"', subscription().subscriptionId, '\" -T \"', subscription().tenantId, '\" -i \"', parameters('spClientId'), '\" -s \"', parameters('spClientSecret'), '\" -r \"', resourceGroup().name, '\" -c \"', parameters('cosmosDbName'), '\" -k \"', parameters('kubernetesClusterName'), '\" -l \"', parameters('_artifactsLocation'), '\" -t \"', parameters('_artifactsLocationSasToken'), '\"')]",
+    "nicName": "[concat(parameters('grafanaVMName'), '-nic')]",
+    "publicIPAddressName": "[concat(parameters('grafanaVMName'), '-ip')]",
+    "securityGroupName": "[concat(parameters('grafanaVMName'), '-nsg')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-06-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2019-06-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('securityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "Allows inbound SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Grafana",
+            "properties": {
+              "description": "Allows inbound grafana HTTP traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3000",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-06-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat(parameters('grafanaVMName'), '-ip-config')]",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+        }
+      }
+    },
+    {
+      "name": "[parameters('grafanaVMName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-03-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "16.04-LTS",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            }
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('grafanaVMSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('grafanaVMName'), '-vm')]",
+          "adminUsername": "[parameters('linuxAdminUsername')]",
+          "adminPassword": "[parameters('linuxAdminPassword')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "installGrafana",
+          "apiVersion": "2019-03-01",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('grafanaVMName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), 'scripts/grafana/install-grafana.sh', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), 'scripts/grafana/configure-grafana.sh', parameters('_artifactsLocationSasToken'))]"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('bash install-grafana.sh ', variables('installOpts'), '; bash configure-grafana.sh ', variables('configureOpts'))]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "grafanaURL": {
+      "type": "string",
+      "value": "[concat('http://', reference(variables('publicIPAddressName')).dnsSettings.fqdn, ':3000')]"
+    }
+  }
+}

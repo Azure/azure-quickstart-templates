@@ -1,0 +1,688 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "CreateTimerJobLogicAppName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "CreateTimerJob",
+      "metadata": {
+        "description": "The name of the logic app that creates timer jobs."
+      }
+    },
+    "TimerJobLogicAppName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "TimerJob",
+      "metadata": {
+        "description": "The name of the logic app that runs timer jobs."
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('CreateTimerJobLogicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "LogicApp"
+      },
+      "apiVersion": "2019-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Logic/workflows', parameters('TimerJobLogicAppName'))]"
+      ],
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "triggers": {
+            "manual": {
+              "correlation": {
+                "clientTrackingId": "@triggerBody()['timerjobid']"
+              },
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {
+                  "properties": {
+                    "jobRecurrence": {
+                      "properties": {
+                        "count": {
+                          "minimum": -1,
+                          "title": "count (jobRecurrence)",
+                          "type": "integer"
+                        },
+                        "endTime": {
+                          "title": "endTime (jobRecurrence)",
+                          "type": "string"
+                        },
+                        "frequency": {
+                          "enum": [
+                            "second",
+                            "minute",
+                            "hour",
+                            "day",
+                            "week",
+                            "month"
+                          ],
+                          "title": "frequency (jobRecurrence)",
+                          "type": "string"
+                        },
+                        "interval": {
+                          "title": "interval (jobRecurrence)",
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "frequency",
+                        "interval"
+                      ],
+                      "type": "object"
+                    },
+                    "jobStatus": {
+                      "properties": {
+                        "executionCount": {
+                          "title": "executionCount (jobStatus)",
+                          "type": "integer"
+                        },
+                        "faultedCount": {
+                          "title": "faultedCount (jobStatus)",
+                          "type": "integer"
+                        },
+                        "lastExecutionTime": {
+                          "title": "lastExecutionTime (jobStatus)",
+                          "type": "string"
+                        },
+                        "nextExecutionTime": {
+                          "title": "nextExecutionTime (jobStatus)",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "startTime": {
+                      "type": "string"
+                    },
+                    "timerjobid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "jobRecurrence",
+                    "timerjobid"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "actions": {
+            "If_not_past_endTime_or_exceeds_count": {
+              "actions": {
+                "Catch_TimerJob_error": {
+                  "actions": {
+                    "Terminate_failed_to_create_job": {
+                      "runAfter": {
+                        "Timer_job_failed_response": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Terminate",
+                      "inputs": {
+                        "runError": {
+                          "message": "Failed to create timer job"
+                        },
+                        "runStatus": "Failed"
+                      }
+                    },
+                    "Timer_job_failed_response": {
+
+                      "type": "Response",
+                      "kind": "Http",
+                      "inputs": {
+                        "body": "Failed to create timer job",
+                        "statusCode": 400
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "TimerJob": [
+                      "Failed",
+                      "TimedOut"
+                    ]
+                  },
+                  "type": "Scope"
+                },
+                "Created_Response": {
+                  "runAfter": {
+                    "TimerJob": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Response",
+                  "kind": "Http",
+                  "inputs": {
+                    "body": "Next execution time will be at @{variables('nextTime')}",
+                    "statusCode": 201
+                  }
+                },
+                "TimerJob": {
+
+                  "type": "Workflow",
+                  "inputs": {
+                    "body": {
+                      "jobRecurrence": {
+                        "count": "@triggerBody()?['jobRecurrence']?['count']",
+                        "endTime": "@triggerBody()?['jobRecurrence']?['endTime']",
+                        "frequency": "@triggerBody()?['jobRecurrence']?['frequency']",
+                        "interval": "@triggerBody()?['jobRecurrence']?['interval']"
+                      },
+                      "jobStatus": {
+                        "executionCount": "@triggerBody()?['jobStatus']?['executionCount']",
+                        "faultedCount": "@triggerBody()?['jobStatus']?['faultedCount']",
+                        "lastExecutionTime": "@triggerBody()?['jobStatus']?['lastExecutionTime']",
+                        "nextExecutionTime": "@variables('nextTime')"
+                      },
+                      "startTime": "@triggerBody()?['startTime']",
+                      "timerjobid": "@triggerBody()['timerjobid']"
+                    },
+                    "host": {
+                      "triggerName": "manual",
+                      "workflow": {
+                        "id": "[resourceId('Microsoft.Logic/workflows',parameters('TimerJobLogicAppName'))]"
+                      }
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Initialize_nextTime": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {
+                  "Cancelled": {
+                    "runAfter": {
+                      "Exceeded_Criteria_Response": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "Terminate",
+                    "inputs": {
+                      "runStatus": "Cancelled"
+                    }
+                  },
+                  "Exceeded_Criteria_Response": {
+
+                    "type": "Response",
+                    "kind": "Http",
+                    "inputs": {
+                      "body": "Job completion criteria met.\nDetails: \nEither\nendTime(@{triggerBody()?['jobRecurrence']?['endTime']}) < Next execution time(@{variables('nextTime')})\nOR\ncount(@{triggerBody()?['jobRecurrence']?['count']}) > execution count (@{triggerBody()?['jobStatus']?['executionCount']})",
+                      "statusCode": 409
+                    }
+                  }
+                }
+              },
+              "expression": {
+                "and": [
+                  {
+                    "or": [
+                      {
+                        "equals": [
+                          "@coalesce(triggerBody()?['jobRecurrence']?['endTime'],-1)",
+                          -1
+                        ]
+                      },
+                      {
+                        "less": [
+                          "@variables('nextTime')",
+                          "@{triggerBody()?['jobRecurrence']?['endTime']}"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "or": [
+                      {
+                        "equals": [
+                          "@coalesce(triggerBody()?['jobRecurrence']?['count'],-1)",
+                          -1
+                        ]
+                      },
+                      {
+                        "greater": [
+                          "@coalesce(triggerBody()?['jobRecurrence']?['count'],1)",
+                          "@coalesce(triggerBody()?['jobStatus']?['executionCount'],0)"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "type": "If"
+            },
+            "Initialize_nextTime": {
+              "runAfter": {
+                "Initialize_startTime": [
+                  "Succeeded"
+                ]
+              },
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "nextTime",
+                    "type": "string",
+                    "value": "@{addToTime(coalesce(triggerBody()?['jobStatus']?['lastExecutionTime'],variables('startTime')),triggerBody()['jobRecurrence']['interval'],triggerBody()['jobRecurrence']['frequency'])}"
+                  }
+                ]
+              }
+            },
+            "Initialize_startTime": {
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "startTime",
+                    "type": "string",
+                    "value": "@{if(less(coalesce(triggerBody()?['startTime'],utcNow()),utcNow()),utcNow(),coalesce(triggerBody()?['startTime'],utcNow()))}"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "[parameters('TimerJobLogicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "LogicApp"
+      },
+      "apiVersion": "2019-05-01",
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+
+          "triggers": {
+            "manual": {
+              "correlation": {
+                "clientTrackingId": "@triggerBody()['timerjobid']"
+              },
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {
+                  "properties": {
+                    "jobRecurrence": {
+                      "properties": {
+                        "count": {
+                          "minimum": -1,
+                          "title": "count (jobRecurrence)",
+                          "type": "integer"
+                        },
+                        "endTime": {
+                          "title": "endTime (jobRecurrence)",
+                          "type": "string"
+                        },
+                        "frequency": {
+                          "enum": [
+                            "second",
+                            "minute",
+                            "hour",
+                            "day",
+                            "week",
+                            "month"
+                          ],
+                          "title": "frequency (jobRecurrence)",
+                          "type": "string"
+                        },
+                        "interval": {
+                          "title": "interval (jobRecurrence)",
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "frequency",
+                        "interval"
+                      ],
+                      "type": "object"
+                    },
+                    "jobStatus": {
+                      "properties": {
+                        "executionCount": {
+                          "title": "executionCount (jobStatus)",
+                          "type": "integer"
+                        },
+                        "faultedCount": {
+                          "title": "faultedCount (jobStatus)",
+                          "type": "integer"
+                        },
+                        "lastExecutionTime": {
+                          "title": "lastExecutionTime (jobStatus)",
+                          "type": "string"
+                        },
+                        "nextExecutionTime": {
+                          "title": "nextExecutionTime (jobStatus)",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "nextExecutionTime"
+                      ],
+                      "type": "object"
+                    },
+                    "startTime": {
+                      "type": "string"
+                    },
+                    "timerjobid": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "timerjobid",
+                    "jobRecurrence",
+                    "jobStatus"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "nestedTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.Logic/workflows', parameters('CreateTimerJobLogicAppName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "name": "[parameters('TimerJobLogicAppName')]",
+              "type": "Microsoft.Logic/workflows",
+              "location": "[parameters('location')]",
+              "tags": {
+                "displayName": "LogicApp"
+              },
+              "apiVersion": "2019-05-01",
+              "properties": {
+                "state": "Enabled",
+                "definition": {
+                  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                  "contentVersion": "1.0.0.0",
+
+                  "triggers": {
+                    "manual": {
+                      "correlation": {
+                        "clientTrackingId": "@triggerBody()['timerjobid']"
+                      },
+                      "type": "Request",
+                      "kind": "Http",
+                      "inputs": {
+                        "schema": {
+                          "properties": {
+                            "jobRecurrence": {
+                              "properties": {
+                                "count": {
+                                  "minimum": -1,
+                                  "title": "count (jobRecurrence)",
+                                  "type": "integer"
+                                },
+                                "endTime": {
+                                  "title": "endTime (jobRecurrence)",
+                                  "type": "string"
+                                },
+                                "frequency": {
+                                  "enum": [
+                                    "second",
+                                    "minute",
+                                    "hour",
+                                    "day",
+                                    "week",
+                                    "month"
+                                  ],
+                                  "title": "frequency (jobRecurrence)",
+                                  "type": "string"
+                                },
+                                "interval": {
+                                  "title": "interval (jobRecurrence)",
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "frequency",
+                                "interval"
+                              ],
+                              "type": "object"
+                            },
+                            "jobStatus": {
+                              "properties": {
+                                "executionCount": {
+                                  "title": "executionCount (jobStatus)",
+                                  "type": "integer"
+                                },
+                                "faultedCount": {
+                                  "title": "faultedCount (jobStatus)",
+                                  "type": "integer"
+                                },
+                                "lastExecutionTime": {
+                                  "title": "lastExecutionTime (jobStatus)",
+                                  "type": "string"
+                                },
+                                "nextExecutionTime": {
+                                  "title": "nextExecutionTime (jobStatus)",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "nextExecutionTime"
+                              ],
+                              "type": "object"
+                            },
+                            "startTime": {
+                              "type": "string"
+                            },
+                            "timerjobid": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "timerjobid",
+                            "jobRecurrence",
+                            "jobStatus"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    }
+                  },
+                  "actions": {
+                    "CreateTimerJob": {
+                      "runAfter": {
+                        "On_Error": [
+                          "Succeeded",
+                          "Skipped",
+                          "Failed",
+                          "TimedOut"
+                        ]
+                      },
+                      "type": "Workflow",
+                      "inputs": {
+                        "body": {
+                          "jobRecurrence": {
+                            "count": "@triggerBody()?['jobRecurrence']?['count']",
+                            "endTime": "@triggerBody()?['jobRecurrence']?['endTime']",
+                            "frequency": "@triggerBody()['jobRecurrence']['frequency']",
+                            "interval": "@triggerBody()['jobRecurrence']['interval']"
+                          },
+                          "jobStatus": {
+                            "executionCount": "@add(1,coalesce(triggerBody()?['jobStatus']?['executionCount'],0))",
+                            "faultedCount": "@variables('faultedCount')",
+                            "lastExecutionTime": "@triggerBody()?['jobStatus']?['nextExecutionTime']"
+                          },
+                          "startTime": "@triggerBody()?['startTime']",
+                          "timerjobid": "@triggerBody()['timerjobid']"
+                        },
+                        "host": {
+                          "triggerName": "manual",
+                          "workflow": {
+                            "id": "[resourceId('Microsoft.Logic/workflows',parameters('CreateTimerJobLogicAppName'))]"
+                          }
+                        }
+                      }
+                    },
+                    "Delay_until_nextExecutionTime": {
+                      "runAfter": {
+                        "Response": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Wait",
+                      "inputs": {
+                        "until": {
+                          "timestamp": "@triggerBody()?['jobStatus']?['nextExecutionTime']"
+                        }
+                      }
+                    },
+                    "If_CreateTimerJob_failed_and_no_next_recurrence": {
+
+                      "runAfter": {
+                        "CreateTimerJob": [
+                          "Failed"
+                        ]
+                      },
+                      "else": {
+                        "actions": {
+                          "Create_next_job_error_failed": {
+
+                            "type": "Terminate",
+                            "inputs": {
+                              "runError": {
+                                "message": "Failed to create the next timer job"
+                              },
+                              "runStatus": "Failed"
+                            }
+                          }
+                        }
+                      },
+                      "expression": {
+                        "and": [
+                          {
+                            "equals": [
+                              "@actionOutputs('CreateTimerJob')['statusCode']",
+                              409
+                            ]
+                          }
+                        ]
+                      },
+                      "type": "If",
+                      "description": "If CreateTimerJob fails with a 409 (conflict) then recurrence completion criteria is met"
+                    },
+                    "Increment_faultedCount": {
+                      "runAfter": {
+                        "Job": [
+                          "Failed",
+                          "TimedOut"
+                        ]
+                      },
+                      "type": "IncrementVariable",
+                      "inputs": {
+                        "name": "faultedCount",
+                        "value": 1
+                      }
+                    },
+                    "Initialize_faultedCount": {
+                      "runAfter": {
+                        "Delay_until_nextExecutionTime": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "InitializeVariable",
+                      "inputs": {
+                        "variables": [
+                          {
+                            "name": "faultedCount",
+                            "type": "Integer",
+                            "value": "@triggerBody()?['jobStatus']?['faultedCount']"
+                          }
+                        ]
+                      }
+                    },
+                    "Job": {
+                      "actions": {
+                        "HTTP": {
+
+                          "type": "Http",
+                          "inputs": {
+                            "method": "GET",
+                            "uri": "https://api.chucknorris.io/jokes/random?category=dev"
+                          }
+                        }
+                      },
+                      "runAfter": {
+                        "Initialize_faultedCount": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Scope",
+                      "description": "Executes the set of actions defined for the timer job"
+                    },
+                    "On_Error": {
+
+                      "runAfter": {
+                        "Increment_faultedCount": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "Scope",
+                      "description": "Executes the set of actions if main job actions has fails to execute"
+                    },
+                    "Response": {
+                      "type": "Response",
+                      "kind": "Http",
+                      "inputs": {
+                        "body": {
+                          "jobid": "@workflow().run.name"
+                        },
+                        "schema": {
+                          "properties": {
+                            "jobid": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "statusCode": 200
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

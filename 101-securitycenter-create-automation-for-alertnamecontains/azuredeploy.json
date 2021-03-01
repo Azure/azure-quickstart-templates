@@ -1,0 +1,96 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "automationName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 24
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the automation"
+      }
+    },
+    "logicAppName": {
+      "type": "string",
+      "minLength": 3
+    },
+    "logicAppResourceGroupName": {
+      "type": "string",
+      "minLength": 3
+    },
+    "subscriptionId": {
+      "type": "string",
+      "defaultValue": "[subscription().subscriptionId]",
+      "metadata": {
+        "description": "The Azure resource GUID id of the subscription"
+      }
+    },
+    "alertSettings": {
+      "type": "object",
+      "metadata": {
+        "description": "The alert settings object used for deploying the automation"
+      }
+    }
+  },
+  "variables": {
+    "automationDescription": "automation description for subscription {0}",
+    "scopeDescription": "automation scope for subscription {0}"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Security/automations",
+      "apiVersion": "2019-01-01-preview",
+      "name": "[parameters('automationName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "description": "[format(variables('automationDescription'),'{0}', parameters('subscriptionId'))]",
+        "isEnabled": true,
+        "actions": [
+          {
+            "actionType": "LogicApp",
+            "logicAppResourceId": "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]",
+            "uri": "[listCallbackURL(resourceId(parameters('subscriptionId'), parameters('logicAppResourceGroupName'), 'Microsoft.Logic/workflows/triggers', parameters('logicAppName'), 'manual'), '2019-05-01').value]"
+          }
+        ],
+        "scopes": [
+          {
+            "description": "[format(variables('scopeDescription'),'{0}', parameters('subscriptionId'))]",
+            "scopePath": "[subscription().id]"
+          }
+        ],
+        "sources": [
+          {
+            "eventSource": "Alerts",
+            "eventVersionType": "Api",
+            "copy": [
+              {
+                "name": "ruleSets",
+                "count": "[length(parameters('alertSettings').alertSeverityMapping)]",
+                "input": {
+                  "rules": [
+                    {
+                      "propertyJPath": "[parameters('alertSettings').alertSeverityMapping[copyIndex('ruleSets')].jpath]",
+                      "propertyType": "string",
+                      "expectedValue": "[parameters('alertSettings').alertSeverityMapping[copyIndex('ruleSets')].expectedValue]",
+                      "operator": "[parameters('alertSettings').alertSeverityMapping[copyIndex('ruleSets')].operator]"
+                    },
+                    {
+                      "propertyJPath": "Severity",
+                      "propertyType": "string",
+                      "expectedValue": "[parameters('alertSettings').alertSeverityMapping[copyIndex('ruleSets')].severity]",
+                      "operator": "Equals"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

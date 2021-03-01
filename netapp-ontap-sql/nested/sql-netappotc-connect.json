@@ -1,0 +1,72 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminEmailAddress": {
+      "type": "securestring"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "OTCPassword": {
+      "type": "securestring"
+    },
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring"
+    },
+    "sqlVmName": {
+      "type": "string"
+    },
+    "otcIp": {
+      "type": "string"
+    },
+    "sqlDataVolumeSize": {
+      "type": "int"
+    },
+    "NetAppTags": {
+      "type": "object"
+    },
+    "quickstartTags": {
+      "type": "object"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "scriptFileName": "netapp_connect_ontap_win.ps1"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('sqlVmName'),'/','sqlNetAppOTCConnect')]",
+      "apiVersion": "2016-03-30",
+      "location": "[parameters('location')]",
+      "tags": {
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('NetAppTags').provider]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.8",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('_artifactsLocation'),'/scripts/',variables('scriptFileName'),parameters('_artifactsLocationSasToken'))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File',' ', variables('scriptFileName'), ' ', parameters('adminEmailAddress'),' ', parameters('adminPassword'),' ', parameters('OTCPassword'),' ', parameters('otcIp'),' ', parameters('sqlDataVolumeSize'))]"
+        }
+      }
+    }
+  ]
+}

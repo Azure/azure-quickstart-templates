@@ -1,0 +1,248 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "MyNewVNet",
+      "metadata": {
+        "description": "The name of new Azure VNet where you can deploy Azure Sql Managed Instances and the resources that use them"
+      }
+    },
+    "virtualNetworkAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "VNet IP address range (VNet prefix)"
+      }
+    },
+    "defaultSubnetName": {
+      "type": "string",
+      "defaultValue": "Default",
+      "metadata": {
+        "description": "The name of default subnet for VNet (used to deploy VMs, web, and other client apps - no Managed Instances). You can delete this subnet later if you don't need it."
+      }
+    },
+    "defaultSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Default subnet address range (subnet prefix)"
+      }
+    },
+    "managedInstanceSubnetName": {
+      "type": "string",
+      "defaultValue": "ManagedInstances",
+      "metadata": {
+        "description": "The name of the subnet dedicated to Azure SQL Managed Instances"
+      }
+    },
+    "managedInstanceSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24",
+      "metadata": {
+        "description": "IP Address range in the subnet dedicated to Azure SQL Managed Instances"
+      }
+    },
+    "nsgForManagedInstanceSubnet": {
+      "type": "string",
+      "defaultValue": "nsgManagedInstance",
+      "metadata": {
+        "description": "Name of network security group dedicated to managed instance subnet"
+      }
+    },
+    "routeTableForManagedInstanceSubnet": {
+      "type": "string",
+      "defaultValue": "rtManagedInstance",
+      "metadata": {
+        "description": "The name of the existing or new route table that enables access to Azure SQL Managed Instance Management Service that controls the instance, manages backups and other maintenance operations"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure data center location where all resources will be deployed"
+      }
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "apiVersion": "2019-04-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+          "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgForManagedInstanceSubnet'))]",
+          "[resourceId('Microsoft.Network/routeTables', parameters('routeTableForManagedInstanceSubnet'))]"
+          ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('defaultSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('defaultSubnetPrefix')]"
+            }
+          },
+          {
+            "name": "[parameters('managedInstanceSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('managedInstanceSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgForManagedInstanceSubnet'))]"
+              },
+              "routeTable": {
+                "id": "[resourceId('Microsoft.Network/routeTables', parameters('routeTableForManagedInstanceSubnet'))]"
+              },
+              "delegations": [
+                  {
+                      "name": "miDelegation",
+                      "properties": {
+                          "serviceName": "Microsoft.Sql/managedInstances"
+                      }
+                  }
+              ]		              
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-06-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('nsgForManagedInstanceSubnet')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+        {
+            "name": "allow_tds_inbound",
+            "properties": {
+                "description": "Allow access to data",
+                "protocol": "TCP",
+                "sourcePortRange": "*",
+                "destinationPortRange": "1433",
+                "sourceAddressPrefix": "VirtualNetwork",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1000,
+                "direction": "Inbound"
+            }
+        },
+        {
+            "name": "allow_redirect_inbound",
+            "properties": {
+                "description": "Allow inbound redirect traffic to Managed Instance inside the virtual network",
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "11000-11999",
+                "sourceAddressPrefix": "VirtualNetwork",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1100,
+                "direction": "Inbound"
+            }
+        },
+        {
+            "name": "allow_geodr_inbound",
+            "properties": {
+                "description": "Allow inbound geodr traffic inside the virtual network",
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "5022",
+                "sourceAddressPrefix": "VirtualNetwork",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1200,
+                "direction": "Inbound"
+            }
+        },
+        {
+            "name": "deny_all_inbound",
+            "properties": {
+                "description": "Deny all other inbound traffic",
+                "protocol": "*",
+                "sourcePortRange": "*",
+                "destinationPortRange": "*",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Deny",
+                "priority": 4096,
+                "direction": "Inbound"
+            }
+        },
+        {
+            "name": "allow_linkedserver_outbound",
+            "properties": {
+                "description": "Allow outbound linkedserver traffic inside the virtual network",
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "1433",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "VirtualNetwork",
+                "access": "Allow",
+                "priority": 1000,
+                "direction": "Outbound"
+            }
+        },
+        {
+            "name": "allow_redirect_outbound",
+            "properties": {
+                "description": "Allow outbound redirect traffic to Managed Instance inside the virtual network",
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "11000-11999",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "VirtualNetwork",
+                "access": "Allow",
+                "priority": 1100,
+                "direction": "Outbound"
+            }
+        },
+        {
+            "name": "allow_geodr_outbound",
+            "properties": {
+                "description": "Allow outbound geodr traffic inside the virtual network",
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "5022",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "VirtualNetwork",
+                "access": "Allow",
+                "priority": 1200,
+                "direction": "Outbound"
+            }
+        },
+        {
+            "name": "deny_all_outbound",
+            "properties": {
+                "description": "Deny all other outbound traffic",
+                "protocol": "*",
+                "sourcePortRange": "*",
+                "destinationPortRange": "*",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Deny",
+                "priority": 4096,
+                "direction": "Outbound"
+            }
+        }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "2019-04-01",
+      "name": "[parameters('routeTableForManagedInstanceSubnet')]",
+      "location": "[parameters('location')]",
+      "properties": {
+          "disableBgpRoutePropagation": false
+      }
+  }    
+  ]
+}

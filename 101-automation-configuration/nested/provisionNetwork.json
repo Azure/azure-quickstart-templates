@@ -1,0 +1,88 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "virtualNetworkName": {
+      "type": "string"
+    },
+    "virtualNetworkAddressRange": {
+      "type": "string"
+    },
+    "virtualNetworkSubnets": {
+      "type": "array"
+    },
+    "nicName": {
+      "type": "string"
+    },
+    "nicIPAddress": {
+      "type": "string"
+    },
+    "nicSubnetRef": {
+      "type": "string"
+    },
+    "publicIPAddressName": {
+      "type": "string"
+    },
+    "publicIPAddressType": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('virtualNetworkName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-05-01",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkAddressRange')]"
+          ]
+        },
+        "subnets": "[parameters('virtualNetworkSubnets')]"
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[parameters('virtualNetworkName')]"
+      ],
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]"
+      }
+    },
+    {
+      "name": "[parameters('nicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-05-01",
+      "dependsOn": [
+        "[parameters('virtualNetworkName')]",
+        "[parameters('publicIPAddressName')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "privateipconfig",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('nicIPAddress')]",
+              "subnet": {
+                "id": "[parameters('nicSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId ('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

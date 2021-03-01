@@ -1,0 +1,372 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "domainName": {
+      "type": "string",
+      "defaultValue": "[concat('postgres-', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Domain name of the public jumpbox"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual machine administrator username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Virtual machine administrator password"
+      }
+    },
+    "tshirtSize": {
+      "type": "string",
+      "defaultValue": "Small",
+      "allowedValues": [
+        "Small",
+        "Medium",
+        "Large",
+        "XLarge"
+      ],
+      "metadata": {
+        "description": "T-shirt size of the PostgreSQL deployment"
+      }
+    },
+    "replicatorPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The replication password used for PostgreSQL streaming replication"
+      }
+    },
+    "jumpbox": {
+      "type": "string",
+      "defaultValue": "Enabled",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "metadata": {
+        "description": "The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the PostgreSQL environment"
+      }
+    },
+    "jumpBoxSize": {
+      "type": "string",
+      "defaultValue": "Standard_A1_V2",
+      "metadata": {
+        "description": "Size of the jumpbox VM, ignored if jumbox is disabled."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet",
+      "metadata": {
+        "description": "Virtual network name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "deploymentSize": {
+      "Small": {
+        "vmSize": "Standard_A1_v2",
+        "diskSize": 1023,
+        "diskCount": 2,
+        "vmCount": 2,
+        "slaveCount": 1,
+        "storage": {
+          "count": 1,
+          "pool": "db",
+          "map": [
+            0,
+            0
+          ],
+          "jumpbox": 0
+        }
+      },
+      "Medium": {
+        "vmSize": "Standard_A2_v2",
+        "diskSize": 1023,
+        "diskCount": 8,
+        "vmCount": 2,
+        "slaveCount": 1,
+        "storage": {
+          "count": 2,
+          "pool": "db",
+          "map": [
+            0,
+            1
+          ],
+          "jumpbox": 0
+        }
+      },
+      "Large": {
+        "vmSize": "Standard_A4_v2",
+        "diskSize": 1023,
+        "diskCount": 16,
+        "vmCount": 3,
+        "slaveCount": 2,
+        "storage": {
+          "count": 2,
+          "pool": "db",
+          "map": [
+            0,
+            1,
+            1
+          ],
+          "jumpbox": 0
+        }
+      },
+      "XLarge": {
+        "vmSize": "Standard_A8_v2",
+        "diskSize": 1023,
+        "diskCount": 16,
+        "vmCount": 4,
+        "slaveCount": 3,
+        "storage": {
+          "count": 2,
+          "pool": "db",
+          "map": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "jumpbox": 0
+        }
+      }
+    },
+    "jumpboxTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('jumpbox-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "databaseTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('database-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "osSettings": {
+      "scripts": [
+        "[uri(parameters('_artifactsLocation'), concat('install_postgresql.sh', parameters('_artifactsLocationSasToken')))]",
+        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
+      ],
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "18.04-LTS",
+        "version": "latest"
+      }
+    },
+    "networkSettings": {
+      "vnetName": "[parameters('virtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnets": {
+        "dmz": {
+          "name": "dmz",
+          "prefix": "10.0.0.0/24",
+          "vnet": "[parameters('virtualNetworkName')]"
+        },
+        "data": {
+          "name": "data",
+          "prefix": "10.0.1.0/24",
+          "vnet": "[parameters('virtualNetworkName')]"
+        }
+      }
+    },
+    "availabilitySetSettings": {
+      "name": "pgsqlAvailabilitySet",
+      "fdCount": 2,
+      "udCount": 5
+    }
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "availabilitySetSettings": {
+            "value": "[variables('availabilitySetSettings')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "master-node",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('databaseTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "replicatorPassword": {
+            "value": "[parameters('replicatorPassword')]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnets.data]"
+          },
+          "commonSettings": {
+            "value": {
+              "adminUsername": "[parameters('adminUsername')]",
+              "namespace": "ms"
+            }
+          },
+          "machineSettings": {
+            "value": {
+              "vmSize": "[variables('deploymentSize')[parameters('tshirtSize')].vmSize]",
+              "diskCount": "[variables('deploymentSize')[parameters('tshirtSize')].diskCount]",
+              "diskSize": "[variables('deploymentSize')[parameters('tshirtSize')].diskSize]",
+              "vmCount": 1,
+              "availabilitySet": "[variables('availabilitySetSettings').name]"
+            }
+          },
+          "masterIpAddress": {
+            "value": "0"
+          },
+          "dbType": {
+            "value": "MASTER"
+          }
+        }
+      }
+    },
+    {
+      "name": "slave-node",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'master-node')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('databaseTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "replicatorPassword": {
+            "value": "[parameters('replicatorPassword')]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnets.data]"
+          },
+          "commonSettings": {
+            "value": {
+              "adminUsername": "[parameters('adminUsername')]",
+              "namespace": "sl"
+            }
+          },
+          "machineSettings": {
+            "value": {
+              "vmSize": "[variables('deploymentSize')[parameters('tshirtSize')].vmSize]",
+              "diskCount": "[variables('deploymentSize')[parameters('tshirtSize')].diskCount]",
+              "diskSize": "[variables('deploymentSize')[parameters('tshirtSize')].diskSize]",
+              "vmCount": "[variables('deploymentSize')[parameters('tshirtSize')].slaveCount]",
+              "availabilitySet": "[variables('availabilitySetSettings').name]"
+            }
+          },
+          "masterIpAddress": {
+            "value": "[reference('master-node').outputs.masterip.value]"
+          },
+          "dbType": {
+            "value": "SLAVE"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[equals('Enabled', parameters('jumpbox'))]",
+      "name": "jumpbox",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('jumpboxTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "dnsName": {
+            "value": "[parameters('domainName')]"
+          },
+          "commonSettings": {
+            "value": {
+              "adminUsername": "[parameters('adminUsername')]",
+              "namespace": "jumpbox"
+            }
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnets.dmz]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "vmSize": {
+            "value": "[parameters('jumpBoxSize')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}

@@ -1,0 +1,262 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "defaultValue": "newvm",
+      "metadata": {
+        "description": "Name of the VM"
+      }
+    },
+    "osType": {
+      "type": "string",
+      "allowedValues": [
+        "Windows",
+        "Linux"
+      ],
+      "defaultValue": "Windows",
+      "metadata": {
+        "description": "Type of OS on the existing vhd"
+      }
+    },
+    "osDiskVhdUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Uri of the existing VHD in ARM standard or premium storage"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "vNetNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Specify whether to create a new or existing virtual network for the VM."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "newVnet",
+      "metadata": {
+        "description": "Name of the existing VNET"
+      }
+    },
+    "virtualNetworkResourceGroup": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Name of the existing VNET resource group"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "subnet-1",
+      "metadata": {
+        "description": "Name of the subnet in the virtual network you want to use"
+      }
+    },
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "defaultValue": "[concat('vm-', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password or ssh key for the Virtual Machine."
+      }
+    }
+  },
+  "variables": {
+    "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'specvm')]",
+    "subnetRef": "[resourceId(parameters('virtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'),  parameters('subnetName'))]",
+    "nicName": "nic",
+    "publicIPAddressName": "publicIp",
+    "imageName": "[concat(parameters('vmName'), '-image')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
+  "resources": [
+    {
+      "condition": "[equals(parameters('vNetNewOrExisting'), 'new')]",
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('diagStorageAccountName')]",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "PublicIPAddress"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('publicIPAddressName')]"
+      ],
+      "tags": {
+        "displayName": "NetworkInterface"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('imageName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hyperVGeneration": "V2",
+        "storageProfile": {
+          "osDisk": {
+            "osType": "[parameters('osType')]",
+            "osState": "Generalized",
+            "blobUri": "[parameters('osDiskVhdUri')]",
+            "caching": "ReadWrite",
+            "storageAccountType": "Standard_LRS"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "VirtualMachine"
+      },
+      "dependsOn": [
+        "[variables('nicName')]",
+        "[variables('imageName')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+              "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(variables('diagStorageAccountName')).primaryEndpoints.blob]"
+          }
+        }
+      }
+    }
+  ]
+}
