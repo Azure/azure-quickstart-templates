@@ -15,15 +15,13 @@
 
 This template creates an AS2 Send Receive workflow by using Azure Logic Apps to create the following Azure resources:
 
-- Integration accounts for two partners, Contoso and Fabrikam, along with the necessary artifacts, partners and agreements.
+- Integration accounts for two partners, Contoso and Fabrikam, along with the necessary artifacts, which are partners and agreements.
 
 - Logic apps between Fabrikam Sales and Contoso, which demonstrate Sync AS2 Send Receive.
 
 - Logic apps between Fabrikam Finance and Contoso, which demonstrate ASync AS2 Send Receive.
 
-> [!IMPORTANT]
-> This template creates and deploys two Standard-tier integration accounts, which incur costs. For more information, 
-> see [Azure Logic Apps pricing](https://azure.microsoft.com/pricing/details/logic-apps/) and [Pricing and billing models for Azure Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-pricing).
+**Important**: This template creates and deploys two Standard-tier integration accounts, which incur costs. For more information, see [Azure Logic Apps pricing](https://azure.microsoft.com/pricing/details/logic-apps/) and [Pricing and billing models for Azure Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-pricing).
 
 `Tags: AS2, Logic Apps, Integration Account, Enterprise Integration`
 
@@ -59,9 +57,7 @@ To test your logic apps after deployment completes, you can perform these steps:
 
 1. Again, you can review the run history, inputs, and outputs for each action in these logic apps.
 
-> [!IMPORTANT]
-> The logic apps, FabrikamSales-AS2Send and FabrikamFinance-AS2Send, start with a Recurrence trigger that runs every hour. 
-> To run the logic apps more or less often, you can change the trigger's frequency and interval as appropriate by using the Logic App Designer.
+**Important**: The logic apps, FabrikamSales-AS2Send and FabrikamFinance-AS2Send, start with a Recurrence trigger that runs every hour. To run the logic apps more or less often, you can change the trigger's frequency and interval as appropriate by using the Logic App Designer.
 
 ## Next steps
 
@@ -69,5 +65,3 @@ Learn more about Azure Logic Apps:
 
 * [Azure Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-overview)
 * [B2B Processing capabilities in Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-enterprise-integration-overview)
-
-
