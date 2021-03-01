@@ -47,7 +47,6 @@ resource apiManagementService 'Microsoft.ApiManagement/service@2020-06-01-previe
   }
 }
 
-// TODO: once copy is available in Bicep, return this as an array instead of first item
 output apiManagementInternalIPAddress string = apiManagementService.properties.publicIPAddresses[0]
 output apiManagementProxyHostName string = apiManagementService.properties.hostnameConfigurations[0].hostName
 output apiManagementDeveloperPortalHostName string = replace(apiManagementService.properties.developerPortalUrl, 'https://', '')
