@@ -1,6 +1,6 @@
 # SAS 9.4 Visual Analytics and SAS 9.4 Visual Statistics Quickstart Template for Azure 
 
-**Note:** The SAS 9.4 Visual Analytics (VA) and SAS 9.4 Visual Statistics (VS) Quickstart Template for Azure is an example architecture only, and is not intended for production use. Specifically, the Quickstart provides an example of how SAS 9.4 VA and SAS 9.4 VS workloads running in a massively parallel processing (MPP) environment with SAS LASR Analytic Server can be run on Azure.  When running in an MPP environment, the SAS 9.4 VA and SAS 9.4 VS Quickstart Template for Azure deploys Apache Hadoop.  As stated in our [SAS 9.4 Support for Hadoop policy](https://support.sas.com/en/documentation/third-party-software-reference/9-4/support-for-hadoop.html), SAS does not provide support for the installation or administration of Apache Hadoop.  For support with these issues, please refer to the Apache Hadoop open-source community.  The intent of the SAS 9.4 VA and SAS 9.4 VS Quickstart Template for Azure is to provide customers an opportunity to test deployments on the cloud before committing to a lift and shift from their current on-premises deployments.
+**Note:** The SAS 9.4 Visual Analytics and SAS 9.4 Visual Statistics Quickstart Template for Azure is an example architecture only, and is not intended for production use. Specifically, the Quickstart provides an example of how SAS 9.4 Visual Analytics and SAS 9.4 Visual Statistics workloads running in a massively parallel processing (MPP) environment with SAS LASR Analytic Server can be run on Azure.  When running in an MPP environment, the SAS 9.4 Visual Analytics and SAS 9.4 Visual Statistics Quickstart Template for Azure deploys Apache Hadoop.  As stated in our [SAS 9.4 Support for Hadoop policy](https://support.sas.com/en/documentation/third-party-software-reference/9-4/support-for-hadoop.html), SAS does not provide support for the installation or administration of Apache Hadoop.  For support with these issues, please refer to the Apache Hadoop open-source community.  The intent of the SAS 9.4 Visual Analytics and SAS 9.4 Visual Statistis Quickstart Template for Azure is to provide customers an opportunity to test deployments on the cloud before committing to a lift and shift from their current on-premises deployments.
 
 <a name="Deploybutton"></a>
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsas-viya%2Fazuredeploy.json)
@@ -9,7 +9,7 @@
 ## Contents
 1. [Overview](#Overview)
     1. [Costs and Licenses](#Costs)
-        1. [SAS 9.4 VA/VS server](#compute)
+        1. [SAS 9.4 Visual Analytics and SAS 9.4 Visual Stati s server](#compute)
         1. [SAS 9.4M7 Mid-Tier server](#midtier)
         1. [SAS 9.4M7 Metadata clustered server](#metadata)
 1. [Architecture](#architecture)
@@ -26,13 +26,13 @@
 
 <a name="Overview"></a>
 ## Overview
-This README for the SAS 9.4 Visual Analytics (VA) and SAS 9.4 Visual Statistics (VS) Quickstart Template for Azure is used to deploy the following SAS 9.4 products in the Azure cloud:
+This README for the SAS 9.4 Visual Analytics and SAS 9.4 Visual Statistics  Quickstart Template for Azure is used to deploy the following SAS 9.4 products in the Azure cloud:
 
-* SAS Visual Analytics 7.5
+* SAS Visual Analytics 7.51
 
-* SAS Visual Statistics 7.5
+* SAS Visual Statistics 7.51
 
-This Quickstart is a reference architecture for users who want to deploy the SAS 9.4 VA and SAS 9.4 VS  platform using cloud-friendly technologies. By deploying SAS 9.4 in Azure, you get access to SAS analytics visualization and the ability to create powerful statistical models in an Azure-validated environment. 
+This Quickstart is a reference architecture for users who want to deploy the SAS 9.4 Visual Analytics and SAS 9.4 Visual Statistics  platform using cloud-friendly technologies. By deploying SAS 9.4 in Azure, you get access to SAS analytics visualization and the ability to create powerful statistical models in an Azure-validated environment. 
 
 For assistance with SAS software, contact  [SAS Technical Support](https://support.sas.com/en/technical-support.html).   When you contact support, you will be required to provide information, such as your SAS site number, company name, email address, and phone number, that identifies you as a licensed SAS software customer. 
 
@@ -40,13 +40,13 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
 ### Costs and Licenses
 You are responsible for the cost of the Azure services used while running this Quickstart deployment. There is no additional cost for using the Quickstart.
 You will need a SAS license to launch this Quickstart. Your SAS account team and the SAS Enterprise Excellence Center can advise on the appropriate software licensing and sizing to meet your workload and performance needs.
-The SAS 9.4M7 VA and SAS 9.4M7 VS Quickstart Template for Azure creates instances as follows: 
-* 1 compute server virtual machine (VM) for the SAS 9.4M7 VA and SAS 9.4M7 VS server head node, plus the number of VMs for the SAS 9.4M7 VA and SAS 9.4M7 VS workers (as specified in the Visual Analytics Worker Count parameter)
+The SAS 9.4M7 Visual Analytics and SAS 9.4M7 Visual Statistics Quickstart Template for Azure creates instances as follows: 
+* 1 compute server virtual machine (VM) for the SAS 9.4M7 Visual Analytics and SAS 9.4M7 Visual Statistics server head node, plus the number of VMs for the SAS 9.4M7 Visual Analytics and SAS 9.4M7 Visual Statistics workers (as specified in the Visual Analytics Worker Count parameter)
 * the number of middle tier VMs for the SAS 9.4M7 Mid-Tier server (as specified in the Mid-Tier VM Count parameter)
 * the number of metadata server VMs for the SAS 9.4M7 Metadata clustered server (as specified in the Metadata VM Count parameter)
 
 <a name="compute"></a>
-#### SAS 9.4M7 VA and SAS 9.4M7 VS server
+#### SAS 9.4M7 Visual Analytics and SAS 9.4M7 Visual Statistics server
 We  recommend that you use at least the memory optimized Standard E16s_v3 VM size.
 
 Here are some recommended example VM sizes based on the number of licensed cores:
@@ -68,7 +68,7 @@ We  recommend that you use one or three of the memory optimized Standard E16s_v3
 <a name="architecture"></a>
 ## Architecture
 
-This SAS 9.4 VA and SAS 9.4 VS Quickstart Template for Azure takes a generic license for SAS 9.4 and deploys SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS 9.4 deployment on recommended virtual machines (VMs).  
+This SAS 9.4 Visual Analytics and SAS 9.4 Visual Statistics Quickstart Template for Azure takes a generic license for SAS 9.4 and deploys SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS 9.4 deployment on recommended virtual machines (VMs).  
 
 For details, see [SAS 9.4 Intelligence Platform: Installation and Configuration Guide](https://go.documentation.sas.com/?cdcId=bicdc&cdcVersion=9.4&docsetId=biig&docsetTarget=titlepage.htm&locale=en). 
 
@@ -77,15 +77,15 @@ By default, Quickstart deployments enable Transport Layer Security (TLS) to help
 Deploying this Quickstart for a new virtual private cloud (VPC) with default parameters in a massively parallel processing (MPP) environment builds the following SAS 9.4 environment in the Microsoft Azure cloud, shown in Figure 1.   In MPP environments, the CASInstanceCount parameter is set to one, indicating that only one CAS controller is configured.
 
 ![Network Diagram](Azure_9_vavs_quickstart.svg)
-Figure 1: Quickstart architecture for SAS 9.4 VA and SAS 9.4 VS on Azure in an MPP Environment
+Figure 1: Quickstart architecture for SAS 9.4 Visual Analytics and SAS 9.4 Visual Statistics on Azure in an MPP Environment
 
 <a name="Prerequisites"></a>
 ## Prerequisites
 
-Before deploying the SAS 9.4 VA and SAS 9.4 VS Quickstart Template for Azure, you must have the following:
+Before deploying the SAS 9.4 Visual Analytics and SAS 9.4 Visual Statistics Quickstart Template for Azure, you must have the following:
 * A Microsoft Azure account with Contributor and Admin Roles if you do not already have one. Request an Azure account at ["CIS Cloud Services"](http://sww.sas.com/sites/it/cloud-services/).
         
-* A SAS 9.4M7 VA and SAS 9.4M7 VS software order that contains the following supported Quickstart products: 
+* A SAS 9.4M7 Visual Analytics and SAS 9.4M7 Visual Statistics software order that contains the following supported Quickstart products: 
 
         SAS Visual Analytics 7.5 on Linux 
 
@@ -134,7 +134,7 @@ For more information about this command, see ["az storage blob upload-batch"](ht
 |Mid-Tier VM Size|Specifies the VM size. Use the default size (recommended).|
 |Visual Analytics Worker Count|Specifies the number of worker instances created for the SAS Visual Analytics controller.| 
 |Visual Analytics Controller Size|Specifies the size of the Visual Analytics Controller.|
-|Visual Analytics Worker Size|Specifies the size of the Visual Analytics Worker.|
+|Visual Analytics Worker Size|Specifies the size of the SAS Visual Analytics Worker.|
 |Proximity Placement Group Name| Specifies the proximity group for instances. For better performance, you might want to place all instances in the same proximity group. You supply the name.|
 |SSH Key for VM Access| Specifies the full SSH public key that will be added to the servers. Cut and paste a public SSH key into this field.|
 |SAS Administration Password|Specifies the password used for SAS authentication. Enter the password to be used for the sasadm@saspw account.|
