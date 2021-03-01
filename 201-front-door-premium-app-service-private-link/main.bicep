@@ -4,7 +4,7 @@
   'westus2'
   'southcentralus'
 ])
-param location string = 'eastus'
+param location string
 
 @description('The name of the App Service application to create. This must be globally unique.')
 param appName string = 'myapp-${uniqueString(resourceGroup().id)}'
