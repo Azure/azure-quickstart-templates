@@ -17,7 +17,7 @@ var appServicePlanName = 'FunctionPlan'
 var appInsightsName = 'AppInsights'
 var storageAccountName = 'fnstor${uniqueString(resourceGroup().id, appName)}'
 var functionPlanKind = (functionPlanSkuName == 'Y1') ? 'functionapp' : 'elastic'
-var functionNameComputed = 'MyHttpTriggeredFunction'
+var functionName = 'MyHttpTriggeredFunction'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   name: storageAccountName
@@ -124,7 +124,7 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
 }
 
 resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
-  name: '${functionApp.name}/${functionNameComputed}'
+  name: '${functionApp.name}/${functionName}'
   properties: {
     config: {
       disabled: false
@@ -152,4 +152,4 @@ resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
 }
 
 output functionAppHostName string = functionApp.properties.defaultHostName
-output functionName string = functionNameComputed
+output functionName string = functionName
