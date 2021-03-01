@@ -1,0 +1,388 @@
+#cloud-config
+---
+coreos:
+  fleet:
+    # We have to set the public_ip here so this works on Vagrant -- otherwise, Vagrant VMs
+    # will all publish the same private IP. This is harmless for cloud providers.
+    public-ip: $private_ipv4
+    # allow etcd to slow down at times
+    etcd_request_timeout: 3.0
+    metadata: controlPlane=true,dataPlane=true,routerMesh=true
+  units:
+    - name: format-ephemeral.service
+      command: start
+      content: |
+        [Unit]
+        Description=Formats the ephemeral drive
+        ConditionPathExists=!/etc/azure-formatted
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/sbin/wipefs -f /dev/sdc
+        ExecStart=/usr/sbin/mkfs.ext4 -i 4096 -b 4096 /dev/sdc
+        ExecStart=/bin/touch /etc/azure-formatted
+    - name: var-lib-docker.mount
+      command: start
+      content: |
+        [Unit]
+        Description=Mount ephemeral to /var/lib/docker
+        Requires=format-ephemeral.service
+        After=format-ephemeral.service
+        Before=docker.service
+        [Mount]
+        What=/dev/sdc
+        Where=/var/lib/docker
+        Type=ext4
+    - name: docker.service
+      drop-ins:
+        - name: 90-after-docker-volume.conf
+          content: |
+            [Unit]
+            Requires=var-lib-docker.mount
+            After=var-lib-docker.mount
+    - name: etcd.service
+      command: start
+      content: |
+        [Unit]
+        Description=etcd2 container
+        Requires=early-docker.service
+        After=early-docker.service
+        Before=early-docker.target
+
+        [Service]
+        User=etcd
+        PermissionsStartOnly=true
+        Restart=always
+        RestartSec=10s
+        LimitNOFILE=40000
+        EnvironmentFile=/etc/environment
+        Environment="ETCD_IMAGE=quay.io/coreos/etcd:v2.1.1"
+        Environment="ETCD_ELECTION_TIMEOUT=2000"
+        Environment="ETCD_HEARTBEAT_INTERVAL=400"
+        Environment="ETCD_DATA_DIR=/var/lib/etcd2"
+        Environment="ETCD_NAME=%m"
+        Environment="DOCKER_HOST=unix:///var/run/early-docker.sock"
+        ExecStartPre=/bin/sh -c "docker history $ETCD_IMAGE >/dev/null 2>&1 || docker pull $ETCD_IMAGE"
+        ExecStartPre=/bin/sh -c "docker inspect $ETCD_NAME >/dev/null 2>&1 && docker rm -f $ETCD_NAME || true"
+        ExecStart=/usr/bin/docker run --net=host --rm \
+          --volume=${ETCD_DATA_DIR}:/var/lib/etcd2 \
+          --volume=/usr/share/ca-certificates:/etc/ssl/certs:ro \
+          -p 4001:4001 -p 2380:2380 -p 2379:2379 -p 7001:7001 \
+          --name ${ETCD_NAME} \
+          ${ETCD_IMAGE} \
+          -name ${ETCD_NAME} \
+          -data-dir /var/lib/etcd2 \
+          -advertise-client-urls http://${COREOS_PRIVATE_IPV4}:2379,http://${COREOS_PRIVATE_IPV4}:4001 \
+          -listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001 \
+          -initial-advertise-peer-urls http://${COREOS_PRIVATE_IPV4}:2380,http://${COREOS_PRIVATE_IPV4}:7001 \
+          -listen-peer-urls http://0.0.0.0:2380,http://0.0.0.0:7001 \
+          --heartbeat-interval ${ETCD_HEARTBEAT_INTERVAL} \
+          --election-timeout ${ETCD_ELECTION_TIMEOUT} \
+          --discovery #DISCOVERY_URL
+        ExecStop=-/usr/bin/docker stop $ETCD_NAME
+    - name: etcd2.service
+      mask: true
+    - name: docker-tcp.socket
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=Docker Socket for the API
+
+        [Socket]
+        ListenStream=2375
+        BindIPv6Only=both
+        Service=docker.service
+        [Install]
+        WantedBy=sockets.target
+    - name: flanneld.service
+      command: start
+      content: |
+        [Unit]
+        Description=Network fabric for containers
+        Documentation=https://github.com/coreos/flannel
+        Requires=early-docker.service etcd.service
+        After=etcd.service early-docker.service
+        Before=early-docker.target
+
+        [Service]
+        Type=notify
+        Restart=always
+        RestartSec=5
+        Environment="TMPDIR=/var/tmp/"
+        Environment="DOCKER_HOST=unix:///var/run/early-docker.sock"
+        Environment="FLANNEL_VER=0.5.1"
+        LimitNOFILE=40000
+        LimitNPROC=1048576
+        ExecStartPre=/sbin/modprobe ip_tables
+        ExecStartPre=/usr/bin/mkdir -p /run/flannel
+        ExecStartPre=/usr/bin/touch /run/flannel/options.env
+        ExecStartPre=-/usr/bin/etcdctl mk /coreos.com/network/config '{"Network":"10.244.0.0/16", "SubnetLen": 24, "SubnetMin":"10.244.0.0", "Backend": {"Type": "vxlan"}}'
+        ExecStart=/usr/libexec/sdnotify-proxy /run/flannel/sd.sock \
+          /usr/bin/docker run --net=host --privileged=true --rm \
+          --volume=/run/flannel:/run/flannel \
+          --env=NOTIFY_SOCKET=/run/flannel/sd.sock \
+          --env-file=/run/flannel/options.env \
+          --volume=/usr/share/ca-certificates:/etc/ssl/certs:ro \
+          quay.io/coreos/flannel:${FLANNEL_VER} /opt/bin/flanneld --ip-masq=true
+
+        # Update docker options
+        ExecStartPost=/usr/bin/docker run --net=host --rm -v /run:/run \
+          quay.io/coreos/flannel:${FLANNEL_VER} \
+          /opt/bin/mk-docker-opts.sh -d /run/flannel_docker_opts.env -i
+    - name: stop-update-engine.service
+      command: start
+      content: |
+        [Unit]
+        Description=stop update-engine
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/bin/systemctl stop update-engine.service
+        ExecStartPost=/usr/bin/systemctl mask update-engine.service
+    - name: graceful-deis-shutdown.service
+      content: |
+        [Unit]
+        Description=Clean up
+        DefaultDependencies=no
+        After=fleet.service etcd.service docker.service docker.socket deis-store-admin.service deis-store-daemon.service deis-store-volume.service deis-store-monitor.service
+        Requires=fleet.service etcd.service deis-store-admin.service deis-store-daemon.service deis-store-volume.service docker.service docker.socket deis-store-monitor.service
+
+        [Install]
+        WantedBy=shutdown.target halt.target reboot.target
+
+        [Service]
+        ExecStop=/opt/bin/graceful-shutdown.sh --really
+        Type=oneshot
+        TimeoutSec=1200
+        RemainAfterExit=yes
+    - name: install-deisctl.service
+      command: start
+      content: |
+        [Unit]
+        Description=Install deisctl utility
+        ConditionPathExists=!/opt/bin/deisctl
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/bin/sh -c 'curl -sSL --retry 5 --retry-delay 2 http://deis.io/deisctl/install.sh | sh -s 1.9.0'
+    - name: debug-etcd.service
+      content: |
+        [Unit]
+        Description=etcd debugging service
+
+        [Service]
+        ExecStartPre=/usr/bin/curl -sSL -o /opt/bin/jq http://stedolan.github.io/jq/download/linux64/jq
+        ExecStartPre=/usr/bin/chmod +x /opt/bin/jq
+        ExecStart=/usr/bin/bash -c "while true; do curl -sL http://127.0.0.1:4001/v2/stats/self | /opt/bin/jq . ; sleep 1 ; done"
+    - name: increase-nf_conntrack-connections.service
+      command: start
+      content: |
+        [Unit]
+        Description=Increase the number of connections in nf_conntrack. default is 65536
+
+        [Service]
+        Type=oneshot
+        ExecStartPre=/usr/sbin/modprobe nf_conntrack
+        ExecStart=/bin/sh -c "sysctl -w net.netfilter.nf_conntrack_max=262144"
+    - name: fleet.service
+      command: start
+write_files:
+  - path: /etc/deis-release
+    content: |
+      DEIS_RELEASE=v1.9.0
+  - path: /etc/motd
+    content: " \e[31m* *    \e[34m*   \e[32m*****    \e[39mddddd   eeeeeee iiiiiii   ssss\n\e[31m*   *  \e[34m* *  \e[32m*   *     \e[39md   d   e    e    i     s    s\n \e[31m* *  \e[34m***** \e[32m*****     \e[39md    d  e         i    s\n\e[32m*****  \e[31m* *    \e[34m*       \e[39md     d e         i     s\n\e[32m*   * \e[31m*   *  \e[34m* *      \e[39md     d eee       i      sss\n\e[32m*****  \e[31m* *  \e[34m*****     \e[39md     d e         i         s\n  \e[34m*   \e[32m*****  \e[31m* *      \e[39md    d  e         i          s\n \e[34m* *  \e[32m*   * \e[31m*   *     \e[39md   d   e    e    i    s    s\n\e[34m***** \e[32m*****  \e[31m* *     \e[39mddddd   eeeeeee iiiiiii  ssss\n\n\e[39mWelcome to Deis\t\t\tPowered by Core\e[38;5;45mO\e[38;5;206mS\e[39m\n"
+  - path: /etc/profile.d/nse-function.sh
+    permissions: '0755'
+    content: |
+      function nse() {
+        docker exec -it $1 bash
+      }
+  - path: /etc/systemd/system/docker.service.d/50-insecure-registry.conf
+    content: |
+      [Unit]
+      Requires=flanneld.service
+      After=flanneld.service
+
+      [Service]
+      EnvironmentFile=/etc/environment_proxy
+      Environment="DOCKER_OPTS=--insecure-registry 10.0.0.0/8 --insecure-registry 172.16.0.0/12 --insecure-registry 192.168.0.0/16 --insecure-registry 100.64.0.0/10"
+  - path: /run/deis/bin/get_image
+    permissions: '0755'
+    content: |
+      #!/usr/bin/env bash
+      # usage: get_image <component_path>
+      IMAGE=`etcdctl get $1/image 2>/dev/null`
+
+      # if no image was set in etcd, we use the default plus the release string
+      if [ $? -ne 0 ]; then
+        RELEASE=`etcdctl get /deis/platform/version 2>/dev/null`
+
+        # if no release was set in etcd, use the default provisioned with the server
+        if [ $? -ne 0 ]; then
+          source /etc/deis-release
+          RELEASE=$DEIS_RELEASE
+        fi
+
+        IMAGE=$1:$RELEASE
+      fi
+
+      # remove leading slash
+      echo ${IMAGE#/}
+  - path: /run/deis/bin/preseed
+    permissions: '0755'
+    content: |
+      #!/usr/bin/env bash
+
+      COMPONENTS=(builder cache controller database logger logspout publisher registry router store-daemon store-gateway store-metadata store-monitor)
+      for c in "${COMPONENTS[@]}"; do
+        image=`/run/deis/bin/get_image /deis/$c`
+        docker history $image >/dev/null 2>&1 || docker pull $image
+      done
+  - path: /opt/bin/deis-debug-logs
+    permissions: '0755'
+    content: |
+      #!/usr/bin/env bash
+
+      echo '--- VERSIONS ---'
+      source /etc/os-release
+      echo $PRETTY_NAME
+      source /etc/deis-release
+      echo "Deis $DEIS_RELEASE"
+      etcd -version
+      fleet -version
+      printf "\n"
+
+      echo '--- SYSTEM STATUS ---'
+      journalctl -n 50 -u etcd --no-pager
+      journalctl -n 50 -u fleet --no-pager
+      printf "\n"
+
+      echo '--- DEIS STATUS ---'
+      deisctl list
+      etcdctl ls --recursive /deis
+      printf "\n"
+  - path: /home/core/.toolboxrc
+    owner: core
+    content: |
+      TOOLBOX_DOCKER_IMAGE=alpine
+      TOOLBOX_DOCKER_TAG=3.1
+      TOOLBOX_USER=root
+  - path: /etc/environment_proxy
+    owner: core
+    content: |
+      HTTP_PROXY=
+      HTTPS_PROXY=
+      ALL_PROXY=
+      NO_PROXY=
+      http_proxy=
+      https_proxy=
+      all_proxy=
+      no_proxy=
+  - path: /etc/systemd/coredump.conf
+    content: |
+      [Coredump]
+      Storage=none
+  - path: /opt/bin/graceful-shutdown.sh
+    permissions: '0755'
+    content: |
+      #!/usr/bin/bash
+      if [ "$1" != '--really' ]; then
+        echo "command must be run as: $0 --really"
+        exit 1
+      fi
+      # procedure requires the store-admin
+      ADMIN_RUNNING=$(docker inspect --format="{{ .State.Running }}" deis-store-admin)
+      if [ $? -eq 1 ] || [ "$ADMIN_RUNNING" == "false" ]; then
+        echo "deis-store-admin container is required for graceful shutdown"
+        exit 2
+      fi
+      set -e -x -o pipefail
+      # determine osd id
+      CURRENT_STATUS=$(/usr/bin/docker exec deis-store-admin ceph health | awk '{print $1}')
+      OSD_HOSTS=($(/usr/bin/etcdctl ls /deis/store/hosts/| awk -F'/' '{print $5}'))
+      for HOST in "${OSD_HOSTS[@]}"
+      do
+        PUBLIC_IP=$(fleetctl list-machines -fields="machine,ip" -full -no-legend| grep `cat /etc/machine-id` | awk '{print $2}')
+        if [ "$HOST" = "$PUBLIC_IP" ] ; then
+          OSD_ID=$(/usr/bin/etcdctl get /deis/store/osds/$PUBLIC_IP)
+          break
+        fi
+      done
+      # if we own an osd and its healthy, try to gracefully remove it
+      if [ ! -z "$OSD_ID" ] && [[ "$CURRENT_STATUS" == *"HEALTH_OK"* ]] && [ ${#OSD_HOSTS[@]} -gt "3" ]; then
+        /usr/bin/docker exec deis-store-admin ceph osd out $OSD_ID
+        sleep 30
+        TIMEWAITED=0
+        until [[ $(/usr/bin/docker exec deis-store-admin ceph health) == *"HEALTH_OK"* ]]
+        do
+          if [ $TIMEWAITED -gt "1200" ]
+          then
+            echo "ceph graceful removal timeout exceeded"
+            break
+          fi
+          echo "waiting" && sleep 5
+          TIMEWAITED=$((TIMEWAITED+5))
+        done
+        /usr/bin/docker stop deis-store-daemon
+        /usr/bin/docker exec deis-store-admin ceph osd crush remove osd.$OSD_ID
+        /usr/bin/docker exec deis-store-admin ceph auth del osd.$OSD_ID
+        /usr/bin/docker exec deis-store-admin ceph osd rm $OSD_ID
+        /usr/bin/etcdctl rm /deis/store/osds/$PUBLIC_IP
+        etcdctl rm /deis/store/hosts/$PUBLIC_IP && sleep 10
+        # remove ceph mon
+        /usr/bin/docker stop deis-store-monitor || true
+        /usr/bin/docker exec deis-store-admin ceph mon remove `hostname -f` # fixme
+        /usr/bin/docker stop deis-store-metadata || true
+      fi
+
+      # TODO: remove the next check once etcdctl is using etcd2
+      ETCDCTL=/usr/bin/etcdctl
+      if ! $ETCDCTL --version | grep -q "etcdctl version 2.0."; then
+        ETCD_VERSION=2.0.13
+        curl -sSL https://github.com/coreos/etcd/releases/download/v${ETCD_VERSION}/etcd-v${ETCD_VERSION}-linux-amd64.tar.gz | \
+          tar zxv -C /opt/bin etcd-v${ETCD_VERSION}-linux-amd64/etcdctl --strip=1
+        ETCDCTL="/opt/bin/etcdctl"
+      fi
+      # removing the node from etcd
+      NODE=$($ETCDCTL member list | grep `cat /etc/machine-id` | cut -d ':' -f 1)
+      $ETCDCTL member remove $NODE
+  - path: /opt/bin/wupiao
+    permissions: '0755'
+    content: |
+      #!/usr/bin/env bash
+      # [w]ait [u]ntil [p]ort [i]s [a]ctually [o]pen
+      [ -n "$1" ] && \
+        until curl -o /dev/null -sIf http://${1}; do \
+          sleep 1 && echo .;
+        done;
+      exit $?
+  - path: /opt/bin/download-k8s-binary
+    permissions: '0755'
+    content: |
+      #!/usr/bin/env bash
+      export K8S_VERSION="v1.0.1"
+      mkdir -p /opt/bin
+      FILE=$1
+      if [ ! -f /opt/bin/$FILE ]; then
+        curl -sSL -o /opt/bin/$FILE https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/$FILE
+        chmod +x /opt/bin/$FILE
+      else
+        # we check the version of the binary
+        INSTALLED_VERSION=$(/opt/bin/$FILE --version)
+        MATCH=$(echo "${INSTALLED_VERSION}" | grep -c "${K8S_VERSION}")
+        if [ $MATCH -eq 0 ]; then
+          # the version is different
+          curl -sSL -o /opt/bin/$FILE https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/$FILE
+          chmod +x /opt/bin/$FILE
+        fi
+      fi
+  - path: /opt/bin/scheduler-policy.json
+    content: |
+      {
+          "kind": "Policy",
+          "apiVersion": "v1",
+          "predicates": [{"name": "PodFitsPorts"},{"name": "PodFitsResources"},{"name": "NoDiskConflict"},{"name": "MatchNodeSelector"},{"name": "HostName"}],
+          "priorities": [{"name": "LeastRequestedPriority","weight": 1},{"name": "BalancedResourceAllocation","weight": 1},{"name": "ServiceSpreadingPriority","weight": 2},{"name": "EqualPriority","weight": 1}]
+      }

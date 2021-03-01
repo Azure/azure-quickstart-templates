@@ -1,0 +1,87 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "siteName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the web app that you wish to create."
+            }
+        },
+        "appServicePlanName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the App Service plan to use for hosting the web app."
+            }
+        },
+        "appServiceEnvironmentName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the App Service Environment where the app service plan will be created."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Set this to the same location as the app service environment"
+            }
+        },
+        "pricingTier": {
+            "type": "string",
+            "allowedValues": [
+                "1",
+                "2",
+                "3"
+            ],
+            "defaultValue": "1",
+            "metadata": {
+                "description": "Defines pricing tier for workers: 1 = Isolated 1, 2 = Isolated 2, 3 = Isolated 3."
+            }
+        },
+        "capacity": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Defines the number of instances that will be allocated to the app service plan."
+            }
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('appServicePlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[parameters('location')]",
+            "properties": {
+                "name": "[parameters('appServicePlanName')]",
+                "hostingEnvironmentProfile": {
+                    "id": "[resourceId('Microsoft.Web/hostingEnvironments', parameters('appServiceEnvironmentName'))]"
+                }
+            },
+            "sku": {
+                "name": "[concat('I',parameters('pricingTier'))]",
+                "tier": "Isolated",
+                "size": "[concat('I',parameters('pricingTier'))]",
+                "family": "I",
+                "capacity": "[parameters('capacity')]"
+            }
+        },
+        {
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('siteName')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[parameters('location')]",
+            "properties": {
+                "name": "[parameters('siteName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverFarms', parameters('appServicePlanName'))]",
+                "hostingEnvironmentProfile": {
+                    "id": "[resourceId('Microsoft.Web/hostingEnvironments', parameters('appServiceEnvironmentName'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverFarms/', parameters('appServicePlanName'))]"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,145 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+    },
+    "virtualNetworkName": {
+      "type": "string"
+    },
+    "virtualNetworkAddressRange": {
+      "type": "string"
+    },
+    "virtualNetworkSubnets": {
+      "type": "array"
+    },
+    "publicIPAddressName": {
+      "type": "string"
+    },
+    "publicIPAddressType": {
+      "type": "string"
+    },
+    "loadBalancerName": {
+      "type": "string"
+    },
+    "httpProbeRequestPath": {
+      "type": "string",
+      "defaultValue": "/iisstart.htm"
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('virtualNetworkName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-12-01",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkAddressRange')]"
+          ]
+        },
+        "subnets": "[parameters('virtualNetworkSubnets')]"
+      }
+    },
+    {
+      "name": "[parameters('publicIPAddressName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-12-01",
+      "dependsOn": [
+        "[parameters('virtualNetworkName')]"
+      ],
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[parameters('loadBalancerName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-12-01",
+      "dependsOn": [
+        "[parameters('publicIPAddressName')]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "frontendIPConfiguration",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "backendAddressPool"
+          }
+        ],
+        "probes": [
+          {
+            "name": "httpProbe",
+            "properties": {
+              "protocol": "Http",
+              "port": 80,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2,
+              "requestPath": "[parameters('httpProbeRequestPath')]"
+            }
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "loadBalancingRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',parameters('loadBalancerName'),'frontendIPConfiguration')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',parameters('loadBalancerName'),'backendAddressPool')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',parameters('loadBalancerName'),'httpProbe')]"
+              }
+            }
+          }
+        ],
+        "inboundNatPools": [
+          {
+            "name": "natRDPPool",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',parameters('loadBalancerName'),'frontendIPConfiguration')]"
+              },
+              "protocol": "Tcp",
+              "frontendPortRangeStart": 50000,
+              "frontendPortRangeEnd": 50119,
+              "backendPort": 3389
+            }
+          },
+          {
+            "name": "natWinRMPool",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',parameters('loadBalancerName'),'frontendIPConfiguration')]"
+              },
+              "protocol": "Tcp",
+              "frontendPortRangeStart": 51000,
+              "frontendPortRangeEnd": 51119,
+              "backendPort": 5896
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {}
+}

@@ -1,0 +1,853 @@
+{
+    "triggers": [
+        {
+            "branchFilters": [
+                "+master"
+            ],
+            "forks": {
+                "enabled": true,
+                "allowSecrets": true
+            },
+            "pathFilters": [
+                "-/test/*",
+                "-/1-CONTRIBUTION-GUIDE/*",
+                "-/.github/*"
+            ],
+            "requireCommentsForNonTeamMembersOnly": false,
+            "isCommentRequiredForPullRequest": false,
+            "triggerType": 64
+        }
+    ],
+    "variables": {
+        "app.id": {
+            "value": "<GUID for the SP deploying the template, should have limited permissions in a public repo - must be able to also read the GEN resources>"
+        },
+        "app.id.admin": {
+            "value": "<GUID for the SP that can give permissions to the app.id SP to deploy to the test resourceGroup>"
+        },
+        "app.secret": {
+            "value": null,
+            "isSecret": true
+        },
+        "app.secret.admin": {
+            "value": null,
+            "isSecret": true
+        },
+        "config.file.uri": {
+            "value": "<uri to the .config.json file that contains GEN values for the subscription used for test deployments>"
+        },
+        "environment": {
+            "value": "<cloud environment as specified by Powershell (e.g. 'AzureCloud' or 'AzureUSGovernemnt'>"
+        },
+        "gen.artifacts.resourceGroup": {
+            "value": "<name of the resourceGroup that contains the static artifacts for testing>"
+        },
+        "gen.parameters.filename": {
+            "value": "gen.azuredeploy.parameters.json"
+        },
+        "gen.prereq.parameters.filename": {
+            "value": "gen.prereq.parameters.json"
+        },
+        "location": {
+            "value": "<location resources should be deployed to, should match the location prereq resources are deployed to when required>"
+        },
+        "mainTemplate.deployment.name": {
+            "value": "mainTemplate-deployment"
+        },
+        "parameters.filename": {
+            "value": "azuredeploy.parameters.json"
+        },
+        "prereq.deployment.name": {
+            "value": "prereq-deployment"
+        },
+        "prereq.outputs.filename": {
+            "value": "prereq.outputs.json"
+        },
+        "prereq.resourceGroup.name": {
+            "value": "<this will set by a pipeline task>"
+        },
+        "resourceGroup.name": {
+            "value": "<this will set by a pipeline task>"
+        },
+        "result.best.practice": {
+            "value": "FAIL"
+        },
+        "result.credscan": {
+            "value": ""
+        },
+        "result.deployment": {
+            "value": "FAIL"
+        },
+        "result.deployment.last.test.date.parameter": {
+            "value": "PublicLastTestDate"
+        },
+        "result.deployment.parameter": {
+            "value": "PublicDeployment"
+        },
+        "sample.folder": {
+            "value": "<this will set by a pipeline task>"
+        },
+        "skipComponentGovernanceDetection": {
+            "value": "true"
+        },
+        "storage.account.key": {
+            "value": null,
+            "isSecret": true
+        },
+        "subscription.id": {
+            "value": "<subscription Id used for test deployments>"
+        },
+        "system.debug": {
+            "value": "false",
+            "allowOverride": true
+        },
+        "tenant.id": {
+            "value": "<tenantId for the subscription and service principals>"
+        },
+        "ttk.asset.filename": {
+            "value": "arm-template-toolkit.zip"
+        },
+        "ttk.folder": {
+            "value": "$(Agent.BuildDirectory)\\test"
+        },
+        "ttk.uri": {
+            "value": "https://aka.ms/arm-ttk-latest"
+        },
+        "validation.type": {
+            "value": "Automated"
+        }
+    },
+    "properties": {},
+    "tags": [],
+    "jobAuthorizationScope": 1,
+    "jobTimeoutInMinutes": 360,
+    "jobCancelTimeoutInMinutes": 15,
+    "badgeEnabled": false,
+    "process": {
+        "phases": [
+            {
+                "steps": [
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Download TTK",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "New-Item '$(ttk.folder)' -ItemType Directory\nInvoke-WebRequest -uri '$(ttk.uri)' -OutFile \"$(ttk.folder)/$(ttk.asset.filename)\" -Verbose\nGet-ChildItem '$(ttk.folder)' -Recurse\n\nWrite-Host \"Expanding files...\"\nExpand-Archive -Path '$(ttk.folder)/*.zip' -DestinationPath '$(ttk.folder)' -Verbose\n\nWrite-Host \"Expanded files found:\"\nGet-ChildItem '$(ttk.folder)' -Recurse",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": false,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Install Az Module from Storage",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "$AzModuleUri = 'https://azurequickstartsservice.blob.core.windows.net/ttk/AzModules/Az-AzTable.5.0.zip'\n\ngci env:\n $p = ($env:psmodulepath).split(';')[0]\n\nInvoke-WebRequest -uri \"$AzModuleUri\" -OutFile \"$env:TEMP/az.zip\" -Verbose\n\n#Get-ChildItem '$p' -Recurse\n\nWrite-Host \"Expanding files...\"\nExpand-Archive -Path \"$env:TEMP/az.zip\" -DestinationPath \"$p\" -Verbose\n\nWrite-Host \"Expanded files found:\"\n#Get-ChildItem \"$p\" -Recurse\n\nGet-Module Az -ListAvailable\n\n#Get-AzResourceGroup\n",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Connect To Azure (Admin) To Create RGs",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)/ci-scripts/ConnectTo-Azure.ps1",
+                            "arguments": "-appId $(app.id.admin) -secret \"$(app.secret.admin)\" -tenantId $(tenant.id) -subscriptionId $(subscription.id) -Environment $(environment) -InstallAzModule ",
+                            "script": "",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Get Oldest Sample Folder (Scheduled)",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)\\ci-scripts\\Get-OldestSampleFolder.ps1",
+                            "arguments": "-StorageAccountKey \"$(storage.account.key)\"",
+                            "script": "",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": true,
+                        "alwaysRun": false,
+                        "displayName": "Set Build Number",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "$s = \"$(sample.name)\"\n$s = $s.Replace('\\', '#')\nWrite-Host \"##vso[build.updatebuildnumber]($s)\"\n",
+                            "errorActionPreference": "continue",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Get Sample Folder (Pull Request)",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)\\ci-scripts\\Get-SampleFolder.ps1",
+                            "arguments": "",
+                            "script": "",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "true",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "DEBUG: Dump ENV",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "gci \"env:\"\n\n$ErrorView = \"NormalView\"",
+                            "errorActionPreference": "continue",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": true,
+                        "alwaysRun": false,
+                        "displayName": "Validate metadata.json",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)\\ci-scripts\\Validate-Metadata.ps1",
+                            "arguments": "",
+                            "script": "",
+                            "errorActionPreference": "continue",
+                            "failOnStderr": "true",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": true,
+                        "alwaysRun": false,
+                        "displayName": "GitHub PR label (add manual validation)",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), eq(variables['validation.type'], 'Manual'), ne(variables['Build.SourceBranch'], 'refs/heads/master'))",
+                        "task": {
+                            "id": "79ae0514-ee91-4a19-ae69-030952b0b23e",
+                            "versionSpec": "0.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "gitHubConnection": "16756c6a-c229-4df8-890d-767c47fb45f5",
+                            "action": "add",
+                            "label": "manual validation"
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": true,
+                        "alwaysRun": false,
+                        "displayName": "Validate README.md",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)\\ci-scripts\\Validate-ReadMe.ps1",
+                            "arguments": "",
+                            "script": "",
+                            "errorActionPreference": "continue",
+                            "failOnStderr": "true",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": true,
+                        "alwaysRun": false,
+                        "displayName": "Run Best Practices Tests",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "Import-Module $(ttk.folder)/arm-ttk/arm-ttk.psd1 -Verbose\n$testOutput = @(Test-AzTemplate -TemplatePath \"$(sample.folder)\")\n$testOutput\n\nif ($testOutput | ? {$_.Errors }) {\n   exit 1 \n} else {\n    Write-Host \"##vso[task.setvariable variable=result.best.practice]$true\"\n    exit 0\n} \n",
+                            "errorActionPreference": "continue",
+                            "failOnStderr": "true",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Generate RG Names and Check for Prereqs",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)\\ci-scripts\\Gen-ResourceGroupNames.ps1",
+                            "arguments": "-sampleFolder \"$(sample.folder)\"",
+                            "script": "",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": true,
+                        "alwaysRun": false,
+                        "displayName": "Create ResourceGroup - Assign RBAC (mainTemplate RG)",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)/ci-scripts/Create-ResourceGroupAssignment.ps1",
+                            "arguments": "-ResourceGroupName \"$(resourceGroup.name)\" -Location \"$(location)\" -appId $(app.id) ",
+                            "script": "",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": true,
+                        "alwaysRun": false,
+                        "displayName": "Create ResourceGroup - Assign RBAC (prereqs RG) ",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), eq(variables['deploy.prereqs'], 'true'), ne(variables['prereq.resourceGroup.name'], variables['resourceGroup.name']),  ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)/ci-scripts/Create-ResourceGroupAssignment.ps1",
+                            "arguments": "-ResourceGroupName \"$(prereq.resourceGroup.name)\" -Location \"$(location)\" -appId $(app.id)",
+                            "script": "",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Connect To Azure (non-Admin) To Deploy",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)/ci-scripts/ConnectTo-Azure.ps1",
+                            "arguments": "-appId $(app.id) -secret \"$(app.secret)\" -tenantId $(tenant.id) -subscriptionId $(subscription.id) -Environment \"$(environment)\"",
+                            "script": "",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "GEN Parameters (Prereqs)",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), eq(variables['deploy.prereqs'], 'true'), ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)/ci-scripts/Gen-TemplateParameters.ps1",
+                            "arguments": "-configUri \"$(config.file.uri)\" -TemplateParametersFile \"$(sample.folder)\\prereqs\\prereq.$(parameters.filename)\" -NewTemplateParametersFile \"$(sample.folder)\\prereqs\\$(gen.prereq.parameters.filename)\"",
+                            "script": "",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "DEBUG: dump mainTemplate param file content (prereqs)",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "if(Test-Path -Path \"$(sample.folder)\\prereqs\\$(gen.prereq.parameters.filename)\"){\n\n  Write-Output (Get-Content \"$(sample.folder)\\prereqs\\$(gen.prereq.parameters.filename)\" -Raw)\n\n}\n",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Deploy Template (prereqs)",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), eq(variables['deploy.prereqs'], 'true'), ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)\\Deploy-AzTemplate.ps1",
+                            "arguments": "-ArtifactStagingDirectory \"$(sample.folder)\\prereqs\" -Location \"$(Location)\" -ResourceGroupName \"$(prereq.resourceGroup.name)\" -TemplateParametersFile \"$(sample.folder)\\prereqs\\$(gen.prereq.parameters.filename)\" -DeploymentName \"$(prereq.deployment.name)\" -TemplateFile \"$(sample.folder)\\prereqs\\prereq.azuredeploy.json\"",
+                            "script": "",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Dump Outputs To File (prereqs)",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), eq(variables['deploy.prereqs'], 'true'), ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "$PreReqOutputs = (Get-AzResourceGroupDeployment -ResourceGroupName \"$(prereq.resourceGroup.name)\" -Name $(prereq.deployment.name)).Outputs | ConvertTo-Json -Depth 100\nWrite-Output \"$PreReqOutputs\"\n\n###Write-Output \"##vso[task.setvariable variable=prereq.config.json]$PreReqOutputs\"\n\n$PreReqOutputs | Out-File -FilePath \"$(sample.folder)\\prereqs\\$(prereq.outputs.filename)\"",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "DEBUG: Dump Prereqs Output File",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), eq(variables['deploy.prereqs'], 'true'),  ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "Write-Output (Get-Content \"$(sample.folder)\\prereqs\\$(prereq.outputs.filename)\" -Raw)\n",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "GEN mainTemplate Params",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)/ci-scripts/Gen-TemplateParameters.ps1",
+                            "arguments": "-configUri \"$(config.file.uri)\" -TemplateParametersFile \"$(sample.folder)\\$(parameters.filename)\" -NewTemplateParametersFile \"$(sample.folder)\\$(gen.parameters.filename)\" -prereqOutputsFileName \"$(sample.folder)\\prereqs\\$(prereq.outputs.filename)\"",
+                            "script": "",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "DEBUG: dump mainTemplate param file content",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "Write-Output(Get-Content \"$(sample.folder)\\$(gen.parameters.filename)\" -Raw)",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Deploy mainTemplate",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(succeeded(), ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "$(ttk.folder)\\Deploy-AzTemplate.ps1 `\n    -ArtifactStagingDirectory \"$(sample.folder)\" `\n    -Location \"$(Location)\" `\n    -ResourceGroupName \"$(resourceGroup.name)\" `\n    -TemplateParametersFile \"$(sample.folder)\\$(gen.parameters.filename)\" `\n    -DeploymentName \"$(mainTemplate.deployment.name)\"\n\nWrite-Host \"##vso[task.setvariable variable=result.deployment]$true\"\n\n",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Connect To Azure (Admin) To Clean Up",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)/ci-scripts/ConnectTo-Azure.ps1",
+                            "arguments": "-appId $(app.id.admin) -secret \"$(app.secret.admin)\" -tenantId $(tenant.id) -subscriptionId $(subscription.id)",
+                            "script": "",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Clean Up ResourceGroup (main)",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "# remove the resource group\nWrite-Host \"First attempt...\"\n& $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(resourceGroup.name)\" -ErrorAction SilentlyContinue\n\n# if the resource group still exists after the first attempt, try again after a few minutes\nWrite-Host \"Checking for ResourceGroup…\"\nif ((Get-AzResourceGroup -Name \"$(resourceGroup.name)\" -verbose -ErrorAction SilentlyContinue) -ne $null) {\n\n    Write-Host \"Found the resource group - sleeping...\" \n    Sleep 600\n    Write-Host \"Attempting Kill-AzResourceGroup…\"\n    & $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(resourceGroup.name)\"\n\n}\n",
+                            "errorActionPreference": "continue",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Clean Up ResourceGroup (prereqs)",
+                        "timeoutInMinutes": 0,
+                        "condition": "and(eq(variables['deploy.prereqs'], 'true'), ne(variables['prereq.resourceGroup.name'], variables['resourceGroup.name']),  ne(variables['result.deployment'], 'Not Supported'), ne(variables['validation.type'], 'Manual'))",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "# remove the resource group\nWrite-Host \"First attempt...\"\n& $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(prereq.resourceGroup.name)\" -ErrorAction SilentlyContinue\n\n# if the resource group still exists after the first attempt, try again after a few minutes\nWrite-Host \"Checking for ResourceGroup…\"\nif ((Get-AzResourceGroup -Name \"$(prereq.resourceGroup.name)\" -verbose -ErrorAction SilentlyContinue) -ne $null) {\n\n    Write-Host \"Found the resource group - sleeping...\" \n    Sleep 600\n    Write-Host \"Attempting Kill-AzResourceGroup…\"\n    & $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(prereq.resourceGroup.name)\"\n}\n",
+                            "errorActionPreference": "continue",
+                            "failOnStderr": "false",
+                            "showWarnings": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    }
+                ],
+                "name": "Agent job 1",
+                "refName": "Job_1",
+                "condition": "succeeded()",
+                "target": {
+                    "executionOptions": {
+                        "type": 0
+                    },
+                    "allowScriptsAuthAccessOption": false,
+                    "type": 1
+                },
+                "jobAuthorizationScope": 1,
+                "jobTimeoutInMinutes": 360
+            }
+        ],
+        "target": {
+            "agentSpecification": {
+                "identifier": "windows-2019"
+            }
+        },
+        "type": 1
+    },
+    "repository": {},
+    "processParameters": {},
+    "quality": 1,
+    "authoredBy": {
+        "displayName": "Brian Moore (AZURE RESOURCE MANAGER)",
+        "url": "https://spsprodcus1.vssps.visualstudio.com/Ac8aef736-af44-4df8-8ee0-e3f71ba093b7/_apis/Identities/a776ea98-0041-458d-a782-55b352492e1e",
+        "_links": {
+            "avatar": {
+                "href": "https://dev.azure.com/azurequickstarts/_apis/GraphProfile/MemberAvatars/aad.ZmNkYzI4MmEtZTY1My03M2Y5LThkNTgtYzgwMTY1ZDM1NTRk"
+            }
+        },
+        "id": "a776ea98-0041-458d-a782-55b352492e1e",
+        "uniqueName": "bmoore@microsoft.com",
+        "imageUrl": "https://dev.azure.com/azurequickstarts/_apis/GraphProfile/MemberAvatars/aad.ZmNkYzI4MmEtZTY1My03M2Y5LThkNTgtYzgwMTY1ZDM1NTRk",
+        "descriptor": "aad.ZmNkYzI4MmEtZTY1My03M2Y5LThkNTgtYzgwMTY1ZDM1NTRk"
+    },
+    "drafts": [],
+    "queue": {},
+    "id": 5,
+    "name": "Azure-QuickStart-Templates-Fork-Import",
+    "path": "\\",
+    "type": 2,
+    "queueStatus": 0,
+    "revision": 148,
+    "createdDate": "2021-02-19T15:07:50.780Z",
+    "project": {
+        "id": "00000000-0000-0000-0000-000000000000",
+        "state": 1,
+        "revision": 21,
+        "visibility": 2,
+        "lastUpdateTime": "2019-07-08T21:54:49.103Z"
+    }
+}

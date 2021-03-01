@@ -1,0 +1,78 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "2.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location of the existing Virtual Network and for the new Redis Cache."
+      }
+    },
+    "redisCacheName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Azure Redis Cache to create."
+      }
+    },
+    "redisCacheCapacity": {
+      "type": "int",
+      "allowedValues": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "defaultValue": 1,
+      "metadata": {
+        "description": "The size of the new Azure Redis Cache instance. Valid family and capacity combinations are (C0..C6, P1..P4)."
+      }
+    },
+    "existingVirtualNetworkResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "The resource group of the existing Virtual Network."
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the existing Virtual Network."
+      }
+    },
+    "existingSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the existing subnet."
+      }
+    },
+    "enableNonSslPort": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Set to true to allow access to redis on port 6379, without SSL tunneling (less secure)."
+      }
+    }
+  },
+  "variables": {
+    "subnetId": "[resourceId(parameters('existingVirtualNetworkResourceGroupName'),'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSubnetName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-07-01",
+      "name": "[parameters('redisCacheName')]",
+      "type": "Microsoft.Cache/Redis",
+      "location": "[parameters('location')]",
+      "properties": {
+        "enableNonSslPort": "[parameters('enableNonSslPort')]",
+        "sku": {
+          "capacity": "[parameters('redisCacheCapacity')]",
+          "family": "P",
+          "name": "Premium"
+        },
+        "subnetId": "[variables('subnetId')]"
+      }
+    }
+  ]
+}

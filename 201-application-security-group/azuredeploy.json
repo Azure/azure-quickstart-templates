@@ -1,0 +1,287 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation when they're located in a storage account with private access."
+      },
+      "defaultValue": ""
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "VM",
+      "metadata": {
+        "description": "VM Name"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "VM Size"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    }
+  },
+  "variables": {
+    "vnetName": "vnet",
+    "vNetAddressSpace": "10.0.0.0/16",
+    "subnetName": "subnet01",
+    "subnetAdressPrefix": "10.0.0.0/24",
+    "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'),variables('subnetName'))]",
+    "asgName": "webServersAsg",
+    "asgId": "[resourceId('Microsoft.Network/applicationSecurityGroups',variables('asgName'))]",
+    "nsgName": "webNsg",
+    "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
+    "pipName": "webServerPip",
+    "pipId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('pipName'))]",
+    "imageInfo": {
+      "publisher": "OpenLogic",
+      "offer": "CentOS",
+      "sku": "6.9",
+      "version": "latest"
+    },
+    "vmStorageType": "Standard_LRS",
+    "scriptUrl": "[uri(parameters('_artifactsLocation'), concat('install_nginx.sh', parameters('_artifactsLocationSasToken')))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
+  "resources": [
+    {
+      "comments": "Application Security Group",
+      "name": "[variables('asgName')]",
+      "type": "Microsoft.Network/applicationSecurityGroups",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "comments": "Network Security Group",
+      "name": "[variables('nsgName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('asgName')]"
+      ],
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowHttpAll",
+            "properties": {
+              "description": "Allow http traffic to web servers",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "direction": "Inbound",
+              "access": "Allow",
+              "priority": 100,
+              "protocol": "Tcp",
+              "destinationPortRange": "80",
+              "destinationApplicationSecurityGroups": [
+                {
+                  "id": "[variables('asgId')]"
+                }
+              ]
+            }
+          },
+          {
+            "name": "AllowSshAll",
+            "properties": {
+              "description": "Allow SSH traffic to web servers",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "direction": "Inbound",
+              "access": "Allow",
+              "priority": 200,
+              "protocol": "Tcp",
+              "destinationPortRange": "22",
+              "destinationApplicationSecurityGroups": [
+                {
+                  "id": "[variables('asgId')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Virtual Network",
+      "name": "[variables('vNetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('nsgName')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vNetAddressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetAdressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Public Ip Address",
+      "name": "[variables('pipName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "comments": "Web Server Network Interface",
+      "name": "[concat(parameters('vmName'),'-NIC')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-05-01",
+      "dependsOn": [
+        "[variables('vNetName')]",
+        "[variables('pipName')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[variables('pipId')]"
+              },
+              "subnet": {
+                "id": "[variables('subnetId')]"
+              },
+              "applicationSecurityGroups": [
+                {
+                  "id": "[variables('asgId')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Linux Web Server",
+      "name": "[parameters('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-06-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'),'-NIC'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('imageInfo')]",
+          "osDisk": {
+            "name": "[concat(parameters('vmName'),'-osdisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('vmStorageType')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'),'-NIC'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "comments": "Installs NGNIX",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/linuxconfig')]",
+      "apiVersion": "2020-06-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[parameters('vmName')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('scriptUrl')]"
+          ],
+          "commandToExecute": "sh install_nginx.sh"
+        }
+      }
+    }
+  ]
+}

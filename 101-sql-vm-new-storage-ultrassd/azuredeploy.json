@@ -1,0 +1,392 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualMachineName": {
+      "type": "String",
+      "defaultValue": "myVM",
+      "metadata": {
+        "description": "The name of the VM"
+      }
+    },
+    "virtualMachineSize": {
+      "type": "String",
+      "defaultValue": "Standard_D8s_v3",
+      "metadata": {
+        "description": "The virtual machine size."
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "String",
+      "metadata": {
+        "description": "Specify the name of an existing VNet in the same resource group"
+      }
+    },
+    "existingVnetResourceGroup": {
+      "type": "String",
+      "metadata": {
+        "description": "Specify the resrouce group of the existing VNet"
+      },
+      "defaultValue": "[resourceGroup().name]"
+    },
+    "existingSubnetName": {
+      "type": "String",
+      "metadata": {
+        "description": "Specify the name of the Subnet Name"
+      }
+    },
+    "imageOffer": {
+      "type": "String",
+      "allowedValues": [
+        "sql2019-ws2019",
+        "sql2017-ws2019",
+        "SQL2017-WS2016",
+        "SQL2016SP1-WS2016",
+        "SQL2016SP2-WS2016",
+        "SQL2014SP3-WS2012R2",
+        "SQL2014SP2-WS2012R2"
+      ],
+      "defaultValue": "sql2019-ws2019",
+      "metadata": {
+        "description": "Windows Server and SQL Offer"
+      }
+    },
+    "sqlSku": {
+      "type": "String",
+      "allowedValues": [
+        "Standard",
+        "Enterprise",
+        "SQLDEV",
+        "Web",
+        "Express"
+      ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "SQL Server Sku"
+      }
+    },
+    "zone": {
+      "defaultValue": 1,
+      "allowedValues": [
+        1,
+        2,
+        3
+      ],
+      "type": "Int",
+      "metadata": {
+        "description": "Zone to deploy to"
+      }
+    },
+    "adminUsername": {
+      "type": "String",
+      "metadata": {
+        "description": "The admin user name of the VM"
+      }
+    },
+    "adminPassword": {
+      "type": "SecureString",
+      "metadata": {
+        "description": "The admin password of the VM"
+      }
+    },
+    "storageWorkloadType": {
+      "type": "String",
+      "allowedValues": [
+        "General",
+        "OLTP",
+        "DW"
+      ],
+      "defaultValue": "General",
+      "metadata": {
+        "description": "SQL Server Workload Type"
+      }
+    },
+    "sqlDataDisksCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 8,
+      "metadata": {
+        "description": "Amount of data disks (1TB each) for SQL Data files"
+      }
+    },
+    "dataPath": {
+      "type": "String",
+      "defaultValue": "F:\\SQLData",
+      "metadata": {
+        "description": "Path for SQL Data files. Please choose drive letter from F to Z, and other drives from A to E are reserved for system"
+      }
+    },
+    "sqlLogUltraSSDDiskSizeInGB": {
+      "defaultValue": 512,
+      "type": "int",
+      "metadata": {
+        "description": "SQL Log UltraSSD Disk size in GiB."
+      }
+    },
+    "sqlLogUltraSSDdiskIOPSReadWrite": {
+      "defaultValue": 20000,
+      "type": "int",
+      "metadata": {
+        "description": "SQL Log UltraSSD Disk IOPS value representing the maximum IOPS that the disk can achieve."
+      }
+    },
+    "sqlLogUltraSSDdiskMbpsReadWrite": {
+      "defaultValue": 500,
+      "type": "int",
+      "metadata": {
+        "description": "SQL Log UltraSSD Disk MBps value representing the maximum throughput that the disk can achieve."
+      }
+    },
+    "logPath": {
+      "type": "String",
+      "defaultValue": "G:\\SQLLog",
+      "metadata": {
+        "description": "Path for SQL Log files. Please choose drive letter from F to Z and different than the one used for SQL data. Drive letter from A to E are reserved for system"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      },
+      "allowedValues": [
+        "East US 2",
+        "SouthEast Asia",
+        "North Europe"
+      ]
+    }
+  },
+  "variables": {
+    "networkInterfaceName": "[concat(parameters('virtualMachineName'), '-nic')]",
+    "networkSecurityGroupName": "[concat(parameters('virtualMachineName'), '-nsg')]",
+    "networkSecurityGroupRules": [
+      {
+        "name": "RDP",
+        "properties": {
+          "priority": 300,
+          "protocol": "TCP",
+          "access": "Allow",
+          "direction": "Inbound",
+          "sourceAddressPrefix": "*",
+          "sourcePortRange": "*",
+          "destinationAddressPrefix": "*",
+          "destinationPortRange": "3389"
+        }
+      }
+    ],
+    "publicIpAddressName": "[concat(parameters('virtualMachineName'), '-publicip-', uniqueString(parameters('virtualMachineName')))]",
+    "publicIpAddressType": "Dynamic",
+    "publicIpAddressSku": "Basic",
+    "diskConfigurationType": "NEW",
+    "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+    "subnetRef": "[resourceID(parameters('existingVNetResourceGroup'), 'Microsoft.Network/virtualNetWorks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSubNetName'))]",
+    "dataDisksLuns": "[array(range(0 ,parameters('sqlDataDisksCount')))]",
+    "logDisksLuns": "[array(range(parameters('sqlDataDisksCount'), 1))]",
+    "dataDisks": {
+      "createOption": "empty",
+      "caching": "ReadOnly",
+      "writeAcceleratorEnabled": false,
+      "storageAccountType": "Premium_LRS",
+      "diskSizeGB": 1023
+    },
+    "tempDbPath": "D:\\SQLTempdb"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2019-11-01",
+      "name": "[concat(parameters('virtualMachineName'),'-dataDisk-UltraSSD-',copyIndex())]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "UltraSSD_LRS"
+      },
+      "zones": [
+        "[parameters('zone')]"
+      ],
+      "properties": {
+        "creationData": {
+          "createOption": "Empty"
+        },
+        "diskSizeGB": "[parameters('sqlLogUltraSSDDiskSizeInGB')]",
+        "diskIOPSReadWrite": "[parameters('sqlLogUltraSSDdiskIOPSReadWrite')]",
+        "diskMBpsReadWrite": "[parameters('sqlLogUltraSSDdiskMbpsReadWrite')]"
+      },
+      "copy": {
+        "name": "UltraSSDLoop",
+        "count": 1
+      }
+    },
+    {
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2019-11-01",
+      "name": "[concat(parameters('virtualMachineName'),'-dataDisk-',copyIndex())]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Premium_LRS"
+      },
+      "zones": [
+        "[parameters('zone')]"
+      ],
+      "properties": {
+        "creationData": {
+          "createOption": "Empty"
+        },
+        "diskSizeGB": "[variables('dataDisks').diskSizeGB]"
+      },
+      "copy": {
+        "name": "PremiumSSDLoop",
+        "count": "[parameters('sqlDataDisksCount')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIpAddresses",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('publicIpAddressName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('publicIpAddressSku')]"
+      },
+      "zones": [
+        "[parameters('zone')]"
+      ],
+      "properties": {
+        "publicIpAllocationMethod": "[variables('publicIpAddressType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": "[variables('networkSecurityGroupRules')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('networkInterfaceName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
+        "[resourceId('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIpAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+              }
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": true,
+        "networkSecurityGroup": {
+          "id": "[variables('nsgId')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-12-01",
+      "name": "[parameters('virtualMachineName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
+        "UltraSSDLoop",
+        "PremiumSSDLoop"
+      ],
+      "zones": [
+        "[parameters('zone')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "additionalCapabilities": {
+          "ultraSSDEnabled": "true"
+        },
+        "storageProfile": {
+          "osDisk": {
+            "createOption": "fromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            }
+          },
+          "imageReference": {
+            "publisher": "MicrosoftSQLServer",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('sqlSku')]",
+            "version": "latest"
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[add(parameters('sqlDataDisksCount'), 1)]",
+              "input": {
+                "lun": "[copyIndex('dataDisks')]",
+                "createOption": "attach",
+                "caching": "[if(greaterOrEquals(copyIndex('dataDisks'), parameters('sqlDataDisksCount')), 'None', variables('dataDisks').caching)]",
+                "managedDisk": {
+                  "id": "[if(greaterOrEquals(copyIndex('dataDisks'), parameters('sqlDataDisksCount')), resourceId('Microsoft.Compute/disks/', concat(parameters('virtualMachineName'),'-dataDisk-UltraSSD-0')), resourceId('Microsoft.Compute/disks/', concat(parameters('virtualMachineName'),'-dataDisk-',copyIndex('dataDisks'))))]"
+                }
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[parameters('virtualMachineName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "enableAutomaticUpdates": true,
+            "provisionVmAgent": true
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachines",
+      "apiVersion": "2017-03-01-preview",
+      "name": "[parameters('virtualMachineName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
+      ],
+      "properties": {
+        "virtualMachineResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
+        "sqlManagement": "Full",
+        "SqlServerLicenseType": "PAYG",
+        "StorageConfigurationSettings": {
+          "DiskConfigurationType": "[variables('diskConfigurationType')]",
+          "StorageWorkloadType": "[parameters('storageWorkloadType')]",
+          "SQLDataSettings": {
+            "LUNs": "[variables('dataDisksLUNs')]",
+            "DefaultFilePath": "[parameters('dataPath')]"
+          },
+          "SQLLogSettings": {
+            "Luns": "[variables('logDisksLUNs')]",
+            "DefaultFilePath": "[parameters('logPath')]"
+          },
+          "SQLTempDbSettings": {
+            "DefaultFilePath": "[variables('tempDbPath')]"
+          }
+        }
+      }
+    }
+  ]
+}

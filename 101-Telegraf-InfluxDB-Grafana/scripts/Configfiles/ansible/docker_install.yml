@@ -1,0 +1,100 @@
+--- 
+- 
+  connection: localhost
+  hosts: localhost
+  tasks: 
+    - 
+      args: 
+        chdir: /home/
+      command: "curl -fsSL get.docker.com -o get-docker.sh"
+      name: "Download docker script"
+    - 
+      name: "run docker script"
+      script: /home/get-docker.sh
+    - 
+      name: "start Docker"
+      service: 
+        name: docker
+        state: started
+    - 
+      apt: 
+        name: python-pip
+        state: present
+      name: "install pip"
+      register: results
+    - 
+      debug: 
+        var: results
+    - 
+      command: "pip install docker-compose"
+      name: "install docker-compose"
+    - 
+      file: 
+        path: /home/Configfiles/telegraf.conf
+        state: absent
+      name: "remove existing telegraf file"
+    - 
+      name: "replace telegraf.conf with required values"
+      template: 
+        dest: /home/Configfiles/temp.conf
+        src: telegraf.conf.jk2
+    - 
+      args: 
+        chdir: /home/Configfiles/
+      name: "append telegraf.conf with content of tempfile"
+      shell: "cat temp.conf >> telegraf.conf"
+    - 
+      file: 
+        mode: 420
+        path: /home/Configfiles/telegraf.conf
+      name: "change file permission"
+    - 
+      name: "replace grafanacfg.output file with values"
+      template: 
+        dest: /home/Configfiles/grafanacfg.output
+        src: grafanacfg.input.jk2
+    - 
+      args: 
+        chdir: /home/Configfiles/
+      command: "docker-compose build"
+      name: "docker build"
+    - 
+      args: 
+        chdir: /home/Configfiles/
+      command: "docker-compose up -d"
+      name: "docker up"
+    - 
+      name: "Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds"
+      wait_for: 
+        delay: 10
+        port: 3000
+    - 
+      name: "Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds"
+      wait_for: 
+        delay: 10
+        port: 8083
+    - 
+      command: "curl -i -XPOST http://localhost:8086/query --data-urlencode \"q=CREATE DATABASE {{ DBName }}\""
+      name: "create database in influxdb"
+    - 
+      command: "curl -s http://localhost:3000/api/org -u {{ grafana_user }}:{{ grafana_passwd }}"
+      name: "check if grafana can be accessed"
+    - 
+      command: "curl -L --header 'Content-Type: application/json' --header 'Accept: application/json' -d@/home/Configfiles/grafanacfg.output http://localhost:3000/api/datasources -u {{ grafana_user }}:{{ grafana_passwd }}"
+      name: "create datasoure in grafana"
+    - 
+      command: "curl -L --header 'Content-Type: application/json' --header 'Accept: application/json' -d@/home/Configfiles/dashboards/TelegrafHostMetrics.json  http://{{ HostIP }}:3000/api/dashboards/db -u {{ grafana_user }}:{{ grafana_passwd }}"
+      name: "create TelegrafHost dashboard in grafana using the jsonfile"
+    - 
+      command: "curl --header 'Content-Type: application/json' --header 'Accept: application/json' -d@/home/Configfiles/dashboards/DockerMetricsperContainer.json  http://{{ HostIP }}:3000/api/dashboards/db -u {{ grafana_user }}:{{ grafana_passwd }}"
+      name: "create DockerMetrics dashboard in grafana using the jsonfile"
+    - 
+      debug: 
+        var: HostIP
+  vars: 
+    DBName: TIG
+    datasrcname: TIG
+    grafana_passwd: YOUR_PASSWORD
+    grafana_user: admin
+    influxdb_password: root
+    influxdb_user: root

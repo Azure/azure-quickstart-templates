@@ -1,0 +1,235 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "functionAppName": {
+      "type": "string",
+      "defaultValue": "[format('fn-{0}', uniqueString(resourceGroup().id))]"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "[format('stor{0}', uniqueString(resourceGroup().id))]"
+    },
+    "deploymentScriptTimestamp": {
+      "type": "string",
+      "defaultValue": "[utcNow()]"
+    }
+  },
+  "functions": [],
+  "variables": {
+    "functionRuntime": "dotnet",
+    "appServicePlanName": "FunctionPlan",
+    "appInsightsName": "AppInsights",
+    "functionNameComputed": "MyEventGridFunction",
+    "deploymentScriptName": "[format('deployscript{0}', uniqueString(resourceGroup().id))]",
+    "userAssignedManagedIdentityName": "DeployScript",
+    "roleAssignmentGuid": "[guid(resourceGroup().id)]",
+    "contributorRoleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "supportsHttpsTrafficOnly": true,
+        "encryption": {
+          "services": {
+            "file": {
+              "keyType": "Account",
+              "enabled": true
+            },
+            "blob": {
+              "keyType": "Account",
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        },
+        "accessTier": "Hot"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2015-05-01",
+      "name": "[variables('appInsightsName')]",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('appServicePlanName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp",
+      "sku": {
+        "name": "Y1"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('functionAppName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', parameters('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', parameters('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).InstrumentationKey]"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[format('InstrumentationKey={0}', reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).InstrumentationKey)]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "[variables('functionRuntime')]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            }
+          ]
+        },
+        "httpsOnly": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/functions",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('functionAppName'), variables('functionNameComputed'))]",
+      "properties": {
+        "config": {
+          "disabled": false,
+          "bindings": [
+            {
+              "name": "eventGridEvent",
+              "type": "eventGridTrigger",
+              "direction": "in"
+            }
+          ]
+        },
+        "files": {
+          "run.csx": "#r \"Microsoft.Azure.EventGrid\"\nusing Microsoft.Azure.EventGrid.Models;\nusing Microsoft.Extensions.Logging;\n\npublic static void Run(EventGridEvent eventGridEvent, ILogger log)\n{\n    log.LogInformation(eventGridEvent.Data.ToString());\n}"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
+      ]
+    },
+    {
+      "scope": "[concat('Microsoft.Web/sites', '/', parameters('functionAppName'))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[variables('roleAssignmentGuid')]",
+      "properties": {
+          "roleDefinitionId": "[variables('contributorRoleDefinitionId')]",
+          "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedManagedIdentityName'))).principalId]"
+      },
+      "dependsOn": [
+          "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]",
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedManagedIdentityName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "name": "[variables('userAssignedManagedIdentityName')]",
+      "apiVersion": "2018-11-30",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2020-10-01",
+      "kind": "AzurePowerShell",
+      "name": "[variables('deploymentScriptName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedManagedIdentityName'))]": {}
+        }
+      },
+      "properties": {
+        "azPowerShellVersion": "3.0",
+        "scriptContent": "
+          param([string] $FunctionHostResourceId)
+
+          $ErrorActionPreference = 'Stop'
+
+          # Try to get the key. If this fails, retry up to 5 times.
+          $loopAttempts = 0
+          while ($loopAttempts -lt 5)
+          {
+            $listKeysOutput = Invoke-AzResourceAction -ResourceId $FunctionHostResourceId -Action listKeys -ApiVersion 2020-06-01 -Force
+            $eventGridKey = $listKeysOutput.systemKeys.eventgrid_extension
+            if ($null -ne $eventGridKey)
+            {
+              break
+            }
+
+            $loopAttempts += 1
+            Write-Output 'Event Grid key is not included in response. Sleeping for 5 seconds.'
+            Start-Sleep -Seconds 5
+          }
+
+          if ($null -eq $eventGridKey)
+          {
+            Write-Error 'Event Grid key could not be obtained.'
+            return 1
+          }
+
+          # Propagate to the deployment script output.
+          $DeploymentScriptOutputs = @{}
+          $DeploymentScriptOutputs['eventGridExtensionSystemKey'] = $eventGridKey
+        ",
+        "forceUpdateTag": "[parameters('deploymentScriptTimestamp')]",
+        "retentionInterval": "PT4H",
+        "arguments": "[format('-FunctionHostResourceId {0}/host/default', resourceId('Microsoft.Web/sites', parameters('functionAppName')))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/functions', parameters('functionAppName'), variables('functionNameComputed'))]",
+        "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedManagedIdentityName'))]",
+        "[extensionResourceId(resourceId('Microsoft.Web/sites', parameters('functionAppName')), 'Microsoft.Authorization/roleAssignments', variables('roleAssignmentGuid'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "functionUrl": {
+      "type": "string",
+      "value": "[format('https://{0}.azurewebsites.net/runtime/webhooks/EventGrid?functionName={1}&code={2}', parameters('functionAppName'), variables('functionNameComputed'), reference(resourceId('Microsoft.Resources/deploymentScripts', variables('deploymentScriptName'))).outputs.eventGridExtensionSystemKey)]"
+    }
+  }
+}

@@ -1,0 +1,54 @@
+version: '2'
+
+volumes:
+    grafana_data: {}
+    influxdb_data: {}
+
+services:
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    depends_on:
+      - influxdb
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+    env_file:
+      - config.monitoring
+    environment:
+      - HTTP_USER=admin
+      - HTTP_PASS=admin
+      - INFLUXDB_HOST=influxsrv
+      - INFLUXDB_PORT=8086
+      - INFLUXDB_NAME=kafka
+      - INFLUXDB_USER=root
+      - INFLUXDB_PASS=root
+
+  influxdb:
+    image: tutum/influxdb
+    container_name: influxdb
+    ports:
+      - "8083:8083"
+      - "8086:8086"
+      - "8090:8090"
+    volumes:
+      - influxdb_data:/data/influxdb
+    env_file:
+      - 'env.influxdb'
+     
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    links:
+      - influxdb
+    environment:
+      - HOST_ETC=/rootfs/etc
+      - HOST_SYS=/rootfs/sys
+      - HOST_PROC=/rootfs/proc
+    volumes:
+      - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro 
+      - /sys:/rootfs/sys:ro
+      - /proc:/rootfs/proc:ro
+      - /etc:/rootfs/etc:ro

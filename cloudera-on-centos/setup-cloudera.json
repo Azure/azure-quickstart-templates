@@ -1,0 +1,93 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {
+    "resourceAPIVersion": {
+      "type": "string"
+    },
+    "dnsNamePrefix": {
+      "type": "string"
+    },
+    "scriptsUri": {
+      "type": "string"
+    },
+    "vmSpec": {
+      "type": "object"
+    },
+    "networkSpec": {
+      "type": "object"
+    },
+    "clusterSpec": {
+      "type": "object"
+    },
+    "fqdn": {
+      "type": "string"
+    },
+    "cmUsername": {
+      "type": "string"
+    },
+    "cmPassword": {
+      "type": "securestring"
+    },
+    "company": {
+      "type": "string"
+    },
+    "emailAddress": {
+      "type": "string"
+    },
+    "businessPhone": {
+      "type": "string"
+    },
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "jobRole": {
+      "type": "string"
+    },
+    "jobFunction": {
+      "type": "string"
+    },
+    "installCDH": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "singleQuote": "'",
+    "masterIP": "[parameters('networkSpec').masterIP]",
+    "workerIP": "[parameters('networkSpec').workerIP]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('dnsNamePrefix'), '-mn0', '/prepareDisks')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('scriptsUri'), '/scripts/bootstrap-cloudera.sh')]",
+            "[concat(parameters('scriptsUri'), '/scripts/initialize-cloudera-server.sh')]",
+            "[concat(parameters('scriptsUri'), '/scripts/cmxDeployOnIbiza.py')]",
+            "[concat(parameters('scriptsUri'), '/scripts/install-postgresql.sh')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('sh bootstrap-cloudera.sh ', variables('singleQuote'), variables('masterIP'), variables('singleQuote'), ' ', variables('singleQuote'), variables('workerIP'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('dnsNamePrefix'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('fqdn'), variables('singleQuote'),' ', variables('singleQuote'), parameters('clusterSpec').masterNodeCount, variables('singleQuote'), ' ', variables('singleQuote'), parameters('clusterSpec').dataNodeCount, variables('singleQuote'), ' ', variables('singleQuote'), parameters('vmSpec').adminUsername, variables('singleQuote'), ' ', variables('singleQuote'), parameters('clusterSpec').highAvailability, variables('singleQuote'), ' ', variables('singleQuote'), parameters('vmSpec').adminPassword, variables('singleQuote'), ' ', variables('singleQuote'), parameters('cmUsername'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('cmPassword'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('emailAddress'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('businessPhone'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('firstName'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('lastName'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('jobRole'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('jobFunction'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('company'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('installCDH'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('vmSpec').vmSize, variables('singleQuote'), ' >> /var/log/cloudera-azure-initialize.log 2>&1')]"
+        }
+      }
+    }
+  ]
+}
