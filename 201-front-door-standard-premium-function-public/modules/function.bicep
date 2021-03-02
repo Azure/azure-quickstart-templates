@@ -60,11 +60,11 @@ resource appInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
 resource functionPlan 'Microsoft.Web/serverFarms@2020-06-01' = {
   name: appServicePlanName
   location: location
-  kind: functionPlanKind // TODO check if this is mandatory or not, and delete functionPlanKind variable if not
+  kind: functionPlanKind
   sku: {
     name: functionPlanSkuName
   }
-  properties: {} // TODO check if this is mandatory or not
+  properties: {}
 }
 
 resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
