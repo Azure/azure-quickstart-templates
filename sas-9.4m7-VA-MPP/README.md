@@ -21,6 +21,7 @@
     1. [Check Logs and Services Status](#logsandservices)
     1. [Restarting Services](#restartservices)
     1. [Running SAS Management Console](#smc)
+1. [Appendix A: Getting the SAS Token](#AppendixA)
 
 
 
@@ -99,6 +100,8 @@ Before deploying the SAS 9.4 Visual Analytics and SAS 9.4 Visual Statistics Quic
 ["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
 * A resource group that does not already contain a Quickstart deployment. For more information, see ["Resource groups"](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview#resource-groups).
 
+* If you are using Azure NFS file shares, you must enable your Azure subscription for NFS.  For more information, see the "Register the NFS 4.1 Protocol" section at [How to create an NFS File Share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal).
+
 * The software depot must be uploaded to Azure Blob Storage as follows:
 1. Navigate to the directory where the software depot was downloaded.  
 2. Upload the software depot by running this command: 
@@ -107,7 +110,22 @@ az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$S
 ```
 For more information about this command, see ["az storage blob upload-batch"](https://docs.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az_storage_blob_upload_batch).
 
-* If you are using Azure NFS file shares, you must enable your Azure subscription for NFS.  For more information, see the "Register the NFS 4.1 Protocol" section at [How to create an NFS File Share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal).
+<a name="depotlocation"></a>
+* The URL for the SAS depot location:
+1. From the Azure Portal [here](https://portal.azure.com/#home), click *Resource Groups*.
+2. From the left column, click on the storage account that you uploaded the SAS 9.4 order files to.
+3. Expand *BLOB CONTAINERS*.  Verify that your order files are inside the blob container.
+4. Get the SAS Token string. See ["Appendix A"](#AppendixA) for instructions. 
+5. Click *Copy URL* from the menu at the top to get the path to your order files.
+6. Append the SAS Token string that you saved in step 4 to the end of the URL that you copied in step 5 to determine the URL for the SAS depot location.
+
+For example, suppose that the URL path to your order files is:
+\<protocol\>://sas9storageaccount.blob.core.windows.net/sas9-storagecontainer/\<order-directory\>
+
+Suppose that the SAS Token string is \<token-string\>.
+
+Then the  SAS depot location is:
+\<protocol\>://sas9storageaccount.blob.core.windows.net/sas9-storagecontainer/\<order-directory\>\<token-string\>
 
 <a name="Deployment"></a>
 ## Deployment Steps
@@ -124,7 +142,7 @@ For more information about this command, see ["az storage blob upload-batch"](ht
 |Resource group|Specifies what resource group to use. Choose an existing group or click *Create new* and provide a name for the new group.|
 |Region|Defines the Azure region in which the deployment should run. The available Azure regions are listed at [Azure Services that support Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-region). The available Azure regions if using Azure NFS file shares are listed in the "Available regions" section at [How to create an NFS share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal).  
 |Location|Defines the location in Microsoft Azure where these resources should be created. This is derived from the Resource group.|
-|SAS Depot Location|Specifies the URI of the Azure Blob Store where the software depot was uploaded.|
+|SAS Depot Location|Specifies the URI of the Azure Blob Store where the software depot was uploaded. You determined this URI during the prerequisite step [here](#depotlocation).|
 |SAS Plan File Location|Specifies the URI to download the plan file from as currently specified in the Azure Blob Store. Leave blank if the plan file is stored in the depot blob.
 |Use a New or Existing Virtual Network?|Specifies whether to use a new or existing network.|
 |Existing Virtual Network Resource Group|Specifies the resource group if using an existing virtual network. Leave blank if using a new network. Otherwise enter the resource group for the existing network|
@@ -229,4 +247,15 @@ ssh -X midtier-0
 cd /opt/sas/SASHome/SASManagementConsole/9.4 
 ./sasmc & 
 ```
+
+<a name="AppendixA"></a>
+## Appendix A: Get the SAS Token
+1. From the Azure Portal [here](https://portal.azure.com/#home), click *Resource Groups*.
+2. From the left column, click on the storage account that you uploaded the SAS 9.4 order files to.
+3. Expand *BLOB CONTAINERS*.  Verify that your order files are inside the blob container.
+8. From the left column, click on *Shared access signature*.
+9. From the Shared Access Signature window, click the *Container* and *Object* check boxes under *Allowed resource types*.
+10. Specify an end date. The end date specifies the expiration date of your SAS Token.  You might want to specify a date that is a year in the future.
+11. Copy and paste the string under *SAS Token*. Save to a known location.
+
 
