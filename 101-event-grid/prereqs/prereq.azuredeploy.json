@@ -4,6 +4,7 @@
   "parameters": {
     "location": {
       "type": "string",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "The location into which the Azure Functions resources should be deployed."
       }
@@ -24,14 +25,9 @@
     },
     "functionPlanSkuName": {
       "type": "string",
+      "defaultValue": "Y1",
       "metadata": {
         "description": "The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium)."
-      }
-    },
-    "frontDoorId": {
-      "type": "string",
-      "metadata": {
-        "description": "The unique ID associated with the Front Door profile that will send traffic to this application. Access restricitons will be configured to disallow traffic that hasn't had this ID attached to it."
       }
     }
   },
@@ -136,20 +132,6 @@
               "name": "AzureWebJobsDisableHomepage",
               "value": "true"
             }
-          ],
-          "ipSecurityRestrictions": [
-            {
-              "tag": "ServiceTag",
-              "ipAddress": "AzureFrontDoor.Backend",
-              "action": "Allow",
-              "priority": 100,
-              "headers": {
-                "x-azure-fdid": [
-                  "[parameters('frontDoorId')]"
-                ]
-              },
-              "name": "Allow traffic from Front Door"
-            }
           ]
         },
         "httpsOnly": true
@@ -192,15 +174,15 @@
     {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2020-04-01-preview",
-      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageAccountName'))]",
+      "scope": "[format('Microsoft.Web/sites/{0}', parameters('appName'))]",
       "name": "[guid(resourceGroup().id, variables('managedIdentityName'))]",
       "properties": {
         "roleDefinitionId": "[variables('contributorRoleDefinitionId')]",
         "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))).principalId]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+        "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]"
       ]
     },
     {
@@ -220,12 +202,12 @@
         "scriptContent": "    param([string] $FunctionHostResourceId)\n\n    $ErrorActionPreference = 'Stop'\n\n    # Try to get the key. If this fails, retry up to 5 times.\n    $loopAttempts = 0\n    while ($loopAttempts -lt 5)\n    {\n      $listKeysOutput = Invoke-AzResourceAction -ResourceId $FunctionHostResourceId -Action listKeys -ApiVersion 2020-06-01 -Force\n      $eventGridKey = $listKeysOutput.systemKeys.eventgrid_extension\n      if ($null -ne $eventGridKey)\n      {\n        break\n      }\n\n      $loopAttempts += 1\n      Write-Output 'Event Grid key is not included in response. Sleeping for 5 seconds.'\n      Start-Sleep -Seconds 5\n    }\n\n    if ($null -eq $eventGridKey)\n    {\n      Write-Error 'Event Grid key could not be obtained.'\n      return 1\n    }\n\n    # Propagate to the deployment script output.\n    $DeploymentScriptOutputs = @{}\n    $DeploymentScriptOutputs['eventGridExtensionSystemKey'] = $eventGridKey\n    ",
         "cleanupPreference": "OnSuccess",
         "retentionInterval": "PT4H",
-        "arguments": "[format('-FunctionHostResourceId {0}/host/default', parameters('appName'))]"
+        "arguments": "[format('-FunctionHostResourceId {0}/host/default', resourceId('Microsoft.Web/sites', parameters('appName')))]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
         "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]",
-        "[extensionResourceId(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), 'Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, variables('managedIdentityName')))]"
+        "[extensionResourceId(resourceId('Microsoft.Web/sites', parameters('appName')), 'Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, variables('managedIdentityName')))]"
       ]
     }
   ],
@@ -239,7 +221,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.3.1.62928",
-      "templateHash": "16695963106216379766"
+      "templateHash": "8733488411257998475"
     }
   }
 }

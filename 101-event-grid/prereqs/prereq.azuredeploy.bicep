@@ -1,5 +1,5 @@
 @description('The location into which the Azure Functions resources should be deployed.')
-param location string
+param location string = resourceGroup().location
 
 @description('The name of the Azure Functions application to create. This must be globally unique.')
 param appName string = 'fn-${uniqueString(resourceGroup().id)}'
@@ -8,10 +8,7 @@ param appName string = 'fn-${uniqueString(resourceGroup().id)}'
 param functionRuntime string = 'dotnet'
 
 @description('The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium).')
-param functionPlanSkuName string
-
-@description('The unique ID associated with the Front Door profile that will send traffic to this application. Access restricitons will be configured to disallow traffic that hasn\'t had this ID attached to it.')
-param frontDoorId string
+param functionPlanSkuName string = 'Y1'
 
 var appServicePlanName = 'FunctionPlan'
 var appInsightsName = 'AppInsights'
@@ -107,20 +104,6 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
           value: 'true'
         }
       ]
-      ipSecurityRestrictions: [
-        {
-          tag: 'ServiceTag'
-          ipAddress: 'AzureFrontDoor.Backend'
-          action: 'Allow'
-          priority: 100
-          headers: {
-            'x-azure-fdid': [
-              frontDoorId
-            ]
-          }
-          name: 'Allow traffic from Front Door'
-        }
-      ]
     }
     httpsOnly: true
   }
@@ -160,7 +143,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-
 }
 
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  scope: storageAccount
+  scope: functionApp
   name: guid(resourceGroup().id, managedIdentityName)
   properties: {
     roleDefinitionId: contributorRoleDefinitionId
@@ -216,7 +199,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     '''
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'PT4H'
-    arguments: '-FunctionHostResourceId ${functionApp.name}/host/default'
+    arguments: '-FunctionHostResourceId ${functionApp.id}/host/default'
   }
 }
 
