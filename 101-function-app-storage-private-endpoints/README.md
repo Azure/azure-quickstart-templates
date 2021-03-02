@@ -84,7 +84,7 @@ The prereqs template does the following:
 - If the isContributor parameter is set to false: creates a custom role with the necessary permissions to run the deployment script and assigns this role to the deployment principal. By default, the role is created in the scope of the resource group and assigned in the scope of the resource group.
 - If the isContributor parameter is set to false: Assigns the deployment principal as a Managed Identity Operator to the managed identity.
 
-In order to run the prereq template, you must have Owner permissions in the scope that you are assigning roles in. For example, if using the default scope of resource group, you must have Owner permissions on the resource group.
+In order to run the prereq template, you must have access to the Microsoft.Authorization/roleAssignments/write operation in the scope that you are running the deployment. The Owner and User Access Administrator built-in roles have access to this operation.
 
 By default, the template assumes that the principal is a Contributor and does not assign permissions to the principal and you don't need to specify a value for the principleId parameter. If you set the isContributor parameter to false, you will need to provide the object id of an existing deployment principal for the principleId parameter.
 Note: The object id of a service principal is different from the object id of the AAD App registration. 
