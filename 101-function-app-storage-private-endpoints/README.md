@@ -76,12 +76,12 @@ The script will change the size of the plan, and then retrieve the site-level cr
 
 You will need a user-assigned managed identity to run the script because the script performs actions upon Azure resources.
 
-The principal that is used to deploy the ARM template will need Managed Identity Operator permissions in order to use the managed identity. The deployment principal will also need the permissions described in [this document]. If you are using a deployment principal is assigned the Contributor role to the resource group, then the principal would already have these permissions and you shouldn't need to assign the Managed Identity Operator role or create a custom role for these actions.
+The principal that is used to deploy the ARM template will need Managed Identity Operator permissions in order to use the managed identity. The deployment principal will also need the permissions described in [this document] in order to run the deployment script, in addition to permissions to deploy the specific resource types that are included in the main template. If you are using a deployment principal is assigned the Contributor role to the resource group, then the principal would already have these permissions and you shouldn't need to assign the Managed Identity Operator role or create a custom role for these actions.
 
 The prereqs template does the following:
 - Creates a user-assigned managed identity.
 - Creates a custom role with the necessary permissions to perform operations on Function Apps and App Service Plans and assigns this role to the managed identity. By default, the role is created and assigned in the scope of the resource group.
-- If the isContributor parameter is set to false: creates a custom role with the necessary permissions to run the deployment script and assigns this role to the deployment principal. By default, the role is created and assigned in the scope of the resource group.
+- If the isContributor parameter is set to false: creates a custom role with the necessary permissions to run the deployment script and assigns this role to the deployment principal. By default, the role is created in the scope of the resource group and assigned in the scope of the resource group.
 - If the isContributor parameter is set to false: Assigns the deployment principal as a Managed Identity Operator to the managed identity.
 
 In order to run the prereq template, you must have Owner permissions in the scope that you are assigning roles in. For example, if using the default scope of resource group, you must have Owner permissions on the resource group.
