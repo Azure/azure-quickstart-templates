@@ -203,4 +203,4 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   }
 }
 
-output functionUrl string = 'https://${appName}.azurewebsites.net/runtime/webhooks/EventGrid?functionName=${functionName}&code=${deploymentScript.properties.outputs.eventGridExtensionSystemKey}'
+output functionUrl string = 'https://${functionApp.properties.defaultHostName}/runtime/webhooks/EventGrid?functionName=${functionName}&code=${deploymentScript.properties.outputs.eventGridExtensionSystemKey}'
