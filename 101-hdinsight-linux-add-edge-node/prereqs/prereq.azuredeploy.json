@@ -66,8 +66,7 @@
     }
   },
   "variables": {
-    "clusterStorageAccountName": "[concat('clustrstg',uniqueString(resourceGroup().id))]",
-    "clusterStoragestring": "[concat('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]"
+    "clusterStorageAccountName": "[concat('clustrstg',uniqueString(resourceGroup().id))]"
   },
   "resources": [
     {
@@ -85,7 +84,9 @@
       "type": "Microsoft.HDInsight/clusters",
       "location": "[parameters('location')]",
       "apiVersion": "2018-06-01-preview",
-      "dependsOn": "[variables('clusterStorageString')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccount',variables('clusterStorageAccountName'))]"
+      ],
       "tags": {},
       "properties": {
         "clusterVersion": "4.0",
@@ -104,11 +105,11 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[concat(variables('clusterStorageAccountName'),'.blob.core.windows.net')]",
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2019-06-01').primaryEndpoints.blob,'https://',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')),'2019-06-01').key1]"
-            }
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2019-06-01').keys[0].value]"
+            } 
           ]
         },
         "computeProfile": {
@@ -151,4 +152,3 @@
     }
   }
 }
- 
