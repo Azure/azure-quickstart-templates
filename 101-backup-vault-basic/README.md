@@ -1,4 +1,4 @@
-# Create Recovery Services Vault
+# Create Backup Vault
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-backup-vault-basic/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-backup-vault-basic/PublicDeployment.svg)
@@ -22,4 +22,10 @@ The Backup service is Microsoft's born in the cloud backup solution to backup da
 ### Azure Database for PostgreSQL backup with long-term retention (preview)
 
 Azure Backup and Azure Database Services have come together to build an enterprise-class backup solution for Azure Database for PostgreSQL servers that retains backups for up to 10 years. [Learn more](https://docs.microsoft.com/en-us/azure/backup/backup-azure-database-postgresql)
+
+### Operational backup for Azure Blobs (preview)
+
+Operational backup for Blobs is a managed, local data protection solution that lets you protect your block blobs from various data loss scenarios like corruptions, blob deletions, and accidental storage account deletion. The data is stored locally within the source storage account itself and can be recovered to a selected point in time whenever needed. So it provides a simple, secure, and cost-effective means to protect your blobs.
+
+Operational backup for Blobs integrates with Backup Center, among other Backup management capabilities, to provide a single pane of glass that can help you govern, monitor, operate, and analyze backups at scale. [Learn more](https://docs.microsoft.com/en-us/azure/backup/blob-backup-overview)
 

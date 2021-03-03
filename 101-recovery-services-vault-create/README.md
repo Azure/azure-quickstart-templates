@@ -23,4 +23,7 @@ The Site Recovery service ensures your servers, virtual machines, and apps are r
 
 ## Storage Type Selection
 
-A Recovery Services vault can only change storage options before any backups have been configured. Once any backup is configured, the storage type cannot be changed. Use the conditional parameter to opt-in or opt-out to change the storage type. [Learn more](https://docs.microsoft.com/azure/backup/backup-azure-backup-faq#can-i-change-the-storage-redundancy-setting-after-a-backup).
+A Recovery Services vault can only change storage options before any backups have been configured. Once any backup is configured, the storage type cannot be changed. [Learn more](https://docs.microsoft.com/azure/backup/backup-azure-backup-faq#can-i-change-the-storage-redundancy-setting-after-a-backup).
+
+## Cross Region Restore
+A Recovery Services vault can only change cross region restore before any backups have been configured. Once any backup is configured, cross region support setting cannot be changed. [Learn more](https://docs.microsoft.com/en-us/azure/backup/backup-create-rs-vault#set-cross-region-restore).
