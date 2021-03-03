@@ -1,4 +1,4 @@
-# Create Recovery Services Vault
+# Create Storate Account and enable protection with Azure Backup
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-backup-create-storage-account-enable-protection/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-backup-create-storage-account-enable-protection/PublicDeployment.svg)
