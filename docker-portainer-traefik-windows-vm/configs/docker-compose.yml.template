@@ -1,0 +1,55 @@
+version: '3.7'
+
+services:
+  traefik:
+    image: tobiasfenster/french-reverse-proxy:2.3.4-windowsservercore
+    container_name: traefik
+    command:
+#      - --log.level=DEBUG
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.endpoint=npipe:////./pipe/docker_engine
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.myresolver.acme.tlschallenge=true
+      - --certificatesresolvers.myresolver.acme.email=$email
+      - --certificatesresolvers.myresolver.acme.storage=c:/le/acme.json
+      - --serversTransport.insecureSkipVerify=true
+    volumes:
+      - source: 'f:/le'
+        target: 'C:/le'
+        type: bind
+      - source: '\\.\pipe\docker_engine'
+        target: '\\.\pipe\docker_engine'
+        type: npipe
+    ports:
+      - 443:443
+    labels:
+      - traefik.enable=false
+      - traefik.http.routers.api.entrypoints=websecure
+      - traefik.http.routers.api.tls.certresolver=myresolver
+      - traefik.http.routers.api.rule=Host(``$publicdnsname``) && (PathPrefix(``/api``) || PathPrefix(``/dashboard``))
+      - traefik.http.routers.api.service=api@internal
+      - traefik.http.services.api.loadBalancer.server.port=8080
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    command: --admin-password-file c:/data/passwordfile
+    restart: always
+    volumes:
+      - f:/portainerdata:c:/data
+      - source: '\\.\pipe\docker_engine'
+        target: '\\.\pipe\docker_engine'
+        type: npipe
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.portainer.rule=Host(``$publicdnsname``) && PathPrefix(``/portainer/``)
+      - traefik.http.routers.portainer.entrypoints=websecure
+      - traefik.http.routers.portainer.tls.certresolver=myresolver
+      - traefik.http.routers.portainer.service=portainer@docker
+      - traefik.http.services.portainer.loadBalancer.server.scheme=http
+      - traefik.http.services.portainer.loadBalancer.server.port=9000
+      - traefik.http.middlewares.portainer.stripprefix.prefixes=/portainer
+      - traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=500000000
+      - traefik.http.routers.portainer.middlewares=portainer@docker, limit@docker

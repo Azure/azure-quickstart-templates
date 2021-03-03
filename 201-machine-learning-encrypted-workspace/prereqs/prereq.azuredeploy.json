@@ -61,7 +61,7 @@
         "description": "Specifies the object ID of the 'Azure Cosmos DB' principal."
       }
     },
-    
+
     "skuName": {
       "type": "string",
       "defaultValue": "Standard",
@@ -82,38 +82,7 @@
       }
     }
   },
-  "variables": {
-    "scriptName": "createKey",
-    "identityName": "scratch",
-    "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-    "roleDefinitionName": "[guid(variables('identityName'), variables('roleDefinitionId'))]",
-    "keyPermissions": [
-        "get",
-        "wrapKey",
-        "unwrapKey"
-      ]
-  },
   "resources": [
-  {
-      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-      "name": "[variables('identityName')]",
-      "apiVersion": "2018-11-30",
-      "location": "[parameters('location')]"
-    },
-    {
-      "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2020-03-01-preview",
-      "name": "[variables('roleDefinitionName')]",
-      "dependsOn": [
-        "[variables('identityName')]"
-      ],
-      "properties": {
-        "roleDefinitionId": "[variables('roleDefinitionId')]",
-        "principalId": "[reference(variables('identityName')).principalId]",
-        "scope": "[resourceGroup().id]",
-        "principalType": "ServicePrincipal"
-      }
-    },
     {
       "type": "Microsoft.KeyVault/vaults",
       "name": "[parameters('keyVaultName')]",
@@ -126,17 +95,14 @@
         "tenantId": "[parameters('tenantId')]",
         "accessPolicies": [
           {
-            "objectId": "[reference(variables('identityName')).principalId]",
-            "tenantId": "[parameters('tenantId')]",
-            "permissions": {
-              "keys": ["all"]
-            }
-          },
-          {
             "objectId": "[parameters('cosmosDbId')]",
             "tenantId": "[parameters('tenantId')]",
             "permissions": {
-              "keys": "[variables('keyPermissions')]"
+              "keys": [
+                "get",
+                "wrapKey",
+                "unwrapKey"
+              ]
             }
           }
         ],
@@ -151,36 +117,23 @@
       }
     },
     {
-      "type": "Microsoft.Resources/deploymentScripts",
-      "apiVersion": "2019-10-01-preview",
-      "name": "[variables('scriptName')]",
+      "type": "Microsoft.KeyVault/vaults/keys",
+      "name": "[concat(parameters('keyVaultName'), '/', parameters('keyName'))]",
+      "apiVersion": "2019-09-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[variables('roleDefinitionName')]",
-        "[parameters('keyVaultName')]"
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
       ],
-      "kind": "AzurePowerShell",
-      "identity": {
-        "type": "userAssigned",
-        "userAssignedIdentities": {
-          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]": {  /*ttk bug*/
-          }
-        }
-      },
       "properties": {
-        "forceUpdateTag": "1",
-        "azPowerShellVersion": "3.0",
-        "arguments": "[format(' -vaultName {0} -keyName {1}', parameters('keyVaultName'), parameters('keyName'))]",
-        "scriptContent": "
-        param(
-          [string] $vaultName,
-          [string] $keyName
-        )
-        $DeploymentScriptOutputs = @{ keyid = (Add-AzKeyVaultKey -VaultName $vaultName -Name $keyName -Destination 'Software').Id }
-        ",
-        "timeout": "PT5M",
-        "cleanupPreference": "OnSuccess",
-        "retentionInterval": "P1D"
+        "kty": "RSA",
+        "keyOps": [
+          "encrypt",
+          "decrypt",
+          "sign",
+          "verify",
+          "wrapKey",
+          "unwrapKey"
+        ]
       }
     }
   ],
@@ -191,7 +144,7 @@
     },
     "resource_cmk_uri": {
       "type": "string",
-      "value": "[reference('createKey').outputs.keyid]"
+      "value": "[reference(resourceId('Microsoft.KeyVault/vaults/keys', parameters('keyVaultName'), parameters('keyName'))).keyUriWithVersion]"
     }
   }
 }

@@ -4,42 +4,44 @@
   "parameters": {
     "appName": {
       "type": "string",
+      "defaultValue": "[concat('umbraco', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Name of azure web app"
       }
     },
-        "servicePlanTier": {
-            "type": "string",
-            "allowedValues": [
-                "Standard",
-                "Premium",
-                "PremiumV2"
-            ],
-            "defaultValue": "PremiumV2",
-            "metadata": {
-                "description": "Tier for Service Plan"
-            }
-        },
-        "servicePlanSku": {
-            "type": "string",
-            "allowedValues": [
-                "S1",
-                "S2",
-                "S3",
-                "P1",
-                "P2",
-                "P3",
-                "P1V2",
-                "P2V2",
-                "P3V3"
-            ],
-            "defaultValue": "P1V2",
-            "metadata": {
-                "description": "Size for Service Plan"
-            }
-        },
+    "servicePlanTier": {
+      "type": "string",
+      "allowedValues": [
+        "Standard",
+        "Premium",
+        "PremiumV2"
+      ],
+      "defaultValue": "PremiumV2",
+      "metadata": {
+        "description": "Tier for Service Plan"
+      }
+    },
+    "servicePlanSku": {
+      "type": "string",
+      "allowedValues": [
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P1V2",
+        "P2V2",
+        "P3V3"
+      ],
+      "defaultValue": "P1V2",
+      "metadata": {
+        "description": "Size for Service Plan"
+      }
+    },
     "dbServerName": {
       "type": "string",
+      "defaultValue": "[concat('umbraco', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "SQL Azure DB Server name"
       }
@@ -58,6 +60,7 @@
     },
     "dbName": {
       "type": "string",
+      "defaultValue": "umbraco-db",
       "metadata": {
         "description": "Database Name"
       }
@@ -93,19 +96,32 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "appInsightsRegion": "South Central US",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
     "appServicePlanName": "[concat(parameters('appName'), 'serviceplan')]"
   },
   "resources": [
     {
-      "name": "[parameters('dbServerName')]",
       "type": "Microsoft.Sql/servers",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[parameters('dbServerName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01-preview",
       "properties": {
         "administratorLogin": "[parameters('dbAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('dbAdministratorLoginPassword')]",
@@ -113,9 +129,9 @@
       },
       "resources": [
         {
-          "apiVersion": "2018-06-01-preview",
-          "name": "[parameters('dbName')]",
           "type": "databases",
+          "apiVersion": "2020-02-02-preview",
+          "name": "[parameters('dbName')]",
           "location": "[parameters('location')]",
           "sku": {
             "name": "S0",
@@ -130,7 +146,7 @@
           }
         },
         {
-          "apiVersion": "2018-06-01-preview",
+          "apiVersion": "2020-02-02-preview",
           "name": "AllowAllWindowsAzureIps",
           "type": "firewallrules",
           "location": "[parameters('location')]",
@@ -146,30 +162,30 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('storageAccountType')]"
       },
-      "kind": "Storage"
+      "kind": "StorageV2"
     },
     {
-      "apiVersion": "2018-02-01",
-      "name": "[variables('appServicePlanName')]",
       "type": "Microsoft.Web/serverFarms",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('appServicePlanName')]",
       "location": "[parameters('location')]",
       "sku": {
         "Tier": "[parameters('servicePlanTier')]",
         "Name": "[parameters('servicePlanSku')]"
       },
       "kind": "linux",
-      "properties": { }
+      "properties": {}
     },
     {
-      "apiVersion": "2018-11-01",
-      "name": "[parameters('appName')]",
       "type": "Microsoft.Web/Sites",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('appName')]",
       "location": "[parameters('location')]",
       "tags": {
         "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "empty"
@@ -183,9 +199,9 @@
       },
       "resources": [
         {
-          "apiVersion": "2018-11-01",
-          "name": "MSDeploy",
           "type": "Extensions",
+          "apiVersion": "2020-06-01",
+          "name": "MSDeploy",
           "dependsOn": [
             "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
             "[resourceId('Microsoft.Web/Sites/config', parameters('appName'), 'web')]",
@@ -193,7 +209,7 @@
             "[variables('storageAccountName')]"
           ],
           "properties": {
-            "packageUri": "https://auxmktplceprod.blob.core.windows.net/packages/UmbracoCms.WebPI.7.4.3.zip",
+            "packageUri": "[uri(parameters('_artifactsLocation'), concat('UmbracoCms.WebPI.7.4.3.zip', parameters('_artifactsLocationSasToken')))]",
             "dbType": "SQL",
             "connectionString": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.SQL/servers', parameters('dbServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', parameters('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
             "setParameters": {
@@ -208,9 +224,9 @@
           }
         },
         {
-          "apiVersion": "2018-11-01",
-          "name": "connectionstrings",
           "type": "config",
+          "apiVersion": "2020-06-01",
+          "name": "connectionstrings",
           "dependsOn": [
             "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
             "[resourceId('Microsoft.SQL/Servers/databases', parameters('dbServerName'), parameters('dbName'))]",
@@ -224,7 +240,7 @@
           }
         },
         {
-          "apiVersion": "2018-11-01",
+          "apiVersion": "2020-06-01",
           "name": "web",
           "type": "config",
           "dependsOn": [
@@ -243,10 +259,10 @@
       ]
     },
     {
+      "type": "microsoft.insights/autoscalesettings",
       "apiVersion": "2015-04-01",
       "name": "[concat(variables('appServicePlanName'), '-scaleset')]",
-      "type": "microsoft.insights/autoscalesettings",
-      "location": "[variables('appInsightsRegion')]",
+      "location": "[parameters('location')]",
       "tags": {
         "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "Resource"
       },
@@ -308,138 +324,10 @@
       }
     },
     {
-      "apiVersion": "2016-03-01",
-      "name": "[concat('ServerErrors ', parameters('appName'))]",
-      "type": "microsoft.insights/alertrules",
-      "location": "[variables('appInsightsRegion')]",
-      "tags": {
-        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', parameters('appName')))]": "Resource"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
-      ],
-      "properties": {
-        "name": "[concat('ServerErrors ', parameters('appName'))]",
-        "description": "[concat(parameters('appName'), ' has some server errors, status code 5xx.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-            "resourceUri": "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
-            "metricName": "Http5xx"
-          },
-          "operator": "GreaterThan",
-          "threshold": 0,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
-          "sendToServiceOwners": true
-        }
-      }
-    },
-    {
-      "apiVersion": "2016-03-01",
-      "name": "[concat('ForbiddenRequests ', parameters('appName'))]",
-      "type": "microsoft.insights/alertrules",
-      "location": "[variables('appInsightsRegion')]",
-      "tags": {
-        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', parameters('appName')))]": "Resource"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
-      ],
-      "properties": {
-        "name": "[concat('ForbiddenRequests ', parameters('appName'))]",
-        "description": "[concat(parameters('appName'), ' has some requests that are forbidden, status code 403.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-            "resourceUri": "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
-            "metricName": "Http403"
-          },
-          "operator": "GreaterThan",
-          "threshold": 0,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
-          "sendToServiceOwners": true
-        }
-      }
-    },
-    {
-      "apiVersion": "2016-03-01",
-      "name": "[concat('CPUHigh ', variables('appServicePlanName'))]",
-      "type": "microsoft.insights/alertrules",
-      "location": "[variables('appInsightsRegion')]",
-      "tags": {
-        "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "Resource"
-      },
-      "dependsOn": [
-        "[variables('appServicePlanName')]"
-      ],
-      "properties": {
-        "name": "[concat('CPUHigh ', variables('appServicePlanName'))]",
-        "description": "[concat('The average CPU is high across all the instances of ', variables('appServicePlanName'))]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-            "resourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
-            "metricName": "CpuPercentage"
-          },
-          "operator": "GreaterThan",
-          "threshold": 90,
-          "windowSize": "PT15M"
-        },
-        "action": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
-          "sendToServiceOwners": true
-        }
-      }
-    },
-    {
-      "apiVersion": "2016-03-01",
-      "name": "[concat('LongHttpQueue ', variables('appServicePlanName'))]",
-      "type": "microsoft.insights/alertrules",
-      "location": "[variables('appInsightsRegion')]",
-      "tags": {
-        "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "Resource"
-      },
-      "dependsOn": [
-        "[variables('appServicePlanName')]"
-      ],
-      "properties": {
-        "name": "[concat('LongHttpQueue ', variables('appServicePlanName'))]",
-        "description": "[concat('The HTTP queue for the instances of ', variables('appServicePlanName'), ' has a large number of pending requests.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-            "resourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
-            "metricName": "HttpQueueLength"
-          },
-          "operator": "GreaterThan",
-          "threshold": 100,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
-          "sendToServiceOwners": true
-        }
-      }
-    },
-    {
-      "apiVersion": "2018-05-01-preview",
-      "name": "[concat(parameters('appName'),'-appin')]",
       "type": "microsoft.insights/components",
-      "location": "[variables('appInsightsRegion')]",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[concat(parameters('appName'),'-appin')]",
+      "location": "[parameters('location')]",
       "tags": {
         "[concat('hidden-link:', resourceId('Microsoft.Web/sites', parameters('appName')))]": "Resource"
       },
@@ -447,7 +335,8 @@
         "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
       ],
       "properties": {
-        "applicationId": "[parameters('appName')]"
+        "applicationId": "[parameters('appName')]",
+        "Application_Type": "web"
       }
     }
   ]

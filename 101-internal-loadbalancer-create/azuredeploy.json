@@ -25,11 +25,14 @@
     }
   },
   "variables": {
-    "virtualNetworkName": "virtualNetwork1",
-    "subnetName": "subnet1",
-    "loadBalancerName": "loadBalancer1",
-    "nicName": "networkInterface1",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+    "virtualNetworkName": "myVNet",
+    "subnetName": "myBackendSubnet",
+    "loadBalancerName": "myLoadBalancer",
+    "nicName": "myNIC1",
+    "lbsku": "Standard",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+    "lbrulename": "myHTTPRule",
+    "lbprobename": "myHealthProbe"
   },
   "resources": [
     {
@@ -85,6 +88,9 @@
       "name": "[variables('loadBalancerName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('lbSku')]"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
@@ -114,14 +120,16 @@
                 "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), 'loadBalancerBackEnd')]"
               },
               "probe": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), 'lbprobe')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), variables('lbprobename'))]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
               "backendPort": 80,
+              "enableTcpReset": true,
+              "disableOutboundSnat": true,
               "idleTimeoutInMinutes": 15
             },
-            "name": "lbrule"
+            "name": "[variables('lbrulename')]"
           }
         ],
         "probes": [
@@ -132,7 +140,7 @@
               "intervalInSeconds": 15,
               "numberOfProbes": 2
             },
-            "name": "lbprobe"
+            "name": "[variables('lbprobename')]"
           }
         ]
       }
