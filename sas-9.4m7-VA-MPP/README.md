@@ -9,7 +9,7 @@
 ## Contents
 1. [Overview](#Overview)
     1. [Costs and Licenses](#Costs)
-        1. [SAS Visual Analytics in SAS 9.4 and SAS Visual Statistics in SAS 9.4 server](#compute)
+        1. [SAS Visual Analytics in SAS 9.4M7 and SAS Visual Statistics in SAS 9.4M7 server](#compute)
         1. [SAS 9.4M7 Mid-Tier server](#midtier)
         1. [SAS 9.4M7 Metadata clustered server](#metadata)
 1. [Architecture](#architecture)
