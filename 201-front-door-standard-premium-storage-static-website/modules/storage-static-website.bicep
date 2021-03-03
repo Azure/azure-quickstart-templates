@@ -40,7 +40,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-
 
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   scope: storageAccount
-  name: guid(resourceGroup().id, managedIdentityName)
+  name: guid(resourceGroup().id, managedIdentityName, storageAccountContributorRoleDefinitionId)
   properties: {
     roleDefinitionId: storageAccountContributorRoleDefinitionId
     principalId: managedIdentity.properties.principalId
