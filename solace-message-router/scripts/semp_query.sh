@@ -40,12 +40,12 @@ if [[ ${url} = "" || ${name} = "" || ${password} = "" || ${query} = "" ]]; then
   echo  "{\"errorInfo\":\"missing parameter\"}"
   exit 1
 fi
-if [ `curl --write-out '%{http_code}' --silent --output /dev/null -u ${name}:${password} ${url} -d "<rpc><show><version/></show></rpc>` != "200" ] ; then
+if [ `curl --write-out '%{http_code}' --silent --output /dev/null -u ${name}:${password} ${url} -d "<rpc><show><version/></show></rpc>"` != "200" ] ; then
   echo  "{\"errorInfo\":\"management host is not responding\"}"
   exit 1
 fi
 
-query_response=`curl -u ${name}:${password} ${url} -d "${query}"`
+query_response=`curl -sS -u ${name}:${password} ${url} -d "${query}"`
 # Validate first char of response is "<", otherwise no hope of being valid xml
 if [[ ${query_response:0:1} != "<" ]] ; then
   echo  "{\"errorInfo\":\"no valid xml returned\"}"
