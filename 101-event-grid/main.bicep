@@ -1,8 +1,8 @@
 @description('The name of the Event Grid custom topic.')
-param eventGridTopicName string = uniqueString(resourceGroup().id)
+param eventGridTopicName string = 'topic-${uniqueString(resourceGroup().id)}'
 
 @description('The name of the Event Grid custom topic\'s subscription.')
-param eventGridSubscriptionName string = uniqueString(resourceGroup().id)
+param eventGridSubscriptionName string = 'sub-${uniqueString(resourceGroup().id)}'
 
 @description('The webhook URL to send the subscription events to. This URL must be valid and must be prepared to accept the Event Grid webhook URL challenge request.')
 param eventGridSubscriptionUrl string
