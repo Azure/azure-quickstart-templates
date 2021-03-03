@@ -5,13 +5,13 @@
     "vmAdminUsername": {
       "type": "string",
       "metadata": {
-        "description": "Username for the Virtual Machine(s) hosting the Solace event router instance(s). Do not use special characters."
+        "description": "Username for the virtual Machine(s) hosting the PubSub+ event broker instance(s). Do not use special characters."
       }
     },
     "vmAdminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Password for the Virtual Machine(s)."
+        "description": "Password for the virtual Machine(s). Azure sets rules on passwords, check the online feedback."
       }
     },
     "solaceAdminPassword": {
@@ -51,17 +51,29 @@
         "Canada Central"
       ]
     },
-    "dnsLabelForLbIp": {
+    "vmAndLoadbalancerExposure": {
       "type": "string",
+      "defaultValue": "Public",
       "metadata": {
-        "description": "Unique DNS Label for the Public IP used to access the Load Balancer. Name must satisfy regular expression ^[a-z][a-z0-9-]{1,61}[a-z0-9]$"
+        "description": "Specify the type of access to the broker VMs for SSH and to the Load Balancer for broker services. 'Internal' will make them accessible only from the local virtual network"
+      },
+      "allowedValues": [
+        "Internal",
+        "Public"
+      ]
+    },
+    "dnsLabelForPublicLoadBalancer": {
+      "type": "string",
+      "defaultValue": "[concat('lb', uniqueString(resourceGroup().id, deployment().name))]",
+      "metadata": {
+        "description": "Ignored if Local exposure selected. If using a Public access, provide a unique DNS Label for the Load Balancer access IP. Name must satisfy regular expression ^[a-z][a-z0-9-]{1,61}[a-z0-9]$. Default will generate a unique string"
       }
     },
     "dnsLabelForVmIp": {
       "type": "string",
       "defaultValue": "[concat('vm', uniqueString(resourceGroup().id, deployment().name))]",
       "metadata": {
-        "description": "Unique DNS Label for the Public IP used to access the Virtual Machine(s). Do not use '-'. Default will generate a unique string."
+        "description": "Ignored if Local exposure selected. If using a Public access, provide a unique DNS Label for the broker Virtual Machine(s). Do not use '-'. Default will generate a unique string"
       }
     },
     "centosVersion": {
@@ -76,11 +88,37 @@
         "7.4"
       ]
     },
-    "messageRoutingVmSize": {
+    "maxNumberOfClientConnections": {
+      "type": "string",
+      "defaultValue": "100",
+      "metadata": {
+        "description": "Broker system scaling: the maximum supported number of client connections"
+      },
+      "allowedValues": [
+        "100",
+        "1000",
+        "10000",
+        "100000",
+        "200000"
+      ]
+    },
+    "maxNumberOfQueueMessages": {
+      "type": "string",
+      "defaultValue": "100",
+      "metadata": {
+        "description": "Broker system scaling: the maximum number of queue messages, in millions of messages"
+      },
+      "allowedValues": [
+        "100",
+        "240",
+        "3000"
+      ]
+    },
+    "messageRoutingNodeVmSize": {
       "type": "string",
       "defaultValue": "Standard_D2_v2",
       "metadata": {
-        "description": "The size of the Solace Message Routing Node VM. Requires at least 2 cores and 4GB of memory. Allowed values: D2_v2, DS2_v2, D2_v3, D2s_v3"
+        "description": "The size of a PubSub+ broker message routing node VM. Important: ensure adequate CPU and Memory resources are available to support the selected broker system scaling parameters. For requirements check https://docs.solace.com/."
       },
       "allowedValues": [
         "Standard_D1_v2",
@@ -96,43 +134,40 @@
         "Standard_DS2_v2",
         "Standard_DS3_v2",
         "Standard_DS4_v2",
-        "Standard_DS5_v2",
-        "Standard_D2s_v3",
-        "Standard_D4s_v3",
-        "Standard_D8s_v3",
-        "Standard_D16s_v3"
+        "Standard_DS5_v2"
       ]
     },
-    "monitorVmSize": {
+    "monitorNodeVmSize": {
       "type": "string",
       "defaultValue": "Standard_D1_v2",
       "metadata": {
-        "description": "The size of the Solace Monitor Node VM. Requires at least 1 core and 1GB of memory. Allowed values: D1_v2, DS1_v2, D2_v2, DS2_v2, D2_v3, D2s_v3"
+        "description": "The size of the PubSub+ monitor node VM in a High Availabity deployment. For requirements check https://docs.solace.com/."
       },
       "allowedValues": [
         "Standard_D1_v2",
         "Standard_DS1_v2",
         "Standard_D2_v2",
         "Standard_DS2_v2",
-        "Standard_D2_v3",
-        "Standard_D2s_v3"
+        "Standard_D2_v3"
       ]
     },
     "dataDiskSize": {
       "type": "string",
       "defaultValue": "0",
       "metadata": {
-        "description": "The size of the data disk in GB for diagnostics and message spooling on the Solace Message Routing Nodes. Allowed values: 0, 20, 40, 80, 160"
+        "description": "The size of the data disk in GB for diagnostics and message spooling on the Solace Message Routing Nodes. For requirements check https://docs.solace.com/."
       },
       "allowedValues": [
         "0",
-        "20",
-        "40",
-        "80",
-        "160"
+        "8",
+        "16",
+        "32",
+        "64",
+        "128",
+        "256"
       ]
     },
-    "solaceEventBrokerDockerImageReference": {
+    "brokerDockerImageReference": {
       "type": "string",
       "defaultValue": "solace/solace-pubsub-standard:latest",
       "metadata": {
@@ -207,15 +242,13 @@
     }
   },
   "variables": {
-    "availabilitySetName": "solace-ha-cluster",
+    "availabilitySetName": "solace-availabilityset",
     "platformFaultDomainCount": "[parameters('numberOfFaultDomains')]",
     "platformUpdateDomainCount": "[if(equals(parameters('numberOfFaultDomains'), 1), 1, 3)]",
     "imagePublisher": "OpenLogic",
     "imageOffer": "Centos",
-    "OSDiskName": "osdiskfordockersimple",
-    "dataDiskName": "datadiskfordockersimple",
     "nestedTemplatesLocation": "nestedtemplates/",
-    "solaceSecurityName": "SolaceSecurity.Template",
+    "solaceSecurityTemplateName": "SolaceSecurity.Template",
     "securitySharedTemplateName": "security-shared-resources.json",
     "securitySharedTemplateUri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesLocation'), variables('securitySharedTemplateName'), parameters('_artifactsLocationSasToken')))]",
     "solaceLoadBalancerName": "SolaceLoadBalancer.Template",
@@ -228,21 +261,19 @@
     "workspaceEnabledSharedTemplateName": "workspace-enabled-shared-resources.json",
     "workspaceEnabledSharedTemplateUri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesLocation'), variables('workspaceEnabledSharedTemplateName'), parameters('_artifactsLocationSasToken')))]",
     "scriptsLocation": "scripts/",
-    "solaceInstallScriptName": "deploy_solace.sh",
+    "solaceInstallScriptName": "install-solace.sh",
     "solaceInstallScriptFileUri": "[uri(parameters('_artifactsLocation'), concat(variables('scriptsLocation'), variables('solaceInstallScriptName'), parameters('_artifactsLocationSasToken')))]",
     "sempQueryScriptName": "semp_query.sh",
     "sempQueryScriptFileUri": "[uri(parameters('_artifactsLocation'), concat(variables('scriptsLocation'), variables('sempQueryScriptName'), parameters('_artifactsLocationSasToken')))]",
-    "publicIPAddressName": "myPublicIPD",
+    "publicIPAddressNameVM": "myVMPublicIPD",
     "publicIPAddressNameLB": "myLBPublicIPD",
     "publicIPAddressType": "Dynamic",
     "virtualNetworkName": "[if(not(empty(parameters('existingVirtualNetworkName'))), parameters('existingVirtualNetworkName'), 'solace-vnet')]",
     "subnetName": "[if(not(empty(parameters('existingSubnetName'))), parameters('existingSubnetName'), 'solace-subnet')]",
-    "nicName": "nicd",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+    "nicName": "Nicd",
     "deploymentModelHighAvailability": { "numberOfNodes": 3 },
-    "deploymentModelSingleNode": {
-      "numberOfNodes": 1
-    },
+    "deploymentModelSingleNode": { "numberOfNodes": 1 },
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "numberOfInstances": "[variables(concat('deploymentModel', parameters('deploymentModel'))).numberOfNodes]",
     "monitorNodeIndex": 2,
     "lbName" : "solace-ha-group-loadbalancer",
@@ -255,7 +286,10 @@
           "diskSizeGB": "[parameters('dataDiskSize')]",
           "lun": 0,
           "caching": "ReadWrite",
-          "createOption": "Empty"
+          "createOption": "Empty",
+          "managedDisk": {
+            "storageAccountType": "Standard_LRS"
+          }
         }
       ],
       "1": [
@@ -264,7 +298,10 @@
           "diskSizeGB": "[parameters('dataDiskSize')]",
           "lun": 0,
           "caching": "ReadWrite",
-          "createOption": "Empty"
+          "createOption": "Empty",
+          "managedDisk": {
+            "storageAccountType": "Standard_LRS"
+          }
         }
       ],
       "2": [ ]
@@ -276,7 +313,7 @@
     {
       "apiVersion": "2019-10-01",
       "type": "Microsoft.Resources/deployments",
-      "name": "[variables('solaceSecurityName')]",
+      "name": "[variables('solaceSecurityTemplateName')]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -307,8 +344,11 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "dnsLabelForLbIp": {
-            "value": "[parameters('dnsLabelForLbIp')]"
+          "vmAndLoadbalancerExposure": {
+            "value": "[parameters('vmAndLoadbalancerExposure')]"
+          },
+          "dnsLabelForPublicLoadBalancer": {
+            "value": "[parameters('dnsLabelForPublicLoadBalancer')]"
           },
           "publicIPAddressNameLB": {
             "value": "[variables('publicIPAddressNameLB')]"
@@ -321,6 +361,9 @@
           },
           "lbPoolName": {
             "value": "[variables('lbPoolName')]"
+          },
+          "subnetRef": {
+            "value": "[variables('subnetRef')]"
           },
           "location": {
             "value": "[parameters('location')]"
@@ -350,9 +393,10 @@
       }
     },
     {
+      "condition": "[equals(parameters('vmAndLoadbalancerExposure'),'Public')]",
       "apiVersion": "2020-04-01",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(variables('publicIPAddressName'), copyindex())]",
+      "name": "[concat(variables('publicIPAddressNameVM'), copyindex())]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "interfaceLoop",
@@ -392,7 +436,7 @@
       "name": "[variables('solaceUpdateSubnetName')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('solaceSecurityName'))]"
+        "[concat('Microsoft.Resources/deployments/', variables('solaceSecurityTemplateName'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -420,16 +464,18 @@
       }
     },
     {
+      "condition": "[equals(parameters('vmAndLoadbalancerExposure'),'Public')]",
+      "comments": "Only created if network interfaces are to be publicly exposed. Otherwise the next resource is created.",
       "apiVersion": "2020-04-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicName'), copyindex())]",
+      "name": "[concat('Public',variables('nicName'), copyindex())]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), copyindex())]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressNameVM'), copyindex())]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[concat('Microsoft.Resources/deployments/', variables('solaceLoadBalancerName'))]"
       ],
@@ -443,8 +489,44 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), copyindex()))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressNameVM'), copyindex()))]"
               },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('lbPoolID')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[not(equals(parameters('vmAndLoadbalancerExposure'),'Public'))]",
+      "apiVersion": "2020-04-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('Internal',variables('nicName'), copyindex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('solaceLoadBalancerName'))]"
+      ],
+      "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('securityGroupName'))]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
               "subnet": {
                 "id": "[variables('subnetRef')]"
               },
@@ -481,7 +563,7 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), copyindex()))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(parameters('vmAndLoadbalancerExposure'),variables('nicName'), copyindex()))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
@@ -489,7 +571,7 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
         },
         "hardwareProfile": {
-          "vmSize": "[if(equals(copyindex(), variables('monitorNodeIndex')), parameters('monitorVmSize'), parameters('messageRoutingVmSize'))]"
+          "vmSize": "[if(equals(copyindex(), variables('monitorNodeIndex')), parameters('monitorNodeVmSize'), parameters('messageRoutingNodeVmSize'))]"
         },
         "osProfile": {
           "computerName": "[concat(parameters('dnsLabelForVmIp'), copyindex())]",
@@ -513,7 +595,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmAndLoadbalancerExposure'),variables('nicName'), copyindex()))]"
             }
           ]
         }
@@ -589,7 +671,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('mkdir -p -m 770 ', variables('adminPasswordDir'), '; echo ', parameters('solaceAdminPassword'), ' > ', variables('adminPasswordFile'), '; bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -d ', parameters('dnsLabelForVmIp'), ' -n ', variables('numberOfInstances'), ' -p ', variables('adminPasswordFile'), ' -s ', if(equals(copyindex(), variables('monitorNodeIndex')), '0', parameters('dataDiskSize')), if(empty(parameters('workspaceName')), '', concat(' -w ', reference(variables('solaceWorkspaceName')).outputs.workspaceId.value)), ' -u ', parameters('solaceEventBrokerDockerImageReference'))]"
+          "commandToExecute": "[concat('mkdir -p -m 770 ', variables('adminPasswordDir'), '; echo ', parameters('solaceAdminPassword'), ' > ', variables('adminPasswordFile'), '; bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -d ', parameters('dnsLabelForVmIp'), ' -i ', variables('numberOfInstances'), ' -p ', variables('adminPasswordFile'), ' -n ', parameters('maxNumberOfClientConnections'), ' -q ', parameters('maxNumberOfQueueMessages'), ' -s ', if(equals(copyindex(), variables('monitorNodeIndex')), '0', parameters('dataDiskSize')), if(empty(parameters('workspaceName')), '', concat(' -w ', reference(variables('solaceWorkspaceName')).outputs.workspaceId.value)), ' -u ', parameters('brokerDockerImageReference'))]"
          }
       }
     }
