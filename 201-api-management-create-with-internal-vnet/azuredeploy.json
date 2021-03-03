@@ -2,13 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "apiManagementServiceName": {
-      "type": "string",
-      "defaultValue": "[concat('apiservice', uniqueString(resourceGroup().id))]",
-      "metadata": {
-        "description": "Name of the API Management service."
-      }
-    },
     "publisherEmail": {
       "type": "string",
       "minLength": 1,
@@ -27,7 +20,6 @@
       "type": "string",
       "allowedValues": [
         "Developer",
-        "Standard",
         "Premium"
       ],
       "defaultValue": "Developer",
@@ -44,6 +36,7 @@
     },
     "virtualNetworkName": {
       "type": "string",
+      "defaultValue": "internalvnet",
       "metadata": {
         "description": "Virtual Network name"
       }
@@ -64,19 +57,38 @@
     },
     "subnetName": {
       "type": "string",
+      "defaultValue": "apim",
       "metadata": {
         "description": "Subnet Name"
+      }
+    },
+    "apimSubnetServiceEndpoints": {
+      "type": "array",
+      "defaultValue": [
+        {
+          "service": "Microsoft.Storage"
+        },
+        {
+          "service": "Microsoft.Sql"
+        },
+        {
+          "service": "Microsoft.EventHub"
+        }
+      ],
+      "metadata": {
+        "description": "Service Endpoints enabled on the APIM subnet"
       }
     },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for all resources."
+        "description": "Azure Region where the resources will be deployed"
       }
     }
   },
   "variables": {
+    "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
     "apimNsgName": "[concat('apimnsg', uniqueString(resourceGroup().id))]"
   },
@@ -84,7 +96,7 @@
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('apimNsgName')]",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -115,7 +127,7 @@
             }
           },
           {
-            "name": "Management_endpoint_for_Azure_portal_and_Powershell",            
+            "name": "Management_endpoint_for_Azure_portal_and_Powershell",
             "properties": {
               "protocol": "Tcp",
               "sourcePortRange": "*",
@@ -137,6 +149,19 @@
               "destinationAddressPrefix": "VirtualNetwork",
               "access": "Allow",
               "priority": 130,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Dependency_to_sync_Rate_Limit_Inbound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4290",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 135,
               "direction": "Inbound"
             }
           },
@@ -180,6 +205,19 @@
             }
           },
           {
+            "name": "Depenedency_To_sync_RateLimit_Outbound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4290",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 165,
+              "direction": "Outbound"
+            }
+          },
+          {
             "name": "Dependency_on_Azure_File_Share_for_GIT",
             "properties": {
               "protocol": "Tcp",
@@ -215,7 +253,7 @@
               "destinationAddressPrefix": "AzureMonitor",
               "access": "Allow",
               "priority": 185,
-              "direction": "Outbound",              
+              "direction": "Outbound",
               "destinationPortRanges": [
                 "443",
                 "12000",
@@ -233,7 +271,7 @@
               "destinationAddressPrefix": "Internet",
               "access": "Allow",
               "priority": 190,
-              "direction": "Outbound",              
+              "direction": "Outbound",
               "destinationPortRanges": [
                 "25",
                 "587",
@@ -242,7 +280,7 @@
             }
           },
           {
-            "name": "Authenticate_To_Azure_Active_Directory",            
+            "name": "Authenticate_To_Azure_Active_Directory",
             "properties": {
               "description": "Connect to Azure Active Directory for Developer Portal Authentication or for Oauth2 flow during any Proxy Authentication",
               "protocol": "Tcp",
@@ -286,6 +324,22 @@
             }
           },
           {
+            "name": "Access_KeyVault",
+            "properties": {
+              "description": "Allow APIM service control plane access to KeyVault to refresh secrets",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "AzureKeyVault",
+              "access": "Allow",
+              "priority": 350,
+              "direction": "Outbound",
+              "destinationPortRanges": [
+                "443"
+              ]
+            }
+          },
+          {
             "name": "Deny_All_Internet_Outbound",
             "properties": {
               "protocol": "*",
@@ -299,11 +353,10 @@
             }
           }
         ]
-      },
-      "dependsOn": []
+      }
     },
     {
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -323,15 +376,16 @@
               "addressPrefix": "[parameters('subnetPrefix')]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('apimNsgName'))]"
-              }
+              },
+              "serviceEndpoints": "[parameters('apimSubnetServiceEndpoints')]"
             }
           }
         ]
       }
     },
     {
-      "apiVersion": "2018-01-01",
-      "name": "[parameters('apiManagementServiceName')]",
+      "apiVersion": "2019-12-01",
+      "name": "[variables('apiManagementServiceName')]",
       "type": "Microsoft.ApiManagement/service",
       "location": "[parameters('location')]",
       "dependsOn": [

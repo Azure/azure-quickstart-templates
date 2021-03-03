@@ -21,5 +21,10 @@ The template creates and configures the following Azure resources:
 - A Virtual Network
 - Three NICs associated with the backend pool of the load balancer
 - Three virtual machines with each vm in a different zone
+- An Azure Bastion host to manage the virtual machines
+- Create outbound rules and outbound pool for virtual machines
 
-For a more information about this template, see [Quickstart: Create a Standard Load Balancer to load balance VMs using the Azure portal](https://docs.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-public-portal)
+For more information about this template, see the quickstart articles:
+
+- [Quickstart: Create a public load balancer to load balance VMs using the Azure portal](https://docs.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-public-portal)
+- [Quickstart: Create a public load balancer to load balance VMs by using an ARM template](https://docs.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-public-template)

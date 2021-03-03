@@ -48,6 +48,13 @@
       "metadata": {
         "description": "Name of Namespace Authorization Rule."
       }
+    },
+    "isMSDevopsAuditEnabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+          "description": "Enable Auditing of Microsoft support operations (DevOps)"
+      }
     }
   },
   "variables": {
@@ -70,14 +77,14 @@
           "name": "[parameters('eventHubName')]",
           "type": "eventhubs",
           "dependsOn": [
-            "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]"
+            "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNamespaceName'))]"
           ]
         }
       ]
     },
     {
       "type": "Microsoft.Sql/servers",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2019-06-01-preview",
       "location": "[parameters('location')]",
       "name": "[parameters('sqlServerName')]",
       "properties": {
@@ -91,7 +98,7 @@
       "resources": [
         {
           "type": "databases",
-          "apiVersion": "2017-03-01-preview",
+          "apiVersion": "2019-06-01-preview",
           "location": "[parameters('location')]",
           "dependsOn": ["[parameters('sqlServerName')]"],
           "name": "master",
@@ -102,8 +109,8 @@
           "name": "[concat('master/microsoft.insights/',variables('diagnosticSettingsName'))]",
           "dependsOn": [
             "[parameters('sqlServerName')]",
-            "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]",
-            "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'), '/databases/master')]"
+            "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNamespaceName'))]",         
+            "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), 'master')]"
           ],
           "apiVersion": "2017-05-01-preview",
           "properties": {
@@ -113,6 +120,15 @@
             "logs": [
               {
                 "category": "SQLSecurityAuditEvents",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": 0,
+                  "enabled": false
+                }
+              },
+              {
+                "condition": "[parameters('isMSDevopsAuditEnabled')]",
+                "category": "DevOpsOperationsAudit",
                 "enabled": true,
                 "retentionPolicy": {
                   "days": 0,
@@ -129,7 +145,17 @@
           "dependsOn": ["[parameters('sqlServerName')]"],
           "properties": {
             "State": "Enabled",
-            "auditActionsAndGroups": null,
+            "isAzureMonitorTargetEnabled": true
+          }
+        },
+        {
+          "condition": "[parameters('isMSDevopsAuditEnabled')]",
+          "type": "devOpsAuditingSettings",
+          "apiVersion": "2020-08-01-preview",
+          "name": "Default",
+          "dependsOn": ["[parameters('sqlServerName')]"],
+          "properties": {
+            "State": "Enabled",
             "isAzureMonitorTargetEnabled": true
           }
         }

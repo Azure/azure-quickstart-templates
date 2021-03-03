@@ -18,7 +18,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
+    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, cChoco
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -153,6 +153,68 @@ configuration ConfigureSPVM
             TcpPort              = 1433
         }
 
+        xScript DisableIESecurity
+        {
+            TestScript = {
+                return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            }
+            SetScript = {
+                # Source: https://stackoverflow.com/questions/9368305/disable-ie-security-on-windows-server-via-powershell
+                $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
+                #$UserKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}"
+                Set-ItemProperty -Path $AdminKey -Name "IsInstalled" -Value 0
+                #Set-ItemProperty -Path $UserKey -Name "IsInstalled" -Value 0
+
+                if ($false -eq (Test-Path -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer")) {
+                    New-Item -Path "HKLM:\Software\Policies\Microsoft" -Name "Internet Explorer"
+                }
+
+                # Disable the first run wizard of IE
+                $ieFirstRunKey = "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main"
+                if ($false -eq (Test-Path -Path $ieFirstRunKey)) {
+                    New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "Main"
+                }
+                Set-ItemProperty -Path $ieFirstRunKey -Name "DisableFirstRunCustomize" -Value 1
+                
+                # Set new tabs to open "about:blank" in IE
+                $ieNewTabKey = "HKLM:\Software\Policies\Microsoft\Internet Explorer\TabbedBrowsing"
+                if ($false -eq (Test-Path -Path $ieNewTabKey)) {
+                    New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "TabbedBrowsing"
+                }
+                Set-ItemProperty -Path $ieNewTabKey -Name "NewTabPageShow" -Value 0
+            }
+            GetScript = { }
+        }
+
+        #**********************************************************
+        # Install applications using Chocolatey
+        #**********************************************************
+        cChocoInstaller InstallChoco
+        {
+            InstallDir = "C:\Choco"
+        }
+
+        cChocoPackageInstaller InstallEdge
+        {
+            Name                 = "microsoft-edge"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        cChocoPackageInstaller InstallNotepadpp
+        {
+            Name                 = "notepadplusplus.install"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        cChocoPackageInstaller Install7zip
+        {
+            Name                 = "7zip.install"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
         #**********************************************************
         # Join AD forest
         #**********************************************************
@@ -160,7 +222,7 @@ configuration ConfigureSPVM
         WaitForADDomain WaitForDCReady
         {
             DomainName              = $DomainFQDN
-            WaitTimeout             = 1200
+            WaitTimeout             = 1800
             RestartCount            = 2
             WaitForValidCredentials = $True
             PsDscRunAsCredential    = $DomainAdminCredsQualified
@@ -356,7 +418,8 @@ configuration ConfigureSPVM
             Password                      = $SPAppPoolCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
+            ServicePrincipalNames         = @("HTTP/$SPTrustedSitesName.$($DomainFQDN)", "HTTP/$MySiteHostAlias.$($DomainFQDN)", "HTTP/$HNSC1Alias.$($DomainFQDN)", "HTTP/$SPTrustedSitesName", "HTTP/$MySiteHostAlias", "HTTP/$HNSC1Alias")
+            PsDscRunAsCredential          = $DomainAdminCredsQualified
             DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
@@ -390,6 +453,25 @@ configuration ConfigureSPVM
             Force                = $true
             PsDscRunAsCredential = $SPSetupCredential
             DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[xScript]CreateWSManSPNsIfNeeded"
+        }
+        
+        # Fiddler must be installed as $DomainAdminCredsQualified because it's a per-user installation
+        cChocoPackageInstaller InstallFiddler
+        {
+            Name                 = "fiddler"
+            Version              =  5.0.20204.45441
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
+        }
+
+        # Install ULSViewer as $DomainAdminCredsQualified to ensure that the shortcut is visible on the desktop
+        cChocoPackageInstaller InstallUlsViewer
+        {
+            Name                 = "ulsviewer"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         xScript WaitForSQL
@@ -499,15 +581,6 @@ configuration ConfigureSPVM
             DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
         }
 
-        SPDiagnosticLoggingSettings ApplyDiagnosticLogSettings
-        {
-            LogPath              = "C:\ULS"
-            LogSpaceInGB         = 20
-            IsSingleInstance     = "Yes"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
-        }
-
         SPStateServiceApp StateServiceApp
         {
             Name                 = "State Service Application"
@@ -521,10 +594,10 @@ configuration ConfigureSPVM
             Name                 = "AppFabricCachingService"
             CacheSizeInMB        = 2000
             CreateFirewallRules  = $true
-            ServiceAccount       = $SPSvcCredsQualified.UserName
+            ServiceAccount       = $SPFarmCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified
             Ensure               = "Present"
-            DependsOn            = "[SPManagedAccount]CreateSPSvcManagedAccount"
+            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
         }
 
         #**********************************************************
@@ -563,6 +636,50 @@ configuration ConfigureSPVM
             DependsOn            = "[SPManagedAccount]CreateSPSvcManagedAccount"
         }
 
+        SPWebApplication CreateMainWebApp
+        {
+            Name                   = "SharePoint - 80"
+            ApplicationPool        = "SharePoint - 80"
+            ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
+            AllowAnonymous         = $false
+            DatabaseName           = $SPDBPrefix + "Content_80"
+            WebAppUrl              = "http://$SPTrustedSitesName/"
+            Port                   = 80
+            Ensure                 = "Present"
+            PsDscRunAsCredential   = $SPSetupCredsQualified
+            DependsOn              = "[xScript]RestartSPTimerAfterCreateSPFarm"
+        }
+
+        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
+        xScript UpdateGPOToTrustRootCACert
+        {
+            SetScript =
+            {
+                gpupdate.exe /force
+            }
+            GetScript            = { }
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
+        CertReq GenerateMainWebAppCertificate
+        {
+            CARootName             = "$DomainNetbiosName-$DCName-CA"
+            CAServerFQDN           = "$DCName.$DomainFQDN"
+            Subject                = "$SPTrustedSitesName.$DomainFQDN"
+            SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
+            KeyLength              = '2048'
+            Exportable             = $true
+            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+            OID                    = '1.3.6.1.5.5.7.3.1'
+            KeyUsage               = '0xa0'
+            CertificateTemplate    = 'WebServer'
+            AutoRenew              = $true
+            Credential             = $DomainAdminCredsQualified
+            DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
+        }
+
         # Installing LDAPCP somehow updates SPClaimEncodingManager 
         # But in SharePoint 2019 (only), it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
         # The only solution I've found is to force a reboot in SharePoint 2019
@@ -571,14 +688,14 @@ configuration ConfigureSPVM
             {
                 # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
                 TestScript = {
-                    return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
+                    return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust)
                 }
                 SetScript = {
-                    New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
+                    New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust -Force
                     $global:DSCMachineStatus = 1
                 }
                 GetScript = { }
-                PsDscRunAsCredential = $SPSetupCredsQualified
+                PsDscRunAsCredential = $DomainAdminCredsQualified
                 DependsOn = "[SPFarmSolution]InstallLdapcp"
             }
 
@@ -609,7 +726,7 @@ configuration ConfigureSPVM
             )
             SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
             ClaimProviderName            = "LDAPCP"
-            #ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
+            ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
             UseWReplyParameter           = $true
             Ensure                       = "Present"
             DependsOn                    = "[SPFarmSolution]InstallLdapcp"
@@ -661,50 +778,8 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
-        SPWebApplication CreateMainWebApp
-        {
-            Name                   = "SharePoint - 80"
-            ApplicationPool        = "SharePoint - 80"
-            ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
-            AllowAnonymous         = $false
-            DatabaseName           = $SPDBPrefix + "Content_80"
-            WebAppUrl              = "http://$SPTrustedSitesName/"
-            Port                   = 80
-            Ensure                 = "Present"
-            PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = "[xScript]RestartSPTimerAfterCreateSPFarm"
-        }
-
-        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
-        xScript UpdateGPOToTrustRootCACert
-        {
-            SetScript =
-            {
-                gpupdate.exe /force
-            }
-            GetScript            = { }
-            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-        }
-
-        CertReq GenerateMainWebAppCertificate
-        {
-            CARootName             = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN           = "$DCName.$DomainFQDN"
-            Subject                = "$SPTrustedSitesName.$DomainFQDN"
-            SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
-            KeyLength              = '2048'
-            Exportable             = $true
-            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
-            OID                    = '1.3.6.1.5.5.7.3.1'
-            KeyUsage               = '0xa0'
-            CertificateTemplate    = 'WebServer'
-            AutoRenew              = $true
-            Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
-        }
-
+        # ExtendMainWebApp might fail with error: "The web.config could not be saved on this IIS Web Site: C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config.\r\nThe process cannot access the file 'C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config' because it is being used by another process."
+        # So I added resources between it and CreateMainWebApp to avoid it
         SPWebApplicationExtension ExtendMainWebApp
         {
             WebAppUrl              = "http://$SPTrustedSitesName/"
@@ -735,7 +810,7 @@ configuration ConfigureSPVM
                 }
             )
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplicationExtension]ExtendMainWebApp"
+            DependsOn            = "[SPWebApplicationExtension]ExtendMainWebApp", "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
         }
 
         xWebsite SetHTTPSCertificate
@@ -1008,6 +1083,7 @@ configuration ConfigureSPVM
             DestinationPath = "C:\inetpub\wwwroot\addins"
             Type            = "Directory"
             Ensure          = "Present"
+            DependsOn       = "[SPFarm]CreateSPFarm"
         }
 
         xWebAppPool CreateAddinsSiteApplicationPool
@@ -1021,6 +1097,7 @@ configuration ConfigureSPVM
             Credential            = $SPSvcCredsQualified
             Ensure                = "Present"
             PsDscRunAsCredential  = $DomainAdminCredsQualified
+            DependsOn             = "[SPFarm]CreateSPFarm"
         }
 
         xWebsite CreateAddinsSite
