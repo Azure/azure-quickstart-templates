@@ -77,7 +77,7 @@ By default, Quickstart deployments enable Transport Layer Security (TLS) to help
 
 Deploying this Quickstart for a new virtual private cloud (VPC) with default parameters in a massively parallel processing (MPP) environment builds the following SAS 9.4 environment in the Microsoft Azure cloud, shown in Figure 1.   In MPP environments, the CASInstanceCount parameter is set to one, indicating that only one CAS controller is configured.
 
-![Network Diagram](Azure_9_vavs_quickstart.svg)
+![Network Diagram](Azure_9_vavs_quickstart_mpp (2).svg)
 Figure 1: Quickstart architecture in Azure for SAS Visual Analytics in SAS 9.4 and SAS Visual Statistics in SAS 9.4 in an MPP Environment
 
 <a name="Prerequisites"></a>
