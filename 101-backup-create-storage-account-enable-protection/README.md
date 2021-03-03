@@ -23,3 +23,10 @@ The Backup service is Microsoft's born in the cloud backup solution to backup da
 
 Operational backup for Azure Blobs is a managed, local data protection solution that lets you protect your block blobs from various data loss scenarios like blob corruptions, blob deletions, and accidental storage account deletion. The data is stored locally within the source storage account itself and can be restored to a selected point in time whenever needed. So this provides a simple, secure, and cost-effective means to protect your blobs. [Learn more](https://docs.microsoft.com/en-us/azure/backup/blob-backup-overview)
 
+#### Delete a Backup Vault
+You can't delete a Backup vault with any of the following dependencies:
+- You can't delete a vault that contains protected data sources (for example, Azure database for PostgreSQL servers, Azure Blobs, Azure Disks).
+- You can't delete a vault that contains backup data.
+If you try to delete the vault without removing the dependencies, you'll encounter the following error messages:
+Cannot delete the Backup vault as there are existing backup instances or backup policies in the vault. Delete all backup instances and backup policies that are present in the vault and then try deleting the vault.
+Here are the steps for [Delete a Backup Vault](https://docs.microsoft.com/en-us/azure/backup/backup-vault-overview#delete-a-backup-vault)
