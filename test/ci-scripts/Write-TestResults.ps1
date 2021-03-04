@@ -9,7 +9,7 @@ param(
     [string]$SampleFolder = $ENV:SAMPLE_FOLDER, # this is the full absolute path to the sample
     [string]$SampleName = $ENV:SAMPLE_NAME, # the name of the sample or folder path from the root of the repo (i.e. relative path) e.g. "sample-type/sample-name"
     [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
-    [string]$StorageAccountName = "azurequickstartsservice",
+    [string]$StorageAccountName = "azureqsbicep",
     [string]$TableName = "QuickStartsMetadataService",
     [string]$TableNamePRs = "QuickStartsMetadataServicePRs",
     [Parameter(mandatory = $true)]$StorageAccountKey, 
