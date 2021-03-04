@@ -4,37 +4,49 @@
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]"
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location into which the Azure Functions resources should be deployed."
+      }
     },
-    "functionAppName": {
+    "appName": {
       "type": "string",
-      "defaultValue": "[format('fn-{0}', uniqueString(resourceGroup().id))]"
+      "defaultValue": "[format('fn-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Azure Functions application to create. This must be globally unique."
+      }
     },
-    "storageAccountName": {
+    "functionRuntime": {
       "type": "string",
-      "defaultValue": "[format('stor{0}', uniqueString(resourceGroup().id))]"
+      "defaultValue": "dotnet",
+      "metadata": {
+        "description": "The runtime to deploy onto the Azure Functions application."
+      }
     },
-    "deploymentScriptTimestamp": {
+    "functionPlanSkuName": {
       "type": "string",
-      "defaultValue": "[utcNow()]"
+      "defaultValue": "Y1",
+      "metadata": {
+        "description": "The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium)."
+      }
     }
   },
   "functions": [],
   "variables": {
-    "functionRuntime": "dotnet",
     "appServicePlanName": "FunctionPlan",
     "appInsightsName": "AppInsights",
-    "functionNameComputed": "MyEventGridFunction",
-    "deploymentScriptName": "[format('deployscript{0}', uniqueString(resourceGroup().id))]",
-    "userAssignedManagedIdentityName": "DeployScript",
-    "roleAssignmentGuid": "[guid(resourceGroup().id)]",
-    "contributorRoleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]"
+    "storageAccountName": "[format('fnstor{0}', uniqueString(resourceGroup().id, parameters('appName')))]",
+    "functionPlanKind": "[if(equals(parameters('functionPlanSkuName'), 'Y1'), 'functionapp', 'elastic')]",
+    "functionName": "MyHttpTriggeredFunction",
+    "contributorRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+    "managedIdentityName": "EventGridFunctionEnabler",
+    "deploymentScriptName": "GetFunctionAppEventGridKey"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2019-06-01",
-      "name": "[parameters('storageAccountName')]",
+      "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS",
@@ -61,7 +73,7 @@
     },
     {
       "type": "Microsoft.Insights/components",
-      "apiVersion": "2015-05-01",
+      "apiVersion": "2018-05-01-preview",
       "name": "[variables('appInsightsName')]",
       "location": "[parameters('location')]",
       "kind": "web",
@@ -76,16 +88,16 @@
       "apiVersion": "2020-06-01",
       "name": "[variables('appServicePlanName')]",
       "location": "[parameters('location')]",
-      "kind": "functionapp",
+      "kind": "[variables('functionPlanKind')]",
       "sku": {
-        "name": "Y1"
+        "name": "[parameters('functionPlanSkuName')]"
       },
       "properties": {}
     },
     {
       "type": "Microsoft.Web/sites",
       "apiVersion": "2020-06-01",
-      "name": "[parameters('functionAppName')]",
+      "name": "[parameters('appName')]",
       "location": "[parameters('location')]",
       "kind": "functionapp",
       "properties": {
@@ -94,11 +106,11 @@
           "appSettings": [
             {
               "name": "AzureWebJobsStorage",
-              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', parameters('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value)]"
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
             },
             {
               "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', parameters('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value)]"
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
             },
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
@@ -110,11 +122,15 @@
             },
             {
               "name": "FUNCTIONS_WORKER_RUNTIME",
-              "value": "[variables('functionRuntime')]"
+              "value": "[parameters('functionRuntime')]"
             },
             {
               "name": "FUNCTIONS_EXTENSION_VERSION",
               "value": "~3"
+            },
+            {
+              "name": "AzureWebJobsDisableHomepage",
+              "value": "true"
             }
           ]
         },
@@ -123,13 +139,13 @@
       "dependsOn": [
         "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]",
         "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ]
     },
     {
       "type": "Microsoft.Web/sites/functions",
       "apiVersion": "2020-06-01",
-      "name": "[format('{0}/{1}', parameters('functionAppName'), variables('functionNameComputed'))]",
+      "name": "[format('{0}/{1}', parameters('appName'), variables('functionName'))]",
       "properties": {
         "config": {
           "disabled": false,
@@ -142,94 +158,70 @@
           ]
         },
         "files": {
-          "run.csx": "#r \"Microsoft.Azure.EventGrid\"\nusing Microsoft.Azure.EventGrid.Models;\nusing Microsoft.Extensions.Logging;\n\npublic static void Run(EventGridEvent eventGridEvent, ILogger log)\n{\n    log.LogInformation(eventGridEvent.Data.ToString());\n}"
+          "run.csx": "      #r \"Microsoft.Azure.EventGrid\"\n      using Microsoft.Azure.EventGrid.Models;\n      using Microsoft.Extensions.Logging;\n\n      public static void Run(EventGridEvent eventGridEvent, ILogger log)\n      {\n          log.LogInformation(eventGridEvent.Data.ToString());\n      }\n      "
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
-      ]
-    },
-    {
-      "scope": "[concat('Microsoft.Web/sites', '/', parameters('functionAppName'))]",
-      "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2020-04-01-preview",
-      "name": "[variables('roleAssignmentGuid')]",
-      "properties": {
-          "roleDefinitionId": "[variables('contributorRoleDefinitionId')]",
-          "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedManagedIdentityName'))).principalId]"
-      },
-      "dependsOn": [
-          "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]",
-          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedManagedIdentityName'))]"
+        "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
       ]
     },
     {
       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-      "name": "[variables('userAssignedManagedIdentityName')]",
       "apiVersion": "2018-11-30",
+      "name": "[variables('managedIdentityName')]",
       "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "scope": "[format('Microsoft.Web/sites/{0}', parameters('appName'))]",
+      "name": "[guid(resourceGroup().id, variables('managedIdentityName'))]",
+      "properties": {
+        "roleDefinitionId": "[variables('contributorRoleDefinitionId')]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))).principalId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]"
+      ]
     },
     {
       "type": "Microsoft.Resources/deploymentScripts",
       "apiVersion": "2020-10-01",
-      "kind": "AzurePowerShell",
       "name": "[variables('deploymentScriptName')]",
       "location": "[parameters('location')]",
+      "kind": "AzurePowerShell",
       "identity": {
         "type": "UserAssigned",
         "userAssignedIdentities": {
-          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedManagedIdentityName'))]": {}
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]": {}
         }
       },
       "properties": {
-        "azPowerShellVersion": "3.0",
-        "scriptContent": "
-          param([string] $FunctionHostResourceId)
-
-          $ErrorActionPreference = 'Stop'
-
-          # Try to get the key. If this fails, retry up to 5 times.
-          $loopAttempts = 0
-          while ($loopAttempts -lt 5)
-          {
-            $listKeysOutput = Invoke-AzResourceAction -ResourceId $FunctionHostResourceId -Action listKeys -ApiVersion 2020-06-01 -Force
-            $eventGridKey = $listKeysOutput.systemKeys.eventgrid_extension
-            if ($null -ne $eventGridKey)
-            {
-              break
-            }
-
-            $loopAttempts += 1
-            Write-Output 'Event Grid key is not included in response. Sleeping for 5 seconds.'
-            Start-Sleep -Seconds 5
-          }
-
-          if ($null -eq $eventGridKey)
-          {
-            Write-Error 'Event Grid key could not be obtained.'
-            return 1
-          }
-
-          # Propagate to the deployment script output.
-          $DeploymentScriptOutputs = @{}
-          $DeploymentScriptOutputs['eventGridExtensionSystemKey'] = $eventGridKey
-        ",
-        "forceUpdateTag": "[parameters('deploymentScriptTimestamp')]",
+        "azPowerShellVersion": "5.4",
+        "scriptContent": "    param([string] $FunctionHostResourceId)\n\n    $ErrorActionPreference = 'Stop'\n\n    # Try to get the key. If this fails, retry up to 5 times.\n    $loopAttempts = 0\n    while ($loopAttempts -lt 5)\n    {\n      $listKeysOutput = Invoke-AzResourceAction -ResourceId $FunctionHostResourceId -Action listKeys -ApiVersion 2020-06-01 -Force\n      $eventGridKey = $listKeysOutput.systemKeys.eventgrid_extension\n      if ($null -ne $eventGridKey)\n      {\n        break\n      }\n\n      $loopAttempts += 1\n      Write-Output 'Event Grid key is not included in response. Sleeping for 5 seconds.'\n      Start-Sleep -Seconds 5\n    }\n\n    if ($null -eq $eventGridKey)\n    {\n      Write-Error 'Event Grid key could not be obtained.'\n      return 1\n    }\n\n    # Propagate to the deployment script output.\n    $DeploymentScriptOutputs = @{}\n    $DeploymentScriptOutputs['eventGridExtensionSystemKey'] = $eventGridKey\n    ",
+        "cleanupPreference": "OnSuccess",
         "retentionInterval": "PT4H",
-        "arguments": "[format('-FunctionHostResourceId {0}/host/default', resourceId('Microsoft.Web/sites', parameters('functionAppName')))]"
+        "arguments": "[format('-FunctionHostResourceId {0}/host/default', resourceId('Microsoft.Web/sites', parameters('appName')))]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites/functions', parameters('functionAppName'), variables('functionNameComputed'))]",
-        "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]",
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedManagedIdentityName'))]",
-        "[extensionResourceId(resourceId('Microsoft.Web/sites', parameters('functionAppName')), 'Microsoft.Authorization/roleAssignments', variables('roleAssignmentGuid'))]"
+        "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]",
+        "[extensionResourceId(resourceId('Microsoft.Web/sites', parameters('appName')), 'Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, variables('managedIdentityName')))]"
       ]
     }
   ],
   "outputs": {
     "functionUrl": {
       "type": "string",
-      "value": "[format('https://{0}.azurewebsites.net/runtime/webhooks/EventGrid?functionName={1}&code={2}', parameters('functionAppName'), variables('functionNameComputed'), reference(resourceId('Microsoft.Resources/deploymentScripts', variables('deploymentScriptName'))).outputs.eventGridExtensionSystemKey)]"
+      "value": "[format('https://{0}/runtime/webhooks/EventGrid?functionName={1}&code={2}', reference(resourceId('Microsoft.Web/sites', parameters('appName'))).defaultHostName, variables('functionName'), reference(resourceId('Microsoft.Resources/deploymentScripts', variables('deploymentScriptName'))).outputs.eventGridExtensionSystemKey)]"
+    }
+  },
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.1.62928",
+      "templateHash": "15177398755834409622"
     }
   }
 }
