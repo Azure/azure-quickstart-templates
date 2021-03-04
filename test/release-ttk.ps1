@@ -3,7 +3,7 @@ param(
     [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
     [string]$StorageAccountName = "azurequickstartsservice",
     [string]$containerName = "ttk",
-    [string]$folderName = "latest",
+    [string]$folderName = "bicep",
     [string]$ttkFileName = "arm-template-toolkit.zip",
     [switch]$Publish
 )
