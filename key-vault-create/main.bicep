@@ -1,3 +1,4 @@
+
 param vaultName string = 'keyVault${uniqueString(resourceGroup().id)}' // must be globally unique
 param location string = resourceGroup().location
 param sku string = 'Standard'
