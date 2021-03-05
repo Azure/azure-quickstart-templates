@@ -25,7 +25,7 @@ FORKS=5
 echo "LoadbalancerDNS: ${PUBLIC_DNS_NAME}" >/tmp/ansible_vars.yaml
 echo "AdminPassword: '{sas001}${sasPassword}'" >>/tmp/ansible_vars.yaml
 echo "ExternalPassword: '${azurePassword}'" >>/tmp/ansible_vars.yaml
-echo "SASFolder: '${sas_folder}'" >>/tmp/ansible_vars.yaml
+echo "sasFolder: '${sasFolder}'" >>/tmp/ansible_vars.yaml
 
 # in order to get around the azure ci testing, we need
 if [[ "$depot_uri" == "$DEPOT_DUMMY_FOR_QUICK_EXIT_VALUE" ]]; then
@@ -35,15 +35,8 @@ fi
 
 pushd ${INSTALL_DIR}/ansible
 
-export ANSIBLE_LOG_PATH=/tmp/step03_prereqs.log
-ansible-playbook -i ${INVENTORY_FILE} -vvv step03_prereqs.yaml
-
-#export ANSIBLE_LOG_PATH=/tmp/step04_download_mirror_and_licenses.log
-#ansible-playbook -i ${INVENTORY_FILE} \
-#	-e "DEPOT_DOWNLOAD_LOCATION=$depot_uri" \
-#	-e "LICENCE_DOWNLOAD_LOCATION=$license_file_uri" \
-#	-e "PLANFILE_DOWNLOAD_LOCATION=$planfile_uri" \
-#	-vvv step04_download_mirror_and_licenses.yaml
+export ANSIBLE_LOG_PATH=/tmp/install_prerequisites.log
+ansible-playbook -i ${INVENTORY_FILE} -vvv install_prerequisites.yaml
 
 # Get the path to the sid file in the depot
 SID_FILE=$(ls /sasshare/depot/sid_files)
@@ -51,33 +44,30 @@ echo "sid_file_name: $SID_FILE" >>/tmp/ansible_vars.yaml
 
 cp /sas/install/plan.xml /sasshare/plan.xml
 
-export ANSIBLE_LOG_PATH=/tmp/step05_preinstall_sas.log
-ansible-playbook -i ${INVENTORY_FILE} -vvv step05_preinstall_sas.yaml
-
 mkdir /sasshare/responsefiles
 mkdir /sasshare/scripts
 cp /sas/install/scripts/run_install_as_user.sh /sasshare/scripts/
 mkdir /tmp/responsefiles
 
-export ANSIBLE_LOG_PATH=/tmp/step06_update_responsefiles.log
-ansible-playbook -i ${INVENTORY_FILE} -vvv step06_update_responsefiles.yaml
+export ANSIBLE_LOG_PATH=/tmp/update_responsefiles.log
+ansible-playbook -i ${INVENTORY_FILE} -vvv update_responsefiles.yaml
 
 cp /tmp/responsefiles/* /sasshare/responsefiles
 
-export ANSIBLE_LOG_PATH=/tmp/step07_install_sas.log
-ansible-playbook -i ${INVENTORY_FILE} -vvv step07_install_sas.yaml
+export ANSIBLE_LOG_PATH=/tmp/install_sas.log
+ansible-playbook -i ${INVENTORY_FILE} -vvv install_sas.yaml
 
 # Stop the midtier SAS servers
-export ANSIBLE_LOG_PATH=/tmp/step08_run_sas_servers.log
+export ANSIBLE_LOG_PATH=/tmp/run_sas_servers.log
 ansible-playbook -i ${INVENTORY_FILE} -vvv run_sas_servers.yaml --extra-vars "sas_hosts=midtier_servers sas_action=stop"
 
 # Copy the loadbalancer cert to /sasshare and run the playbook to add it to all of the SAS installations
 cp /sas/install/setup/ssl/loadbalancer.crt.pem /sasshare
-export ANSIBLE_LOG_PATH=/tmp/step09_install_loadbalancer_cert.log
+export ANSIBLE_LOG_PATH=/tmp/install_loadbalancer_cert.log
 ansible-playbook -i ${INVENTORY_FILE} -vvv install_loadbalancer_cert.yaml
 
 # Update the external URL connections for each SAS web app to use the SSL and loadbalancer DNS name
-export ANSIBLE_LOG_PATH=/tmp/step10_setSASWebUrls.log
+export ANSIBLE_LOG_PATH=/tmp/setSASWebUrls.log
 mkdir /tmp/sasfiles
 mkdir /sasshare/sasfiles
 ansible-playbook -i ${INVENTORY_FILE} -vvv create_metadata_update_scripts.yaml
@@ -85,15 +75,15 @@ cp /tmp/sasfiles/* /sasshare/sasfiles/
 ansible-playbook -i ${INVENTORY_FILE} -vvv run_metadata_update_scripts.yaml
 
 # Update the WIP Data Server to use the loadbalancer name, scheme and port for SASThemes_default
-export ANSIBLE_LOG_PATH=/tmp/step11_update_wip_server.log
+export ANSIBLE_LOG_PATH=/tmp/update_wip_server.log
 ansible-playbook -i ${INVENTORY_FILE} -vvv update_wip_server.yaml
 
 # Update the midtier server configuration files with the loadbalancer name, scheme and port
-export ANSIBLE_LOG_PATH=/tmp/step12_update_midtier_files.log
+export ANSIBLE_LOG_PATH=/tmp/update_midtier_files.log
 ansible-playbook -i ${INVENTORY_FILE} -vvv update_midtier_files.yaml
 
 # Restart the SAS servers on all installations
-export ANSIBLE_LOG_PATH=/tmp/step13_restart_servers.log
+export ANSIBLE_LOG_PATH=/tmp/restart_servers.log
 ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=metadata_servers sas_action=restart"
 ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=va_controllers sas_action=restart"
 ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=midtier_servers sas_action=restart"

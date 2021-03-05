@@ -24,7 +24,7 @@ export azurePassword="${13}"
 export PUBLIC_DNS_NAME="${14}"
 export azure_subscription="${15}"
 export azure_resource_group="${16}"
-export sas_folder="${17}"
+export sasFolder="${17}"
 
 export DIRECTORY_NFS_SHARE="/sasshare"
 export INSTALL_DIR="/sas/install"
@@ -273,12 +273,12 @@ startSASInstall() {
 	        -e "DEPOT_DOWNLOAD_LOCATION=$depot_uri" \
 	        -e "LICENCE_DOWNLOAD_LOCATION=$license_file_uri" \
 	        -e "PLANFILE_DOWNLOAD_LOCATION=$planfile_uri" \
-	        -vvv step04_download_mirror_and_licenses.yaml
+	        -vvv download_mirror_and_licenses.yaml
     fi
-    export ANSIBLE_LOG_PATH=/tmp/step01_wait_for_servers.log
-    ansible-playbook -i ${INVENTORY_FILE} -vvv step01_wait_for_servers.yaml
-    export ANSIBLE_LOG_PATH=/tmp/step02_install_os_updates.log
-    ansible-playbook -i ${INVENTORY_FILE} -vvv step02_install_os_updates.yaml
+    export ANSIBLE_LOG_PATH=/tmp/wait_for_servers.log
+    ansible-playbook -i ${INVENTORY_FILE} -vvv wait_for_servers.yaml
+    export ANSIBLE_LOG_PATH=/tmp/install_os_updates.log
+    ansible-playbook -i ${INVENTORY_FILE} -vvv install_os_updates.yaml
     popd
     pushd ${INSTALL_DIR}/scripts/install_runner
     ./wrapper__base.sh

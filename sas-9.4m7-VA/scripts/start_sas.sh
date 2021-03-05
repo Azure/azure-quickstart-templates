@@ -70,8 +70,8 @@ if [[ "${HARD}" == "hard" ]]; then
 # Wait for all the VMs to get online
 #
 
-	export ANSIBLE_LOG_PATH=/tmp/swait_for_servers.log
-	ansible-playbook -i ${INVENTORY_FILE} -v step01_wait_for_servers.yaml
+	export ANSIBLE_LOG_PATH=/tmp/wait_for_servers.log
+	ansible-playbook -i ${INVENTORY_FILE} -v wait_for_servers.yaml
 fi
 
 LOG_FILE="start_sas.log"
