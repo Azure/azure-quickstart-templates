@@ -1,0 +1,679 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "eastus",
+        "westus2",
+        "southcentralus"
+      ],
+      "metadata": {
+        "description": "The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource. When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details."
+      }
+    },
+    "vnetIPPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "The IP address prefix (CIDR range) to use when deploying the virtual network."
+      }
+    },
+    "appServiceEnvironmentSubnetIPPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "The IP address prefix (CIDR range) to use when deploying the App Service environment subnet within the virtual network."
+      }
+    },
+    "appServiceEnvironmentName": {
+      "type": "string",
+      "defaultValue": "[format('ase-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the App Service environment to create. This must be globally unique."
+      }
+    },
+    "appName": {
+      "type": "string",
+      "defaultValue": "[format('app-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the App Service application to create. This must be globally unique."
+      }
+    },
+    "appServicePlanSkuName": {
+      "type": "string",
+      "defaultValue": "I1",
+      "metadata": {
+        "description": "The name of the SKU to use when creating the App Service plan. This must be a SKU that is compatible with App Service environments, i.e. I1 or better."
+      }
+    },
+    "appServicePlanCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "The number of worker instances of your App Service plan that should be provisioned."
+      }
+    },
+    "frontDoorEndpointName": {
+      "type": "string",
+      "defaultValue": "[format('afd-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Front Door endpoint to create. This must be globally unique."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "frontDoorSkuName": "Premium_AzureFrontDoor"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "network",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vnetIPPrefix": {
+            "value": "[parameters('vnetIPPrefix')]"
+          },
+          "appServiceEnvironmentSubnetIPPrefix": {
+            "value": "[parameters('appServiceEnvironmentSubnetIPPrefix')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the virtual network resources should be deployed."
+              }
+            },
+            "vnetIPPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "The IP address prefix (CIDR range) to use when deploying the virtual network."
+              }
+            },
+            "appServiceEnvironmentSubnetIPPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "The IP address prefix (CIDR range) to use when deploying the App Service environment subnet within the virtual network."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "vnetName": "VNet",
+            "appServiceEnvironmentSubnetName": "ase",
+            "nsgName": "MyNSG"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('vnetName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vnetIPPrefix')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "[variables('appServiceEnvironmentSubnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('appServiceEnvironmentSubnetIPPrefix')]",
+                      "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+                      }
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2020-05-01",
+              "name": "[variables('nsgName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "Allow_inbound_App_Service_Management_traffic",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "454-455",
+                      "sourceAddressPrefix": "AppServiceManagement",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "Allow_inbound_load_balancer_traffic",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "16001",
+                      "sourceAddressPrefix": "AzureLoadBalancer",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "Allow_outbound_DNS_and_NTP_traffic",
+                    "properties": {
+                      "protocol": "Udp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "53",
+                        "123"
+                      ],
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "Internet",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "Allow_outbound_HTTP_and_HTTPS_traffic",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "80",
+                        "443"
+                      ],
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "Internet",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "Allow_outbound_Azure_SQL_traffic",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "1433",
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "Sql",
+                      "access": "Allow",
+                      "priority": 120,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "Allow_outbound_monitoring_traffic",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "12000",
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "Internet",
+                      "access": "Allow",
+                      "priority": 130,
+                      "direction": "Outbound"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "vnetName": {
+              "type": "string",
+              "value": "[variables('vnetName')]"
+            },
+            "appServiceEnvironmentSubnetResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('appServiceEnvironmentSubnetName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "app-service-environment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "appServiceEnvironmentName": {
+            "value": "[parameters('appServiceEnvironmentName')]"
+          },
+          "subnetResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'network'), '2019-10-01').outputs.appServiceEnvironmentSubnetResourceId.value]"
+          },
+          "appName": {
+            "value": "[parameters('appName')]"
+          },
+          "appServicePlanSkuName": {
+            "value": "[parameters('appServicePlanSkuName')]"
+          },
+          "appServicePlanCapacity": {
+            "value": "[parameters('appServicePlanCapacity')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the App Service environment resources should be deployed."
+              }
+            },
+            "appServiceEnvironmentName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the App Service environment to create. This must be globally unique."
+              }
+            },
+            "subnetResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the virtual network subnet that the App Service environment should be deployed into."
+              }
+            },
+            "appName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the App Service application to create. This must be globally unique."
+              }
+            },
+            "appServicePlanSkuName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the SKU to use when creating the App Service plan. This must be a SKU that is compatible with App Service environments, i.e. I1 or better."
+              }
+            },
+            "appServicePlanCapacity": {
+              "type": "int",
+              "metadata": {
+                "description": "The number of worker instances of your App Service plan that should be provisioned."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "appServicePlanName": "AppServicePlan",
+            "appServiceEnvironmentInternalLoadBalancingMode": "None"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/hostingEnvironments",
+              "apiVersion": "2020-06-01",
+              "name": "[parameters('appServiceEnvironmentName')]",
+              "location": "[parameters('location')]",
+              "kind": "ASEV2",
+              "properties": {
+                "location": "[parameters('location')]",
+                "name": "[parameters('appServiceEnvironmentName')]",
+                "internalLoadBalancingMode": "[variables('appServiceEnvironmentInternalLoadBalancingMode')]",
+                "virtualNetwork": {
+                  "id": "[parameters('subnetResourceId')]"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('appServicePlanName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "[parameters('appServicePlanSkuName')]",
+                "tier": "Isolated",
+                "size": "[parameters('appServicePlanSkuName')]",
+                "family": "I",
+                "capacity": "[parameters('appServicePlanCapacity')]"
+              },
+              "kind": "app",
+              "properties": {
+                "hostingEnvironmentProfile": {
+                  "id": "[resourceId('Microsoft.Web/hostingEnvironments', parameters('appServiceEnvironmentName'))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/hostingEnvironments', parameters('appServiceEnvironmentName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2020-06-01",
+              "name": "[parameters('appName')]",
+              "location": "[parameters('location')]",
+              "kind": "app",
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+                "httpsOnly": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "appHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', parameters('appName'))).defaultHostName]"
+            },
+            "appServiceResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'network')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "front-door",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "skuName": {
+            "value": "[variables('frontDoorSkuName')]"
+          },
+          "endpointName": {
+            "value": "[parameters('frontDoorEndpointName')]"
+          },
+          "originHostName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'app-service-environment'), '2019-10-01').outputs.appHostName.value]"
+          },
+          "privateEndpointResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'app-service-environment'), '2019-10-01').outputs.appServiceResourceId.value]"
+          },
+          "privateLinkResourceType": {
+            "value": "sites"
+          },
+          "privateEndpointLocation": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "originHostName": {
+              "type": "string",
+              "metadata": {
+                "description": "The host name that should be used when connecting to the origin."
+              }
+            },
+            "originPath": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "The path that should be used when connecting to the origin."
+              }
+            },
+            "endpointName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Front Door endpoint to create. This must be globally unique."
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "allowedValues": [
+                "Standard_AzureFrontDoor",
+                "Premium_AzureFrontDoor"
+              ],
+              "metadata": {
+                "description": "The name of the SKU to use when creating the Front Door profile. If you use Private Link this must be set to `Premium_AzureFrontDoor`."
+              }
+            },
+            "originForwardingProtocol": {
+              "type": "string",
+              "defaultValue": "HttpsOnly",
+              "allowedValues": [
+                "HttpOnly",
+                "HttpsOnly",
+                "MatchRequest"
+              ],
+              "metadata": {
+                "description": "The protocol that should be used when connecting from Front Door to the origin."
+              }
+            },
+            "privateEndpointResourceId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the resource ID of the Private Link resource (e.g. an App Service application, Azure Storage account, etc). If you are not using Private Link then this should be empty."
+              }
+            },
+            "privateLinkResourceType": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the resource type of the Private Link resource. The allowed value will depend on the specific Private Link resource type you are using. If you are not using Private Link then this should be empty."
+              }
+            },
+            "privateEndpointLocation": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the location of the Private Link resource. If you are not using Private Link then this should be empty."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "isPrivateLinkOrigin": "[not(equals(parameters('privateEndpointResourceId'), ''))]",
+            "privateLinkOriginDetails": {
+              "privateLink": {
+                "id": "[parameters('privateEndpointResourceId')]"
+              },
+              "groupId": "[if(not(equals(parameters('privateLinkResourceType'), '')), parameters('privateLinkResourceType'), null())]",
+              "privateLinkLocation": "[parameters('privateEndpointLocation')]",
+              "requestMessage": "Please approve this connection."
+            },
+            "profileName": "MyFrontDoor",
+            "originGroupName": "MyOriginGroup",
+            "originName": "MyOrigin",
+            "routeName": "MyRoute"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Cdn/profiles",
+              "apiVersion": "2020-09-01",
+              "name": "[variables('profileName')]",
+              "location": "global",
+              "sku": {
+                "name": "[parameters('skuName')]"
+              }
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints",
+              "apiVersion": "2020-09-01",
+              "name": "[format('{0}/{1}', variables('profileName'), parameters('endpointName'))]",
+              "location": "global",
+              "properties": {
+                "originResponseTimeoutSeconds": 240,
+                "enabledState": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups",
+              "apiVersion": "2020-09-01",
+              "name": "[format('{0}/{1}', variables('profileName'), variables('originGroupName'))]",
+              "properties": {
+                "loadBalancingSettings": {
+                  "sampleSize": 4,
+                  "successfulSamplesRequired": 3
+                },
+                "healthProbeSettings": {
+                  "probePath": "/",
+                  "probeRequestType": "HEAD",
+                  "probeProtocol": "Http",
+                  "probeIntervalInSeconds": 100
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups/origins",
+              "apiVersion": "2020-09-01",
+              "name": "[format('{0}/{1}', format('{0}/{1}', variables('profileName'), variables('originGroupName')), variables('originName'))]",
+              "properties": {
+                "hostName": "[parameters('originHostName')]",
+                "httpPort": 80,
+                "httpsPort": 443,
+                "originHostHeader": "[parameters('originHostName')]",
+                "priority": 1,
+                "weight": 1000,
+                "sharedPrivateLinkResource": "[if(variables('isPrivateLinkOrigin'), variables('privateLinkOriginDetails'), null())]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[0], split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[1])]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+              "apiVersion": "2020-09-01",
+              "name": "[format('{0}/{1}', format('{0}/{1}', variables('profileName'), parameters('endpointName')), variables('routeName'))]",
+              "properties": {
+                "originGroup": {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[0], split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[1])]"
+                },
+                "originPath": "[if(not(equals(parameters('originPath'), '')), parameters('originPath'), null())]",
+                "supportedProtocols": [
+                  "Http",
+                  "Https"
+                ],
+                "patternsToMatch": [
+                  "/*"
+                ],
+                "compressionSettings": {
+                  "contentTypesToCompress": [
+                    "application/eot",
+                    "application/font",
+                    "application/font-sfnt",
+                    "application/javascript",
+                    "application/json",
+                    "application/opentype",
+                    "application/otf",
+                    "application/pkcs7-mime",
+                    "application/truetype",
+                    "application/ttf",
+                    "application/vnd.ms-fontobject",
+                    "application/xhtml+xml",
+                    "application/xml",
+                    "application/xml+rss",
+                    "application/x-font-opentype",
+                    "application/x-font-truetype",
+                    "application/x-font-ttf",
+                    "application/x-httpd-cgi",
+                    "application/x-javascript",
+                    "application/x-mpegurl",
+                    "application/x-opentype",
+                    "application/x-otf",
+                    "application/x-perl",
+                    "application/x-ttf",
+                    "font/eot",
+                    "font/ttf",
+                    "font/otf",
+                    "font/opentype",
+                    "image/svg+xml",
+                    "text/css",
+                    "text/csv",
+                    "text/html",
+                    "text/javascript",
+                    "text/js",
+                    "text/plain",
+                    "text/richtext",
+                    "text/tab-separated-values",
+                    "text/xml",
+                    "text/x-script",
+                    "text/x-component",
+                    "text/x-java-source"
+                  ],
+                  "isCompressionEnabled": true
+                },
+                "queryStringCachingBehavior": "IgnoreQueryString",
+                "forwardingProtocol": "[parameters('originForwardingProtocol')]",
+                "linkToDefaultDomain": "Enabled",
+                "httpsRedirect": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[0], split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[1])]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[0], split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[1])]"
+              ]
+            }
+          ],
+          "outputs": {
+            "frontDoorEndpointHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[0], split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[1])).hostName]"
+            },
+            "frontDoorId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles', variables('profileName'))).frontDoorId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'app-service-environment')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "appServiceHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'app-service-environment'), '2019-10-01').outputs.appHostName.value]"
+    },
+    "frontDoorEndpointHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door'), '2019-10-01').outputs.frontDoorEndpointHostName.value]"
+    }
+  },
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.2.481.31468",
+      "templateHash": "16447205938893216481"
+    }
+  }
+}
