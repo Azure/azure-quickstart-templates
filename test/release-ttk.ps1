@@ -1,4 +1,3 @@
-
 param(
     [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
     [string]$StorageAccountName = "azurequickstartsservice",
