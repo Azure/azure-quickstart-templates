@@ -1,5 +1,5 @@
 #!/bin/bash -e
-while getopts "a:l:g:s:f:e:uvd" opt; do
+while getopts "a:l:g:s:f:e:uvdb" opt; do
     case $opt in
         a)
             artifactsStagingDirectory=$OPTARG #the folder or sample to deploy
@@ -27,6 +27,9 @@ while getopts "a:l:g:s:f:e:uvd" opt; do
         ;;
         d)
             devMode='true' #dev mode automatically selects a different parameter file without explicitly specifying it
+        ;;        
+        b)
+            bicep='true' #dev mode automatically selects a different parameter file without explicitly specifying it
         ;;
     esac
 done
@@ -35,13 +38,27 @@ done
 
 export AZURE_HTTP_USER_AGENT="AzureQuickStarts $AZURE_HTTP_USER_AGENT"
 
+# if the switch is set or the file is a bicep file
+if [[ $bicep || ($templateFile == *.bicep) ]]
+then
+    isBicep=true
+    defaultTemplateFile="main.bicep"
+else
+    isBicep=false
+    defaultTemplateFile="azuredeploy.json"
+fi
+
 if [[ -z $templateFile ]]
 then
-    templateFile="$artifactsStagingDirectory/mainTemplate.json"
-    if [ ! -f $templateFile ]
-    then
-        templateFile="$artifactsStagingDirectory/azuredeploy.json"
-    fi
+    templateFile="$artifactsStagingDirectory$defaultTemplateFile"
+fi
+
+if [[ $isBicep ]]
+then
+    bicep build $templateFile
+    # after building the script will work with the json file
+    t="${templateFile/.bicep/.json}"
+    templateFile=$t
 fi
 
 if [[ $devMode ]]

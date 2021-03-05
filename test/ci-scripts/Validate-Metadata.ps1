@@ -26,8 +26,9 @@ if ($ENV:BUILD_REASON -eq "PullRequest") {
     Catch {
         Write-Error "dateUpdate is not in the correct format: $rawDate must be in yyyy-MM-dd format."
     }
-    if ($dateUpdated -gt (Get-Date)) {
-        Write-Error "dateUpdated in metadata.json must not be in the future -- $dateUpdated is later than $(Get-Date)"
+    # Provide one day grace in the future since half the planet is ahead of UTC
+    if ($dateUpdated -gt (Get-Date).AddDays(1)) {
+        Write-Error "dateUpdated in metadata.json must not be in the future -- $dateUpdated is later than $((Get-Date).AddDays(1))"
     }
     $oldDate = (Get-Date).AddDays(-60)
     if ($dateUpdated -lt $oldDate) {

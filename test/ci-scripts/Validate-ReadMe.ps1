@@ -63,6 +63,13 @@ $links = $ARMVizLinks + $PublicLinks + $GovLinks
 
 
 Write-Output "Testing file: $SampleFolder/$ReadMeFileName"
+
+# Confirm the filename is README.md (with that exact casing)
+$readmeFile = (Get-Item $SampleFolder).GetFiles($ReadMeFileName)
+if ($readmeFile.Name -cne 'README.md') {
+    Write-Error "Readme file must be named README.md (with that exact casing)."
+}
+
 $readme = Get-Content "$SampleFolder/$ReadMeFileName" -Raw
 
 $dumpHelp = $false

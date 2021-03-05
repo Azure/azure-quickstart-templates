@@ -1,5 +1,9 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in February 9, 2021
+
+* Update DSC module cChoco from 2.4 to 2.5 to fix issue <https://github.com/chocolatey/cChoco/issues/151> 
+
 ## Enhancements & bug-fixes - Published in December 10, 2020
 
 * Update all Chocolatey packages to their latest version
