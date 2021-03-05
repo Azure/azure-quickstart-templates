@@ -1,0 +1,506 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.1",
+    "parameters": {
+        "NetworkSecurityGroupName": {
+            "type": "string",
+            "defaultValue": "KubeSphereRG-NSG",
+            "metadata": {
+                "description": "Name of new or existing network security group"
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "defaultValue": "KubeSphereRG-vnet",
+            "metadata": {
+                "description": "Name of new or existing virtual network"
+            }
+        },
+        "addressSpaces": {
+            "type": "array",
+            "defaultValue": [
+                "10.10.0.0/16"
+            ],
+            "metadata": {
+                "description": "The spaces of address"
+            }
+        },
+        "AKSSubnetName": {
+            "type": "string",
+            "defaultValue": "KubeSphereRG-vnet-aks",
+            "metadata": {
+                "description": "The name of new or existing AKS subnet"
+            }
+        },
+        "AKSSubnetAddressRange": {
+            "type": "string",
+            "defaultValue": "10.10.128.0/20",
+            "metadata": {
+                "description": "The address range of AKS subnet"
+            }
+        },
+        "AKSServiceAddressRange": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "The address range of AKS service, it must not overlap with any subnet IP ranges"
+            }
+        },
+        "AKSdnsServiceIP": {
+            "type": "string",
+            "defaultValue": "10.0.0.10",
+            "metadata": {
+                "description": "The dns  service IP in AKS"
+            }
+        },
+        "dockerBridgeCidr": {
+            "type": "string",
+            "defaultValue": "172.17.0.1/16",
+            "metadata": {
+                "description": "The bridge cidr for docker。"
+            }
+        },
+        "ClientSubnetName": {
+            "type": "string",
+            "defaultValue": "KubeSphereRG-vnet-client",
+            "metadata": {
+                "description": "The name of new or existing client subnet"
+            }
+        },
+        "ClientSubnetAddressRange": {
+            "type": "string",
+            "defaultValue": "10.10.10.0/24",
+            "metadata": {
+                "description": "The name of new or existing client subnet"
+            }
+        },
+        "AKSresourceName": {
+            "type": "string",
+            "defaultValue": "AKS-KubeSphere",
+            "metadata": {
+                "description": "The name of AKS resource"
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_F8s_v2",
+            "metadata": {
+                "description": "virtual machine resource size，default Standard_F8s_v2 - 8vcpu、16GiB"
+            }
+        },
+        "osDiskSizeGB": {
+            "type": "int",
+            "defaultValue": 0,
+            "metadata": {
+                "description": "Disk size (in GB) to provision for each of the agent pool nodes. This value ranges from 0 to 1023. Specifying 0 will apply the default disk size for that agentVMSize."
+            },
+            "minValue": 0,
+            "maxValue": 1023
+        },
+        "dnsPrefix": {
+            "type": "string",
+            "defaultValue": "AKS-KubeSphere-dns",
+            "metadata": {
+                "description": "Optional DNS prefix to use with hosted Kubernetes API server FQDN."
+            }
+        },
+        "kubernetesVersion": {
+            "type": "string",
+            "allowedValues": [
+                "1.17.13",
+                "1.17.16",
+                "1.18.10",
+                "1.18.14",
+                "1.19.6",
+                "1.19.7"
+            ],
+            "defaultValue": "1.18.14",
+            "metadata": {
+                "description": "The version of Kubernetes."
+            }
+        },
+        "MasterNodeCount": {
+            "type": "int",
+            "defaultValue": 3,
+            "allowedValues": [
+                1,
+                3,
+                5
+            ],
+            "metadata": {
+                "description": "The number of Master node."
+            }
+        },
+        "WorkerNodeCount": {
+            "type": "int",
+            "defaultValue": 3,
+            "allowedValues": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+            ],
+            "metadata": {
+                "description": "The number of Worker node."
+            }
+        },
+        "enablePrivateCluster": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Enable private network access to the kubernetes cluster."
+            }
+        },
+        "ClientResourceName": {
+            "type": "string",
+            "defaultValue": "aksclient",
+            "metadata": {
+                "description": "The name of AKS client node"
+            }
+        },
+        "ClientNodeNetworkInterfaceName": {
+            "type": "string",
+            "defaultValue": "ksnode-nic",
+            "metadata": {
+                "description": "The name of new or existing client node network interface."
+            }
+        },
+        "ClientNodeEnableAcceleratedNetworking": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Enable client node network accelerated."
+            }
+        },
+        "ClientosDiskType": {
+            "type": "string",
+            "allowedValues": [
+                "StandardSSD_LRS",
+                "Premium_LRS"
+            ],
+            "defaultValue": "StandardSSD_LRS",
+            "metadata": {
+                "description": "Client os Disk type"
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "aksuser",
+            "metadata": {
+                "description": "Client node admin user name."
+            }
+        },
+        "adminPassword": {
+            "type": "string",
+            "defaultValue": "ABCabc321",
+            "metadata": {
+                "description": "Client node admin user password."
+            }
+        },
+        "CloudName": {
+            "type": "string",
+            "defaultValue": "AzureGlobalCloud",
+            "allowedValues": [
+                "AzureChinaCloud",
+                "AzureGlobalCloud"
+            ],
+            "metadata": {
+                "description": "AzureChinaCloud users should change it."
+            }
+        },
+        "SPName": {
+            "type": "string",
+            "metadata": {
+                "description": "Service Principal User Name."
+            }
+        },
+        "SPPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Service Principal User Password."
+            }
+        },
+        "SPTenant": {
+            "type": "string",
+            "metadata": {
+                "description": "Service Principal User Tenant."
+            }
+        },
+        "SubscriptionID": {
+            "type": "string",
+            "metadata": {
+                "description": "SubscriptionID."
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/aks-kubesphere-linux/",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "AKSDeploymentTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/AKS.json', parameters('_artifactsLocationSasToken')))]",
+        "ClientNodeDeploymentTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/clientnode.json', parameters('_artifactsLocationSasToken')))]",
+        "KubeSphereInstallScriptUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/deployKubeSphere.sh', parameters('_artifactsLocationSasToken')))]",
+        "KubeSphereInstallScriptFileName": "deployKubeSphere.sh",
+        "osDiskSizeGB": "[parameters('osDiskSizeGB')]",
+        "networkPlugin": "azure",
+        "vmssNodePool": true,
+        "networkPolicy": "azure",
+        "ddosProtectionPlanEnabled": false,
+        "networkSecurityGroupID": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups/', parameters('NetworkSecurityGroupName'))]",
+        "virtualNetworkId": "[resourceId(resourceGroup().name,'Microsoft.Network/VirtualNetworks',parameters('virtualNetworkName'))]",
+        "AKSsubnetRefID": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'),parameters('AKSSubnetName'))]",
+        "ClientsubnetRefID": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'),parameters('ClientSubnetName'))]",
+        "ClientPublicIpAddressName": "ClientNode-PIP",
+        "ClientPublicIpAddressType": "Dynamic",
+        "ClientPublicIpAddressSku": "Basic",
+        "location": "[resourceGroup().location]"
+    },
+    "resources": [
+        {
+            "name": "[parameters('virtualNetworkName')]",
+            "type": "Microsoft.Network/VirtualNetworks",
+            "apiVersion": "2019-04-01",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('NetworkSecurityGroupName'))]"
+            ],
+            "tags": {},
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('addressSpaces')]"
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('AKSSubnetName')]",
+                        "properties": {
+                            "addressPrefix" : "[parameters('AKSSubnetAddressRange')]",
+                            "networkSecurityGroup": {
+								"id": "[variables('networkSecurityGroupID')]"
+							}
+                        }
+                    },
+                    {
+                        "name": "[parameters('ClientSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('ClientSubnetAddressRange')]",
+                            "networkSecurityGroup": {
+								"id": "[variables('networkSecurityGroupID')]"
+							}
+                        }
+                    }
+                ],
+                "enableDdosProtection": "[variables('ddosProtectionPlanEnabled')]"
+            }
+        },
+		{
+			"apiVersion": "2019-09-01",
+			"type": "Microsoft.Network/networkSecurityGroups",
+			"name": "[parameters('NetworkSecurityGroupName')]",
+			"location": "[variables('location')]",
+			"tags": {},
+			"properties": {
+				"securityRules": [
+					{
+						"name": "allowSSHin_all",
+						"properties": {
+							"description": "Allow SSH in from all locations",
+							"protocol": "Tcp",
+							"sourcePortRange": "*",
+							"destinationPortRange": "22",
+							"sourceAddressPrefix": "*",
+							"destinationAddressPrefix": "*",
+							"access": "Allow",
+							"priority": 100,
+							"direction": "Inbound"
+						}
+					},
+					{
+						"name": "allowKSConsolein_all",
+						"properties": {
+							"description": "Allow KS Console in from all locations",
+							"protocol": "Tcp",
+							"sourcePortRange": "*",
+							"destinationPortRange": "30880",
+							"sourceAddressPrefix": "*",
+							"destinationAddressPrefix": "*",
+							"access": "Allow",
+							"priority": 210,
+							"direction": "Inbound"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "AKSDeployment",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-05-01",
+			"dependsOn": [
+				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('AKSDeploymentTemplateUrl')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"AKSresourceName": {
+                        "value": "[parameters('AKSresourceName')]"
+                    },
+					"location": {
+                        "value": "[variables('location')]"
+                    },
+					"dnsPrefix": {
+                        "value": "[parameters('dnsPrefix')]"
+                    },
+                    "serviceCidr": {
+                        "value": "[parameters('AKSServiceAddressRange')]"
+                    },
+                    "dnsServiceIP": {
+                        "value": "[parameters('AKSdnsServiceIP')]"
+                    },
+                    "dockerBridgeCidr": {
+                        "value": "[parameters('dockerBridgeCidr')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+					"osDiskSizeGB": {
+                        "value": "[variables('osDiskSizeGB')]"
+                    },
+					"kubernetesVersion": {
+                        "value": "[parameters('kubernetesVersion')]"
+                    },
+					"MasterNodeCount": {
+                        "value": "[parameters('MasterNodeCount')]"
+                    },
+					"WorkerNodeCount": {
+                        "value": "[parameters('WorkerNodeCount')]"
+                    },
+					"networkPlugin": {
+                        "value": "[variables('networkPlugin')]"
+                    },
+                    "vnetSubnetID": {
+                        "value": "[variables('AKSsubnetRefID')]"
+                    },
+					"vmssNodePool": {
+                        "value": "[variables('vmssNodePool')]"
+                    },
+					"enablePrivateCluster": {
+                        "value": "[parameters('enablePrivateCluster')]"
+                    },
+					"networkPolicy": {
+                        "value": "[variables('networkPolicy')]"
+                    }
+				}
+			}
+		},
+        {
+			"name": "CreateClientNode",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-05-01",
+			"dependsOn": [
+				"AKSDeployment"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('ClientNodeDeploymentTemplateUrl')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"location": {
+                        "value": "[variables('location')]"
+                    },
+					"ClientNodeNetworkInterfaceName": {
+                        "value": "[parameters('ClientNodeNetworkInterfaceName')]"
+                    },
+					"enableAcceleratedNetworking": {
+                        "value": "[parameters('ClientNodeEnableAcceleratedNetworking')]"
+                    },
+					"networkSecurityGroupID": {
+                        "value": "[variables('networkSecurityGroupID')]"
+                    },
+					"subnetName": {
+                        "value": "[parameters('ClientSubnetName')]"
+                    },
+                    "clientsubnetid": {
+                        "value": "[variables('ClientsubnetRefID')]"
+                    },
+					"virtualNetworkId": {
+                        "value": "[variables('virtualNetworkId')]"
+                    },
+					"publicIpAddressName": {
+                        "value": "[variables('ClientPublicIpAddressName')]"
+                    },
+					"publicIpAddressType": {
+                        "value": "[variables('ClientPublicIpAddressType')]"
+                    },
+					"publicIpAddressSku": {
+                        "value": "[variables('ClientPublicIpAddressSku')]"
+                    },
+					"virtualMachineName": {
+                        "value": "[parameters('ClientResourceName')]"
+                    },
+					"virtualMachineComputerName": {
+                        "value": "[parameters('ClientResourceName')]"
+                    },
+					"osDiskType": {
+                        "value": "[parameters('ClientosDiskType')]"
+                    },
+					"virtualMachineSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+					"adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+					"adminPassword":{
+                        "value": "[parameters('adminPassword')]"
+                    },
+					"CloudName": {
+                        "value": "[parameters('CloudName')]"
+                    },
+					"SPName": {
+                        "value": "[parameters('SPName')]"
+                    },
+					"SPPassword": {
+                        "value": "[parameters('SPPassword')]"
+                    },
+					"SPTenant": {
+                        "value": "[parameters('SPTenant')]"
+                    },
+					"SubscriptionID": {
+                        "value": "[parameters('SubscriptionID')]"
+                    },
+					"ResourceGroup": {
+                        "value": "[resourceGroup().name]"
+                    },
+                    "AKSresourceName": {
+                        "value": "[parameters('AKSresourceName')]"
+                    },
+					"KubeSphereInstallScriptUrl": {
+                        "value": "[variables('KubeSphereInstallScriptUrl')]"
+                    },
+					"KubeSphereInstallScriptFileName": {
+                        "value": "[variables('KubeSphereInstallScriptFileName')]"
+                    }
+				}
+			}
+		}
+    ],
+    "outputs": {}
+}
