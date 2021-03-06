@@ -23,8 +23,6 @@ The Function App uses the AzureWebJobsStorage and WEBSITE_CONTENTAZUREFILECONNEC
 
 The Azure Function app provisioned in this sample uses an [Azure Functions Elastic Premium plan](https://docs.microsoft.com/azure/azure-functions/functions-premium-plan#features). 
 
-If you don't execute the optional inline deployment script, specify the plan size that you want in the "initialplansize" parameter, and you can ignore the "finalplansize" parameter. Otherwise, set "initialplansize" to a value that is different from the size you want the plan to use.
-
 ### Azure Storage account
 
 The Storage account that the Function uses for operation and for file contents. 
@@ -68,32 +66,24 @@ The following DNS zones are created in this sample:
 
 ### Optional in-line deployment script
 
-After the first time you configure the Function App to talk to the private endpoint-enabled Storage account, you may need to vertically scale the Plan and connect to the file system via Kudu (eg by performing a content deployment or by making a GET request to the Kudu /DebugConsole) to refresh the SMB connection so that the Function App can successfully retrieve the contents from the Storage account. The optional deployment script in this template automates these steps.
+After the first time you configure the Function App to talk to the private endpoint-enabled Storage account, you may need to connect to the file system via Kudu (eg by performing a content deployment or by making a GET request to the Kudu /DebugConsole) to refresh the SMB connection so that the Function App can successfully retrieve the contents from the Storage account. The optional deployment script in this template automates these steps.
 
-The script will change the size of the plan, and then retrieve the site-level credentials from the publish profile and make an authenticated request to the Kudu /Debugconsole page of the Function App.
+The script will retrieve the site-level credentials from the publish profile and make an authenticated request to the Kudu /Debugconsole page of the Function App.
 
 #### Prerequisites to run the in-line deployment script
 
-You will need a user-assigned managed identity to run the script because the script performs actions upon Azure resources.
+You will need a user-assigned managed identity to run the script because the script performs actions upon a Azure resources. The managed identity must have permissions to perform deployment-related operations on Function Apps in the scope of the deployment.
 
-The principal that is used to deploy the ARM template will need Managed Identity Operator permissions in order to use the managed identity. The deployment principal will also need the permissions described in [this document] in order to run the deployment script, in addition to permissions to deploy the specific resource types that are included in the main template. If you are using a deployment principal is assigned the Contributor role to the resource group, then the principal would already have these permissions and you shouldn't need to assign the Managed Identity Operator role or create a custom role for these actions.
+Your deployment principal must either be at least a Contributor in the scope of the deployment or, if you are using a using custom role, have the additional permissions described in [this document](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template#configure-the-minimum-permissions).
 
 The prereqs template does the following:
 - Creates a user-assigned managed identity.
-- Creates a custom role with the necessary permissions to perform operations on Function Apps and App Service Plans and assigns this role to the managed identity. By default, the role is created and assigned in the scope of the resource group.
-- If the isContributor parameter is set to false: creates a custom role with the necessary permissions to run the deployment script and assigns this role to the deployment principal. By default, the role is created in the scope of the resource group and assigned in the scope of the resource group.
-- If the isContributor parameter is set to false: Assigns the deployment principal as a Managed Identity Operator to the managed identity.
+- Creates a custom role with the necessary permissions to perform deployment-related operations on Microsoft.Web/sites and assigns this role to the managed identity. By default, the role is created and assigned in the scope of the resource group.
 
-In order to run the prereq template, you must have access to the Microsoft.Authorization/roleAssignments/write operation in the scope that you are running the deployment. The Owner and User Access Administrator built-in roles have access to this operation.
-
-By default, the template assumes that the principal is a Contributor and does not assign permissions to the principal and you don't need to specify a value for the principleId parameter. If you set the isContributor parameter to false, you will need to provide the object id of an existing deployment principal for the principleId parameter.
-Note: The object id of a service principal is different from the object id of the AAD App registration. 
-You can get the object id of a service principal via [PowerShell](https://docs.microsoft.com/en-us/powershell/module/azuread/get-azureadserviceprincipal?view=azureadps-2.0#example-2--retrieve-a-service-principal-by-id
-) or [CLI](https://docs.microsoft.com/en-us/cli/azure/ad/sp?view=azure-cli-latest#az_ad_sp_show-examples).
+In order to run the prereq template, you must have Microsoft.Authorization/roleAssignments/write permissions, such as User Access Administrator or Owner.
 
 #### Using the deployment script in the main template
 
 To execute the inline deployment script in the main template:
 - For the postDeploymentScript parameter, specify either "azpowershell" or "azcli" depending on which modules your deployment environment has. If you leave the value as "none", the inline deployment script won't get executed.
-- For the "userIdentity" and "userIdentityResourceGroup" parameters, specify values that correpond to an existing User Managed Identity that has the necessary permissions described [here](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template#configure-the-minimum-permissions).
-- Specify the plan size that you want in the "finalplansize" parameter, and specify a different plan size in the "initialplansize" parameter. For example, if you want the plan size to be EP1, specify "EP2" for the "initialplansize" parameter and specify "EP1" for the "finalplansize" parameter. This way, 
+- For the "identityName", specify an existing user-assigned managed identity that meets the prerequisites described above. By default, the "identityNameResourceGroup" parameter assumes that the managed identity is in the same resource group that the main template is being deployed to.
