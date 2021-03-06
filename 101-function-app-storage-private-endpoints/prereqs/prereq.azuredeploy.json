@@ -9,25 +9,11 @@
         "description": "Location to deploy resources to."
       }
     },
-    "isContributor": {
-      "type": "bool",
-      "defaultValue": true,
-      "metadata": {
-        "description": "If the deployment principal is not a contributor and doesn't have the necessary permissions to run a Microsoft.Resources/deploymentScripts script, set this to false so that the custom role will be created and assigned to the principal. "
-      }
-    },
     "identityName": {
       "type": "string",
       "defaultValue": "[concat('deploymentscriptidentity', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Name of the user managed identity that will be used to run the deployment script"
-      }
-    },
-    "principleId": {
-      "type": "string",
-      "defaultValue": "none",
-      "metadata": {
-        "description": "The object id of the deployment principal that will be used to deploy an ARM template that contains a Microsoft.Resources/deploymentScripts resource. You will need to specify this parameter if you set the isContributor parameter to false."
       }
     },
     "identityRoleName": {
@@ -37,13 +23,6 @@
         "description": "Configure least privilege for the managed identity to use the deployment script"
       }
     },
-    "principalRoleName": {
-      "type": "string",
-      "defaultValue": "[concat('deployment-principal-run-deployment-script', uniqueString(resourceGroup().id))]",
-      "metadata": {
-        "description": "Configure least privilege for the deployment principal to run the deployment script"
-      }
-    },
     "identityRoleDescription": {
       "type": "string",
       "defaultValue": "Configure least privilege for the managed identity to use the deployment script",
@@ -51,57 +30,32 @@
         "description": "Detailed description of the custom role definition for the managed identity"
       }
     },
-    "principalRoleDescription": {
-      "type": "string",
-      "defaultValue": "Configure least privilege for the deployment principal in deployment script",
-      "metadata": {
-        "description": "Detailed description of the custom role definition for the deployment principal"
-      }
-    },
     "identityActions": {
       "type": "array",
       "defaultValue": [
-        "Microsoft.Web/serverfarms/*",
         "Microsoft.Web/sites/*"
       ],
       "metadata": {
         "description": "Array of actions that the user identity needs to run the deployment script to perform actions upon the Function App and Elastic Premium Plan."
       }
     },
-    "principalActions": {
-      "type": "array",
-      "defaultValue": [
-        "Microsoft.Storage/storageAccounts/*",
-        "Microsoft.ContainerInstance/containerGroups/*",
-        "Microsoft.Resources/deployments/*",
-        "Microsoft.Resources/deploymentScripts/*"
-      ],
-      "metadata": {
-        "description": "Array of actions for the custom roleDefinition for the deployment principal to run the deployment script"
-      }
-    },
     "notActions": {
       "type": "array",
       "defaultValue": [],
       "metadata": {
-        "description": "Array of notActions for the custom roleDefinitions"
+        "description": "Array of notActions for the custom roleDefinition"
       }
     },
     "assignableScope": {
       "type": "string",
       "defaultValue": "[resourcegroup().id]",
       "metadata": {
-        "description": "The scope of the custom role definitions"
+        "description": "The scope of the custom role definition"
       }
     }
   },
   "variables": {
-    "identityCustomRoleDefName": "[guid(resourcegroup().id, 'identityDeploymentRole')]",
-    "principalCustomRoleDefName": "[guid(resourcegroup().id, 'principalDeploymentRole')]",
-    "identityCustomRoleAssignmentName": "[guid(resourcegroup().id, 'identityDeploymentRoleAssignment')]",
-    "principalCustomRoleAssignmentName": "[guid(resourcegroup().id, 'principalDeploymentRoleAssignment')]",
-    "managedIdentityOperatorRoleDefId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'f1a07417-d97a-45cb-824c-7a7467783830')]",
-    "managedIdentityOperatorRoleAssignmentName": "[guid(resourcegroup().id, 'ManagedIdentityOperatorRoleAssignment')]"
+    "identityCustomRoleDefName": "[guid(resourcegroup().id, 'identityDeploymentRole')]"
   },
   "resources": [
     {
@@ -136,68 +90,14 @@
     {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2020-04-01-preview",
-      "name": "[variables('identityCustomRoleAssignmentName')]",
+      "name": "[guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName')), variables('identityCustomRoleDefName'), parameters('assignableScope'))]",
       "dependsOn": [
         "[resourceId('Microsoft.Authorization/roleDefinitions', variables('identityCustomRoleDefName'))]"
       ],
       "properties": {
-        "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('identityCustomRoleDefName'))]",
-        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName')), '2015-08-31-preview').principalId]",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('identityCustomRoleDefName'))]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName')), '2018-11-30').principalId]",
         "principalType": "ServicePrincipal"
-      }
-    },
-    {
-      "type": "Microsoft.Authorization/roleDefinitions",
-      "apiVersion": "2018-01-01-preview",
-      "name": "[variables('principalCustomRoleDefName')]",
-      "condition": "[not(parameters('isContributor'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]",
-        "[resourceId('Microsoft.Authorization/roleDefinitions', variables('identityCustomRoleDefName'))]"
-      ],
-      "properties": {
-        "roleName": "[parameters('principalRoleName')]",
-        "description": "[parameters('principalRoleDescription')]",
-        "type": "customRole",
-        "isCustom": true,
-        "permissions": [
-          {
-            "actions": "[parameters('principalActions')]",
-            "notActions": "[parameters('notActions')]"
-          }
-        ],
-        "assignableScopes": [
-          "[parameters('assignableScope')]"
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2020-04-01-preview",
-      "name": "[variables('principalCustomRoleAssignmentName')]",
-      "condition": "[not(parameters('isContributor'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Authorization/roleDefinitions', variables('principalCustomRoleDefName'))]",
-        "[resourceId('Microsoft.Authorization/roleAssignments', variables('identityCustomRoleAssignmentName'))]"
-      ],
-      "properties": {
-        "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('principalCustomRoleDefName'))]",
-        "principalId": "[parameters('principleId')]"
-      }
-    },
-    {
-      "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2020-04-01-preview",
-      "name": "[variables('managedIdentityOperatorRoleAssignmentName')]",
-      "condition": "[not(parameters('isContributor'))]",
-      "scope": "[concat('Microsoft.ManagedIdentity/userAssignedIdentities', '/', parameters('identityName'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]",
-        "[resourceId('Microsoft.Authorization/roleAssignments', variables('principalCustomRoleAssignmentName'))]"
-      ],
-      "properties": {
-        "roleDefinitionId": "[variables('ManagedIdentityOperatorRoleDefId')]",
-        "principalId": "[parameters('principleId')]"
       }
     }
   ],
