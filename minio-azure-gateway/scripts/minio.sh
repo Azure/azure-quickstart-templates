@@ -14,5 +14,7 @@ helm upgrade --install --wait minio minio/minio --set azuregateway.enabled=true 
 # Get load balancer IP, once available
 until [ $(kubectl get service minio -o=jsonpath='{...ip}') != "" ]; do sleep 15; done
 serviceIp=$(kubectl get service minio -o=jsonpath='{...ip}')
+#Configure Pod Autoscaler
+kubectl autoscale deployment minio --cpu-percent=60 --min=3 --max=50
 # Create output for S3 endpoint IP 
 echo \{\"loadBalancerIP\":\"$serviceIp\"\} > $AZ_SCRIPTS_OUTPUT_PATH
