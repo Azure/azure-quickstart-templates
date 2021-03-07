@@ -19,6 +19,11 @@ This sample Azure Resource Manager template deploys an Azure Function App that c
 
 The Function App uses the AzureWebJobsStorage and WEBSITE_CONTENTAZUREFILECONNECTIONSTRING app settings to connect to a private endpoint-secured Storage Account.
 
+In order for the host.json to get generated when using Storage with private endpoints, you may need to do a content deployment or connect to the Function App's file system via Kudu.
+By default, this template does a zipdeploy of a default default host.json, for the purpose of having a Function App that is immediately running after ARM deployment.
+By default, WEBSITE_RUN_FROM_PACKAGE is set to 0 to help ensure that the zipdeploy ARM extension deployment succeeds.
+If you are planning to do a separate code deployment immediately after resource deployment, set the useZipDeployExtension parameter to false and you can set [WEBSITE_RUN_FROM_PACKAGE](https://docs.microsoft.com/en-us/azure/azure-functions/run-functions-from-deployment-package#enabling-functions-to-run-from-a-package) to the mode that you are planning to use for your deployment.
+
 ### Elastic Premium Plan
 
 The Azure Function app provisioned in this sample uses an [Azure Functions Elastic Premium plan](https://docs.microsoft.com/azure/azure-functions/functions-premium-plan#features). 
@@ -63,27 +68,3 @@ The following DNS zones are created in this sample:
 ### Application Insights
 
 [Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to [monitor the Azure Function](https://docs.microsoft.com/azure/azure-functions/functions-monitoring).
-
-### Optional in-line deployment script
-
-After the first time you configure the Function App to talk to the private endpoint-enabled Storage account, you may need to connect to the file system via Kudu (eg by performing a content deployment or by making a GET request to the Kudu /DebugConsole) to refresh the SMB connection so that the Function App can successfully retrieve the contents from the Storage account. The optional deployment script in this template automates these steps.
-
-The script will retrieve the site-level credentials from the publish profile and make an authenticated request to the Kudu /Debugconsole page of the Function App.
-
-#### Prerequisites to run the in-line deployment script
-
-You will need a user-assigned managed identity to run the script because the script performs actions upon a Azure resources. The managed identity must have permissions to perform deployment-related operations on Function Apps in the scope of the deployment.
-
-Your deployment principal must either be at least a Contributor in the scope of the deployment or, if you are using a using custom role, have the additional permissions described in [this document](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template#configure-the-minimum-permissions).
-
-The prereqs template does the following:
-- Creates a user-assigned managed identity.
-- Creates a custom role with the necessary permissions to perform deployment-related operations on Microsoft.Web/sites and assigns this role to the managed identity. By default, the role is created and assigned in the scope of the resource group.
-
-In order to run the prereq template, you must have Microsoft.Authorization/roleAssignments/write permissions, such as User Access Administrator or Owner.
-
-#### Using the deployment script in the main template
-
-To execute the inline deployment script in the main template:
-- For the postDeploymentScript parameter, specify either "azpowershell" or "azcli" depending on which modules your deployment environment has. If you leave the value as "none", the inline deployment script won't get executed.
-- For the "identityName", specify an existing user-assigned managed identity that meets the prerequisites described above. By default, the "identityNameResourceGroup" parameter assumes that the managed identity is in the same resource group that the main template is being deployed to.
