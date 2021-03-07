@@ -48,23 +48,15 @@ The SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visu
 
 <a name="compute"></a>
 #### SAS Visual Analytics in SAS 9.4M7 and SAS Visual Statistics in SAS 9.4M7 server
-We  recommend that you use at least the memory optimized Standard E16s_v3 VM size.
-
-Here are some recommended example VM sizes based on the number of licensed cores:
-
-| Licensed Cores  | Virtual Machine| SKU	Memory(RAM) | Maximum Data Set Size | Cache Size |
-| ------------- | ------------- | ------------- | ------------- | ------------- |
-|4  | Standard_E8s_v3   | 64 GB  | 20-40 GB	  |128 GB  |
-| 8 | Standard_E16s_v3  | 128 GB  |20-40 GB	  |256 GB  |
-| 16  | Standard_E32s_v3| 256 GB  | 90-170 GB |512 GB  |
+We  recommend that you work with your SAS account team to form a hardware estimate, and use the instance sizes from the hardware estimate.  See [Best Practices for using Microsoft Azure with SAS](https://communities.sas.com/t5/Administration-and-Deployment/Best-Practices-for-Using-Microsoft-Azure-with-SAS/m-p/676833#M19680) for more information.
 
 <a name="midtier"></a>
 #### SAS 9.4M7 Middle Tier server
-We  recommend that you use one or two of the memory optimized Standard E16s_v3 VM size at least.
+We  recommend that you work with your SAS account team to form a hardware estimate, and use the instance sizes from the hardware estimate.  See [Best Practices for using Microsoft Azure with SAS](https://communities.sas.com/t5/Administration-and-Deployment/Best-Practices-for-Using-Microsoft-Azure-with-SAS/m-p/676833#M19680) for more information.
 
 <a name="metadata"></a>
 #### SAS 9.4M7 Metadata clustered server
-We  recommend that you use one or three of the memory optimized Standard E16s_v3 VM size at least.
+We  recommend that you work with your SAS account team to form a hardware estimate, and use the instance sizes from the hardware estimate.  See [Best Practices for using Microsoft Azure with SAS](https://communities.sas.com/t5/Administration-and-Deployment/Best-Practices-for-Using-Microsoft-Azure-with-SAS/m-p/676833#M19680) for more information.
 
 <a name="architecture"></a>
 ## Architecture
@@ -94,7 +86,7 @@ Before deploying the SAS 9.4 Quickstart Template for Azure with SAS Visual Analy
 
 * A software depot that has been downloaded with the SAS Download Manager (per the instructions in the Software Order Email) to a folder similar to this: /<download_folder_name>/nondist/depot.
 
-* Sufficient quota of at least ## Cores, based on four licensed SAS cores in an SMP environment.  In MPP environments, apply this sizing to the CAS workers as well as the CAS controller.
+* Sufficient number of cores. We  recommend that you work with your SAS account team to form a hardware estimate, and use the instance sizes from the hardware estimate.  See [Best Practices for using Microsoft Azure with SAS](https://communities.sas.com/t5/Administration-and-Deployment/Best-Practices-for-Using-Microsoft-Azure-with-SAS/m-p/676833#M19680) for more information.
 
 *  Verification that your required SAS 9.4M7 file upload sizes do not exceed the limits of the Application Gateway. For details about limits, see 
 ["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
