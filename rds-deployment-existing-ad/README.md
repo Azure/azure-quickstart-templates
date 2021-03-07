@@ -1,4 +1,4 @@
-# Create Remote Desktop Sesson Collection deployment
+# Create Remote Desktop Session Collection deployment
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/rds-deployment-existing-ad/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/rds-deployment-existing-ad/PublicDeployment.svg)
