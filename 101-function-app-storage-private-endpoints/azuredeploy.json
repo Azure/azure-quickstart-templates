@@ -44,7 +44,7 @@
         "description": "The subnet that the Function App will use for VNET traffic."
       }
     },
-    "storagePESubnetName": {
+    "privateEndpointSubnetName": {
       "type": "string",
       "defaultValue": "StoragePESubnet",
       "metadata": {
@@ -79,30 +79,25 @@
         "description": "Storage account's private endpoint's subnet address range."
       }
     },
-    "postDeploymentScript": {
-      "type": "string",
-      "defaultValue": "none",
-      "allowedValues": [
-        "none",
-        "azpowershell",
-        "azcli"
-      ],
+    "useZipDeployExtension": {
+      "type": "bool",
+      "defaultValue": true,
       "metadata": {
-        "description": "An optional script to run after resource deployment to help ensure that the Functions host is able to start after the content share is pointing to the secured Storage account. This script will make an authenticated GET request to the Function App's Kudu site. If none is specified, this script won't be run."
+        "description": "Specify whether to use the ZipDeploy ARM extension within this ARM template deployment."
       }
     },
-    "identityName": {
+    "WEBSITE_RUN_FROM_PACKAGE": {
       "type": "string",
-      "defaultValue": "GET-PREREQ-identityName",
+      "defaultValue": "0",
       "metadata": {
-        "description": "Name of an existing user managed identity used to run the optional deployment script. This parameter will be ignored if you don't specify azpowershell or azcli for the postDeploymentScript parameter."
+        "description": "The value that will be used for the WEBSITE_RUN_FROM_PACKAGE app setting on the Function App. If setting the useZipDeployExtension parameter to true, set WEBSITE_RUN_FROM_PACKAGE to 0 otherwise the resource deployment may fail."
       }
     },
-    "identityNameResourceGroup": {
+    "packageUri": {
       "type": "string",
-      "defaultValue": "[resourceGroup().name]",
+      "defaultValue": "https://github.com/Azure/azure-quickstart-templates/101-function-app-storage-private-endpoints/raw/master/zip/host.json.zip",
       "metadata": {
-        "description": "Resource group of existing user managed identity used to run the optional deployment script. This parameter will be ignored if you don't specify azpowershell or azcli for the postDeploymentScript parameter."
+        "description": "The package that will be deployed if the useZipDeployExtension parameter is set to true."
       }
     }
   },
@@ -151,7 +146,7 @@
             }
           },
           {
-            "name": "[parameters('storagePESubnetName')]",
+            "name": "[parameters('privateEndpointSubnetName')]",
             "properties": {
               "addressPrefix": "[parameters('privateEndpointSubnetAddressPrefix')]",
               "privateLinkServiceNetworkPolicies": "Enabled",
@@ -209,25 +204,37 @@
       "type": "Microsoft.Network/privateDnsZones",
       "apiVersion": "2020-06-01",
       "name": "[concat('privatelink.file.', environment().suffixes.storage)]",
-      "location": "global"
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/privateDnsZones",
       "apiVersion": "2020-06-01",
       "name": "[concat('privatelink.blob.', environment().suffixes.storage)]",
-      "location": "global"
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/privateDnsZones",
       "apiVersion": "2020-06-01",
       "name": "[concat('privatelink.queue.', environment().suffixes.storage)]",
-      "location": "global"
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/privateDnsZones",
       "apiVersion": "2020-06-01",
       "name": "[concat('privatelink.table.', environment().suffixes.storage)]",
-      "location": "global"
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
@@ -304,7 +311,7 @@
       ],
       "properties": {
         "subnet": {
-          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('storagePESubnetName') )]"
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('privateEndpointSubnetName') )]"
         },
         "privateLinkServiceConnections": [
           {
@@ -330,7 +337,7 @@
       ],
       "properties": {
         "subnet": {
-          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('storagePESubnetName') )]"
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('privateEndpointSubnetName') )]"
         },
         "privateLinkServiceConnections": [
           {
@@ -356,7 +363,7 @@
       ],
       "properties": {
         "subnet": {
-          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('storagePESubnetName'))]"
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('privateEndpointSubnetName'))]"
         },
         "privateLinkServiceConnections": [
           {
@@ -382,7 +389,7 @@
       ],
       "properties": {
         "subnet": {
-          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('storagePESubnetName'))]"
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('privateEndpointSubnetName'))]"
         },
         "privateLinkServiceConnections": [
           {
@@ -544,6 +551,10 @@
               "value": "dotnet"
             },
             {
+              "name": "WEBSITE_RUN_FROM_PACKAGE",
+              "value": "[parameters('WEBSITE_RUN_FROM_PACKAGE')]"
+            },
+            {
               "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
               "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('StorageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')), '2019-06-01').keys[0].value,';')]"
             },
@@ -581,53 +592,15 @@
       }
     },
     {
-      "type": "Microsoft.Resources/deploymentScripts",
-      "apiVersion": "2020-10-01",
-      "name": "AzPowerShellStartHost",
-      "condition": "[equals(parameters('postDeploymentScript'),'azpowershell')]",
-      "location": "[parameters('Location')]",
-      "kind": "AzurePowerShell",
+      "type": "Microsoft.Web/sites/extensions",
+      "apiVersion": "2020-09-01",
+      "name": "[concat(parameters('AppName'), '/zipdeploy')]",
+      "condition": "[parameters('useZipDeployExtension')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites/networkConfig', parameters('AppName'), 'virtualNetwork')]"
       ],
-      "identity": {
-        "type": "userAssigned",
-        "userAssignedIdentities": {
-          "[resourceId(parameters('identityNameResourceGroup'), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]": {}
-        }
-      },
       "properties": {
-        "azPowerShellVersion": "3.0",
-        "arguments": "[format(' -appName {0} -rgName {1}', parameters('AppName'), resourceGroup().name)]",
-        "scriptContent": "param([string][Parameter(Mandatory=$true)] $appName, [string][Parameter(Mandatory=$true)] $rgName); $publishProfileString = Invoke-AzResourceAction -ResourceGroupName $rgName -ResourceType Microsoft.Web/sites -ResourceName $appName -Action publishxml -ApiVersion 2020-09-01 -Force; $publishProfileXml =[xml]$publishProfileString; $username = $publishProfileXml.publishData.FirstChild.userName; $password = $publishProfileXml.publishData.FirstChild.userPWD; $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes((\"{0}:{1}\" -f $username,$password))); $userAgent = \"powershell/1.0\"; $apiUrl = \"https://$appName.scm.azurewebsites.net/DebugConsole\"; Invoke-RestMethod -Uri $apiUrl -Headers @{Authorization=(\"Basic {0}\" -f $base64AuthInfo)} -UserAgent $userAgent -Method HEAD;",
-        "timeout": "PT5M",
-        "cleanupPreference": "OnSuccess",
-        "retentionInterval": "P1D"
-      }
-    },
-    {
-      "type": "Microsoft.Resources/deploymentScripts",
-      "apiVersion": "2020-10-01",
-      "name": "AzCLIStartHost",
-      "condition": "[equals(parameters('postDeploymentScript'),'azcli')]",
-      "location": "[parameters('Location')]",
-      "kind": "AzureCLI",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites/networkConfig', parameters('AppName'), 'virtualNetwork')]"
-      ],
-      "identity": {
-        "type": "userAssigned",
-        "userAssignedIdentities": {
-          "[resourceId(parameters('identityNameResourceGroup'), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]": {}
-        }
-      },
-      "properties": {
-        "azCliVersion": "2.0.80",
-        "arguments": "[concat(parameters('AppName'), ' ', resourceGroup().name)]",
-        "scriptContent": "user=($(az webapp deployment list-publishing-profiles -n $1 -g $2 --query \"[?publishMethod=='MSDeploy'].userName\" -o tsv)) && password=($(az webapp deployment list-publishing-profiles -n $1 -g $2 --query \"[?publishMethod=='MSDeploy'].userPWD\" -o tsv)) && URL=https://$1.scm.azurewebsites.net/debugconsole && curl --silent --output -sIXGET --show-error --fail -u $user:$password ${URL}",
-        "timeout": "PT5M",
-        "cleanupPreference": "OnSuccess",
-        "retentionInterval": "P1D"
+        "packageUri": "[parameters('packageUri')]"
       }
     }
   ]
