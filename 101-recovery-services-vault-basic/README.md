@@ -1,4 +1,4 @@
-# Create Backup Vault
+# Create Recovery Services Vault with default options
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-recovery-services-vault-basic/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-recovery-services-vault-basic/PublicDeployment.svg)
