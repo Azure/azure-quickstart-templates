@@ -69,14 +69,24 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
           var jwtToken = context.Request.Headers.GetValueOrDefault("Authorization","").AsJwt();
           var userId = (context.User != null && context.User.Id != null) ? context.User.Id : (jwtToken != null && jwtToken.Subject != null ? jwtToken.Subject : null);
           var companyId = "";
-          var requestBody = (body != null ? System.Convert.ToBase64String(Encoding.ASCII.GetBytes(body)) : null);
+          var cru = new JObject();
+          if (context.User != null) {
+            cru.Add("Email", context.User.Email);
+            cru.Add("Id", context.User.Email);
+            cru.Add("FirstName", context.User.FirstName);
+            cru.Add("LastName", context.User.LastName);
+          }
+          var crus = System.Convert.ToBase64String(Encoding.UTF8.GetBytes(cru.ToString()));
+          var requestBody = (body != null ? System.Convert.ToBase64String(Encoding.UTF8.GetBytes(body)) : null);
           string metadata = $@"";
           var request = $@"
                     ""event_type"": ""request"",
                     ""message-id"": ""{messageId}"",
                     ""method"": ""{context.Request.Method}"",
-                    ""uri"": ""{context.Request.Url}"",
+                    ""ip_address"": ""{context.Request.IpAddress}"",
+                    ""uri"": ""{context.Request.OriginalUrl}"",
                     ""user_id"": ""{userId}"",
+                    ""contextRequestUser"": ""{crus}"",
                     ""company_id"": ""{companyId}"",
                     ""request_headers"": ""{headerString}"",
                     ""request_body"": ""{requestBody}"",
@@ -101,7 +111,7 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
                                           .ToArray<string>();
           var headerString = (headers.Any()) ? string.Join(";;", headers): string.Empty;
           var messageId = context.Variables["message-id"];
-          var responseBody = (body != null ? System.Convert.ToBase64String(Encoding.ASCII.GetBytes(body)) : null);
+          var responseBody = (body != null ? System.Convert.ToBase64String(Encoding.UTF8.GetBytes(body)) : null);
           var response = $@"
                     ""event_type"": ""response"",
                     ""orig_body_len"": ""{origBodyLen}"",
