@@ -36,6 +36,7 @@ sed -i -e '/Defaults    requiretty/{ s/.*/# Defaults    requiretty/ }' /etc/sudo
 echo "$(date)"
 echo "Creating the share on the storage account."
 yum install -y rh-python36 gcc time
+/opt/rh/rh-python36/root/usr/bin/pip install --upgrade pip
 /opt/rh/rh-python36/root/usr/bin/pip3 install azure-cli
 /opt/rh/rh-python36/root/usr/bin/az storage share create --name ${azure_storage_files_share} --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=${azure_storage_account};AccountKey=${azure_storage_files_password}"
 
