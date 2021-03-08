@@ -313,7 +313,8 @@ To do this you must define two standard parameters:
       "_artifactsLocation": {
           "type": "string",
           "metadata": {
-              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+              "description": "The base URI where artifacts required by this template are located including a trailing '/'",
+              "artifactsBaseUrl": "" // use this for Azure Marketplace
           },
           "defaultValue": "[deployment().properties.templateLink.uri]",  //use this for the Azure marketplace
           "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/[name of sample folder]/" // use this for a Quickstart in this repo (we're working on fixing this to match the marketplace...)
