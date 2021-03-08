@@ -1,4 +1,5 @@
 param vaultName string = 'keyVault${uniqueString(resourceGroup().id)}' // must be globally unique
+
 param location string = resourceGroup().location
 param sku string = 'Standard'
 param tenant string = '72f988bf-86f1-41af-91ab-2d7cd011db47' // replace with your tenantId
