@@ -93,6 +93,9 @@ resource frontDoorOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01
 
 resource frontDoorRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
   name: '${frontDoorEndpoint.name}/${frontDoorRouteName}'
+  dependsOn: [
+    frontDoorOrigin
+  ]
   properties: {
     originGroup: {
       id: frontDoorOriginGroup.id
