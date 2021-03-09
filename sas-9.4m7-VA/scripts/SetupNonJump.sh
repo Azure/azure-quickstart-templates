@@ -31,11 +31,6 @@ main() {
         setupSASShareMountRHEL
         disableSelinuxRHEL
     else
-        # Workaround for SUSE registration issue
-        sed -i.bak -e 's/dataProvider/#dataProvider/g' /etc/regionserverclnt.cfg
-        echo "dataProvider = /usr/bin/azuremetadata --api 2019-08-15 --subscriptionId --billingTag --xml" >>/etc/regionserverclnt.cfg
-        registercloudguest --force-new
-        # End workaround        
         mountSASRaidSUSE
         setupSASShareMountSUSE
     fi
