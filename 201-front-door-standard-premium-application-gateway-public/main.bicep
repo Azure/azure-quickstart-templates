@@ -48,7 +48,7 @@ module applicationGateway 'modules/application-gateway.bicep' = {
   params: {
     location: location
     backendFqdn: originHostName
-    pickHostNameFromBackendAddress: true // TODO as per https://docs.microsoft.com/en-us/azure/application-gateway/configure-web-app-portal#edit-http-settings-for-app-service
+    pickHostNameFromBackendAddress: true // This is required for multitenant backends, as per https://docs.microsoft.com/en-us/azure/application-gateway/configure-web-app-portal#edit-http-settings-for-app-service
     subnetResourceId: network.outputs.applicationGatewaySubnetResourceId
     frontDoorId: frontDoorProfile.properties.frontDoorId
   }
