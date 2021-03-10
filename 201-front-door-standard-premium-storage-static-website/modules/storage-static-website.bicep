@@ -69,6 +69,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   }
   dependsOn: [
     roleAssignmentContributor
+    roleAssignmentStorageBlobDataContributor
   ]
   properties: {
     azPowerShellVersion: '5.4'
