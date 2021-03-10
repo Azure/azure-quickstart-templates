@@ -60,7 +60,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     $storageAccount = Get-AzStorageAccount -ResourceGroupName $ResourceGroupName -AccountName $StorageAccountName
     $ctx = $storageAccount.Context
 
-    New-Item $BlobName
+    New-Item $BlobName -Force
     Set-Content $BlobName '<h1>Welcome</h1>'
     Set-AzStorageBlobContent -Context $ctx -Container $BlobContainerName -File $BlobName -Blob $BlobName -Properties @{'ContentType' = 'text/html'}
     '''
