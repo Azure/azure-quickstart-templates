@@ -54,7 +54,6 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
 resource applicationGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
   name: applicationGatewayName
   location: location
-  zones: []
   properties: {
     sku: {
       name: 'WAF_v2'
