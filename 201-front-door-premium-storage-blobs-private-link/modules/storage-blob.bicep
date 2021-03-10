@@ -10,6 +10,7 @@ param blobContainerName string
 @description('The name of the blob to create with some dummy content.')
 param blobName string
 
+var storageAccountContributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab') // as per https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#:~:text=17d1049b-9a84-46fb-8f53-869881c3d3ab
 var storageAccountStorageBlobDataContributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // as per https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#:~:text=ba92f5b4-2d11-453d-a403-e96b0029c9fe
 var managedIdentityName = 'StorageBlobCreator'
 var deploymentScriptName = 'CreateStorageBlob'
@@ -21,6 +22,15 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' existing 
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: managedIdentityName
   location: location
+}
+
+resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  scope: storageAccount
+  name: guid(resourceGroup().id, managedIdentityName, storageAccountContributorRoleDefinitionId)
+  properties: {
+    roleDefinitionId: storageAccountContributorRoleDefinitionId
+    principalId: managedIdentity.properties.principalId
+  }
 }
 
 resource roleAssignmentStorageBlobDataContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
@@ -43,6 +53,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     }
   }
   dependsOn: [
+    roleAssignmentContributor
     roleAssignmentStorageBlobDataContributor
   ]
   properties: {
