@@ -21,6 +21,7 @@ param indexDocument string
 param errorDocument404Path string
 
 var storageAccountContributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab') // as per https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#:~:text=17d1049b-9a84-46fb-8f53-869881c3d3ab
+var storageAccountStorageBlobDataContributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // as per https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#:~:text=ba92f5b4-2d11-453d-a403-e96b0029c9fe
 var managedIdentityName = 'StorageStaticWebsiteEnabler'
 var deploymentScriptName = 'EnableStorageStaticWebsite'
 
@@ -38,11 +39,20 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-
   location: location
 }
 
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   scope: storageAccount
   name: guid(resourceGroup().id, managedIdentityName, storageAccountContributorRoleDefinitionId)
   properties: {
     roleDefinitionId: storageAccountContributorRoleDefinitionId
+    principalId: managedIdentity.properties.principalId
+  }
+}
+
+resource roleAssignmentStorageBlobDataContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  scope: storageAccount
+  name: guid(resourceGroup().id, managedIdentityName, storageAccountStorageBlobDataContributorRoleDefinitionId)
+  properties: {
+    roleDefinitionId: storageAccountStorageBlobDataContributorRoleDefinitionId
     principalId: managedIdentity.properties.principalId
   }
 }
@@ -58,7 +68,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     }
   }
   dependsOn: [
-    roleAssignment
+    roleAssignmentContributor
   ]
   properties: {
     azPowerShellVersion: '5.4'
@@ -71,10 +81,18 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     )
 
     $ErrorActionPreference = 'Stop'
-    
+
     $storageAccount = Get-AzStorageAccount -ResourceGroupName $ResourceGroupName -AccountName $StorageAccountName
     $ctx = $storageAccount.Context
     Enable-AzStorageStaticWebsite -Context $ctx -IndexDocument $IndexDocument -ErrorDocument404Path $ErrorDocument404Path
+
+    New-Item $IndexDocument
+    Set-Content $IndexDocument '<h1>Welcome</h1>'
+    Set-AzStorageBlobContent -Context $ctx -Container '$web' -File $IndexDocument -Blob $IndexDocument -Properties @{'ContentType' = 'text/html'}
+
+    New-Item $ErrorDocument404Path
+    Set-Content $ErrorDocument404Path '<h1>Error: 404 Not Found</h1>'
+    Set-AzStorageBlobContent -Context $ctx -Container '$web' -File $ErrorDocument404Path -Blob $ErrorDocument404Path -Properties @{'ContentType' = 'text/html'}
     '''
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'PT4H'
