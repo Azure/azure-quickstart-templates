@@ -95,6 +95,9 @@ resource origin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
 
 resource route 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
   name: '${endpoint.name}/${routeName}'
+  dependsOn: [
+    origin // This explicit dependency is required to ensure that the origin group is not empty when the route is created.
+  ]
   properties: {
     originGroup: {
       id: originGroup.id
