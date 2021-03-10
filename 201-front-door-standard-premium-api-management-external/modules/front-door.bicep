@@ -72,6 +72,9 @@ resource proxyOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = 
 
 resource proxyRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
   name: '${proxyEndpoint.name}/${proxyRouteName}'
+  dependsOn: [
+    proxyOrigin // This explicit dependency is required to ensure that the origin group is not empty when the route is created.
+  ]
   properties: {
     originGroup: {
       id: proxyOriginGroup.id
@@ -129,6 +132,9 @@ resource developerPortalOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020
 
 resource developerPortalRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
   name: '${developerPortalEndpoint.name}/${developerPortalRouteName}'
+  dependsOn: [
+    developerPortalOrigin // This explicit dependency is required to ensure that the origin group is not empty when the route is created.
+  ]
   properties: {
     originGroup: {
       id: developerPortalOriginGroup.id
