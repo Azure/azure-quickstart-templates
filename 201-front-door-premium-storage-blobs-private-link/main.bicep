@@ -25,6 +25,7 @@ param storageBlobContainerName string = 'mycontainer'
 param frontDoorEndpointName string = 'afd-${uniqueString(resourceGroup().id)}'
 
 var frontDoorSkuName = 'Premium_AzureFrontDoor' // This sample uses Private Link, which requires the premium SKU of Front Door.
+var blobName = 'index.htm'
 
 module storage 'modules/storage.bicep' = {
   name: 'storage'
@@ -33,6 +34,16 @@ module storage 'modules/storage.bicep' = {
     accountName: storageAccountName
     skuName: storageSkuName
     blobContainerName: storageBlobContainerName
+  }
+}
+
+module storageBlob 'modules/storage-blob.bicep' = {
+  name: 'storage-blob'
+  params: {
+    location: location
+    accountName: storageAccountName
+    blobContainerName: storageBlobContainerName
+    blobName: blobName
   }
 }
 
