@@ -85,5 +85,5 @@ In order to run the prereq template, you must have Microsoft.Authorization/roleA
 #### Using the deployment script in the main template
 
 To execute the inline deployment script in the main template:
-- For the postDeploymentScript parameter, specify either "azpowershell" or "azcli" depending on which modules your deployment environment has. If you leave the value as "none", the inline deployment script won't get executed.
+- For the postDeploymentScript parameter, specify either "azpowershell" or "azclibash" depending on which modules your deployment environment has. If you leave the value as "none", the inline deployment script won't get executed.
 - For the "identityName", specify an existing user-assigned managed identity that meets the prerequisites described above. By default, the "identityNameResourceGroup" parameter assumes that the managed identity is in the same resource group that the main template is being deployed to.
