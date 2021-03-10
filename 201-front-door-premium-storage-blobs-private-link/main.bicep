@@ -37,19 +37,6 @@ module storage 'modules/storage.bicep' = {
   }
 }
 
-module storageBlob 'modules/storage-blob.bicep' = {
-  name: 'storage-blob'
-  dependsOn: [
-    storage
-  ]
-  params: {
-    location: location
-    accountName: storageAccountName
-    blobContainerName: storageBlobContainerName
-    blobName: blobName
-  }
-}
-
 module frontDoor 'modules/front-door.bicep' = {
   name: 'front-door'
   params: {
