@@ -44,7 +44,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-
 
 resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   scope: storageAccount
-  name: guid(resourceGroup().id, managedIdentityName, storageAccountContributorRoleDefinitionId)
+  name: guid(resourceGroup().id, managedIdentity.id, storageAccountContributorRoleDefinitionId)
   properties: {
     roleDefinitionId: storageAccountContributorRoleDefinitionId
     principalId: managedIdentity.properties.principalId
@@ -53,7 +53,7 @@ resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2020
 
 resource roleAssignmentStorageBlobDataContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   scope: storageAccount
-  name: guid(resourceGroup().id, managedIdentityName, storageAccountStorageBlobDataContributorRoleDefinitionId)
+  name: guid(resourceGroup().id, managedIdentity.id, storageAccountStorageBlobDataContributorRoleDefinitionId)
   properties: {
     roleDefinitionId: storageAccountStorageBlobDataContributorRoleDefinitionId
     principalId: managedIdentity.properties.principalId
