@@ -39,6 +39,9 @@ module storage 'modules/storage.bicep' = {
 
 module storageBlob 'modules/storage-blob.bicep' = {
   name: 'storage-blob'
+  dependsOn: [
+    storage
+  ]
   params: {
     location: location
     accountName: storageAccountName
