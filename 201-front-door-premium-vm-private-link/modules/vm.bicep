@@ -7,17 +7,8 @@ param subnetResourceId string
 @description('The name of the SKU to use when creating the virtual machine.')
 param vmSize string
 
-@description('The name of the publisher of the virtual machine image, such as \'MicrosoftWindowsServer\'.')
-param vmImagePublisher string
-
-@description('The name of the offer of the virtual machine image, such as \'WindowsServer\'.')
-param vmImageOffer string
-
-@description('The name of the SKU of the virtual machine image, such as \'2019-Datacenter\'.')
-param vmImageSku string
-
-@description('The version of the virtual machine image, such as \'latest\'.')
-param vmImageVersion string
+@description('The details of the image to deploy on the virtual machine.')
+param vmImageReference object
 
 @description('The type of disk and storage account to use for the virtual machine\'s OS disk.')
 param vmOSDiskStorageAccountType string
@@ -72,12 +63,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-06-01' = {
       adminPassword: vmAdminPassword
     }
     storageProfile: {
-      imageReference: {
-        publisher: vmImagePublisher
-        offer: vmImageOffer
-        sku: vmImageSku
-        version: vmImageVersion
-      }
+      imageReference: vmImageReference
       osDisk: {
         name: vmOSDiskName
         caching: 'ReadWrite'
