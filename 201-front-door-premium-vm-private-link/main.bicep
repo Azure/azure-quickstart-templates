@@ -18,17 +18,13 @@ param privateLinkServiceSubnetIPPrefix string = '10.0.1.0/24'
 @description('The name of the SKU to use when creating the virtual machine.')
 param vmSize string = 'Standard_DS1_v2'
 
-@description('The name of the publisher of the virtual machine image, such as \'MicrosoftWindowsServer\'.')
-param vmImagePublisher string = 'MicrosoftWindowsServer'
-
-@description('The name of the offer of the virtual machine image, such as \'WindowsServer\'.')
-param vmImageOffer string = 'WindowsServer'
-
-@description('The name of the SKU of the virtual machine image, such as \'2019-Datacenter\'.')
-param vmImageSku string = '2019-Datacenter'
-
-@description('The version of the virtual machine image, such as \'latest\'.')
-param vmImageVersion string = 'latest'
+@description('The details of the image to deploy on the virtual machine.')
+param vmImageReference object = {
+  publisher: 'MicrosoftWindowsServer'
+  offer: 'WindowsServer'
+  sku: '2019-Datacenter'
+  version: 'latest'
+}
 
 @description('The type of disk and storage account to use for the virtual machine\'s OS disk.')
 param vmOSDiskStorageAccountType string = 'StandardSSD_LRS'
@@ -68,10 +64,7 @@ module vm 'modules/vm.bicep' = {
   params: {
     location: location
     subnetResourceId: network.outputs.vmSubnetResourceId
-    vmImagePublisher: vmImagePublisher
-    vmImageOffer: vmImageOffer
-    vmImageSku: vmImageSku
-    vmImageVersion: vmImageVersion
+    vmImageReference: vmImageReference
     vmSize: vmSize
     vmOSDiskStorageAccountType: vmOSDiskStorageAccountType
     vmAdminUsername: vmAdminUsername
