@@ -23,7 +23,7 @@
     1. [Running SAS Management Console](#smc)
 1. [Appendix A: Getting the SAS Token](#AppendixA)
 
-**Note:**  This Quickstart is supported only in regions that support Availability Zones. For more information, see [Azure Services that support Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-region).
+
 
 <a name="Overview"></a>
 ## Overview
@@ -94,6 +94,8 @@ Before deploying the SAS 9.4 Quickstart Template for Azure with SAS Visual Analy
 
 * If you are using Azure NFS file shares, you must enable your Azure subscription for NFS.  For more information, see the "Register the NFS 4.1 Protocol" section at [How to create an NFS File Share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal).
 
+*  Use of a region that supports Availability Zones. For more information, see [Azure Services that support Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-region).
+ 
 * The software depot must be uploaded to Azure Blob Storage as follows:
 1. Navigate to the directory where the software depot was downloaded.  
 2. Upload the software depot by running this command: 
