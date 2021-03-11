@@ -36,7 +36,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D4s_v3",
+      "defaultValue": "Standard_DS1_v2",
       "metadata": {
         "description": "The name of the SKU to use when creating the virtual machine."
       }
@@ -244,10 +244,8 @@
           "variables": {
             "loadBalancerName": "MyLoadBalancer",
             "frontendIPConfigurationName": "MyFrontendIPConfiguration",
-            "frontendIPConfigurationResourceId": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadBalancerName'), variables('frontendIPConfigurationName'))]",
             "healthProbeName": "MyHealthProbe",
-            "backendAddressPoolName": "MyBackendAddressPool",
-            "backendAddressPoolResourceId": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('backendAddressPoolName'))]"
+            "backendAddressPoolName": "MyBackendAddressPool"
           },
           "resources": [
             {
@@ -295,10 +293,10 @@
                       "backendPort": 80,
                       "idleTimeoutInMinutes": 15,
                       "frontendIPConfiguration": {
-                        "id": "[variables('frontendIPConfigurationResourceId')]"
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadBalancerName'), variables('frontendIPConfigurationName'))]"
                       },
                       "backendAddressPool": {
-                        "id": "[variables('backendAddressPoolResourceId')]"
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('backendAddressPoolName'))]"
                       },
                       "probe": {
                         "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), variables('healthProbeName'))]"
@@ -316,11 +314,11 @@
             },
             "frontendIPConfigurationResourceId": {
               "type": "string",
-              "value": "[variables('frontendIPConfigurationResourceId')]"
+              "value": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadBalancerName'), variables('frontendIPConfigurationName'))]"
             },
             "backendAddressPoolResourceId": {
               "type": "string",
-              "value": "[variables('backendAddressPoolResourceId')]"
+              "value": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('backendAddressPoolName'))]"
             }
           }
         }
@@ -803,12 +801,13 @@
                 "hostName": "[parameters('originHostName')]",
                 "httpPort": 80,
                 "httpsPort": 443,
-                "originHostHeader": "[parameters('originHostName')]",
+                "originHostHeader": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[0], split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[1])).hostName]",
                 "priority": 1,
                 "weight": 1000,
                 "sharedPrivateLinkResource": "[if(variables('isPrivateLinkOrigin'), variables('privateLinkOriginDetails'), null())]"
               },
               "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[0], split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[1])]",
                 "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[0], split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[1])]"
               ]
             },
@@ -914,7 +913,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.3.1.62928",
-      "templateHash": "3778843848550494379"
+      "templateHash": "9069969429907174232"
     }
   }
 }
