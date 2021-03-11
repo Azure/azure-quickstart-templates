@@ -6,10 +6,8 @@ param subnetResourceId string
 
 var loadBalancerName = 'MyLoadBalancer'
 var frontendIPConfigurationName = 'MyFrontendIPConfiguration'
-var frontendIPConfigurationResourceId = resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerName, frontendIPConfigurationName)
 var healthProbeName = 'MyHealthProbe'
 var backendAddressPoolName = 'MyBackendAddressPool'
-var backendAddressPoolResourceId = resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, backendAddressPoolName)
 
 resource loadBalancer 'Microsoft.Network/loadBalancers@2020-06-01' = {
   name: loadBalancerName
@@ -54,10 +52,10 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2020-06-01' = {
           backendPort: 80
           idleTimeoutInMinutes: 15
           frontendIPConfiguration: {
-            id: frontendIPConfigurationResourceId
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerName, frontendIPConfigurationName)
           }
           backendAddressPool: {
-            id: backendAddressPoolResourceId
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, backendAddressPoolName)
           }
           probe: {
             id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerName, healthProbeName)
@@ -69,5 +67,5 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2020-06-01' = {
 }
 
 output frontendIPAddress string = loadBalancer.properties.frontendIPConfigurations[0].properties.privateIPAddress
-output frontendIPConfigurationResourceId string = frontendIPConfigurationResourceId
-output backendAddressPoolResourceId string = backendAddressPoolResourceId
+output frontendIPConfigurationResourceId string = resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerName, frontendIPConfigurationName)
+output backendAddressPoolResourceId string = resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, backendAddressPoolName)
