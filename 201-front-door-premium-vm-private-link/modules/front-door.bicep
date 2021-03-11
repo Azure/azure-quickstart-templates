@@ -86,7 +86,7 @@ resource origin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
     hostName: originHostName
     httpPort: 80
     httpsPort: 443
-    originHostHeader: endpoint.properties.hostName // This probably isn't the right host header for most scenarios - you will need to look at what makes sense for your solution.
+    originHostHeader: endpoint.properties.hostName // For the purposes of this sample, the 'Host' header value sent from Front Door to the origin must be the Front Door endpoint's hostname. In most real-world scenarios, you will need to set this to the originHostName value or a custom domain name, as described here: https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin#hostheader
     priority: 1
     weight: 1000
     sharedPrivateLinkResource: isPrivateLinkOrigin ? privateLinkOriginDetails : null
