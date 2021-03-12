@@ -13,7 +13,7 @@
 
 This sample Azure Resource Manager template deploys an Azure Function App that communicates with the Azure Storage account referenced by the [AzureWebJobsStorage](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#azurewebjobsstorage) and [WEBSITE_CONTENTAZUREFILECONNECTIONSTRING](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#website_contentazurefileconnectionstring) app settings, [via private endpoints](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#private-endpoints). 
 
-![Function App with Storage Private Endpoints](/images/function-app-storage-privateendponts.png) 
+![Function App with Storage Private Endpoints](/101-function-app-storage-private-endpoints/images/function-app-storage-privateendponts.png) 
 
 ### Azure Function App
 
@@ -70,20 +70,12 @@ After the first time you configure the Function App to talk to the private endpo
 
 The script will retrieve the site-level credentials from the publish profile and make an authenticated request to the Kudu /Debugconsole page of the Function App.
 
+To run the deployment script, set the postDeploymentScript parameter to either "azpowershell" or "azclibash" depending upon your deployment environment. If you set the value as "none", the inline deployment script won't get executed.
+
 #### Prerequisites to run the in-line deployment script
 
-You will need a user-assigned managed identity to run the script because the script performs actions upon a Azure resources. The managed identity must have permissions to perform deployment-related operations on Function Apps in the scope of the deployment.
+You will need a user-assigned managed identity to run the script because the script performs ARM actions upon the Function App. The prereqs template creates a user-assigned managed identity.
 
-Your deployment principal must either be at least a Contributor in the scope of the deployment or, if you are using a using custom role, have the additional permissions described in [this document](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template#configure-the-minimum-permissions).
+The managed identity must have resource permissions to download the Function App's publish profile. If the postDeploymentScript parameter in the main template is set to either "azpowershell" or "azclibash", the main template assigns the Contributor role to the managed identity in the scope of the Function App that is deployed. In order to do this, the deployment principal must have Microsoft.Authorization/roleAssignments/write permissions.
 
-The prereqs template does the following:
-- Creates a user-assigned managed identity.
-- Creates a custom role with the necessary permissions to perform deployment-related operations on Microsoft.Web/sites and assigns this role to the managed identity. By default, the role is created and assigned in the scope of the resource group.
-
-In order to run the prereq template, you must have Microsoft.Authorization/roleAssignments/write permissions, such as User Access Administrator or Owner.
-
-#### Using the deployment script in the main template
-
-To execute the inline deployment script in the main template:
-- For the postDeploymentScript parameter, specify either "azpowershell" or "azcli" depending on which modules your deployment environment has. If you leave the value as "none", the inline deployment script won't get executed.
-- For the "identityName", specify an existing user-assigned managed identity that meets the prerequisites described above. By default, the "identityNameResourceGroup" parameter assumes that the managed identity is in the same resource group that the main template is being deployed to.
+Furthermore, the deployment principal must have the permissions described in [this document](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template#configure-the-minimum-permissions) in order to run the deployment script.
