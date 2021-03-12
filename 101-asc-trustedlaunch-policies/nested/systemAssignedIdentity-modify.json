@@ -1,0 +1,73 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {
+    "effect": {
+      "type": "string",
+      "defaultValue": "Modify",
+      "allowedValues": [
+        "Modify",
+        "Disabled"
+      ],
+      "metadata": {
+        "displayName": "Effect",
+        "description": "Enable or disable the execution of the policy"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/policyDefinitions",
+      "apiVersion": "2018-05-01",
+      "name": "3cf2ab00-13f1-4d0c-8971-2ac933341a7e",
+      "properties": {
+        "displayName": "Add system-assigned managed identity to enable Guest Attestation",
+        "policyType": "Custom",
+        "mode": "All",
+        "description": "This policy adds system-assigned managed identity to virtual machines that supports Guest Attestation but do not have a system-assigned managed identity.",
+        "metadata": {
+          "category": "Compute",
+          "version": "1.0.0-preview",
+          "preview": true
+        },
+        "policyRule": {
+          "if": {
+            "allOf": [
+              {
+                "field": "type",
+                "equals": "Microsoft.Compute/virtualMachines"
+              },
+              {
+                "field": "Microsoft.Compute/virtualMachines/securityProfile.uefiSettings",
+                "exists": "true"
+              },
+              {
+                "value": "[requestContext().apiVersion]",
+                "greaterOrEquals": "2018-10-01"
+              },
+              {
+                "field": "identity.type",
+                "notContains": "SystemAssigned"
+              }
+            ]
+          },
+          "then": {
+            "effect": "[parameters('effect')]",
+            "details": {
+              "roleDefinitionIds": [
+                "/providers/microsoft.authorization/roleDefinitions/9980e02c-c2be-4d73-94e8-173b1dc7cf3c"
+              ],
+              "operations": [
+                {
+                  "operation": "AddOrReplace",
+                  "field": "identity.type",
+                  "value": "[[if(contains(field('identity.type'), 'UserAssigned'), concat(field('identity.type'), ',SystemAssigned'), 'SystemAssigned')]"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}
