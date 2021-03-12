@@ -315,8 +315,7 @@ To do this you must define two standard parameters:
           "metadata": {
               "description": "The base URI where artifacts required by this template are located including a trailing '/'"
           },
-          "defaultValue": "[deployment().properties.templateLink.uri]",  //use this for the Azure marketplace
-          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/[name of sample folder]/" // use this for a Quickstart in this repo (we're working on fixing this to match the marketplace...)
+          "defaultValue": "[deployment().properties.templateLink.uri]"
       },
       "_artifactsLocationSasToken": {
           "type": "securestring",
