@@ -1,4 +1,4 @@
-# Deployment of a Trusted Launch Windows virtual machine
+# Deployment of a trusted launch capable Windows virtual machine
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-vm-trustedlaunch-windows/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-vm-trustedlaunch-windows/PublicDeployment.svg)
@@ -9,7 +9,7 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-trustedlaunch-windows%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-trustedlaunch-windows%2FcreateUiDefinition.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-trustedlaunch-windows%2Fazuredeploy.json)
 
-This template allows you to deploy a Trusted Launch Windows virtual machine using a few different options for the Windows version, using the latest patched version. By default, this will deploy a Standard_D2_v3 size virtual machine in the resource group location and return the fully qualified domain name of the virtual machine.
+This template allows you to deploy a [trusted launch](https://docs.microsoft.com/en-us/azure/virtual-machines/trusted-launch) capable Windows virtual machine using a few different options for the Windows version, using the latest patched version. By default, this will deploy a Standard_D2_v3 size virtual machine in the resource group location and return the fully qualified domain name of the virtual machine.
 
 If you're new to Azure virtual machines, see:
 
