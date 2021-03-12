@@ -18,13 +18,12 @@ param privateLinkServiceSubnetIPPrefix string = '10.0.1.0/24'
 @description('The name of the SKU to use when creating the virtual machine.')
 param vmSize string = 'Standard_DS1_v2'
 
-@description('The details of the image to deploy on the virtual machine.')
-param vmImageReference object = {
-  publisher: 'MicrosoftWindowsServer'
-  offer: 'WindowsServer'
-  sku: '2019-Datacenter'
-  version: 'latest'
-}
+@description('The name of the operating system to deploy on the virtual machine.')
+@allowed([
+  'Windows2016Datacenter'
+  'Windows2019Datacenter'
+])
+param vmOSName string = 'Windows2019Datacenter'
 
 @description('The type of disk and storage account to use for the virtual machine\'s OS disk.')
 param vmOSDiskStorageAccountType string = 'StandardSSD_LRS'
@@ -39,6 +38,20 @@ param vmAdminPassword string
 @description('The name of the Front Door endpoint to create. This must be globally unique.')
 param frontDoorEndpointName string = 'afd-${uniqueString(resourceGroup().id)}'
 
+var vmImageReference = {
+  Windows2019Datacenter: {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: '2019-Datacenter'
+    version: 'latest'
+  }
+  Windows2016Datacenter: {
+    publisher: 'MicrosoftWindowsServer'
+    offer: 'WindowsServer'
+    sku: '2016-Datacenter'
+    version: 'latest'
+  }
+}
 var frontDoorSkuName = 'Premium_AzureFrontDoor' // This sample uses Private Link, which requires the premium SKU of Front Door.
 
 module network 'modules/network.bicep' = {
@@ -64,7 +77,7 @@ module vm 'modules/vm.bicep' = {
   params: {
     location: location
     subnetResourceId: network.outputs.vmSubnetResourceId
-    vmImageReference: vmImageReference
+    vmImageReference: vmImageReference[vmOSName]
     vmSize: vmSize
     vmOSDiskStorageAccountType: vmOSDiskStorageAccountType
     vmAdminUsername: vmAdminUsername
