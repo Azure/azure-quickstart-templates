@@ -94,14 +94,14 @@
     "identityName": {
       "type": "string",
       "metadata": {
-        "description": "Name of an existing user managed identity used to run the optional deployment script. This parameter will be ignored if you don't specify azpowershell or azclibash for the postDeploymentScript parameter."
+        "description": "Name of an existing user managed identity used to run the optional deployment script. This parameter will be ignored if you specify none for the postDeploymentScript parameter."
       }
     },
     "identityNameResourceGroup": {
       "type": "string",
       "defaultValue": "[resourceGroup().name]",
       "metadata": {
-        "description": "Resource group of existing user managed identity used to run the optional deployment script. This parameter will be ignored if you don't specify azpowershell or azclibash for the postDeploymentScript parameter."
+        "description": "Resource group of existing user managed identity used to run the optional deployment script. This parameter will be ignored if you specify none for the postDeploymentScript parameter."
       }
     }
   },
@@ -119,6 +119,9 @@
     "virtualNetworkLinksSuffixBlobStorageName": "[concat(variables('privateStorageBlobDnsZoneName'), '-link')]",
     "virtualNetworkLinksSuffixQueueStorageName": "[concat(variables('privateStorageQueueDnsZoneName'), '-link')]",
     "virtualNetworkLinksSuffixTableStorageName": "[concat(variables('privateStorageTableDNSZoneName'), '-link')]",
+    "Contributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+    "identityResource": "[resourceId(parameters('identityNameResourceGroup'), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]",
+    "roleAssignmentName": "[guid(resourcegroup().id, variables('identityResource'), parameters('AppName'),'Contributor')]",
     "AzPowerShellArgs": "[format(' -appName {0} -rgName {1}', parameters('AppName'), resourceGroup().name)]",
     "AzCLIBashArgs": "[concat(parameters('AppName'), ' ', resourceGroup().name)]",
     "AzPowerShellScript": "param([string][Parameter(Mandatory=$true)] $appName, [string][Parameter(Mandatory=$true)] $rgName); $publishProfileString = Invoke-AzResourceAction -ResourceGroupName $rgName -ResourceType Microsoft.Web/sites -ResourceName $appName -Action publishxml -ApiVersion 2020-09-01 -Force; $publishProfileXml =[xml]$publishProfileString; $username = $publishProfileXml.publishData.FirstChild.userName; $password = $publishProfileXml.publishData.FirstChild.userPWD; $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes((\"{0}:{1}\" -f $username,$password))); $userAgent = \"powershell/1.0\"; $apiUrl = \"https://$appName.scm.azurewebsites.net/DebugConsole\"; Invoke-RestMethod -Uri $apiUrl -Headers @{Authorization=(\"Basic {0}\" -f $base64AuthInfo)} -UserAgent $userAgent -Method HEAD;",
@@ -603,6 +606,21 @@
       }
     },
     {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[variables('roleAssignmentName')]",
+      "condition": "[not(equals(parameters('postDeploymentScript'),'none'))]",
+      "scope": "[concat('Microsoft.Web/sites/', parameters('AppName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/networkConfig', parameters('AppName'), 'virtualNetwork')]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables('Contributor')]",
+        "principalId": "[reference(variables('identityResource'), '2018-11-30').principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
       "type": "Microsoft.Resources/deploymentScripts",
       "apiVersion": "2020-10-01",
       "name": "KuduConsoleRequest",
@@ -610,12 +628,12 @@
       "location": "[parameters('Location')]",
       "kind": "[if(equals(parameters('postDeploymentScript'),'azpowershell'), 'AzurePowerShell', 'AzureCLI')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites/networkConfig', parameters('AppName'), 'virtualNetwork')]"
+        "[variables('roleAssignmentName')]"
       ],
       "identity": {
         "type": "userAssigned",
         "userAssignedIdentities": {
-          "[resourceId(parameters('identityNameResourceGroup'), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]": {}
+          "[variables('identityResource')]": {}
         }
       },
       "properties": {
