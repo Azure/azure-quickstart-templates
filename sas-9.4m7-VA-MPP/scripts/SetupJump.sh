@@ -74,6 +74,7 @@ main() {
     makeAnsibleInventory
     createCertificates
     downloadHadoop
+    installAzureCLI
 }
 
 mountSASRaid() {
@@ -154,15 +155,19 @@ END
 
 installAnsibleSUSE() {
     echo "Installing pip"
-    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+    curl https://bootstrap.pypa.io/pip/get-pip.py -o get-pip.py
     python get-pip.py
     /usr/local/bin/pip install ansible==2.9.2
 }
 
 installAnsibleRHEL() {
-  curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+  curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/pip/get-pip.py" -o "get-pip.py"
   sudo python3 get-pip.py
   sudo /usr/local/bin/pip install 'ansible==2.7.10'
+}
+
+installAzureCLI() {
+    /usr/local/bin/pip install azure-cli
 }
 
 makeAnsibleInventory() {

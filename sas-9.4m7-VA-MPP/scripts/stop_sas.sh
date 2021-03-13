@@ -56,23 +56,23 @@ if (( $COUNT != 0 )); then
 fi
 
 if [[ "${HARD}" == "hard" ]]; then
+
 #
 # Verify that the user has logged in to Azure
 #
-
-	AZ_STATUS=$(/opt/rh/rh-python36/root/usr/bin/az account list)
+	AZ_STATUS=$(/usr/local/bin/az account list)
 
 	if [[ ${#AZ_STATUS} -le 2 ]]; then
 	  echo "You must authenticate with Azure before running this command. Run"
 	  echo ""
-	  echo "   /opt/rh/rh-python36/root/usr/bin/az login --use-device-code"
+	  echo "   /usr/local/bin/az login --use-device-code"
 	  echo ""
 	  echo "to authenticate."
 	  echo ""
 	  echo "Verify that the current subscription matches the subscription for this resource group."
 	  echo "If they do not match, run"
 	  echo ""
-	  echo "   /opt/rh/rh-python36/root/usr/bin/az account set --subscription [subscription-name-or-id]"
+	  echo "   /usr/local/bin/az account set --subscription [subscription-name-or-id]"
 	  echo ""
 	  echo "to set the current subscription."
 	  exit 0
@@ -83,13 +83,13 @@ if [[ "${HARD}" == "hard" ]]; then
 #
 
 # Get a list of the VMs in this resource group - azure_resource_group is a variable from sasinstall.env
-	VMLIST=( $(/opt/rh/rh-python36/root/usr/bin/az vm list -g "${azure_resource_group}" --query "[].name" -o tsv) )
+	VMLIST=( $(/usr/local/bin/az vm list -g "${azure_resource_group}" --query "[].name" -o tsv) )
 
 # Iterate through the VM list and stop all VMs EXCEPT jumpvm
 	for v in ${VMLIST[@]}; do
 	    if [[ $v != "jumpvm" ]]; then
 	      echo "Stopping ${v}"
-	      /opt/rh/rh-python36/root/usr/bin/az vm stop --resource-group "${azure_resource_group}" --name "${v}"
+	      /usr/local/bin/az vm stop --resource-group "${azure_resource_group}" --name "${v}"
 	    fi
 	done
 fi

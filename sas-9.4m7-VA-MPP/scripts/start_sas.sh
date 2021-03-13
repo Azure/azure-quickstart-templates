@@ -27,25 +27,25 @@ FORKS=5
 INVENTORY_FILE="inventory.ini"
 pushd $ANSIBLE_DIR
 
+
+if [[ "${HARD}" == "hard" ]]; then
+
 #
 # Verify that the user has logged in to Azure
 #
-
-AZ_STATUS=$(/opt/rh/rh-python36/root/usr/bin/az account list)
-
-if [[ "${HARD}" == "hard" ]]; then
+        AZ_STATUS=$(/usr/local/bin/az account list)
 
 	if [[ ${#AZ_STATUS} -le 2 ]]; then
 	  echo "You must authenticate with Azure before running this command. Run"
 	  echo ""
-	  echo "   /opt/rh/rh-python36/root/usr/bin/az login --use-device-code"
+	  echo "   /usr/local/bin/az login --use-device-code"
 	  echo ""
 	  echo "to authenticate."
 	  echo ""
 	  echo "Verify that the current subscription matches the subscription for this resource group."
 	  echo "If they do not match, run"
 	  echo ""
-	  echo "   /opt/rh/rh-python36/root/usr/bin/az account set --subscription [subscription-name-or-id]"
+	  echo "   /usr/local/bin/az account set --subscription [subscription-name-or-id]"
 	  echo ""
 	  echo "to set the current subscription."
 	  exit 0
@@ -54,7 +54,7 @@ if [[ "${HARD}" == "hard" ]]; then
 #
 # Get a list of the VMs in the resource group
 #
-	VMLIST=( $(/opt/rh/rh-python36/root/usr/bin/az vm list -g "${azure_resource_group}" --query "[].name" -o tsv) )
+	VMLIST=( $(/usr/local/bin/az vm list -g "${azure_resource_group}" --query "[].name" -o tsv) )
 
 #
 # Start the VMs in the list EXCEPT for jumpvm
@@ -62,7 +62,7 @@ if [[ "${HARD}" == "hard" ]]; then
 	for v in ${VMLIST[@]}; do
 	    if [[ $v != "jumpvm" ]]; then
 	      echo "Starting ${v}"
-	      /opt/rh/rh-python36/root/usr/bin/az vm start --resource-group "${azure_resource_group}" --name "${v}"
+	      /usr/local/bin/az vm start --resource-group "${azure_resource_group}" --name "${v}"
 	    fi
 	done
 
@@ -70,7 +70,7 @@ if [[ "${HARD}" == "hard" ]]; then
 # Wait for all the VMs to get online
 #
 
-	export ANSIBLE_LOG_PATH=/tmp/swait_for_servers.log
+	export ANSIBLE_LOG_PATH=/tmp/wait_for_servers.log
 	ansible-playbook -i ${INVENTORY_FILE} -v wait_for_servers.yaml
 fi
 
