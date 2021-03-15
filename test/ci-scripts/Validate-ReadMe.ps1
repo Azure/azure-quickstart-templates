@@ -128,3 +128,9 @@ $ARMVizButton
     Write-Output $md
 
 }
+
+# pipeline variable should default to FAIL
+Write-Host "Count: $($error.count)"
+if($error.count -eq 0){
+    Write-Host "##vso[task.setvariable variable=result.readme]PASS"
+}
