@@ -99,7 +99,26 @@ To make sure your template is added to Azure.com index, please follow these guid
 
 ## README.md
 
-The README.md describes your deployment. A good description helps other community members to understand your deployment. The README.md uses [Github Flavored Markdown](https://guides.github.com/features/mastering-markdown/) for formatting text. If you want to add images to your README.md file, store the images in the **images** folder. Reference the images in the README.md with a relative path (e.g. `![alt text](images/namingConvention.png "Files, folders and naming conventions")`). This ensures the link will reference the target repository if the source repository is forked. A good README.md contains the following sections
+The README.md describes your deployment.
+A good description helps other community members to understand your deployment.
+
+### Generating automatically
+
+To generate your template README.md you can use PSDocs for Azure.
+PSDocs for Azure is a PowerShell module that automatically generates your README.md.
+To generate documentation PSDocs uses metadata tags that exist in `azuredeploy.json` and `metadata.json`.
+
+To generate documentation:
+
+```powershell
+./.ps-docs/run.ps1
+```
+
+Additionally, a Visual Studio Code task called _Build docs_ has been added to make generating documentation even easier.
+
+### Writing manually
+
+The README.md uses [Github Flavored Markdown](https://guides.github.com/features/mastering-markdown/) for formatting text. If you want to add images to your README.md file, store the images in the **images** folder. Reference the images in the README.md with a relative path (e.g. `![alt text](images/namingConvention.png "Files, folders and naming conventions")`). This ensures the link will reference the target repository if the source repository is forked. A good README.md contains the following sections
 
 + Deploy to Azure button
 + Visualize button
