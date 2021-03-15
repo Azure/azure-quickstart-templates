@@ -46,6 +46,7 @@ The SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visu
 * the number of middle tier VMs for the SAS 9.4M7 Mid-Tier server (as specified in the Mid-Tier VM Count parameter)
 * the number of metadata server VMs for the SAS 9.4M7 Metadata clustered server (as specified in the Metadata VM Count parameter)
 
+**Note:** The first release of the SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics supports only a single instance of the metadata server.
 <a name="compute"></a>
 #### SAS Visual Analytics in SAS 9.4M7 and SAS Visual Statistics in SAS 9.4M7 server
 We  recommend that you work with your SAS account team to form a hardware estimate, and use the instance sizes from the hardware estimate.  See [Best Practices for using Microsoft Azure with SAS](https://communities.sas.com/t5/Administration-and-Deployment/Best-Practices-for-Using-Microsoft-Azure-with-SAS/m-p/676833#M19680) for more information.
@@ -68,6 +69,8 @@ For details, see [SAS 9.4 Intelligence Platform: Installation and Configuration 
 By default, Quickstart deployments enable Transport Layer Security (TLS) to help ensure that communication between external clients (on the internet) and the load balancer is secure. Likewise, TLS is enabled between the load balancer and the private subnet that contains the SAS 9.4 components. 
 
 Deploying this Quickstart for a new virtual private cloud (VPC) with default parameters in a massively parallel processing (MPP) environment builds the following SAS 9.4 environment in the Microsoft Azure cloud, shown in Figure 1.   In MPP environments, the CASInstanceCount parameter is set to one, indicating that only one CAS controller is configured.
+
+**Note:** In the diagram below, a SAS 9.4M7 Metadata Clustered server is depicted.  However, the first release of the SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics supports only a single instance of the metadata server.
 
 ![Network Diagram](Azure_9_vavs_quickstart_mpp.svg)
 Figure 1: Quickstart architecture in Azure for SAS Visual Analytics in SAS 9.4 and SAS Visual Statistics in SAS 9.4 in an MPP Environment
