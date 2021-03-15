@@ -87,7 +87,7 @@ resource proxyRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
       '/*'
     ]
     queryStringCachingBehavior: 'NotSet'
-    forwardingProtocol: 'HttpOnly'
+    forwardingProtocol: 'HttpsOnly'
     linkToDefaultDomain: 'Enabled'
     httpsRedirect: 'Enabled'
   }
@@ -193,7 +193,7 @@ resource developerPortalRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-0
       isCompressionEnabled: true
     }
     queryStringCachingBehavior: 'IgnoreQueryString'
-    forwardingProtocol: 'HttpOnly'
+    forwardingProtocol: 'HttpsOnly'
     linkToDefaultDomain: 'Enabled'
     httpsRedirect: 'Enabled'
   }
