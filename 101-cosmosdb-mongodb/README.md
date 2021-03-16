@@ -1,4 +1,4 @@
-# Create an Azure Cosmos account for MongoDB API (3.2 or 3.6) with two collections
+# Create an Azure Cosmos account for MongoDB API with two collections
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb/PublicDeployment.svg)
@@ -15,11 +15,10 @@ Below are the parameters which can be user configured in the parameters file inc
 
 - **Consistency Level:** Select from one of the 5 consistency levels: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual.
 - **Multi-Region:** Enter locations for primary and secondary regions.
-- **Multi-Master:** Select whether to enable multi-master support making both regions fully writable.
-- **Automatic Failover:** Select whether to enable automatic failover on the account (Ignored when Multi-Master is enabled).
+- **Automatic Failover:** Select whether to enable automatic failover on the account.
 - **Database Name:** Enter the database name for the account.
 - **Throughput:** Enter the RU/s to share across the 2 containers (default is 400).
-- **Server Version:** Select the MongoDB server version (default is 3.6).
+- **Server Version:** Select the MongoDB server version (default is 4.0).
 - **Collection 1 Name:** Enter the name for the first collection.
 - **Collection 2 Name:** Enter the name for the second collection.
 
