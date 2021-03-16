@@ -1,4 +1,4 @@
-# Create an Azure Cosmos account for Cassandra API with a keyspace and two tables
+# Create an Azure Cosmos account for Cassandra API with a keyspace and a table
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra/PublicDeployment.svg)
@@ -23,7 +23,3 @@ Below are the parameters which can be user configured in the parameters file inc
 - **Keyspace Name:** Enter the keyspace name for the account.
 - **Table Name:** Enter the table name for the account.
 - **Throughput:** Enter the RU/s for the table (default is 400).
-
-    
-
-
