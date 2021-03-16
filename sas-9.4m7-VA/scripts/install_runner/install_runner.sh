@@ -15,8 +15,8 @@ fi
 if [ -e "$HOME/.bash_profile" ]; then
 	. $HOME/.bash_profile
 fi
-set -x
-set -v
+#set -x
+#set -v
 
 ScriptDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . "/tmp/sasinstall.env"
@@ -31,6 +31,12 @@ echo "sasFolder: '${sasFolder}'" >>/tmp/ansible_vars.yaml
 if [[ "$depot_uri" == "$DEPOT_DUMMY_FOR_QUICK_EXIT_VALUE" ]]; then
 	echo "No license given. Doing infrastructure only install. SAS will not be installed."
 	exit 0
+fi
+
+# Check for the existence of the software depot
+if [ ! -d "/sasshare/depot/sid_files" ]; then
+    echo "The SAS software depot cannot be found in /sasshare/depot. Terminating deployment."
+    exit 1
 fi
 
 pushd ${INSTALL_DIR}/ansible
