@@ -43,6 +43,12 @@ setupForSASInstall() {
 		exit 0
 	fi
 
+	# Check for the existence of the software depot
+	if [ ! -d "/sasshare/depot/sid_files" ]; then
+	    echo "The SAS software depot cannot be found in /sasshare/depot. Terminating deployment."
+	    exit 1
+	fi
+
 	# Get the path to the sid file in the depot
 	SID_FILE=$(ls /sasshare/depot/sid_files)
 	echo "sid_file_name: $SID_FILE" >>/tmp/ansible_vars.yaml
