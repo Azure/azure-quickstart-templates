@@ -30,7 +30,7 @@
 | `privateOrPublicEndpoints` | public | Public or Private. Set publish to Private to deploy a cluster which cannot be accessed from the internet. See [documentation](https://docs.openshift.com/container-platform/4.3/installing/installing_azure/installing-azure-private.html#private-clusters-default_installing-azure-private) for more details. |
 | `outboundType` | Loadbalancer | User Azure Loadbalancer or assume User Defined Routing has been setup on the vNet. Options are `Loadbalancer` and `UserDefinedRouting` |
 | `publicBootnodeIP` | true | Public IP attached to the bootnode|
-| `enableAutoscaler` | true | Enable/Disable Openshift Machine Autoscaler|
+| `enableAutoscaler` | false | Enable/Disable Openshift Machine Autoscaler|
 | `storageOption` | nfs | nfs, ocs or portworx. Storage option to use. |
 | `portworxSpecUrl` | - | Generate a specification file the [portworx-central](https://central.portworx.com/dashboard). See PORTWORX.md. |
 | `storageDiskSize` | 1024 | Data disk size. Only applicable for NFS storage |
