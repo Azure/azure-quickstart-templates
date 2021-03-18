@@ -8,10 +8,7 @@
 
 ## Contents
 1. [Overview](#Overview)
-    1. [Costs and Licenses](#Costs)
-        1. [SAS Visual Analytics in SAS 9.4M7 and SAS Visual Statistics in SAS 9.4M7 server](#compute)
-        1. [SAS 9.4M7 Mid-Tier server](#midtier)
-        1. [SAS 9.4M7 Metadata clustered server](#metadata)
+    1. [Costs and Licenses](#Costs)        
 1. [Architecture](#architecture)
 1. [Prerequisites](#Prerequisites)
 1. [Deployment Steps](#Deployment)
@@ -47,17 +44,8 @@ The SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visu
 * the number of metadata server VMs for the SAS 9.4M7 Metadata clustered server (as specified in the Metadata VM Count parameter)
 
 **Note:** The first release of the SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics supports only a single instance of the metadata server.
-<a name="compute"></a>
-#### SAS Visual Analytics in SAS 9.4M7 and SAS Visual Statistics in SAS 9.4M7 server
-We  recommend that you work with your SAS account team to form a hardware estimate, and use the instance sizes from the hardware estimate.  See [Best Practices for using Microsoft Azure with SAS](https://communities.sas.com/t5/Administration-and-Deployment/Best-Practices-for-Using-Microsoft-Azure-with-SAS/m-p/676833#M19680) for more information.
 
-<a name="midtier"></a>
-#### SAS 9.4M7 Middle Tier server
-We  recommend that you work with your SAS account team to form a hardware estimate, and use the instance sizes from the hardware estimate.  See [Best Practices for using Microsoft Azure with SAS](https://communities.sas.com/t5/Administration-and-Deployment/Best-Practices-for-Using-Microsoft-Azure-with-SAS/m-p/676833#M19680) for more information.
-
-<a name="metadata"></a>
-#### SAS 9.4M7 Metadata clustered server
-We  recommend that you work with your SAS account team to form a hardware estimate, and use the instance sizes from the hardware estimate.  See [Best Practices for using Microsoft Azure with SAS](https://communities.sas.com/t5/Administration-and-Deployment/Best-Practices-for-Using-Microsoft-Azure-with-SAS/m-p/676833#M19680) for more information.
+To determine the appropriate sizes of these resources, we recommend that you work with your SAS account team to form a hardware estimate, and use the instance sizes from the hardware estimate. See [Best Practices for using Microsoft Azure with SAS](https://communities.sas.com/t5/Administration-and-Deployment/Best-Practices-for-Using-Microsoft-Azure-with-SAS/m-p/676833#M19680) for more information.
 
 <a name="architecture"></a>
 ## Architecture
