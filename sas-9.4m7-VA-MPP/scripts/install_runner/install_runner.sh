@@ -78,6 +78,13 @@ installAndConfigureSAS() {
 	export ANSIBLE_LOG_PATH=/tmp/install_hadoop.log
 	ansible-playbook -i ${INVENTORY_FILE} -vvv install_hadoop.yaml
 
+	# Start HDFS and YARN on hadoop
+	# For an as-yet-unexplained reason, running these commands from ansible
+	# doesn't start all necessary processes
+	ssh sasinst@vacontroller "hdfs namenode -format"
+	ssh sasinst@vacontroller "start-dfs.sh"
+	ssh sasinst@vacontroller "start-yarn.sh"
+
 	# Install TKGrid
 	export ANSIBLE_LOG_PATH=/tmp/install_tkgrid.log
 	ansible-playbook -i ${INVENTORY_FILE} -vvv install_tkgrid.yaml
