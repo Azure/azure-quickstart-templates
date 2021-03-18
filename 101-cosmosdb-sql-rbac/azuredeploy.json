@@ -1,0 +1,117 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "accountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Cosmos DB account name, max length 44 characters"
+      }
+    },
+    "roleDefinitionId": {
+      "type": "string",
+      "defaultValue": "[newGuid()]",
+      "metadata": {
+        "description": "Unique ID for the SQL Role Definition. Must be a GUID."
+      }
+    },
+    "roleDefinitionName": {
+      "type": "string",
+      "defaultValue": "My Read Write Role",
+      "metadata": {
+        "description": "Friendly name for the SQL Role Definition"
+      }
+    },
+    "dataActions": {
+      "type": "array",
+      "defaultValue": [
+        "Microsoft.DocumentDB/databaseAccounts/readMetadata",
+        "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*"
+      ],
+      "metadata": {
+        "description": "Data actions permitted by the Role Definition"
+      }
+    },
+    "roleAssignmentId": {
+      "type": "string",
+      "defaultValue": "[newGuid()]",
+      "metadata": {
+        "description": "Unique ID for the SQL Role Assignment. Must be a GUID."
+      }
+    },
+    "principalId": {
+      "type": "string",
+      "metadata": {
+        "description": "Object ID of the AAD identity. Must be a GUID."
+      }
+    }
+  },
+  "variables": {
+    "accountName": "[toLower(parameters('accountName'))]",
+    "locations": [
+      {
+        "locationName": "[parameters('location')]",
+        "failoverPriority": 0,
+        "isZoneRedundant": false
+      }
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "name": "[variables('accountName')]",
+      "apiVersion": "2021-01-15",
+      "kind": "GlobalDocumentDB",
+      "location": "[parameters('location')]",
+      "properties": {
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Session"
+        },
+        "locations": "[variables('locations')]",
+        "databaseAccountOfferType": "Standard",
+        "enableAutomaticFailover": false,
+        "enableMultipleWriteLocations": false
+      }
+    },
+    {
+      "name": "[parameters('roleDefinitionId')]",
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions",
+      "apiVersion": "2020-06-01-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]"
+      ],
+      "properties": {
+        "roleName": "[parameters('roleDefinitionName')]",
+        "type": "CustomRole",
+        "assignableScopes": [
+          "[resourceId(subscription().id, resourceGroup().id, 'Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]"
+        ],
+        "permissions": [
+          {
+            "dataActions": "[parameters('dataActions')]"
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('roleAssignmentId')]",
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
+      "apiVersion": "2020-06-01-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', variables('accountName'), parameters('roleDefinitionId'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[resourceId(subscription().id, resourceGroup().id, 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', variables('accountName'), parameters('roleDefinitionId'))]",
+        "principalId": "[parameters('principalId')]",
+        "scope": "[resourceId(subscription().id, resourceGroup().id, 'Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]"
+      }
+    }
+  ]
+}
