@@ -84,6 +84,8 @@ installAndConfigureSAS() {
 	ssh sasinst@vacontroller "hdfs namenode -format"
 	ssh sasinst@vacontroller "start-dfs.sh"
 	ssh sasinst@vacontroller "start-yarn.sh"
+	ssh sasinst@vacontroller "hdfs dfs -chgrp sas /"
+	ssh sasinst@vacontroller "hdfs dfs -chmod 0775 /"
 
 	# Install TKGrid
 	export ANSIBLE_LOG_PATH=/tmp/install_tkgrid.log
