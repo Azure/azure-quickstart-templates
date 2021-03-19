@@ -1,0 +1,243 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "deploymentNameSuffix": {
+            "type": "string",
+            "metadata": {
+                "description": "Used to create unique deployment names for subsequent deployments"
+            }
+        },
+        "omsLogAnalyticsWorkspaceName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Create new or use an existing Log Analytic Workspace"
+            }
+        },
+        "omsLogAnalyticsRegion": {
+            "type": "string",
+            "allowedValues": [
+                "westeurope",
+                "eastus",
+                "southeastasia",
+                "australiasoutheast",
+                "westcentralus",
+                "japaneast",
+                "uksouth",
+                "centralindia",
+                "canadacentral"
+            ],
+            "metadata": {
+                "description": "Specify the Azure Region for your new or existing OMS workspace"
+            }
+        },
+        "omsLogAnalyticsSku": {
+            "type": "string",
+            "defaultValue": "free",
+            "allowedValues": [
+                "free",
+                "standalone",
+                "pernode"
+            ],
+            "metadata": {
+                "description": "Specify the Azure Region for your OMS Automation Account"
+            }
+        },
+        "omsAutomationAccountName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Use an existing Automation account or create a new"
+            }
+        },
+        "omsAutomationRegion": {
+            "type": "string",
+            "allowedValues": [
+                  "westeurope",
+                "southeastasia",
+                "eastus2",
+                "southcentralus",
+                "japaneast",
+                "southeastasia",
+                "southcentralus",
+                "northeurope",
+                "canadacentral",
+                "australiasoutheast",
+                "centralindia",
+                "japaneast",
+                "northcentralus",
+                "brazilsouth",
+                "uksouth",
+                "westcentralus"
+            ],
+            "metadata": {
+                "description": "Specify the Azure Region for your OMS Automation Account"
+            }
+        },
+        "omsWorkspaceType": {
+            "type": "string",
+            "allowedValues": [
+                "Linked",
+                "Unlinked"
+            ],
+            "metadata": {
+                "description": "Specify the workspace type"
+            }
+        },
+        "linkedWorkspaceSKU": {
+            "type": "array",
+            "defaultValue": [
+                "pernode",
+                "OMS"
+            ],
+            "allowedValues": [
+                [
+                    "pernode",
+                    "OMS"
+                ],
+                [
+                    "free",
+                    "free"
+                ]
+            ],
+            "metadata": {
+                "description": "Choose the SKU for linked workspace  , only valid  if omsWorkspaceType is Linked otherwise ignored."
+            }
+        },
+        "collectAuditLogs": {
+            "type": "string",
+            "allowedValues": [
+                "Enabled",
+                "Disabled"
+            ],
+            "metadata": {
+                "description": "This option creates extra collectors to collect and ingest storage audit logs"
+            }
+        },
+        "collectionFromAllSubscriptions": {
+            "type": "string",
+            "allowedValues": [
+                "Enabled",
+                "Disabled"
+            ],
+            "metadata": {
+                "description": "Enables data collection from all subscriptions where Azure SPN has access"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Volkanco/AzureDeploy/master/OMSSolutions/oms-azure-storage-analytics-solution-v2",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated"
+            }
+        }
+    },
+    "variables": {
+        "nestedTemplates": {
+            "deployToLinkedWorkspaceWithAuditLogs": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/deployToLinkedWorkspaceWithAuditLogs.json', parameters('_artifactsLocationSasToken'))]",
+            "deployToWorkspaceWithAuditLogs": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/deployToWorkspaceWithAuditLogs.json', parameters('_artifactsLocationSasToken'))]"
+        }
+    },
+    "resources": [
+        {
+            "condition": "[equals(parameters('omsWorkspaceType'), 'Linked')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-02-01",
+            "name": "[concat('AS-AnalyticswithLogs-Linked-',parameters('deploymentNameSuffix'))]",
+            "dependsOn": [],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('nestedTemplates').deployToLinkedWorkspaceWithAuditLogs]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "deploymentNameSuffix": {
+                        "value": "[parameters('deploymentNameSuffix')]"
+                    },
+                    "omsLogAnalyticsWorkspaceName": {
+                        "value": "[parameters('omsLogAnalyticsWorkspaceName')]"
+                    },
+                    "omsLogAnalyticsRegion": {
+                        "value": "[parameters('omsLogAnalyticsRegion')]"
+                    },
+                    "omsLogAnalyticsSku": {
+                        "value": "[parameters('omsLogAnalyticsSku')]"
+                    },
+                    "omsAutomationAccountName": {
+                        "value": "[parameters('omsAutomationAccountName')]"
+                    },
+                    "omsAutomationRegion": {
+                        "value": "[parameters('omsAutomationRegion')]"
+                    },
+                    "linkedWorkspaceSKU": {
+                        "value": "[parameters('linkedWorkspaceSKU')]"
+                    },
+                    "collectAuditLogs": {
+                        "value": "[parameters('collectAuditLogs')]"
+                    },
+                    "collectionFromAllSubscriptions": {
+                        "value": "[parameters('collectionFromAllSubscriptions')]"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[equals(parameters('omsWorkspaceType'), 'Unlinked')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-02-01",
+            "name": "[concat('AS-AnalyticswithLogs-',parameters('deploymentNameSuffix'))]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('nestedTemplates').deployToWorkspaceWithAuditLogs]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "deploymentNameSuffix": {
+                        "value": "[parameters('deploymentNameSuffix')]"
+                    },
+                    "omsLogAnalyticsWorkspaceName": {
+                        "value": "[parameters('omsLogAnalyticsWorkspaceName')]"
+                    },
+                    "omsLogAnalyticsRegion": {
+                        "value": "[parameters('omsLogAnalyticsRegion')]"
+                    },
+                    "omsLogAnalyticsSku": {
+                        "value": "[parameters('omsLogAnalyticsSku')]"
+                    },
+                    "omsAutomationAccountName": {
+                        "value": "[parameters('omsAutomationAccountName')]"
+                    },
+                    "omsAutomationRegion": {
+                        "value": "[parameters('omsAutomationRegion')]"
+                    },
+                    "linkedWorkspaceSKU": {
+                        "value": "[parameters('linkedWorkspaceSKU')]"
+                    },
+                    "collectAuditLogs": {
+                        "value": "[parameters('collectAuditLogs')]"
+                    },
+                    "collectionFromAllSubscriptions": {
+                        "value": "[parameters('collectionFromAllSubscriptions')]"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

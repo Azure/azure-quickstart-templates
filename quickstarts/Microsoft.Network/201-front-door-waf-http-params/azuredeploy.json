@@ -1,0 +1,95 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "wafPolicyName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the WAF policy"
+            }
+        },
+        "wafMode": {
+            "type": "string",
+            "allowedValues": [
+                "Detection",
+                "Prevention"
+            ],
+            "defaultValue": "Detection",
+            "metadata": {
+                "description": "Describes if it is in detection mode or prevention mode at policy level."
+            }
+        },
+        "httpRule1": {
+            "type": "object",
+            "metadata": {
+                "description": "Defines contents of a web application rule 1"
+            }
+        },
+        "httpRule2": {
+            "type": "object",
+            "metadata": {
+                "description": "Defines contents of a web application rule 2"
+            }
+        }
+    },
+    "variables": {
+        "wafLocation": "global"
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-03-01",
+            "type": "Microsoft.Network/FrontDoorWebApplicationFirewallPolicies",
+            "name": "[parameters('wafPolicyName')]",
+            "location": "[variables('wafLocation')]",            
+            "properties": {
+                "policySettings": {
+                    "mode": "[parameters('wafMode')]",
+                    "enabledState": "Enabled"
+                },
+                "customRules": {
+                    "rules": [
+                        {
+                            "name": "[parameters('httpRule1').name]",
+                            "priority": "[parameters('httpRule1').priority]",
+                            "enabledState": "[parameters('httpRule1').enabledState]",
+                            "ruleType": "[parameters('httpRule1').ruleType]",
+                            "copy": [
+                                {
+                                    "name": "matchConditions",
+                                    "count": "[length(parameters('httpRule1').matchConditions)]",
+                                    "input": {
+                                        "matchVariable": "[parameters('httpRule1').matchConditions[copyIndex('matchConditions')].matchVariable]",
+                                        "operator": "[parameters('httpRule1').matchConditions[copyIndex('matchConditions')].operator]",
+                                        "selector": "[parameters('httpRule1').matchConditions[copyIndex('matchConditions')].selector]",
+                                        "matchValue": "[parameters('httpRule1').matchConditions[copyIndex('matchConditions')].matchValue]"
+                                    }
+                                }
+                            ],
+                            "action": "[parameters('httpRule1').action]"
+                        },
+                        {
+                            "name": "[parameters('httpRule2').name]",
+                            "priority": "[parameters('httpRule2').priority]",
+                            "enabledState": "[parameters('httpRule2').enabledState]",
+                            "ruleType": "[parameters('httpRule2').ruleType]",
+                            "copy": [
+                                {
+                                    "name": "matchConditions",
+                                    "count": "[length(parameters('httpRule2').matchConditions)]",
+                                    "input": {
+                                        "matchVariable": "[parameters('httpRule2').matchConditions[copyIndex('matchConditions')].matchVariable]",
+                                        "operator": "[parameters('httpRule2').matchConditions[copyIndex('matchConditions')].operator]",
+                                        "selector": "[parameters('httpRule2').matchConditions[copyIndex('matchConditions')].selector]",
+                                        "matchValue": "[parameters('httpRule2').matchConditions[copyIndex('matchConditions')].matchValue]"
+                                    }
+                                }
+                            ],
+                            "action": "[parameters('httpRule2').action]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

@@ -1,0 +1,67 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"location": {
+			"metadata": {
+				"description": "The Location For the resources"
+			},
+			"type": "string"
+		},
+		"vmName": {
+			"metadata": {
+				"description": "The name of the vm"
+			},
+			"type": "string"
+		},
+		"commandToExecute": {
+			"type": "string"
+		},
+		"filepath": {
+			"type": "string"
+		},
+		"_artifactsLocation": {
+			"type": "string",
+			"metadata": {
+				"description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+			}
+		},
+		"_artifactsLocationSasToken": {
+			"type": "securestring",
+			"metadata": {
+				"description": "The sasToken required to access _artifactsLocation."
+			}
+		}
+	},
+	"variables": {
+		"extensionName": "[concat(parameters('vmName'),'InitStartup')]"
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"apiVersion": "2019-07-01",
+			"name": "[concat(parameters('vmName'), '/', variables('extensionName'))]",
+			"location": "[parameters('location')]",
+			"properties": {
+				"publisher": "Microsoft.Compute",
+				"type": "CustomScriptExtension",
+				"typeHandlerVersion": "1.10",
+				"autoUpgradeMinorVersion": true,
+				"settings": {
+					"fileUris": [
+						"[uri(parameters('_artifactsLocation'), concat(parameters('filepath'), parameters('_artifactsLocationSasToken')))]"
+					]
+				},
+				"protectedSettings": {
+					"commandToExecute": "[parameters('commandToExecute')]"
+				}
+			}
+		}
+	],
+	"outputs": {
+		"instanceView": {
+			"value": "[reference( resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('vmName'), variables('extensionName'))).instanceView]",
+			"type": "object"
+		}
+	}
+}

@@ -1,0 +1,358 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "publicIPDomainNameLabelOrchServer": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "networkSecurityGroupNameOrchServer": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "networkInterfaceNameOrchServer": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "vmNameOrchServer": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "vmAdminUsernameOrchServer": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "storageAccountName": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "vmStorageAccountContainerName": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "network-api-version": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "compute-api-version": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "deployment-api-version2": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "tagvalues": {
+      "type": "object",
+      "defaultValue": ""
+    },
+    "imagePublisherLinux": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "imageOfferLinux": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "orcServerubuntuOSVersion": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "vmSizeOrcServer": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "subnet2Ref": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "installOrchTemplateurl": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "datameerTags": {
+      "type": "object"
+    },
+    "trendmicroTags": {
+      "type": "object"
+    },
+    "chefSoftwareTags": {
+      "type": "object"
+    },
+    "quickstartTags": {
+      "type": "object"
+    },
+    "authenticationType": {
+      "type": "string"
+    },
+    "vmAdminPasswordOrPublicKeyOrchServer": {
+      "type": "securestring"
+    }
+  },
+  "variables": {
+    "publicIPAddressNameOrchServer": "publicipOrchestratorServer",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('vmAdminUsernameOrchServer'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('vmAdminPasswordOrPublicKeyOrchServer')]"
+          }
+        ]
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmNameOrchServer')]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('chefSoftwareTags').provider]"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSizeOrcServer')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisherLinux')]",
+            "offer": "[parameters('imageOfferLinux')]",
+            "sku": "[parameters('orcServerubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('vmNameOrchServer'),'-osDisk')]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite"
+          },
+          "dataDisks": []
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmNameOrchServer')]",
+          "adminUsername": "[parameters('vmAdminUsernameOrchServer')]",
+          "secrets": [],
+          "adminPassword": "[parameters('vmAdminPasswordOrPublicKeyOrchServer')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceNameOrchServer'))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceNameOrchServer'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmNameOrchServer'),'/','installdockerandcompose')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('chefSoftwareTags').provider]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameOrchServer'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "DockerExtension",
+        "typeHandlerVersion": "1.1",
+        "autoUpgradeMinorVersion": true,
+        "settings": {}
+      }
+    },
+    {
+      "name": "orchestratorapplication",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameOrchServer'),'/extensions/installdockerandcompose')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[parameters('installOrchTemplateurl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "[parameters('vmNameOrchServer')]"
+          },
+          "datameerTags": {
+            "value": "[parameters('datameerTags')]"
+          },
+          "trendmicroTags": {
+            "value": "[parameters('trendmicroTags')]"
+          },
+          "chefSoftwareTags": {
+            "value": "[parameters('chefSoftwareTags')]"
+          },
+          "quickstartTags": {
+            "value": "[parameters('quickstartTags')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressNameOrchServer')]",
+      "apiVersion": "2017-06-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('chefSoftwareTags').provider]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('publicIPDomainNameLabelOrchServer')]"
+        },
+        "idleTimeoutInMinutes": 4
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('networkInterfaceNameOrchServer')]",
+      "apiVersion": "2017-06-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('chefSoftwareTags').provider]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressNameOrchServer'))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnet2Ref')]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupNameOrchServer'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressNameOrchServer'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupNameOrchServer'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('networkSecurityGroupNameOrchServer')]",
+      "apiVersion": "2017-06-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('chefSoftwareTags').provider]"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1010,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "http",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1020,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "https",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1030,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "https8443",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1040,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "http33001",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "33001",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1050,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      },
+      "dependsOn": []
+    }
+  ]
+}

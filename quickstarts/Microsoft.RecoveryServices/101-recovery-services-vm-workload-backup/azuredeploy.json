@@ -1,0 +1,195 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vaultName": {
+      "type": "string",
+      "defaultValue": "SqlBackupDemoVault",
+      "metadata": {
+        "description": "Name of the Vault"
+      }
+    },
+    "vmResourceGroup": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Resource group of Compute VM containing the workload"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "sqlvmbackupdemo",
+      "metadata": {
+        "description": "Name of the Compute VM containing the workload"
+      }
+    },
+    "policyName": {
+      "type": "string",
+      "metadata": {
+        "description": "Backup Policy Name"
+      }
+    },
+    "databaseInstanceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of database server instance"
+      }
+    },
+    "databaseName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of protectable data source i.e. Database Name"
+      }
+    },
+    "isNewVault": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Conditional parameter for New or Existing Vault"
+      }
+    },
+    "isNewPolicy": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Conditional parameter for New or Existing Backup Policy"
+      }
+    },
+    "workloadType": {
+      "type": "string",
+      "defaultValue": "SQLDataBase",
+      "allowedValues": [
+        "SQLDataBase"
+      ],
+      "metadata": {
+        "description": "Workload type which is installed in VM and Pre-Registration Steps are performed"
+      }
+    },
+    "protectedItemType": {
+      "type": "string",
+      "defaultValue": "AzureVmWorkloadSQLDatabaseProtectedItem",
+      "allowedValues": [
+        "AzureVmWorkloadSQLDatabaseProtectedItem"
+      ],
+      "metadata": {
+        "description": "Protected Item (Database) type"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "skuName": "RS0",
+    "skuTier": "Standard",
+    "backupFabric": "Azure",
+    "containerType": "VMAppContainer",
+    "backupManagementType": "AzureWorkload"
+  },
+  "resources": [
+    {
+      "condition": "[parameters('isNewVault')]",
+      "type": "Microsoft.RecoveryServices/vaults",
+      "apiVersion": "2018-01-10",
+      "name": "[parameters('vaultName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('skuName')]",
+        "tier": "[variables('skuTier')]"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers",
+      "apiVersion": "2018-01-10",
+      "name": "[concat(parameters('vaultName'), '/', variables('backupFabric'), '/', variables('containerType'), ';compute;', parameters('vmResourceGroup'),';',parameters('vmName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+      ],
+      "properties":{
+        "containerType": "[variables('containerType')]",
+        "backupManagementType": "[variables('backupManagementType')]",
+        "workloadType": "[parameters('workloadType')]",
+        "friendlyName": "[parameters('vmName')]",
+        "sourceResourceId": "[resourceId(parameters('vmResourceGroup'),'Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+      }
+    },
+    {
+      "condition": "[parameters('isNewPolicy')]",
+      "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+      "apiVersion": "2018-01-10",
+      "name": "[concat(parameters('vaultName'), '/', parameters('policyName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+      ],
+      "properties": {
+        "backupManagementType": "[variables('backupManagementType')]",
+        "workloadType": "[parameters('workloadType')]",
+        "settings": {
+          "timeZone": "UTC",
+          "issqlcompression": false,
+          "isCompression": false
+        },
+        "subProtectionPolicy": [
+          {
+            "policyType": "Full",
+            "schedulePolicy": {
+                "schedulePolicyType": "SimpleSchedulePolicy",
+                "scheduleRunFrequency": "Daily",
+                "scheduleRunTimes": [
+                    "2019-03-24T16:00:00Z"
+                ],
+                "scheduleWeeklyFrequency": 0
+            },
+            "retentionPolicy": {
+                "retentionPolicyType": "LongTermRetentionPolicy",
+                "dailySchedule": {
+                    "retentionTimes": [
+                        "2019-03-24T16:00:00Z"
+                    ],
+                    "retentionDuration": {
+                        "count": 30,
+                        "durationType": "Days"
+                    }
+                }
+            }
+          },
+          {
+              "policyType": "Log",
+              "schedulePolicy": {
+                  "schedulePolicyType": "LogSchedulePolicy",
+                  "scheduleFrequencyInMins": 60
+              },
+              "retentionPolicy": {
+                  "retentionPolicyType": "SimpleRetentionPolicy",
+                  "retentionDuration": {
+                      "count": 30,
+                      "durationType": "Days"
+                  }
+              }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
+      "apiVersion": "2018-01-10",
+      "name": "[concat(parameters('vaultName'), '/', variables('backupFabric'), '/', variables('containerType'), ';compute;', parameters('vmResourceGroup'),';',parameters('vmName'), '/', parameters('workloadType'), ';', parameters('databaseInstanceName'), ';', parameters('databaseName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]",
+        "[resourceId('Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers', parameters('vaultName'), variables('backupFabric'), concat(variables('containerType'), ';compute;', parameters('vmResourceGroup'),';',parameters('vmName')))]"
+      ],
+      "properties":{
+        "backupManagementType": "[variables('backupManagementType')]",
+        "workloadType": "[parameters('workloadType')]",
+        "protectedItemType": "[parameters('protectedItemType')]",
+        "friendlyName": "[parameters('databaseName')]",
+        "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), parameters('policyName'))]"
+      }
+    }
+  ]
+}

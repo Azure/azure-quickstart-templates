@@ -1,0 +1,71 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "ParentDomainName": {
+      "type": "string"
+    },
+    "ChildDomainName": {
+      "type": "string"
+    },
+    "DnsForwarder": {
+      "type": "string"
+    },
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "adChildDomainDC1ModulesURL": "[uri(parameters('_artifactsLocation'), concat('DSC/CreateADChildDomainDC1.ps1.zip',parameters('_artifactsLocationSasToken')))]",
+    "adChildDomainDC1ConfigurationFunction": "CreateADChildDomainDC1.ps1\\CreateADChildDomainDC1"
+  },
+  "resources": [
+	{
+      "name": "[concat(parameters('vmName'),'/CreateADChildDomain1')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.21",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "ModulesUrl": "[variables('adChildDomainDC1ModulesURL')]",
+          "ConfigurationFunction": "[variables('adChildDomainDC1ConfigurationFunction')]",
+          "Properties": {
+            "ParentDomainName": "[parameters('parentDomainName')]",
+            "ChildDomainName": "[parameters('childDomainName')]",
+            "DnsForwarder": "[parameters('DnsForwarder')]",
+            "AdminCreds": {
+              "UserName": "[parameters('adminUserName')]",
+              "Password": "PrivateSettingsRef:AdminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "Items": {
+            "AdminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
