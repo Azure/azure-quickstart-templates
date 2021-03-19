@@ -1,4 +1,4 @@
-# Sample name
+# Min.io Azure Gateway
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/minio-azure-gateway/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/minio-azure-gateway/PublicDeployment.svg)
@@ -14,7 +14,7 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fminio-azure-gateway%2Fazuredeploy.json)
 
 
-## Sample overview and deployed resources
+## Overview and deployed resources
 
 This template deploys an AKS cluster running [min.io](https://min.io/) configured as an Azure storage gateway to provision a private S3 API into a VNET to enable the deployment of solutions which have a dependency on S3 object storage. 
 
