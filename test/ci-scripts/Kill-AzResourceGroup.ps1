@@ -207,4 +207,3 @@ foreach($vnet in $vnets){
 #finally...
 Remove-AzResourceGroup -Force -Verbose -Name $ResourceGroupName
 
-
