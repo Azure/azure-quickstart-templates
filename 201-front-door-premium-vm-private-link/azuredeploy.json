@@ -420,6 +420,24 @@
           },
           "resources": [
             {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', variables('vmName'), 'InstallCustomScript')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.0",
+                "autoUpgradeMinorVersion": true,
+                "protectedSettings": {
+                  "commandToExecute": "powershell -ExecutionPolicy Unrestricted Install-WindowsFeature -Name Web-Server"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+              ]
+            },
+            {
               "type": "Microsoft.Network/networkInterfaces",
               "apiVersion": "2020-06-01",
               "name": "[variables('vmNicName')]",
@@ -479,24 +497,6 @@
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.Compute/virtualMachines/extensions",
-              "apiVersion": "2020-06-01",
-              "name": "[format('{0}/InstallCustomScript', variables('vmName'))]",
-              "location": "[parameters('location')]",
-              "properties": {
-                "publisher": "Microsoft.Compute",
-                "type": "CustomScriptExtension",
-                "typeHandlerVersion": "1.0",
-                "autoUpgradeMinorVersion": true,
-                "protectedSettings": {
-                  "commandToExecute": "powershell -ExecutionPolicy Unrestricted Install-WindowsFeature -Name Web-Server"
-                }
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
               ]
             }
           ]
@@ -761,28 +761,29 @@
             {
               "type": "Microsoft.Cdn/profiles/originGroups/origins",
               "apiVersion": "2020-09-01",
-              "name": "[format('{0}/{1}', format('{0}/{1}', variables('profileName'), variables('originGroupName')), variables('originName'))]",
+              "name": "[format('{0}/{1}/{2}', variables('profileName'), variables('originGroupName'), variables('originName'))]",
               "properties": {
                 "hostName": "[parameters('originHostName')]",
                 "httpPort": 80,
                 "httpsPort": 443,
-                "originHostHeader": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[0], split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[1])).hostName]",
+                "originHostHeader": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))).hostName]",
                 "priority": 1,
                 "weight": 1000,
                 "sharedPrivateLinkResource": "[if(variables('isPrivateLinkOrigin'), variables('privateLinkOriginDetails'), null())]"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[0], split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[1])]",
-                "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[0], split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[1])]"
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]",
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
               ]
             },
             {
               "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
               "apiVersion": "2020-09-01",
-              "name": "[format('{0}/{1}', format('{0}/{1}', variables('profileName'), parameters('endpointName')), variables('routeName'))]",
+              "name": "[format('{0}/{1}/{2}', variables('profileName'), parameters('endpointName'), variables('routeName'))]",
               "properties": {
                 "originGroup": {
-                  "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[0], split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[1])]"
+                  "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]"
                 },
                 "originPath": "[if(not(equals(parameters('originPath'), '')), parameters('originPath'), null())]",
                 "supportedProtocols": [
@@ -844,20 +845,21 @@
                 "httpsRedirect": "Enabled"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[0], split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[1])]",
-                "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', split(format('{0}/{1}', format('{0}/{1}', variables('profileName'), variables('originGroupName')), variables('originName')), '/')[0], split(format('{0}/{1}', format('{0}/{1}', variables('profileName'), variables('originGroupName')), variables('originName')), '/')[1], split(format('{0}/{1}', format('{0}/{1}', variables('profileName'), variables('originGroupName')), variables('originName')), '/')[2])]",
-                "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[0], split(format('{0}/{1}', variables('profileName'), variables('originGroupName')), '/')[1])]"
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', variables('profileName'), variables('originGroupName'), variables('originName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]",
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
               ]
             }
           ],
           "outputs": {
             "frontDoorEndpointHostName": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[0], split(format('{0}/{1}', variables('profileName'), parameters('endpointName')), '/')[1])).hostName]"
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))).hostName]"
             },
             "frontDoorId": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Cdn/profiles', variables('profileName'))).frontDoorId]"
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles', variables('profileName'))).frontdoorId]"
             }
           }
         }
@@ -877,8 +879,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.3.1.62928",
-      "templateHash": "12155999356165306099"
+      "version": "0.3.126.58533",
+      "templateHash": "11026282578573497498"
     }
   }
 }
