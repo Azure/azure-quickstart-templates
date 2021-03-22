@@ -14,41 +14,30 @@
         "description": "Specifies the location for workspace."
       }
     },
-    "sku": {
-      "type": "string",
-      "defaultValue": "basic",
-      "allowedValues": [
-        "basic",
-        "enterprise"
-      ],
-      "metadata": {
-        "description": "Specifies the sku, also referred as 'edition' of the Azure Machine Learning workspace."
-      }
-    },
-    "identityType": {
-      "type": "string",
-      "defaultValue": "systemAssigned",
-      "allowedValues": [
-        "systemAssigned",
-        "userAssigned"
-      ],
-      "metadata": {
-        "description": "Specifies the identity type of the Azure Machine Learning workspace."
-      }
-    },
-    "primaryUserAssignedIdentityResourceGroup": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().name]",
-      "metadata": {
-        "description": "Specifies the resource group of user assigned identity that represents the Azure Machine Learing workspace."
-      }
-    },
-    "primaryUserAssignedIdentityName": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Specifies the name of user assigned identity that represents the Azure Machine Learing workspace."
-      }
+      "identityType": {
+        "type": "string",
+        "defaultValue": "systemAssigned",
+        "allowedValues": [
+          "systemAssigned",
+          "userAssigned"
+        ],
+        "metadata": {
+          "description": "Specifies the identity type of the Azure Machine Learning workspace."
+        }
+      },
+      "primaryUserAssignedIdentityResourceGroup": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().name]",
+        "metadata": {
+          "description": "Specifies the resource group of user assigned identity that represents the Azure Machine Learing workspace."
+        }
+      },
+      "primaryUserAssignedIdentityName": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "Specifies the name of user assigned identity that represents the Azure Machine Learing workspace."
+        }
     },
     "tagValues": {
       "type": "object",
@@ -341,6 +330,16 @@
     "applicationInsights": "[resourceId(parameters('applicationInsightsResourceGroupName'), 'Microsoft.Insights/components', parameters('applicationInsightsName'))]",
     "vnet": "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
     "subnet": "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]",
+    "privateDnsZoneName": {
+      "azureusgovernment": "privatelink.api.ml.azure.us",
+      "azurechinacloud": "privatelink.api.ml.azure.cn",
+      "azurecloud": "privatelink.api.azureml.ms"
+      },
+    "privateAznbDnsZoneName":{
+      "azureusgovernment": "privatelink.notebooks.usgovcloudapi.net",
+      "azurecloud": "privatelink.notebooks.azure.net",
+      "azurechinacloud": "privatelink.notebooks.chinacloudapi.cn"
+      },
     "privateEndpointName": "[concat(parameters('workspaceName'), '-PrivateEndpoint')]",
     "enablePE": "[not(equals(parameters('privateEndpointType'), 'none'))]",
     "networkRuleSetBehindVNet": {
@@ -356,6 +355,25 @@
       "privateEndpointNetworkPolicies": "Disabled",
       "privateLinkServiceNetworkPolicies": "Enabled"
     },
+    "serviceEndpointsAll": [
+      {
+        "service": "Microsoft.Storage"
+      },
+      {
+        "service": "Microsoft.KeyVault"
+      },
+      {
+        "service": "Microsoft.ContainerRegistry"
+      }
+    ],
+    "serviceEndpointsAzureChinaCloud": [
+      {
+        "service": "Microsoft.Storage"
+      },
+      {
+        "service": "Microsoft.KeyVault"
+      }
+    ],
     "privateEndpointSettings": {
       "name": "[concat(parameters('workspaceName'), '-PrivateEndpoint')]",
       "properties": {
@@ -398,7 +416,10 @@
       "koreacentral": "koreacentral",
       "koreasouth": "koreasouth",
       "eastus2euap": "southcentralus",
-      "centraluseuap": "southcentralus"
+      "centraluseuap": "southcentralus",
+      "usgovarizona": "usgovarizona",
+      "usgovvirginia": "usgovvirginia",
+      "chinaeast2": "chinaeast2"
     },
     "appInsightsLocation": "[variables('azAppInsightsLocationMap')[parameters('location')]]"
   },
@@ -430,17 +451,7 @@
         "addressPrefix": "[parameters('subnetPrefix')]",
         "privateEndpointNetworkPolicies": "Disabled",
         "privateLinkServiceNetworkPolicies": "Enabled",
-        "serviceEndpoints": [
-          {
-            "service": "Microsoft.Storage"
-          },
-          {
-            "service": "Microsoft.KeyVault"
-          },
-          {
-            "service": "Microsoft.ContainerRegistry"
-          }
-        ]
+        "serviceEndpoints": "[if(equals(toLower(environment().name), 'azurechinacloud'), variables('serviceEndpointsAzureChinaCloud'), variables('serviceEndpointsAll') )]"
       }
     },
     {
@@ -550,10 +561,6 @@
       "apiVersion": "2020-09-01-preview",
       "name": "[parameters('workspaceName')]",
       "location": "[parameters('location')]",
-      "sku": {
-        "tier": "[parameters('sku')]",
-        "name": "[parameters('sku')]"
-      },
       "identity": {
         "type": "[parameters('identityType')]",
         "userAssignedIdentities": "[if(equals(parameters('identityType'), 'userAssigned'), variables('userAssignedIdentities'), json('null'))]"
@@ -617,7 +624,7 @@
               "condition": "[equals(parameters('privateEndpointType'), 'AutoApproval')]",
               "type": "Microsoft.Network/privateDnsZones",
               "apiVersion": "2020-01-01",
-              "name": "privatelink.api.azureml.ms",
+              "name": "[variables('privateDnsZoneName')[toLower(environment().name)]]",
               "location": "global",
               "dependsOn": [
                 "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
@@ -629,7 +636,7 @@
               "condition": "[equals(parameters('privateEndpointType'), 'AutoApproval')]",
               "type": "Microsoft.Network/privateDnsZones",
               "apiVersion": "2020-01-01",
-              "name": "privatelink.notebooks.azure.net",
+              "name": "[variables('privateAznbDnsZoneName')[toLower(environment().name)]]",
               "location": "global",
               "dependsOn": [
                 "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"
@@ -641,11 +648,11 @@
               "condition": "[equals(parameters('privateEndpointType'), 'AutoApproval')]",
               "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
               "apiVersion": "2020-01-01",
-              "name": "[concat('privatelink.api.azureml.ms', '/', uniqueString(variables('vnet')))]",
+              "name": "[concat(variables('privateDnsZoneName')[toLower(environment().name)], '/', uniqueString(variables('vnet')))]",
               "location": "global",
               "dependsOn": [
                 "[resourceid(parameters('vnetResourceGroupName'), 'Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]",
-                "privatelink.api.azureml.ms"
+                "[variables('privateDnsZoneName')[toLower(environment().name)]]"
               ],
               "tags": "[parameters('tagValues')]",
               "properties": {
@@ -659,11 +666,11 @@
               "condition": "[equals(parameters('privateEndpointType'), 'AutoApproval')]",
               "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
               "apiVersion": "2020-01-01",
-              "name": "[concat('privatelink.notebooks.azure.net', '/', uniqueString(variables('vnet')))]",
+              "name": "[concat(variables('privateAznbDnsZoneName')[toLower(environment().name)], '/', uniqueString(variables('vnet')))]",
               "location": "global",
               "dependsOn": [
                 "[resourceid(parameters('vnetResourceGroupName'), 'Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]",
-                "privatelink.notebooks.azure.net"
+                "[variables('privateAznbDnsZoneName')[toLower(environment().name)]]"
               ],
               "tags": "[parameters('tagValues')]",
               "properties": {
@@ -679,23 +686,23 @@
               "apiVersion": "2020-06-01",
               "name": "[concat(variables('privateEndpointName'), '/', 'default')]",
               "location": "[parameters('vnetLocation')]",
-              "dependsOn": [
+              "dependsOn":[
                 "[resourceid(parameters('vnetResourceGroupName'), 'Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]",
-                "privatelink.notebooks.azure.net",
-                "privatelink.api.azureml.ms"
+                "[variables('privateAznbDnsZoneName')[toLower(environment().name)]]",
+                "[variables('privateDnsZoneName')[toLower(environment().name)]]"
               ],
               "properties": {
                 "privateDnsZoneConfigs": [
                   {
                     "name": "privatelink-api-azureml-ms",
                     "properties": {
-                      "privateDnsZoneId": "[resourceid(parameters('vnetResourceGroupName'), 'Microsoft.Network/privateDnsZones', 'privatelink.api.azureml.ms')]"
+                      "privateDnsZoneId": "[resourceid(parameters('vnetResourceGroupName'), 'Microsoft.Network/privateDnsZones', variables('privateDnsZoneName')[toLower(environment().name)])]"
                     }
                   },
                   {
                     "name": "privatelink-notebooks-azure-net",
                     "properties": {
-                      "privateDnsZoneId": "[resourceid(parameters('vnetResourceGroupName'), 'Microsoft.Network/privateDnsZones', 'privatelink.notebooks.azure.net')]"
+                      "privateDnsZoneId": "[resourceid(parameters('vnetResourceGroupName'), 'Microsoft.Network/privateDnsZones', variables('privateAznbDnsZoneName')[toLower(environment().name)])]"
                     }
                   }
                 ]
