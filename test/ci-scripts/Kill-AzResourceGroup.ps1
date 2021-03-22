@@ -10,6 +10,8 @@ param(
     [string][Parameter(mandatory=$true)] $ResourceGroupName
 )
 
+$subscriptionId = $(Get-AzContext).Subscription.Id
+
 #remove the locks
 Get-AzResourceLock -ResourceGroupName $ResourceGroupName -Verbose | Remove-AzResourceLock -Force -verbose
 
@@ -25,7 +27,6 @@ foreach($vault in $vaults){
     }
     Remove-AzRecoveryServicesVault -Vault $vault -Verbose
 }
-
 
 #Note that for SQL Backup vaults the sequence of steps are different and not supported in the AzureRM cmdlets - see the remove-vaults.ps1 script for these steps until we can rewrite this
 <#From public documentation, I see following steps prior to Delete Vault:
@@ -121,6 +122,35 @@ foreach($subnet in $subnets){
 }
 #>
 
+# web apps that have a serviceAssociationLink can be deleted even if the link exists and the vnet will be bricked 
+# (cannot be delete and the serviceAssociation link cannot be removed)
+# a funky traversal of 3 resources are needed to discover and remove the link (PUT/GET/DELETE are not symmetrical)
+$webapps = Get-AzWebApp -ResourceGroupName $ResourceGroupName -Verbose
+foreach($w in $webapps){
+    Write-Host "WebApp: $($w.Name)"
+    $slots = Get-AzWebAppSlot -ResourceGroupName $ResourceGroupName -Name $w.Name -Verbose
+    foreach($s in $slots){
+        $slotName = $($s.Name).Split('/')[1]
+        # assumption is that there can only be one vnetConfig but it returns an array so maybe not
+        $r = Invoke-AzRestMethod -Method "GET" -Path "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/sites/$($w.name)/slots/$slotName/virtualNetworkConnections?api-version=2020-10-01"
+        Write-Host "Slot: $slotName / $($r.StatusCode)"
+        if($r.StatusCode -eq '200'){
+            # The URI for remove is not the same as the GET URI
+            $r | Out-String
+            Invoke-AzRestMethod -Method "DELETE" -Path "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/sites/$($w.name)/slots/$slotName/networkConfig/virtualNetwork?api-version=2020-10-01" -Verbose
+        }
+    }
+    # now remove the config on the webapp itself
+    $r = Invoke-AzRestMethod -Method "GET" -Path "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/sites/$($w.name)/virtualNetworkConnections?api-version=2020-10-01"
+    Write-Host "Prod Slot: $($r.StatusCode)"
+    if($r.StatusCode -eq '200'){
+        # The URI for remove is not the same as the GET URI
+        $r | Out-String
+        Invoke-AzRestMethod -Method "DELETE" -Path "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/sites/$($w.name)/networkConfig/virtualNetwork?api-version=2020-10-01" -Verbose
+    }
+}
+
+
 #removing the link is async and takes a while, so remove the RG will likely still fail unless we want to wait - status takes a while to populate so polling will be hard
 $redisCaches = Get-AzRedisCache -ResourceGroupName $ResourceGroupName -Verbose
 
@@ -130,6 +160,35 @@ foreach($r in $redisCaches){
         $link | Remove-AzRedisCacheLink -Verbose
     }
 }
+
+# WebApps can have subnet delegation
+$webapps = Get-AzWebApp -ResourceGroupName $ResourceGroupName -Verbose
+foreach($w in $webapps){
+    Write-Host "WebApp: $($w.Name)"
+    $slots = Get-AzWebAppSlot -ResourceGroupName $ResourceGroupName -Name $w.Name -Verbose
+    foreach($s in $slots){
+        $slotName = $($s.Name).Split('/')[1]
+        # assumption is that there can only be one vnetConfig but it returns an array so maybe not
+        $r = Invoke-AzRestMethod -Method "GET" -Path "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/sites/$($w.name)/slots/$slotName/virtualNetworkConnections?api-version=2020-10-01"
+        Write-Host "Slot: $slotName / $($r.StatusCode)"
+        if($r.StatusCode -eq '200'){
+            # The URI for remove is not the same as the GET URI
+            $r | Out-String
+            Invoke-AzRestMethod -Method "DELETE" -Path "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/sites/$($w.name)/slots/$slotName/networkConfig/virtualNetwork?api-version=2020-10-01" -Verbose
+        }
+    }
+    # now remove the config on the webapp itself
+    $r = Invoke-AzRestMethod -Method "GET" -Path "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/sites/$($w.name)/virtualNetworkConnections?api-version=2020-10-01"
+    Write-Host "Prod Slot: $($r.StatusCode)"
+    if($r.StatusCode -eq '200'){
+        # The URI for remove is not the same as the GET URI
+        $r | Out-String
+        Invoke-AzRestMethod -Method "DELETE" -Path "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/sites/$($w.name)/networkConfig/virtualNetwork?api-version=2020-10-01" -Verbose
+    }
+}
+
+
+
 
 #ACI create a subnet delegation that must be removed before the vnet can be deleted
 $vnets = Get-AzVirtualNetwork -ResourceGroupName $ResourceGroupName -Verbose
@@ -147,3 +206,4 @@ foreach($vnet in $vnets){
 
 #finally...
 Remove-AzResourceGroup -Force -Verbose -Name $ResourceGroupName
+
