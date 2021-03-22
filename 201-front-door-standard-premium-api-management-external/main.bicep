@@ -76,26 +76,30 @@ module frontDoor 'modules/front-door.bicep' = {
   }
 }
 
-resource apiManagementFrontDoorIdNamedValue 'Microsoft.ApiManagement/service/namedValues@2020-06-01-preview' = {
-  name: '${apiManagementServiceName}/${apiManagementFrontDoorIdNamedValueName}'
-  dependsOn: [
-    apiManagement
-  ]
-  properties: {
-    displayName: 'FrontDoorId'
-    value: frontDoor.outputs.frontDoorId
-    secret: true
-  }
-}
+resource apiManagementService 'Microsoft.ApiManagement/service@2020-06-01-preview' existing = {
+  name: apiManagementServiceName
 
-resource apiManagementGlobalPolicy 'Microsoft.ApiManagement/service/policies@2020-06-01-preview' = {
-  name: '${apiManagementServiceName}/policy'
-  dependsOn: [
-    apiManagementFrontDoorIdNamedValue
-  ]
-  properties: {
-    value: '<policies><inbound><check-header name="X-Azure-FDID" failed-check-httpcode="403" failed-check-error-message="Invalid request." ignore-case="false"><value>{{${apiManagementFrontDoorIdNamedValueName}}}</value></check-header></inbound><backend><forward-request /></backend></policies>'
-    format: 'xml'
+  resource frontDoorIdNamedValue 'namedValues' = {
+    name: apiManagementFrontDoorIdNamedValueName
+    dependsOn: [
+      apiManagement
+    ]
+    properties: {
+      displayName: 'FrontDoorId'
+      value: frontDoor.outputs.frontDoorId
+      secret: true
+    }
+  }
+  
+  resource globalPolicy 'policies' = {
+    name: 'policy'
+    dependsOn: [
+      frontDoorIdNamedValue
+    ]
+    properties: {
+      value: '<policies><inbound><check-header name="X-Azure-FDID" failed-check-httpcode="403" failed-check-error-message="Invalid request." ignore-case="false"><value>{{${apiManagementFrontDoorIdNamedValueName}}}</value></check-header></inbound><backend><forward-request /></backend></policies>'
+      format: 'xml'
+    }
   }
 }
 
