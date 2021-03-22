@@ -92,6 +92,7 @@ resource origin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
     originHostHeader: originHostName
     priority: 1
     weight: 1000
+    sharedPrivateLinkResource: isPrivateLinkOrigin ? privateLinkOriginDetails : null
   }
 }
 
