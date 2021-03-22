@@ -82,18 +82,18 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-06-01' = {
       ]
     }
   }
-}
 
-resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = {
-  name: '${vm.name}/InstallCustomScript'
-  location: location
-  properties: {
-    publisher: 'Microsoft.Compute'
-    type: 'CustomScriptExtension'
-    typeHandlerVersion: '1.0'
-    autoUpgradeMinorVersion: true
-    protectedSettings: {
-      commandToExecute: 'powershell -ExecutionPolicy Unrestricted Install-WindowsFeature -Name Web-Server'
+  resource installCustomScriptExtension 'extensions' = {
+    name: 'InstallCustomScript'
+    location: location
+    properties: {
+      publisher: 'Microsoft.Compute'
+      type: 'CustomScriptExtension'
+      typeHandlerVersion: '1.0'
+      autoUpgradeMinorVersion: true
+      protectedSettings: {
+        commandToExecute: 'powershell -ExecutionPolicy Unrestricted Install-WindowsFeature -Name Web-Server'
+      }
     }
   }
 }
