@@ -32,9 +32,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   sku: {
     name: skuName
   }
-  properties: {
-    supportsHttpsTrafficOnly: false // This is only configured to make this sample work correctly with Application Gateway. This is not recommended practice - for production solutions you should always use end-to-end HTTPS.
-  }
 }
 
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
@@ -89,11 +86,11 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     $ctx = $storageAccount.Context
     Enable-AzStorageStaticWebsite -Context $ctx -IndexDocument $IndexDocument -ErrorDocument404Path $ErrorDocument404Path
 
-    New-Item $IndexDocument
+    New-Item $IndexDocument -Force
     Set-Content $IndexDocument '<h1>Welcome</h1>'
     Set-AzStorageBlobContent -Context $ctx -Container '$web' -File $IndexDocument -Blob $IndexDocument -Properties @{'ContentType' = 'text/html'}
 
-    New-Item $ErrorDocument404Path
+    New-Item $ErrorDocument404Path -Force
     Set-Content $ErrorDocument404Path '<h1>Error: 404 Not Found</h1>'
     Set-AzStorageBlobContent -Context $ctx -Container '$web' -File $ErrorDocument404Path -Blob $ErrorDocument404Path -Properties @{'ContentType' = 'text/html'}
     '''
