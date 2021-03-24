@@ -53,26 +53,55 @@ mountSASRaid() {
     mkfs.xfs /dev/md0
     mkdir "${sasFolder}"
     echo "$(blkid /dev/md0 | cut -d ' ' -f 2) ${sasFolder} xfs defaults 0 0" | tee -a /etc/fstab
+    set +e
     mount "${sasFolder}"
+    RET=$?
+    while [ "$RET" -gt "0" ]; do
+        echo "Waiting 5 seconds for mount to be possible"
+        sleep 5
+        mount "${sasFolder}"
+        RET=$?
+    done
+    set -e
+    echo "Mounting Successful for ${sasFolder}"
 }
 
 setupSASShareMount() {
     # Update /etc/hosts with private endpoint IP
     echo "$endpoint_ip $azure_storage_account.file.core.windows.net" | tee -a /etc/hosts
-
     # Create the share folder
     mkdir -p "${NFS_MOUNT_POINT}"
-
-    # Mount the sasshare
-    sudo mount -t nfs $azure_storage_account.file.core.windows.net:/$azure_storage_account/sasshare ${NFS_MOUNT_POINT} -o "vers=4,minorversion=1,sec=sys,actimeo=5"
+    # Adding the share folder to fstab
+    echo "$azure_storage_account.file.core.windows.net:/$azure_storage_account${NFS_MOUNT_POINT} ${NFS_MOUNT_POINT} nfs vers=4,minorversion=1,sec=sys,actimeo=5" | tee -a /etc/fstab
+    # Mount the share folder
+    set +e
+    mount "${NFS_MOUNT_POINT}"
+    RET=$?
+    while [ "$RET" -gt "0" ]; do
+        echo "Waiting 5 seconds for mount to be possible"
+        sleep 5
+        mount "${NFS_MOUNT_POINT}"
+        RET=$?
+    done
+    set -e
+    echo "Mounting Successful for ${NFS_MOUNT_POINT}"
 
     # Create the backups folder for metadata nodes - this is a separate share only for metadata nodes
     if [[ "${instance_type}" == "metadata" ]]; then
        mkdir -p "${BACKUP_NFS_MOUNT_POINT}"
-       sudo mount -t nfs $azure_storage_account.file.core.windows.net:/$azure_storage_account/backups ${BACKUP_NFS_MOUNT_POINT} -o "vers=4,minorversion=1,sec=sys,noac"
+       echo "$azure_storage_account.file.core.windows.net:/$azure_storage_account${BACKUP_NFS_MOUNT_POINT} ${BACKUP_NFS_MOUNT_POINT} nfs vers=4,minorversion=1,sec=sys,noac" | tee -a /etc/fstab
+       set +e
+       mount "${BACKUP_NFS_MOUNT_POINT}"
+       RET=$?
+       while [ "$RET" -gt "0" ]; do
+           echo "Waiting 5 seconds for mount to be possible"
+           sleep 5
+           mount "${BACKUP_NFS_MOUNT_POINT}"
+           RET=$?
+       done
+       set -e
+       echo "Mounting Successful for ${BACKUP_NFS_MOUNT_POINT}"
     fi
-
-    echo "Mounting Successful"
 }
 
 setupSUDOForAnsible() {
