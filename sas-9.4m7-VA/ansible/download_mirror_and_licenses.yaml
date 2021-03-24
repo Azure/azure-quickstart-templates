@@ -1,0 +1,100 @@
+#
+# Copyright (c) 2019, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+---
+- name: download all the things
+  hosts: [localhost]
+  vars:
+    DEPOT_DIRECTORY: /sasshare/depot
+    DEPOT_DOWNLOAD_LOCATION: ""
+    LICENSE_LOCATION: /sasshare/depot/sid_files/
+    LICENCE_DOWNLOAD_LOCATION: ""
+    PLANFILE_LOCATION: /sasshare/depot/planfiles/plan.xml
+    PLANFILE_DOWNLOAD_LOCATION: ""
+  tasks:
+  ############################################# Download the Depot folder ################################################
+    - name: install azcopy prerequisites
+      yum:
+          name: "{{ item }}"
+          state: "latest"
+      with_items:
+      - libunwind
+      - libicu
+      - rsync
+      become: yes
+
+    - name: create install folder
+      file:
+          state: directory
+          path: /tmp/azcopy_install
+
+    - name: downloading azcopy from microsoft
+      become: yes
+      unarchive:
+          remote_src: yes
+          src: "https://aka.ms/downloadazcopylinux64"
+          dest: "/tmp/azcopy_install"
+      register: task_result
+      until: task_result is success
+      retries: 10
+      delay: 5
+
+    - name: install azcopy
+      become: yes
+      shell: >-
+          /tmp/azcopy_install/install.sh
+
+    - name: remove install directory
+      ignore_errors: yes
+      file:
+          state: absent
+          path: /tmp/azcopy_install
+
+    - name: create storage folder
+      file:
+          path: "{{ DEPOT_DIRECTORY }}"
+          state: directory
+
+    - name: use azsync to download mirror
+      become: yes
+      shell: >-
+          timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
+      async: 7200
+      failed_when: false
+      register: copy_ret1
+
+    - name: use azsync to download mirror retry 1
+      become: yes
+      shell: |-
+          timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
+      async: 7200
+      failed_when: false
+      register: copy_ret2
+      when: "copy_ret1.rc != 0"
+
+    - name: use azsync to download mirror retry 2
+      become: yes
+      shell: |-
+          timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
+      async: 7200
+      failed_when: false
+      register: copy_ret3
+      when: "copy_ret1.rc != 0 and copy_ret2.rc != 0"
+
+    - name: use azsync to download mirror retry 3
+      become: yes
+      shell: |-
+          timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
+      async: 7200
+      failed_when: false
+      register: copy_ret4
+      when: "copy_ret1.rc != 0 and copy_ret2.rc != 0 and copy_ret3.rc != 0"
+
+    - name: use azsync to download mirror retry 4
+      become: yes
+      shell: |-
+          timeout -k 7140 7000 azcopy --source "{{ DEPOT_DOWNLOAD_LOCATION }}" --destination "{{ DEPOT_DIRECTORY }}" --recursive --quiet
+      async: 7200
+      register: copy_ret5
+      when: "copy_ret1.rc != 0 and copy_ret2.rc != 0 and copy_ret3.rc != 0 and copy_ret4.rc != 0"
