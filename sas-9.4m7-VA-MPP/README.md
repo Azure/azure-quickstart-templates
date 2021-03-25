@@ -14,13 +14,12 @@
 1. [Deployment Steps](#Deployment)
     1. [Deploy Using the Azure Portal](#azureportal)
 1. [Post Deployment Steps](#PostDeployment)
-    1. [Accessing Resources in the Deployment](#accessresources)
+    1. [Accessing Resources in the Deployment](#accessresources)      
+    1. [Running SAS Management Console](#smc)
+1. [Troubleshooting](#troubleshooting)
     1. [Check Logs and Services Status](#logsandservices)
     1. [Restarting Services](#restartservices)
-    1. [Running SAS Management Console](#smc)
-1. [Appendix A: Getting the SAS Token](#AppendixA)
-
-
+3. [Appendix A: Getting the SAS Token](#AppendixA)
 
 <a name="Overview"></a>
 ## Overview
@@ -166,17 +165,37 @@ Deployments typically take 2-3 hours to complete.
     * SAS Studio URL
 6. Browse to the SAS Visual Analytics and SAS Studio URLs.  Log in as *sasadm@saspw*.  Enter the password that you specified for the SAS Administration password value [here](#azureportal).
 
+<a name="smc"></a>
+### Running SAS Management Console 
+
+The easiest way to run SAS Management Console is to connect to the deployment using X11 port forwarding as follows:
+```
+ssh -X -i <public key pem file> AzureUser@<jumpvm public IP address>
+ssh -X <vm name> 
+cd /opt/sas/SASHome/SASManagementConsole/9.4 
+./sasmc & 
+```
+For example, to run SAS Management Console on the *midtier-0* VM:
+```
+ssh -X -i <public key pem file> AzureUser@<jumpvm public IP address>
+ssh -X midtier-0 
+cd /opt/sas/SASHome/SASManagementConsole/9.4 
+./sasmc & 
+```
+,a name="troubleshooting"></a>
+## Troubleshooting 
+
 <a name="logsandservices"></a>
 ### Check Logs and Services Status
 Check the logs and services status by accessing the various VM instances from the jumpvm, as follows: 
 
-1. Obtain the Public IP Address of the jumpvm from the jumpvm’s details: 
+1. Obtain the public IP Address of the jumpvm from the jumpvm’s details: 
 
    a. Navigate to [https://portal.azure.com/#blade/HubsExtension/BrowseResourceGroups](https://portal.azure.com/#blade/HubsExtension/BrowseResourceGroups) and select the *Resource Group* created by the deployment.
    
    b. Select the *jumpvm* resource from the list of resources in the *Resource Group*. The public IP address is displayed in the *Resource Overview*. 
 
-2. Using the Public IP address, SSH to the jumpvm: 
+2. Using the public IP address, SSH to the jumpvm: 
 
     ```
    ssh -I <public key pem file> AzureUser@<jumpvm public IP address>
@@ -202,36 +221,54 @@ Check the logs and services status by accessing the various VM instances from th
    The password for all accounts is set to the default: *Go4thsas*
    
    SAS is installed in the /opt/sas folder on all VMs. 
-
 <a name="restartservices"></a>
 ### Restarting Services
 
 Some services might not successfully restart when the deployment completes. 
 
-To restart the middle tier services, SSH to the midtier-0 VM instance and perform the following steps: 
-```
-cd /opt/sas/config/Lev1 
-./sas.servers stop 
-./sas.servers start 
-```
+To restart the services using the start and stop scripts, perform the following steps:
+1. Obtain the public IP Address of the jumpvm from the jumpvm’s details: 
 
-<a name="smc"></a>
-### Running SAS Management Console 
+   a. Navigate to [https://portal.azure.com/#blade/HubsExtension/BrowseResourceGroups](https://portal.azure.com/#blade/HubsExtension/BrowseResourceGroups) and select the *Resource Group* created by the deployment.
+   
+   b. Select the *jumpvm* resource from the list of resources in the *Resource Group*. The public IP address is displayed in the *Resource Overview*. 
+2. Using the public IP address, SSH to the jumpvm: 
 
-The easiest way to run SAS Management Console is to connect to the deployment using X11 port forwarding as follows:
-```
-ssh -X -i <public key pem file> AzureUser@<jumpvm public IP address>
-ssh -X <vm name> 
-cd /opt/sas/SASHome/SASManagementConsole/9.4 
-./sasmc & 
-```
-For example, to run SAS Management Console on the *midtier-0* VM:
-```
-ssh -X -i <public key pem file> AzureUser@<jumpvm public IP address>
-ssh -X midtier-0 
-cd /opt/sas/SASHome/SASManagementConsole/9.4 
-./sasmc & 
-```
+    ```
+   ssh -I <public key pem file> AzureUser@<jumpvm public IP address>
+   ```
+ 3. Log in to the Azure CLI:
+ ```
+ /usr/local/bin/az login --use-device-code
+ ```
+ For more information about the Azure CLI, see [Sign in with Azure CLI](https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli).
+ 
+ 4. Verify that the current subscription matches the subscription in which SAS has been deployed:
+ ```
+ /usr/local/bin/az/account list --output table
+ ```
+ For more information about the az account command see [az account](https://docs.microsoft.com/en-us/cli/azure/account?view=azure-cli-latest).
+ 
+ 5. If the subscriptions do not match, set the current subscription to the subscription in which SAS has been deployed:
+ ```
+ /usr/local/bin/az/account set --subscription <subscription>
+ ```
+ 6. When the correct subscription is set, you can run the start and stop scripts as follows:
+   
+    a. To start the SAS services on the SAS 9.4M7 Metadata server, SAS 9.4M7 Mid-tier server, and SAS Visual Analytics controller VMs:
+    ```
+    /sas/install/scripts/start_sas.sh 
+    ```
+    
+    b. To return the status of the SAS services on the SAS 9.4M7 Metadata server, SAS 9.4M7 Mid-tier server, and SAS Visual Analytic controller VMs:
+    ```
+    /sas/install/scripts/status_sas.sh 
+    ```
+    c. To stop the SAS services on the SAS 9.4M7 Metadata server, SAS 9.4M7 Mid-tier server, and SAS Visual Analytic controller VMs:
+    ```
+    /sas/install/scripts/stop_sas.sh 
+    ```
+
 
 <a name="AppendixA"></a>
 ## Appendix A: Get the SAS Token
