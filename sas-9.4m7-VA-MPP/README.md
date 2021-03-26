@@ -106,7 +106,7 @@ SUBDIRECTORY_NAME - the name of the Azure storage blob to which the depot is upl
 For more information about this command, see ["az storage blob upload-batch"](https://docs.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az_storage_blob_upload_batch).
 
 <a name="depotlocation"></a>
-* The URL for the SAS depot location:
+* You must obtain the URL for the SAS depot location as follows: 
 
 **Note:** In these steps, SAS Token refers to the Shared Access Signature Token.
 1. From the Azure Portal [here](https://portal.azure.com/#home), click *Resource Groups*.
@@ -171,7 +171,7 @@ Deployments typically take 2-3 hours to complete.
 
 1. Open the resource group.
 2. Click *Deployments*.
-3. Click *Microsoft Template-<deployment name>*.
+3. Click *Microsoft Template-\<deployment name\>*.
 5. Click *Outputs* to access the following:
     * jump_IP IP address
     * SAS Visual Analytics URL
