@@ -17,6 +17,7 @@ if [ -e "$HOME/.bash_profile" ]; then
 fi
 #set -x
 #set -v
+set -e
 
 ScriptDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . "/tmp/sasinstall.env"
