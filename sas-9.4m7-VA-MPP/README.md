@@ -82,7 +82,7 @@ Before deploying the SAS 9.4 Quickstart Template for Azure with SAS Visual Analy
 ["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
 * A resource group that does not already contain a Quickstart deployment. For more information, see ["Resource groups"](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview#resource-groups).
 
-* If you are using Azure NFS file shares, you must enable your Azure subscription for NFS.  For more information, see the "Register the NFS 4.1 Protocol" section at [How to create an NFS File Share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal).
+* Since this Quickstart uses Azure NFS file shares, you must enable your Azure subscription for NFS.  For more information, see the "Register the NFS 4.1 Protocol" section at [How to create an NFS File Share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal).
 
 *  Use of a region that supports Availability Zones. For more information, see [Azure Services that support Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-region).
  
@@ -92,10 +92,23 @@ Before deploying the SAS 9.4 Quickstart Template for Azure with SAS Visual Analy
 ```
 az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$STORAGEKEY" --destination "$SHARE_NAME" --destination-path "$SUBDIRECTORY_NAME" --source "$(pwd)" 
 ```
+
+Here is a description of the variables in the above command:
+
+STORAGE_ACCOUNT - the name of the Azure storage account to which the depot is uploaded.
+
+STORAGEKEY - the access key for the Azure storage account. This value can be retrieved using the Azure CLI “az storage account keys list” command.  See [az storage account keys](https://docs.microsoft.com/en-us/cli/azure/storage/account/keys?view=azure-cli-latest) for more information. 
+
+SHARE_NAME - the name of the Azure container to which the depot is uploaded. This container must exist in the storage account.
+
+SUBDIRECTORY_NAME - the name of the Azure storage blob to which the depot is uploaded. This storage blob is created by the “az storage account keys list” command.
+
 For more information about this command, see ["az storage blob upload-batch"](https://docs.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az_storage_blob_upload_batch).
 
 <a name="depotlocation"></a>
 * The URL for the SAS depot location:
+
+**Note:** In these steps, SAS Token refers to the Shared Access Signature Token.
 1. From the Azure Portal [here](https://portal.azure.com/#home), click *Resource Groups*.
 2. From the left column, click on the storage account that you uploaded the SAS 9.4 order files to.
 3. Expand *BLOB CONTAINERS*.  Verify that your order files are inside the blob container.
@@ -127,7 +140,7 @@ Then the  SAS depot location is:
 |Region|Defines the Azure region in which the deployment should run. The available Azure regions are listed at [Azure Services that support Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-region). The available Azure regions if using Azure NFS file shares are listed in the "Available regions" section at [How to create an NFS share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal).  
 |Location|Defines the location in Microsoft Azure where these resources should be created. This is derived from the Resource group.|
 |SAS Depot Location|Specifies the URI of the Azure Blob Store where the software depot was uploaded. You determined this URI during the prerequisite step [here](#depotlocation).|
-|SAS Plan File Location|Specifies the URI to download the plan file from as currently specified in the Azure Blob Store. Leave blank if the plan file is stored in the depot blob.
+|SAS Plan File Location|Specifies the URI to download the plan file from as currently specified in the Azure Blob Store. Leave blank if the plan file is stored in the depot blob. If this is left blank, then the plan file located in the depot at “depot/plan.xml” is used. If no plan file exists in the depot, then the default plan file supplied by this Quickstart is used.
 |Use a New or Existing Virtual Network?|Specifies whether to use a new or existing network.|
 |Existing Virtual Network Resource Group|Specifies the resource group if using an existing virtual network. Leave blank if using a new network. Otherwise, enter the resource group for the existing network|
 |Virtual Network Name|Use the default value (recommended).|
@@ -137,13 +150,13 @@ Then the  SAS depot location is:
 |Visual Analytics Worker Count|Specifies the number of worker instances created for the SAS Visual Analytics controller.| 
 |Visual Analytics Controller Size|Specifies the size of the Visual Analytics Controller.|
 |Visual Analytics Worker Size|Specifies the size of the SAS Visual Analytics Worker.|
-|Proximity Placement Group Name| Specifies the proximity group for instances. For better performance, you might want to place all instances in the same proximity group. You supply the name.|
+|Proximity Placement Group Name| Specifies the proximity group for instances. You supply the name.|
 |SSH Key for VM Access| Specifies the full SSH public key that will be added to the servers. Cut and paste a public SSH key into this field.|
 |SAS Administration Password|Specifies the password used for SAS authentication. Enter the password to be used for the sasadm@saspw account.|
 |Azure Administration Password|Specifies the password used for OS authentication.  Enter the password to be used for the sasinst account.|
-|Admin Ingress Location|Specifies to allow inbound SSH traffic to the Ansible Controller from this Classless Inter-Domain Routing (CIDR) block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x.|
-|Web Ingress Location| Specifies to allow inbound HTTP traffic to the SAS 9.4 environment from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x.|
-|\_artifacts Location SAS Token|Leave blank.|
+|Admin Ingress Location|Specifies to allow inbound SSH traffic to the Ansible Controller from this Classless Inter-Domain Routing (CIDR) block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x. If this is left blank, the environment can be accessed from any location on the internet.|
+|Web Ingress Location| Specifies to allow inbound HTTP traffic to the SAS 9.4 environment from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x. If this is left blank, the environment can be accessed from any location on the internet.|
+|\_artifacts Location SAS Token|Leave blank. **Note:** SAS Token refers to the Shared Access Signature Token|
 |\_artifacts Location|Use the default value (recommended).|
 
 3. Click *Next: Review and Create*. 
@@ -158,12 +171,12 @@ Deployments typically take 2-3 hours to complete.
 
 1. Open the resource group.
 2. Click *Deployments*.
-3. Click *Microsoft Template-\<deployment name\>*.
+3. Click *Microsoft Template-<deployment name>*.
 5. Click *Outputs* to access the following:
     * jump_IP IP address
     * SAS Visual Analytics URL
     * SAS Studio URL
-6. Browse to the SAS Visual Analytics and SAS Studio URLs.  Log in as *sasadm@saspw*.  Enter the password that you specified for the SAS Administration password value [here](#azureportal).
+6. Navigate to the SAS Visual Analytics and SAS Studio URLs.  Log in as *sasadm@saspw*.  Enter the password that you specified for the SAS Administration password value [here](#azureportal).
 
 <a name="smc"></a>
 ### Running SAS Management Console 
@@ -198,7 +211,7 @@ Check the logs and services status by accessing the various VM instances from th
 2. Using the public IP address, SSH to the jumpvm: 
 
     ```
-   ssh -I <public key pem file> AzureUser@<jumpvm public IP address>
+   ssh -i <public key pem file> AzureUser@<jumpvm public IP address>
    ```
    
    The jumpvm provides SSH access to the other VMs in the deployment: 
@@ -218,8 +231,8 @@ Check the logs and services status by accessing the various VM instances from th
    ```
    ssh sasinst@midtier-0 
    ```
-   The password for all accounts is set to the default: *Go4thsas*
-   
+   The password for all system accounts is set to the value provided by the user in the “Azure Administration Password” parameter.
+     
    SAS is installed in the /opt/sas folder on all VMs. 
 <a name="restartservices"></a>
 ### Restarting Services
@@ -235,7 +248,7 @@ To restart the services using the start and stop scripts, perform the following 
 2. Using the public IP address, SSH to the jumpvm: 
 
     ```
-   ssh -I <public key pem file> AzureUser@<jumpvm public IP address>
+   ssh -i <public key pem file> AzureUser@<jumpvm public IP address>
    ```
  3. Log in to the Azure CLI:
  ```
@@ -272,6 +285,7 @@ To restart the services using the start and stop scripts, perform the following 
 
 <a name="AppendixA"></a>
 ## Appendix A: Get the SAS Token
+**Note:** In these steps, SAS Token refers to the Shared Access Signature Token. 
 1. From the Azure Portal [here](https://portal.azure.com/#home), click *Resource Groups*.
 2. From the left column, click on the storage account that you uploaded the SAS 9.4 order files to.
 3. Expand *BLOB CONTAINERS*.  Verify that your order files are inside the blob container.
