@@ -1,0 +1,195 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.1",
+    "parameters": {
+      "autoManageAccountSubscriptionId": {
+        "type": "string",
+        "defaultValue": "[subscription().id]"
+      },
+      "autoManageAccountResourceGroup": {
+        "type": "string"
+      },
+      "autoManageAccountName": {
+        "type": "string"
+      },
+      "autoManageAccountLocation": {
+        "type": "string"
+      },
+      "vMResourceGroup": {
+        "type": "string"
+      },
+      "vMName": {
+        "type": "string"
+      },
+      "configurationProfile": {
+        "type": "string",
+        "defaultValue": "Azure virtual machine best practices – Production",
+        "allowedValues": [
+          "Azure virtual machine best practices – Dev/Test",
+          "Azure virtual machine best practices – Production"
+        ]
+      },
+      "autoManageAccountDeployName": {
+        "type": "string",
+        "defaultValue": "[concat(parameters('autoManageAccountName'), '-', utcNow('yyyyMMddHHmmss'))]"
+      },
+      "assignmentDeployName": {
+        "type": "string",
+        "defaultValue": "[concat('AssignmentDeployment-', parameters('vMName'))]"
+      },
+      "createAutoManageAccount": {
+        "type": "bool"
+      }
+    },
+    "variables": {
+      "autoManageAccountResourceId": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('autoManageAccountResourceGroup'),'/providers/','Microsoft.Automanage/accounts/',parameters('autoManageAccountName'))]",
+      "contributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+      "resourcePolicyContributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '36243c78-bf99-498c-9df9-86d9f8d28608')]"
+    },
+    "resources": [
+      {
+        "condition": "[parameters('createAutoManageAccount')]",
+        "type": "Microsoft.Resources/resourceGroups",
+        "apiVersion": "2019-10-01",
+        "name": "[parameters('autoManageAccountResourceGroup')]",
+        "location": "[parameters('autoManageAccountLocation')]"
+      },
+      {
+        "condition": "[and(parameters('createAutoManageAccount'), equals(parameters('autoManageAccountSubscriptionId'), subscription().subscriptionId))]",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2019-10-01",
+        "name": "[parameters('autoManageAccountDeployName')]",
+        "resourceGroup": "[parameters('autoManageAccountResourceGroup')]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Resources/resourceGroups', parameters('autoManageAccountResourceGroup'))]"
+          ],
+        "properties": {
+          "mode": "Incremental",
+          "expressionEvaluationOptions":{
+                "scope": "inner"
+          },
+          "parameters": {
+                "autoManageAccountLocation": {
+                    "value": "[parameters('autoManageAccountLocation')]"
+                },
+                "autoManageAccountName": {
+                    "value": "[parameters('autoManageAccountName')]"
+                }
+          },
+          "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+                        "parameters": {
+                  "autoManageAccountLocation": {
+                      "type": "string"
+                  },
+                  "autoManageAccountName": {
+                      "type": "string"
+                  }
+              },
+            "resources": [
+              {
+                "type": "Microsoft.Automanage/accounts",
+                "apiVersion": "2020-06-30-preview",
+                "name": "[parameters('autoManageAccountName')]",
+                "location": "[parameters('autoManageAccountLocation')]",
+                "identity": {
+                  "type": "SystemAssigned"
+                }
+              }
+            ],
+            "outputs": {
+              "principalId": {
+                "type": "string",
+                "value": "[reference(resourceId('Microsoft.Automanage/accounts', parameters('autoManageAccountName')), '2020-06-30-preview', 'Full').Identity.principalId]"
+              }
+            }
+          }
+        }
+      },
+      {
+          "condition": "[parameters('createAutoManageAccount')]",
+          "type": "Microsoft.Authorization/roleAssignments",
+          "apiVersion": "2020-04-01-preview",
+          "name": "[guid(parameters('autoManageAccountName'), parameters('autoManageAccountResourceGroup'), variables('contributor'))]",
+          "dependsOn": [
+            "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('autoManageAccountResourceGroup'))]",  "[parameters('autoManageAccountDeployName')]"
+          ],
+          "properties": {
+            "roleDefinitionId": "[variables('contributor')]",
+            "principalId": "[if(parameters('createAutoManageAccount'), reference(parameters('autoManageAccountDeployName')).outputs.principalId.value, 'resource not deployed')]",
+            "principalType": "ServicePrincipal",
+            "scope": "[subscription().id]"
+          }
+      },
+      {
+          "condition": "[parameters('createAutoManageAccount')]",
+          "type": "Microsoft.Authorization/roleAssignments",
+          "apiVersion": "2020-04-01-preview",
+          "name": "[guid(parameters('autoManageAccountName'), parameters('autoManageAccountResourceGroup'), variables('resourcePolicyContributor'))]",
+          "dependsOn": [
+            "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('autoManageAccountResourceGroup'))]",  "[parameters('autoManageAccountDeployName')]"
+          ],
+          "properties": {
+            "roleDefinitionId": "[variables('resourcePolicyContributor')]",
+            "principalId": "[if(parameters('createAutoManageAccount'), reference(parameters('autoManageAccountDeployName')).outputs.principalId.value, 'resource not deployed')]",
+            "principalType": "ServicePrincipal",
+            "scope": "[subscription().id]"
+          }
+      },
+      {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2019-10-01",
+        "name": "[parameters('assignmentDeployName')]",
+        "resourceGroup": "[parameters('vMResourceGroup')]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Resources/resourceGroups', parameters('autoManageAccountResourceGroup'))]",
+            "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('autoManageAccountResourceGroup'))]",  "[parameters('autoManageAccountDeployName')]"
+          ],
+        "properties": {
+          "mode": "Incremental",
+          "expressionEvaluationOptions":{
+                "scope": "inner"
+          },
+          "parameters": {
+                "vMName": {
+                    "value": "[parameters('vMName')]"
+                },
+                "configurationProfile": {
+                    "value": "[parameters('configurationProfile')]"
+                },
+                "autoManageAccountResourceId": {
+                    "value": "[variables('autoManageAccountResourceId')]"
+                }
+          },
+          "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                  "vMName": {
+                      "type": "string"
+                  },
+                  "configurationProfile": {
+                      "type": "string"
+                  },
+                  "autoManageAccountResourceId": {
+                      "type": "string"
+                  }
+              },
+            "resources": [
+              {
+                "type": "Microsoft.Compute/virtualMachines/providers/configurationProfileAssignments",
+                "apiVersion": "2020-06-30-preview",
+                "name": "[concat(parameters('vMName'), '/Microsoft.Automanage/default')]",
+                "properties" : {
+                    "accountId" : "[parameters('autoManageAccountResourceId')]",
+                    "configurationProfile" : "[parameters('configurationProfile')]",
+                    "configurationProfilePreferenceId" : null
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
