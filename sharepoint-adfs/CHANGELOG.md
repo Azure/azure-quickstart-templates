@@ -1,8 +1,28 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+* Rename local admin on VM SQL/SP/FE to local-<adminUserName>, to avoid using the local admin instead of the domain admin
+* Set UserPrincipalName of all AD accounts
+* Change the identity claim type to use the UPN in federated authentication
+* Change the format of the realm / identifier in federated authentication
+* Fix the reboot issue on SP and FE VMs when they join the AD domain
+* Enable file sharing (on Domain network profile) on SP and FE VMs
+* Setup an OIDC application in ADFS
+* Add new SQL permissions to spsetup account to work with updated SPFarm resource
+* Add a retry download logic to DSC resource cChocoInstaller to improve reliability
+* Add AD CS and AD LDS RSAT to SP and FE configs
+* Various improvements in DSC configurations
+* Update apiVersion of ARM resources
+* Replace outdated DSC module cADFS with AdfsDsc 1.1
+* Update DSC module SharePointDSC from 4.3 to 4.5.1
+* Update DSC module SqlServerDsc from 15.0 to 15.1.1
+* Update DSC module NetworkingDsc from 8.1 to 8.2
+* Update DSC module CertificateDsc from 4.7 to 5.1
+
 ## Enhancements & bug-fixes - Published in February 9, 2021
 
-* Update DSC module cChoco from 2.4 to 2.5 to fix issue <https://github.com/chocolatey/cChoco/issues/151> 
+* Update DSC module cChoco from 2.4 to 2.5 to fix issue <https://github.com/chocolatey/cChoco/issues/151>
 
 ## Enhancements & bug-fixes - Published in December 10, 2020
 
@@ -57,11 +77,18 @@
 ## September 2020 update
 
 * Many modifications made to DSC scripts to improve their reliability, readability and consistency
+* Create default SharePoint security groups on team site
 * Ensure compliance with policy CASG-DenyNSGRule100Allow
 
 ## August 2020 update
 
 * Fix timeout issue / DSC not resuming after VM reboot: Update dependencies of DSC extensions of SP and SQL, so they no longer depend on DSC of DC
+* Update DSC on all VMs
+* Replace DSC module xActiveDirectory with ActiveDirectoryDsc 6.0.1
+* Update VM sizes to more recent, powerful and cheaper ones (prices per month in West US as of 2020-08-11):
+  - DC: from [Standard_F4](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-previous-gen?toc=/azure/virtual-machines/linux/toc.json&bc=/azure/virtual-machines/linux/breadcrumb/toc.json) ($316.09) to [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) ($183.96)
+  - SQL: from [Standard_D2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) ($183.96) to [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series) ($185.42)
+  - SP: from [Standard_D11_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series-memory) ($192.72) to [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series) ($185.42)
 
 ## July 2020 update
 
