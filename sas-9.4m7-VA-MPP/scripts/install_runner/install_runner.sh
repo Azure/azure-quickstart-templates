@@ -26,6 +26,7 @@ FORKS=5
 echo "LoadbalancerDNS: ${PUBLIC_DNS_NAME}" >/tmp/ansible_vars.yaml
 echo "AdminPassword: '{sas001}${sasPassword}'" >>/tmp/ansible_vars.yaml
 echo "ExternalPassword: '${azurePassword}'" >>/tmp/ansible_vars.yaml
+echo "DBPassword: '${sasPassword}'" >>/tmp/ansible_vars.yaml
 echo "HADOOP_VERSION: ${HADOOP_VERSION}" >>/tmp/ansible_vars.yaml
 echo "HADOOP_HOME: '${HADOOP_HOME}'" >>/tmp/ansible_vars.yaml
 echo "HDAT_HOME: '${HDAT_HOME}'" >>/tmp/ansible_vars.yaml
