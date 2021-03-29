@@ -25,6 +25,7 @@ FORKS=5
 echo "LoadbalancerDNS: ${PUBLIC_DNS_NAME}" >/tmp/ansible_vars.yaml
 echo "AdminPassword: '{sas001}${sasPassword}'" >>/tmp/ansible_vars.yaml
 echo "ExternalPassword: '${azurePassword}'" >>/tmp/ansible_vars.yaml
+echo "DBPassword: '${sasPassword}'" >>/tmp/ansible_vars.yaml
 echo "sasFolder: '${sasFolder}'" >>/tmp/ansible_vars.yaml
 
 # in order to get around the azure ci testing, we need
