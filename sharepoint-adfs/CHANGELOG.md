@@ -1,6 +1,6 @@
 # Change log for Azure template SharePoint-ADFS
 
-## Unreleased
+## Enhancements & bug-fixes - Published in March 29, 2021
 
 * Rename local admin on VM SQL/SP/FE to local-<adminUserName>, to avoid using the local admin instead of the domain admin
 * Set UserPrincipalName of all AD accounts
