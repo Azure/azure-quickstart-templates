@@ -23,6 +23,9 @@
 
 <a name="Overview"></a>
 ## Overview
+
+**Note:** Due to the inherent characteristics of SAS 9.4,  the Quickstart is tightly coupled with a specific release of SAS 9.4M7. This release of the Quickstart supports SAS 9.4 (TS1M7), Rev. 940_21w08. As new versions of SAS 9.4 are released, the Quickstart will not automatically support them.
+
 This README for the SAS 9.4M7 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics is used to deploy the following SAS 9.4 products in the Azure cloud:
 
 * SAS Visual Analytics 7.51
