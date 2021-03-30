@@ -50,12 +50,13 @@ module applicationGateway 'modules/application-gateway.bicep' = {
     backendFqdn: originHostName
     pickHostNameFromBackendAddress: true // This is required for multitenant backends, as per https://docs.microsoft.com/en-us/azure/application-gateway/configure-web-app-portal#edit-http-settings-for-app-service
     subnetResourceId: network.outputs.applicationGatewaySubnetResourceId
-    frontDoorId: frontDoorProfile.properties.frontDoorId
+    frontDoorId: frontDoorProfile.properties.frontdoorId
   }
 }
 
 resource frontDoorEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
-  name: '${frontDoorProfile.name}/${frontDoorEndpointName}'
+  name: frontDoorEndpointName
+  parent: frontDoorProfile
   location: 'global'
   properties: {
     originResponseTimeoutSeconds: 240
@@ -64,7 +65,8 @@ resource frontDoorEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
 }
 
 resource frontDoorOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
-  name: '${frontDoorProfile.name}/${frontDoorOriginGroupName}'
+  name: frontDoorOriginGroupName
+  parent: frontDoorProfile
   properties: {
     loadBalancingSettings: {
       sampleSize: 4
@@ -80,7 +82,8 @@ resource frontDoorOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' =
 }
 
 resource frontDoorOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
-  name: '${frontDoorOriginGroup.name}/${frontDoorOriginName}'
+  name: frontDoorOriginName
+  parent: frontDoorOriginGroup
   properties: {
     hostName: applicationGateway.outputs.publicIPAddressHostName
     httpPort: 80
@@ -92,7 +95,8 @@ resource frontDoorOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01
 }
 
 resource frontDoorRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
-  name: '${frontDoorEndpoint.name}/${frontDoorRouteName}'
+  name: frontDoorRouteName
+  parent: frontDoorEndpoint
   dependsOn: [
     frontDoorOrigin // This explicit dependency is required to ensure that the origin group is not empty when the route is created.
   ]

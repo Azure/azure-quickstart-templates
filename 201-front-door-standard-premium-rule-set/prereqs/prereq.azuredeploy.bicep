@@ -32,9 +32,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   sku: {
     name: skuName
   }
-  properties: {
-    supportsHttpsTrafficOnly: false // This is only configured to make this sample work correctly with Application Gateway. This is not recommended practice - for production solutions you should always use end-to-end HTTPS.
-  }
 }
 
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
