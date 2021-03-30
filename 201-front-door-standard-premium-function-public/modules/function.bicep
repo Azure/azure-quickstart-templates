@@ -10,7 +10,7 @@ param functionRuntime string = 'dotnet'
 @description('The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium).')
 param functionPlanSkuName string
 
-@description('The unique ID associated with the Front Door profile that will send traffic to this application. Access restricitons will be configured to disallow traffic that hasn\'t had this ID attached to it.')
+@description('The unique ID associated with the Front Door profile that will send traffic to this application. Access restrictions will be configured to disallow traffic that hasn\'t had this ID attached to it.')
 param frontDoorId string
 
 var appServicePlanName = 'FunctionPlan'
@@ -124,7 +124,8 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
 }
 
 resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
-  name: '${functionApp.name}/${functionName}'
+  name: functionName
+  parent: functionApp
   properties: {
     config: {
       disabled: false
