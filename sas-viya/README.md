@@ -36,7 +36,7 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
     - [Upload the License File to an Azure Blob](#upload-the-license-file-to-an-azure-blob)
     - [(Optional) Create a Mirror Repository](#optional-create-a-mirror-repository)
     - [Upload the Entire Mirror to Azure Blob Storage](#upload-the-entire-mirror-to-azure-blob-storage)
-  - [Best Practices When Deploying SAS Viya 3.5 on Azure](#best-practices-when-deploying-sas-viya-on-azure)
+  - [Best Practices When Deploying SAS Viya 3.5 on Azure](#best-practices-when-deploying-sas-viya-35-on-azure)
   - [Deployment Steps](#deployment-steps)
   - [Additional Deployment Details](#additional-deployment-details)
   - [User Accounts](#user-accounts)
