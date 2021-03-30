@@ -107,7 +107,8 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
 }
 
 resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
-  name: '${functionApp.name}/${functionName}'
+  name: functionName
+  parent: functionApp
   properties: {
     config: {
       disabled: false

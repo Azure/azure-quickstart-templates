@@ -41,8 +41,10 @@
   "variables": {
     "dataManagementPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dataManagementPublicIpName'))]",
     "enginePublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('enginePublicIpName'))]",
-    "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
     "nsgName": "azureDataExplorerNsg",
+    "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
+    "routeTableName": "azureDataExplorerRt",
+    "routeTableId": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]",
     "publicIpAllocationMethod": "Static",
     "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'),parameters('subnetName'))]",
     "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]"
@@ -69,6 +71,18 @@
           "dataManagementPublicIpId": "[variables('dataManagementPublicIpId')]"
         }
       }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/routeTables",
+      "name": "[variables('routeTableName')]",
+      "location": "[parameters('location')]"
     },
     {
       "apiVersion": "2020-05-01",
@@ -101,7 +115,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [ "[variables('nsgId')]" ],
+      "dependsOn": [ "[variables('nsgName')]", "[variables('routeTableName')]"],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -115,31 +129,18 @@
               "addressPrefix": "10.0.0.0/20",
               "networkSecurityGroup": {
                 "id": "[variables('nsgId')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('nsgName')]",
-      "apiVersion": "2019-07-01",
-      "location": "[parameters('location')]",
-      "properties": {
-        "securityRules": [
-          {
-            "name": "AllowHTTPS",
-            "properties": {
-              "description": "Allow access using HTTPS",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "443",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
+              },
+              "routeTable" :{
+                  "id": "[variables('routeTableId')]"
+              },
+              "delegations": [
+                  {
+                      "name": "AzureDataExplorer",
+                      "properties": {
+                          "serviceName" : "Microsoft.Kusto/clusters"
+                      }
+                  }
+              ]
             }
           }
         ]

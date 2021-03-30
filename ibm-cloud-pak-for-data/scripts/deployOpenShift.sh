@@ -114,7 +114,7 @@ compute:
     azure:
       type: $WORKERINSTANCETYPE
       osDisk:
-        diskSizeGB: 256
+        diskSizeGB: 1024
       $zones
   replicas: $WORKERCOUNT
 controlPlane:
@@ -124,7 +124,7 @@ controlPlane:
     azure:
       type: $MASTERINSTANCETYPE
       osDisk:
-        diskSizeGB: 256
+        diskSizeGB: 1024
       $zones
   replicas: $MASTERCOUNT
 metadata:

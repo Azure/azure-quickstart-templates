@@ -1,4 +1,4 @@
-# Create an Azure Cosmos account for MongoDB API (3.2 or 3.6) with autoscale shared database throughput with two collections
+# Create an Azure Cosmos account for MongoDB API with autoscale shared database throughput with two collections
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb-autoscale/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb-autoscale/PublicDeployment.svg)
@@ -19,7 +19,7 @@ Below are the parameters which can be user configured in the parameters file or 
 
 - **Primary Region:** Enter location for the primary region.
 - **Secondary Region:** Enter location for the secondary region.
-- **Server Version:** Select the MongoDB server version (default is 3.6).
+- **Server Version:** Select the MongoDB server version (default is 4.0).
 - **Consistency Level:** Select from one of the 5 consistency levels: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual.
 - **Automatic Failover:** Select whether to enable automatic failover on the account
 - **Database Name:** Enter the database name for the account.

@@ -46,7 +46,7 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 Once you have deployed the Azure Resource Manager template, wait a few minutes before you attempt to access your Front Door endpoint to allow time for Front Door to propagate the settings throughout its network.
 
-You can then access the Front Door endpoint. The hostname is emitted as an output from the deployment - the output is named `frontDoorEndpointHostName`. You should see a page saying 'The requested content does not exist'. This is returned by Azure Storage because no files have been uploaded to the `$web` blob container and therefore there is no content on the static website. If you see a different error page, wait a few minutes and try again.
+You can then access the Front Door endpoint. The hostname is emitted as an output from the deployment - the output is named `frontDoorEndpointHostName`. You should see a page saying _Welcome_. If you see a different error page, wait a few minutes and try again.
 
 You can also attempt to access the static website hostname directly. The hostname is also emitted as an output from the deployment - the output is named `storageStaticWebsiteHostName`. This should show you the same page as when you access through Front Door, since Azure Storage static websites can't be configured to only allow traffic from Front Door.
 

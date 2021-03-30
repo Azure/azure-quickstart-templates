@@ -1,4 +1,4 @@
-# Create a Recovery Services vault
+# Create a Recovery Services vault with advanced options
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-recovery-services-vault-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-recovery-services-vault-create/PublicDeployment.svg)
@@ -23,4 +23,10 @@ The Site Recovery service ensures your servers, virtual machines, and apps are r
 
 ## Storage Type Selection
 
-A Recovery Services vault can only change storage options before any backups have been configured. Once any backup is configured, the storage type cannot be changed. Use the conditional parameter to opt-in or opt-out to change the storage type. [Learn more](https://docs.microsoft.com/azure/backup/backup-azure-backup-faq#can-i-change-the-storage-redundancy-setting-after-a-backup).
+A Recovery Services vault can only change storage options before any backups have been configured. Once any backup is configured, the storage type cannot be changed. [Learn more](https://docs.microsoft.com/azure/backup/backup-azure-backup-faq#can-i-change-the-storage-redundancy-setting-after-a-backup).
+
+## Cross Region Restore
+A Recovery Services vault can only change cross region restore before any backups have been configured. Once any backup is configured, cross region support setting cannot be changed. [Learn more](https://docs.microsoft.com/en-us/azure/backup/backup-create-rs-vault#set-cross-region-restore).
+
+## Delete an Azure Backup Recovery Services vault
+In order to delete the recovery services vault, you first need to stop protection to any existing backup items. You may refer [Delete Recovery Services Vault](https://docs.microsoft.com/en-us/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)
