@@ -3,7 +3,7 @@
 **Note:** The SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics is an example architecture only, and is not intended for production use. Specifically, the Quickstart provides an example of how SAS Visual Analytics in SAS 9.4  and SAS Visual Statistics in SAS 9.4 workloads running in a massively parallel processing (MPP) environment with SAS LASR Analytic Server can be run on Azure.  When running in an MPP environment, the SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics deploys Apache Hadoop.  As stated in our [SAS 9.4 Support for Hadoop policy](https://support.sas.com/en/documentation/third-party-software-reference/9-4/support-for-hadoop.html), SAS does not provide support for the installation or administration of Apache Hadoop.  For support with these issues, please refer to the Apache Hadoop open-source community.  The intent of the SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics is to provide customers an opportunity to test deployments on the cloud before committing to a lift and shift from their current on-premises deployments.
 
 <a name="Deploybutton"></a>
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsas-viya%2Fazuredeploy.json)
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsas-9.4m7-VA-MPP%2Fazuredeploy.json)
 
 
 ## Contents
@@ -55,7 +55,7 @@ For details, see [SAS 9.4 Intelligence Platform: Installation and Configuration 
 
 By default, Quickstart deployments enable Transport Layer Security (TLS) to help ensure that communication between external clients (on the internet) and the load balancer is secure. Likewise, TLS is enabled between the load balancer and the private subnet that contains the SAS 9.4 components. 
 
-Deploying this Quickstart for a new virtual private cloud (VPC) with default parameters in a massively parallel processing (MPP) environment builds the following SAS 9.4 environment in the Microsoft Azure cloud, shown in Figure 1.   In MPP environments, the CASInstanceCount parameter is set to one, indicating that only one CAS controller is configured.
+Deploying this Quickstart for a new virtual private cloud (VPC) with default parameters in a massively parallel processing (MPP) environment builds the following SAS 9.4 environment in the Microsoft Azure cloud, shown in Figure 1.   
 
 **Note:** In the diagram below, a SAS 9.4M7 Metadata Clustered server is depicted.  However, the first release of the SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics supports only a single instance of the metadata server.
 
@@ -66,7 +66,7 @@ Figure 1: Quickstart architecture in Azure for SAS Visual Analytics in SAS 9.4 a
 ## Prerequisites
 
 Before deploying the SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics, you must have the following:
-* A Microsoft Azure account with Contributor and Admin Roles if you do not already have one. Request an Azure account at ["CIS Cloud Services"](http://sww.sas.com/sites/it/cloud-services/).
+* A Microsoft Azure account with Contributor and Admin Roles if you do not already have one. 
         
 * A SAS Visual Analytics in SAS 9.4M7 and SAS Visual Statistics in SAS 9.4M7 software order that contains the following supported Quickstart products: 
 
@@ -137,7 +137,7 @@ Then the  SAS depot location is:
 |--------------|-----------|
 |Subscription|Specifies what subscription to use for the deployment.|
 |Resource group|Specifies what resource group to use. Choose an existing group or click *Create new* and provide a name for the new group.|
-|Region|Defines the Azure region in which the deployment should run. The available Azure regions are listed at [Azure Services that support Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-region). The available Azure regions if using Azure NFS file shares are listed in the "Available regions" section at [How to create an NFS share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal).  
+|Region|Defines the Azure region in which the deployment should run. The available Azure regions are the ones listed at both [Azure Services that support Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-region), and [How to create an NFS share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal).  
 |Location|Defines the location in Microsoft Azure where these resources should be created. This is derived from the Resource group.|
 |SAS Depot Location|Specifies the URI of the Azure Blob Store where the software depot was uploaded. You determined this URI during the prerequisite step [here](#depotlocation).|
 |SAS Plan File Location|Specifies the URI to download the plan file from as currently specified in the Azure Blob Store. Leave blank if the plan file is stored in the depot blob. If this is left blank, then the plan file located in the depot at “depot/plan.xml” is used. If no plan file exists in the depot, then the default plan file supplied by this Quickstart is used.
@@ -195,7 +195,7 @@ ssh -X midtier-0
 cd /opt/sas/SASHome/SASManagementConsole/9.4 
 ./sasmc & 
 ```
-,a name="troubleshooting"></a>
+<a name="troubleshooting"></a>
 ## Troubleshooting 
 
 <a name="logsandservices"></a>
