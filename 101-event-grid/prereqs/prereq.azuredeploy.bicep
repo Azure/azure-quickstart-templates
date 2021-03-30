@@ -144,7 +144,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-
 
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   scope: functionApp
-  name: guid(resourceGroup().id, managedIdentityName)
+  name: guid(resourceGroup().id, managedIdentity.id, contributorRoleDefinitionId)
   properties: {
     roleDefinitionId: contributorRoleDefinitionId
     principalId: managedIdentity.properties.principalId

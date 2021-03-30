@@ -56,7 +56,8 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
 }
 
 resource endpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
-  name: '${profile.name}/${endpointName}'
+  name: endpointName
+  parent: profile
   location: 'global'
   properties: {
     originResponseTimeoutSeconds: 240
@@ -65,7 +66,8 @@ resource endpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
 }
 
 resource originGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
-  name: '${profile.name}/${originGroupName}'
+  name: originGroupName
+  parent: profile
   properties: {
     loadBalancingSettings: {
       sampleSize: 4
@@ -81,7 +83,8 @@ resource originGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
 }
 
 resource origin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
-  name: '${originGroup.name}/${originName}'
+  name: originName
+  parent: originGroup
   properties: {
     hostName: originHostName
     httpPort: 80
@@ -94,7 +97,11 @@ resource origin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
 }
 
 resource route 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
-  name: '${endpoint.name}/${routeName}'
+  name: routeName
+  parent: endpoint
+  dependsOn: [
+    origin // This explicit dependency is required to ensure that the origin group is not empty when the route is created.
+  ]
   properties: {
     originGroup: {
       id: originGroup.id
@@ -161,4 +168,4 @@ resource route 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
 }
 
 output frontDoorEndpointHostName string = endpoint.properties.hostName
-output frontDoorId string = profile.properties.frontDoorId
+output frontDoorId string = profile.properties.frontdoorId

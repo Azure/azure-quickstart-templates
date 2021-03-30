@@ -34,7 +34,8 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
 }
 
 resource proxyEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
-  name: '${profile.name}/${proxyEndpointName}'
+  name: proxyEndpointName
+  parent: profile
   location: 'global'
   properties: {
     originResponseTimeoutSeconds: 240
@@ -43,7 +44,8 @@ resource proxyEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
 }
 
 resource proxyOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
-  name: '${profile.name}/${proxyOriginGroupName}'
+  name: proxyOriginGroupName
+  parent: profile
   properties: {
     loadBalancingSettings: {
       sampleSize: 4
@@ -59,7 +61,8 @@ resource proxyOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
 }
 
 resource proxyOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
-  name: '${proxyOriginGroup.name}/${proxyOriginName}'
+  name: proxyOriginName
+  parent: proxyOriginGroup
   properties: {
     hostName: proxyOriginHostName
     httpPort: 80
@@ -71,7 +74,11 @@ resource proxyOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = 
 }
 
 resource proxyRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
-  name: '${proxyEndpoint.name}/${proxyRouteName}'
+  name: proxyRouteName
+  parent: proxyEndpoint
+  dependsOn: [
+    proxyOrigin // This explicit dependency is required to ensure that the origin group is not empty when the route is created.
+  ]
   properties: {
     originGroup: {
       id: proxyOriginGroup.id
@@ -84,14 +91,15 @@ resource proxyRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
       '/*'
     ]
     queryStringCachingBehavior: 'NotSet'
-    forwardingProtocol: 'HttpOnly'
+    forwardingProtocol: 'HttpsOnly'
     linkToDefaultDomain: 'Enabled'
     httpsRedirect: 'Enabled'
   }
 }
 
 resource developerPortalEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
-  name: '${profile.name}/${developerPortalEndpointName}'
+  name: developerPortalEndpointName
+  parent: profile
   location: 'global'
   properties: {
     originResponseTimeoutSeconds: 240
@@ -100,7 +108,8 @@ resource developerPortalEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01
 }
 
 resource developerPortalOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
-  name: '${profile.name}/${developerPortalOriginGroupName}'
+  name: developerPortalOriginGroupName
+  parent: profile
   properties: {
     loadBalancingSettings: {
       sampleSize: 4
@@ -116,7 +125,8 @@ resource developerPortalOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09
 }
 
 resource developerPortalOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
-  name: '${developerPortalOriginGroup.name}/${developerPortalOriginName}'
+  name: developerPortalOriginName
+  parent: developerPortalOriginGroup
   properties: {
     hostName: developerPortalOriginHostName
     httpPort: 80
@@ -128,7 +138,11 @@ resource developerPortalOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020
 }
 
 resource developerPortalRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
-  name: '${developerPortalEndpoint.name}/${developerPortalRouteName}'
+  name: developerPortalRouteName
+  parent: developerPortalEndpoint
+  dependsOn: [
+    developerPortalOrigin // This explicit dependency is required to ensure that the origin group is not empty when the route is created.
+  ]
   properties: {
     originGroup: {
       id: developerPortalOriginGroup.id
@@ -187,12 +201,12 @@ resource developerPortalRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-0
       isCompressionEnabled: true
     }
     queryStringCachingBehavior: 'IgnoreQueryString'
-    forwardingProtocol: 'HttpOnly'
+    forwardingProtocol: 'HttpsOnly'
     linkToDefaultDomain: 'Enabled'
     httpsRedirect: 'Enabled'
   }
 }
 
-output frontDoorId string = profile.properties.frontDoorId
+output frontDoorId string = profile.properties.frontdoorId
 output frontDoorProxyEndpointHostName string = proxyEndpoint.properties.hostName
 output frontDoorDeveloperPortalEndpointHostName string = developerPortalEndpoint.properties.hostName
