@@ -20,3 +20,4 @@ This template deploys resources in the same Resource Group and Azure region as t
 ## Notes
 
 * Route Server is currently in Public Preview.
+* Route Server is not currently available in the US Government regions.
