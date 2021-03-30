@@ -45,9 +45,9 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 ### Connect
 
-Once you have deployed the Azure Resource Manager template, wait a few minutes before you attempt to access your Front Door endpoint to allow time for Front Door to propagate the settings throughout its network. You can then access the Front Door endpoints. The hostnames are emitted as an output from the deployment.
+Once you have deployed the Azure Resource Manager template, wait a few minutes before you attempt to access your Front Door endpoint to allow time for Front Door to propagate the settings throughout its network. You can then access the Front Door endpoints. The host names are emitted as an output from the deployment.
 
-To access the API proxy URL, get the hostname from the output named `frontDoorEndpointApiManagementProxyHostName` (TODO). If you access this in a browser you should see a JSON response as follows:
+To access the API proxy URL, get the hostname from the output named `frontDoorEndpointApiManagementProxyHostName`. If you access this in a browser you should see a JSON response as follows:
 
 ```
 { "statusCode": 404, "message": "Resource not found" }
@@ -55,9 +55,9 @@ To access the API proxy URL, get the hostname from the output named `frontDoorEn
 
 If you see an error page, wait a few minutes and try again.
 
-To access the developer portal URL, get the hostname from the output named `frontDoorEndpointApiManagementPortalHostName` (TODO). If you access this in a browser you should see a welcome page for the portal advising that it has not yet been published. See the note below for further detail on configuring API Management and its developer portal to work correctly.
+The developer portal will not be accessible unless you configure custom domain names in both API Management and Front Door. This is due to the way the API Management developer portal is designed.
 
-You can also attempt to access the API Management instance directly. The hostnames are also emitted as an output from the deployment - the outputs are named `apiManagementProxyHostName` and `apiManagementPortalHostName`. Any connection attempts you make to these hostnames should time out, since your network security group is blocking incoming requests to your API Management instance unless they come through Front Door.
+You can also attempt to access the API Management instance directly. The host names are also emitted as an output from the deployment - the outputs are named `apiManagementProxyHostName` and `apiManagementPortalHostName`. Any connection attempts you make to these host names should time out, since your network security group is blocking incoming requests to your API Management instance unless they come through Front Door.
 
 ## Notes
 

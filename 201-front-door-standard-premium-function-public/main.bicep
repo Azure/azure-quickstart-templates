@@ -36,12 +36,13 @@ module functionApp 'modules/function.bicep' = {
     location: location
     appName: functionAppName
     functionPlanSkuName: functionPlanSkuName
-    frontDoorId: frontDoorProfile.properties.frontDoorId
+    frontDoorId: frontDoorProfile.properties.frontdoorId
   }
 }
 
 resource frontDoorEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
-  name: '${frontDoorProfile.name}/${frontDoorEndpointName}'
+  name: frontDoorEndpointName
+  parent: frontDoorProfile
   location: 'global'
   properties: {
     originResponseTimeoutSeconds: 240
@@ -50,7 +51,8 @@ resource frontDoorEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
 }
 
 resource frontDoorOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
-  name: '${frontDoorProfile.name}/${frontDoorOriginGroupName}'
+  name: frontDoorOriginGroupName
+  parent: frontDoorProfile
   properties: {
     loadBalancingSettings: {
       sampleSize: 4
@@ -66,7 +68,8 @@ resource frontDoorOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' =
 }
 
 resource frontDoorOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
-  name: '${frontDoorOriginGroup.name}/${frontDoorOriginName}'
+  name: frontDoorOriginName
+  parent: frontDoorOriginGroup
   properties: {
     hostName: functionApp.outputs.functionAppHostName
     httpPort: 80
@@ -78,7 +81,11 @@ resource frontDoorOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01
 }
 
 resource frontDoorRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
-  name: '${frontDoorEndpoint.name}/${frontDoorRouteName}'
+  name: frontDoorRouteName
+  parent: frontDoorEndpoint
+  dependsOn: [
+    frontDoorOrigin // This explicit dependency is required to ensure that the origin group is not empty when the route is created.
+  ]
   properties: {
     originGroup: {
       id: frontDoorOriginGroup.id

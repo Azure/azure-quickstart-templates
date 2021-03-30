@@ -33,10 +33,15 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
       defaultAction: 'Deny'
     }
   }
+
+  resource defaultBlobService 'blobServices' existing = {
+    name: 'default'
+  }
 }
 
 resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2020-08-01-preview' = {
-  name: '${storageAccount.name}/default/${blobContainerName}'
+  name: blobContainerName
+  parent: storageAccount::defaultBlobService
   properties:{
     publicAccess: 'None'
   }
