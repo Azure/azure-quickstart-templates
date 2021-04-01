@@ -14,7 +14,7 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, cChoco
+    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, cChoco, ReverseDSC
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -23,7 +23,7 @@ configuration ConfigureFEVM
     [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
-    [String] $SPTrustedSitesName = "SPSites"
+    [String] $SPTrustedSitesName = "spsites"
     [String] $ComputerName = Get-Content env:computername
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
     [String] $MySiteHostAlias = "OhMy"
@@ -40,9 +40,11 @@ configuration ConfigureFEVM
         #**********************************************************
         # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
-        WindowsFeature AddADTools      { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
-        WindowsFeature AddADPowerShell { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
-        WindowsFeature AddDnsTools     { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
+        WindowsFeature AddADTools             { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
+        WindowsFeature AddADPowerShell        { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
+        WindowsFeature AddDnsTools            { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
+        WindowsFeature AddADLDS               { Name = "RSAT-ADLDS";         Ensure = "Present"; }
+        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
         DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         # # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
@@ -166,6 +168,23 @@ configuration ConfigureFEVM
             GetScript = { }
         }
 
+        xScript EnableFileSharing
+        {
+            TestScript = {
+                # Test if firewall rules for file sharing already exist
+                $rulesSet = Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object{$_.Profile -eq "Domain"}
+                if ($null -eq $rulesSet) {
+                    return $false   # Run SetScript
+                } else {
+                    return $true    # Rules already set
+                }
+            }
+            SetScript = {
+                Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false
+            }
+            GetScript = { }
+        }
+
         #**********************************************************
         # Join AD forest
         #**********************************************************
@@ -176,7 +195,7 @@ configuration ConfigureFEVM
             WaitTimeout             = 1800
             RestartCount            = 2
             WaitForValidCredentials = $True
-            PsDscRunAsCredential    = $DomainAdminCredsQualified
+            Credential              = $DomainAdminCredsQualified
             DependsOn               = "[DnsServerAddress]SetDNS"
         }
 
@@ -306,14 +325,14 @@ configuration ConfigureFEVM
             Name                 = "ulsviewer"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[cChocoInstaller]InstallChoco"
+            DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         #********************************************************************
         # Wait for SharePoint app server to be ready
         #********************************************************************
         # The best test is to check the latest HTTP team site to be created, after all SharePoint services are provisioned.
-        # If this server joins the farm while a SharePoint service is creating, it may block its creation forever.
+        # If this server joins the farm while a SharePoint service is being created on the 1st server, it may block its creation forever.
         # Not testing HTTPS avoid potential issues with the root CA cert maybe not present in the machine store yet
         xScript WaitForSPFarmReadyToJoin
         {
@@ -368,6 +387,20 @@ configuration ConfigureFEVM
             Ensure               = "Present"
             MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
             Credential           = $DomainAdminCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xScript]WaitForSPFarmReadyToJoin"
+        }
+
+        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", to prevent error when issuing a certificate request
+        # At this point it is safe to assume that the DC finished provisioning AD CS
+        xScript UpdateGPOToTrustRootCACert
+        {
+            SetScript =
+            {
+                gpupdate.exe /force
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false }
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[xScript]WaitForSPFarmReadyToJoin"
         }
@@ -476,19 +509,6 @@ configuration ConfigureFEVM
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\" before issuing a certificate request, otherwise request would fail
-        xScript UpdateGPOToTrustRootCACert
-        {
-            SetScript =
-            {
-                gpupdate.exe /force
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false }
-            DependsOn            = "[SPFarm]JoinSPFarm"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-        }
-
         CertReq SPSSiteCert
         {
             CARootName             = "$DomainNetbiosName-$DCName-CA"
@@ -518,7 +538,7 @@ configuration ConfigureFEVM
             }
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[CertReq]SPSSiteCert"
+            DependsOn            = "[CertReq]SPSSiteCert", "[SPFarm]JoinSPFarm"
         }
     }
 }
@@ -573,8 +593,8 @@ function Get-SPDSCInstalledProductVersion
 }
 
 <#
-# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
-# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
+# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.1.0
+# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork
 
 Install-Module -Name xPendingReboot
 help ConfigureFEVM
@@ -592,7 +612,7 @@ $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
 $SharePointVersion = 2019
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.1.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
 ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
