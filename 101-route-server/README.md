@@ -1,4 +1,4 @@
-# Sample name
+# Deploy Azure Route Server in an Azure Virtual Network
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-route-server/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-route-server/PublicDeployment.svg)
