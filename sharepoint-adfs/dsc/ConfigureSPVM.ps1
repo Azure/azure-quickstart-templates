@@ -18,7 +18,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, cChoco
+    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, cChoco, ReverseDSC
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -29,7 +29,7 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
-    [String] $SPTrustedSitesName = "SPSites"
+    [String] $SPTrustedSitesName = "spsites"
     [String] $ComputerName = Get-Content env:computername
     [String] $LdapcpLink = (Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp")
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
@@ -42,6 +42,7 @@ configuration ConfigureSPVM
     [String] $HNSC1Alias = "HNSC1"
     [String] $AddinsSiteDNSAlias = "addins"
     [String] $AddinsSiteName = "Provider-hosted addins"
+    [String] $TrustedIdChar = "e"
 
     Node localhost
     {
@@ -54,9 +55,11 @@ configuration ConfigureSPVM
         #**********************************************************
         # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
-        WindowsFeature AddADTools      { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
-        WindowsFeature AddADPowerShell { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
-        WindowsFeature AddDnsTools     { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
+        WindowsFeature AddADTools             { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
+        WindowsFeature AddADPowerShell        { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
+        WindowsFeature AddDnsTools            { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
+        WindowsFeature AddADLDS               { Name = "RSAT-ADLDS";         Ensure = "Present"; }
+        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
         DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
@@ -186,6 +189,23 @@ configuration ConfigureSPVM
             GetScript = { }
         }
 
+        xScript EnableFileSharing
+        {
+            TestScript = {
+                # Test if firewall rules for file sharing already exist
+                $rulesSet = Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object{$_.Profile -eq "Domain"}
+                if ($null -eq $rulesSet) {
+                    return $false   # Run SetScript
+                } else {
+                    return $true    # Rules already set
+                }
+            }
+            SetScript = {
+                Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false
+            }
+            GetScript = { }
+        }
+
         #**********************************************************
         # Install applications using Chocolatey
         #**********************************************************
@@ -225,7 +245,7 @@ configuration ConfigureSPVM
             WaitTimeout             = 1800
             RestartCount            = 2
             WaitForValidCredentials = $True
-            PsDscRunAsCredential    = $DomainAdminCredsQualified
+            Credential              = $DomainAdminCredsQualified
             DependsOn               = "[DnsServerAddress]SetDNS"
         }
 
@@ -373,6 +393,7 @@ configuration ConfigureSPVM
             DomainName                    = $DomainFQDN
             UserName                      = $SPSetupCreds.UserName
             Password                      = $SPSetupCreds
+            UserPrincipalName             = "$($SPSetupCreds.UserName)@$DomainFQDN"
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -383,6 +404,7 @@ configuration ConfigureSPVM
         {
             DomainName                    = $DomainFQDN
             UserName                      = $SPFarmCreds.UserName
+            UserPrincipalName             = "$($SPFarmCreds.UserName)@$DomainFQDN"
             Password                      = $SPFarmCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
@@ -404,6 +426,7 @@ configuration ConfigureSPVM
         {
             DomainName                    = $DomainFQDN
             UserName                      = $SPSvcCreds.UserName
+            UserPrincipalName             = "$($SPSvcCreds.UserName)@$DomainFQDN"
             Password                      = $SPSvcCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
@@ -415,6 +438,7 @@ configuration ConfigureSPVM
         {
             DomainName                    = $DomainFQDN
             UserName                      = $SPAppPoolCreds.UserName
+            UserPrincipalName             = "$($SPAppPoolCreds.UserName)@$DomainFQDN"
             Password                      = $SPAppPoolCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
@@ -427,6 +451,7 @@ configuration ConfigureSPVM
         {
             DomainName                    = $DomainFQDN
             UserName                      = $SPSuperUserCreds.UserName
+            UserPrincipalName             = "$($SPSuperUserCreds.UserName)@$DomainFQDN"
             Password                      = $SPSuperUserCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
@@ -438,6 +463,7 @@ configuration ConfigureSPVM
         {
             DomainName                    = $DomainFQDN
             UserName                      = $SPSuperReaderCreds.UserName
+            UserPrincipalName             = "$($SPSuperReaderCreds.UserName)@$DomainFQDN"
             Password                      = $SPSuperReaderCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
@@ -659,7 +685,7 @@ configuration ConfigureSPVM
             }
             GetScript            = { }
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
+            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
@@ -711,16 +737,16 @@ configuration ConfigureSPVM
         {
             Name                         = $DomainFQDN
             Description                  = "Federation with $DomainFQDN"
-            Realm                        = "https://$SPTrustedSitesName.$DomainFQDN"
+            Realm                        = "urn:sharepoint:$($SPTrustedSitesName)"
             SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
-            IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+            IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
             ClaimsMappings               = @(
                 MSFT_SPClaimTypeMapping{
-                    Name = "Email"
-                    IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+                    Name = "upn"
+                    IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
                 }
                 MSFT_SPClaimTypeMapping{
-                    Name = "Role"
+                    Name = "role"
                     IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                 }
             )
@@ -743,7 +769,7 @@ configuration ConfigureSPVM
 				$config = [ldapcp.LDAPCPConfig]::CreateConfiguration([ldapcp.ClaimsProviderConstants]::CONFIG_ID, [ldapcp.ClaimsProviderConstants]::CONFIG_NAME, $using:DomainFQDN);
 
 				# Remove unused claim types
-				$config.ClaimTypes.Remove("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn")
+				$config.ClaimTypes.Remove("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")
 				$config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname")
 				$config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/primarygroupsid")
 
@@ -791,7 +817,7 @@ configuration ConfigureSPVM
             Port                   = 443
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = "[CertReq]GenerateMainWebAppCertificate", "[SPWebApplication]CreateMainWebApp"
+            DependsOn              = "[CertReq]GenerateMainWebAppCertificate", "[SPWebApplication]CreateMainWebApp", "[xScript]ConfigureLDAPCP"
         }
 
         SPWebAppAuthentication ConfigureMainWebAppAuthentication
@@ -841,7 +867,7 @@ configuration ConfigureSPVM
         {
             Url                  = "http://$SPTrustedSitesName/"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
             Template             = "STS#0"
             CreateDefaultGroups  = $true
@@ -854,7 +880,7 @@ configuration ConfigureSPVM
         {
             Url                  = "http://$SPTrustedSitesName/sites/AppCatalog"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "AppCatalog"
             Template             = "APPCATALOG#0"
             PsDscRunAsCredential = $SPSetupCredsQualified
@@ -869,7 +895,7 @@ configuration ConfigureSPVM
             Url                      = "http://$MySiteHostAlias/"
             HostHeaderWebApplication = "http://$SPTrustedSitesName/"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "MySite host"
             Template                 = "SPSMSITEHOST#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
@@ -911,7 +937,7 @@ configuration ConfigureSPVM
         {
             Url                  = "http://$SPTrustedSitesName/sites/dev"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Developer site"
             Template             = "DEV#0"
             PsDscRunAsCredential = $SPSetupCredsQualified
@@ -923,7 +949,7 @@ configuration ConfigureSPVM
             Url                      = "http://$HNSC1Alias/"
             HostHeaderWebApplication = "http://$SPTrustedSitesName/"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "$HNSC1Alias site"
             Template                 = "STS#0"
             CreateDefaultGroups      = $true
@@ -939,38 +965,13 @@ configuration ConfigureSPVM
             DependsOn            = "[SPSite]CreateHNSC1"
         }
 
-        # Added that to avoid the update conflict error (UpdatedConcurrencyException) of the UserProfileApplication persisted object
-        # Error message avoided: UpdatedConcurrencyException: The object UserProfileApplication Name=User Profile Service Application was updated by another user.  Determine if these changes will conflict, resolve any differences, and reapply the second change.  This error may also indicate a programming error caused by obtaining two copies of the same object in a single thread. Previous update information: User: CONTOSO\spfarm Process:wsmprovhost (8632) Machine:SP Time:October 17, 2017 11:25:01.0000 Stack trace (Thread [16] CorrelationId [2c50ced7-4721-0003-b7f3-502c2147d301]):  Current update information: User: CONTOSO\spsetup Process:wsmprovhost (696) Machine:SP Time:October 17, 2017 11:25:06.0252 Stack trace (Thread [62] CorrelationId [37bd239e-a854-f0e6-ee90-b0567bfec821]):
-        <#xScript RefreshLocalConfigCache
-        {
-            SetScript =
-            {
-                $methodName = "get_Local"
-                $assembly = [Reflection.Assembly]::LoadWithPartialName("Microsoft.SharePoint")
-                $SPConfigurationDBType = $assembly.GetType("Microsoft.SharePoint.Administration.SPConfigurationDatabase")
-
-                $bindingFlags = [Reflection.BindingFlags] "Public, Static"
-                $localProp = [System.Reflection.MethodInfo] $SPConfigurationDBType.GetMethod($methodName, $bindingFlags)
-                $SPConfigurationDBObject = $localProp.Invoke($null, $null)
-
-                $methodName = "FlushCache"  # method RefreshCache() does not fix the UpdatedConcurrencyException, so use FlushCache instead
-                $bindingFlags = [Reflection.BindingFlags] "NonPublic, Instance"
-                $localProp = [System.Reflection.MethodInfo] $SPConfigurationDBType.GetMethod($methodName, $bindingFlags)
-                $localProp.Invoke($SPConfigurationDBObject, $null)
-            }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
-        }#>
-
         SPSubscriptionSettingsServiceApp CreateSubscriptionServiceApp
         {
             Name                 = "Subscription Settings Service Application"
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
             InstallAccount       = $SPSetupCredsQualified
-            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
+            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance", "[xScript]ConfigureLDAPCP"
         }
 
         SPAppManagementServiceApp CreateAppManagementServiceApp
@@ -1052,7 +1053,7 @@ configuration ConfigureSPVM
         {
             Url                  = "http://$SPTrustedSitesName/sites/team"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
             Template             = "STS#0"
             CreateDefaultGroups  = $true
@@ -1083,7 +1084,7 @@ configuration ConfigureSPVM
             DestinationPath = "C:\inetpub\wwwroot\addins"
             Type            = "Directory"
             Ensure          = "Present"
-            DependsOn       = "[SPFarm]CreateSPFarm"
+            DependsOn       = "[SPFarm]CreateSPFarm", "[xScript]ConfigureLDAPCP"
         }
 
         xWebAppPool CreateAddinsSiteApplicationPool
@@ -1299,8 +1300,8 @@ function Get-SPDSCInstalledProductVersion
 }
 
 <#
-# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
-# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
+# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.1.0
+# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork
 
 Install-Module -Name PendingReboot
 help ConfigureSPVM
@@ -1313,14 +1314,14 @@ $SPAppPoolCreds = Get-Credential -Credential "spapppool"
 $SPPassphraseCreds = Get-Credential -Credential "Passphrase"
 $SPSuperUserCreds = Get-Credential -Credential "spSuperUser"
 $SPSuperReaderCreds = Get-Credential -Credential "spSuperReader"
-$DNSServer = "10.1.1.4"
+$DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
 $SharePointVersion = 2019
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.3\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
 ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
