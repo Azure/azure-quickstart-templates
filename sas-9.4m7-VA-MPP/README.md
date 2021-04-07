@@ -172,7 +172,7 @@ Deployments typically take two to three hours to complete.
 <a name="accessresources"></a>
 ### Accessing Resources in the Deployment
 
-**Note:** After deploying, an Instructions.html file is created in the /opt/sas/config/Lev1/Documents directory on each SAS VM. You are directed to follow the instructions in this file as a post-installation step.  However, the host names referenced in the Instructions.html files are not accessible from external clients, such as the Bastion host from which you access URLs in this Quickstart. Instead, the host names referenced in the steps below should be used.
+**Note:** After deploying, an Instructions.html file is created in the /opt/sas/config/Lev1/Documents directory on each SAS VM. You are directed to follow the instructions in this file as a post-installation step.  However, the host names referenced in the Instructions.html files are not accessible from external clients. Instead, the host names referenced in the steps below should be used.
 
 1. Open the resource group.
 2. Click *Deployments*.
