@@ -19,12 +19,12 @@ routeserver_IP1=10.1.1.4
 routeserver_IP2=10.1.1.5
 
 
+sudo apt-get -y update
 
-apt update
 
 ## Install the Quagga routing daemon
 echo "Installing quagga"
-apt -y install quagga
+sudo apt-get install -y quagga
 
 ## Enable IPv4 forwarding
 echo "net.ipv4.conf.all.forwarding=1" | tee -a /etc/sysctl.conf 
