@@ -10,17 +10,6 @@
     },
     "location": {
       "type": "string",
-      "allowedValues": [
-        "centralus",
-        "eastus",
-        "eastus2",
-        "francecentral",
-        "northeurope",
-        "southeastasia",
-        "ukwest",
-        "westus2",
-        "westeurope"
-      ],
       "metadata": {
         "description": "Location for the VM, only certain regions support zones during preview."
       }
@@ -67,6 +56,9 @@
     }
   },
   "variables": {
+    "bastionHostsName": "usw-bastion01",
+    "bastinSubnetName": "usw-bastion-vnet",
+    "bastinSubnet": "10.10.30.0/24",
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
     "imageSKU": "2019-Datacenter",
@@ -76,10 +68,14 @@
     "adSubnet": "10.10.10.0/24",
     "adSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('adSubnetName'))]",
     "publicIPSKU": "Standard",
-    "publicIPAddressName": "usw-dc01-pip",
+    "dcPublicIPAddressName": "usw-dc01-pip",
+    "bastionPublicIPAddressName": "usw-bastion-pip",
     "publicIPAddressType": "Static",
-    "publicIpAddressId": {
-      "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+    "dcpublicIpAddressId": {
+      "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('dcpublicIPAddressName'))]"
+    },
+    "bastionpublicIpAddressId": {
+      "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionpublicIPAddressName'))]"
     },
     "vnetTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken')))]",
     "nicTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/nic.json', parameters('_artifactsLocationSasToken')))]",
@@ -104,7 +100,25 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2019-02-01",
-      "name": "[variables('publicIPAddressName')]",
+      "name": "[variables('dcPublicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('publicIPSKU')]"
+      },
+      "zones": [
+        "1"
+      ],
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsPrefix')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2019-02-01",
+      "name": "[variables('bastionPublicIPAddressName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[variables('publicIPSKU')]"
@@ -142,6 +156,12 @@
           "subnetRange": {
             "value": "[variables('adSubnet')]"
           },
+          "bastionsubnetName": {
+            "value": "[variables('bastinSubnetName')]"
+          },
+          "bastionsubnetRange": {
+            "value": "[variables('bastinSubnet')]"
+          },
           "location": {
             "value": "[parameters('location')]"
           }
@@ -159,7 +179,8 @@
       },
       "dependsOn": [
         "CreateVNet",
-        "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIpAddresses', variables('dcPublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/publicIpAddresses', variables('bastionPublicIPAddressName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -168,7 +189,37 @@
             "properties": {
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[variables('iPAddress')[copyIndex()]]",
-              "publicIPAddress": "[if(equals(copyIndex(), 0), variables('publicIpAddressId'), json('null'))]",
+              "publicIPAddress": "[if(equals(copyIndex(), 0), variables('dcpublicIpAddressId'), json('null'))]",
+              "subnet": {
+                "id": "[variables('adSubnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+        {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-02-01",
+      "name": "[variables('nicName')[copyIndex()]]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": 2
+      },
+      "dependsOn": [
+        "CreateVNet",
+        "[resourceId('Microsoft.Network/publicIpAddresses', variables('dcPublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/publicIpAddresses', variables('bastionPublicIPAddressName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('iPAddress')[copyIndex()]]",
+              "publicIPAddress": "[if(equals(copyIndex(), 0), variables('bastionpublicIpAddressId'), json('null'))]",
               "subnet": {
                 "id": "[variables('adSubnetRef')]"
               }
@@ -217,7 +268,7 @@
           },
           "dataDisks": [
             {
-              "diskSizeGB": 127,
+              "diskSizeGB": 64,
               "lun": 0,
               "createOption": "Empty"
             }
@@ -319,6 +370,12 @@
             "value": "[variables('adSubnetName')]"
           },
           "subnetRange": {
+            "value": "[variables('adSubnet')]"
+          },
+          "bastionSubnetName": {
+            "value": "[variables('adSubnetName')]"
+          },
+          "bastionSubnetRange": {
             "value": "[variables('adSubnet')]"
           },
           "DNSServerAddress": {
@@ -444,6 +501,12 @@
           "subnetRange": {
             "value": "[variables('adSubnet')]"
           },
+          "bastionSubnetName": {
+            "value": "[variables('adSubnetName')]"
+          },
+          "bastionSubnetRange": {
+            "value": "[variables('adSubnet')]"
+          },
           "DNSServerAddress": {
             "value": "[variables('ipAddress')]"
           },
@@ -451,6 +514,34 @@
             "value": "[parameters('location')]"
           }
         }
+      }
+    },
+    {
+        "type": "Microsoft.Network/bastionHosts",
+        "apiVersion": "2020-11-01",
+       "name": "[variables ('bastionHostsName')]",
+        "location": "westus2",
+        "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables ('dcPublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/publicIpAddresses', variables ('bastionPublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables ('virtualNetworkName'), 'AzureBastionSubnet')]"
+      ],
+      "properties": {
+        "dnsName": "bst-0f497c3b-0de0-433d-8d18-22415e2dd84b.bastion.azure.com",
+        "ipConfigurations": [
+            {
+              "name": "IpConf",
+              "properties": {
+                  "privateIPAllocationMethod": "Dynamic",
+                  "publicIPAddress": {
+                  "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'AzureBastionSubnet')]"
+              }
+            }
+          }
+        ]
       }
     }
   ]
