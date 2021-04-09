@@ -181,20 +181,22 @@ After deploying, an Instructions.html file is created in the /opt/sas/config/Lev
 2. Click *Deployments*.
 3. Click *Microsoft Template-\<deployment name\>*.
 5. Click *Outputs*. 
-6. From the list of URLs that appear, copy the base URL associated with the web application that you want to validate. Substitute that value for the base URL of that web application in the Instructions.html file.
+6. From the list of URLs that appear, copy the base URL from the sasVisualAnalyticsHub or sasStudio URLs. Substitute that value for the base URLs in the in the Instructions.html file.  If the URL path in the Instructions.html file has a port, remove the port as it is not valid in the Quickstart.
 
 For example, suppose that the URL path to the SAS Visual Analytics Hub in the Outputs window is:
 https://sas94-dpm1234567890-123e3.eastus.cloudapp.azure.com/SASVisualAnalyticsHub
 
 The base URL portion of the URL above is:  https://sas94-dpm1234567890-123e3.eastus.cloudapp.azure.com
 
-Suppose that the URL path to the SAS Visual Analytics Hub in the Instructions.html file is:
-https://midtier-0.internal.cloudapp.net/SASVisualAnalyticsHub
+Suppose that the URL path to SAS Visual Data Builder in the Instructions.html file is:
+https://midtier-0.internal.cloudapp.net:7980/SASVisualDataBuilder
 
 The base URL portion of the URL above is: https://midtier-0.internal.cloudapp.net
 
 Substitute the base URL from the Outputs window for the base URL in the Instructions.html file:
-https://sas94-dpm1234567890-123e3.eastus.cloudapp.azure.com/SASVisualAnalyticsHub
+https://sas94-dpm1234567890-123e3.eastus.cloudapp.azure.com/SASVisualDataBuilder
+
+**Note:** The port (:7980) in the URL from the Instructions.html is not included in the new URL.
 
 ### Accessing Resources in the Deployment
 
