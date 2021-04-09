@@ -21,45 +21,47 @@ routeserver_IP2=10.1.1.5
 
 sudo apt-get -y update
 
-
 ## Install the Quagga routing daemon
 echo "Installing quagga"
-sudo apt-get install -y quagga
+sudo apt-get -y install quagga
+
+##  run the updates and ensure the packages are up to date and there is no new version available for the packages
+sudo apt-get -y update --fix-missing
 
 ## Enable IPv4 forwarding
-echo "net.ipv4.conf.all.forwarding=1" | tee -a /etc/sysctl.conf 
-echo "net.ipv4.conf.default.forwarding=1" | tee -a /etc/sysctl.conf 
+echo "net.ipv4.conf.all.forwarding=1" | sudo tee -a /etc/sysctl.conf 
+echo "net.ipv4.conf.default.forwarding=1" | sudo tee -a /etc/sysctl.conf 
 sysctl -p
 
 ## Create a folder for the quagga logs
-echo "creating fordel for quagga logs"
-mkdir -p /var/log/quagga && sudo chown quagga:quagga /var/log/quagga
-touch /var/log/zebra.log
-chown quagga:quagga /var/log/zebra.log
+echo "creating folder for quagga logs"
+sudo mkdir -p /var/log/quagga && sudo chown quagga:quagga /var/log/quagga
+sudo touch /var/log/zebra.log
+sudo chown quagga:quagga /var/log/zebra.log
 
 ## Create the configuration files for Quagga daemon
 echo "creating empty quagga config files"
-touch /etc/quagga/babeld.conf
-touch /etc/quagga/bgpd.conf
-touch /etc/quagga/isisd.conf
-touch /etc/quagga/ospf6d.conf
-touch /etc/quagga/ospfd.conf
-touch /etc/quagga/ripd.conf
-touch /etc/quagga/ripngd.conf
-touch /etc/quagga/vtysh.conf
-touch /etc/quagga/zebra.conf
+sudo touch /etc/quagga/babeld.conf
+sudo touch /etc/quagga/bgpd.conf
+sudo touch /etc/quagga/isisd.conf
+sudo touch /etc/quagga/ospf6d.conf
+sudo touch /etc/quagga/ospfd.conf
+sudo touch /etc/quagga/ripd.conf
+sudo touch /etc/quagga/ripngd.conf
+sudo touch /etc/quagga/vtysh.conf
+sudo touch /etc/quagga/zebra.conf
 
 ## Change the ownership and permission for configuration files, under /etc/quagga folder
 echo "assign to quagga user the ownership of config files"
-chown quagga:quagga /etc/quagga/babeld.conf && chmod 640 /etc/quagga/babeld.conf
-chown quagga:quagga /etc/quagga/bgpd.conf && chmod 640 /etc/quagga/bgpd.conf
-chown quagga:quagga /etc/quagga/isisd.conf && chmod 640 /etc/quagga/isisd.conf
-chown quagga:quagga /etc/quagga/ospf6d.conf && chmod 640 /etc/quagga/ospf6d.conf
-chown quagga:quagga /etc/quagga/ospfd.conf && chmod 640 /etc/quagga/ospfd.conf
-chown quagga:quagga /etc/quagga/ripd.conf && chmod 640 /etc/quagga/ripd.conf
-chown quagga:quagga /etc/quagga/ripngd.conf && chmod 640 /etc/quagga/ripngd.conf
-chown quagga:quaggavty /etc/quagga/vtysh.conf && chmod 660 /etc/quagga/vtysh.conf
-chown quagga:quagga /etc/quagga/zebra.conf && chmod 640 /etc/quagga/zebra.conf
+sudo chown quagga:quagga /etc/quagga/babeld.conf && sudo chmod 640 /etc/quagga/babeld.conf
+sudo chown quagga:quagga /etc/quagga/bgpd.conf && sudo chmod 640 /etc/quagga/bgpd.conf
+sudo chown quagga:quagga /etc/quagga/isisd.conf && sudo chmod 640 /etc/quagga/isisd.conf
+sudo chown quagga:quagga /etc/quagga/ospf6d.conf && sudo chmod 640 /etc/quagga/ospf6d.conf
+sudo chown quagga:quagga /etc/quagga/ospfd.conf && sudo chmod 640 /etc/quagga/ospfd.conf
+sudo chown quagga:quagga /etc/quagga/ripd.conf && sudo chmod 640 /etc/quagga/ripd.conf
+sudo chown quagga:quagga /etc/quagga/ripngd.conf && sudo chmod 640 /etc/quagga/ripngd.conf
+sudo chown quagga:quaggavty /etc/quagga/vtysh.conf && sudo chmod 660 /etc/quagga/vtysh.conf
+sudo chown quagga:quagga /etc/quagga/zebra.conf && sudo chmod 640 /etc/quagga/zebra.conf
 
 ## initial startup configuration for Quagga daemons are required
 echo "Setting up daemon startup config"
