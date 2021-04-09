@@ -14,6 +14,7 @@
 1. [Deployment Steps](#Deployment)
     1. [Deploy Using the Azure Portal](#azureportal)
 1. [Post Deployment Steps](#PostDeployment)
+    1. [Validating the Deployment](#validating)
     1. [Accessing Resources in the Deployment](#accessresources)      
     1. [Running SAS Management Console](#smc)
 1. [Troubleshooting](#troubleshooting)
@@ -24,7 +25,7 @@
 <a name="Overview"></a>
 ## Overview
 
-**Note:** Due to the inherent characteristics of SAS 9.4,  the Quickstart is tightly coupled with a specific release of SAS 9.4M7. This Quickstart is validated against the release of SAS 9.4M7 that is associated with SAS 9.4 (TS1M7), Rev. 940_21w17. As new versions of SAS 9.4 are released, the Quickstart might not automatically support them.
+**Note:** The SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics is generally available for consideration.  Your SAS account team and SAS Enterprise Excellence Center will evaluate if this Quickstart is the recommended solution for you as opposed to the more current SAS Viya Quickstart Template for Azure.
 
 This README for the SAS 9.4M7 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics is used to deploy the following SAS 9.4 products in the Azure cloud:
 
@@ -39,7 +40,8 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
 <a name="Costs"></a>
 ### Costs and Licenses
 You are responsible for the cost of the Azure services used while running this Quickstart deployment. There is no additional cost for using the Quickstart.
-You will need a SAS license to launch this Quickstart. Your SAS account team and the SAS Enterprise Excellence Center can advise on the appropriate software licensing and sizing to meet your workload and performance needs.
+You will need a SAS license to launch this Quickstart. Your SAS account team and the SAS Enterprise Excellence Center can advise on the appropriate software licensing and sizing to meet your workload and performance needs as well as if this Quickstart is the recommended solution for you as opposed to the more current SAS Viya Quickstart Template for Azure.
+
 The SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics creates instances as follows: 
 * one SAS Compute Server virtual machine (VM) for the SAS Visual Analytics in SAS 9.4M7 and SAS Visual Statistics in SAS 9.4M7 server main node, plus the number of VMs for the SAS Visual Analytics and SAS  Visual Statistics workers (as specified in the Visual Analytics Worker Count parameter)
 * the number of middle-tier VMs for the SAS 9.4M7 mid-tier server (as specified in the Mid-Tier VM Count parameter)
@@ -52,7 +54,7 @@ To determine the appropriate sizes of these resources, we recommend that you wor
 <a name="architecture"></a>
 ## Architecture
 
-This SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics takes a generic license for SAS 9.4 and deploys SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS 9.4 deployment on recommended VMs.  
+This SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics takes a license for SAS 9.4 and deploys SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS 9.4 deployment on recommended VMs.  
 
 For details, see [SAS 9.4 Intelligence Platform: Installation and Configuration Guide](https://go.documentation.sas.com/?cdcId=bicdc&cdcVersion=9.4&docsetId=biig&docsetTarget=titlepage.htm&locale=en). 
 
@@ -144,7 +146,7 @@ Then the  SAS software depot location is:
 |Location|Defines the location in Azure where these resources should be created. This is derived from the resource group.|
 |SAS Depot Location|Specifies the URI of the Azure Blob Store where the software depot was uploaded. You determined this URI during the prerequisite step [here](#depotlocation).|
 |SAS Plan File Location|Specifies the URI to download the plan file from as currently specified in the Azure Blob Store. Leave this blank if the plan file is stored in the software depot blob. If this is left blank, then the plan file located in the depot at depot/plan.xml is used. If no plan file exists in the depot, then the default plan file supplied by this Quickstart is used.
-|Use a New or Existing Virtual Network?|Specifies whether to use a new or existing network.|
+|Use a New or Existing Virtual Network|Specifies whether to use a new or existing network.|
 |Existing Virtual Network Resource Group|Specifies the resource group if using an existing virtual network. Leave this blank if you are using a new network. Otherwise, enter the resource group for the existing network|
 |Virtual Network Name|Use the default value (recommended).|
 |Operating System Image|Specifies the operating system to use.  Currently, only SUSE is supported.|
@@ -169,10 +171,32 @@ Deployments typically take two to three hours to complete.
 <a name="PostDeployment"></a>
 ## Post-Deployment Steps
 
+<a name="validating"></a>
+### Validating the Deployment
 <a name="accessresources"></a>
-### Accessing Resources in the Deployment
 
-**Note:** After deploying, an Instructions.html file is created in the /opt/sas/config/Lev1/Documents directory on each SAS VM. You are directed to follow the instructions in this file as a post-installation step.  However, the host names referenced in the Instructions.html files are not accessible from external clients. Instead, the host names referenced in the steps below should be used.
+After deploying, an Instructions.html file is created in the /opt/sas/config/Lev1/Documents directory on each SAS VM. You are directed to follow the instructions in this file as a post-installation step.  However, the host names referenced in the Instructions.html file URLs are not accessible from external clients. Instead, construct the URLs using the base URLs referenced in the steps below.
+
+1. Open the resource group.
+2. Click *Deployments*.
+3. Click *Microsoft Template-\<deployment name\>*.
+5. Click *Outputs*. 
+6. From the list of URLs that appear, copy the base URL associated with the web application that you want to validate. Substitute that value for the base URL of that web application in the Instructions.html file.
+
+For example, suppose that the URL path to the SAS Visual Analytics Hub in the Outputs window is:
+https://sas94-dpm1234567890-123e3.eastus.cloudapp.azure.com/SASVisualAnalyticsHub
+
+The base URL portion of the URL above is:  https://sas94-dpm1234567890-123e3.eastus.cloudapp.azure.com
+
+Suppose that the URL path to the SAS Visual Analytics Hub in the Instructions.html file is:
+https://midtier-0.internal.cloudapp.net/SASVisualAnalyticsHub
+
+The base URL portion of the URL above is: https://midtier-0.internal.cloudapp.net
+
+Substitute the base URL from the Outputs window for the base URL in the Instructions.html file:
+https://sas94-dpm1234567890-123e3.eastus.cloudapp.azure.com/SASVisualAnalyticsHub
+
+### Accessing Resources in the Deployment
 
 1. Open the resource group.
 2. Click *Deployments*.
@@ -263,13 +287,13 @@ To restart the services using the start and stop scripts, perform the following 
  
  4. Verify that the current subscription matches the subscription in which SAS has been deployed:
  ```
- /usr/local/bin/az/account list --output table
+ /usr/local/bin/az/ account list --output table
  ```
  For more information about the az account command see [az account](https://docs.microsoft.com/en-us/cli/azure/account?view=azure-cli-latest).
  
  5. If the subscriptions do not match, set the current subscription to the subscription in which SAS has been deployed:
  ```
- /usr/local/bin/az/account set --subscription <subscription>
+ /usr/local/bin/az/ account set --subscription <subscription>
  ```
  6. When the correct subscription is set, you can run the start and stop scripts as follows:
    
