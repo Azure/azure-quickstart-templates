@@ -25,7 +25,7 @@
 <a name="Overview"></a>
 ## Overview
 
-**Note:** The SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics is generally available for consideration.  Your SAS account team and SAS Enterprise Excellence Center will evaluate if this Quickstart is the recommended solution for you as opposed to the more current SAS Viya Quickstart Template for Azure.
+**Note:** The SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics is generally available for consideration.  Your SAS account team and SAS Enterprise Excellence Center will evaluate if this Quickstart is the recommended solution for you as opposed to the more current SAS Viya Quickstart Template for Azure. If you are interested in this Quickstart, see [Contact SAS](https://www.sas.com/en_us/contact.html).
 
 This README for the SAS 9.4M7 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics is used to deploy the following SAS 9.4 products in the Azure cloud:
 
