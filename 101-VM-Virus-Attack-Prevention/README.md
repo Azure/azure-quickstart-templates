@@ -1,4 +1,4 @@
-# Virus attack on Virtual Machines Scenario
+# Virus attack on Virtual Machines Scenario 
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-VM-Virus-Attack-Prevention/PublicDeployment.svg)
