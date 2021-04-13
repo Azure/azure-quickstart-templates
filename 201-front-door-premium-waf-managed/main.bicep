@@ -1,3 +1,6 @@
+@description('The location into which regional resources should be deployed.')
+param location string = resourceGroup().location
+
 @description('The name of the Front Door endpoint to create. This must be globally unique.')
 param endpointName string = 'afd-${uniqueString(resourceGroup().id)}'
 
@@ -25,9 +28,6 @@ param wafManagedRuleSets array = [
 
 @description('The name of the Log Analytics workspace to create.')
 param logAnalyticsWorkspaceName string = 'la-${uniqueString(resourceGroup().id)}'
-
-@description('The location into which the Log Analytics workspace should be deployed.')
-param logAnalyticsWorkspaceLocation string = resourceGroup().location
 
 var skuName = 'Premium_AzureFrontDoor' // The Microsoft-managed WAF rule sets require the premium SKU of Front Door/
 var profileName = 'MyFrontDoor'
@@ -199,7 +199,7 @@ resource securityPolicy 'Microsoft.Cdn/profiles/securityPolicies@2020-09-01' = {
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-03-01-preview' = {
   name: logAnalyticsWorkspaceName
-  location: logAnalyticsWorkspaceLocation
+  location: location
   properties: {
     retentionInDays: 30
     sku: {
