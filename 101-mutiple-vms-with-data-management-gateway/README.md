@@ -1,5 +1,6 @@
 # Create HA data management gateway and make it workable in azure VMs
 
+[](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-mutiple-vms-with-data-management-gateway%2Fazuredeploy.json)
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/PublicDeployment.svg)
 
