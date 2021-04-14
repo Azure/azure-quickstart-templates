@@ -29,7 +29,7 @@ param wafManagedRuleSets array = [
 @description('The name of the Log Analytics workspace to create.')
 param logAnalyticsWorkspaceName string = 'la-${uniqueString(resourceGroup().id)}'
 
-var skuName = 'Premium_AzureFrontDoor' // The Microsoft-managed WAF rule sets require the premium SKU of Front Door/
+var skuName = 'Premium_AzureFrontDoor' // The Microsoft-managed WAF rule sets require the premium SKU of Front Door.
 var profileName = 'MyFrontDoor'
 var originGroupName = 'MyOriginGroup'
 var originName = 'MyOrigin'
