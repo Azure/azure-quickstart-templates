@@ -1,4 +1,4 @@
-# Create an Azure Migrate Project
+# Create an Azure Migrate project
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-migrate-project-create/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-migrate-project-create/PublicDeployment.svg)
