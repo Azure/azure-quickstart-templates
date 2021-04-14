@@ -6,6 +6,8 @@
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/FairfaxDeployment.svg)
 
+![sanitize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/CredScanResult.svg)
 
