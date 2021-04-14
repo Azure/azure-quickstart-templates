@@ -473,6 +473,34 @@
             }
           },
           {
+            "name": "allow_https_port_8443",
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8443",
+              "sourceAddressPrefix": "[variables('webIngressLocation')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 501,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow_https_port_8080",
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8080",
+              "sourceAddressPrefix": "[variables('webIngressLocation')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 502,
+              "direction": "Inbound"
+            }
+          },
+          {
             "name": "allow_nat_ingress",
             "type": "Microsoft.Network/networkSecurityGroups/securityRules",
             "properties": {
@@ -482,7 +510,7 @@
               "sourceAddressPrefix": "[concat(reference(resourceId('Microsoft.Network/publicIPAddresses', 'nat_publicIP')).ipAddress, '/32')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 501,
+              "priority": 503,
               "direction": "Inbound"
             }
           },
@@ -1059,6 +1087,18 @@
             "properties": {
               "port": 443
             }
+          },
+          {
+            "name": "port_8443",
+            "properties": {
+              "port": 8443
+            }
+          },
+          {
+            "name": "port_8080",
+            "properties": {
+              "port": 8080
+            }
           }
         ],
         "backendAddressPools": [
@@ -1073,6 +1113,16 @@
             "name": "http-setting",
             "properties": {
               "port": 7980,
+              "protocol": "Http",
+              "cookieBasedAffinity": "Disabled",
+              "pickHostNameFromBackendAddress": false,
+              "requestTimeout": 60
+            }
+          },
+          {
+            "name": "http-setting-2",
+            "properties": {
+              "port": 7080,
               "protocol": "Http",
               "cookieBasedAffinity": "Disabled",
               "pickHostNameFromBackendAddress": false,
@@ -1096,7 +1146,40 @@
               },
               "requireServerNameIndication": false
             }
+          },
+          {
+            "name": "http-listener-8443",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendIPConfigurations/appGwPublicFrontendIp')]"
+              },
+              "frontendPort": {
+                "id": "[concat(resourceid('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendPorts/port_8443')]"
+              },
+              "protocol": "Https",
+              "sslCertificate": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/sslCertificates', 'loadbalancer', 'appGatewayFrontendCertificate')]"
+              },
+              "requireServerNameIndication": false
+            }
+          },
+          {
+            "name": "http-listener-8080",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendIPConfigurations/appGwPublicFrontendIp')]"
+              },
+              "frontendPort": {
+                "id": "[concat(resourceid('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendPorts/port_8080')]"
+              },
+              "protocol": "Https",
+              "sslCertificate": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/sslCertificates', 'loadbalancer', 'appGatewayFrontendCertificate')]"
+              },
+              "requireServerNameIndication": false
+            }
           }
+
         ],
         "requestRoutingRules": [
           {
@@ -1112,6 +1195,51 @@
               "backendHttpSettings": {
                 "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendHttpSettingsCollection/http-setting')]"
               }
+            }
+          },
+          {
+            "name": "rule2",
+            "properties": {
+              "ruleType": "Basic",
+              "httpListener": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-8443')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendAddressPools/midtierAddressPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendHttpSettingsCollection/http-setting-2')]"
+              }
+            }
+          },
+          {
+            "name": "rule3",
+            "properties": {
+              "ruleType": "Basic",
+              "httpListener": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-8080')]"
+              },
+              "redirectConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/redirectConfigurations/rule3')]"
+              }
+            }
+          }
+        ],
+        "redirectConfigurations": [
+          {
+            "name": "rule3",
+            "properties": {
+              "redirectType": "Permanent",
+              "targetListener": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-8443')]"
+              },
+              "includePath": true,
+              "includeQueryString": true,
+              "requestRoutingRules": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/requestRoutingRules/rule3')]"
+                }
+              ]
             }
           }
         ],
@@ -1817,6 +1945,10 @@
     "SASStudio": {
       "type": "string",
       "value": "[concat('https://', reference(resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')).dnsSettings.fqdn, '/SASStudio')]"
+    },
+    "SASEnvironmentManager": {
+      "type": "string",
+      "value": "[concat('https://', reference(resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')).dnsSettings.fqdn, ':8443/')]"
     }
   }
 }
