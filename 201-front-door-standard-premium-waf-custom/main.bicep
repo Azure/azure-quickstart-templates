@@ -14,11 +14,11 @@ param originHostName string
 ])
 param frontDoorSkuName string = 'Standard_AzureFrontDoor'
 
+@description('The mode that the WAF should be deployed using. In \'Prevention\' mode, the WAF will block requests it detects as malicious. In \'Detection\' mode, the WAF will not block requests and will simply log the request.')
 @allowed([
   'Detection'
   'Prevention'
 ])
-@description('The mode that the WAF should be deployed using. In \'Prevention\' mode, the WAF will block requests it detects as malicious. In \'Detection\' mode, the WAF will not block requests and will simply log the request.')
 param wafMode string = 'Prevention'
 
 @description('The IP address ranges to block. Individual IP addresses can be specified as-is. Ranges should be specified using CIDR notation.')
