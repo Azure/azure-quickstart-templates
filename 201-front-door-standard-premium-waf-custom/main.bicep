@@ -30,7 +30,6 @@ param ipAddressRangesToBlock array = [
 @description('The name of the Log Analytics workspace to create.')
 param logAnalyticsWorkspaceName string = 'la-${uniqueString(resourceGroup().id)}'
 
-var skuName = 'Standard_AzureFrontDoor'
 var profileName = 'MyFrontDoor'
 var originGroupName = 'MyOriginGroup'
 var originName = 'MyOrigin'
@@ -42,7 +41,7 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
   name: profileName
   location: 'global'
   sku: {
-    name: skuName
+    name: frontDoorSkuName
   }
 }
 
@@ -160,7 +159,7 @@ resource wafPolicy 'Microsoft.Network/frontDoorWebApplicationFirewallPolicies@20
   name: wafPolicyName
   location: 'global'
   sku: {
-    name: skuName
+    name: frontDoorSkuName
   }
   properties: {
     policySettings: {
