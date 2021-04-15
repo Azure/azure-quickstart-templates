@@ -26,8 +26,9 @@ if ($ENV:BUILD_REASON -eq "PullRequest") {
     Catch {
         Write-Error "dateUpdate is not in the correct format: $rawDate must be in yyyy-MM-dd format."
     }
-    if ($dateUpdated -gt (Get-Date)) {
-        Write-Error "dateUpdated in metadata.json must not be in the future -- $dateUpdated is later than $(Get-Date)"
+    # Provide one day grace in the future since half the planet is ahead of UTC
+    if ($dateUpdated -gt (Get-Date).AddDays(1)) {
+        Write-Error "dateUpdated in metadata.json must not be in the future -- $dateUpdated is later than $((Get-Date).AddDays(1))"
     }
     $oldDate = (Get-Date).AddDays(-60)
     if ($dateUpdated -lt $oldDate) {
@@ -75,4 +76,10 @@ Write-Output "Validation type from metadata.json: $validationType"
 if($validationType -eq "Manual"){
     Write-Host "##vso[task.setvariable variable=validation.type]$validationType"
     Write-Host "##vso[task.setvariable variable=result.deployment]Not Supported" # set this so the pipeline does not run deployment will be overridden in the test results step
+}
+
+# pipeline variable should default to FAIL
+Write-Host "Count: $($error.count)"
+if($error.count -eq 0){
+    Write-Host "##vso[task.setvariable variable=result.metadata]PASS"
 }
