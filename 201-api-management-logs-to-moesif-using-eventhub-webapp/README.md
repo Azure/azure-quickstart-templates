@@ -167,8 +167,6 @@ To re-deploy the WebJob:
 
 Once created, the script will clone the [ApimEventProcessor repo 'v1' branch](https://github.com/Moesif/Apimeventprocessor/tree/v1), run `dotnet build`, and starts the worker.
 
-The WebJob can also be re-deployed using the ARM template [nested/microsoft.web/sites/extensions.json](https://raw.githubusercontent.com/Moesif/azure-quickstart-templates/master/201-api-management-logs-to-moesif-using-eventhub-webapp/nested/microsoft.web/sites/extensions.json). During deployment, when prompted for parameter `webJobZipDeployUrl` - use `https://raw.githubusercontent.com/Moesif/azure-quickstart-templates/master/201-api-management-logs-to-moesif-using-eventhub-webapp/scripts/apim-2-moesif-webjob-webdeploy.zip`
-
 ### APIM Logger
 
 If the name of an existing Azure API Management is not specified during deployment, you will need to add the `log-to-eventhub` logger to your Azure API Management service manually. To do so, utilize the [`nested/microsoft.apimanagement/service/loggers.json` ARM template](nested/microsoft.apimanagement/service/loggers.json) or view [Microsoft docs](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-log-event-hubs)
