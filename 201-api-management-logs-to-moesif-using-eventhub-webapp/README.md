@@ -134,7 +134,7 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
 </policies>
 ```
 
-That's it. Once the XML 
+That's it. Once the XML is added to your APIs, the logs should start showing up in Moesif. 
 
 ## Configuration Options
 
