@@ -8,8 +8,7 @@ Then, when the PR is merged, the CI pipeline copies the badges to the "badges" f
 
 param(
     [string]$SampleName = $ENV:SAMPLE_NAME, # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
-    [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
-    [string]$StorageAccountName = "azurequickstartsservice",
+    [string]$StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME,
     [string]$TableName = "QuickStartsMetadataService",
     [string]$TableNamePRs = "QuickStartsMetadataServicePRs",
     [Parameter(mandatory = $true)]$StorageAccountKey
