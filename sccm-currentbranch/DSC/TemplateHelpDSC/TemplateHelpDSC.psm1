@@ -529,7 +529,8 @@ class DownloadSCCM
 
         Write-Verbose "Downloading SCCM installation source..."
         $cmurl = "https://go.microsoft.com/fwlink/?linkid=2093192"
-        Invoke-WebRequest -Uri $cmurl -OutFile $cmpath
+        $WebClient = New-Object System.Net.WebClient
+        $WebClient.DownloadFile($cmurl,$cmpath)
         if(!(Test-Path $cmsourcepath))
         {
             Start-Process -Filepath ($cmpath) -ArgumentList ('/Auto "' + $cmsourcepath + '"') -wait

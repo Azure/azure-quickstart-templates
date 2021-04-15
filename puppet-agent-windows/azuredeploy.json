@@ -2,15 +2,9 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageAccountNamePrefix": {
-      "type": "string",
-      "maxLength": 11,
-      "metadata": {
-        "description": "Name prefix of the storage account to hold your VM disk."
-      }
-    },
     "dnsLabelPrefix": {
       "type": "string",
+      "defaultValue": "[concat('puppet-', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Unique DNS Name"
       }
@@ -29,7 +23,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2",
+      "defaultValue": "Standard_D2_v3",
       "metadata": {
         "description": "VM Size for creating the Virtual Machine"
       }
@@ -49,11 +43,9 @@
     }
   },
   "variables": {
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]",
     "vmExtensionName": "PuppetEnterpriseAgent",
-    "vmName": "[parameters('dnsLabelPrefix')]",
-    "storageAccountType": "Standard_LRS",
+    "vmName": "[take(parameters('dnsLabelPrefix'),15)]",
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
     "virtualNetworkName": "MyVNET",
@@ -63,22 +55,12 @@
     "nicName": "myVMNic",
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
-    "imageSKU": "2012-R2-Datacenter",
-    "storageAccountName": "[replace(replace(tolower(concat(parameters('storageAccountNamePrefix'), uniquestring(resourceGroup().id))), '-',''),'.','')]",
+    "imageSKU": "2019-Datacenter",
     "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -92,7 +74,7 @@
     {
       "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-08-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -114,7 +96,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -141,13 +123,13 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -167,13 +149,12 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -209,10 +190,10 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/', variables('vmExtensionName'))]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "PuppetLabs",
