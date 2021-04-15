@@ -335,7 +335,7 @@ $PublicRegressed = Get-Regression $comparisonResults $newResults "PublicDeployme
 $AnyRegressed = $BPRegressed -or $FairfaxRegressed -or $PublicRegresse
 
 if (!$isPullRequest) {
-    Write-Host "Writing regression info to table '$regressionsTable'"
+    Write-Host "Writing regression info to table '$RegressionsTableName'"
     $regressionsTable = (Get-AzStorageTable –Name $RegressionsTableName –Context $ctx).CloudTable
     $regressionsKey = Get-Date -Format "o"
     $regressionsRow = $newResults.PSObject.copy()
