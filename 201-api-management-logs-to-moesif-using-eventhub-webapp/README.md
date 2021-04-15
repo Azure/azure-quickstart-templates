@@ -12,7 +12,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMoesif%2Fazure-quickstart-templates%2Fmaster%2F201-api-management-logs-to-moesif-using-eventhub-webapp%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FMoesif%2Fazure-quickstart-templates%2Fmaster%2F201-api-management-logs-to-moesif-using-eventhub-webapp%2Fazuredeploy.json)    
 
-Log and monitor API traffic from Azure API Management using [Moesif API Analytics](https://www.moesif.com/?language=azure-api-management) in a few minutes without any code changes or restarts. The integration also provides visibility into rejected requests that never reach your underlying service. 
+Log and monitor API traffic from Azure API Management using [Moesif API Analytics](https://www.moesif.com/?language=azure-api-management) in a few minutes without any code changes or restarts. The integration also provides visibility into rejected requests that never reach your underlying service.
 
 ## How it works
 
@@ -77,6 +77,7 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
           var cru = new JObject();
           if (context.User != null) {
             cru.Add("Email", context.User.Email);
+            cru.Add("Id", context.User.Id);
             cru.Add("FirstName", context.User.FirstName);
             cru.Add("LastName", context.User.LastName);
           }
@@ -157,14 +158,14 @@ The individual components can be deployed directly if needed.
 
 ### WebJob
 
-To launch the WebJob directly:
+The WebJob is deployed as part of the overall deployment.
+To re-deploy the WebJob:
 1. Download the [run.bat](https://raw.githubusercontent.com/Moesif/ApimEventProcessor/v1/azure-app-service-webjobs/run.bat) script to your computer.
 2. Within the Azure Portal, go to your WebApp and select the WebJobs panel. 
-3. Click the _+Add_ button to create a new job. Set type to _continuous_ and upload the `run.bat` you previously downloaded. 
+ -- If there is an existing WebJob, stop it and remove it.
+3. Click the _+Add_ button to create a new job. Give it a name, set type to _continuous_ and upload the `run.bat` you previously downloaded. 
 
-Once created, the script will clone the [ApimEventProcessor repo](https://github.com/Moesif/ApimEventProcessor), run `dotnet build`, and starts the worker.
-
-You can also utilize the ARM template [nested/microsoft.web/sites/extensions.json](https://raw.githubusercontent.com/Moesif/azure-quickstart-templates/master/201-api-management-logs-to-moesif-using-eventhub-webapp/nested/microsoft.web/sites/extensions.json). For the zip, use the file [scripts/apim-2-moesif-webjob-webdeploy.zip](https://github.com/Moesif/azure-quickstart-templates/blob/master/201-api-management-logs-to-moesif-using-eventhub-webapp/scripts/apim-2-moesif-webjob-webdeploy.zip). 
+Once created, the script will clone the [ApimEventProcessor repo 'v1' branch](https://github.com/Moesif/Apimeventprocessor/tree/v1), run `dotnet build`, and starts the worker.
 
 ### APIM Logger
 
@@ -178,8 +179,8 @@ This template performs the following tasks
 - Create Azure Eventhub and policies for Send and Listen.
 - If the name of an existing Azure API Management instance is provided, the template creates a new [log-to-eventhub](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-log-event-hubs) with the name `moesif-log-to-event-hub`.
 - Create an Azure Storage Account to periodically checkpoint the EventHub read location.
-- Create an Azure WebApp and configures the environment variables required by [ApimEventProcessor](https://github.com/Moesif/ApimEventProcessor).
-- Deploys [ApimEventProcessor](https://github.com/Moesif/ApimEventProcessor) as a Webjob on the WebApp.
+- Create an Azure WebApp and configures the environment variables required by [ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1).
+- Deploys [ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1) as a Webjob on the WebApp.
 
 ## Troubleshooting
 
@@ -191,9 +192,9 @@ This template performs the following tasks
 
 ## Updating the integration
 
-If you need to update [Moesif/ApimEventProcessor](https://github.com/Moesif/ApimEventProcessor) and don't want to redeploy the entire template, you can follow these steps:
+If you need to update [Moesif/ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1) and don't want to redeploy the entire template, you can follow these steps:
 
-Before starting, make sure you fork the repo [ApimEventProcessor](https://github.com/Moesif/ApimEventProcessor), so it's in your GitHub account. 
+Before starting, make sure you fork the repo [ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1), so it's in your GitHub account. 
 
 1. Log into your Azure Portal and navigate to the resource group holding your Moesif resources. 
 
@@ -209,6 +210,6 @@ Before starting, make sure you fork the repo [ApimEventProcessor](https://github
 
 5.  Select the repo you forked earlier and finish the walkthrough. 
 
-Deployment may take a few minutes. Double check your XML policy if there are any changes. 
+Deployment may take a few minutes. Double check your XML policy if there are any changes.
 
 `Tags: Azure API Management, API Management, EventHub, Event Hub, API Gateway, Monitoring, Analytics, Observability, Logs, Logging, API Monitoring, API Analytics, API Logs, API Logging, Moesif, Kong, Tyk, Envoy, WebApp, WebJob, App`
