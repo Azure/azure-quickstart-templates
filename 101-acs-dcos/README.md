@@ -1,4 +1,4 @@
-# Azure Container Service (DEPRECATED)
+# Azure Container Service (DEPRECATED) 
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-acs-dcos/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-acs-dcos/PublicDeployment.svg)
