@@ -1,4 +1,4 @@
-# XSS-Attack-Prevention
+# XSS-Attack-Prevention 
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-XSS-Attack-Prevention/PublicDeployment.svg)
