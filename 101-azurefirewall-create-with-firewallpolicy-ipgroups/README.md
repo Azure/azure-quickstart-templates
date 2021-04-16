@@ -1,4 +1,4 @@
-# Create Azure Firewall with Firewall Policy referencing IP Groups 
+# Create Azure Firewall with Firewall Policy referencing IP Groups
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-azurefirewall-create-with-firewallpolicy-ipgroups/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-azurefirewall-create-with-firewallpolicy-ipgroups/PublicDeployment.svg)
