@@ -92,6 +92,10 @@ ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_
 ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=va_controllers sas_action=start"
 ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=va_workers sas_action=start"
 ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=midtier_servers sas_action=start"
+# Only start Hadoop on HARD start, otherwise it's already running
+if [[ "${HARD}" == "hard" ]]; then
+    ansible-playbook -i ${INVENTORY_FILE} -v run_hadoop_servers.yaml --extra-vars "hadoop_hosts=va_controllers hadoop_action=start"
+fi
 
 popd
 
