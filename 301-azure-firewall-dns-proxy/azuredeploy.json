@@ -134,7 +134,6 @@
     },
     "adminUsername": {
       "type": "string",
-      "defaultValue": "azadmin",
       "metadata": {
         "description": "Specifies the name of the administrator account of the virtual machine."
       }
@@ -149,14 +148,11 @@
       "type": "string",
       "defaultValue": "Premium_LRS",
       "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Standard_RAGRS",
-        "Standard_ZRS",
         "Premium_LRS",
         "Premium_ZRS",
-        "Standard_GZRS",
-        "Standard_RAGZRS"
+        "StandardSSD_LRS",
+        "StandardSSD_ZRS", 
+        "Standard_LRS"
       ],
       "metadata": {
         "description": "Defines the storage account type for OS and data disk."
@@ -204,20 +200,6 @@
       "defaultValue": "",
       "metadata": {
         "description": "Specifies the sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
-      }
-    },
-    "dnsVmScriptFileName": {
-      "type": "string",
-      "defaultValue": "configure-custom-dns-forwarder.sh",
-      "metadata": {
-        "description": "Specifies the script to download from the URI specified by the testVmScriptFilePath parameter."
-      }
-    },
-    "testVmScriptFileName": {
-      "type": "string",
-      "defaultValue": "test-dns-and-private-endpoints.sh",
-      "metadata": {
-        "description": "Specifies the script to download from the URI specified by the testVmScriptFilePath parameter."
       }
     },
     "adlsStorageAccountAdlsPrivateEndpointName": {
@@ -566,18 +548,18 @@
     "firewallPolicyDefaultDnatRuleCollectionGroupName": "[concat(parameters('firewallPolicyName'), '/DefaultDnatRuleCollectionGroup')]",
     "firewallPolicyDefaultNetworkRuleCollectionGroupId": "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups', parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]",
 
-    "devContributorRoleAssignmentGuid": "[guid(concat('devcontributor', resourceGroup().id))]",
-    "prodContributorRoleAssignmentGuid": "[guid(concat('prodcontributor', resourceGroup().id))]",
+    "devContributorRoleAssignmentGuid": "[guid(concat('devcontributor', resourceGroup().id, parameters('devVmName')))]",
+    "prodContributorRoleAssignmentGuid": "[guid(concat('prodcontributor', resourceGroup().id, parameters('prodVmName')))]",
     "devContributorRoleAssignmentId": "[resourceId('Microsoft.Authorization/roleAssignments', variables('devContributorRoleAssignmentGuid'))]",
     "prodContributorRoleAssignmentId": "[resourceId('Microsoft.Authorization/roleAssignments', variables('prodContributorRoleAssignmentGuid'))]",
 
-    "devStorageBlobDataContributorRoleAssignmentGuid": "[guid(concat('devStorageBlobDataContributor', resourceGroup().id))]",
-    "prodStorageBlobDataContributorRoleAssignmentGuid": "[guid(concat('prodStorageBlobDataContributor', resourceGroup().id))]",
+    "devStorageBlobDataContributorRoleAssignmentGuid": "[guid(concat('devStorageBlobDataContributor', resourceGroup().id, parameters('devVmName')))]",
+    "prodStorageBlobDataContributorRoleAssignmentGuid": "[guid(concat('prodStorageBlobDataContributor', resourceGroup().id, parameters('prodVmName')))]",
     "devStorageBlobDataContributorRoleAssignmentId": "[resourceId('Microsoft.Authorization/roleAssignments', variables('devStorageBlobDataContributorRoleAssignmentGuid'))]",
     "prodStorageBlobDataContributorRoleAssignmentId": "[resourceId('Microsoft.Authorization/roleAssignments', variables('prodStorageBlobDataContributorRoleAssignmentGuid'))]",
     
-    "contributorRoleId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-    "storageBlobDataContributorRoleId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+    "contributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+    "storageBlobDataContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
 
     "dnsCustomScriptId": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('dnsVmName'), 'CustomScript')]",
     "devCustomScriptId": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('devVmName'), 'CustomScript')]",
@@ -616,8 +598,10 @@
     "adlsGroupName": "dfs",
     "blobGroupName": "blob",
 
-    "dnsVmScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', parameters('dnsVmScriptFileName'), parameters('_artifactsLocationSasToken')))]",
-    "testVmScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', parameters('testVmScriptFileName'), parameters('_artifactsLocationSasToken')))]"
+    "dnsVmScriptFileName": "configure-custom-dns-forwarder.sh",
+    "testVmScriptFileName": "test-dns-and-private-endpoints.sh",
+    "dnsVmScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('dnsVmScriptFileName'), parameters('_artifactsLocationSasToken')))]",
+    "testVmScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('testVmScriptFileName'), parameters('_artifactsLocationSasToken')))]"
 
   },
   "resources": [
@@ -1395,7 +1379,7 @@
           "fileUris": [
             "[variables('dnsVmScriptFileUri')]"
           ],
-          "commandToExecute": "[concat('./', parameters('dnsVmScriptFileName'))]"
+          "commandToExecute": "[concat('./', variables('dnsVmScriptFileName'))]"
         }
       }
     },
@@ -1586,7 +1570,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash ',  parameters('testVmScriptFileName'), ' ', parameters('privateDnsZoneName'), ' ', parameters('devVmName'), ' ', parameters('prodVmName'), ' ', variables('adlsServicePrimaryEndpoint'), ' ', variables('blobServicePrimaryEndpoint'))]"
+          "commandToExecute": "[concat('bash ',  variables('testVmScriptFileName'), ' ', parameters('privateDnsZoneName'), ' ', parameters('devVmName'), ' ', parameters('prodVmName'), ' ', variables('adlsServicePrimaryEndpoint'), ' ', variables('blobServicePrimaryEndpoint'))]"
         }
       }
     },
@@ -1775,7 +1759,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash ',  parameters('testVmScriptFileName'), ' ', parameters('privateDnsZoneName'), ' ', parameters('devVmName'), ' ', parameters('prodVmName'), ' ', variables('adlsServicePrimaryEndpoint'), ' ', variables('blobServicePrimaryEndpoint'))]"
+          "commandToExecute": "[concat('bash ',  variables('testVmScriptFileName'), ' ', parameters('privateDnsZoneName'), ' ', parameters('devVmName'), ' ', parameters('prodVmName'), ' ', variables('adlsServicePrimaryEndpoint'), ' ', variables('blobServicePrimaryEndpoint'))]"
         }
       }
     },
