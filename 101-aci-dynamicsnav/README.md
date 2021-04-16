@@ -1,4 +1,4 @@
-# MS Dynamics NAV / MS Dynamics 365 Business Central including SQL Server in Azure Container Instances 
+# MS Dynamics NAV / MS Dynamics 365 Business Central including SQL Server in Azure Container Instances
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/PublicDeployment.svg)
