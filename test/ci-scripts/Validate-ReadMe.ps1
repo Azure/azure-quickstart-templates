@@ -4,7 +4,6 @@ param(
     [string] $StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME,
     [string] $ReadMeFileName = "README.md",
     [string] $supportedEnvironmentsJson = $ENV:SUPPORTED_ENVIRONMENTS, # the minified json array from metadata.json
-    [string] $bicepVersion = $ENV:BICEP_VERSION,
     [switch] $bicepSupported = ($ENV:BICEP_SUPPORTED -eq "true")
 )
 
