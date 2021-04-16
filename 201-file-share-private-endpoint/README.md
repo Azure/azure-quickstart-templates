@@ -61,42 +61,6 @@ The ARM template uses the [Azure Custom Script Extension](https://docs.microsoft
 - Runs the nslookup command against the public URL of the ADLS Gen 2 storage account to verify that this gets resolved to a private address
 - Runs the nslookup command against the public URL of the second storage account to verify that this gets resolved to a private address
 
-```bash
-#!/bin/bash
-
-# Variables
-fileServicePrimaryEndpoint=$1
-blobServicePrimaryEndpoint=$2
-
-# Parameters validation
-if [[ -z $fileServicePrimaryEndpoint ]]; then
-    echo "fileServicePrimaryEndpoint parameter cannot be null or empty"
-    exit 1
-fi
-
-if [[ -z $blobServicePrimaryEndpoint ]]; then
-    echo "blobServicePrimaryEndpoint parameter cannot be null or empty"
-    exit 1
-fi
-
-# Eliminate debconf warnings
-echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
-
-# Update the system
-sudo apt-get update -y
-
-# Upgrade packages
-sudo apt-get upgrade -y
-
-# Run nslookup to verify that public hostname of the Service Bus namespace
-# is properly mapped to the private address of the provate endpoint
-nslookup $fileServicePrimaryEndpoint
-
-# Run nslookup to verify that public hostname of the Blob storage account 
-# is properly mapped to the private address of the provate endpoint
-nslookup $blobServicePrimaryEndpoint
-```
-
 ## Deployment ##
 
 You can use the template.json ARM template and parameters.json file included in this repository to deploy the sample. Make sure to edit the parameters.json file to customize the installation. You can also use the deploy.sh Bash script under the scripts folder to deploy the ARM template. The following figure shows the resources deployed by the ARM template in the target resource group.
