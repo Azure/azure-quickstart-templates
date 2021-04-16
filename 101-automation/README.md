@@ -1,4 +1,4 @@
-# Azure Automation create account template 
+# Azure Automation create account template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-automation/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-automation/PublicDeployment.svg)
