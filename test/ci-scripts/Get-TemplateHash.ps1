@@ -14,6 +14,9 @@ function RemoveGeneratorMetadata(
         $json.PSObject.properties.remove('metadata')
         return ConvertTo-JSON $json -Depth 100
     }
+    else {
+        return $jsonContent
+    }
 }
 
 # TODO - this could now be updated to use Invoke-AzRestMethod that handles authn, so token steps could be removed.
@@ -32,8 +35,12 @@ $Headers = @{
 }
 # END TODO
 
-$raw = Get-Content -Path $templateFilePath -Raw
-$withoutGeneratorMetadata = RemoveGeneratorMetadata $raw
+$raw = Get-Content -Path $templateFilePath -Raw -ErrorAction Stop
+$withoutGeneratorMetadata = RemoveGeneratorMetadata $raw -ErrorAction Stop
+
+if ($withoutGeneratorMetadata -eq $null -or $withoutGeneratorMetadata -eq "") {
+    Write-Error "JSON is empty"
+}
 
 # Get TemplateHash
 Write-Host "Requesting Hash for file: $templateFilePath"
