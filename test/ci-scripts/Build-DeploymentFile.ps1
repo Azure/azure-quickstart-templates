@@ -26,9 +26,14 @@ if ($bicepSupported) {
     $MainTemplatePathJson = "$($SampleFolder)/$($MainTemplateFilenameJson)"
     
     # Build a JSON version of the bicep file
-    $CompiledJsonFilename = "$($MainTemplateFilenameBicep).json"
+    $CompiledJsonFilename = "$($MainTemplateFilenameBicep).temp.json"
     $CompiledJsonPath = "$($SampleFolder)/$($CompiledJsonFilename)"
+    Write-host "BUILDING: $BicepPath build $MainTemplatePathBicep --outfile $CompiledJsonPath"
     & $BicepPath build $MainTemplatePathBicep --outfile $CompiledJsonPath
+    if (!(Test-Path $CompiledJsonPath)) {
+        Write-Error "Bicep build produced no output file. Check above for build errors."
+        return
+    }
     
     # If this is a PR, compare it against the JSON file included in the sample
     if ($isPR) {
@@ -44,9 +49,11 @@ if ($bicepSupported) {
     
     # Deploy the compiled JSON file, not the one included in the sample (we might be using a different version of bicep now)
     $fileToDeploy = $CompiledJsonFilename
+    Write-Host "##vso[task.setvariable variable=compiled.json.filename]$CompiledJsonFilename"
 }
 else {
     # Just deploy the JSON file included in the sample
+    Write-Host "Bicep not supported in this sample, deploying to $MainTemplateFilenameJson"
     $fileToDeploy = $MainTemplateFilenameJson
 }
 

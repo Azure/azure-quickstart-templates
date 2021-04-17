@@ -42,7 +42,25 @@ $checkLanguageHostOutput = & $PSScriptRoot/Check-LanguageSupport.ps1 `
 $vars = Find-VarsFromWriteHostOutput $checkLanguageHostOutput
 $bicepSupported = $vars["BICEP_SUPPORTED"] -eq 'true'
 $bicepVersion = $vars["BICEP_VERSION"]
-$mainTemplateFilenameJson = $vars["MAIN_TEMPLATE_FILENAME_JSON"]
+$mainTemplateFilenameJson = $vars["MAINTEMPLATE_FILENAME_JSON"]
+Assert-NotEmptyOrNull $mainTemplateFilenameJson "mainTemplateFilenameJson"
+
+# Build-DeploymentFile.ps1
+Write-host "Building deployment file if needed"
+#TODO: bicepVersion?
+$buildHostOutput = & $PSScriptRoot/Build-DeploymentFile.ps1 `
+    -SampleFolder $SampleFolder `
+    -MainTemplateFilenameBicep "main.bicep" `
+    -MainTemplateFilenameJson $mainTemplateFilenameJson `
+    -BuildReason "PullRequest" `
+    -BicepPath "bicep" `
+    -BicepVersion "(current)" `
+    -BicepSupported:$bicepSupported `
+    6>&1
+$vars = Find-VarsFromWriteHostOutput $buildHostOutput
+$mainTemplateDeploymentFilename = $vars["MAINTEMPLATE_DEPLOYMENT_FILENAME"]
+Assert-NotEmptyOrNull $mainTemplateDeploymentFilename "mainTemplateDeploymentFilename"
+$CompiledJsonFilename = $vars["COMPILED_JSON_FILENAME"]
 
 # Validate-MetaData
 Write-Host "Validating metadata.json"
@@ -54,6 +72,7 @@ $metadataHostOutput =
     6>&1
 $vars = Find-VarsFromWriteHostOutput $metadataHostOutput
 $supportedEnvironmentsJson = $vars["SUPPORTED_ENVIRONMENTS"]
+Assert-NotEmptyOrNull $supportedEnvironmentsJson "supportedEnvironmentsJson"
 
 # Validate-ReadMe
 Write-Host "Validating README.md"
@@ -64,9 +83,15 @@ $validateReadMeHostOutput =
     -StorageAccountName $StorageAccountName `
     -ReadMeFileName "README.md" `
     -supportedEnvironmentsJson $supportedEnvironmentsJson `
-    -bicepSupported:$bicepSupported
+    -bicepSupported:$bicepSupported `
+    6>&1
 $vars = Find-VarsFromWriteHostOutput $validateReadMeHostOutput
-$resultReadMe = $vars["RESULT_README"]
+$resultReadMe = $vars["RESULT_README"] # will be null if fails
+
+# Clean up
+if (Test-Path $CompiledJsonFilename) {
+    Remove-Item $CompiledJsonFilename
+}
 
 Write-host "Validation complete."
 

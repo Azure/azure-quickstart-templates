@@ -20,3 +20,15 @@ function Find-VarsFromWriteHostOutput {
 
     return $vars
 }
+
+function Assert-IsTrue([bool] $condition, $message) {
+    if (!$condition) {
+        Write-Error "Assertion failed: $message"
+    }
+}
+
+function Assert-NotEmptyOrNull([string] $string, $message) {
+    if (!($string -is [string]) -or $string -eq "") {
+        Write-Error "Assertion failed: String should not be empty: $message"
+    }
+}
