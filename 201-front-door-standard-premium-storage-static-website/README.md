@@ -9,7 +9,10 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-front-door-standard-premium-storage-static-website/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-front-door-standard-premium-storage-static-website/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-front-door-standard-premium-storage-static-website%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-front-door-standard-premium-storage-static-website%2Fazuredeploy.json)
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/201-front-door-standard-premium-storage-static-website/BicepVersion.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-front-door-standard-premium-storage-static-website%2Fazuredeploy.json)
+
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-front-door-standard-premium-storage-static-website%2Fazuredeploy.json)
 
 This template deploys a Front Door Standard/Premium (Preview) with an [Azure Storage static website](https://docs.microsoft.com/azure/storage/blobs/storage-blob-static-website) origin, using the public endpoint for the Azure Storage static website.
@@ -23,12 +26,15 @@ Note that in this sample, the storage account will still accept requests directl
 The following resources are deployed as part of the solution:
 
 ### Azure Storage
+
 - Azure Storage account.
 
 ### Deployment script
+
 - A deployment script enables [static website hosting](https://docs.microsoft.com/azure/storage/blobs/storage-blob-static-website) on the storage account account. This script only executes on the initial deployment of the template.
 
 ### Front Door Standard/Premium (Preview)
+
 - Front Door profile, endpoint, origin group, origin, and route to direct traffic to the static website.
   - Note that you can use either the standard or premium Front Door SKU for this sample. By default, the standard SKU is used.
 
