@@ -39,6 +39,7 @@ $checkLanguageHostOutput = & $PSScriptRoot/Check-LanguageSupport.ps1 `
     -SampleFolder $SampleFolder `
     -MainTemplateFilenameBicep "main.bicep" `
     6>&1
+Write-Output $checkLanguageHostOutput
 $vars = Find-VarsFromWriteHostOutput $checkLanguageHostOutput
 $bicepSupported = $vars["BICEP_SUPPORTED"] -eq 'true'
 $bicepVersion = $vars["BICEP_VERSION"]
@@ -57,6 +58,7 @@ $buildHostOutput = & $PSScriptRoot/Build-DeploymentFile.ps1 `
     -BicepVersion "(current)" `
     -BicepSupported:$bicepSupported `
     6>&1
+Write-Output $buildHostOutput
 $vars = Find-VarsFromWriteHostOutput $buildHostOutput
 $mainTemplateDeploymentFilename = $vars["MAINTEMPLATE_DEPLOYMENT_FILENAME"]
 Assert-NotEmptyOrNull $mainTemplateDeploymentFilename "mainTemplateDeploymentFilename"
@@ -70,6 +72,7 @@ $metadataHostOutput =
     -CloudEnvironment $CloudEnvironment `
     -BuildReason "PullRequest" `
     6>&1
+Write-Output $metadataHostOutput
 $vars = Find-VarsFromWriteHostOutput $metadataHostOutput
 $supportedEnvironmentsJson = $vars["SUPPORTED_ENVIRONMENTS"]
 Assert-NotEmptyOrNull $supportedEnvironmentsJson "supportedEnvironmentsJson"
@@ -85,6 +88,7 @@ $validateReadMeHostOutput =
     -supportedEnvironmentsJson $supportedEnvironmentsJson `
     -bicepSupported:$bicepSupported `
     6>&1
+Write-Output $validateReadMeHostOutput
 $vars = Find-VarsFromWriteHostOutput $validateReadMeHostOutput
 $resultReadMe = $vars["RESULT_README"] # will be null if fails
 

@@ -175,6 +175,7 @@ $ARMVizButton
     Write-Host "Copy and paste the following markdown to the README just under the top line's heading:"
     Write-Host "***************************************************************************************"
     Write-Host $md
+    Write-Host "`n"
 }
 
 # pipeline variable should default to FAIL
