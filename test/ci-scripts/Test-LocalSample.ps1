@@ -6,9 +6,9 @@ a PR is submitted.
 Usage:
 
 1) cd to the sample folder
-2) ../test/Test-LocalSample.bat (Windows)
+2) ../test/test-localsample.bat (Windows)
      or
-   ../test/Test-LocalSample.sh (Mac/Linux)
+   ../test/test-localsample.sh (Mac/Linux)
 
 #>
 
@@ -64,7 +64,7 @@ $validateReadMeHostOutput =
     -StorageAccountName $StorageAccountName `
     -ReadMeFileName "README.md" `
     -supportedEnvironmentsJson $supportedEnvironmentsJson `
-    -bicepSupported $bicepSupported
+    -bicepSupported:$bicepSupported
 $vars = Find-VarsFromWriteHostOutput $validateReadMeHostOutput
 $resultReadMe = $vars["RESULT_README"]
 

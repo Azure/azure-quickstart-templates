@@ -25,10 +25,9 @@ Write-Host "Hash for templateFilePathExpected: $templateHashExpected"
 Write-Host "Hash for templateFilePathActual: $templateHashActual"
 
 if (($templateHashExpected -cne $templateHashActual) -or ($null -eq $templateHashExpected) -or ($null -eq $templateHashActual)) {
+    Write-Warning "The templates do not match (testing by their hashes)"
     Write-Host "`n`n************* ACTUAL CONTENTS ****************`n$templateContentsActual`n***************** END OF ACTUAL CONTENTS ***************"
     Write-Host "`n`n************* EXPECTED CONTENTS ****************`n$templateContentsExpected`n***************** END OF ACTUAL CONTENTS ***************"
-
-    Write-Error "The templates do not match (testing by their hashes)"
     return $false
 }
 else {
