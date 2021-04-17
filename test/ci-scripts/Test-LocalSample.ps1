@@ -88,6 +88,8 @@ $validateReadMeHostOutput =
 $vars = Find-VarsFromWriteHostOutput $validateReadMeHostOutput
 $resultReadMe = $vars["RESULT_README"] # will be null if fails
 
+# TODO: Test-BestPractices.ps1
+
 # Clean up
 if (Test-Path $CompiledJsonFilename) {
     Remove-Item $CompiledJsonFilename
