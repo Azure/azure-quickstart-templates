@@ -18,8 +18,8 @@ $templateHashActual = $null
 $templateContentsExpected = Get-Content $templateFilePathExpected -Raw
 $templateContentsActual = Get-Content $templateFilePathActual -Raw
 
-$templateHashExpected = & "$PSScriptRoot/Get-TemplateHash.ps1" -templateFilePath $templateFilePathExpected -bearerToken $bearerToken
-$templateHashActual = & "$PSScriptRoot/Get-TemplateHash.ps1" -templateFilePath $templateFilePathActual -bearerToken $bearerToken
+$templateHashExpected = & "$PSScriptRoot/Get-TemplateHash.ps1" -templateFilePath $templateFilePathExpected -bearerToken $bearerToken -RemoveGeneratorMetadata
+$templateHashActual = & "$PSScriptRoot/Get-TemplateHash.ps1" -templateFilePath $templateFilePathActual -bearerToken $bearerToken -RemoveGeneratorMetadata
 
 Write-Host "Hash for templateFilePathExpected: $templateHashExpected"
 Write-Host "Hash for templateFilePathActual: $templateHashActual"

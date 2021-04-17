@@ -1,16 +1,19 @@
-﻿
-param(
+﻿param(
     [string][Parameter(Mandatory = $true)] $templateFilePath,
-    [string]$bearerToken
+    [string][Parameter(Mandatory = $false)] $bearerToken,
+    # If this is set, the hash obtained will *not* be the official template hash that Azure would compute.
+    [switch][Parameter(Mandatory = $false)] $removeGeneratorMetadata
 )
 function RemoveGeneratorMetadata(
     [object] $jsonContent
 ) {
-    # Remove the top-level metadata the generator information is there, including the bicep version, and we don'td
-    # want that to affect the file comparisons
-    $json = ConvertFrom-Json $jsonContent 
-    $json.PSObject.properties.remove('metadata')
-    return ConvertTo-JSON $json -Depth 100
+    if ($removeGeneratorMetadata) {
+        # Remove the top-level metadata the generator information is there, including the bicep version, and this would
+        # affect file comparisons where only the bicep version differs
+        $json = ConvertFrom-Json $jsonContent 
+        $json.PSObject.properties.remove('metadata')
+        return ConvertTo-JSON $json -Depth 100
+    }
 }
 
 # TODO - this could now be updated to use Invoke-AzRestMethod that handles authn, so token steps could be removed.
