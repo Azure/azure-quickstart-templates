@@ -10,12 +10,10 @@ param(
 # TODO: Kludge for while we're in the cloned repo, otherwise scheduled runs of non-bicep-converted samples get dinged for using the wrong badges
 Write-Host "StorageAccountName: $StorageAccountName"
 Write-Host "bicepSupported: $bicepSupported"
-if (!$bicepSupported) {
-    Write-Host "changing"
+#if (!$bicepSupported) {
+if ($true) {
+    Write-Host "changing to $azurequickstartsservice"
     $StorageAccountName = "azurequickstartsservice"
-}
-else {
-    Write-Host "not changing"
 }
 Write-Host "StorageAccountName: $StorageAccountName"
 Write-Host "bicepSupported: $bicepSupported"

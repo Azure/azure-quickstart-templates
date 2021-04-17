@@ -17,7 +17,7 @@ Import-Module "$($ttkFolder)/arm-ttk/arm-ttk.psd1" -Verbose
 
 $templatePath = "$($SampleFolder)/$MainTemplateDeploymentFilename"
 Write-Host "Calling Test-AzureTemplate on $templatePath"
-$testOutput = @(Test-AzTemplate -TemplatePath $templatePath)
+$testOutput = @(Test-AzTemplate -TemplatePath $templatePath -MainTemplateFile $MainTemplateDeploymentFilename)
 $testOutput
 
 if ($testOutput | ? { $_.Errors }) {
