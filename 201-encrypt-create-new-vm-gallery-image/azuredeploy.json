@@ -39,85 +39,39 @@
         "description": "Name of Subnet to which the VM NIC belongs to"
       }
     },
+    "aadClientID": {
+      "type": "string",
+      "metadata": {
+        "description": "Client ID of AAD app which has permissions to KeyVault"
+      }
+    },
+    "aadClientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Client Secret of AAD app which has permissions to KeyVault"
+      }
+    },
     "keyVaultName": {
       "type": "string",
       "metadata": {
-        "description": "Specifies the name of the key vault."
+        "description": "Name of the KeyVault to place the volume encryption key"
       }
     },
-    "enabledForDeployment": {
-      "type": "bool",
-      "defaultValue": false,
-      "allowedValues": [
-        true,
-        false
-      ],
-      "metadata": {
-        "description": "Specifies whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault."
-      }
-    },
-    "enabledForDiskEncryption": {
-      "type": "bool",
-      "defaultValue": false,
-      "allowedValues": [
-        true,
-        false
-      ],
-      "metadata": {
-        "description": "Specifies whether Azure Disk Encryption is permitted to retrieve secrets from the vault and unwrap keys."
-      }
-    },
-    "enabledForTemplateDeployment": {
-      "type": "bool",
-      "defaultValue": false,
-      "allowedValues": [
-        true,
-        false
-      ],
-      "metadata": {
-        "description": "Specifies whether Azure Resource Manager is permitted to retrieve secrets from the key vault."
-      }
-    },
-    "tenantId": {
-      "type": "string",
-      "defaultValue": "[subscription().tenantId]",
-      "metadata": {
-        "description": "Specifies the Azure Active Directory tenant ID that should be used for authenticating requests to the key vault. Get it by using Get-AzSubscription cmdlet."
-      }
-    },
-    "objectId": {
+    "keyVaultResourceGroup": {
       "type": "string",
       "metadata": {
-        "description": "Specifies the object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault. The object ID must be unique for the list of access policies. Get it by using Get-AzADUser or Get-AzADServicePrincipal cmdlets."
+        "description": "Resource group of the KeyVault"
       }
     },
-    "keysPermissions": {
-      "type": "array",
-      "defaultValue": [
-        "list"
-      ],
-      "metadata": {
-        "description": "Specifies the permissions to keys in the vault. Valid values are: all, encrypt, decrypt, wrapKey, unwrapKey, sign, verify, get, list, create, update, import, delete, backup, restore, recover, and purge."
-      }
-    },
-    "secretsPermissions": {
-      "type": "array",
-      "defaultValue": [
-        "list"
-      ],
-      "metadata": {
-        "description": "Specifies the permissions to secrets in the vault. Valid values are: all, get, list, set, delete, backup, restore, recover, and purge."
-      }
-    },
-    "skuName": {
+    "useExistingKek": {
       "type": "string",
-      "defaultValue": "Standard",
+      "defaultValue": "nokek",
       "allowedValues": [
-        "Standard",
-        "Premium"
+        "nokek",
+        "kek"
       ],
       "metadata": {
-        "description": "Specifies whether the key vault is a standard vault or a premium vault."
+        "description": "Select kek if the secret should be encrypted with a key encryption key and pass explicit keyEncryptionKeyURL. For nokek, you can keep keyEncryptionKeyURL empty."
       }
     },
     "keyEncryptionKeyURL": {
@@ -146,28 +100,27 @@
     "nicName": "[toLower(concat('nic',parameters('vmName')))]"
   },
   "resources": [
-     {
-        "type": "Microsoft.Network/VirtualNetworks",
-        "name": "[parameters('virtualNetworkName')]",
-        "apiVersion": "2019-09-01",
-        "location": "[parameters('location')]",
-        "properties": {
-            "addressSpace": {
-                "addressPrefixes": [
-                    "10.0.0.0/16"
-                ]
-            },
-            "subnets": [
-                {
-                    "name": "[parameters('subnetName')]",
-                    "properties": {
-                        "addressPrefix": "10.0.0.0/24"
-                    }
-                }
-            ]
-         }
+    {   
+      "type": "Microsoft.Network/VirtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "apiVersion": "2019-09-01",
+      "location": "[parameters('location')]",
+      "properties": {
+          "addressSpace": {
+              "addressPrefixes": [
+                  "10.0.0.0/16"
+              ]
+          },
+          "subnets": [
+              {
+                  "name": "[parameters('subnetName')]",
+                  "properties": {
+                      "addressPrefix": "10.0.0.0/24"
+                  }
+              }
+          ]
+       }
     },
-
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -243,36 +196,6 @@
       }
     },
     {
-      "type": "Microsoft.KeyVault/vaults",
-      "apiVersion": "2019-09-01",
-      "name": "[parameters('keyVaultName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "enabledForDeployment": "[parameters('enabledForDeployment')]",
-        "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
-        "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
-        "tenantId": "[parameters('tenantId')]",
-        "accessPolicies": [
-          {
-            "objectId": "[parameters('objectId')]",
-            "tenantId": "[parameters('tenantId')]",
-            "permissions": {
-              "keys": "[parameters('keysPermissions')]",
-              "secrets": "[parameters('secretsPermissions')]"
-            }
-          }
-        ],
-        "sku": {
-          "name": "[parameters('skuName')]",
-          "family": "A"
-        },
-        "networkAcls": {
-          "defaultAction": "Allow",
-          "bypass": "AzureServices"
-        }
-      }
-    },
-    {
       "name": "UpdateEncryptionSettings",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
@@ -282,18 +205,27 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-encrypt-running-windows-vm-without-aad/azuredeploy.json",
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-encrypt-running-windows-vm/azuredeploy.json",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "vmName": {
             "value": "[parameters('vmName')]"
           },
+          "aadClientID": {
+            "value": "[parameters('aadClientID')]"
+          },
+          "aadClientSecret": {
+            "value": "[parameters('aadClientSecret')]"
+          },
           "keyVaultName": {
             "value": "[parameters('keyVaultName')]"
           },
           "keyVaultResourceGroup": {
-            "value": "[resourceGroup()]"
+            "value": "[parameters('keyVaultResourceGroup')]"
+          },
+          "useExistingKek": {
+            "value": "[parameters('useExistingKek')]"
           },
           "keyEncryptionKeyURL": {
             "value": "[parameters('keyEncryptionKeyURL')]"
