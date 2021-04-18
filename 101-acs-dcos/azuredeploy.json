@@ -26,7 +26,6 @@
     },
     "linuxAdminUsername": {
       "type": "string",
-      "defaultValue": "azureuser",
       "metadata": {
         "description": "User name for the Linux Virtual Machines."
       }
@@ -34,10 +33,6 @@
     "orchestratorType": {
       "type": "string",
       "defaultValue": "DCOS",
-      "allowedValues": [
-        "DCOS",
-        "Swarm"
-      ],
       "metadata": {
         "description": "The type of orchestrator used to manage the applications on the cluster."
       }
@@ -59,6 +54,20 @@
       "metadata": {
         "description": "Configure all linux machines with the SSH RSA public key string.  Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
       }
+    },
+    "servicePrincipalClientId": {
+      "metadata": {
+        "description": "Client ID (used by cloudprovider)"
+      },
+      "type": "securestring",
+      "defaultValue": "n/a"
+    },
+    "servicePrincipalClientSecret": {
+      "metadata": {
+        "description": "The Service Principal Client Secret."
+      },
+      "type": "securestring",
+      "defaultValue": "n/a"
     },
     "enableDiagnostics": {
       "type": "bool",
@@ -84,11 +93,25 @@
     "mastersEndpointDNSNamePrefix": "[concat(parameters('dnsNamePrefix'),'mgmt')]",
     "orchestratorType": "[parameters('orchestratorType')]",
     "sshRSAPublicKey": "[parameters('sshRSAPublicKey')]",
-    "enableDiagnostics": "[parameters('enableDiagnostics')]"
+    "enableDiagnostics": "[parameters('enableDiagnostics')]",
+    "useServicePrincipalDictionary": {
+      "DCOS": 0,
+      "Swarm": 0,
+      "Kubernetes": 1
+    },
+    "useServicePrincipal": "[variables('useServicePrincipalDictionary')[parameters('orchestratorType')]]",
+    "servicePrincipalFields": [
+      null,
+      {
+        "ClientId": "[parameters('servicePrincipalClientId')]",
+        "Secret": "[parameters('servicePrincipalClientSecret')]"
+      }
+    ]
   },
+  
   "resources": [
     {
-      "apiVersion": "2017-07-01",
+      "apiVersion": "2016-09-30",
       "type": "Microsoft.ContainerService/containerServices",
       "location": "[parameters('location')]",
       "name": "[concat('containerservice-',resourceGroup().name)]",
@@ -122,7 +145,8 @@
               }
             ]
           }
-        }
+        },
+        "servicePrincipalProfile": "[variables('servicePrincipalFields')[variables('useServicePrincipal')]]"
       }
     }
   ],
