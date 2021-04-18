@@ -44,5 +44,3 @@ In order to delete the recovery services vault, you first need to stop protectio
 </ul>
 
 To know more about Azure Backup for SQL Server in Azure Virtual Machines [Click Here](https://azure.microsoft.com/en-us/blog/azure-backup-for-sql-server-in-azure-virtual-machines-now-generally-available/)
-
-
