@@ -18,6 +18,8 @@ elseif ($ENV:BUILD_REASON -eq "BatchedCI" -or $ENV:BUILD_REASON -eq "IndividualC
         When a CI trigger is running, we get no information in the environment about what changed in the incoming PUSH (i.e. PR# or files changed) except...
         In the source version message - so even though this fragile, we can extract from there - the expected format is:
         BUILD_SOURCEVERSIONMESSAGE = "Merge pull request #9 from bmoore-msft/bmoore-msft-patch-2…"
+        2021-04-18 - they changed the format of the message again, now its:
+        BUILD_SOURCEVERSIONMESSAGE = 101 event grid - Add bicep badge (#8997)
     #>
     try {
         $pr = $ENV:BUILD_SOURCEVERSIONMESSAGE # TODO: sometimes AzDO is not setting the message, not clear why...
@@ -26,7 +28,7 @@ elseif ($ENV:BUILD_REASON -eq "BatchedCI" -or $ENV:BUILD_REASON -eq "IndividualC
     }
     catch { }
     if ($begin -ge 0) {
-        $end = $pr.IndexOf(" ", $begin) # look for the trailing space
+        $end = $pr.IndexOf(")", $begin) # look for the trailing space
         $GitHubPRNumber = $pr.Substring($begin + 1, $end - $begin - 1)
     }
     else {
