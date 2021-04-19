@@ -70,38 +70,16 @@
         "description": "Name of the KeyVault to place the volume encryption key"
       }
     },
-    "keyVaultResourceGroup": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().name]", 
-      "metadata": {
-        "description": "Resource group of the KeyVault"
-      }
-    },
     "keyEncryptionKeyURL": {
       "type": "string",
       "metadata": {
         "description": "URL of the KeyEncryptionKey used to encrypt the volume encryption key. The Valut is assumed to be in keyVaultResourceGroup"
       }
-    },
-    "keyEncryptionAlgorithm": {
-      "type": "string",
-	  "defaultValue": "RSA-OAEP",
-      "metadata": {
-        "description": "Key encryption algorithm used to wrap with KeyEncryptionKeyURL"
-      }
     },	
-    "volumeType": {
+    "keyVaultResourceId": {
       "type": "string",
-      "defaultValue": "All",
       "metadata": {
-        "description": "Type of the volume OS or Data to perform encryption operation"
-      }
-    },
-    "forceUpdateTag": {
-      "type": "string",
-      "defaultValue": "1.0",
-      "metadata": {
-        "description": "Pass in an unique value like a GUID everytime the operation needs to be force run"
+        "description": "Resource ID of the key vault"
       }
     }
   },
@@ -129,10 +107,9 @@
       "version": "[parameters('osVersion')]"
     },
     "imageReference": "[variables('osType')]",
-    "extensionName": "AzureDiskEncryption",
-    "extensionVersion": "2.1",
+    "keyVaultURL": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/')]",
     "encryptionOperation": "EnableEncryption",
-    "keyVaultResourceId": "[resourceId(parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]" 
+    "volumeType": "All"
   },
   "resources": [
     {
@@ -298,21 +275,19 @@
           "extensionProfile": {
             "extensions": [
               {
-                "name": "[variables('extensionName')]",
+                "name": "[concat(variables('jumpBoxName'),'/diskEncryption')]",
                 "properties": {
-                  "publisher": "Microsoft.Azure.Security",
-                  "type": "[variables('extensionName')]",
-                  "typeHandlerVersion": "[variables('extensionVersion')]",
-                  "autoUpgradeMinorVersion": true,
-                  "forceUpdateTag": "[parameters('forceUpdateTag')]",
-                  "settings": {
-                    "encryptionOperation": "[variables('encryptionOperation')]",
-                    "keyVaultURL": "[reference(variables('keyVaultResourceId'),'2016-10-01').vaultUri]",
-                    "keyVaultResourceId": "[variables('keyVaultResourceID')]",
-                    "keyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
-                    "kekVaultResourceId": "[variables('keyVaultResourceID')]",					
-                    "keyEncryptionAlgorithm": "[parameters('keyEncryptionAlgorithm')]",
-                    "volumeType": "[parameters('volumeType')]"
+                "publisher": "Microsoft.Azure.Security",
+                "type": "AzureDiskEncryption",
+                "typeHandlerVersion": "2.2",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "EncryptionOperation": "[variables('encryptionOperation')]",
+                    "KeyVaultURL": "[variables('keyVaultURL')]",
+                    "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
+                    "KeyVaultResourceId": "[parameters('keyVaultResourceId')]",
+                    "KekVaultResourceId": "[parameters('keyVaultResourceId')]",
+                    "VolumeType": "[variables('volumeType')]"
                   }
                 }
               }
