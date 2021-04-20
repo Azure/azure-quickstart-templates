@@ -181,7 +181,11 @@ After deploying, an Instructions.html file is created in the /opt/sas/config/Lev
 2. Click *Deployments*.
 3. Click *Microsoft Template-\<deployment name\>*.
 5. Click *Outputs*. 
-6. From the list of URLs that appear, copy the base URL from the sasVisualAnalyticsHub or sasStudio URLs. Substitute that value for the base URLs in the in the Instructions.html file.  If the URL path in the Instructions.html file has a port, remove the port as it is not valid in the Quickstart.
+6. From the list of URLs that appear, copy the base URL from the sasVisualAnalyticsHub or sasStudio URLs. Substitute that value for the base URLs in the Instructions.html file. In addition, make the following changes to the base URLs in the Instructions.html file:
+  
+* If the URL path in the Instructions.html file has port 7980, remove the port as it is not valid in the Quickstart. 
+* If the URL path in the Instructions.html file has port 7080, replace with port 8441.
+* Change the protocol in all URLs from HTTP to HTTPS.
 
 For example, suppose that the URL path to the SAS Visual Analytics Hub in the Outputs window is:
 https://sas94-dpm1234567890-123e3.eastus.cloudapp.azure.com/SASVisualAnalyticsHub
@@ -207,7 +211,8 @@ https://sas94-dpm1234567890-123e3.eastus.cloudapp.azure.com/SASVisualDataBuilder
     * jump_IP IP address
     * SAS Visual Analytics URL
     * SAS Studio URL
-6. Navigate to the SAS Visual Analytics and SAS Studio URLs.  Log in as *sasadm@saspw*.  Enter the password that you specified for the SAS Administration Password value [here](#azureportal).
+    * SAS Environment Manager
+6. Navigate to the SAS Visual Analytics, SAS Studio, and SAS Environment Manager URLs.  Log in as *sasadm@saspw*.  Enter the password that you specified for the SAS Administration Password value [here](#azureportal).
 
 <a name="smc"></a>
 ### Running SAS Management Console 
