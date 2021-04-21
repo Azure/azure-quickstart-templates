@@ -174,6 +174,7 @@ resource wafPolicy 'Microsoft.Network/frontDoorWebApplicationFirewallPolicies@20
             {
               matchVariable: 'RemoteAddr'
               operator: 'GeoMatch'
+              negateCondition: true
               matchValue: allowedCountries
             }
           ]
