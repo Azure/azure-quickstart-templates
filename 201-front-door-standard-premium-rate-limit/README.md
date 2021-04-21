@@ -26,7 +26,7 @@ The following resources are deployed as part of the solution:
 - Front Door profile, endpoint, origin group, origin, and route to direct traffic to the Azure Storage static website.
   - Note that you can use either the standard or premium Front Door SKU for this sample. The rate limit custom rule for the WAF are supported in either SKU (note that managed rule sets require the premium SKU though). By default, the standard SKU is used.
 - Front Door WAF policy with a custom rate limit rule.
-  - TODO
+  -  Currently Front Door requires that a rate limit rule has a match condition. This specifies the subset of requests it should apply to. For this sample, we are using an IP address-based match condition and setting the value to "not 192.0.2.0/24". This is an IANA documentation range and no real clients will use that range, so this match condition effectively matches all requests. Note that the rate limit is applied per IP address.
 - Front Door security policy to attach the WAF policy to the Front Door endpoint.
 
 ## Deployment steps
