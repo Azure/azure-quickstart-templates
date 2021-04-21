@@ -2,7 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "VmAdminPassword": {
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Admin User Name for VNS3 (required but not used)"
+            }    
+        },
+        "adminPassword": {
             "type": "securestring",
             "metadata": {
                 "description": "Admin Password for Ubuntu VM"
@@ -22,25 +28,7 @@
             "metadata": {
                 "description": "Deployment location"
             }
-        },
-        "vnetSubnet": {
-            "type": "string",
-            "metadata": {
-                "description": "VNET CIDR"
-            }
-        },
-           "vnetPublicSubnet": {
-            "type": "string",
-            "metadata": {
-                "description": "Public Subnet CIDR"
-            }
-        },
-           "vnetPrivateSubnet": {
-            "type": "string",
-            "metadata": {
-                "description": "Private Subnet CIDR"
-            }
-        },
+        }, 
         "virtualMachineOs": {
             "type": "string",
             "defaultValue": "ubuntu",
@@ -50,16 +38,6 @@
             ],
             "metadata": {
                 "description": "Virtual Machine Operating System, Ubuntu or Windows"
-            }
-        },
-        "vns3LicenseType": {
-            "type": "string",
-            "defaultValue": "free",
-            "allowedValues": [
-                "free"
-            ],
-        "metadata": {
-            "description": "VNS3 Version. Visit cohesive.net for more info."
             }
         },
          "virtualMachineName": {
@@ -101,20 +79,21 @@
         "resourceGroupName": "[toLower(resourceGroup().name)]",
         "storageAccount": "[substring(concat(parameters('location'),'storage', variables('suffix')), 0, 24)]",
         "virtualNetworkName": "[concat(variables('resourceGroupName'), '-vnet')]",
+        "vnetSubnet": "10.10.10.0/24",
+        "vnetPublicSubnet": "10.10.10.0/28",
+        "vnetPrivateSubnet": "10.10.10.16/28",
         "publicSubnet": "publicsubnet",
         "privateSubnet": "privatesubnet",
+        "vns3LicenseType": "free",
         "vns3ControllerName": "VNS3Controller",
-        "vns3AdminUserName" : "vns3adminuser",
-        "adminPassword" : "VNScontroller!",
         "networkInterfaceName": "[toLower(concat(variables('vns3ControllerName'), '-nic'))]",
         "publicIPAddresseName": "[concat(variables('vns3ControllerName'), '-ip')]",
         "networkSecurityGroupName": "[concat(variables('vns3ControllerName'), '-nsg')]",
         "routeTableName" : "private-subnet-routes",
 
-        "vnsPlanType":"[toLower(concat(parameters('vns3LicenseType'), 'Plan'))]",
+        "vnsPlanType":"[toLower(concat(variables('vns3LicenseType'), 'Plan'))]",
         "osScript":"[toLower(concat(parameters('virtualMachineOs'), 'Script'))]",
 
-        "virtualSubnetName": "VNS3_VirtualSubnet",
         "vnsStaticIp": "10.10.10.10",
         "vnsVersion":{
             "free":{
@@ -135,7 +114,6 @@
                 }
             }
         },
-        "VmAdminUsername": "AzureUser",
         "CustomScriptForLinux": "CustomScript",
         "linuxScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('customextensionlinux.sh', parameters('_artifactsLocationSasToken')))]",
         "linuxScriptCommandToExecute": "sudo bash customextensionlinux.sh",
@@ -232,12 +210,12 @@
                         },
                         "diskSizeGB": 30
                     },
-                    "imageReference": "[variables('vnsVersion')[parameters('vns3LicenseType')].imageReference]"  
+                    "imageReference": "[variables('vnsVersion')[variables('vns3LicenseType')].imageReference]"  
                 },
                 "osProfile": {
                     "computerName": "[variables('vns3ControllerName')]",
-                    "adminUsername": "[variables('vns3AdminUserName')]",
-                    "adminPassword": "[variables('adminPassword')]",
+                    "adminUsername": "[parameters('adminUserName')]",
+                    "adminPassword": "[parameters('adminPassword')]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": false,
                         "provisionVMAgent": true
@@ -388,20 +366,20 @@
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
-                        "[parameters('vnetSubnet')]"
+                        "[variables('vnetSubnet')]"
                     ]
                 },
                 "subnets": [
                     {
                         "name": "[variables('publicSubnet')]",
                         "properties": {
-                            "addressPrefix": "[parameters('vnetPublicSubnet')]"
+                            "addressPrefix": "[variables('vnetPublicSubnet')]"
                         }
                     },
                     {
                         "name": "[variables('privateSubnet')]",
                         "properties": {
-                            "addressPrefix": "[parameters('vnetPrivateSubnet')]"
+                            "addressPrefix": "[variables('vnetPrivateSubnet')]"
                         }
                     }
                 ],
@@ -443,7 +421,7 @@
             "apiVersion": "2019-06-01",
             "name": "[concat(variables('virtualNetworkName'), '/', variables('publicSubnet'))]",
             "properties": {
-                "addressPrefix": "[parameters('vnetPublicSubnet')]"
+                "addressPrefix": "[variables('vnetPublicSubnet')]"
             },
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
@@ -454,7 +432,7 @@
             "apiVersion": "2019-06-01",
             "name": "[concat(variables('virtualNetworkName'), '/', variables('privateSubnet'))]",
             "properties": {
-                "addressPrefix": "[parameters('vnetPrivateSubnet')]",
+                "addressPrefix": "[variables('vnetPrivateSubnet')]",
                 "routeTable": {
                     "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
                 }
@@ -614,8 +592,8 @@
                 },
                 "osProfile": {
                     "computerName": "[concat(variables('vmName'), copyIndex())]",
-                    "adminUsername": "[variables('VmAdminUsername')]",
-                    "adminPassword": "[parameters('VmAdminPassword')]"
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
                     "imageReference": "[variables('OS')[parameters('virtualMachineOs')].image]",
