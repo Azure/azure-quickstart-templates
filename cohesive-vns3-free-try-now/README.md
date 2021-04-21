@@ -2,6 +2,8 @@
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-try-now/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-try-now/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-try-now/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-try-now/FairfaxDeployment.svg)
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-try-now/BestPracticeResult.svg)
