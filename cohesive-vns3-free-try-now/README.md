@@ -49,30 +49,19 @@ If you require a larger trial license or a license for production use, please em
 If you require technical assistance please email support@cohesive.net
 
 ## Quickstart Template
-Dynamically launch and configure your overlay network in minutes using the REST API or web-based UI.  This template deploys a VNS3 Free Edition into it's own VNET where it creates a multi-client overlay network between multiple Linux hosts.
+Dynamically launches and configures an overlay network in an Azure VNET.  This template deploys a VNS3 Free Edition into it's own VNET where it creates a multi-client overlay network between multiple hosts, either Windows or Ubuntu.
 
 The template also provisions storage accounts, virtual network, network interfaces, VMs, disks, network security groups and other infrastructure and runtime resources required by the installation.
-
-The template expects the following parameters:
-
-| Name   | Description | Default Value |
-|:--- |:---|:---|
-| adminUsername  | Administrator username for VNS3 (required but not used) | {No Default} |
-| adminPassword  | Administrator password for VNS3 (required but not used) | {No Default} |
-| adminUsernameUbuntu | Administrator username for Ubuntu VM | {No Default} |
-| adminPasswordUbuntu | Administrator password for Ubuntu VM | {No Default} |
-| numberOfInstances| VMs to deploy, max 5 as free edition only supports 5 clientpacks | 3 |
-
 
 ### This is an overview of the solution
 
 The following resources are deployed as part of the solution:
 
-A VNS3 4.4.3 Free controller running on a Standard_B1ms instance.
+A VNS3 Free Editon controller
 
-Upto 5 Ubuntu 16.04.0-LTS VM's running on a Standard_B1ms instance.
+Upto 5 Windows Datacentre 2019 or Ubuntu 18.04.0-LTS virtual machines
 
-VNET, Subnet, NSG's, NIC & PIP's
+VNET, Subnets, NSG's, NIC & PIP's
 
 Once the controller and hosts are deployed a custom script downloads, deploys and configures the overlay network. 
 
@@ -92,12 +81,12 @@ Once the deployment is complete, you can access the VNS3 Controller Web UI by na
 
 **The username is**: vnscubed
 
-**The password is**: vnscubed (you will be prompted to change these on initial login)
+**The password is**: <vmname>-<private-ip> (you will be promted to change the password at initial login)
 
 	https://[PublicIP]:8000
 
 ### Management
 
-For comprehesive documentation please visit our website https://www.cohesive.net/support/documentation	
+For comprehesive documentation please visit our website https://docs.cohesive.net 
 
 `Tags: VPN, HA, Multicast, Network Traffic Analysis, Network Visibility, Federation, Security, Isolation, Segmentation, Firewall, NIDS, WAF, Load-balancer, multi-cloud, hybrid, UTM, overlay, NAT, NAT Gateway, Address Overlap, awesome`
