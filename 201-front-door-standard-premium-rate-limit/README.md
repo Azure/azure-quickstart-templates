@@ -15,7 +15,7 @@ This template deploys a Front Door Standard/Premium (Preview) with a rate limit.
 
 ## Sample overview and deployed resources
 
-This sample template creates a Front Door profile with a rate ilmit. To keep the sample simple, Front Door is configured to direct traffic to an Azure Storage static website configured as an origin, but this could be [any origin supported by Front Door](https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin).
+This sample template creates a Front Door profile with a rate limit. To keep the sample simple, Front Door is configured to direct traffic to an Azure Storage static website configured as an origin, but this could be [any origin supported by Front Door](https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin).
 
 The following resources are deployed as part of the solution:
 
