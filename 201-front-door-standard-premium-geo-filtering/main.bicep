@@ -18,7 +18,7 @@ param frontDoorSkuName string = 'Standard_AzureFrontDoor'
 ])
 param wafMode string = 'Prevention'
 
-@description('The list of country codes that are allowed to access the Front Door endpoint.')
+@description('The list of country codes that are allowed to access the Front Door endpoint. Country codes are specified using ISO 3166-1 alpha-2 format. [See here for a list of country codes.](https://docs.microsoft.com/azure/frontdoor/front-door-geo-filtering#countryregion-code-reference)')
 param allowedCountries array = [
   'US'
   'AU'
