@@ -42,6 +42,8 @@
     },
     "clusterLoginPassword": {
       "type": "securestring",
+      "minLength": 8,
+      "maxLength": 72,
       "metadata": {
         "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
       }
@@ -54,6 +56,8 @@
     },
     "sshPassword": {
       "type": "securestring",
+      "minLength": 8,
+      "maxLength": 72,
       "metadata": {
         "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
       }
@@ -64,10 +68,16 @@
         "description": "The short name of the default Azure storage account name. This account needs to be secure transfer enabled."
       }
     },
-    "linkedStorageAccountKey": {
+    "linkedStorageAccountShortName": {
       "type": "string",
       "metadata": {
-        "description": "The key of the default storage account."
+        "description": "The short name of the default Azure storage account name. This account needs to be secure transfer enabled."
+      }
+    },
+    "linkedStorageAccountRG": {
+      "type": "string",
+      "metadata": {
+        "description": "The short name of the default Azure storage account Resource Group Name"
       }
     },
     "location": {
@@ -89,7 +99,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('defaultStorageAccount').name]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2020-08-01-preview",
       "sku": {
         "name": "[variables('defaultStorageAccount').type]"
       },
@@ -100,8 +110,7 @@
       "type": "Microsoft.HDInsight/clusters",
       "name": "[parameters('clusterName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-03-01-preview",
-      "dependsOn": [],
+      "apiVersion": "2018-06-01-preview",
       "properties": {
         "clusterVersion": "[parameters('clusterVersion')]",
         "osType": "Linux",
@@ -119,16 +128,16 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2016-01-01').primaryEndpoints.blob),'https:',''),'/','')]",
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2020-08-01-preview').primaryEndpoints.blob,'https:',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').keys[0].value]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2020-08-01-preview').keys[0].value]"
             },
             {
-              "name": "[concat(parameters('linkedStorageAccountName'),'.blob.core.windows.net')]",
+              "name": "[parameters('linkedStorageAccountName')]",
               "isDefault": false,
               "container": "blank",
-              "key": "[parameters('linkedStorageAccountKey')]"
+              "key": "[listKeys(resourceId(parameters('linkedStorageAccountRG'), 'Microsoft.Storage/storageAccounts', parameters('linkedStorageAccountShortName')), '2020-08-01-preview').keys[0].value]"
             }
           ]
         },
