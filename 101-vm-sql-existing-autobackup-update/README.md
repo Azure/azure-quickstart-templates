@@ -39,3 +39,5 @@ If you wish to disable Automated Backup, you must edit *azuredeploy.json* and ch
 ## SQL Server IaaS Agent extension
 
 Automated Backup is supported in your virtual machine through the SQL Server IaaS Agent extension. This extension must be installed on the VM to be able to use this feature. When you enable Automated Backup on your virtual machine, the extension will be automatically installed. This extension will also report back the latest status of this feature to you. More information on this extension can be found [here](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sql-server-agent-extension/).
+
+
