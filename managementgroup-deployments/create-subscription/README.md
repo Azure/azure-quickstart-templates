@@ -1,4 +1,4 @@
-# Create a Policy Definition and Assignment for a Management Group
+# Create a Subscription under an EA Account
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-deployments/create-subscription/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-deployments/create-subscription/PublicDeployment.svg)
