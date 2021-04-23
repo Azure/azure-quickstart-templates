@@ -41,11 +41,11 @@ done
 
 sudo apt-get -y update
 sudo apt-get -y install linux-image-extra-$(uname -r) linux-image-extra-virtual
-sudo apt-get -y install apt-transport-https ca-certificates curl software-properties-common
+sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-sudo apt-get remove --purge docker-ce
-sudo apt-get -y install docker-ce
+sudo apt-get -y update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 sudo docker run -v `pwd`:/scripts --network='host' \
 -e STORAGE_ACCOUNT=${storage_account} \
 -e CONTAINER_NAME=${container_name} \
