@@ -1,203 +1,156 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "dataFactoryName": {
-      "type": "string",
-      "defaultValue": "[concat('datafactory', uniqueString(resourceGroup().id))]",
-      "metadata": {
-        "description": "Data Factory Name"
-      }
+    "name": {
+      "defaultValue": "myv2datafactory",
+      "type": "string"
+    },
+    "version": {
+      "defaultValue": "V2",
+      "type": "string"
     },
     "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Location of the data factory. Currently, only East US, East US 2, and West Europe are supported."
-      }
+      "defaultValue": "eastus",
+      "type": "string"
     },
-    "storageAccountName": {
-      "type": "string",
-      "defaultValue": "[concat('storage', uniqueString(resourceGroup().id))]",
-      "metadata": {
-        "description": "Name of the Azure storage account that contains the input/output data."
-      }
+    "apiVersion": {
+      "defaultValue": "2018-06-01",
+      "type": "string"
     },
-    "blobContainer": {
-      "type": "string",
-      "defaultValue": "[concat('blob', uniqueString(resourceGroup().id))]",
-      "metadata": {
-        "description": "Name of the blob container in the Azure Storage account."
-      }
+    "tagsByResource": {
+      "type": "Object"
+    },
+    "vNetEnabled": {
+      "defaultValue": false,
+      "type": "bool"
+    },
+    "publicNetworkAccess": {
+      "defaultValue": true,
+      "type": "bool"
+    },
+    "gitConfigureLater": {
+      "defaultValue": true,
+      "type": "bool"
+    },
+    "gitRepoType": {
+      "defaultValue": "FactoryVSTSConfiguration",
+      "type": "string"
+    },
+    "gitAccountName": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "gitProjectName": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "gitRepositoryName": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "gitCollaborationBranch": {
+      "defaultValue": "master",
+      "type": "string"
+    },
+    "gitRootFolder": {
+      "defaultValue": "/",
+      "type": "string"
+    },
+    "userAssignedIdentities": {
+      "defaultValue": {
+        "type": "SystemAssigned"
+      },
+      "type": "object"
+    },
+    "userAssignedIdentitiesStr": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "vaultBaseUrl": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "keyName": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "keyVersion": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "enableCMK": {
+      "defaultValue": false,
+      "type": "bool"
+    },
+    "cmkIdentity": {
+      "defaultValue": "",
+      "type": "string"
     }
-  },
-  "variables": {
-    "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
-    "storageLinkedService": "[resourceId('Microsoft.DataFactory/factories/linkedServices', parameters('dataFactoryName'), 'armTemplateStorageLinkedService')]",
-    "datasetIn": "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('dataFactoryName'), 'armTemplateTestDatasetIn')]",
-    "datasetOut": "[resourceId('Microsoft.DataFactory/factories/datasets', parameters('dataFactoryName'), 'armTemplateTestDatasetOut')]"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
-      "name": "[parameters('storageAccountName')]",
+      "condition": "[equals(parameters('version'), 'V2')]",
+      "type": "Microsoft.DataFactory/factories",
+      "apiVersion": "2018-06-01",
+      "name": "[parameters('name')]",
       "location": "[parameters('location')]",
-      "sku": {
-        "name": "Standard_LRS"
+      "identity": "[if(parameters('enableCMK'),json(parameters('userAssignedIdentitiesStr')), parameters('userAssignedIdentities'))]",
+      "properties": {
+        "repoConfiguration": "[if(bool(parameters('gitConfigureLater')), json('null'), json(concat('{\"type\": \"', parameters('gitRepoType'), '\",','\"accountName\": \"', parameters('gitAccountName'), '\",','\"repositoryName\": \"', parameters('gitRepositoryName'), '\",', if(equals(parameters('gitRepoType'), 'FactoryVSTSConfiguration'), concat('\"projectName\": \"', parameters('gitProjectName'), '\",'), ''),'\"collaborationBranch\": \"', parameters('gitCollaborationBranch'), '\",','\"rootFolder\": \"', parameters('gitRootFolder'), '\"}')))]",
+        "publicNetworkAccess": "[if(bool(parameters('publicNetworkAccess')), 'Enabled', 'Disabled')]",
+        "encryption": "[if(bool(parameters('enableCMK')), json(concat('{\"identity\":{\"userAssignedIdentity\":\"', parameters('cmkIdentity'), '\"},','\"VaultBaseUrl\": \"', parameters('vaultBaseUrl'), '\",','\"KeyName\": \"', parameters('keyName'), '\",','\"KeyVersion\": \"', parameters('keyVersion'), '\"}')), json('null'))]"
       },
-      "kind": "StorageV2",
-      "properties": {},
+      "tags": "[ if(contains(parameters('tagsByResource'), 'Microsoft.DataFactory/factories'), parameters('tagsByResource')['Microsoft.DataFactory/factories'], json('{}')) ]",
       "resources": [
         {
-          "type": "blobServices/containers",
-          "apiVersion": "2019-06-01",
-          "name": "[concat('default/', parameters('blobContainer'))]",
+          "condition": "[and(equals(parameters('version'), 'V2'), parameters('vNetEnabled'))]",
+          "name": "[concat(parameters('name'), '/default')]",
+          "type": "Microsoft.DataFactory/factories/managedVirtualNetworks",
+          "apiVersion": "2018-06-01",
+          "properties": {},
           "dependsOn": [
-            "[parameters('storageAccountName')]"
+            "[concat('Microsoft.DataFactory/factories/', parameters('name'))]"
+          ]
+        },
+        {
+          "condition": "[and(equals(parameters('version'), 'V2'), parameters('vNetEnabled'))]",
+          "name": "[concat(parameters('name'), '/AutoResolveIntegrationRuntime')]",
+          "type": "Microsoft.DataFactory/factories/integrationRuntimes",
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "type": "Managed",
+            "managedVirtualNetwork": {
+              "referenceName": "default",
+              "type": "ManagedVirtualNetworkReference"
+            },
+            "typeProperties": {
+              "computeProperties": {
+                "location": "AutoResolve"
+              }
+            }
+          },
+          "dependsOn": [
+            "[concat('Microsoft.DataFactory/factories/', parameters('name'))]",
+            "[concat('Microsoft.DataFactory/factories/', parameters('name'), '/managedVirtualNetworks/default')]"
           ]
         }
       ]
     },
     {
-      "type": "Microsoft.DataFactory/factories",
-      "apiVersion": "2018-06-01",
-      "name": "[parameters('dataFactoryName')]",
-      "location": "[parameters('location')]",
+      "condition": "[equals(parameters('version'), 'V1')]",
+      "apiVersion": "2015-01-01-preview",
+      "name": "[parameters('name')]",
+      "location": "[if(equals(parameters('version'), 'V1'), parameters('location'), 'eastus')]",
+      "type": "Microsoft.DataFactory/dataFactories",
       "properties": {},
-      "identity": {
-        "type": "SystemAssigned"
-      },
-      "resources": [
-        {
-          "type": "Microsoft.DataFactory/factories/linkedServices",
-          "apiVersion": "2018-06-01",
-          "name": "[concat(parameters('dataFactoryName'), '/ArmtemplateStorageLinkedService')]",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[parameters('dataFactoryName')]",
-            "[parameters('storageAccountName')]"
-          ],
-          "properties": {
-            "type": "AzureBlobStorage",
-            "typeProperties": {
-              "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(variables('storageAccountId'), '2019-06-01').keys[0].value)]"
-            }
-          }
-        },
-        {
-          "type": "Microsoft.DataFactory/factories/datasets",
-          "apiVersion": "2018-06-01",
-          "name": "[concat(parameters('dataFactoryName'), '/ArmtemplateTestDatasetIn')]",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[parameters('dataFactoryName')]",
-            "[variables('storageLinkedService')]"
-          ],
-          "properties": {
-            "linkedServiceName": {
-              "referenceName": "ArmtemplateStorageLinkedService",
-              "type": "LinkedServiceReference"
-            },
-            "type": "Binary",
-            "typeProperties": {
-              "location": {
-                "type": "AzureBlobStorageLocation",
-                "container": "[parameters('blobContainer')]",
-                "folderPath": "input",
-                "fileName": "emp.txt"
-              }
-            }
-          }
-        },
-        {
-          "type": "Microsoft.DataFactory/factories/datasets",
-          "apiVersion": "2018-06-01",
-          "name": "[concat(parameters('dataFactoryName'), '/ArmtemplateTestDatasetOut')]",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[parameters('dataFactoryName')]",
-            "[variables('storageLinkedService')]"
-          ],
-          "properties": {
-            "linkedServiceName": {
-              "referenceName": "ArmtemplateStorageLinkedService",
-              "type": "LinkedServiceReference"
-            },
-            "type": "Binary",
-            "typeProperties": {
-              "location": {
-                "type": "AzureBlobStorageLocation",
-                "container": "[parameters('blobContainer')]",
-                "folderPath": "output"
-              }
-            }
-          }
-        },
-        {
-          "type": "Microsoft.DataFactory/factories/pipelines",
-          "apiVersion": "2018-06-01",
-          "name": "[concat(parameters('dataFactoryName'), '/ArmtemplateSampleCopyPipeline')]",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[parameters('dataFactoryName')]",
-            "[variables('datasetIn')]",
-            "[variables('datasetOut')]"
-          ],
-          "properties": {
-            "activities": [
-              {
-                "name": "MyCopyActivity",
-                "type": "Copy",
-                "policy": {
-                  "timeout": "7.00:00:00",
-                  "retry": 0,
-                  "retryIntervalInSeconds": 30,
-                  "secureOutput": false,
-                  "secureInput": false
-                },
-                "typeProperties": {
-                  "source": {
-                    "type": "BinarySource",
-                    "storeSettings": {
-                      "type": "AzureBlobStorageReadSettings",
-                      "recursive": true
-                    }
-                  },
-                  "sink": {
-                    "type": "BinarySink",
-                    "storeSettings": {
-                      "type": "AzureBlobStorageWriteSettings"
-                    }
-                  },
-                  "enableStaging": false
-                },
-                "inputs": [
-                  {
-                    "referenceName": "ArmtemplateTestDatasetIn",
-                    "type": "DatasetReference",
-                    "parameters": {
-                    }
-                  }
-                ],
-                "outputs": [
-                  {
-                    "referenceName": "ArmtemplateTestDatasetOut",
-                    "type": "DatasetReference",
-                    "parameters": {}
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      ]
+      "tags": "[ if(contains(parameters('tagsByResource'), 'Microsoft.DataFactory/dataFactories'), parameters('tagsByResource')['Microsoft.DataFactory/dataFactories'], json('{}')) ]"
     }
   ],
   "outputs": {
     "dataFactoryName": {
       "type": "string",
-      "value": "[parameters('dataFactoryName')]"
+      "value": "[parameters('name')]"
     }
   }
 }
