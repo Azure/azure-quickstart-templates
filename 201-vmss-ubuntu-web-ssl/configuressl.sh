@@ -45,21 +45,21 @@ sslkeyfilename=$certprint'.prv'
 echo "Copying SSL files"
 echo "cert file" $sslcertfilename
 fullpath=/var/lib/waagent/$sslcertfilename
-if [ -f $fullpath ]
+if [! -f $fullpath ]
 then
     cp $fullpath /etc/ssl/certs/
 else
-    echo "Cert missing: " $fullpath
+    echo "Cert already present"
     exit 1
 fi
 
 echo "private key file" $sslkeyfilename
 fullpath=/var/lib/waagent/$sslkeyfilename
-if [ -f $fullpath ]
+if [! -f $fullpath ]
 then
     cp $fullpath /etc/ssl/private/
 else
-    echo "Private Key missing: " $fullpath
+    echo "Private Key already present"
     exit 1
 fi
 
