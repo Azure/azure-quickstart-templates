@@ -1,0 +1,274 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "enrollmentAccount": {
+            "type": "string",
+            "metadata": {
+                "description": "EnrollmentAccount used for subscription billing"
+            }
+        },
+        "billingAccount": {
+            "type": "string",
+            "metadata": {
+                "description": "BillingAccount used for subscription billing"
+            }
+        },
+        "subscriptionAlias": {
+            "type": "string",
+            "metadata": {
+                "description": "Alias to assign to the subscription"
+            }
+        },
+        "subscriptionDisplayName": {
+            "type": "string",
+            "metadata": {
+                "description": "Display name for the subscription"
+            }
+        },
+        "subscriptionWorkload": {
+            "type": "string",
+            "defaultValue": "Production",
+            "allowedValues": [
+                "Production",
+                "DevTest"
+            ],
+            "metadata": {
+                "description": "Workload type for the subscription"
+            }
+        },
+        "resourceGroupName": {
+            "type": "string",
+            "defaultValue": "Demo",
+            "metadata": {
+                "description": "Name of the resourceGroup, will be created in the same location as the deployment."
+            }
+        },
+        // TODO: this is only needed until the managementGroup() function is live
+        "managementGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the managementGroup for this deployment."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[deployment().location]",
+            "metadata": {
+                "description": "Location for the deployments and the resources"
+            }
+        }
+    },
+    "resources": [
+        // Create the subscription and output the GUID
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "[concat('createSubscription-', parameters('subscriptionAlias'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "enrollmentAccount": {
+                        "value": "[parameters('enrollmentAccount')]"
+                    },
+                    "billingAccount": {
+                        "value": "[parameters('billingAccount')]"
+                    },
+                    "subscriptionAlias": {
+                        "value": "[parameters('subscriptionAlias')]"
+                    },
+                    "subscriptionDisplayName": {
+                        "value": "[parameters('subscriptionDisplayName')]"
+                    },
+                    "subscriptionWorkload": {
+                        "value": "[parameters('subscriptionWorkload')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "enrollmentAccount": {
+                            "type": "string"
+                        },
+                        "billingAccount": {
+                            "type": "string"
+                        },
+                        "subscriptionAlias": {
+                            "type": "string"
+                        },
+                        "subscriptionDisplayName": {
+                            "type": "string"
+                        },
+                        "subscriptionWorkload": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "scope": "/",
+                            "type": "Microsoft.Subscription/aliases",
+                            "apiVersion": "2020-09-01",
+                            "name": "[parameters('subscriptionAlias')]",
+                            "properties": {
+                                "workload": "[parameters('subscriptionWorkload')]",
+                                "displayName": "[parameters('subscriptionDisplayName')]",
+                                "billingScope": "[tenantResourceId('Microsoft.Billing/billingAccounts/enrollmentAccounts', parameters('billingAccount'), parameters('enrollmentAccount'))]"
+                            }
+                        }
+                    ],
+                    "outputs": {
+                        "subscriptionId": {
+                            "type": "string",
+                            "value": "[reference(parameters('subscriptionAlias')).subscriptionId]"
+                        }
+                    }
+                }
+            }
+        },
+        // creating resources in the subscription requires an extra level of "nesting" to reference() the subscriptionId
+        // The reference() function cannot be used in the resource header so needs to be passed down as a parameter
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "[concat('nested-createResourceGroup-', parameters('resourceGroupName'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "subscriptionId": {
+                        // this cannot be referenced directly on the subscriptionId property of the deployment so needs to be nested one level
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('createSubscription-', parameters('subscriptionAlias')))).outputs.subscriptionId.value]"
+                    },
+                    "resourceGroupName": {
+                        "value": "[parameters('resourceGroupName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "subscriptionId": {
+                            "type": "string"
+                        },
+                        "resourceGroupName": {
+                            "type": "string"
+                        },
+                        "location": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        // deploy to the subscription and create the resourceGroup
+                        {
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "2020-10-01",
+                            "name": "[concat('createResourceGroup-', parameters('resourceGroupName'))]",
+                            "subscriptionId": "[parameters('subscriptionId')]",
+                            "location": "[parameters('location')]",
+                            "properties": {
+                                "mode": "Incremental",
+                                "parameters": {
+                                },
+                                "template": {
+                                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                    "contentVersion": "1.0.0.0",
+                                    "parameters": {},
+                                    "variables": {},
+                                    "resources": [
+                                        {
+                                            "type": "Microsoft.Resources/resourceGroups",
+                                            "apiVersion": "2019-10-01",
+                                            "name": "[parameters('resourceGroupName')]",
+                                            "location": "[parameters('location')]"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        // deploy to the resourceGroup and create the storageAccount
+                        {
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "2020-10-01",
+                            "name": "[concat('createStorage-', parameters('resourceGroupName'))]",
+                            "subscriptionId": "[parameters('subscriptionId')]",
+                            "resourceGroup": "[parameters('resourceGroupName')]",
+                            "dependsOn": [
+                                "[resourceId('Microsoft.Resources/deployments', concat('createResourceGroup-', parameters('resourceGroupName')))]"
+                            ],
+                            "properties": {
+                                "mode": "Incremental",
+                                "expressionEvaluationOptions": {
+                                    "scope": "Inner"
+                                },
+                                "parameters": {
+                                    "location": {
+                                        "value": "[parameters('location')]"
+                                    }
+                                },
+                                "template": {
+                                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                    "contentVersion": "1.0.0.0",
+                                    "parameters": {
+                                        "location": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "variables": {
+                                        "storageAccountName": "[concat('stor', uniqueString(resourceGroup().id))]"
+                                    },
+                                    "resources": [
+                                        {
+                                            "type": "Microsoft.Storage/storageAccounts",
+                                            "apiVersion": "2019-06-01",
+                                            "name": "[variables('storageAccountName')]",
+                                            "location": "[parameters('location')]",
+                                            "kind": "StorageV2",
+                                            "sku": {
+                                                "name": "Standard_LRS",
+                                                "tier": "Standard"
+                                            }
+                                        }
+                                    ],
+                                    "outputs": {
+                                        "storageAccountId": {
+                                            "type": "string",
+                                            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "outputs": {
+                        "outputs": {
+                            "type": "object",
+                            // this is a resourceGroup scoped resourceId and needs to be created with format() since the resourceId function cannot be used at a non-resourceGroup scope
+                            "value": "[reference(format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Resources/deployments/{2}', parameters('subscriptionId'), parameters('resourceGroupName'), concat('createStorage-', parameters('resourceGroupName')))).outputs]"
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "subscriptionId": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('createSubscription-', parameters('subscriptionAlias')))).outputs.subscriptionId.value]"
+        },
+        "nested-outputs": {
+            "type": "object",
+            "value": "[reference(extensionResourceId(tenantResourceId('Microsoft.Management/managementGroups', parameters('managementGroupName')), 'Microsoft.Resources/deployments', concat('nested-createResourceGroup-', parameters('resourceGroupName')))).outputs.outputs.value]"
+        }
+    }
+}
