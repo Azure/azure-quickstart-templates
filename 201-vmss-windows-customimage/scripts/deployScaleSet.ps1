@@ -122,7 +122,7 @@ try
     Switch-AzureResourceManagement
 
     $parameters=@{"vmSSName"="$scaleSetName";"instanceCount"=$scaleSetInstanceCount;"vmSize"="$scaleSetVMSize";"dnsNamePrefix"="$scaleSetDNSPrefix";"adminUsername"=$scaleSetVMCredentials.UserName;"adminPassword"=$scaleSetVMCredentials.GetNetworkCredential().Password;"location"="$location";"sourceImageVhdUri"="$sourceImageVhdUri"}
-    $templateUri="$repoUri$scaleSetTemplate"
+    $templateUri="$repoUri"
 
     New-AzureResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateUri $templateUri -TemplateParameterObject $parameters -Name 'createscaleset'
 }
