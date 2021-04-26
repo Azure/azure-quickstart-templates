@@ -1,13 +1,13 @@
 # Copy data from Azure Blob Storage to Azure Database for PostgreSQL
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-postgresql-copy/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-postgresql-copy/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-blob-to-postgresql-copy/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-blob-to-postgresql-copy/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-postgresql-copy/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-postgresql-copy/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-blob-to-postgresql-copy/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-blob-to-postgresql-copy/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-postgresql-copy/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-postgresql-copy/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-blob-to-postgresql-copy/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-blob-to-postgresql-copy/CredScanResult.svg)
 This template creates a data factory of version 2 with a pipeline that copies data from a folder in an Azure Blob Storage to a table in an Azure Database for PostgreSQL. 
 
 ## Prerequisites ##
@@ -16,8 +16,8 @@ This template creates a data factory of version 2 with a pipeline that copies da
 * Azure storage account. You use Blob storage as a source data store. If you don't have a storage account, see [Create an Azure storage account](https://docs.microsoft.com/en-us/azure/storage/common/storage-quickstart-create-account) for steps to create one.
 * Azure Database for PostgreSQL. You use the database as a sink data store. If you don't have a PostgreSQL database, see [Create a PostgreSQL database](https://docs.microsoft.com/en-us/azure/postgresql/quickstart-create-server-database-portal) for steps to create one.
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-v2-blob-to-postgresql-copy%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-v2-blob-to-postgresql-copy%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datafactory%2Fdata-factory-v2-blob-to-postgresql-copy%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datafactory%2Fdata-factory-v2-blob-to-postgresql-copy%2Fazuredeploy.json)
 
 When you deploy this Azure Resource Manager template, a data factory of version 2 is created with the following entities: 
 
