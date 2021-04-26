@@ -134,6 +134,8 @@ Then the  SAS software depot location is:
 
 <a name="azureportal"></a>
 ### Deploy Using the Azure Portal 
+
+**Note:** We recommend that you run only one installation of the Quickstart at a time.
  
 1. Click the Deploy to Azure button at the beginning of this document [here](#Deploybutton). 
 2. Specify the following parameters for your deployment:
