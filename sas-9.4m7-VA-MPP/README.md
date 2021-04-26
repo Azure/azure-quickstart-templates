@@ -173,7 +173,6 @@ Deployments typically take two to three hours to complete.
 
 <a name="validating"></a>
 ### Validating the Deployment
-<a name="accessresources"></a>
 
 After deploying, an Instructions.html file is created in the /opt/sas/config/Lev1/Documents directory on each SAS VM. You are directed to follow the instructions in this file as a post-installation step.  However, the host names referenced in the Instructions.html file URLs are not accessible from external clients. Instead, construct the URLs using the base URLs referenced in the steps below.
 
@@ -202,6 +201,7 @@ https://sas94-dpm1234567890-123e3.eastus.cloudapp.azure.com/SASVisualDataBuilder
 
 **Note:** The port (:7980) in the URL from the Instructions.html is not included in the new URL.
 
+<a name="accessresources"></a>
 ### Accessing Resources in the Deployment
 
 1. Open the resource group.
