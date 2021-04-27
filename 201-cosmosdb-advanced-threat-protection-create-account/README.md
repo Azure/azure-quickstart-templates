@@ -14,7 +14,7 @@
 
 <a href="http://armviz.io/#/?load=https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-cosmosdb-advanced-threat-protection-create-account/azuredeploy.json" target="_blank">
 
-This ARM template is intented to create a **CosmosDB Account** quickly with the **minimal required values** and **Advanced Threat Protection**.
+This ARM template is intended to create a **CosmosDB Account** quickly with the **minimal required values** and **Advanced Threat Protection**.
 
 CosmosDB Advanced Threat Protection is a unified package for advanced CosmosDB security capabilities. See the [official documentation]( https://go.microsoft.com/fwlink/?linkid=2097603) for more information.
 

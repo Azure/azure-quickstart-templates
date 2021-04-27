@@ -16,7 +16,7 @@ which leverage the bitcoin protocol and blockchain technology.
  - Proof of Work/Proof of Stake blockchain security model (scrypt)
 
 For more information, as well as an immediately useable, binary version of
-the Jumbucks client sofware, see http://www.getjumbucks.com.
+the Jumbucks client software, see http://www.getjumbucks.com.
 
 
 # Getting Started Tutorial

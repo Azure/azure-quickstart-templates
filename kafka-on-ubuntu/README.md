@@ -95,7 +95,7 @@ To check deployment errors go to the new azure portal and look under Resource Gr
 
 ##Known Issues and Limitations
 - The deployment script is not yet handling data disks and using local storage.
-- There will be a separate checkin for persistant disks as per T shirt sizing.
+- There will be a separate checkin for persistent disks as per T shirt sizing.
 - Health monitoring of the Kafka instances is not currently enabled
 - SSH key is not yet implemented and the template currently takes a password for the admin user
 

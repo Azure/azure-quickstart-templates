@@ -18,7 +18,7 @@ The purpose of this template is to illustrate:
 
   * Subnet definition inside the vNet is done this way
 
-  * The Window server template (WinServ.json) can accomodate any number of data disks because it receives them as a parameter 
+  * The Window server template (WinServ.json) can accommodate any number of data disks because it receives them as a parameter 
 
 * Use of outputs to get back unique IDs such as storage (instead of passing them as parameters).
 

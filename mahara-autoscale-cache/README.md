@@ -131,11 +131,11 @@ Standard instances have a minimum storage requirement of 128GB. All database sto
 
 ### *Controller instance sizing*
 
-The controller handles both syslog and cron duties. Depending on how big you Mahara cron runs are this may not be sufficent. If cron jobs are delayed and cron processess are building up on the controller then an upgrade in tier is needed.
+The controller handles both syslog and cron duties. Depending on how big you Mahara cron runs are this may not be sufficient. If cron jobs are delayed and cron processess are building up on the controller then an upgrade in tier is needed.
 
 ### *Frontend instances*
 
-In general the frontend instances will not be the source of any bottlenecs unless they are severly undersized versus the rest of the cluster. More powerful instances will be needed should fpm processess spawn and exhaust memory during periods of heavy site load. This can also be mitigated against by increasing the number of VMs but spawning new VMs is slower (and potentially more expensive) than having that capacity already available.
+In general the frontend instances will not be the source of any bottlenecs unless they are severely undersized versus the rest of the cluster. More powerful instances will be needed should fpm processess spawn and exhaust memory during periods of heavy site load. This can also be mitigated against by increasing the number of VMs but spawning new VMs is slower (and potentially more expensive) than having that capacity already available.
 
 It is worth noting that the memory allowances on these instances allow for more memory than they may be able to provide with lower instance tiers. This is intentional as you can opt to run larger VMs with more memory and not require manual configuration. FPM also allows for a very large number of threads with prevents the systerm from failing during many small jobs.
 

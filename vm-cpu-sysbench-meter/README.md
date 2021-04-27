@@ -13,7 +13,7 @@
 
 This template allows you to run a CPU performance test using sysbench utility.
 
-Upon template deployment you will have the CPU perfomance automatically measured. You can see the measurements like this:
+Upon template deployment you will have the CPU performance automatically measured. You can see the measurements like this:
 
 ```powershell
 OutputsString           : 

@@ -22,7 +22,7 @@ The following resources are deployed as part of the solution:
 
 ### Azure Functions
 - Azure Functions plan and application. This sample uses the public endpoint for the Azure Functions application and does not use a private endpoint.
-- HTTP-triggered sample function. The function is configured with the `anonymous` authentication level, which means there is no function key required, and anyone can invoke the function as long as they access the funtion app through the Front Door endpoint.
+- HTTP-triggered sample function. The function is configured with the `anonymous` authentication level, which means there is no function key required, and anyone can invoke the function as long as they access the function app through the Front Door endpoint.
 - [Azure Functions access restrictions](https://docs.microsoft.com/azure/app-service/app-service-ip-restrictions) to block access to the application unless they have come through Front Door. The traffic is checked to ensure it has come from the `AzureFrontDoor.Backend` service tag, and also that the `X-Azure-FDID` header is configured with your specific Front Door instance's ID.
 
 ### Front Door Standard/Premium (Preview)

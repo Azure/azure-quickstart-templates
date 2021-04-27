@@ -30,7 +30,7 @@ The parameters which can be user configured in the parameters file include:
 * `helix_admin_password` (default None) - p4d password for above user. This is required.
 * `source_CIDR` (default "0.0.0.0/0") - Source IP access list - for security we *strongly recommend* you consider only allowing specific whitelisted IP addresses to access the server
 * `VMSize` (default "Standard_B2s" - suitable for testing only) - Select one of the [Azure Linux Instance types](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-general) with appropriate vCPUs and RAM for your needs. We recommend Compute optimized instances for production use, e.g. Fsv2 series options such as "Standard_F4s_v2". See KB link in More Details section below for further discussion.
-* `dataDiskSize` (default 50) - Size in GB of data volume where all metadata/logs/depot files are stored. Upto 2TB (2048GB) is supported.
+* `dataDiskSize` (default 50) - Size in GB of data volume where all metadata/logs/depot files are stored. Up to 2TB (2048GB) is supported.
 * `p4Port` (default 1666) - P4PORT value to access p4d service. Note SSL is not optional.
 
 # After Installation

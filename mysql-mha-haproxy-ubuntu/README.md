@@ -99,7 +99,7 @@ $sudo nohup bash /usr/local/haproxy/master_ip_check.sh 10.0.0.10 10.0.0.11 &
 
 $sudo nohup bash /usr/local/haproxy/slave_ip_check.sh 10.0.0.11 10.0.0.12 &
 
-Now the mha plus haproxy works. Once the master fails, the candiate master 10.0.0.11 will become the new master automatically, the slave02 will change master to 10.0.0.11 automatically. So then you fix original master issue, sync the data with new master, then brings it online, it must become the slave role. Then you go to haproxy node, delete /var/log/masterha/app1/app1.failover.complete file, start mha manager, master ip check script and slave ip check script again. Remember this time for the master ip check script, you execute sudo nohup bash /usr/local/haproxy/master_ip_check.sh 10.0.0.11 10.0.0.10 & 
+Now the mha plus haproxy works. Once the master fails, the candidate master 10.0.0.11 will become the new master automatically, the slave02 will change master to 10.0.0.11 automatically. So then you fix original master issue, sync the data with new master, then brings it online, it must become the slave role. Then you go to haproxy node, delete /var/log/masterha/app1/app1.failover.complete file, start mha manager, master ip check script and slave ip check script again. Remember this time for the master ip check script, you execute sudo nohup bash /usr/local/haproxy/master_ip_check.sh 10.0.0.11 10.0.0.10 & 
 
 ##Known Limitations
 - The mysql nodes don't replicate mysql db. If you want to replicate mysql db too, please stop haproxy, mha manager, the mater and slave ip check scripts, re-configure master-slave data replication, then start haproxy, mha manager, the mater and slave ip check scripts again.

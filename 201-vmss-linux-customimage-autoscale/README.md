@@ -15,7 +15,7 @@
 
 This template deploys a VM Scale Set from a user provided Linux Custom Image.
 
-The template allows a URL to a custom image to be provided as a parameter at run time. The custom image should be contained in a storage account which is in the same location as the VM Scale Set is created in, in addtion the storage account which contains the image should also be under the same subscription that the scale set is being created in. If it's not, you should copy it to your location.
+The template allows a URL to a custom image to be provided as a parameter at run time. The custom image should be contained in a storage account which is in the same location as the VM Scale Set is created in, in addition the storage account which contains the image should also be under the same subscription that the scale set is being created in. If it's not, you should copy it to your location.
 
 To create a custom Linux image you should first create a Linux VM in Azure, install everything you need and then generalize the image running the command
 

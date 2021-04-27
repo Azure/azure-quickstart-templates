@@ -20,7 +20,7 @@ Those are the parameters on the template. Most of them are already with the valu
 
 Parameter         | Suggested value     | Description
 :--------------- |:-------------      |:---------------------
-**webAppName** |*location*-*name*-*enviroment* i.e.:  uks-name-tst  | A globally unique name of azure web app. I recommend you to use the notation above, that will help to create a unique name for your Web Application. The name must use alphanumeric and underscore characters only. There is a 35 character limit to this field. The App name cannot be changed once the Web App is created.
+**webAppName** |*location*-*name*-*environment* i.e.:  uks-name-tst  | A globally unique name of azure web app. I recommend you to use the notation above, that will help to create a unique name for your Web Application. The name must use alphanumeric and underscore characters only. There is a 35 character limit to this field. The App name cannot be changed once the Web App is created.
 **location**| The default location | Select the geographic location for your resource group.
 **Resource Group**| your resource group |  That is the Resource Group that you need to deploy your resources.
 

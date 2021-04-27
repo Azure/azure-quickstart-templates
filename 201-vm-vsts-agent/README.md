@@ -17,7 +17,7 @@ This Template **201-vm-vsts-agent** builds the following:
  * Creates a Virtual Network
  * Creates 1 Nic for the Virtual Machine
  * Creates 1 Virtual Machine with OS Disk with Windows 2016 including Visual Studio Enterprise 2017.
- * Installs and configures upto 4 VSTS agents
+ * Installs and configures up to 4 VSTS agents
  * Installs named versions of modules  
 
 ## Usage

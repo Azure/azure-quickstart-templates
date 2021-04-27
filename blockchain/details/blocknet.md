@@ -21,7 +21,7 @@ The Blocknet enables multi-blockchain services to be delivered to devices that o
 Thus, device and network resources are conserved, and a flexible, mobile, indefinitely extensible future is enabled.
 
 For more information, as well as an immediately useable, binary version of
-the Blocknet client sofware and network, see http://www.blocknet.co.
+the Blocknet client software and network, see http://www.blocknet.co.
 
 
 # Getting Started Tutorial

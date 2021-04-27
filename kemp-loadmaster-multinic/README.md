@@ -19,7 +19,7 @@ Note: This template requires an existing Subnet and VNET prior to deployment.
 
 This template deploys a KEMP LoadMaster with multiple NICs. Doing so will enabled the Virtual LoadMaster to have more than one interface and expose additional fucntionality such as:
 
-* Greater performance enhanced by additive bandwith
+* Greater performance enhanced by additive bandwidth
 * Enabling extended topologies
 * Multiple networks without the need for VLAN trunking
 * Management isolation to a specific NIC

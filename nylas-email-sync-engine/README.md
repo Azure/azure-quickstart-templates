@@ -40,7 +40,7 @@ You can get a list of all connected accounts by requesting `http://<your-vms-pub
 
 >2.  In it's current form this endpoint requires no authentication. To deploy this securely you will need to roll your own security layer (nginx reverse proxy etc.) in front of the endpoint.
 
-For subsequent requests to retreive mail, contacts, and calendar data, your app should pass the `account_id` value from the previous step as the "username" parameter in HTTP Basic auth. For example:
+For subsequent requests to retrieve mail, contacts, and calendar data, your app should pass the `account_id` value from the previous step as the "username" parameter in HTTP Basic auth. For example:
 
 ```bash
 $ curl --user 'ACCOUNT_ID_VALUE_HERE:' http://<your-vms-public-ip>:5555/threads

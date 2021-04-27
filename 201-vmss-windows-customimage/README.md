@@ -13,11 +13,11 @@ This template deploys a VM Scale Set from a user provided Windows Custom Image
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-windows-customimage%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-windows-customimage%2Fazuredeploy.json)
 
-The template allows a URL to a custom image to be provided as a parameter at run time. The custom image should be contained in a storage account which is in the same location as the VM Scale Set is created in, in addtion the storage account which contains the image should also be under the same subscription that the scale set is being created in.
+The template allows a URL to a custom image to be provided as a parameter at run time. The custom image should be contained in a storage account which is in the same location as the VM Scale Set is created in, in addition the storage account which contains the image should also be under the same subscription that the scale set is being created in.
 
 In addition to the VM Scale Set the template creates a public IP address and load balances HTTP traffic on port 80 to each VM in the scale set. The load balancer can be customised by parameters passed to the template.
 
-To make it easier to see this template in action there is a PowerShell script located in the scripts folder which will use a demo custom image, this script will create a new resource group and storage account, copy a demo custom image from a publically accessible URL and then deploy the template using the newly created demo instance. Use this script as follows:
+To make it easier to see this template in action there is a PowerShell script located in the scripts folder which will use a demo custom image, this script will create a new resource group and storage account, copy a demo custom image from a publicly accessible URL and then deploy the template using the newly created demo instance. Use this script as follows:
 
 ```
 .\deployscaleset.ps1 -location <location> -resourceGroupName <resourcegroupname> -scaleSetName <scalsetname> -newStorageAccountName <newstorageaccountname> -scaleSetVMSize <scalesetvmsize> -scaleSetDNSPrefix <scalesetdnsprefix> -newStorageAccountType <newstorageaccounttype>

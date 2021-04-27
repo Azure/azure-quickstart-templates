@@ -94,7 +94,7 @@ New-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
 #### Pre-Deployment
 
 1.  Checkout the Git repository.  This folder will be known in the rest of the instructions as **CHECKOUT_DIRECTORY
-2.  Copy the scripts located in CustomScripts folder to a publically accessible location or in Azure Storage.  Once uploaded, update **artifactsLocation** and **artifactsLocationSasToken** in azuredeploy.json accordingly.
+2.  Copy the scripts located in CustomScripts folder to a publicly accessible location or in Azure Storage.  Once uploaded, update **artifactsLocation** and **artifactsLocationSasToken** in azuredeploy.json accordingly.
 
 #### Deployment
 

@@ -64,7 +64,7 @@ The following resources are deployed as part of the solution:
 
 A VNS3 4.4.3 Free controller running on a Standard_B1ms instance.
 
-Upto 5 Ubuntu 16.04.0-LTS VM's running on a Standard_B1ms instance.
+Up to 5 Ubuntu 16.04.0-LTS VM's running on a Standard_B1ms instance.
 
 VNET, Subnet, NSG's, NIC & PIP's
 

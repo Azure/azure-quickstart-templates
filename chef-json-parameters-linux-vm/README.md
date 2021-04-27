@@ -25,6 +25,6 @@ Useful Links for learning about Chef:
 
 <a href="http://docs.chef.io/" target="_blank">Chef Documentation
 
- For deploying the Chef agent on a VM, you can create a hosted Chef account or spin off Chef Server in Azure using the Marketplace image which is free upto 20 nodes. More on Marketplace image : <a href="https://docs.chef.io/azure_portal.html#azure-marketplace" target="_blank">Using Chef Server in the Azure Marketplace
+ For deploying the Chef agent on a VM, you can create a hosted Chef account or spin off Chef Server in Azure using the Marketplace image which is free up to 20 nodes. More on Marketplace image : <a href="https://docs.chef.io/azure_portal.html#azure-marketplace" target="_blank">Using Chef Server in the Azure Marketplace
 
 

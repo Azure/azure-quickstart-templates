@@ -26,7 +26,7 @@ You can click the "Deploy to Azure" button at the beginning of this document or 
  - Name of the subnet where Managed Instance will be created. The name will be _ManagedInstance_, if you don't want to change it. Default address range is 10.0.0.0/24 but you could change it to fit your needs.
  - Name of the subnet where VM with SSMS will be created. The name will be _Management_, if you don't want to change it. Default address range is 10.0.1.0/24 but you could change it to fit your needs.
  - Sku name that combines service tear and hardware generation, number of virtual cores and storage size in GB. The table below shows supported combinations.
- - License type that could be _BasePrice_ if you are eligable for [Azure Hybrid Use Benefit for SQL Server](https://azure.microsoft.com/en-us/pricing/hybrid-benefit/) or _LicenseIncluded_ otherwise
+ - License type that could be _BasePrice_ if you are eligible for [Azure Hybrid Use Benefit for SQL Server](https://azure.microsoft.com/en-us/pricing/hybrid-benefit/) or _LicenseIncluded_ otherwise
 
 ||GP_Gen4|GP_Gen5|BC_Gen4|BC_Gen5|
 |----|------|-----|------|-----|

@@ -40,7 +40,7 @@ Registered business operating out of Canada backing the bitswift blockchain
 Canadian Trademark registered on "bitswift" 
 
 For more information, as well as an immediately useable, binary version of
-the Bitswift client sofware, see https://bitcointalk.org/index.php?topic=922982.msg10131608#msg10131608.
+the Bitswift client software, see https://bitcointalk.org/index.php?topic=922982.msg10131608#msg10131608.
 
 
 # Getting Started Tutorial

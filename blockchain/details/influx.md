@@ -22,7 +22,7 @@ Services include:
 - Payment API for 3rd Party acceptance of Influx for remittance
 
 For more information, as well as an immediately useable, binary version of
-the Influx client sofware, see http://www.influxcoin.xyz.
+the Influx client software, see http://www.influxcoin.xyz.
 
 
 # Getting Started Tutorial
