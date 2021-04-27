@@ -24,7 +24,7 @@ This template demonstrates creating a Storage File Share via az-cli and Azure Co
 The following resources are deployed as part of the solution
 
 + **Storage Account**: Storage account for the file share
-+ **Azure Container Instance**: Azure Container Instance, where the az-cli is exectued to create the file share
++ **Azure Container Instance**: Azure Container Instance, where the az-cli is executed to create the file share
 + **File share**: [Azure File share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-introduction) accessiable via SMB protocol
 
 ## Deployment steps
