@@ -29,7 +29,7 @@ Services include:
 - Distributed encrypted communication
 
 For more information, as well as an immediately useable, binary version of
-the Syscoin client sofware, see http://www.syscoin.org.
+the Syscoin client software, see http://www.syscoin.org.
 
 
 # Getting Started Tutorial

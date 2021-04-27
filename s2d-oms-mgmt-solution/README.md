@@ -221,7 +221,7 @@ Please report any issues to [GitHub](https://github.com/slavizh/s2d-oms-mgmt-sol
 
 Currently the script may end in unhandled exception where the service is running but the script
 itself is not. The error you will see in the log is `s2dmon.ps1 -Service # Error at line 3207: Not enough storage is available to complete this operation.`.
-Additionally in Applicaiton log the following error can be seen as well:
+Additionally in Application log the following error can be seen as well:
 
 ```
 Application: powershell.exe

@@ -98,7 +98,7 @@ By setting up a continuous build to produce your container images and orchestrat
 
 ### Deployment output
 
-After the deployment finishes, you will get some important infomation from the outputs section.
+After the deployment finishes, you will get some important information from the outputs section.
 
 ![](images/azure-deployment-output.png)
 
