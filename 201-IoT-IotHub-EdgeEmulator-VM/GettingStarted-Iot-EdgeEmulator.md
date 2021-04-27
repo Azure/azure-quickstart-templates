@@ -113,7 +113,7 @@ Parameter | Suggested value | Description
 **IoTHubname** | [concat('IoThub', resourceGroup().name)] | Name for your IoTHub.
 **Location**| The default location | Select the geographic location for your resource group.
 **Resource Group**| yourresourcegroup | That is the Resource Group that you need to deploy your resources.
-**VmSize** | Standard_B1ls | The size of the VM. If you are running in a test or dev enviroment, it's recommended use a small Virtual Machine.
+**VmSize** | Standard_B1ls | The size of the VM. If you are running in a test or dev environment, it's recommended use a small Virtual Machine.
 **adminUsername** | adminusername | Usernames can be a maximum of 20 characters and cannot end in a period (".").
 **adminPassword** | Complex Password | Password requirements between 12 to 72 characters and have lower and upper characters, a digit and a special character (Regex match [\W_])
 **virtualNetworkName** | vNet | Name of the Virtual Network.
