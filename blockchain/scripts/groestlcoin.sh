@@ -49,7 +49,7 @@ else
 #################################################################
 sudo add-apt-repository -y ppa:groestlcoin/groestlcoin
 sudo apt-get update
-sudo apt-get install -y groestlcoind groestlcoin-cli groestlcoin-tx groestlcoin-wallet groestlcoin-util
+sudo apt-get install -y groestlcoind groestlcoin-tx groestlcoin-wallet
 
 fi
 
