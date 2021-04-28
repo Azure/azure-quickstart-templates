@@ -96,7 +96,7 @@ The ingestion will start 5-10 minutes post deployment.
 
 ## Exploring the views
 
-Once the template has successfully been deployed, Azure usage  data ingestion should occur within 1 hour  post deployment.  If you are deploying the solution to a new workspace, it can take approximately 30 minutes before the indexing has completed for the workspace in general. IF you have sleected  Daily data ingestion , usage data will be ingested  at 02.00 AM (UTC) every day adn while viewing the views time range should be set at least to 1 day . 
+Once the template has successfully been deployed, Azure usage  data ingestion should occur within 1 hour  post deployment.  If you are deploying the solution to a new workspace, it can take approximately 30 minutes before the indexing has completed for the workspace in general. IF you have selected  Daily data ingestion , usage data will be ingested  at 02.00 AM (UTC) every day and while viewing the views time range should be set at least to 1 day . 
 
 In the Resource Group where you deployed the template, you should see the solution resource.
 

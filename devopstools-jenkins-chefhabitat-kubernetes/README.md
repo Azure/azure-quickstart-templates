@@ -63,7 +63,7 @@
 
 ## Solution Architecture:
 
-This Solution will be helpfull to deploy an application using the integration of Jenkins, Chef Habitat and Kubernetes.
+This Solution will be helpful to deploy an application using the integration of Jenkins, Chef Habitat and Kubernetes.
 
 This solution will deploy the following architecture:
 
