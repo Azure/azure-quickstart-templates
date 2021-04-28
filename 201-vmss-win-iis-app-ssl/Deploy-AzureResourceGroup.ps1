@@ -35,7 +35,7 @@ $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScrip
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
 "UploadArtifacts =" + $UploadArtifacts
 if ($UploadArtifacts) {
-    # Convert relative paths to absolute paths if needed
+    # Convert relative paths to absolute paths if  needed
     $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $ArtifactStagingDirectory))
     $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))
 
