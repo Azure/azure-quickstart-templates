@@ -18,7 +18,7 @@
 * Number of VMs can be set using Parameter 'vmCount'
 * Number of ready-to-deploy scripts included in this template:
 
-Script filename | Packages installed
+Script filename | Packages installed 
 ----------------|-------------------
 container-lab.ps1 | Docker-Desktop, VSCode & Git
 container-vs2019-lab.ps1 | Docker-desktop, VSCode, Git & Visual Studio Community 2019 (All Workloads)
