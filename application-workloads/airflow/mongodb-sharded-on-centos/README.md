@@ -1,15 +1,15 @@
 # Install MongoDB Sharding Cluster
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-mongodb-sharded-on-centos/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-mongodb-sharded-on-centos/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/airflow/mongodb-sharded-on-centos/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/airflow/mongodb-sharded-on-centos/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-mongodb-sharded-on-centos/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-mongodb-sharded-on-centos/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/airflow/mongodb-sharded-on-centos/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/airflow/mongodb-sharded-on-centos/FairfaxDeployment.svg)
     
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-mongodb-sharded-on-centos/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-mongodb-sharded-on-centos/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/airflow/mongodb-sharded-on-centos/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/airflow/mongodb-sharded-on-centos/CredScanResult.svg)
    
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-mongodb-sharded-on-centos%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-mongodb-sharded-on-centos%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fairflow%2Fmongodb-sharded-on-centos%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fairflow%2Fmongodb-sharded-on-centos%2Fazuredeploy.json)
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
