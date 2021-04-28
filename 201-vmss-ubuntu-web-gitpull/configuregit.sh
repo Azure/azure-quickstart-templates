@@ -85,7 +85,7 @@ configure_git()
 
 echo "Checking for apache2 already installed"
 if dpkg -s apache2 > /dev/null 2>&1; then
-     echo "Apache2 installed already - exiting"
+     echo "Apache2  installed already - exiting"
      exit
 else
      echo "Apache2 not installed - proceeding"
