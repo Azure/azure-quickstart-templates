@@ -59,7 +59,7 @@ After you deploy the template, to run Quickstart, do the following steps:
 - Go to the Output section of ARM template deployment services.
 - Copy URL from output section.
 - Open this URL in new tab
-- After successfull deployment do the following steps,
+- After successful deployment do the following steps,
   1.Add Application and user in IAM of ADL store and in data explorer access.
   2.Add application and user in IAM of Azure Data Factory.
 - After completing the above procedure return to the tab and follow the quickstart guide

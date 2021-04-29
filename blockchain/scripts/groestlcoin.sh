@@ -7,20 +7,26 @@ ps axjf
 
 
 if [ $1 = 'From_Source' ]; then
+
 #################################################################
 # Update Ubuntu and install prerequisites for running Groestlcoin Core   #
 #################################################################
 sudo apt-get update
+
 #################################################################
-# Build Groestlcoin Core from source                                     #
+# Get CPU count                                                          #
 #################################################################
 NPROC=$(nproc)
 echo "nproc: $NPROC"
+
 #################################################################
 # Install all necessary packages for building Groestlcoin Core           #
 #################################################################
-sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev
+sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev pwgen
 
+#################################################################
+# Build Groestlcoin Core from source                                     #
+#################################################################
 cd /usr/local
 file=/usr/local/groestlcoin
 if [ ! -e "$file" ]
@@ -49,12 +55,27 @@ else
 #################################################################
 sudo add-apt-repository -y ppa:groestlcoin/groestlcoin
 sudo apt-get update
-sudo apt-get install -y groestlcoind groestlcoin-cli groestlcoin-tx groestlcoin-wallet groestlcoin-util
+sudo apt-get install -y groestlcoind groestlcoin-tx groestlcoin-wallet
 
 fi
 
 ################################################################
-# Configure to auto start at boot					    #
+# Create Groestlcoin Core Directory                                      #
+################################################################
+file=$HOME/.groestlcoin
+if [ ! -e "$file" ]
+then
+	sudo mkdir $HOME/.groestlcoin
+fi
+
+################################################################
+# Create configuration File                                              #
+################################################################
+rpcp=$(pwgen -ncsB 35 1)
+printf '%s\n%s\n%s\nrpcpassword=%s\n' 'daemon=1' 'server=1' 'rpcuser=groestlcoinrpc' $rpcp | sudo tee $HOME/.groestlcoin/groestlcoin.conf
+
+################################################################
+# Configure to auto start at boot                                        #
 ################################################################
 file=/etc/init.d/groestlcoin
 if [ ! -e "$file" ]
@@ -64,6 +85,9 @@ then
 	sudo update-rc.d groestlcoin defaults
 fi
 
+################################################################
+# Start Groestlcoin Core                                                 #
+################################################################
 /usr/bin/groestlcoind
 echo "Groestlcoin Core has been setup successfully and is running..."
 exit 0

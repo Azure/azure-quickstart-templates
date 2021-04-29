@@ -15,7 +15,7 @@
 
 This template allows you to run a data disk performance test using fio utility.
 
-Upon template deployment you will have the disk perfomance automatically measured. You can see the measurements like this:
+Upon template deployment you will have the disk performance automatically measured. You can see the measurements like this:
 
 ```powershell
 OutputsString           :

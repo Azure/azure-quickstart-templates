@@ -50,7 +50,7 @@ You can optionally deploy this template following the instructions found <a href
 
 #### Partially automated
 
-You can use the config-linux.sh or config-win.ps1 scripts separately from the ARM template to perform partially automated installations of Tableau Server.  This requires you to have already provisioned a virtual machine following Tableau's <a href=https://onlinehelp.tableau.com/current/server/en-us/server_hardware_min.htm>hardware requirements</a>.  You can then execute these commands directly on the virtual machine as a user with admin priviledges.
+You can use the config-linux.sh or config-win.ps1 scripts separately from the ARM template to perform partially automated installations of Tableau Server.  This requires you to have already provisioned a virtual machine following Tableau's <a href=https://onlinehelp.tableau.com/current/server/en-us/server_hardware_min.htm>hardware requirements</a>.  You can then execute these commands directly on the virtual machine as a user with admin privileges.
 
 Bash:
 ```
