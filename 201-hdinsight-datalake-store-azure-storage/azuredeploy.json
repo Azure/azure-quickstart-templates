@@ -8,12 +8,6 @@
         "description": "The name of the HDInsight cluster to create."
       }
     },
-    "clusterStorageAccountDomain": {
-      "type": "string",
-      "metadata": {
-        "description": "The domain of the storage account."
-      }
-    },
     "sshUserName": {
       "type": "string",
       "metadata": {
@@ -24,12 +18,6 @@
       "type": "securestring",
       "metadata": {
         "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
-      }
-    },
-    "clusterStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the Azure storage account to be created and be used as the cluster's primary storage."
       }
     },
     "adlAccountName": {
@@ -53,6 +41,12 @@
     }
   },
  
+  "variables": {
+    "defaultStorageAccount": {
+      "name": "[uniqueString(resourceGroup().id)]",
+      "type": "Standard_LRS"
+    }
+  },
   "resources": [
     {
        "type": "Microsoft.DataLakeStore/accounts",
@@ -66,13 +60,14 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
-      "name": "[parameters('clusterStorageAccountName')]",
+      "name": "[variables('defaultStorageAccount').name]",
       "location": "[resourceGroup().location]",
+      "apiVersion": "2020-08-01-preview",
       "sku": {
-        "name": "Standard_LRS"
+        "name": "[variables('defaultStorageAccount').type]"
       },
-      "kind": "StorageV2"
+      "kind": "Storage",
+      "properties": {}
     },
     {
        "name": "[parameters('clusterName')]",
@@ -113,10 +108,10 @@
          "storageProfile": {
            "storageaccounts": [
              {
-               "name": "[concat(parameters('clusterStorageAccountName'), parameters('clusterStorageAccountDomain'))]",
+               "name":  "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2020-08-01-preview').primaryEndpoints.blob,'https:',''),'/','')]",
                "isDefault": true,
                "container": "[parameters('clusterName')]",
-               "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('clusterStorageAccountName')), '2019-06-01').key1]"
+               "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2020-08-01-preview').keys[0].value]"
              }
            ]
          }
