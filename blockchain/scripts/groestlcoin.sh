@@ -6,7 +6,7 @@ date
 ps axjf
 
 
-if [ $1 = 'From_Source' ]; then
+if [[ $1 = 'From_Source' ]]; then
 
 #################################################################
 # Update Ubuntu and install prerequisites for running Groestlcoin Core   #
@@ -85,7 +85,7 @@ printf '%s\n%s\n%s\nrpcpassword=%s\n' 'daemon=1' 'server=1' 'rpcuser=groestlcoin
 file=/etc/init.d/groestlcoin
 if [ ! -e "$file" ]
 then
-	printf '%s\n%s\n' '#!/bin/sh' 'sudo groestlcoind' | sudo tee /etc/init.d/groestlcoin
+	printf '%s\n%s\n' '#!/bin/sh' 'sudo /usr/bin/groestlcoind' | sudo tee /etc/init.d/groestlcoin
 	sudo chmod +x /etc/init.d/groestlcoin
 	sudo update-rc.d groestlcoin defaults
 fi
@@ -93,6 +93,6 @@ fi
 ################################################################
 # Start Groestlcoin Core                                                 #
 ################################################################
-/usr/bin/groestlcoind
+sudo /usr/bin/groestlcoind
 echo "Groestlcoin Core has been setup successfully and is running..."
 exit 0
