@@ -20,9 +20,9 @@ NPROC=$(nproc)
 echo "nproc: $NPROC"
 
 #################################################################
-# Install all necessary packages for building Groestlcoin Core           #
+# Install all necessary packages for building Groestlcoin Core from source  #
 #################################################################
-sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev pwgen
+sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev pwgen dialog apt-utils
 
 #################################################################
 # Build Groestlcoin Core from source                                     #
@@ -67,6 +67,11 @@ if [ ! -e "$file" ]
 then
 	sudo mkdir $HOME/.groestlcoin
 fi
+
+#################################################################
+# Install all necessary packages for building Groestlcoin Core from ppa  #
+#################################################################
+sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev pwgen dialog apt-utils
 
 ################################################################
 # Create configuration File                                              #
