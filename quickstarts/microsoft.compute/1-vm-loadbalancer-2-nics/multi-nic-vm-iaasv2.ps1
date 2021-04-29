@@ -1,4 +1,4 @@
-﻿# PowerShell script to create the same two-NIC VM as the assoicated json template.
+# PowerShell script to create the same two-NIC VM as the assoicated json template.
 # Author, Colin Cole, Microsoft
 
 Switch-AzureMode AzureResourceManager
