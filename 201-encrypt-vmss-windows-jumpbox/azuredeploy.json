@@ -76,18 +76,74 @@
         "description": "Domain of the KeyVault to place the volume encryption key"
       }
     },
-    "keyEncryptionKeyURL": {
-      "type": "string",
-      "metadata": {
-        "description": "URL of the KeyEncryptionKey used to encrypt the volume encryption key. The Valut is assumed to be in keyVaultResourceGroup"
+    "enabledForDeployment": {
+        "type": "bool",
+        "defaultValue": true,
+        "allowedValues": [
+          true,
+          false
+        ],
+        "metadata": {
+          "description": "Specifies whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault."
+        }
+      },
+      "enabledForDiskEncryption": {
+        "type": "bool",
+        "defaultValue": true,
+        "allowedValues": [
+          true,
+          false
+        ],
+        "metadata": {
+          "description": "Specifies whether Azure Disk Encryption is permitted to retrieve secrets from the vault and unwrap keys."
+        }
+      },
+      "enabledForTemplateDeployment": {
+        "type": "bool",
+        "defaultValue": true,
+        "allowedValues": [
+          true,
+          false
+        ],
+        "metadata": {
+          "description": "Specifies whether Azure Resource Manager is permitted to retrieve secrets from the key vault."
+        }
+      },
+      "keysPermissions": {
+        "type": "array",
+        "defaultValue": [
+          "list",
+          "get",
+          "decrypt",
+          "encrypt",
+          "unwrapkey",
+          "wrapkey"
+        ],
+        "metadata": {
+          "description": "Specifies the permissions to keys in the vault. Valid values are: all, encrypt, decrypt, wrapKey, unwrapKey, sign, verify, get, list, create, update, import, delete, backup, restore, recover, and purge."
+        }
+      },
+      "secretsPermissions": {
+        "type": "array",
+        "defaultValue": [
+          "list",
+          "get"
+        ],
+        "metadata": {
+          "description": "Specifies the permissions to secrets in the vault. Valid values are: all, get, list, set, delete, backup, restore, recover, and purge."
+        }
+      },
+      "skuName": {
+        "type": "string",
+        "defaultValue": "Standard",
+        "allowedValues": [
+          "Standard",
+          "Premium"
+        ],
+        "metadata": {
+          "description": "Specifies whether the key vault is a standard vault or a premium vault."
+        }
       }
-    },	
-    "keyVaultResourceId": {
-      "type": "string",
-      "metadata": {
-        "description": "Resource ID of the key vault"
-      }
-    }
   },
   "variables": {
     "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
@@ -115,7 +171,7 @@
     "imageReference": "[variables('osType')]",
     "keyVaultURL": "[concat('https://', parameters('keyVaultName'), parameters('keyVaultDomain'))]",
     "encryptionOperation": "EnableEncryption",
-    "volumeType": "All"
+    "keyVaultResourceId": "[concat(subscription().id,'/resourceGroups/',resourceGroup().name,'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
   },
   "resources": [
     {
@@ -229,6 +285,39 @@
       }
     },
     {
+        "type": "Microsoft.KeyVault/vaults",
+        "apiVersion": "2019-09-01",
+        "name": "[parameters('keyVaultName')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('vmssName'))]"
+        ],
+        "properties": {
+          "enabledForDeployment": "[parameters('enabledForDeployment')]",
+          "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
+          "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
+          "tenantId": "[subscription().tenantId]",
+          "accessPolicies": [
+            {
+              "objectId": "[reference(resourceId('Microsoft.Compute/virtualMachineScaleSets/', parameters('vmssName')), '2019-07-01', 'full').identity.principalId]",
+              "tenantId": "[subscription().tenantId]",
+              "permissions": {
+                "keys": "[parameters('keysPermissions')]",
+                "secrets": "[parameters('secretsPermissions')]"
+              }
+            }
+          ],
+          "sku": {
+            "name": "[parameters('skuName')]",
+            "family": "A"
+          },
+          "networkAcls": {
+            "defaultAction": "Allow",
+            "bypass": "AzureServices"
+          }
+        }
+    },
+    {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[parameters('vmssName')]",
       "location": "[resourceGroup().location]",
@@ -236,6 +325,9 @@
       "dependsOn": [
         "[variables('virtualNetworkName')]" 
       ],
+      "identity": {
+            "type": "SystemAssigned"
+      },
       "sku": {
         "name": "[parameters('vmSku')]",
         "tier": "Standard",
@@ -290,10 +382,8 @@
                 "settings": {
                     "EncryptionOperation": "[variables('encryptionOperation')]",
                     "KeyVaultURL": "[variables('keyVaultURL')]",
-                    "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
-                    "KeyVaultResourceId": "[parameters('keyVaultResourceId')]",
-                    "KekVaultResourceId": "[parameters('keyVaultResourceId')]",
-                    "VolumeType": "[variables('volumeType')]"
+                    "KeyVaultResourceId": "[variables('keyVaultResourceId')]",
+                    "VolumeType": "All"
                   }
                 }
               }
