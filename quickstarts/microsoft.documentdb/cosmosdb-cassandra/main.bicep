@@ -81,7 +81,7 @@ var locations = [
   }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-03-15' = {
+resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
   name: accountName_var
   location: location
   kind: 'GlobalDocumentDB'
@@ -98,7 +98,7 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-03-15'
   }
 }
 
-resource accountName_keyspaceName 'Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces@2021-03-15' = {
+resource accountName_keyspaceName 'Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces@2021-04-15' = {
   name: '${accountName_resource.name}/${keyspaceName}'
   properties: {
     resource: {
@@ -107,7 +107,7 @@ resource accountName_keyspaceName 'Microsoft.DocumentDB/databaseAccounts/cassand
   }
 }
 
-resource accountName_keyspaceName_tableName 'Microsoft.DocumentDb/databaseAccounts/cassandraKeyspaces/tables@2021-03-15' = {
+resource accountName_keyspaceName_tableName 'Microsoft.DocumentDb/databaseAccounts/cassandraKeyspaces/tables@2021-04-15' = {
   name: '${accountName_keyspaceName.name}/${tableName}'
   properties: {
     resource: {
