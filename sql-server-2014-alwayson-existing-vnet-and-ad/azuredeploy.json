@@ -2,44 +2,73 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "namePrefix": {
+    "location": {
       "type": "string",
-      "maxLength": 8,
       "metadata": {
-        "description": "Naming prefix for each new resource created. 8-char max, lowercase alphanumeric"
+        "description": "Azure region that supports Availability Zones"
       }
     },
-    "diskType": {
+    "namePrefix": {
       "type": "string",
-      "allowedValues": [
-        "Standard_LRS",
-        "Premium_LRS"
-      ],
+      "minLength": 3,
+      "maxLength": 8,
       "metadata": {
-        "description": "Type of Storage to be used for VM disks"
-      },
-      "defaultValue": "Premium_LRS"
+        "description": "Naming prefix for each new resource created. 3-char min, 8-char max, lowercase alphanumeric"
+      }
     },
-    "sqlVMSize": {
+    "vmSize": {
       "type": "string",
       "metadata": {
-        "description": "Size of the SQL VMs to be created"
+        "description": "Size of the SQL Server VMs to be created"
       },
-      "defaultValue": "Standard_DS3_V2"
+      "defaultValue": "Standard_DS3_v2"
     },
-    "sqlWitnessVMSize": {
+    "sqlVMImage": {
       "type": "string",
       "metadata": {
-        "description": "Size of the Witness VM to be created"
+        "description": "VM Image Offer to use for provisioning SQL VMs"
       },
-      "defaultValue": "Standard_DS1_V2"
+      "defaultValue": "SQL2014SP2-WS2012R2"
+    },
+    "sqlVMImageSku": {
+       "type": "string",
+       "metadata": {
+            "description": "SQL Image Sku"
+        },
+        "defaultValue": "SQLDEV"
+    },
+    "vmCount": {
+      "type": "int",
+      "minValue": 2,
+      "maxValue": 9,
+      "metadata": {
+        "description": "Number of SQL Server VMs to be created in AlwaysOn Availability Group cluster (Min=2, Max=9)"
+      },
+      "defaultValue": 2
+    },
+    "vmDiskSize": {
+      "type": "int",
+      "minValue": 128,
+      "maxValue": 1023,
+      "metadata": {
+        "description": "Size of each data disk in GB on each SQL Server VM (Min=128, Max=1023)"
+      },
+      "defaultValue": 1023
+    },
+    "vmDiskCount": {
+      "type": "int",
+      "minValue": 2,
+      "maxValue": 32,
+      "metadata": {
+        "description": "Number of data disks on each SQL Server VM (Min=2, Max=32). Ensure that the VM size you've selected will support this number of data disks."
+      },
+      "defaultValue": 2
     },
     "existingDomainName": {
       "type": "string",
       "metadata": {
         "description": "DNS domain name for existing Active Directory domain"
-      },
-      "defaultValue": "contoso.com"
+      }
     },
     "adminUsername": {
       "type": "string",
@@ -49,55 +78,72 @@
     },
     "adminPassword": {
       "type": "securestring",
+      "minLength": 12,
       "metadata": {
         "description": "Password for the Administrator account of the existing Active Directory Domain"
       }
     },
-    "sqlServerServiceAccountUserName": {
+    "sqlServiceAccount": {
       "type": "string",
       "metadata": {
-        "description": "The SQL Server Service account name"
+        "description": "Name of the user account to be used for the SQL Server service account. Do not use the same account speficied in adminUsername parameter"
       }
     },
-    "sqlServerServiceAccountPassword": {
+    "sqlServicePassword": {
       "type": "securestring",
+      "minLength": 12,
       "metadata": {
-        "description": "The SQL Server Service account password"
+        "description": "Password to be used for the SQL Server service account"
       }
     },
-    "existingVirtualNetworkId": {
+    "existingVirtualNetworkRGName": {
       "type": "string",
       "metadata": {
-        "description": "Resource ID of the existing VNET. You can find the Resource ID for the VNET on the Properties blade of the VNET."
+        "description": "Resource Group Name for the existing VNET."
       }
     },
-    "existingSqlSubnetName": {
+    "existingVirtualNetworkName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the existing subnet in the existing VNET to which the SQL & Witness VMs should be deployed"
+        "description": "Name of the existing VNET."
+      }
+    },
+    "existingSubnetName": {
+      "type": "string",
+      "defaultValue": "sqlSubnet",
+      "metadata": {
+        "description": "Name of the existing subnet in the existing VNET to which the SQL Server VMs should be deployed"
+      }
+    },
+    "enableOutboundInternet": {
+      "type": "string",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "defaultValue": "No",
+      "metadata": {
+        "description": "Enable outbound Internet access via source NAT to support ongoing VM Agent extension communication needs"
+      }
+    },
+    "workloadType": {
+      "type": "string",
+      "allowedValues": [
+        "GENERAL",
+        "OLTP",
+        "DW"
+      ],
+      "metadata": {
+        "description": "SQL DB workload type: GENERAL - General workload; DW - Data Warehouse workload; OLTP - Transactional Processing workload"
       },
-      "defaultValue": "default"
-    },
-    "existingAdPDCVMName": {
-      "type": "string",
-      "maxLength": 15,
-      "metadata": {
-        "description": "Computer name of the existing Primary AD domain controller & DNS server"
-      }
-    },
-    "sqlLBIPAddress": {
-      "type": "string",
-      "metadata": {
-        "description": "IP address of ILB for the SQL Server AlwaysOn listener to be created"
-      },
-      "defaultValue": "10.0.1.10"
+      "defaultValue": "GENERAL"
     },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
         "description": "Location of resources that the script is dependent on such as linked templates and DSC modules"
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sql-server-2014-alwayson-existing-vnet-and-ad"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-sql-alwayson-md-ilb-zones/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -105,26 +151,18 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
       "defaultValue": ""
-    },
-    "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Location for all resources."
-      }
     }
   },
   "variables": {
-    "sqlSubnetRef": "[concat(parameters('existingVirtualNetworkId'),'/subnets/',parameters('existingSqlSubnetName'))]",
-    "deploySqlClusterTemplateURL": "[concat(parameters('_artifactsLocation'),'/nested/deploy-sql-cluster.json',parameters('_artifactsLocationSasToken'))]",
+    "subnetId": "[resourceId(parameters('existingVirtualNetworkRGName'),'Microsoft.Network/virtualNetworks/subnets',parameters('existingVirtualNetworkName'), parameters('existingSubnetName'))]",
+    "deploySqlClusterTemplateURL": "[uri(parameters('_artifactsLocation'),concat('nestedtemplates/deploy-sql-cluster.json', parameters('_artifactsLocationSasToken')))]",
     "deploySqlCluster": "deploySqlCluster"
   },
   "resources": [
     {
       "name": "[variables('deploySqlCluster')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [],
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -132,14 +170,14 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
           "namePrefix": {
             "value": "[parameters('namePrefix')]"
           },
           "domainName": {
             "value": "[parameters('existingDomainName')]"
-          },
-          "dnsServerName": {
-            "value": "[parameters('existingAdPDCVMName')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -147,29 +185,38 @@
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
           },
-          "sqlServerServiceAccountUserName": {
-            "value": "[parameters('sqlServerServiceAccountUserName')]"
+          "sqlServiceAccount": {
+            "value": "[parameters('sqlServiceAccount')]"
           },
-          "sqlServerServiceAccountPassword": {
-            "value": "[parameters('sqlServerServiceAccountPassword')]"
+          "sqlServicePassword": {
+            "value": "[parameters('sqlServicePassword')]"
           },
-          "storageAccountType": {
-            "value": "Standard_LRS"
+          "subnetId": {
+            "value": "[variables('subnetId')]"
           },
-          "nicSubnetUri": {
-            "value": "[variables('sqlSubnetRef')]"
+          "enableOutboundInternet": {
+            "value": "[parameters('enableOutboundInternet')]"
           },
-          "lbSubnetUri": {
-            "value": "[variables('sqlSubnetRef')]"
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
           },
-          "sqlLBIPAddress": {
-            "value": "[parameters('sqlLBIPAddress')]"
+          "imageOffer": {
+            "value": "[parameters('sqlVMImage')]"
           },
-          "sqlVMSize": {
-            "value": "[parameters('sqlVMSize')]"
+          "imageSKU": {
+            "value": "[parameters('sqlVMImageSku')]"
+          }, 
+          "vmCount": {
+            "value": "[parameters('vmCount')]"
           },
-          "sqlWitnessVMSize": {
-            "value": "[parameters('sqlWitnessVMSize')]"
+          "vmDiskSize": {
+            "value": "[parameters('vmDiskSize')]"
+          },
+          "vmDiskCount": {
+            "value": "[parameters('vmDiskCount')]"
+          },
+          "workloadType": {
+            "value": "[parameters('workloadType')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -181,5 +228,10 @@
       }
     }
   ],
-  "outputs": {}
+  "outputs": {
+    "agListenerName": {
+      "type": "string",
+      "value": "[reference(variables('deploySqlCluster')).outputs.agListenerName.value]"
+    }
+  }
 }
