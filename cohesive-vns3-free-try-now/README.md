@@ -16,7 +16,7 @@
 ### Introduction
 This Quickstart automates the process of deploying a Cohesive Networks VNS3 overlay network in Azure.
 
-It’s intended for users who are interested in a generalised method for encrypting all data in motion between Azure virtual machines, connecting Azure VNETs securely to other networks, and securing traffic with firewalling and network function virtualisation. VNS3 allows you to meet compliance requirements, attest to data security, and manage your cloud deployments. The VNS3 overlay federates resources for multi-region, hybrid cloud and multi-cloud deployments
+It’s intended for users who are interested in a generalised method for encrypting all data in motion between Azure virtual machines, connecting Azure VNETs securely to other networks, and securing traffic with firewalling and network function virtualisation. VNS3 allows you to meet compliance requirements, attest to data security, and manage your cloud deployments. The VNS3 overlay federates resources for multi-region, hybrid cloud and multi-cloud deployments.
 
 ### About VNS3
 VNS3 is a software only virtual appliance that provides the combined features and functions of a Security Appliance, Application Delivery Controller, and Unified Threat Management device at the cloud application edge.
