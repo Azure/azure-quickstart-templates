@@ -1,0 +1,159 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "enableSqlLedger": {
+            "type": "bool",
+            "defaultValue": false
+        },
+        "enableDigestStorage": {
+            "type": "bool",
+            "defaultValue": true
+        },
+        "digestStorageOption": {
+            "type": "string",
+            "defaultValue": "Azure Storage"
+        },
+        "digestStorageName": {
+            "type": "string",
+            "defaultValue": "StorageAccount-SqlLedger"
+        },
+        "blobStorageContainerName": {
+            "type": "string",
+            "defaultValue": "digestContainer"
+        },
+        "retentionDays": {
+            "type": "string",
+            "defaultValue": "30"
+        },
+        "retentionPolicy": {
+            "type": "bool",
+            "defaultValue": true
+        },
+        "serverName": {
+            "type": "string",
+            "defaultValue": "testServeralpolava"
+        },
+        "digestAccountResourceGroup": {
+            "type": "string",
+            "defaultValue": "MBorisTestGeneral"
+        },
+        "databaseName": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "isNewDigestLocation": {
+            "type": "bool"
+        }
+    },
+    "variables": {
+        "subscriptionId": "[subscription().subscriptionId]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "uniqueRoleGuid": "[guid(resourceId(parameters('digestAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('digestStorageName')), variables('storageBlobContributor'), resourceId('Microsoft.Sql/servers', parameters('serverName')))]",
+        "StorageBlobContributor": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]"
+    },
+    "resources": [
+        {
+            "condition": "[parameters('enableDigestStorage')]",
+            "type": "Microsoft.Sql/servers",
+            "apiVersion": "2019-06-01-preview",
+            "name": "[parameters('serverName')]",
+            "location": "eastus",
+            "identity": {
+                "type": "SystemAssigned"
+            }
+        },
+        {
+            "condition": "[parameters('enableDigestStorage')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "[parameters('digestStorageName')]",
+            "dependsOn": [
+                "[parameters('serverName')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "resources": [
+                        {
+                            "condition": "[equals(parameters('digestStorageOption'),'Azure Storage')]",
+                            "apiVersion": "2019-06-01",
+                            "name": "[parameters('digestStorageName')]",
+                            "type": "Microsoft.Storage/storageAccounts",
+                            "sku": {
+                                "name": "Standard_RAGRS"
+                            },
+                            "kind": "BlobStorage",
+                            "location": "East US",
+                            "properties": {
+                                "accessTier": "Hot"
+                            }
+                        },
+                        {
+                            "condition": "[equals(parameters('digestStorageOption'),'Azure Storage')]",
+                            "scope": "[concat('Microsoft.Storage/storageAccounts/', parameters('digestStorageName'))]",
+                            "type": "Microsoft.Authorization/roleAssignments",
+                            "apiVersion": "2020-04-01-preview",
+                            "name": "[variables('uniqueRoleGuid')]",
+                            "dependsOn": [
+                                "[parameters('digestStorageName')]"
+                            ],
+                            "properties": {
+                                "roleDefinitionId": "[variables('StorageBlobContributor')]",
+                                "principalId": "[reference(resourceId(variables('resourceGroupName'), 'Microsoft.Sql/servers', parameters('serverName')), '2019-06-01-preview', 'Full').identity.principalId]",
+                                "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('digestStorageName'))]",
+                                "principalType": "ServicePrincipal"
+                            }
+                        },
+                        {
+                            "condition": "[equals(parameters('digestStorageOption'),'Azure Storage')]",
+                            "name": "[concat(parameters('digestStorageName'), '/default/', parameters('blobStorageContainerName'))]",
+                            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+                            "apiVersion": "2019-06-01",
+                            "dependsOn": [
+                                "[parameters('digestStorageName')]"
+                            ],
+                            "properties": {}
+                        },
+                        {
+                            "condition": "[equals(parameters('digestStorageOption'),'Azure Storage')]",
+                            "name": "[concat(parameters('digestStorageName'), '/default/', parameters('blobStorageContainerName'), '/default')]",
+                            "type": "Microsoft.Storage/storageAccounts/blobServices/containers/immutabilityPolicies",
+                            "apiVersion": "2019-06-01",
+                            "dependsOn": [
+                                "[parameters('blobStorageContainerName')]"
+                            ],
+                            "properties": {
+                                "immutabilityPeriodSinceCreationInDays": "[parameters('retentionDays')]",
+                                "allowProtectedAppendWrites": "[parameters('retentionPolicy')]"
+                            }
+                        },
+                        {
+                            "condition": "[equals(parameters('digestStorageOption'),'Azure Confidential Ledger')]",
+                            "type": "Microsoft.ConfidentialLedger/ledgers",
+                            "apiVersion": "2020-12-01-preview",
+                            "name": "[parameters('digestStorageName')]",
+                            "location": "EASTUS2EUAP",
+                            "properties": {
+                                "aadBasedSecurityPrincipals": [
+                                    {
+                                        "principalId": "[reference(resourceId(variables('resourceGroupName'), 'Microsoft.Sql/servers', parameters('serverName')), '2019-06-01-preview', 'Full').identity.principalId]"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            "resourceGroup": "[parameters('digestAccountResourceGroup')]"
+        }
+    ]
+}
