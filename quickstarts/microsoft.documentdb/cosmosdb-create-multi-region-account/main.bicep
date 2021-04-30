@@ -121,7 +121,7 @@ var locations = [
   }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-03-15' = {
+resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
   name: accountName_var
   location: location
   kind: apiType[api].kind
