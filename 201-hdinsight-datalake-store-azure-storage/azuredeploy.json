@@ -32,13 +32,18 @@
         "description": "The location of the Azure Data Lake storage account."
       }
     },
-    "clusterWorkerNodeCount": {
-      "type": "int",
-      "defaultValue": 4,
-      "metadata": {
-        "description": "The number of nodes in the HDInsight cluster."
+    "clusterLoginUserName": {
+        "type": "string",
+        "metadata": {
+          "description": "Login username."
+        }
+      },
+      "clusterLoginPassword": {
+        "type": "string",
+        "metadata": {
+          "description": "Login password."
+        }
       }
-    }
   },
  
   "variables": {
@@ -70,52 +75,65 @@
       "properties": {}
     },
     {
-       "name": "[parameters('clusterName')]",
-       "type": "Microsoft.HDInsight/clusters",
-       "apiVersion": "2018-06-01-preview",
-       "location": "[resourceGroup().location]",
-       "properties": {
-         "computeProfile": {
-           "roles": [
-             {
-               "name": "headnode",
-               "targetInstanceCount": 3,
-               "hardwareProfile": {
-                 "vmSize": "Standard_DS2_V2"
-               },
-               "osProfile": {
-                 "linuxOperatingSystemProfile": {
-                   "username": "[parameters('sshUserName')]",
-                   "password": "[parameters('sshPassword')]"
-                 }
-               }
-             },
-             {
-               "name": "workernode",
-               "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
-               "hardwareProfile": {
-                 "vmSize": "Standard_DS2_V2"
-               },
-               "osProfile": {
-                 "linuxOperatingSystemProfile": {
-                   "username": "[parameters('sshUserName')]",
-                   "password": "[parameters('sshPassword')]"
-                 }
-               }
-             }
-           ]
-         },
-         "storageProfile": {
-           "storageaccounts": [
-             {
-               "name":  "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2020-08-01-preview').primaryEndpoints.blob,'https:',''),'/','')]",
-               "isDefault": true,
-               "container": "[parameters('clusterName')]",
-               "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2020-08-01-preview').keys[0].value]"
-             }
-           ]
-         }
-       }
+      "type": "Microsoft.HDInsight/clusters",
+      "name": "[parameters('clusterName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2018-06-01-preview",
+      "properties": {
+        "clusterVersion": "3.6",
+        "osType": "Linux",
+        "tier": "Standard",
+        "clusterDefinition": {
+          "kind": "hadoop",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+              "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2020-08-01-preview').primaryEndpoints.blob,'https:',''),'/','')]",
+              "isDefault": true,
+              "container": "[parameters('clusterName')]",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2020-08-01-preview').keys[0].value]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": 2,
+              "hardwareProfile": {
+                "vmSize": "Standard_D3_v2"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              }
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": 2,
+              "hardwareProfile": {
+                "vmSize": "Standard_D3_v2"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              }
+            }
+          ]
+        }
+      }
     }
   ]
 }
