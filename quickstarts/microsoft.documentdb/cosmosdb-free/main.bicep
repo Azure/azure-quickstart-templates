@@ -10,7 +10,7 @@ param databaseName string
 var accountName_var = toLower(accountName)
 
 resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName
+  name: accountName_var
   location: location
   properties: {
     enableFreeTier: true
@@ -27,7 +27,7 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15'
 }
 
 resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
-  name: '${accountName_var}/${databaseName}'
+  name: '${accountName_resource.name}/${databaseName}'
   properties: {
     resource: {
       id: databaseName
@@ -36,7 +36,4 @@ resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlData
       throughput: 400
     }
   }
-  dependsOn: [
-    resourceId('Microsoft.DocumentDB/databaseAccounts', accountName_var)
-  ]
 }
