@@ -4,6 +4,10 @@
 
 whoami
 w
+sudo su
+whoami
+w
+
 
 /bin/date +%H:%M:%S > /home/$1/install.progress.txt
 echo "ooooo      REDHAT EAP7 RPM INSTALL      ooooo" >> /home/$1/install.progress.txt
@@ -25,8 +29,6 @@ subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD  >
 subscription-manager attach --pool=${RHSM_POOL} >> /home/$1/install.progress.txt 2>&1
 echo "Subscribing the system to get access to EAP 7 repos" >> /home/$1/install.progress.txt
 
-whoami
-w
 
 # Install EAP7
 subscription-manager repos --enable=jb-eap-7-for-rhel-7-server-rpms >> /home/$1/install.out.txt 2>&1
@@ -46,6 +48,9 @@ echo 'WILDFLY_OPTS="-Djboss.bind.address.management=0.0.0.0"' >> ${EAP_RPM_CONF_
 echo "Installing GIT" >> /home/$1/install.progress.txt
 yum install -y git >> /home/$1/install.out.txt 2>&1
 
+whoami
+w
+
 cd /home/$1
 echo "Getting the sample dukes app to install" >> /home/$1/install.progress.txt
 git clone https://github.com/MyriamFentanes/dukes.git >> /home/$1/install.out.txt 2>&1
@@ -57,6 +62,9 @@ $EAP_HOME/bin/add-user.sh -u $EAP_USER -p $EAP_PASSWORD -g 'guest,mgmtgroup'
 
 echo "Start EAP 7" >> /home/$1/install.progress.txt
 systemctl restart eap7-standalone.service
+
+whoami
+w
 
 # Open Red Hat software firewall for port 8080 and 9990:
 firewall-cmd --zone=public --add-port=8080/tcp --permanent  >> /home/$1/install.out.txt 2>&1
