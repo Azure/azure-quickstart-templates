@@ -2,6 +2,9 @@
 
 # $1 - VM Host User Name
 
+whoami
+w
+
 /bin/date +%H:%M:%S > /home/$1/install.progress.txt
 echo "ooooo      REDHAT EAP7 RPM INSTALL      ooooo" >> /home/$1/install.progress.txt
 
@@ -21,6 +24,9 @@ echo "Initial EAP7 setup" >> /home/$1/install.progress.txt
 subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD  >> /home/$1/install.progress.txt 2>&1
 subscription-manager attach --pool=${RHSM_POOL} >> /home/$1/install.progress.txt 2>&1
 echo "Subscribing the system to get access to EAP 7 repos" >> /home/$1/install.progress.txt
+
+whoami
+w
 
 # Install EAP7
 subscription-manager repos --enable=jb-eap-7-for-rhel-7-server-rpms >> /home/$1/install.out.txt 2>&1
