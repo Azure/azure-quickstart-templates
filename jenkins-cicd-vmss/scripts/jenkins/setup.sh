@@ -174,7 +174,6 @@ throw_if_empty --repository $repository
 throw_if_empty --oms_workspace_id $oms_workspace_id
 throw_if_empty --oms_workspace_key $oms_workspace_key
 
-sudo sudo service jenkins status
 
 # install jenkins
 ms_run_util_script "jenkins/install_jenkins.sh" -jf "${jenkins_fqdn}" -pi "${jenkins_private_ip}" -jrt "${jenkins_release_type}" -jvl "${jenkins_version_location}" -al "${ms_artifacts_location}" -st "${ms_artifacts_location_sas_token}"
@@ -186,14 +185,11 @@ for plugin in "${plugins[@]}"; do
 done
 
 # restart jenkins
-sudo sudo service jenkins status
 sudo service jenkins restart
-sudo sudo service jenkins status
 
 # wait for instance to be back online
 ms_run_util_script "jenkins/run-cli-command.sh" -j "$jenkins_url" -ju "$jenkins_username" -jp "$jenkins_password" -c "version"
 
-sudo sudo service jenkins status
 
 # download dependencies
 job_xml=$(curl -s ${artifacts_location}/scripts/jenkins/jobs-build-vm.xml${artifacts_location_sas_token})
