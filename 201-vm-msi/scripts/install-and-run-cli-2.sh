@@ -39,16 +39,11 @@ done
 
 # Install Docker and then run docker image with cli
 
-sudo apt update -y
-sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
-sudo apt update -y
-sudo apt install -y docker-ce
-sudo systemctl start docker
-sudo docker run -v $(pwd):/scripts --network='host' \
+sudo apt-get update
+sudo apt-get install -y docker.io
+sudo docker run -v $(pwd):/scripts --net=host \
 -e STORAGE_ACCOUNT=${storage_account} \
 -e CONTAINER_NAME=${container_name} \
 -e RESOURCE_GROUP=${resource_group} \
 -e PORT=${PORT} \
-${docker_image} "./scripts/${script_file}"
+${docker_image} "./${script_file}"
