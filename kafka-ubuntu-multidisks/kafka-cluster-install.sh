@@ -166,7 +166,7 @@ install_zookeeper()
 	wget "http://mirrors.ukfast.co.uk/sites/ftp.apache.org/zookeeper/zookeeper-3.5.9/apache-zookeeper-3.5.9.tar.gz"
 	tar -xvf "apache-zookeeper-3.5.9.tar.gz"
 
-	touch zookeeper-3.5.9/conf/zoo.cfg
+	touch apache-zookeeper-3.5.9/conf/zoo.cfg
 
 	echo "tickTime=2000" >> apache-zookeeper-3.5.9/conf/zoo.cfg
 	echo "dataDir=/var/lib/zookeeper" >> apache-zookeeper-3.5.9/conf/zoo.cfg
