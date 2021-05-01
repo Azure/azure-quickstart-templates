@@ -23,8 +23,6 @@ function throw_if_empty() {
   fi
 }
 
-sudo sudo service jenkins status
-
 #set defaults
 jenkins_url="http://localhost:8080/"
 jenkins_username="admin"
