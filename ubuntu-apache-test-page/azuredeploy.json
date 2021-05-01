@@ -20,7 +20,7 @@
       "type": "string",
       "defaultValue": "18.04-LTS",
       "metadata": {
-        "description": "The Ubuntu version for the Web Server VM."
+        "description": "The Ubuntu version for the Web Server VM. Allowed values: 14.04.5-LTS, 16.04.0-LTS"
       }
     },
     "testPage": {
@@ -46,24 +46,17 @@
     },
     "installPHP": {
       "type": "bool",
-      "defaultValue": true,
+      "defaultValue": false,
       "metadata": {
         "description": "Set to True to install PHP."
       }
     },
-    "_artifactsLocation": {
+    "scriptLocation": {
       "type": "string",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-apache-test-page/"
-    },
-    "_artifactsLocationSasToken": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-      },
-      "defaultValue": ""
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-apache-test-page/scripts/prepwebserver.sh"
     },
     "location": {
       "type": "string",
@@ -101,16 +94,14 @@
     "vhdStorageType": "Standard_LRS",
     "publicIPAddressType": "Dynamic",
     "vhdStorageContainerName": "vhds",
-    "scriptFolder": "scripts",
     "vmName": "[concat('webtestvm-', parameters('dnsNameForPublicIP'), '-', uniqueString(resourceGroup().id))]",
-    "vmSize": "Standard_DS2_v2",
+    "vmSize": "Standard_D2_v2",
     "virtualNetworkName": "[concat('webtestvnet-', uniqueString(resourceGroup().id, parameters('dnsNameForPublicIP')))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'),  variables('subnetName'))]",
     "vhdStorageName": "[concat('webtestvhd', uniqueString(resourceGroup().id, parameters('dnsNameForPublicIP')))]",
     "singleQuote": "'",
     "frontEndNSGName": "[concat('webtestnsg-', uniqueString(resourceGroup().id, parameters('dnsNameForPublicIP')))]",
     "testPageMarkup": "[concat('<html><head><title>', parameters('testPageTitle'), '</title></head><body>', parameters('testPageBody'), '</body></html>')]",
-    "serverPrepareScriptFileName": "prepwebserver.sh",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -307,7 +298,7 @@
           "name": "PrepareServer",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2020-12-01",
+          "apiVersion": "2015-06-15",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
           ],
@@ -321,7 +312,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(parameters('_artifactsLocation'), '/', variables('scriptFolder'), '/', variables('serverPrepareScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+                "[parameters('scriptLocation')]"
               ],
               "commandToExecute": "[concat('sh prepwebserver.sh', ' ', string(parameters('installPHP')), ' ', variables('singleQuote'), variables('testPageMarkup'), variables('singleQuote'), ' ', parameters('testPage'), ' ', variables('singleQuote'), parameters('ubuntuOSVersion'), variables('singleQuote'))]"
             }
