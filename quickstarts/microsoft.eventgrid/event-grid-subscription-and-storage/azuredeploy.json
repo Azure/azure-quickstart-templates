@@ -1,0 +1,90 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageName": {
+      "type": "string",
+      "defaultValue": "[concat('storage', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Provide a unique name for the Blob Storage account."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Provide a location for the Blob Storage account that supports Event Grid."
+      }
+    },
+    "eventSubName": {
+      "type": "string",
+      "defaultValue": "subToStorage",
+      "metadata": {
+        "description": "Provide a name for the Event Grid subscription."
+      }
+    },
+    "endpoint": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the URL for the WebHook to receive events. Create your own endpoint for events."
+      }
+    },
+    "systemTopicName": {
+      "type": "String",
+      "defaultValue": "mystoragesystemtopic",
+      "metadata": {
+        "description": "Provide a name for the system topic."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[parameters('storageName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "accessTier": "Hot"
+      }
+    },
+    {
+      "type": "Microsoft.EventGrid/systemTopics",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[parameters('systemTopicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[parameters('storageName')]"
+      ],
+      "properties": {
+        "source": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageName'))]",
+        "topicType": "Microsoft.Storage.StorageAccounts"
+      }
+    },
+    {
+      "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[concat(parameters('systemTopicName'), '/', parameters('eventSubName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.EventGrid/systemTopics', parameters('systemTopicName'))]"
+      ],
+      "properties": {
+        "destination": {
+          "properties": {
+            "endpointUrl": "[parameters('endpoint')]"
+          },
+          "endpointType": "WebHook"
+        },
+        "filter": {
+          "includedEventTypes": [
+            "Microsoft.Storage.BlobCreated",
+            "Microsoft.Storage.BlobDeleted"
+          ]
+        }
+      }
+    }
+  ]
+}
