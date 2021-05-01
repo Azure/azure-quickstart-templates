@@ -276,6 +276,8 @@ else
   sudo apt-get install jenkins --yes # sometime the first apt-get install jenkins command fails, so we try it twice
 fi
 
+sudo sudo service jenkins status
+
 retry_until_successful sudo test -f /var/lib/jenkins/secrets/initialAdminPassword
 retry_until_successful run_util_script "scripts/jenkins/run-cli-command.sh" -c "version"
 
@@ -306,6 +308,8 @@ echo "${final_jenkins_config}" | sudo tee /var/lib/jenkins/config.xml > /dev/nul
 
 #restart jenkins
 sudo service jenkins restart
+
+sudo sudo service jenkins status
 
 #install the service principal
 msi_cred=$(cat <<EOF
