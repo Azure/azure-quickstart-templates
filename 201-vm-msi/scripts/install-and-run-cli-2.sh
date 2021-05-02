@@ -42,11 +42,11 @@ done
 sudo apt-get update
 sudo apt-get install -y docker.io
 sudo docker run -d \
-        -v `pwd`:/scripts \
+        -v $PWD:/scripts \
         --net=host \
         ${docker_image} \
         -e STORAGE_ACCOUNT=${storage_account} \
         -e CONTAINER_NAME=${container_name} \
         -e RESOURCE_GROUP=${resource_group} \
         -e PORT=${PORT} \
-        "/scripts/${script_file}"
+        /scripts/${script_file}
