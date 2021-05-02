@@ -20,7 +20,7 @@ while getopts ":i:a:c:r:" opt; do
 done
 
 if [ -z $docker_image ]; then
-    docker_image="azuresdk/azure-cli-python:latest"
+    docker_image="mcr.microsoft.com/azure-cli"
 fi
 
 if [ -z $script_file ]; then
