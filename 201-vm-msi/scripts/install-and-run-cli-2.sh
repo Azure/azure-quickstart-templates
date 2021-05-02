@@ -37,7 +37,7 @@ do
 
 done
 
-# Install Docker and then run docker image with cli
+# Install Docker and then run docker image with cli.
 
 sudo apt-get update
 sudo apt-get install -y docker.io
