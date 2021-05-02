@@ -42,7 +42,7 @@ done
 sudo apt-get update
 sudo apt-get install -y docker.io
 sudo docker run -d \
-        -v /:/scripts \
+        -v `pwd`:/scripts \
         --net=host \
         ${docker_image} \
         -e STORAGE_ACCOUNT=${storage_account} \
