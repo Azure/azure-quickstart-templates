@@ -1,0 +1,123 @@
+
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "namePrefix": {
+            "metadata": {
+                "description": "Used to qualify the names of all of the resources created in this template."
+            },
+            "defaultValue": "avasample",
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 13
+        }
+    },
+    "variables": {
+        "storageAccountName": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id))]",
+        "accountName": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id))]",
+        "managedIdentityName": "[concat(parameters('namePrefix'),'-',resourceGroup().name,'-storage-access-identity')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "deploy-storage-and-identity",
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "Inner"
+                },
+                "parameters": {
+                    "namePrefix": {
+                        "value": "[parameters('namePrefix')]"
+                    },
+                    "managedIdentityName": {
+                        "value": "[variables('managedIdentityName')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "namePrefix": {
+                            "type": "string"
+                        },
+                        "managedIdentityName": {
+                            "type": "string"
+                        }
+                    },
+                    "variables": {
+                        "storageAccountName": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id))]",
+                        "managedIdentityName": "[parameters('managedIdentityName')]",
+                        "roleAssignmentName": "[guid('Storage Blob Data Contributor',variables('managedIdentityName'))]",
+                        "roleDefinitionId": "[concat(resourceGroup().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]"
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+                            "name": "[variables('managedIdentityName')]",
+                            "apiVersion": "2015-08-31-preview",
+                            "location": "[resourceGroup().location]"
+                        },
+                        {
+                            "type": "Microsoft.Storage/storageAccounts",
+                            "apiVersion": "2019-04-01",
+                            "name": "[variables('storageAccountName')]",
+                            "location": "[resourceGroup().location]",
+                            "sku": {
+                                "name": "Standard_LRS"
+                            },
+                            "kind": "StorageV2",
+                            "properties": {
+                                "accessTier": "Hot"
+                            }
+                        },
+                        {
+                            "name": "[concat(variables('storageAccountName'), '/Microsoft.Authorization/', variables('roleAssignmentName'))]",
+                            "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+                            "apiVersion": "2021-04-01-preview",
+                            "dependsOn": [
+                                "[variables('managedIdentityName')]",
+                                "[variables('storageAccountName')]"
+                            ],
+                            "properties": {
+                                "roleDefinitionId": "[variables('roleDefinitionId')]",
+                                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('managedIdentityName')), '2018-11-30').principalId]",
+                                "principalType": "ServicePrincipal"
+                            }
+                        }
+                    ],
+                    "outputs": {}
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Media/videoAnalyzers",
+            "comments": "The Azure Video Analyzer account",
+            "apiVersion": "2021-05-01-preview",
+            "name": "[variables('accountName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "deploy-storage-and-identity"
+            ],
+            "properties": {
+                "storageAccounts": [
+                    {
+                        "id": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                        "identity": {
+                            "userAssignedIdentity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('managedIdentityName'))]"
+                        }
+                    }
+                ]
+            },
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('managedIdentityName'))]": {}
+                }
+            }
+        }
+    ],
+    "outputs": { }
+}
