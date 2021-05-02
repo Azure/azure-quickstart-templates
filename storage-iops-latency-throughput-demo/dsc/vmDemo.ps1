@@ -5,9 +5,8 @@ Param(
 	[string]$NodeName = 'localhost'
 )
 
-Install-Module -Name cChoco
-Import-Module -Name cChoco
-Import-DscResource -ModuleName cChoco,xStorage,xPSDesiredStateConfiguration
+Import-DscResource -Module cChoco
+Import-DscResource -Module xStorage,xPSDesiredStateConfiguration
 
 Node $NodeName 
 	{
@@ -18,7 +17,7 @@ Node $NodeName
 			}
 		cChocoInstaller installChoco
 			{
-				InstallDir = "c:\choco"
+				InstallDir = "c:\ProgramData\chocolatey"
 			}
 		cChocoPackageInstaller installIometer
 			{
