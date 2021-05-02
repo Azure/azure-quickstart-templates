@@ -49,4 +49,4 @@ sudo docker run -d \
         -e CONTAINER_NAME=${container_name} \
         -e RESOURCE_GROUP=${resource_group} \
         -e PORT=${PORT} \
-        ${script_file}
+        "/scripts/${script_file}"
