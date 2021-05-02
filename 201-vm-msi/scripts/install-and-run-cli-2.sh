@@ -41,4 +41,4 @@ done
 
 sudo apt-get update
 sudo apt-get install -y docker.io
-sudo docker run -d --name quickstart -v $(pwd):/scripts --network host -e STORAGE_ACCOUNT=${storage_account} -e CONTAINER_NAME=${container_name} -e RESOURCE_GROUP=${resource_group} -e PORT=${PORT} ${docker_image}
+sudo docker run -d --mount source=/scripts,target=/scripts --network host -e STORAGE_ACCOUNT=${storage_account} -e CONTAINER_NAME=${container_name} -e RESOURCE_GROUP=${resource_group} -e PORT=${PORT} ${docker_image}
