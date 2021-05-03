@@ -121,16 +121,56 @@ while getopts :k:b:z:i:c:p:h optname; do
 done
 
 # Install Oracle Java
+
+# install_java()
+# {
+#     log "Installing Java"
+#     add-apt-repository -y ppa:webupd8team/java
+#     apt-get -y update
+#     echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
+#     echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
+#     apt-get -y install oracle-java7-installer
+# 	java -version
+# }
+
 install_java()
 {
+    if [ -f "jdk-8u291-linux-x64.tar.gz" ];
+    then
+        log "Java already downloaded"
+        return
+    fi
+
     log "Installing Java"
-    add-apt-repository -y ppa:webupd8team/java
-    apt-get -y update
-    echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
-    echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
-    apt-get -y install oracle-java7-installer
-	java -version
+    RETRY=0
+    MAX_RETRY=5
+    while [ $RETRY -lt $MAX_RETRY ]; do
+        log "Retry $RETRY: downloading jdk-8u291-linux-x64.tar.gz"
+        wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" https://download.oracle.com/otn-pub/java/jdk/8u291-b10/d7fc238d0cbf4b0dac67be84580cfb4b/jdk-8u291-linux-x64.tar.gz
+        if [ $? -ne 0 ]; then
+            let RETRY=RETRY+1
+        else
+            break
+        fi
+    done
+    if [ $RETRY -eq $MAX_RETRY ]; then
+        log "Failed to download jdk-8u291-linux-x64.tar.gz"
+        exit 1
+    fi
+
+    tar xzf jdk-8u291-linux-x64.tar.gz -C /var/lib
+    export JAVA_HOME=/var/lib/jdk1.8.0_291
+    export PATH=$PATH:$JAVA_HOME/bin
+    log "JAVA_HOME: $JAVA_HOME"
+    log "PATH: $PATH"
+
+    java -version
+    if [ $? -ne 0 ]; then
+        log "Java installation failed"
+        exit 1
+    fi
 }
+
 
 # Expand a list of successive IP range defined by a starting address prefix (e.g. 10.0.0.1) and the number of machines in the range
 # 10.0.0.1-3 would be converted to "10.0.0.10 10.0.0.11 10.0.0.12"
