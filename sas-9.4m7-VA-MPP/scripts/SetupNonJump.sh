@@ -44,6 +44,7 @@ main() {
     mountSASRaid
     setupSUDOForAnsible
     setupSSHKeysForAnsible
+    startATdaemon
 }
 
 mountSASRaid() {
@@ -133,6 +134,11 @@ disableSelinuxRHEL() {
     setenforce 0
     # disable after restarts
     sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config && cat /etc/sysconfig/selinux
+}
+
+startATdaemon() {
+    sudo chkconfig atd on
+    sudo service atd start
 }
 
 ## First things first, we are going to map all the inputs to variables for postarity
