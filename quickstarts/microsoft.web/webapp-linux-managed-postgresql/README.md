@@ -1,6 +1,6 @@
 # Build a Web App with PostgreSQL
 
-[Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-linux-managed-postgresql/PublicLastTestDate.svg)
+[Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-managed-postgresql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-managed-postgresql/PublicDeployment.svg)
 
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-linux-managed-postgresql/FairfaxLastTestDate.svg)
