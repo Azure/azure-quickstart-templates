@@ -751,36 +751,6 @@
           "description": "Whether or not public network access is allowed for the container registry. Allowed values: Enabled or Disabled"
         }
       },
-      "acrGeoReplicationLocation": {
-        "defaultValue": "eastus",
-        "type": "string",
-        "allowedValues": [
-          "australiasoutheast",
-          "canadaeast",
-          "eastus2",
-          "westus",
-          "centralus",
-          "westcentralus",
-          "francesouth",
-          "germanynorth",
-          "westeurope",
-          "ukwest",
-          "northeurope",
-          "japanwest",
-          "southafricawest",
-          "northcentralus",
-          "eastasia",
-          "eastus",
-          "westus2",
-          "francecentral",
-          "uksouth",
-          "japaneast",
-          "southeastasia"
-        ],
-        "metadata": {
-          "description": "For Azure resources that support native geo-redunancy, provide the location the redundant service will have its secondary. Should be different than the location parameter and ideally should be a paired region - https://docs.microsoft.com/azure/best-practices-availability-paired-regions. This region does not need to support availability zones."
-        }
-      },
       "acrSku": {
         "type": "string",
         "defaultValue": "Premium",
@@ -976,7 +946,6 @@
       "acrPrivateDnsZoneGroupId": "[resourceId('Microsoft.Network/privateEndpoints/privateDnsZoneGroups', parameters('acrPrivateEndpointName'), concat(variables('acrPrivateEndpointGroupName'), 'PrivateDnsZoneGroup'))]",
       "acrPrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('acrPrivateEndpointName'))]",
       "acrId": "[resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName'))]",
-      "acrReplicaId": "[resourceId('Microsoft.ContainerRegistry/registries/replications', parameters('acrName'), parameters('acrGeoReplicationLocation'))]",
       "aksClusterId": "[resourceId('Microsoft.ContainerService/managedClusters', parameters('aksClusterName'))]",
       "keyVaultPublicDNSZoneForwarder": "[if(equals(toLower(environment().name), 'azureusgovernment'), '.vaultcore.usgovcloudapi.net', '.vaultcore.azure.net')]",
       "keyVaultPrivateDnsZoneName": "[concat('privatelink', variables('keyVaultPublicDNSZoneForwarder'))]",
@@ -1685,16 +1654,6 @@
             }
           },
           {
-            "condition": "[and(equals(parameters('acrSku'), 'Premium'), not(equals(toLower(environment().name), 'azureusgovernment')))]",
-            "type": "replications",
-            "apiVersion": "2019-05-01",
-            "name": "[parameters('acrGeoReplicationLocation')]",
-            "location": "[parameters('acrGeoReplicationLocation')]",
-            "dependsOn": [
-              "[variables('acrId')]"
-            ]
-          },
-          {
             "type": "providers/diagnosticSettings",
             "apiVersion": "2017-05-01-preview",
             "name": "Microsoft.Insights/default",
@@ -1852,6 +1811,9 @@
             "loadBalancerProfile": "[json('null')]"
           },
           "aadProfile": {
+            "clientAppId": "[json('null')]",
+            "serverAppId": "[json('null')]",
+            "serverAppSecret": "[json('null')]",
             "managed": "[parameters('aadProfileManaged')]",
             "enableAzureRBAC": "[parameters('aadProfileEnableAzureRBAC')]",
             "adminGroupObjectIDs": "[parameters('aadProfileAdminGroupObjectIDs')]",
@@ -2141,8 +2103,7 @@
         "location": "[parameters('location')]",
         "dependsOn": [
           "[variables('virtualNetworkId')]",
-          "[variables('acrId')]",
-          "[variables('acrReplicaId')]"
+          "[variables('acrId')]"
         ],
         "properties": {
           "privateLinkServiceConnections": [
