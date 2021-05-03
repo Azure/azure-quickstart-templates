@@ -43,11 +43,15 @@ then
 	sudo make -j$NPROC
 fi
 
-sudo cp /usr/local/groestlcoin/src/groestlcoind /usr/bin/groestlcoind
-sudo cp /usr/local/groestlcoin/src/groestlcoin-cli /usr/bin/groestlcoin-cli
-sudo cp /usr/local/groestlcoin/src/groestlcoin-tx /usr/bin/groestlcoin-tx
-sudo cp /usr/local/groestlcoin/src/groestlcoin-wallet /usr/bin/groestlcoin-wallet
-sudo cp /usr/local/groestlcoin/src/groestlcoin-util /usr/bin/groestlcoin-util
+#################################################################
+# Strip executables                                                     #
+#################################################################
+strip /usr/local/groestlcoind /usr/local/groestlcoin-cli /usr/local/groestlcoin-tx /usr/local/groestlcoin-wallet /usr/local/groestlcoin-util
+
+#################################################################
+# Move executables to /usr/bin                                           #
+#################################################################
+sudo mv /usr/local/groestlcoind /usr/local/groestlcoin-cli /usr/local/groestlcoin-tx /usr/local/groestlcoin-wallet /usr/local/groestlcoin-util /usr/bin
 
 else
 #################################################################
@@ -65,7 +69,7 @@ fi
 file=$HOME/.groestlcoin
 if [ ! -e "$file" ]
 then
-	sudo mkdir $HOME/.groestlcoin
+	mkdir $HOME/.groestlcoin
 fi
 
 #################################################################
@@ -77,7 +81,7 @@ sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-confi
 # Create configuration File                                              #
 ################################################################
 rpcp=$(pwgen -ncsB 35 1)
-printf '%s\n%s\n%s\nrpcpassword=%s\n' 'daemon=1' 'server=1' 'rpcuser=groestlcoinrpc' $rpcp | sudo tee $HOME/.groestlcoin/groestlcoin.conf
+printf '%s\n%s\n%s\nrpcpassword=%s\n' 'daemon=1' 'server=1' 'rpcuser=groestlcoinrpc' $rpcp | tee $HOME/.groestlcoin/groestlcoin.conf
 
 ################################################################
 # Configure to auto start at boot                                        #
@@ -85,7 +89,7 @@ printf '%s\n%s\n%s\nrpcpassword=%s\n' 'daemon=1' 'server=1' 'rpcuser=groestlcoin
 file=/etc/init.d/groestlcoin
 if [ ! -e "$file" ]
 then
-	printf '%s\n%s\n' '#!/bin/sh' 'sudo /usr/bin/groestlcoind' | sudo tee /etc/init.d/groestlcoin
+	printf '%s\n%s\n' '#!/bin/sh' '/usr/bin/groestlcoind' | sudo tee /etc/init.d/groestlcoin
 	sudo chmod +x /etc/init.d/groestlcoin
 	sudo update-rc.d groestlcoin defaults
 fi
@@ -93,6 +97,6 @@ fi
 ################################################################
 # Start Groestlcoin Core                                                 #
 ################################################################
-sudo /usr/bin/groestlcoind
+/usr/bin/groestlcoind
 echo "Groestlcoin Core has been setup successfully and is running..."
 exit 0
