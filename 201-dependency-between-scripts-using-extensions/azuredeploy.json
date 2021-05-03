@@ -33,11 +33,17 @@
         "description": "Location for all resources."
       }
     },
-    "adminPasswordOrKey": {
+    "adminPassword": {
       "type": "securestring",
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring"
     }
   },
   "variables": {
@@ -56,18 +62,12 @@
     "nicName": "myVMNic",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
-    "installMongoTemplateurl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-dependency-between-scripts-using-extensions/install-mongo.json"
+    "installMongoTemplateurl": "[concat(parameters('_artifactsLocation'), '/' , 'install-mongo.json', parameters('_artifactsLocationSasToken'))]",
+    "mongoconfigureubuntu": "[concat(parameters('_artifactsLocation'), '/' , 'mongo-configure-ubuntu.sh', parameters('_artifactsLocationSasToken'))]",
+    "mongoinstall": "[concat(parameters('_artifactsLocation'), '/' , 'mongo-install-ubuntu.sh', parameters('_artifactsLocationSasToken'))]"
+
   },
   "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2020-08-01-preview",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -133,7 +133,6 @@
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -143,7 +142,7 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "adminPassword": "[parameters('adminPassword')]",
           "linuxConfiguration": {
             "patchSettings": {
               "patchMode": "ImageDefault"
@@ -194,7 +193,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-dependency-between-scripts-using-extensions/mongo-configure-ubuntu.sh"
+            "[variables('mongoconfigureubuntu')]"
           ],
           "commandToExecute": "sh mongo-configure-ubuntu.sh"
         }
@@ -216,6 +215,9 @@
         "parameters": {
           "vmName": {
             "value": "[variables('vmName')]"
+          },
+          "mongoinstall": {
+            "value": "[variables('mongoinstall')]"
           }
         }
       }
