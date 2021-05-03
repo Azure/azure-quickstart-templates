@@ -1,20 +1,17 @@
 # VM-Windows - Azul Zulu OpenJDK installation
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-Windows-Java-ZuluOpenJDK/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-Windows-Java-ZuluOpenJDK/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/zulu/Windows-Java-ZuluOpenJDK/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/zulu/Windows-Java-ZuluOpenJDK/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-Windows-Java-ZuluOpenJDK/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-Windows-Java-ZuluOpenJDK/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/zulu/Windows-Java-ZuluOpenJDK/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/zulu/Windows-Java-ZuluOpenJDK/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-Windows-Java-ZuluOpenJDK/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-Windows-Java-ZuluOpenJDK/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/zulu/Windows-Java-ZuluOpenJDK/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/zulu/Windows-Java-ZuluOpenJDK/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-Windows-Java-ZuluOpenJDK%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-Windows-Java-ZuluOpenJDK%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fzulu%2FWindows-Java-ZuluOpenJDK%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fzulu%2FWindows-Java-ZuluOpenJDK%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fzulu%2FWindows-Java-ZuluOpenJDK%2Fazuredeploy.json)
 
 ## Overview
 
@@ -29,7 +26,7 @@ The default is the Zulu Java 8 JDK.
 
 The VM is deployed in the resource group location by default using the latest patched version of Windows 2019-Datacenter and a Standard_D2s_v3 size VM as the default value.
 
-The Zulu install script is available [here.](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-Windows-Java-ZuluOpenJDK/zulu-install.ps1)
+The Zulu install script is available [here.](zulu-install.ps1)
 
 **Related Templates**
 - [101-Linux-Java-ZuluOpenJDK](https://github.com/Azure/azure-quickstart-templates/tree/master/101-Linux-Java-ZuluOpenJDK)
