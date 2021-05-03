@@ -26,3 +26,4 @@ Build containerized applications using both Docker-Desktop and Visual Studio 201
 - Docker Desktop 
 
 At your first login, docker-desktop will start preparing Linux VM for docker. It might take 5 minutes. Thereafter it should start (On every login) within few seconds only.
+
