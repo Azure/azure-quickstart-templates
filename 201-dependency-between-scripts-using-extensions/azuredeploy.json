@@ -33,17 +33,6 @@
         "description": "Location for all resources."
       }
     },
-    "authenticationType": {
-      "type": "string",
-      "defaultValue": "sshPublicKey",
-      "allowedValues": [
-        "sshPublicKey",
-        "password"
-      ],
-      "metadata": {
-        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
-      }
-    },
     "adminPasswordOrKey": {
       "type": "securestring",
       "metadata": {
@@ -67,18 +56,7 @@
     "nicName": "myVMNic",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
-    "installMongoTemplateurl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-dependency-between-scripts-using-extensions/install-mongo.json",
-    "linuxConfiguration": {
-      "disablePasswordAuthentication": true,
-      "ssh": {
-        "publicKeys": [
-          {
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-            "keyData": "[parameters('adminPasswordOrKey')]"
-          }
-        ]
-      }
-    }
+    "installMongoTemplateurl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-dependency-between-scripts-using-extensions/install-mongo.json"
   },
   "resources": [
     {
@@ -150,7 +128,7 @@
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2021-03-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
@@ -166,7 +144,11 @@
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          "linuxConfiguration": {
+            "patchSettings": {
+              "patchMode": "ImageDefault"
+            }
+          }
         },
         "storageProfile": {
           "imageReference": {
