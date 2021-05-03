@@ -6,21 +6,27 @@ date
 ps axjf
 
 
-if [ $1 = 'From_Source' ]; then
+if [[ $1 = 'From_Source' ]]; then
+
 #################################################################
 # Update Ubuntu and install prerequisites for running Groestlcoin Core   #
 #################################################################
 sudo apt-get update
+
 #################################################################
-# Build Groestlcoin Core from source                                     #
+# Get CPU count                                                          #
 #################################################################
 NPROC=$(nproc)
 echo "nproc: $NPROC"
-#################################################################
-# Install all necessary packages for building Groestlcoin Core           #
-#################################################################
-sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev
 
+#################################################################
+# Install all necessary packages for building Groestlcoin Core from source  #
+#################################################################
+sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev pwgen dialog apt-utils
+
+#################################################################
+# Build Groestlcoin Core from source                                     #
+#################################################################
 cd /usr/local
 file=/usr/local/groestlcoin
 if [ ! -e "$file" ]
@@ -54,16 +60,39 @@ sudo apt-get install -y groestlcoind groestlcoin-tx groestlcoin-wallet
 fi
 
 ################################################################
-# Configure to auto start at boot					    #
+# Create Groestlcoin Core Directory                                      #
+################################################################
+file=$HOME/.groestlcoin
+if [ ! -e "$file" ]
+then
+	sudo mkdir $HOME/.groestlcoin
+fi
+
+#################################################################
+# Install all necessary packages for building Groestlcoin Core from ppa  #
+#################################################################
+sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev pwgen dialog apt-utils
+
+################################################################
+# Create configuration File                                              #
+################################################################
+rpcp=$(pwgen -ncsB 35 1)
+printf '%s\n%s\n%s\nrpcpassword=%s\n' 'daemon=1' 'server=1' 'rpcuser=groestlcoinrpc' $rpcp | sudo tee $HOME/.groestlcoin/groestlcoin.conf
+
+################################################################
+# Configure to auto start at boot                                        #
 ################################################################
 file=/etc/init.d/groestlcoin
 if [ ! -e "$file" ]
 then
-	printf '%s\n%s\n' '#!/bin/sh' 'sudo groestlcoind' | sudo tee /etc/init.d/groestlcoin
+	printf '%s\n%s\n' '#!/bin/sh' 'sudo /usr/bin/groestlcoind' | sudo tee /etc/init.d/groestlcoin
 	sudo chmod +x /etc/init.d/groestlcoin
 	sudo update-rc.d groestlcoin defaults
 fi
 
-/usr/bin/groestlcoind
+################################################################
+# Start Groestlcoin Core                                                 #
+################################################################
+sudo /usr/bin/groestlcoind
 echo "Groestlcoin Core has been setup successfully and is running..."
 exit 0
