@@ -2,4 +2,4 @@
 sudo apt-get -y update
 
 #Install Mongo DB
-sudo apt-get install -y mongodb-10gen
+sudo apt-get install -y mongodb-org
