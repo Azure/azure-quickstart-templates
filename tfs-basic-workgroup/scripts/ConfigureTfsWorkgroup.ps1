@@ -13,7 +13,7 @@ $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
 # Checks if TFS is installed, if not downloads and runs the web installer
 function Ensure-TfsInstalled()
 {
-    # Check if TFS is already installed
+    # Check if TFS is already installed.
     $tfsInstalled = $false
 
     if(Test-Path $InstallKey)
