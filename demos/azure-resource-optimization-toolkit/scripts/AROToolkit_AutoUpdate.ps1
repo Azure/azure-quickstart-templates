@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS  
  AutoUpdate Module for ARO Toolkit future releases
 .DESCRIPTION  

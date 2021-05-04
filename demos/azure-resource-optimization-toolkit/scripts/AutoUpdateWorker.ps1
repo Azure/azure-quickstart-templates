@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS  
  AutoUpdate worker Module for ARO Toolkit future releases
 .DESCRIPTION  
@@ -197,7 +197,7 @@ try
         #just run the bootstrap_main runbook to create the schedules
         $Bootstrap_MainRunbook = "Bootstrap_Main"
 
-        $RunbookDownloadPath = "$($GithubRootPath)/$($GithubBranch)/azure-resource-optimization-toolkit/scripts/Bootstrap_Main.ps1"
+        $RunbookDownloadPath = "$($GithubRootPath)/$($GithubBranch)/demos/azure-resource-optimization-toolkit/scripts/Bootstrap_Main.ps1"
         Write-Output "Downloading the Bootstrap_Main PowerShell script from Github..."
         $WebClientRB = New-Object System.Net.WebClient
         $WebClientRB.DownloadFile($($RunbookDownloadPath),"$PSScriptRoot\$($Bootstrap_MainRunbook).ps1")
