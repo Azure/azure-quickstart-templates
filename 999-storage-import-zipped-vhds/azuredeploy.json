@@ -1,0 +1,62 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.210303",
+    "parameters": {
+      "location": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "The location in which the resources should be deployed."
+        }
+      },
+      "Source": {
+          "type": "string",
+          "metadata": {
+              "description": "URL of a ZIP archive containing VHD images files. For example: https://provider.com/bin/support/azure-vhd.zip"
+          }
+      },
+      "Destination": {
+        "type": "string",
+        "metadata": {
+          "description": "URI of a Storage Account container with a writable SAS Token. For example: https://blob-storage-name.blob.core.windows.net/container-name?sp=racwl&st=2021-01-01T12:00:00&se=2021-02-01T12:00:00&spr=https&sv=2021-01-01&sig=123412341234"
+        }
+      }
+    },
+    "functions": [],
+    "variables": {
+      "urlVHDZipArchive" : "[parameters('Source')]",
+      "uriWritableStorageAccountBlobContainerSasToken": "[parameters('Destination')]",
+
+      "linkedTemplateName_ImportVHD-FromZipArchive": "ImportVHD-FromZipArchiveURL"
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2020-06-01",
+        "name": "[variables('linkedTemplateName_ImportVHD-FromZipArchive')]",
+        "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri" : "[uri(deployment().properties.templateLink.uri, 'nestedtemplates/ImportVHD-FromZipArchiveURL/azuredeploy.json')]"
+          },
+          "parameters": {
+            "location":{
+              "value":"[parameters('location')]"
+            },
+            "Source": {
+              "value": "[variables('urlVHDZipArchive')]"
+            },
+            "Destination": {
+              "value": "[variables('uriWritableStorageAccountBlobContainerSasToken')]"
+            }
+          }
+        }
+      }
+    ],
+    "outputs": {
+      "vhdBlobUriList": {
+          "type": "object",
+          "value": "[reference(variables('linkedTemplateName_ImportVHD-FromZipArchive')).outputs.vhdBlobUriList.value]"
+      }
+    }
+}
