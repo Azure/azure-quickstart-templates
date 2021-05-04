@@ -17,11 +17,14 @@ This Microsoft Azure Resource Manager template deploys a single VM and allows yo
 
 Options for blockchain software include:
 
+- [bitcoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bitcoin.md)
 - [bitshares](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bitshares.md) (note: failed testing on 10/7/2016)
 - [bitswift](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bitswift.md)
 - [blocknet](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/blocknet.md)
 - [bloqenterprise](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bloqenterprise.md) (note: failed testing on 10/7/2016)
+- [dash](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/dash.md)
 - [digibyte](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/digibyte.md)
+- [dynamic](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/dynamic.md)
 - [emercoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/emercoin.md)
 - [groestlcoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/groestlcoin.md)
 - [influx](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/influx.md)
@@ -30,9 +33,10 @@ Options for blockchain software include:
 - [multichain](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/multichain.md)
 - [nxt](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/nxt.md)
 - [okcash](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/okcash.md)
-- [shadow](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/shadow.md)
+- [particl](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/particl.md)
+- [sequence](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/sequence.md)
 - [stratis](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/stratis.md)
 - [syscoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/syscoin.md)
 - [vcash](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/vcash.md)
-- [viacoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/viacoin.md)
 - [vechain](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/vechain.md)
+- [viacoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/viacoin.md)
