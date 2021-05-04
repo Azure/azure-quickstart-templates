@@ -1,15 +1,15 @@
 # Network Visibility with Moloch and CloudLens
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/cloudlens-moloch-ubuntu/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/cloudlens-moloch-ubuntu/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/cloudlens/cloudlens-moloch-ubuntu/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/cloudlens/cloudlens-moloch-ubuntu/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/cloudlens-moloch-ubuntu/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/cloudlens-moloch-ubuntu/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/cloudlens/cloudlens-moloch-ubuntu/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/cloudlens/cloudlens-moloch-ubuntu/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/cloudlens-moloch-ubuntu/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/cloudlens-moloch-ubuntu/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/cloudlens/cloudlens-moloch-ubuntu/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/cloudlens/cloudlens-moloch-ubuntu/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudlens-moloch-ubuntu%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudlens-moloch-ubuntu%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fcloudlens%2Fcloudlens-moloch-ubuntu%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fcloudlens%2Fcloudlens-moloch-ubuntu%2Fazuredeploy.json)
 
 <!-- TOC -->
 
@@ -37,7 +37,7 @@ This template will deploy:
 -	2 Public IP’s, one for the tapping vm and one for the Moloch tool
 -	Two UbuntuServer 16.04.0-LTS VMs
 
-![Deployment Solution Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudlens-moloch-ubuntu/images/architecture.png?raw=true)
+![Deployment Solution Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/cloudlens/cloudlens-moloch-ubuntu/images/architecture.png?raw=true)
 
 ## Licenses and Costs
 
