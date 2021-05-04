@@ -1,4 +1,4 @@
-﻿#
+#
 #  This PowerShell script shows how to deploy the "DNS forwarder" resource template.
 #  As storage account names need to be unique, please edit storageAccName to a value that's available.
 #
