@@ -13,12 +13,30 @@ $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
 # Checks if TFS is installed, if not downloads and runs the web installer
 function Ensure-TfsInstalled()
 {
+    # Check if TFS is already installed
+    $tfsInstalled = $false
+
+    if(Test-Path $InstallKey)
+    {
+        $key = Get-Item $InstallKey
+        $value = $key.GetValue("Install", $null)
+
+        if(($value -ne $null) -and $value -eq 1)
+        {
+            $tfsInstalled = $true
+        }
+    }
+
+    if(-not $tfsInstalled)
+    {
         Write-Verbose "Installing TFS using ISO"
         # Download TFS install to a temp folder, then run it
         $parent = [System.IO.Path]::GetTempPath()
         [string] $name = [System.Guid]::NewGuid()
         [string] $fullPath = Join-Path $parent $name
 
+        try 
+        {
             New-Item -ItemType Directory -Path $fullPath
 
             Invoke-WebRequest -UseBasicParsing -Uri $TfsDownloadUrl -OutFile $fullPath\tfsserver2017.3.1_enu.iso
@@ -26,13 +44,20 @@ function Ensure-TfsInstalled()
             $mountResult = Mount-DiskImage $fullPath\tfsserver2017.3.1_enu.iso -PassThru
             $driveLetter = ($mountResult | Get-Volume).DriveLetter
             
-            Start-Job -Name "InstallTfs" -ScriptBlock {
-               & $driveLetter":\TfsServer2017.3.1.exe"
-            } -ArgumentList '/quiet'
-
-            Write-Output $LASTEXITCODE
-
-            Get-Job -Name "InstallTfs" | Wait-Job | Receive-Job
+            $process = Start-Process -FilePath $driveLetter":\TfsServer2017.3.1.exe" -ArgumentList '/quiet' -PassThru
+            $process.WaitForExit()
+            Start-Sleep -Seconds 600
+        }
+        finally 
+        {
+            Dismount-DiskImage -ImagePath $fullPath\tfsserver2017.3.1_enu.iso
+            Remove-Item $fullPath\tfsserver2017.3.1_enu.iso -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+    else
+    {
+        Write-Verbose "TFS is already installed"
+    }
 }
 
 # Runs tfsconfig to configure TFS on the machine
