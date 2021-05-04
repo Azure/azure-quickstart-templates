@@ -35,8 +35,6 @@ function Ensure-TfsInstalled()
         [string] $name = [System.Guid]::NewGuid()
         [string] $fullPath = Join-Path $parent $name
 
-        try 
-        {
             New-Item -ItemType Directory -Path $fullPath
 
             Invoke-WebRequest -UseBasicParsing -Uri $TfsDownloadUrl -OutFile $fullPath\tfsserver2017.3.1_enu.iso
@@ -44,20 +42,13 @@ function Ensure-TfsInstalled()
             $mountResult = Mount-DiskImage $fullPath\tfsserver2017.3.1_enu.iso -PassThru
             $driveLetter = ($mountResult | Get-Volume).DriveLetter
             
-            $process = Start-Process -FilePath $driveLetter":\TfsServer2017.3.1.exe" -ArgumentList '/quiet' -PassThru
-            $process.WaitForExit()
-        }
-        finally 
-        {
-            Dismount-DiskImage -ImagePath $fullPath\tfsserver2017.3.1_enu.iso
-            Remove-Item $fullPath\tfsserver2017.3.1_enu.iso -Recurse -Force -ErrorAction SilentlyContinue
-        }
+            Start-Job -Name "InstallTfs" -ScriptBlock {
+               & $driveLetter":\TfsServer2017.3.1.exe" -ArgumentList '/quiet'
+            }
+            Write-Output $LASTEXITCODE
+
+            Get-Job -Name "InstallTfs" | Wait-Job | Receive-Job
     }
-    else
-    {
-        Write-Verbose "TFS is already installed"
-    }
-}
 
 # Runs tfsconfig to configure TFS on the machine
 function Configure-TfsWorkgroup()
@@ -77,5 +68,5 @@ function Configure-TfsWorkgroup()
 }
 
 Ensure-TfsInstalled
-Start-Sleep -Seconds 600
+Start-Sleep -Seconds 300
 Configure-TfsWorkgroup
