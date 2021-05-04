@@ -39,6 +39,10 @@ $blobs | Remove-AzStorageBlob -Verbose -Force
 # TODO if there is no row in the PR table, this won't end well...
 Write-Host "Fetching row for: $RowKey"
 $r = Get-AzTableRow -table $cloudTablePRs -ColumnName "RowKey" -Value $RowKey -Operator Equal
+if ($null -eq $r) {
+    Write-Error "Could not find row with key $RowKey"
+    Return
+}
 
 # change the status before copying the row/data to the "Live" table
 if ($r.status -eq $null) {
