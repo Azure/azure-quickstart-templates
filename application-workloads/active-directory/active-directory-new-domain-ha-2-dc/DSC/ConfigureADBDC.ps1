@@ -1,4 +1,4 @@
-﻿configuration ConfigureADBDC
+configuration ConfigureADBDC
 {
    param
     (
