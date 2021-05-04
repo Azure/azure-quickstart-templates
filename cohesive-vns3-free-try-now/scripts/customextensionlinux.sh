@@ -10,7 +10,7 @@ mv  VNS3_434API_TOOL_20171114 api
 chmod 700 api/vnscubed.rb
 chmod 700 api/api.rb
 
-sleep 1200
+sleep 200
 
 wait_for_api () {
    while :
