@@ -78,4 +78,3 @@ function Configure-TfsBasic()
 
 Ensure-TfsInstalled
 Configure-TfsBasic
-
