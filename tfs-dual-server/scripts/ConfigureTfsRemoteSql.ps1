@@ -52,7 +52,8 @@ function Ensure-TfsInstalled()
         }
         finally 
         {
-            Remove-Item $fullPath -Recurse -Force -ErrorAction SilentlyContinue
+            Dismount-DiskImage -ImagePath $fullPath\tfsserver2017.3.1_enu.iso
+            Remove-Item $fullPath\tfsserver2017.3.1_enu.iso -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
     else
@@ -85,7 +86,7 @@ function Download-PsTools()
 function Configure-TfsRemoteSql()
 {
     # Run tfsconfig to do the unattend install
-    $path = Join-Path $InstallDirectory '\tools\tfsconfig.exe'
+    $path = Join-Path $InstallDirectory '\Tools\tfsconfig.exe'
 
     Write-Verbose "Running tfsconfig..."
 
@@ -101,5 +102,6 @@ function Configure-TfsRemoteSql()
 }
 
 Ensure-TfsInstalled
+Start-Sleep -Seconds 300
 Download-PsTools
 Configure-TfsRemoteSql
