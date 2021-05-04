@@ -46,7 +46,6 @@ function Ensure-TfsInstalled()
             
             $process = Start-Process -FilePath $driveLetter":\TfsServer2017.3.1.exe" -ArgumentList '/quiet' -PassThru
             $process.WaitForExit()
-            Start-Sleep -Seconds 600
         }
         finally 
         {
@@ -68,7 +67,7 @@ function Configure-TfsWorkgroup()
     $path = Join-Path $InstallDirectory '\Tools\tfsconfig.exe'
     $tfsConfigArgs = 'unattend /configure /type:Basic /inputs:"InstallSqlExpress=True"'
 
-    While (!(Test-Path $path)) { Start-Sleep -Seconds 30 }
+      While ( 1 -eq 1) { if ( Test-Path $path ) { break } start-sleep -Seconds 60 }
 
     Write-Verbose "Running tfsconfig..."
 
