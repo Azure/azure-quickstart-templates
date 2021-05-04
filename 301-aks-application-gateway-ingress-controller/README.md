@@ -126,11 +126,7 @@ The following picture shows the resources deployed by the ARM template in the MC
 
 ![MC Resource Group](images/mc_resourcegroup.png)
 
-**NOTE**: if you deploy the ARM template without using the companion [deploy.sh](https://raw.githubusercontent.com/paolosalvatori/aks-agic/master/scripts/deploy.sh), make sure to properly install the necessary preview features (for more information, see the script) and specify a value fo the following parameters:
-
-- **aksClusterKubernetesVersion**: The latest version of Kubernetes available in your region
-- **aadProfileAdminGroupObjectIDs**: an array containing the objectId of one or more Azure Active Directory groups for cluster administrator users
-- **vmAdminPasswordOrKey**: the key or password for the jumpbox virtual machine
+**NOTE**: make sure to properly install the necessary preview features.
 
 ## Application Gateway ##
 
