@@ -1,4 +1,4 @@
-![Dash-Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/blockchain/images/dash.png)
+![Dash-Azure](../images/dash.png)
 
 # Dash Core Blockchain Node on Ubuntu VM
 

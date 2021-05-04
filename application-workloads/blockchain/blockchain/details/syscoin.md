@@ -1,4 +1,4 @@
-![Syscoin-Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/blockchain/images/syscoin.png)
+![Syscoin-Azure](../images/syscoin.png)
 
 # Syscoin Blockchain Node on Ubuntu VM
 

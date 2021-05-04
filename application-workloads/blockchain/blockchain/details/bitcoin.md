@@ -1,4 +1,4 @@
-![Bitcoin-Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/blockchain/images/bitcoin.png)
+![Bitcoin-Azure](../images/bitcoin.png)
 
 # Bitcoin Core Blockchain Node on Ubuntu VM
 
