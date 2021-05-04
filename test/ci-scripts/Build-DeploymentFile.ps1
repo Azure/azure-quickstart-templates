@@ -47,9 +47,12 @@ if ($bicepSupported) {
         }
     }
     
-    # Deploy the compiled JSON file, not the one included in the sample (we might be using a different version of bicep now)
-    $fileToDeploy = $CompiledJsonFilename
-    Write-Host "##vso[task.setvariable variable=compiled.json.filename]$CompiledJsonFilename"
+    # Deploy the JSON file included in the sample, not the one we temporarily built
+    $fileToDeploy = $MainTemplateFilenameJson
+    Write-Host "##vso[task.setvariable variable=compiled.json.filename]$MainTemplateFilenameJson"
+
+    # Delete the temporary built JSON file
+    Remove-Item $CompiledJsonPath
 }
 else {
     # Just deploy the JSON file included in the sample
