@@ -21,7 +21,7 @@ function Ensure-TfsInstalled()
         $key = Get-Item $InstallKey
         $value = $key.GetValue("Install", $null)
 
-        if(($value -ne $null) -and $value -eq 1)
+        if(($null -ne $value) -and $value -eq 1)
         {
             $tfsInstalled = $true
         }
@@ -77,5 +77,5 @@ function Configure-TfsWorkgroup()
 }
 
 Ensure-TfsInstalled
-Start-Sleep -Seconds 300
+Start-Sleep -Seconds 600
 Configure-TfsWorkgroup
