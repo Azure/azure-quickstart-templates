@@ -656,14 +656,11 @@
       "type": "string",
       "defaultValue": "Premium_LRS",
       "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Standard_RAGRS",
-        "Standard_ZRS",
         "Premium_LRS",
         "Premium_ZRS",
-        "Standard_GZRS",
-        "Standard_RAGZRS"
+        "StandardSSD_LRS",
+        "StandardSSD_ZRS", 
+        "Standard_LRS"
       ],
       "metadata": {
         "description": "Specifies the storage account type for OS and data disk."
@@ -937,12 +934,12 @@
     "bastionSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('bastionSubnetName'))]",
     "bastionHostId": "[resourceId('Microsoft.Network/bastionHosts', parameters('bastionHostName'))]",
     "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('logAnalyticsWorkspaceName'))]",
-    "readerRoleId": "[concat(subscription().Id, '/providers/Microsoft.Authorization/roleDefinitions/', variables('readerRoleDefinitionName'))]",
-    "contributorRoleId": "[concat(subscription().Id, '/providers/Microsoft.Authorization/roleDefinitions/', variables('contributorRoleDefinitionName'))]",
-    "acrPullRoleId": "[concat(subscription().Id, '/providers/Microsoft.Authorization/roleDefinitions/', variables('acrPullRoleDefinitionName'))]",
-    "aksContributorRoleAssignmentName": "[guid(concat(resourceGroup().id, variables('aksClusterUserDefinedManagedIdentityName'),'ContributorRoleAssignment'))]",
+    "readerRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('readerRoleDefinitionName'))]",
+    "contributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('contributorRoleDefinitionName'))]",
+    "acrPullRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('acrPullRoleDefinitionName'))]",
+    "aksContributorRoleAssignmentName": "[guid(concat(resourceGroup().id, variables('aksClusterUserDefinedManagedIdentityName'), parameters('aksClusterName')))]",
     "aksContributorRoleAssignmentId": "[resourceId('Microsoft.Authorization/roleAssignments', variables('aksContributorRoleAssignmentName'))]",
-    "appGwContributorRoleAssignmentName": "[guid(concat(resourceGroup().id, variables('applicationGatewayUserDefinedManagedIdentityName'),'ContributorRoleAssignment'))]",
+    "appGwContributorRoleAssignmentName": "[guid(concat(resourceGroup().id, variables('applicationGatewayUserDefinedManagedIdentityName'), parameters('applicationGatewayName')))]",
     "acrPullRoleAssignmentName": "[concat('Microsoft.Authorization/', guid(concat(resourceGroup().id, 'acrPullRoleAssignment')))]",
     "containerInsightsSolutionName": "[concat('ContainerInsights(', parameters('logAnalyticsWorkspaceName'), ')')]",
     "acrPublicDNSZoneForwarder": "[if(equals(toLower(environment().name), 'azureusgovernment'), 'azurecr.us', 'azurecr.io')]",
@@ -1480,25 +1477,25 @@
       }
     },
     {
+      "comments": "User-Defined Managed Identity defined for the AKS cluster. Used to access the Virtual Network and other resources.",
       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
       "name": "[variables('aksClusterUserDefinedManagedIdentityName')]",
       "apiVersion": "2018-11-30",
-      "location": "[parameters('location')]",
-      "comments": "User-Defined Managed Identity defined for the AKS cluster. Used to access the Virtual Network and other resources."
+      "location": "[parameters('location')]"      
     },
     {
+      "comments": "User-Defined Managed Identity used by the Application Gateway is assigned. Used to access Azure Key Vault.",
       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
       "apiVersion": "2018-11-30",
       "name": "[variables('applicationGatewayUserDefinedManagedIdentityName')]",
-      "location": "[parameters('location')]",
-      "comments": "User-Defined Managed Identity used by the Application Gateway is assigned. Used to access Azure Key Vault."
+      "location": "[parameters('location')]"      
     },
     {
+      "comments": "User-Defined Managed Identity used by an AAD Pod Identity. Used to access Azure Key Vault."
       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
       "apiVersion": "2018-11-30",
       "name": "[variables('aadPodIdentityUserDefinedManagedIdentityName')]",
-      "location": "[parameters('location')]",
-      "comments": "User-Defined Managed Identity used by an AAD Pod Identity. Used to access Azure Key Vault."
+      "location": "[parameters('location')]"
     },
     {
       "type": "Microsoft.Authorization/roleAssignments",
@@ -1594,6 +1591,7 @@
           }
         },
         {
+          "comments": "Grant the AKS cluster ingress controller pod managed identity with reader role permissions over Key Vault; paired with the Access Policy, this allows our ingress controller to pull certificates.",
           "type": "providers/roleAssignments",
           "apiVersion": "2020-04-01-preview",
           "name": "[concat('Microsoft.Authorization/', guid(concat(resourceGroup().id), variables('readerRoleId')))]",
@@ -1601,7 +1599,6 @@
             "[variables('keyVaultId')]",
             "[variables('aadPodIdentityUserDefinedManagedIdentityId')]"
           ],
-          "comments": "Grant the AKS cluster ingress controller pod managed identity with reader role permissions over Key Vault; paired with the Access Policy, this allows our ingress controller to pull certificates.",
           "properties": {
             "roleDefinitionId": "[variables('readerRoleId')]",
             "principalId": "[reference(variables('aadPodIdentityUserDefinedManagedIdentityId')).principalId]",
@@ -1611,11 +1608,11 @@
       ]
     },
     {
+      "comments": "Container registry for storing docker images",
       "name": "[parameters('acrName')]",
       "type": "Microsoft.ContainerRegistry/registries",
       "apiVersion": "2019-12-01-preview",
       "location": "[parameters('location')]",
-      "comments": "Container registry for storing docker images",
       "dependsOn": [
         "[variables('acrPrivateDnsZoneId')]"
       ],

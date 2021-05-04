@@ -118,7 +118,7 @@ is 100, and in case of WAF-enabled SKUs, this limit is 40. This implies that the
 
 ## Deployment ##
 
-You can use the [deploy.sh](https://raw.githubusercontent.com/paolosalvatori/aks-agic/master/scripts/deploy.sh) Bash script to deploy the topology. The following picture shows the resources deployed by the ARM template in the target resource group.
+The following picture shows the resources deployed by the ARM template in the target resource group.
 
 ![Resource Group](images/resourcegroup.png)
 
