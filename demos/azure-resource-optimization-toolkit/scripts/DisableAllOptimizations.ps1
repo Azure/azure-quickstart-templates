@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS  
  Disable the ARO Toolkit 
 .DESCRIPTION  

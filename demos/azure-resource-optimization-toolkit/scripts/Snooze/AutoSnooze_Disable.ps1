@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS  
  Disable AutoSnooze feature
 .DESCRIPTION  

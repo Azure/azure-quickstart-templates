@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS  
  Script for deleting the resource group
 .DESCRIPTION  

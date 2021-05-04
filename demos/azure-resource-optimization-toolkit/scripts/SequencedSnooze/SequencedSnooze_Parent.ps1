@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS  
  This runbook used to perform sequenced start or stop Azure RM VM
 .DESCRIPTION  

@@ -1,21 +1,37 @@
-﻿<#
+<#
 .SYNOPSIS  
- Runbook for shutdown the Azure VM based on CPU usage
+ Wrapper script for get all the VM's in all RG's or subscription level and then call the Start or Stop runbook
 .DESCRIPTION  
- Runbook for shutdown the Azure VM based on CPU usage
+ Wrapper script for get all the VM's in all RG's or subscription level and then call the Start or Stop runbook
 .EXAMPLE  
-.\AutoSnooze_CreateAlert_Parent.ps1 -WhatIf $false
+.\ScheduledSnooze_Parent.ps1 -Action "Value1" -WhatIf "False"
 Version History  
 v1.0   - Initial Release  
 #>
-
 Param(
+[Parameter(Mandatory=$true,HelpMessage="Enter the value for Action. Values can be either stop or start")][String]$Action,
 [Parameter(Mandatory=$false,HelpMessage="Enter the value for WhatIf. Values can be either true or false")][bool]$WhatIf = $false
 )
 
-function CheckExcludeVM ($FilterVMList)
+function ScheduleSnoozeAction ($VMObject,[string]$Action)
 {
     
+    Write-Output "Calling the ScheduledSnooze_Child wrapper (Action = $($Action))..."
+    if($Action.ToLower() -eq 'start')
+    {
+        $params = @{"VMName"="$($VMObject.Name)";"Action"="start";"ResourceGroupName"="$($VMObject.ResourceGroupName)"}   
+    }    
+    elseif($Action.ToLower() -eq 'stop')
+    {
+        $params = @{"VMName"="$($VMObject.Name)";"Action"="stop";"ResourceGroupName"="$($VMObject.ResourceGroupName)"}                    
+    }    
+
+    Write-Output "Performing the schedule $($Action) for the VM : $($VMObject.Name)"
+    $runbook = Start-AzureRmAutomationRunbook -automationAccountName $automationAccountName -Name 'ScheduledSnooze_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params
+}
+
+function CheckExcludeVM ($FilterVMList)
+{
     $AzureVM= Get-AzureRmVM -ErrorAction SilentlyContinue
     [boolean] $ISexists = $false
             
@@ -42,7 +58,6 @@ function CheckExcludeVM ($FilterVMList)
             $invalidvm = $invalidvm+$filtervm
         }
     }
-
     if($invalidvm -ne $null)
     {
         Write-Output "Runbook Execution Stopped! Invalid VM Name(s) in the exclude list: $($invalidvm) "
@@ -51,9 +66,8 @@ function CheckExcludeVM ($FilterVMList)
     }
     else
     {
-        return $ExAzureVMList
-    }
-    
+        Write-Output "Exclude VM's validation completed..."
+    }    
 }
 
 #-----L O G I N - A U T H E N T I C A T I O N-----
@@ -90,11 +104,16 @@ $ExcludeVMNames = Get-AutomationVariable -Name 'External_ExcludeVMNames'
 $automationAccountName = Get-AutomationVariable -Name 'Internal_AROautomationAccountName'
 $aroResourceGroupName = Get-AutomationVariable -Name 'Internal_AROResourceGroupName'
 
-#-----Prepare the inputs for alert attributes-----
-$webhookUri = Get-AutomationVariable -Name 'Internal_AutoSnooze_WebhookUri'
-
 try
     {  
+        $Action = $Action.Trim().ToLower()
+
+        if(!($Action -eq "start" -or $Action -eq "stop"))
+        {
+            Write-Output "`$Action parameter value is : $($Action). Value should be either start or stop!"
+            Write-Output "Completed the runbook execution..."
+            exit
+        }            
         Write-Output "Runbook Execution Started..."
         [string[]] $VMfilterList = $ExcludeVMNames -split ","
         [string[]] $VMRGList = $ResourceGroupNames -split ","
@@ -102,34 +121,9 @@ try
         #Validate the Exclude List VM's and stop the execution if the list contains any invalid VM
         if([string]::IsNullOrEmpty($ExcludeVMNames) -ne $true)
         {
-            Write-Output "Exclude VM's added so validating the resource(s)..."            
-            $ExAzureVMList = CheckExcludeVM -FilterVMList $VMfilterList
+            Write-Output "Exclude VM's added so validating the resource(s)..."
+            CheckExcludeVM -FilterVMList $VMfilterList
         } 
-
-        if ($ExAzureVMList -ne $null -and $WhatIf -eq $false)
-        {
-            foreach($VM in $ExAzureVMList)
-            {
-                try
-                {
-                        Write-Output "Disabling the alert rules for VM : $($VM.Name)" 
-                        $params = @{"VMObject"=$VM;"AlertAction"="Disable";"WebhookUri"=$webhookUri}                    
-                        $runbook = Start-AzureRmAutomationRunbook -automationAccountName $automationAccountName -Name 'AutoSnooze_CreateAlert_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params
-                }
-                catch
-                {
-                    $ex = $_.Exception
-                    Write-Output $_.Exception 
-                }
-            }
-        }
-        elseif($ExAzureVMList -ne $null -and $WhatIf -eq $true)
-        {
-            Write-Output "WhatIf parameter is set to True..."
-            Write-Output "What if: Performing the alert rules disable for the Exclude VM's..."
-            Write-Output $ExcludeVMNames
-        }
-
         $AzureVMListTemp = $null
         $AzureVMList=@()
         ##Getting VM Details based on RG List or Subscription
@@ -138,14 +132,14 @@ try
             foreach($Resource in $VMRGList)
             {
                 Write-Output "Validating the resource group name ($($Resource.Trim()))" 
-                $checkRGname = Get-AzureRmResourceGroup  $Resource.Trim() -ev notPresent -ea 0  
+                $checkRGname = Get-AzureRmResourceGroup -Name $Resource.Trim() -ev notPresent -ea 0  
                 if ($checkRGname -eq $null)
                 {
-                    Write-Output "$($Resource) is not a valid Resource Group Name. Please Verify!"
                     Write-Warning "$($Resource) is not a valid Resource Group Name. Please Verify!"
                 }
                 else
                 {                   
+                    Write-Output "Resource Group Exists..."
                     $AzureVMListTemp = Get-AzureRmVM -ResourceGroupName $Resource -ErrorAction SilentlyContinue
                     if($AzureVMListTemp -ne $null)
                     {
@@ -158,8 +152,8 @@ try
         {
             Write-Output "Getting all the VM's from the subscription..."  
             $AzureVMList=Get-AzureRmVM -ErrorAction SilentlyContinue
-        }        
-        
+        }
+
         $ActualAzureVMList=@()
         if($VMfilterList -ne $null)
         {
@@ -177,15 +171,15 @@ try
             $ActualAzureVMList = $AzureVMList
         }
 
+        Write-Output "The current action is $($Action)"
+        
         if($WhatIf -eq $false)
         {    
+                
             foreach($VM in $ActualAzureVMList)
             {  
-                    Write-Output "Creating alert rules for the VM : $($VM.Name)"
-                    $params = @{"VMObject"=$VM;"AlertAction"="Create";"WebhookUri"=$webhookUri}                    
-                    $runbook = Start-AzureRmAutomationRunbook -automationAccountName $automationAccountName -Name 'AutoSnooze_CreateAlert_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params
+                ScheduleSnoozeAction -VMObject $VM -Action $Action
             }
-            Write-Output "Note: All the alert rules creation are processed in parallel. Please check the child runbook (AutoSnooze_CreateAlert_Child) job status..."
         }
         elseif($WhatIf -eq $true)
         {
