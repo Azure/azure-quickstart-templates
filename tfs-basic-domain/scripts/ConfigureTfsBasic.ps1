@@ -77,4 +77,5 @@ function Configure-TfsBasic()
 }
 
 Ensure-TfsInstalled
+Start-Sleep -Seconds 300
 Configure-TfsBasic
