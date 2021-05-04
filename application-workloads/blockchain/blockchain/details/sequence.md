@@ -1,4 +1,4 @@
-![Sequence-Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/blockchain/images/sequence.png)
+![Sequence-Azure](../images/sequence.png)
 
 # Sequence Blockchain Node on Ubuntu VM
 

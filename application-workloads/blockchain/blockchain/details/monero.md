@@ -1,4 +1,4 @@
-![Monero-on-Ubuntu](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/blockchain/images/monero.png)
+![Monero-on-Ubuntu](../images/monero.png)
 
 # Monero Full Node on Ubuntu
 
