@@ -3,6 +3,13 @@
 This script runs some validation on an Azure QuickStarts sample locally so that simple errors can be caught before
 a PR is submitted.
 
+Prerequesites:
+
+1) Install bicep
+    - Make sure it's on the path
+2) Install the Azure TTK (https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/test-toolkit)
+    - Set environment variable TTK_FOLDER to the installation folder location
+
 Usage:
 
 1) cd to the sample folder
@@ -15,7 +22,8 @@ Usage:
 param(
     [string] $SampleFolder = ".", # this is the path to the sample
     [string] $StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME ? $ENV:STORAGE_ACCOUNT_NAME : "azurequickstartsservice",
-    [string] $CloudEnvironment = "AzureCloud" # AzureCloud/AzureUSGovernment
+    [string] $CloudEnvironment = "AzureCloud", # AzureCloud/AzureUSGovernment
+    [string] $TtkFolder = $ENV:TTK_FOLDER
 )
 
 $ErrorActionPreference = "Continue"
@@ -25,6 +33,7 @@ $SampleFolder = Resolve-Path $SampleFolder
 $SampleName = Split-Path -Leaf $SampleFolder
 
 if (!(Test-Path "metadata.json")) {
+    $ErrorActionPreference = "Stop"
     Write-Error "Test-LocalSample must be run from within a sample folder. This folder contains no metadata.json file."
     return
 }
@@ -62,7 +71,7 @@ Write-Output $buildHostOutput
 $vars = Find-VarsFromWriteHostOutput $buildHostOutput
 $mainTemplateDeploymentFilename = $vars["MAINTEMPLATE_DEPLOYMENT_FILENAME"]
 Assert-NotEmptyOrNull $mainTemplateDeploymentFilename "mainTemplateDeploymentFilename"
-$CompiledJsonFilename = $vars["COMPILED_JSON_FILENAME"]
+$CompiledJsonFilename = $vars["COMPILED_JSON_FILENAME"] # $null if not bicep sample
 
 # Validate-MetaData
 Write-Host "Validating metadata.json"
@@ -92,17 +101,40 @@ Write-Output $validateReadMeHostOutput
 $vars = Find-VarsFromWriteHostOutput $validateReadMeHostOutput
 $resultReadMe = $vars["RESULT_README"] # will be null if fails
 
-# TODO: Test-BestPractices.ps1
+# Test-BestPractices
+if (!$TtkFolder) {
+    # Check if the TTK is in a local repo as a sibling to this repo
+    $TtkFolder = "$PSScriptRoot/../../../arm-ttk"
+    if (test-path $TtkFolder) {
+        $TtkFolder = Resolve-Path $TtkFolder
+    }
+    else {
+        $ErrorActionPreference = "Stop"
+        Write-Error "Could not find the ARM TTK. Please install from https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/test-toolkit and set environment variable TTK_FOLDER to the installation folder location."
+        Return
+    }
+}
+Write-Host "Validating JSON best practices"
+$validateBPOutput =
+& $PSScriptRoot/Test-BestPractices.ps1 `
+    -SampleFolder $SampleFolder `
+    -MainTemplateDeploymentFilename $mainTemplateDeploymentFilename `
+    -ttkFolder $TtkFolder `
+    6>&1
+Write-Output $validateBPOutput
+$vars = Find-VarsFromWriteHostOutput $validateBPOutput
 
 # Clean up
-if (Test-Path $CompiledJsonFilename) {
+if ($null -ne $CompiledJsonFilename -and (Test-Path $CompiledJsonFilename)) {
     Remove-Item $CompiledJsonFilename
 }
 
 Write-host "Validation complete."
 
 if ($error) {
+    $ErrorActionPreference = "Stop"
     Write-Error "*** ERRORS HAVE BEEN FOUND. SEE DETAILS ABOVE ***"
-} else {
+}
+else {
     Write-Host "No errors found."
 }

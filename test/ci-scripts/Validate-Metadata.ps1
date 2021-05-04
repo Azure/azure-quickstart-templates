@@ -9,6 +9,7 @@ Write-host "Validating metadata file: $SampleFolder\metadata.json"
 $metadata = Get-Content -Path "$SampleFolder\metadata.json" -Raw 
 
 #Check metadata.json against the schema
+Write-host "Validating contents against JSON schema from https://aka.ms/azure-quickstart-templates-metadata-schema"
 $schema = Invoke-WebRequest -Uri "https://aka.ms/azure-quickstart-templates-metadata-schema" -UseBasicParsing
 $metadata | Test-Json -Schema $schema.content
 

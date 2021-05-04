@@ -29,6 +29,6 @@ function Assert-IsTrue([bool] $condition, $message) {
 
 function Assert-NotEmptyOrNull([string] $string, $message) {
     if (!($string -is [string]) -or $string -eq "") {
-        Write-Error "Assertion failed: String should not be empty: $message"
+        Write-Error "Assertion failed: String should not be empty or null: $message"
     }
-}
+}   

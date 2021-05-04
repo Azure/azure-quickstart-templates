@@ -13,7 +13,15 @@ param (
     [string] $ttkFolder = $ENV:TTK_FOLDER
 )
 
-Import-Module "$($ttkFolder)/arm-ttk/arm-ttk.psd1" -Verbose
+if ($ttkFolder) {
+    Import-Module "$($ttkFolder)/arm-ttk/arm-ttk.psd1" -Verbose
+}
+else {
+    if (!(Get-Command Test-AzTemplate -ErrorAction SilentlyContinue)) {
+        Write-Error "TTK_FOLDER environment variable is not set, and the Azure TTK has not been imported"
+        Return
+    }
+}
 
 $templatePath = "$($SampleFolder)/$MainTemplateDeploymentFilename"
 Write-Host "Calling Test-AzureTemplate on $templatePath"
