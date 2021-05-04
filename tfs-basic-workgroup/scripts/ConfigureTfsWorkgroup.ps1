@@ -64,12 +64,16 @@ function Ensure-TfsInstalled()
 function Configure-TfsWorkgroup()
 {
     # Run tfsconfig to do the unattend install
+
     $path = Join-Path $InstallDirectory '\Tools\tfsconfig.exe'
     $tfsConfigArgs = 'unattend /configure /type:Basic /inputs:"InstallSqlExpress=True"'
 
+    While (!(Test-Path $path)) { Start-Sleep -Seconds 30 }
+
     Write-Verbose "Running tfsconfig..."
 
-    Invoke-Expression "& '$path' $tfsConfigArgs"
+    $process = Start-Process -FilePath $path $tfsConfigArgs
+            $process.WaitForExit()
 
     if($LASTEXITCODE)
     {
