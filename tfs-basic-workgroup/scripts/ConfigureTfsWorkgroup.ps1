@@ -82,5 +82,4 @@ function Configure-TfsWorkgroup()
 }
 
 Ensure-TfsInstalled
-Start-Sleep -Seconds 300
 Configure-TfsWorkgroup
