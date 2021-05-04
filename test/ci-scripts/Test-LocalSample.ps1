@@ -6,7 +6,7 @@ a PR is submitted.
 Prerequesites:
 
 1) Install bicep
-    - Make sure it's on the path
+    - Make sure it's on the path, or set environment variable BICEP_PATH to point to the executable
 2) Install the Azure TTK (https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/test-toolkit)
     - Set environment variable TTK_FOLDER to the installation folder location
 
@@ -23,7 +23,8 @@ param(
     [string] $SampleFolder = ".", # this is the path to the sample
     [string] $StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME ? $ENV:STORAGE_ACCOUNT_NAME : "azurequickstartsservice",
     [string] $CloudEnvironment = "AzureCloud", # AzureCloud/AzureUSGovernment
-    [string] $TtkFolder = $ENV:TTK_FOLDER
+    [string] $TtkFolder = $ENV:TTK_FOLDER,
+    [string] $BicepPath = $ENV:BICEP_PATH ? $ENV:BICEP_PATH : "bicep"
 )
 
 $ErrorActionPreference = "Continue"
@@ -63,7 +64,7 @@ $buildHostOutput = & $PSScriptRoot/Build-DeploymentFile.ps1 `
     -MainTemplateFilenameBicep "main.bicep" `
     -MainTemplateFilenameJson $mainTemplateFilenameJson `
     -BuildReason "PullRequest" `
-    -BicepPath "bicep" `
+    -BicepPath $BicepPath `
     -BicepVersion "(current)" `
     -BicepSupported:$bicepSupported `
     6>&1

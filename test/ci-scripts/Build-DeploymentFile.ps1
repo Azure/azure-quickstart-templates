@@ -42,8 +42,8 @@ if ($bicepSupported) {
             -TemplateFilePathActual $MainTemplatePathJson `
             -ErrorAction Ignore # Ignore so we can write the following error message
         if (!$hashesMatch) {
-            Write-Error "The JSON in the sample does not match the JSON built from bicep`n" `
-                + "Either copy the expected output from the log into $MainTemplateFilenameJson or re-run 'bicep build $mainTemplateFilenameBicep --outfile $MainTemplateFilenameJson' in your sample folder using bicep version $BicepVersion"
+            Write-Error ("The JSON in the sample does not match the JSON built from bicep`n" `
+                    + "Either copy the expected output from the log into $MainTemplateFilenameJson or run the command ``bicep build $mainTemplateFilenameBicep --outfile $MainTemplateFilenameJson`` in your sample folder using bicep version $BicepVersion")
         }
     }
     
