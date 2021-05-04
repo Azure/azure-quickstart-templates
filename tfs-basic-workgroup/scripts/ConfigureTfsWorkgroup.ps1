@@ -49,6 +49,7 @@ function Ensure-TfsInstalled()
 
             Get-Job -Name "InstallTfs" | Wait-Job | Receive-Job
     }
+}
 
 # Runs tfsconfig to configure TFS on the machine
 function Configure-TfsWorkgroup()
