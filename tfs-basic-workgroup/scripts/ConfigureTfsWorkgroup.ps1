@@ -2,10 +2,11 @@
 param(
 
 )
+
 $ErrorActionPreference = 'Stop'
 
-# TFS 2017 Update 2
-$TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=850949'
+# TFS 2017 Update 3
+$TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=857132'
 $InstallDirectory = 'C:\Program Files\Microsoft Team Foundation Server 15.0'
 $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
 
@@ -20,7 +21,7 @@ function Ensure-TfsInstalled()
         $key = Get-Item $InstallKey
         $value = $key.GetValue("Install", $null)
 
-        if(($value -ne $null) -and ($value -eq 1))
+        if(($value -ne $null) -and $value -eq 1)
         {
             $tfsInstalled = $true
         }
@@ -28,7 +29,7 @@ function Ensure-TfsInstalled()
 
     if(-not $tfsInstalled)
     {
-        Write-Verbose "Installing TFS using web installer"
+        Write-Verbose "Installing TFS using ISO"
         # Download TFS install to a temp folder, then run it
         $parent = [System.IO.Path]::GetTempPath()
         [string] $name = [System.Guid]::NewGuid()
@@ -37,16 +38,19 @@ function Ensure-TfsInstalled()
         try 
         {
             New-Item -ItemType Directory -Path $fullPath
-            $serverLocation = Join-Path $fullPath 'tfsserver.exe'
 
-            Invoke-WebRequest -UseBasicParsing -Uri $TfsDownloadUrl -OutFile $serverLocation
+            Invoke-WebRequest -UseBasicParsing -Uri $TfsDownloadUrl -OutFile $fullPath\tfsserver2017.3.1_enu.iso
+
+            $mountResult = Mount-DiskImage $fullPath\tfsserver2017.3.1_enu.iso -PassThru
+            $driveLetter = ($mountResult | Get-Volume).DriveLetter
             
-            $process = Start-Process -FilePath $serverLocation -ArgumentList '/quiet' -PassThru
+            $process = Start-Process -FilePath $driveLetter":\TfsServer2017.3.1.exe" -ArgumentList '/quiet' -PassThru
             $process.WaitForExit()
         }
         finally 
         {
-            Remove-Item $fullPath -Recurse -Force -ErrorAction SilentlyContinue
+            Dismount-DiskImage -ImagePath $fullPath\tfsserver2017.3.1_enu.iso
+            Remove-Item $fullPath\tfsserver2017.3.1_enu.iso -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
     else
