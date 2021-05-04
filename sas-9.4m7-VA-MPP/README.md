@@ -46,6 +46,7 @@ The SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visu
 * one SAS Compute Server virtual machine (VM) for the SAS Visual Analytics in SAS 9.4M7 and SAS Visual Statistics in SAS 9.4M7 server main node, plus the number of VMs for the SAS Visual Analytics and SAS  Visual Statistics workers (as specified in the Visual Analytics Worker Count parameter)
 * the number of middle-tier VMs for the SAS 9.4M7 mid-tier server (as specified in the Mid-Tier VM Count parameter)
 * the number of metadata server VMs for the SAS 9.4M7 metadata clustered server (as specified in the Metadata VM Count parameter)
+* one Linux Bastion Host VM
 
 **Note:** The first release of the SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics supports only a single instance of the metadata server.
 
