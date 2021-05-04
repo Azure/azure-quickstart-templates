@@ -49,7 +49,7 @@ Topology
 --------
 
 The deployment topology is comprised of a predefined number (as per t-shirt sizing) Cloudera member nodes configured as a cluster, configured using a set number of manager,
-name and data nodes. Typical setup for Cloudera uses 3 master nodes with as many data nodes are needed for the size that has been choosen ranging from as
+name and data nodes. Typical setup for Cloudera uses 3 master nodes with as many data nodes are needed for the size that has been chosen ranging from as
 few as 3 to thousands of data nodes.  The current template will scale at the highest end to 200 data nodes when using the large t-shirt size.
 
 The following table outlines the deployment topology characteristics for each supported t-shirt size:

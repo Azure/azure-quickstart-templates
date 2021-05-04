@@ -37,15 +37,17 @@ $blobs | Remove-AzStorageBlob -Verbose -Force
 
 # Get the row to update - can't search by rowkey only since we don't know the partition key, but row key is guaranteed unique in our scenario
 # TODO if there is no row in the PR table, this won't end well...
-Write-Host "Fetching row for: $RowKey"
+Write-Host "Fetching row for: $RowKey in Table: $cloudTablePRs"
 $r = Get-AzTableRow -table $cloudTablePRs -ColumnName "RowKey" -Value $RowKey -Operator Equal
 if ($null -eq $r) {
     Write-Error "Could not find row with key $RowKey"
     Return
 }
+Write-Host "Result from Table: $r"
 
 # change the status before copying the row/data to the "Live" table
 if ($r.status -eq $null) {
+    Write-Host "Adding status column..."
     Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
 }
 else {
