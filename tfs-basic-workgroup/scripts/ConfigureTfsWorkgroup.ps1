@@ -13,22 +13,6 @@ $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
 # Checks if TFS is installed, if not downloads and runs the web installer
 function Ensure-TfsInstalled()
 {
-    # Check if TFS is already installed
-    $tfsInstalled = $false
-
-    if(Test-Path $InstallKey)
-    {
-        $key = Get-Item $InstallKey
-        $value = $key.GetValue("Install", $null)
-
-        if(($null -ne $value) -and $value -eq 1)
-        {
-            $tfsInstalled = $true
-        }
-    }
-
-    if(-not $tfsInstalled)
-    {
         Write-Verbose "Installing TFS using ISO"
         # Download TFS install to a temp folder, then run it
         $parent = [System.IO.Path]::GetTempPath()
@@ -43,12 +27,12 @@ function Ensure-TfsInstalled()
             $driveLetter = ($mountResult | Get-Volume).DriveLetter
             
             Start-Job -Name "InstallTfs" -ScriptBlock {
-               & $driveLetter":\TfsServer2017.3.1.exe" -ArgumentList '/quiet'
-            }
+               & $driveLetter":\TfsServer2017.3.1.exe"
+            } -ArgumentList '/quiet'
+
             Write-Output $LASTEXITCODE
 
             Get-Job -Name "InstallTfs" | Wait-Job | Receive-Job
-    }
 }
 
 # Runs tfsconfig to configure TFS on the machine
@@ -69,5 +53,5 @@ function Configure-TfsWorkgroup()
 }
 
 Ensure-TfsInstalled
-Start-Sleep -Seconds 600
+Start-Sleep -Seconds 300
 Configure-TfsWorkgroup
