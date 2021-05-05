@@ -8,6 +8,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # TFS 2017 Update 3
+# TFS 2017 Update 3
 $TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=857132'
 $InstallDirectory = 'C:\Program Files\Microsoft Team Foundation Server 15.0'
 $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
@@ -83,7 +84,7 @@ function Download-PsTools()
 }
 
 # Runs tfsconfig to configure TFS on the machine
-function Configure-TfsBasic()
+function Configure-TfsRemoteSql()
 {
     # Run tfsconfig to do the unattend install
     $path = Join-Path $InstallDirectory '\Tools\tfsconfig.exe'
@@ -101,4 +102,4 @@ function Configure-TfsBasic()
 
 Ensure-TfsInstalled
 Download-PsTools
-Configure-TfsBasic
+Configure-TfsRemoteSql
