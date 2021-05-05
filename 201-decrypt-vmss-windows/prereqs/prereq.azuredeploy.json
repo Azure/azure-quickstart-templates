@@ -2,10 +2,16 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "adminUsername": {
+        "vmssName": {
             "type": "string",
             "metadata": {
                 "description": "Name of existing VM Scale Set"
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "User Name of existing VM Scale Set"
             }
         },
         "adminPassword": {
@@ -15,36 +21,36 @@
             }
         },
         "keyVaultName": {
-          "type": "string",
-          "metadata": {
-            "description": "Name of the KeyVault to place the volume encryption key"
-          }
+            "type": "string",
+            "metadata": {
+                "description": "Name of the KeyVault to place the volume encryption key"
+            }
         },
         "keyVaultResourceGroup": {
-          "type": "string",
-          "metadata": {
-            "description": "Resource group of the KeyVault"
-          }
+            "type": "string",
+            "metadata": {
+                "description": "Resource group of the KeyVault"
+            }
         },
         "keyEncryptionKeyURL": {
-          "type": "string",
-          "defaultValue": "",
-          "metadata": {
-            "description": "URL of the KeyEncryptionKey used to encrypt the volume encryption key"
-          }
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "URL of the KeyEncryptionKey used to encrypt the volume encryption key"
+            }
         }
     },
     "variables": {
-        "namingInfix": "existingvmss",
-        "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
-        "publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
-        "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
-        "loadBalancerName": "[concat(variables('namingInfix'), 'lb')]",
-        "natPoolName": "[concat(variables('namingInfix'), 'natpool')]",
-        "bePoolName": "[concat(variables('namingInfix'), 'bepool')]",
+        "virtualNetworkName": "[concat(parameters('vmssName'), 'vnet')]",
+        "publicIPAddressName": "[concat(parameters('vmssName'), 'pip')]",
+        "subnetName": "[concat(parameters('vmssName'), 'subnet')]",
+        "loadBalancerName": "[concat(parameters('vmssName'), 'lb')]",
+        "natPoolName": "[concat(parameters('vmssName'), 'natpool')]",
+        "bePoolName": "[concat(parameters('vmssName'), 'bepool')]",
         "keyVaultResourceID": "[resourceId(parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
     },
-    "resources": [{
+    "resources": [
+        {
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('virtualNetworkName')]",
             "location": "[resourceGroup().location]",
@@ -55,12 +61,14 @@
                         "10.0.0.0/16"
                     ]
                 },
-                "subnets": [{
-                    "name": "[variables('subnetName')]",
-                    "properties": {
-                        "addressPrefix": "10.0.0.0/24"
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24"
+                        }
                     }
-                }]
+                ]
             }
         },
         {
@@ -71,7 +79,7 @@
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
                 "dnsSettings": {
-                    "domainNameLabel": "[toLower(substring(concat('existingvmss', uniqueString(resourceGroup().id)), 0, 16))]"
+                    "domainNameLabel": "[toLower(substring(concat('vmssName', uniqueString(resourceGroup().id)), 0, 16))]"
                 }
             }
         },
@@ -84,34 +92,40 @@
                 "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
             ],
             "properties": {
-                "frontendIPConfigurations": [{
-                    "name": "LoadBalancerFrontEnd",
-                    "properties": {
-                        "publicIPAddress": {
-                            "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "frontendIPConfigurations": [
+                    {
+                        "name": "LoadBalancerFrontEnd",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                            }
                         }
                     }
-                }],
-                "backendAddressPools": [{
-                    "name": "[variables('bePoolName')]"
-                }],
-                "inboundNatPools": [{
-                    "name": "[variables('natPoolName')]",
-                    "properties": {
-                        "frontendIPConfiguration": {
-                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName')),'/frontendIPConfigurations/loadBalancerFrontEnd')]"
-                        },
-                        "protocol": "tcp",
-                        "frontendPortRangeStart": 50000,
-                        "frontendPortRangeEnd": 50119,
-                        "backendPort": 3389
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('bePoolName')]"
                     }
-                }]
+                ],
+                "inboundNatPools": [
+                    {
+                        "name": "[variables('natPoolName')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName')),'/frontendIPConfigurations/loadBalancerFrontEnd')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPortRangeStart": 50000,
+                            "frontendPortRangeEnd": 50119,
+                            "backendPort": 3389
+                        }
+                    }
+                ]
             }
         },
         {
             "type": "Microsoft.Compute/virtualMachineScaleSets",
-            "name": "existingvmss",
+            "name": "[parameters('vmssName')]",
             "location": "[resourceGroup().location]",
             "apiVersion": "2017-03-30",
             "dependsOn": [
@@ -146,57 +160,66 @@
                         "adminPassword": "[parameters('adminPassword')]"
                     },
                     "networkProfile": {
-                        "networkInterfaceConfigurations": [{
-                            "name": "[concat(variables('namingInfix'), 'nic')]",
-                            "properties": {
-                                "primary": true,
-                                "ipConfigurations": [{
-                                    "name": "[concat(variables('namingInfix'), 'ipconfig')]",
-                                    "properties": {
-                                        "subnet": {
-                                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
-                                        },
-                                        "loadBalancerBackendAddressPools": [{
-                                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('bePoolName'))]"
-                                        }],
-                                        "loadBalancerInboundNatPools": [{
-                                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('loadBalancerName'), variables('natPoolName'))]"
-                                        }]
-                                    }
-                                }]
+                        "networkInterfaceConfigurations": [
+                            {
+                                "name": "[concat(parameters('vmssName'), 'nic')]",
+                                "properties": {
+                                    "primary": true,
+                                    "ipConfigurations": [
+                                        {
+                                            "name": "[concat(parameters('vmssName'), 'ipconfig')]",
+                                            "properties": {
+                                                "subnet": {
+                                                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+                                                },
+                                                "loadBalancerBackendAddressPools": [
+                                                    {
+                                                        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('bePoolName'))]"
+                                                    }
+                                                ],
+                                                "loadBalancerInboundNatPools": [
+                                                    {
+                                                        "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('loadBalancerName'), variables('natPoolName'))]"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
                             }
-                        }]
+                        ]
                     },
                     "extensionProfile": {
-                      "extensions": [
-                      {
-                        "name": "AzureDiskEncryption",
-                        "properties": {
-                          "publisher": "Microsoft.Azure.Security",
-                          "type": "AzureDiskEncryption",
-                          "typeHandlerVersion": "2.2",
-                          "autoUpgradeMinorVersion": true,
-                          "forceUpdateTag": "[uniqueString(resourceGroup().id, deployment().name)]",
-                          "settings": {
-                            "EncryptionOperation": "EnableEncryption",
-                            "KeyVaultURL": "[reference(variables('keyVaultResourceId'),'2018-02-14-preview').vaultUri]",
-                            "KeyVaultResourceId": "[variables('keyVaultResourceID')]",
-                            "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
-                            "KekVaultResourceId": "[variables('keyVaultResourceID')]",
-                            "KeyEncryptionAlgorithm": "RSA-OAEP",
-                            "VolumeType": "All"
-                          }
-                        }
-                      }]
+                        "extensions": [
+                            {
+                                "name": "AzureDiskEncryption",
+                                "properties": {
+                                    "publisher": "Microsoft.Azure.Security",
+                                    "type": "AzureDiskEncryption",
+                                    "typeHandlerVersion": "2.2",
+                                    "autoUpgradeMinorVersion": true,
+                                    "forceUpdateTag": "[uniqueString(resourceGroup().id, deployment().name)]",
+                                    "settings": {
+                                        "EncryptionOperation": "EnableEncryption",
+                                        "KeyVaultURL": "[reference(variables('keyVaultResourceId'),'2018-02-14-preview').vaultUri]",
+                                        "KeyVaultResourceId": "[variables('keyVaultResourceID')]",
+                                        "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
+                                        "KekVaultResourceId": "[variables('keyVaultResourceID')]",
+                                        "KeyEncryptionAlgorithm": "RSA-OAEP",
+                                        "VolumeType": "All"
+                                    }
+                                }
+                            }
+                        ]
                     }
                 }
             }
         }
     ],
     "outputs": {
-        "existingVmssName": {
+        "vmssName": {
             "type": "string",
-            "value": "existingvmss"
+            "value": "[parameters('vmssName')]"
         }
     }
 }
