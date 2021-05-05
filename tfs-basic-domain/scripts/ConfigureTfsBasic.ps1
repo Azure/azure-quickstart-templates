@@ -13,7 +13,7 @@ $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
 # Checks if TFS is installed, if not downloads and runs the web installer
 function Ensure-TfsInstalled()
 {
-    # Check if TFS is already installed
+    # Check if TFS is already installed.
     $tfsInstalled = $false
 
     if(Test-Path $InstallKey)
@@ -44,8 +44,9 @@ function Ensure-TfsInstalled()
             $mountResult = Mount-DiskImage $fullPath\tfsserver2017.3.1_enu.iso -PassThru
             $driveLetter = ($mountResult | Get-Volume).DriveLetter
             
-            $process = Start-Process -FilePath $driveLetter":\TfsServer2017.3.1.exe" -ArgumentList '/quiet' -PassThru
+            $process = Start-Process -FilePath $driveLetter":\TfsServer2017.3.1.exe" -ArgumentList '/quiet' -PassThru -Wait
             $process.WaitForExit()
+            Start-Sleep -Seconds 90
         }
         finally 
         {
@@ -77,5 +78,4 @@ function Configure-TfsBasic()
 }
 
 Ensure-TfsInstalled
-Start-Sleep -Seconds 300
 Configure-TfsBasic
