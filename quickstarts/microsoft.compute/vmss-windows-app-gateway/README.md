@@ -20,5 +20,3 @@ The Application Gateway is configured for round robin load balancing of incoming
 Note that this template does not install an application on the VM Scale Set VMs, so if you want to demonstrate the round robin load balancing, the template will need to be updated (for example by adding an extension to install a web server).
 
 This template supports VM scale sets of up to 1,000 VMs, and uses Azure Managed Disks.
-
-
