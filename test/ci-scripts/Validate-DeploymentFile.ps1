@@ -3,9 +3,9 @@
 Determines the deployment file to use.
 For JSON samples, this is the JSON file included.
 For bicep samples:
-  Build the JSON to deploy, since bicep might have changed since the JSON included
-  in the sample was built.
-  For PRs, verify that the JSON included in the sample has the same hash as the JSON we build
+  Build the bicep file to check for errors.
+  For PRs, verify that the JSON included in the sample has the same hash as the JSON we build.
+  Remove the built file.
 
 #>
 

@@ -56,10 +56,10 @@ $bicepVersion = $vars["BICEP_VERSION"]
 $mainTemplateFilenameJson = $vars["MAINTEMPLATE_FILENAME_JSON"]
 Assert-NotEmptyOrNull $mainTemplateFilenameJson "mainTemplateFilenameJson"
 
-# Build-DeploymentFile.ps1
-Write-host "Building deployment file if needed"
+# Validaate-DeploymentFile.ps1
+Write-host "Validating deployment file"
 #TODO: bicepVersion?
-$buildHostOutput = & $PSScriptRoot/Build-DeploymentFile.ps1 `
+$buildHostOutput = & $PSScriptRoot/Validate-DeploymentFile.ps1 `
     -SampleFolder $SampleFolder `
     -MainTemplateFilenameBicep "main.bicep" `
     -MainTemplateFilenameJson $mainTemplateFilenameJson `
