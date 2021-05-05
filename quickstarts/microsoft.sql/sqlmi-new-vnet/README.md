@@ -45,3 +45,4 @@ You can select the **Deploy to Azure** button at the beginning of this document.
 During the public preview deployment might take up to six hours. This is because a virtual cluster that hosts the instances needs time to deploy. Each subsequent instance creation in the same virtual cluster takes a few minutes.
 
 After the last Managed Instance is deprovisioned, the cluster stays alive for up to 24 hours. This avoids waiting for a new cluster to be provisioned in case that customer just wants to recreate the instance. During that time period the resource group and virtual network can't be deleted. This is a known issue and the Managed Instance team is working on a resolution.
+
