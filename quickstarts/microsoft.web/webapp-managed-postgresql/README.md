@@ -33,3 +33,4 @@ If you are new to template deployment, see:
 If you have already a Linux App Service Plan, you will have to deploy the new web app into the same resource group that the other web app is. That's because Student accounts has a limit of only 1 free tier Linux app service plan.
 
 `Tags: Azure4Student, appServices , PostgreSQL, linux, Beginner`
+
