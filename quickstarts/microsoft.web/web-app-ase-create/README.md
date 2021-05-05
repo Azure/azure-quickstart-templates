@@ -17,5 +17,3 @@
 For more details on creating an App Service Environment see [How to Create an App Service Environment](https://azure.microsoft.com/documentation/articles/app-service-web-how-to-create-an-app-service-environment/).
 
 
-
-
