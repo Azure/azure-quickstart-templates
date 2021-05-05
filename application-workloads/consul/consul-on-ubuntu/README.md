@@ -25,6 +25,3 @@ you use internally (not publicly accessible) but I didn't want to include spinni
 a public IP and then block off everything from the outside world accept for SSH. That is why the load balancer is internal as the idea is only internal 
 resources will be using it.
 
-
-
-
