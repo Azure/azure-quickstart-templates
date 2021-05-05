@@ -1,4 +1,4 @@
-![Groestlcoin-Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/blockchain/images/groestlcoin.png)
+![Groestlcoin-Azure](../images/groestlcoin.png)
 
 # Groestlcoin Core Blockchain Node on Ubuntu VM
 
