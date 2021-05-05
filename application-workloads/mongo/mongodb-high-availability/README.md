@@ -52,5 +52,3 @@ In the above deployment sequence, steps #1 and #2 will have to complete first be
 - SSH key is not yet implemented and the template currently takes a password for the admin user
 - MongoDB version 3.0.0 and above is recommended in order to take advantage of high-scale replica sets offered by this template
 - The current version of the MongoDB template is shipped with Ubuntu support only (adding support for CentOS is just a matter of creating an additional installation .sh script)
-
-
