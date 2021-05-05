@@ -32,3 +32,29 @@ function Assert-NotEmptyOrNull([string] $string, $message) {
         Write-Error "Assertion failed: String should not be empty or null: $message"
     }
 }   
+
+function Get-SampleNameFromFolderPath([string] $SampleFolder) {
+    $root = Get-SampleRootPath $SampleFolder
+    return Get-RelativePath $root $SampleFolder
+}
+
+function Get-SampleRootPath([string] $SampleFolder = ".") {
+    $folder = Resolve-Path $SampleFolder
+
+    while (Test-Path $folder) {
+        $contributionGuidePath = Join-Path $folder "1-CONTRIBUTION-GUIDE"
+        if (Test-Path ($contributionGuidePath)) {
+            return $folder
+        }
+        else {
+            $folder = Split-Path $folder -Parent
+        }
+    }
+
+    Write-Error "Couldn't find sample name for path $SampleFolder"
+    Return $null
+}
+
+function Get-RelativePath([string] $base, [string] $destination) {
+    return [System.IO.Path]::GetRelativePath($base, $destination)
+}

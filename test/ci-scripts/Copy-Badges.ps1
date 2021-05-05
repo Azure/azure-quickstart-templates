@@ -40,7 +40,7 @@ $blobs | Remove-AzStorageBlob -Verbose -Force
 Write-Host "Fetching row for: $RowKey in Table: $cloudTablePRs"
 $r = Get-AzTableRow -table $cloudTablePRs -ColumnName "RowKey" -Value $RowKey -Operator Equal
 if ($null -eq $r) {
-    Write-Error "Could not find row with key $RowKey"
+    Write-Error "Could not find row with key $RowKey in table $cloudTablePRs"
     Return
 }
 Write-Host "Result from Table: $r"
