@@ -26,5 +26,3 @@ The template creates the following Azure resources:
 - two virtual machines with both IPv4 and IPv6 endpoints in the VNET/subnet
 
 For more information about this template, see [What is IPv6 for Azure Virtual Network?](https://docs.microsoft.com/en-us/azure/virtual-network/ipv6-overview/)
-
-
