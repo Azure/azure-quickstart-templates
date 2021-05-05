@@ -1,7 +1,13 @@
 param(
   [string] $Source,
   [string] $Destination,
-  [string] $azcopyZipArchiveUrl = 'https://aka.ms/downloadazcopy-v10-linux'
+
+  # Set default url to fetch azcopy
+  ## get latest: curl -s -D- https://aka.ms/downloadazcopy-v10-linux | grep ^Location
+  ## 10.10.0: sporadic vhd corruption issue / fatal error lifecyleMgr.go:38 (https://azcopyvnext.azureedge.net/release20210415/azcopy_linux_amd64_10.10.0.tar.gz)
+  ## 10.9.0: sporadic vhd corruption issue https://azcopyvnext.azureedge.net/release20210226/azcopy_linux_amd64_10.9.0.tar.gz
+  ## 10.8.0: validated https://azcopyvnext.azureedge.net/release20201211/azcopy_linux_amd64_10.8.0.tar.gz
+  [string] $azcopyArchiveUrl = 'https://azcopyvnext.azureedge.net/release20201211/azcopy_linux_amd64_10.8.0.tar.gz'
 )
 
 ##### Validate Parameters
@@ -31,8 +37,8 @@ $timestamp = Get-Date -Format 'yyMMddHHmmss'
 
 ##### Fetch prerequisites
 
-Invoke-WebRequest -Uri $azcopyZipArchiveUrl -Outfile azcopy-linux.tar
-tar xf azcopy-linux.tar
+Invoke-WebRequest -Uri $azcopyArchiveUrl -Outfile azcopy-linux.tar.gz
+tar xf azcopy-linux.tar.gz
 Move-Item azcopy_linux_*/azcopy . -Force
 
 ##### Check destination is actually writable or fail
@@ -71,7 +77,8 @@ Expand-Archive -Path $archive_path -DestinationPath $expanded_archive_path -Forc
 
 Write-Output 'Upload extracted VHD file(s)'
 $vhd_filepath='{0}/*.vhd' -f  $expanded_archive_path
-./azcopy copy "$vhd_filepath" "$uriWritableStorageAccountBlobContainerSasToken" --put-md5
+# Temp to fix copy issue due to low resources ./azcopy copy "$vhd_filepath" "$uriWritableStorageAccountBlobContainerSasToken" --put-md5
+./azcopy copy "$vhd_filepath" "$uriWritableStorageAccountBlobContainerSasToken"
 
 ##### Output
 
