@@ -27,7 +27,7 @@ This diagram shows the overall architecture:
 
 ![Architecture](images/architecture.png)
 
-The ARM template deploys:
+The ARM template deploys the following resources:
 
 - A new virtual network with 4 subnets:
   - **AksSubnet**: hosts the AKS cluster
