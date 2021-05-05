@@ -2,6 +2,30 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "virtualMachineName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Name"
+      },
+      "defaultValue": "vmName"
+    },
+    "virtualMachineSize": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Size"
+      },
+      "allowedValues": [
+        "Standard_DS1",
+        "Standard_DS2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_DS11",
+        "Standard_DS12",
+        "Standard_DS13",
+        "Standard_DS14"
+      ],
+      "defaultValue": "Standard_DS1"
+    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -28,8 +52,7 @@
     "vmNSGName": "ExistingNsg",
     "ipAddressName": "ExistingPip",
     "virtualNetworkName": "ExistingVNet",
-    "vmNicName": "ExistingNic",
-    "vmName": "ExistingWinVm"
+    "vmNicName": "ExistingNic"
   },
   "resources": [
     {
@@ -136,7 +159,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
+      "name": "[parameters('virtualMachineName')]",
       "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "comments": "Windows VM",
@@ -149,7 +172,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_DS1_v2"
+          "vmSize": "[parameters('virtualMachineSize')]"
         },
         "osProfile": {
           "computerName": "windowsvm",
@@ -167,13 +190,13 @@
             "version": "latest"
           },
           "osDisk": {
-            "name":"[concat(variables('vmName'), '_OSDisk')]", 
+            "name":"[concat(parameters('virtualMachineName'), '_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "[concat(variables('vmName'), '_DataDisk1')]",
+              "name": "[concat(parameters('virtualMachineName'), '_DataDisk1')]",
               "createOption": "Empty",
               "lun": 0,
               "diskSizeGB": 1023,
@@ -199,10 +222,10 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'), '/SqlIaasExtension')]",
+      "name": "[concat(parameters('virtualMachineName'), '/SqlIaasExtension')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
       ],
       "properties": {
         "type": "SqlIaaSAgent",
@@ -246,11 +269,5 @@
         "protectedSettings": {}
       }
     }
-  ],
-  "outputs": {
-    "existingVirtualMachineName": {
-      "type": "string",
-      "value": "[variables('vmName')]"
-    }
-  }
+  ]
 }
