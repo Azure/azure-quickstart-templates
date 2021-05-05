@@ -38,5 +38,3 @@ The script pops up a credential window, provide the credentials of azure vm.
 	$soptions = New-PSSessionOption -SkipCACheck
 	Enter-PSSession -ComputerName $hostName -Port $winrmPort -Credential $cred -SessionOption $soptions -UseSSL
 
-
-
