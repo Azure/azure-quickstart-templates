@@ -60,17 +60,15 @@
   },
   "variables": {
     "virtualNetworkName": "[concat(parameters('vmssName'), 'vnet')]",
-    "publicIPAddressName": "lbPublicIp",
-    "networkSecurityGroupName": "allowRemoting",
+    "publicIPAddressName": "[concat(parameters('vmssName'), 'lbPublicIp')]",
+    "networkSecurityGroupName": "[concat(parameters('vmssName'), 'nsg')]",
     "subnetName": "[concat(parameters('vmssName'), 'subnet')]",
     "loadBalancerName": "[concat(parameters('vmssName'), 'lb')]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
+    "loadBalancerFeName": "[concat(parameters('vmssName'), 'lbfe')]",
     "natPoolName": "[concat(parameters('vmssName'), 'natpool')]",
     "bePoolName": "[concat(parameters('vmssName'), 'bepool')]",
     "nicName": "[concat(parameters('vmssName'), 'nic')]",
     "ipConfigName": "[concat(parameters('vmssName'), 'ipconfig')]",
-    "frontEndIPConfigID": "[concat(variables('lbID'), '/frontendIPConfigurations/loadBalancerFrontEnd')]",
     "imageReference": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
@@ -173,7 +171,7 @@
         "name": "Standard"
       },
       "dependsOn": [
-        "[variables('publicIPAddressName')]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -181,7 +179,7 @@
             "name": "LoadBalancerFrontEnd",
             "properties": {
               "publicIPAddress": {
-                "id": "[variables('publicIPAddressID')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               }
             }
           }
@@ -196,7 +194,7 @@
             "name": "[variables('natPoolName')]",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerName'), variables('loadBalancerFeName'))]"
               },
               "protocol": "Tcp",
               "frontendPortRangeStart": 50000,
@@ -216,8 +214,8 @@
       ],
       "apiVersion": "2017-12-01",
       "dependsOn": [
-        "[variables('loadBalancerName')]",
-        "[variables('virtualNetworkName')]"
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
       ],
       "sku": {
         "name": "Standard_A1_v2",
@@ -266,7 +264,7 @@
                         ],
                         "loadBalancerInboundNatPools": [
                           {
-                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools/', variables('loadBalancerName'), variables('natPoolName'))]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('loadBalancerName'), variables('natPoolName'))]"
                           }
                         ]
                       }
