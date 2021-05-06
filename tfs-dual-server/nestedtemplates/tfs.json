@@ -69,6 +69,13 @@
         "description": "The name of the SQL Server to use for TFS"
       }
     },
+    "inboundNatRulesName": {
+      "type": "string",
+      "defaultValue": "tfs-rdp",
+      "metadata": {
+        "description": "LB inbound NAT rules name."
+      }
+    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -90,9 +97,7 @@
     }
   },
   "variables": {
-    "networkInterfaceName": "[concat(parameters('vmName'), 'nic')]",
-    "loadBalancerID": "[resourceId('Microsoft.Network/loadBalancers',parameters('existingLoadBalancerName'))]",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubnetName'))]"
+    "networkInterfaceName": "[concat(parameters('vmName'), 'nic')]"
   },
   "resources": [
     {
@@ -108,16 +113,16 @@
               "privateIPAllocationMethod": "Dynamic",
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('loadBalancerID'), '/backendAddressPools/', parameters('existingLoadBalancerBackendName'))]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('existingLoadBalancerBackendName'))]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('loadBalancerID'),'/inboundNatRules/tfs-rdp')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', parameters('inboundNatRulesName'))]"
                 }
               ],
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubnetName'))]"
               }
             }
           }
@@ -209,7 +214,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), 'scripts/ConfigureTfsRemoteSql.ps1')]"
+            "[uri(parameters('_artifactsLocation'), concat('scripts/ConfigureTfsRemoteSql.ps1', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {

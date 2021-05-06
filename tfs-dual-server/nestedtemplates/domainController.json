@@ -69,6 +69,13 @@
         "description": "The internal IP address to give the VM"
       }
     },
+    "inboundNatRulesName": {
+      "type": "string",
+      "defaultValue": "dc-rdp",
+      "metadata": {
+        "description": "LB inbound NAT rules name."
+      }
+    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -90,9 +97,7 @@
     }
   },
   "variables": {
-    "networkInterfaceName": "[concat(parameters('vmName'), 'nic')]",
-    "loadBalancerID": "[resourceId('Microsoft.Network/loadBalancers',parameters('existingLoadBalancerName'))]",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubnetName'))]"
+    "networkInterfaceName": "[concat(parameters('vmName'), 'nic')]"
   },
   "resources": [
     {
@@ -109,16 +114,16 @@
               "privateIPAddress": "[parameters('ipAddress')]",
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('loadBalancerID'), '/backendAddressPools/', parameters('existingLoadBalancerBackendName'))]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('existingLoadBalancerBackendName'))]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('loadBalancerID'),'/inboundNatRules/dc-rdp')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', parameters('inboundNatRulesName'))]"
                 }
               ],
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubnetName'))]"
               }
             }
           }
@@ -181,7 +186,7 @@
         "typeHandlerVersion": "2.19",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "ModulesUrl": "[concat(parameters('_artifactsLocation'), 'DSC/CreateDC.ps1.zip')]",
+          "ModulesUrl": "[uri(parameters('_artifactsLocation'), concat('DSC/CreateDC.ps1.zip', parameters('_artifactsLocationSasToken')))]",
           "ConfigurationFunction": "CreateDC.ps1\\CreateDC",
           "Properties": {
             "DomainName": "[parameters('domainName')]",

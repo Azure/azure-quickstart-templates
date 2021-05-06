@@ -63,6 +63,13 @@
         "description": "The name of the Load Balancer backend"
       }
     },
+    "inboundNatRulesName": {
+      "type": "string",
+      "defaultValue": "sql-rdp",
+      "metadata": {
+        "description": "LB inbound NAT rules name."
+      }
+    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -84,9 +91,7 @@
     }
   },
   "variables": {
-    "networkInterfaceName": "[concat(parameters('vmName'), 'nic')]",
-    "loadBalancerID": "[resourceId('Microsoft.Network/loadBalancers',parameters('existingLoadBalancerName'))]",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubnetName'))]"
+    "networkInterfaceName": "[concat(parameters('vmName'), 'nic')]"
   },
   "resources": [
     {
@@ -103,16 +108,16 @@
               "privateIPAllocationMethod": "Dynamic",
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('loadBalancerID'), '/backendAddressPools/', parameters('existingLoadBalancerBackendName'))]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('existingLoadBalancerBackendName'))]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('loadBalancerID'),'/inboundNatRules/sql-rdp')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', parameters('inboundNatRulesName'))]"
                 }
               ],
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubnetName'))]"
               }
             }
           }
@@ -200,7 +205,7 @@
         "typeHandlerVersion": "2.19",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "ModulesUrl": "[concat(parameters('_artifactsLocation'), 'DSC/ConfigureSqlServer.ps1.zip')]",
+          "ModulesUrl": "[uri(parameters('_artifactsLocation'), concat('DSC/ConfigureSqlServer.ps1.zip', parameters('_artifactsLocationSasToken')))]",
           "ConfigurationFunction": "ConfigureSqlServer.ps1\\ConfigureSqlServer",
           "Properties": {
             "DomainName": "[parameters('domainName')]",
