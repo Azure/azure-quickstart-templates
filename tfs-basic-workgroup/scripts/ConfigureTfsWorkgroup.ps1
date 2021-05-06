@@ -61,7 +61,7 @@ function Ensure-TfsInstalled()
 }
 
 # Runs tfsconfig to configure TFS on the machine
-function Configure-TfsBasic()
+function Configure-TfsWorkgroup()
 {
     # Run tfsconfig to do the unattend install
     $path = Join-Path $InstallDirectory '\Tools\tfsconfig.exe'
@@ -78,4 +78,4 @@ function Configure-TfsBasic()
 }
 
 Ensure-TfsInstalled
-Configure-TfsBasic
+Configure-TfsWorkgroup
