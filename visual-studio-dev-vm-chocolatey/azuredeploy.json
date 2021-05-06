@@ -33,19 +33,19 @@
         "description": "Which version of Visual Studio you would like to deploy"
       }
     },
-    "setupChocolateyScriptFileName": {
+    "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "SetupChocolatey.ps1",
-      "metadata": {
-        "description": "PowerShell script name to execute"
-      }
-    },
-    "setupChocolatelyScriptLocation": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/visual-studio-dev-vm-chocolatey/scripts/",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/visual-studio-dev-vm-chocolatey/",
       "metadata": {
         "description": "Public uri location of PowerShell Chocolately setup script"
       }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     },
     "chocoPackages": {
       "type": "string",
@@ -148,8 +148,8 @@
       "location": "[parameters('location')]",
       "apiVersion": "2020-03-01",
       "dependsOn": [
-        "[variables('vnetName')]",
-        "[variables('vmIP01Name')]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmIP01Name'))]"
       ],
       "tags": {
         "displayName": "VMNic01"
@@ -221,7 +221,7 @@
           "location": "[parameters('location')]",
           "apiVersion": "2020-12-01",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
           ],
           "tags": {
             "displayName": "SetupChocolatey"
@@ -233,9 +233,9 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(parameters('setupChocolatelyScriptLocation'),parameters('setupChocolateyScriptFileName'))]"
+                "[uri(parameters('_artifactsLocation'), concat('scripts/SetupChocolatey.ps1', parameters('_artifactsLocationSasToken')))]"
               ],
-              "commandToExecute": "[concat('powershell -ExecutionPolicy bypass -File ',parameters('setupChocolateyScriptFileName'),' -chocoPackages ',parameters('chocoPackages'))]"
+              "commandToExecute": "[concat('powershell -ExecutionPolicy bypass -File scripts/SetupChocolatey.ps1 -chocoPackages ',parameters('chocoPackages'))]"
             }
           }
         }
