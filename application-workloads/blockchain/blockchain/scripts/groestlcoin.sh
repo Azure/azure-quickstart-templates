@@ -5,9 +5,25 @@ set -e
 date
 ps axjf
 
+AZUREUSER=$2
+HOMEDIR="/home/$AZUREUSER"
+GROESTLCOINPATH="$HOMEDIR/.groestlcoin"
+VMNAME=`hostname`
+echo "User: $AZUREUSER"
+echo "User home dir: $HOMEDIR"
+echo "User Groestlcoin path: $GROESLCOINPATH"
+echo "vmname: $VMNAME"
 
-if [[ $1 = 'From_Source' ]]; then
+if [[ $1 = 'From_PPA' ]]; then
 
+#################################################################
+# Install Groestlcoin Core from PPA                                      #
+#################################################################
+sudo add-apt-repository -y ppa:groestlcoin/groestlcoin
+sudo apt-get update
+sudo apt-get install -y groestlcoind groestlcoin-tx groestlcoin-wallet
+
+else
 #################################################################
 # Update Ubuntu and install prerequisites for running Groestlcoin Core   #
 #################################################################
@@ -53,23 +69,14 @@ strip /usr/local/groestlcoind /usr/local/groestlcoin-cli /usr/local/groestlcoin-
 #################################################################
 sudo mv /usr/local/groestlcoind /usr/local/groestlcoin-cli /usr/local/groestlcoin-tx /usr/local/groestlcoin-wallet /usr/local/groestlcoin-util /usr/bin
 
-else
-#################################################################
-# Install Groestlcoin Core from PPA                                      #
-#################################################################
-sudo add-apt-repository -y ppa:groestlcoin/groestlcoin
-sudo apt-get update
-sudo apt-get install -y groestlcoind groestlcoin-tx groestlcoin-wallet
-
 fi
 
 ################################################################
 # Create Groestlcoin Core Directory                                      #
 ################################################################
-file=$HOME/.groestlcoin
-if [ ! -e "$file" ]
+if [ ! -e "$GROESTLCOINPATH" ]
 then
-	mkdir $HOME/.groestlcoin
+	su - $AZUREUSER -c "mkdir $GROESTLCOINPATH"
 fi
 
 #################################################################
@@ -80,8 +87,14 @@ sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-confi
 ################################################################
 # Create configuration File                                              #
 ################################################################
-rpcp=$(pwgen -ncsB 35 1)
-printf '%s\n%s\n%s\nrpcpassword=%s\n' 'daemon=1' 'server=1' 'rpcuser=groestlcoinrpc' $rpcp | tee $HOME/.groestlcoin/groestlcoin.conf
+su - $AZUREUSER -c "touch $GROESTLCOINPATH/groestlcoin.conf"
+rpcu=$(pwgen -ncsB 35 1)
+rpcp=$(pwgen -ncsB 75 1)
+echo "rpcuser="$rpcu"
+rpcpassword="$rpcp"
+server=1
+listen=1
+daemon=1" > $GROESTLCOINPATH/groestlcoin.conf
 
 ################################################################
 # Configure to auto start at boot                                        #
@@ -97,6 +110,6 @@ fi
 ################################################################
 # Start Groestlcoin Core                                                 #
 ################################################################
-/usr/bin/groestlcoind
-echo "Groestlcoin Core has been setup successfully and is running..."
+su - $AZUREUSER -c "groestlcoind"
+echo "Groestlcoin Core has been setup successfully and is running $$"
 exit 0
