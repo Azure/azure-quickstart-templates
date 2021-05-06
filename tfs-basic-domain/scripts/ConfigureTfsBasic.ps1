@@ -10,7 +10,7 @@ $TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=857132'
 $InstallDirectory = 'C:\Program Files\Microsoft Team Foundation Server 15.0'
 $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
 
-# Checks if TFS is installed, if not downloads and runs the web installer
+# Checks if TFS is installed
 function Ensure-TfsInstalled()
 {
     # Check if TFS is already installed.
@@ -30,7 +30,7 @@ function Ensure-TfsInstalled()
     if(-not $tfsInstalled)
     {
         Write-Verbose "Installing TFS using ISO"
-        # Download TFS install to a temp folder, then run it
+        # Download TFS and mount it
         $parent = [System.IO.Path]::GetTempPath()
         [string] $name = [System.Guid]::NewGuid()
         [string] $fullPath = Join-Path $parent $name
