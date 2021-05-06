@@ -172,8 +172,9 @@ fi
 export DEBIAN_FRONTEND=noninteractive
 export PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin"
 
-apt-get update
-apt-get install -y python2.7 python-pil sudo python-pip python-setuptools python-imaging python-mysqldb python-ldap python-urllib3 \
+sudo rm /var/lib/apt/lists/*
+sudo apt-get update
+sudo apt-get install -y python2.7 python-pil sudo python-pip python-setuptools python-imaging python-mysqldb python-ldap python-urllib3 \
 openjdk-8-jre memcached python-memcache pwgen curl openssl poppler-utils libpython2.7 libreoffice \
 libreoffice-script-provider-python ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy nginx python-requests zfs-fuse
 
