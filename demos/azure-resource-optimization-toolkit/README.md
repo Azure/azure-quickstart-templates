@@ -1,13 +1,13 @@
-# Azure Resource Optimization(ARO) Toolkit
+﻿# Azure Resource Optimization(ARO) Toolkit
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/azure-resource-optimization-toolkit/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/azure-resource-optimization-toolkit/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/azure-resource-optimization-toolkit/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/azure-resource-optimization-toolkit/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/azure-resource-optimization-toolkit/BestPracticeResult.svg)
+![Cred Scan Check]( https://azurequickstartsservice.blob.core.windows.net/badges/demos/azure-resource-optimization-toolkit/CredScanResult.svg)
     
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json)
