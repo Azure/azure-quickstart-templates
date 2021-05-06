@@ -7,13 +7,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# TFS 2017 Update 2
 # TFS 2017 Update 3
 $TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=857132'
 $InstallDirectory = 'C:\Program Files\Microsoft Team Foundation Server 15.0'
 $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
 
-# Checks if TFS is installed, if not downloads and runs the web installer
 function Ensure-TfsInstalled()
 {
     # Check if TFS is already installed.
@@ -33,7 +31,6 @@ function Ensure-TfsInstalled()
     if(-not $tfsInstalled)
     {
         Write-Verbose "Installing TFS using ISO"
-        # Download TFS install to a temp folder, then run it
         $parent = [System.IO.Path]::GetTempPath()
         [string] $name = [System.Guid]::NewGuid()
         [string] $fullPath = Join-Path $parent $name
@@ -85,11 +82,11 @@ function Download-PsTools()
 }
 
 # Runs tfsconfig to configure TFS on the machine
-function Configure-TfsBasic()
+function Configure-TfsRemoteSql()
 {
     # Run tfsconfig to do the unattend install
     $path = Join-Path $InstallDirectory '\Tools\tfsconfig.exe'
-    $tfsConfigArgs = 'unattend /configure /type:Basic /inputs:"InstallSqlExpress=True"'
+    & $PSScriptRoot\PsTools\psexec.exe -h -accepteula -u $userName -p $password "$path" unattend /configure /type:Standard /inputs:"SqlInstance=$SqlInstance"
 
     Write-Verbose "Running tfsconfig..."
 
