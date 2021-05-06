@@ -55,6 +55,7 @@ $docOwner = ($metadata | convertfrom-json).docOwner
 Write-Host "docOwner: $docOwner"
 if ($null -ne $docOwner) {
     $msg = "@$docOwner - check this PR for updates that may be needed to documentation that references this sample.  [this is an automated message]"
+    $msg = "@StephenWeatherford Test: $docOwner - check this PR for updates that may be needed to documentation that references this sample.  [this is an automated message]"
     Write-Host "##vso[task.setvariable variable=docOwner.message]$msg"    
 }
 
