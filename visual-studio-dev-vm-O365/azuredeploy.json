@@ -32,12 +32,19 @@
         "description": "PowerShell script name to execute"
       }
     },
-    "scriptLocation": {
+    "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/visual-studio-dev-vm-O365/scripts/",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/visual-studio-dev-vm-O365/",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     },
     "vmVisualStudioVersion": {
       "type": "string",
@@ -73,7 +80,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2s_v3",
+      "defaultValue": "Standard_DS2_v2",
       "metadata": {
         "description": "VM Size"
       }
@@ -153,8 +160,8 @@
       "location": "[parameters('location')]",
       "apiVersion": "2020-03-01",
       "dependsOn": [
-        "[variables('vnetName')]",
-        "[variables('vmIP01Name')]"
+        "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmIP01Name'))]"
       ],
       "tags": {
         "displayName": "VMNic01"
@@ -182,7 +189,7 @@
       "location": "[parameters('location')]",
       "apiVersion": "2019-12-01",
       "dependsOn": [
-        "[variables('vmNicName')]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
       ],
       "tags": {
         "displayName": "VM01"
@@ -238,7 +245,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(parameters('scriptLocation'),parameters('setupOfficeScriptFileName'))]",
+                "[uri(parameters('_artifactsLocation'),concat(parameters('setupOfficeScriptFileName'), parameters('_artifactsLocationSasToken')))]",
                 "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/DefaultConfiguration.xml",
                 "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Office2013Setup.exe",
                 "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Office2016Setup.exe",
@@ -246,7 +253,7 @@
                 "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Generate-ODTConfigurationXML.ps1",
                 "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Install-OfficeClickToRun.ps1"
               ],
-              "commandToExecute": "[concat('powershell -ExecutionPolicy bypass -File ', parameters('setupOfficeScriptFileName'),' -OfficeVersion ', parameters('officeVersion'))]"
+              "commandToExecute": "[concat('powershell -ExecutionPolicy bypass -File scripts/', parameters('setupOfficeScriptFileName'),' -OfficeVersion ', parameters('officeVersion'))]"
             }
           }
         }
