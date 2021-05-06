@@ -168,10 +168,14 @@ fi
 # -------------------------------------------
 # Additional requirements
 # -------------------------------------------
+
+export DEBIAN_FRONTEND=noninteractive
+export PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin"
+
 apt-get update
 apt-get install -y python2.7 python-pil sudo python-pip python-setuptools python-imaging python-mysqldb python-ldap python-urllib3 \
-openjdk-8-jre memcached python-memcache pwgen curl openssl poppler-utils libpython2.7 libreoffice \
-libreoffice-script-provider-python ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy nginx python-requests
+openjdk-8-jre memcached python-memcache pwgen curl openssl poppler-utils libpython2.7 libreoffice libnvpair1linux_0.6.5.9-5_armhf.deb \
+libreoffice-script-provider-python ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy nginx python-requests zfs-fuse libuutil1linux_0.6.5.9-5_armhf.deb
 
 # -------------------------------------------
 # Create seafile-data with the help of ZFS
