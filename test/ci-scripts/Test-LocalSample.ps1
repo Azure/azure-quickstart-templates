@@ -30,8 +30,10 @@ param(
 $ErrorActionPreference = "Continue"
 $Error.Clear()
 
+Import-Module "$PSScriptRoot/Local.psm1" -force
+
 $SampleFolder = Resolve-Path $SampleFolder
-$SampleName = Split-Path -Leaf $SampleFolder
+$SampleName = SampleNameFromFolderPath $SampleFolder
 
 if (!(Test-Path "metadata.json")) {
     $ErrorActionPreference = "Stop"
@@ -40,8 +42,6 @@ if (!(Test-Path "metadata.json")) {
 }
 
 Write-Host "Running local validation on sample $SampleName in folder $SampleFolder"
-
-Import-Module "$PSScriptRoot/Local.psm1" -force
 
 # Check-LanguageSupport
 Write-Host "Checking bicep support in the sample"
@@ -56,7 +56,7 @@ $bicepVersion = $vars["BICEP_VERSION"]
 $mainTemplateFilenameJson = $vars["MAINTEMPLATE_FILENAME_JSON"]
 Assert-NotEmptyOrNull $mainTemplateFilenameJson "mainTemplateFilenameJson"
 
-# Validaate-DeploymentFile.ps1
+# Validate-DeploymentFile.ps1
 Write-host "Validating deployment file"
 #TODO: bicepVersion?
 $buildHostOutput = & $PSScriptRoot/Validate-DeploymentFile.ps1 `
