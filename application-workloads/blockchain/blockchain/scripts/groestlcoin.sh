@@ -17,14 +17,6 @@ echo "vmname: $VMNAME"
 if [[ $1 = 'From_PPA' ]]; then
 
 #################################################################
-# Install Groestlcoin Core from PPA                                      #
-#################################################################
-sudo add-apt-repository -y ppa:groestlcoin/groestlcoin
-sudo apt-get update
-sudo apt-get install -y groestlcoind groestlcoin-tx groestlcoin-wallet
-
-else
-#################################################################
 # Update Ubuntu and install prerequisites for running Groestlcoin Core   #
 #################################################################
 sudo apt-get update
@@ -38,7 +30,7 @@ echo "nproc: $NPROC"
 #################################################################
 # Install all necessary packages for building Groestlcoin Core from source  #
 #################################################################
-sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev pwgen dialog apt-utils
+sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev
 
 #################################################################
 # Build Groestlcoin Core from source                                     #
@@ -62,12 +54,20 @@ fi
 #################################################################
 # Strip executables                                                     #
 #################################################################
-strip /usr/local/groestlcoind /usr/local/groestlcoin-cli /usr/local/groestlcoin-tx /usr/local/groestlcoin-wallet /usr/local/groestlcoin-util
+strip /usr/local/groestlcoin/src/groestlcoind /usr/local/groestlcoin/src/groestlcoin-cli /usr/local/groestlcoin/src/groestlcoin-tx /usr/local/groestlcoin/src/groestlcoin-wallet /usr/local/groestlcoin/src/groestlcoin-util
 
 #################################################################
 # Move executables to /usr/bin                                           #
 #################################################################
-sudo mv /usr/local/groestlcoind /usr/local/groestlcoin-cli /usr/local/groestlcoin-tx /usr/local/groestlcoin-wallet /usr/local/groestlcoin-util /usr/bin
+sudo mv /usr/local/groestlcoin/src/groestlcoind /usr/local/groestlcoin/src/groestlcoin-cli /usr/local/groestlcoin/src/groestlcoin-tx /usr/local/groestlcoin/src/groestlcoin-wallet /usr/local/groestlcoin/src/groestlcoin-util /usr/bin
+
+else
+#################################################################
+# Install Groestlcoin Core from PPA                                      #
+#################################################################
+sudo add-apt-repository -y ppa:groestlcoin/groestlcoin
+sudo apt-get update
+sudo apt-get install -y groestlcoind groestlcoin-tx groestlcoin-wallet
 
 fi
 
@@ -80,9 +80,9 @@ then
 fi
 
 #################################################################
-# Install all necessary packages for building Groestlcoin Core from ppa  #
+# Install pwgen for generating pronounceable RPC username and password for configuration file #
 #################################################################
-sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev pwgen dialog apt-utils
+sudo apt-get -y install pwgen
 
 ################################################################
 # Create configuration File                                              #
