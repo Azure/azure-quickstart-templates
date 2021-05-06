@@ -15,6 +15,27 @@
         "description": "Location for all resources."
       }
     },
+    "sku": {
+      "type": "String",
+      "defaultValue": "Enterprise",
+      "metadata": {
+        "description": "SKU of the AD Domain Service."
+      }
+    },
+    "domainConfigurationType": {
+      "type": "String",
+      "defaultValue": "FullySynced",
+      "metadata": {
+        "description": "Domain Configuration Type."
+      }
+    },
+    "filteredSync": {
+      "type": "String",
+      "defaultValue": "Disabled",
+      "metadata": {
+        "description": "Choose the filtered sync type."
+      }
+    },
     "domainServicesVnetName": {
       "type": "string",
       "defaultValue": "domain-services-vnet",
@@ -47,7 +68,6 @@
   "variables": {
     "domainServicesNSGName": "[concat(parameters('domainServicesSubnetName'), '-nsg')]",
     "nsgRefId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('domainServicesNSGName'))]",
-    "vnetRefId": "[resourceId('Microsoft.Network/virtualNetworks/', parameters('domainServicesVnetName'))]",
     "subnetRefId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('domainServicesVnetName'), parameters('domainServicesSubnetName'))]",
     "RDPIPAddresses": [
       "207.68.190.32/27",
@@ -58,7 +78,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('domainServicesNSGName')]",
       "location": "[parameters('location')]",
@@ -120,7 +140,7 @@
       }
     },
     {
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('domainServicesVnetName')]",
       "location": "[parameters('location')]",
@@ -132,7 +152,7 @@
       },
       "resources": [
         {
-          "apiVersion": "2018-10-01",
+          "apiVersion": "2020-11-01",
           "type": "subnets",
           "location": "[parameters('location')]",
           "name": "[parameters('domainServicesSubnetName')]",
@@ -149,13 +169,20 @@
     {
       "type": "Microsoft.AAD/DomainServices",
       "name": "[parameters('domainName')]",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2020-01-01",
       "location": "[parameters('location')]",
       "dependsOn": ["[parameters('domainServicesVnetName')]"],
       "properties": {
         "domainName": "[parameters('domainName')]",
-        "vnetSiteID": "[variables('vnetRefId')]",
-        "subnetId": "[variables('subnetRefId')]"
+        "filteredSync": "[parameters('filteredSync')]",
+        "domainConfigurationType": "[parameters('domainConfigurationType')]",
+        "replicaSets": [
+                    {
+                        "subnetId": "[variables('subnetRefId')]",
+                        "location": "[parameters('location')]"
+                    }
+                ],
+        "sku": "[parameters('sku')]"
       }
     }
   ],
