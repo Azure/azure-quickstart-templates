@@ -1,4 +1,4 @@
-﻿    param(
+    param(
         $VMObject,
         [string]$AlertAction,
         [string]$WebhookUri

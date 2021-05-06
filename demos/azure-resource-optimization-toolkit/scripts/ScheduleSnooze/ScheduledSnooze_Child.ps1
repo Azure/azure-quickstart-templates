@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS  
  Wrapper script for start & stop AzureRM VM's
 .DESCRIPTION  
