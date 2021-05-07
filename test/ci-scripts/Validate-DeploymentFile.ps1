@@ -30,8 +30,9 @@ if ($bicepSupported) {
     $CompiledJsonPath = "$($SampleFolder)/$($CompiledJsonFilename)"
     $errorFile = Join-Path $SampleFolder "errors.txt"
     Write-host "BUILDING: $BicepPath build $MainTemplatePathBicep --outfile $CompiledJsonPath"
-    $p = Start-Process $BicepPath -ArgumentList @('build', $MainTemplatePathBicep, '--outfile', $CompiledJsonPath) -RedirectStandardError $errorFile -Wait
+    Start-Process $BicepPath -ArgumentList @('build', $MainTemplatePathBicep, '--outfile', $CompiledJsonPath) -RedirectStandardError $errorFile -Wait
     $errorOutput = [string[]](Get-Content $errorFile)
+    Remove-Item $errorFile
     
     if (!(Test-Path $CompiledJsonPath)) {
         Write-Error "Bicep build produced no output file. Check above for build errors."
