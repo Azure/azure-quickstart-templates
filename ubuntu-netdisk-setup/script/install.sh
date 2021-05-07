@@ -165,7 +165,7 @@ fi
 apt-get update
 apt-get install -y python2.7 sudo python-pil python-pip python-setuptools python-imaging python-mysqldb python-ldap python-urllib3 \
 openjdk-8-jre memcached python-memcache pwgen curl openssl poppler-utils libpython2.7 libreoffice \
-libreoffice-script-provider-python ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy nginx python-requests
+libreoffice-script-provider-python ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy nginx python-requests zfsutils zfs-fuse
 
 # -------------------------------------------
 # Create seafile-data with the help of ZFS
