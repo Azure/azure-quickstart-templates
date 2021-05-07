@@ -24,7 +24,7 @@ Simply hit "Deploy to Azure" button.
 
 - URI of a Storage Account Blob Container with a SAS Token granting write permissions
 
-## Usage
+## Deployment steps
 
 1. Hit the "Deploy to Azure" button above
 2. Fill usual fields:
@@ -39,7 +39,11 @@ Simply hit "Deploy to Azure" button.
 5. Open the Blob Container in the destination Storage Account resource and verify the VHD Blobs are there
 6. Delete the Resource Group if it only contains  temporary resources
 
-## Demo
+## Usage
+
+When the deployment is done, you can start using the .VHD blobs that have been imported in the Storage Account, for example creating Disk or Image resources and then Virtual Machines.
+
+### Demo
 
 This template is used by the [Riverbed Community Cookbooks simple demo for NetIM](https://github.com/riverbed/Riverbed-Community-Toolkit/tree/master/NetIM/Azure-Cloud-Cookbooks/101-netim-simple-demo).
 
