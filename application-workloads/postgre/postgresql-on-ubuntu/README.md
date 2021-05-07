@@ -22,7 +22,7 @@ The template creates the following deployment resources:
 * Network interface card for each VM
 * Multiple remotely-hosted Custom Script Extensions to strip the data disks and to install and configure PostgreSQL services
 
-NOTE: To access the PostgreSQL servers, you need to use the externally accessible jumpbox VM and ssh from it into the backend servers.
+NOTE: To access the PostgreSQL servers, you need to use the externally accessible jumpbox VM and ssh from it into the backend servers. 
 
 Assuming your domainName parameter was "mypsqljumpbox" and region was "West US"
 * Master PostgreSQL server will be deployed at the first available IP address in the subnet: 10.0.1.4
