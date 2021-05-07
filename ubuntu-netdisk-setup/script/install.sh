@@ -177,7 +177,7 @@ libreoffice-script-provider-python ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy ng
 # -------------------------------------------
 # Create seafile-data with the help of ZFS
 # -------------------------------------------
-zpool destroy default
+
 zpool create -f ${ZPOOL_NAME} /dev/sdc
 zpool set cachefile=/etc/zfs/zpool.cache ${ZPOOL_NAME}
 zfs create ${ZPOOL_NAME}/${ZFS_DATASET}
