@@ -1,10 +1,17 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.255.40792",
+      "templateHash": "10459415818537170816"
+    }
+  },
   "parameters": {
     "applicationName": {
       "type": "string",
-      "defaultValue": "[concat('to-do-app', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('to-do-app{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Application Name, max length 30 characters"
       }
@@ -19,6 +26,9 @@
     "appServicePlanTier": {
       "type": "string",
       "defaultValue": "F1",
+      "metadata": {
+        "description": "App Service Plan's pricing tier. Details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      },
       "allowedValues": [
         "F1",
         "D1",
@@ -32,19 +42,16 @@
         "P2",
         "P3",
         "P4"
-      ],
-      "metadata": {
-        "description": "App Service Plan's pricing tier. Details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
-      }
+      ]
     },
     "appServicePlanInstances": {
       "type": "int",
       "defaultValue": 1,
-      "minValue": 1,
-      "maxValue": 3,
       "metadata": {
         "description": "App Service Plan's instance count"
-      }
+      },
+      "maxValue": 3,
+      "minValue": 1
     },
     "repositoryURL": {
       "type": "string",
@@ -75,16 +82,17 @@
       }
     }
   },
+  "functions": [],
   "variables": {
-    "cosmosAccountName": "[toLower(parameters('applicationName'))]",
-    "webSiteName": "[parameters('applicationName')]",
-    "hostingPlanName": "[parameters('applicationName')]"
+    "cosmosAccountName_var": "[toLower(parameters('applicationName'))]",
+    "webSiteName_var": "[parameters('applicationName')]",
+    "hostingPlanName_var": "[parameters('applicationName')]"
   },
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "name": "[variables('cosmosAccountName')]",
-      "apiVersion": "2021-01-15",
+      "apiVersion": "2021-04-15",
+      "name": "[variables('cosmosAccountName_var')]",
       "kind": "GlobalDocumentDB",
       "location": "[parameters('location')]",
       "properties": {
@@ -102,67 +110,65 @@
       }
     },
     {
-      "apiVersion": "2019-08-01",
-      "name": "[variables('hostingPlanName')]",
       "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('hostingPlanName_var')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName'))]"
-      ],
       "sku": {
         "name": "[parameters('appServicePlanTier')]",
         "capacity": "[parameters('appServicePlanInstances')]"
       },
       "properties": {
-        "name": "[variables('hostingPlanName')]"
-      }
+        "name": "[variables('hostingPlanName_var')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName_var'))]"
+      ]
     },
     {
-      "apiVersion": "2019-08-01",
-      "name": "[variables('webSiteName')]",
       "type": "Microsoft.Web/sites",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('webSiteName_var')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
-      ],
       "properties": {
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName_var'))]",
         "siteConfig": {
           "appSettings": [
             {
               "name": "CosmosDb:Account",
-              "value": "[reference(resourceId('Microsoft.DocumentDb/databaseAccounts/', variables('cosmosAccountName'))).documentEndpoint]"
+              "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName_var'))).documentEndpoint]"
             },
             {
               "name": "CosmosDb:Key",
-              "value": "[listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', variables('cosmosAccountName')), '2021-01-15').primaryMasterKey]"
+              "value": "[listKeys(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName_var')), '2021-01-15').primaryMasterKey]"
             },
             {
               "name": "CosmosDb:DatabaseName",
-              "value": "[parameters('DatabaseName')]"
+              "value": "[parameters('databaseName')]"
             },
             {
               "name": "CosmosDb:ContainerName",
-              "value": "[parameters('ContainerName')]"
+              "value": "[parameters('containerName')]"
             }
           ]
         }
       },
-      "resources": [
-        {
-          "type": "sourcecontrols",
-          "apiVersion": "2019-08-01",
-          "name": "web",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
-          ],
-          "properties": {
-            "repoUrl": "[parameters('repositoryURL')]",
-            "branch": "[parameters('branch')]",
-            "isManualIntegration": true
-          }
-        }
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName_var'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName_var'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/sourcecontrols",
+      "apiVersion": "2019-08-01",
+      "name": "[format('{0}/web', variables('webSiteName_var'))]",
+      "properties": {
+        "repoUrl": "[parameters('repositoryURL')]",
+        "branch": "[parameters('branch')]",
+        "isManualIntegration": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('webSiteName_var'))]"
       ]
     }
   ]

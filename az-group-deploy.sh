@@ -87,8 +87,9 @@ fi
 
 parameterJson=$( cat "$parametersFile" | jq '.parameters' )
 _artifactsLocationParameter=$( cat "$templateFile" | jq '.parameters._artifactsLocation' )
+_artifactsLocationSasTokenParameter=$( cat "$templateFile" | jq '.parameters._artifactsLocationSasToken' )
 
-if [[ $uploadArtifacts || $_artifactsLocationParameter != null ]]
+if [[ $uploadArtifacts || $_artifactsLocationParameter != null || $_artifactsLocationSasTokenParameter != null ]]
 then
 
     if [[ -z $storageAccountName ]]
