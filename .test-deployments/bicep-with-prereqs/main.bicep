@@ -20,8 +20,7 @@ resource acct 'Microsoft.DocumentDB/databaseAccounts@2021-03-15' = {
   }
 }
 
-resource db 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-03-15' = {
-  // 2021-04-15
+resource db 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
   location: location
   name: '${acct.name}/${dbName}'
   properties: {
