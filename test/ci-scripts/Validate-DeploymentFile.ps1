@@ -28,13 +28,29 @@ if ($bicepSupported) {
     # Build a JSON version of the bicep file
     $CompiledJsonFilename = "$($MainTemplateFilenameBicep).temp.json"
     $CompiledJsonPath = "$($SampleFolder)/$($CompiledJsonFilename)"
+    $errorFile = Join-Path $SampleFolder "errors.txt"
     Write-host "BUILDING: $BicepPath build $MainTemplatePathBicep --outfile $CompiledJsonPath"
-    & $BicepPath build $MainTemplatePathBicep --outfile $CompiledJsonPath
+    $p = Start-Process $BicepPath -ArgumentList @('build', $MainTemplatePathBicep, '--outfile', $CompiledJsonPath) -RedirectStandardError $errorFile -Wait
+    $errorOutput = [string[]](Get-Content $errorFile)
+    
     if (!(Test-Path $CompiledJsonPath)) {
         Write-Error "Bicep build produced no output file. Check above for build errors."
         return
     }
-    
+
+    $errors = @()
+    foreach ($item in $errorOutput) {
+        if ($item -imatch " Warning BCP") {
+            Write-Warning $item
+        }
+        else {
+            $errors += $item
+        }
+    }
+    if ($errors) {
+        Write-Error ($errors -join "`n")
+    }
+
     # If this is a PR, compare it against the JSON file included in the sample
     if ($isPR) {
         $hashesMatch = & $PSScriptRoot/Validate-TemplateHash.ps1 `
