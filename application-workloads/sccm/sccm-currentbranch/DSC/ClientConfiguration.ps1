@@ -1,4 +1,4 @@
-﻿configuration Configuration
+configuration Configuration
 {
    param
    (
@@ -21,7 +21,7 @@
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds
     )
-
+    Set-ExecutionPolicy -ExecutionPolicy Bypass -Force
     Import-DscResource -ModuleName TemplateHelpDSC
 
     $LogFolder = "TempLog"
@@ -57,8 +57,8 @@
 
         InstallFeatureForSCCM InstallFeature
         {
-            Name = "DPMP"
-            Role = "Distribution Point","Management Point"
+            Name = "Client"
+            Role = "Client"
             DependsOn = "[SetCustomPagingFile]PagingSettings"
         }
 
@@ -104,8 +104,8 @@
 
         OpenFirewallPortForSCCM OpenFirewall
         {
-            Name = "DPMP"
-            Role = "Distribution Point","Management Point"
+            Name = "Client"
+            Role = "Client"
             DependsOn = "[JoinDomain]JoinDomain"
         }
 
@@ -121,11 +121,11 @@
             DependsOn = "[FileReadAccessShare]DomainSMBShare"
         }
 
-        WriteConfigurationFile WriteDPMPFinished
+        WriteConfigurationFile WriteClientFinished
         {
-            Role = "DPMP"
+            Role = "Client"
             LogPath = $LogPath
-            WriteNode = "DPMPFinished"
+            WriteNode = "ClientFinished"
             Status = "Passed"
             Ensure = "Present"
             DependsOn = "[AddUserToLocalAdminGroup]AddADUserToLocalAdminGroup","[AddUserToLocalAdminGroup]AddADComputerToLocalAdminGroup"

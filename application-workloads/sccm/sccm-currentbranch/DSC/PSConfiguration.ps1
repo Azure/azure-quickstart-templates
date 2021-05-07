@@ -1,4 +1,4 @@
-﻿configuration Configuration
+configuration Configuration
 {
    param
    (
@@ -28,10 +28,12 @@
     $LogPath = "c:\$LogFolder"
     $DName = $DomainName.Split(".")[0]
     $DCComputerAccount = "$DName\$DCName$"
-    $PSComputerAccount = "$DName\$PSName$"
+    $CurrentRole = "PS"
+    if($Configuration -ne "Standalone")
+    {
+        $CSComputerAccount = "$DName\$CSName$"
+    }
     $DPMPComputerAccount = "$DName\$DPMPName$"
-    $CurrentRole = "CS"
-    $PrimarySiteName = $PSName.split(".")[0] + "$"
     
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
 
@@ -57,7 +59,7 @@
 
         InstallFeatureForSCCM InstallFeature
         {
-            NAME = "CS"
+            NAME = "PS"
             Role = "Site Server"
             DependsOn = "[AddBuiltinPermission]AddSQLPermission"
         }
@@ -69,19 +71,84 @@
             Ensure = "Present"
             DependsOn = "[InstallFeatureForSCCM]InstallFeature"
         }
-
-        DownloadSCCM DownLoadSCCM
+        if($Configuration -eq "Standalone")
         {
-            CM = $CM
-            Ensure = "Present"
-            DependsOn = "[InstallADK]ADKInstall"
+            DownloadSCCM DownLoadSCCM
+            {
+                CM = $CM
+                Ensure = "Present"
+                DependsOn = "[InstallADK]ADKInstall"
+            }
+
+            SetDNS DnsServerAddress
+            {
+                DNSIPAddress = $DNSIPAddress
+                Ensure = "Present"
+                DependsOn = "[DownloadSCCM]DownLoadSCCM"
+            }
+
+            FileReadAccessShare DomainSMBShare
+            {
+                Name   = $LogFolder
+                Path =  $LogPath
+                Account = $DCComputerAccount
+                DependsOn = "[File]ShareFolder"
+            }
+
+            FileReadAccessShare CMSourceSMBShare
+            {
+                Name   = $CM
+                Path =  "c:\$CM"
+                Account = $DCComputerAccount
+                DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
+            }
+
+            RegisterTaskScheduler InstallAndUpdateSCCM
+            {
+                TaskName = "ScriptWorkFlow"
+                ScriptName = "ScriptWorkFlow.ps1"
+                ScriptPath = $PSScriptRoot
+                ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $ClientName $Configuration $CurrentRole $LogFolder $CSName $PSName"
+                Ensure = "Present"
+                DependsOn = "[FileReadAccessShare]CMSourceSMBShare"
+            }
         }
-
-        SetDNS DnsServerAddress
+        else 
         {
-            DNSIPAddress = $DNSIPAddress
-            Ensure = "Present"
-            DependsOn = "[DownloadSCCM]DownLoadSCCM"
+            SetDNS DnsServerAddress
+            {
+                DNSIPAddress = $DNSIPAddress
+                Ensure = "Present"
+                DependsOn = "[InstallADK]ADKInstall"
+            }
+
+            WaitForConfigurationFile WaitCSJoinDomain
+            {
+                Role = "DC"
+                MachineName = $DCName
+                LogFolder = $LogFolder
+                ReadNode = "CSJoinDomain"
+                Ensure = "Present"
+                DependsOn = "[File]ShareFolder"
+            }
+
+            FileReadAccessShare DomainSMBShare
+            {
+                Name   = $LogFolder
+                Path =  $LogPath
+                Account = $DCComputerAccount,$CSComputerAccount
+                DependsOn = "[WaitForConfigurationFile]WaitCSJoinDomain"
+            }
+
+            RegisterTaskScheduler InstallAndUpdateSCCM
+            {
+                TaskName = "ScriptWorkFlow"
+                ScriptName = "ScriptWorkFlow.ps1"
+                ScriptPath = $PSScriptRoot
+                ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $ClientName $Configuration $CurrentRole $LogFolder $CSName $PSName"
+                Ensure = "Present"
+                DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
+            }
         }
 
         WaitForDomainReady WaitForDomain
@@ -106,28 +173,10 @@
             Ensure = 'Present'
             DependsOn = "[JoinDomain]JoinDomain"
         }
-
-        WaitForConfigurationFile WaitPSJoinDomain
-        {
-            Role = "DC"
-            MachineName = $DCName
-            LogFolder = $LogFolder
-            ReadNode = "PSJoinDomain"
-            Ensure = "Present"
-            DependsOn = "[File]ShareFolder"
-        }
-
-        FileReadAccessShare DomainSMBShare
-        {
-            Name   = $LogFolder
-            Path =  $LogPath
-            Account = $DCComputerAccount,$PSComputerAccount
-            DependsOn = "[WaitForConfigurationFile]WaitPSJoinDomain"
-        }
         
         OpenFirewallPortForSCCM OpenFirewall
         {
-            Name = "CS"
+            Name = "PS"
             Role = "Site Server"
             DependsOn = "[JoinDomain]JoinDomain"
         }
@@ -147,30 +196,6 @@
             SQLInstanceName = "MSSQLSERVER"
             Ensure = "Present"
             DependsOn = "[WaitForConfigurationFile]DelegateControl"
-        }
-
-        FileReadAccessShare CMSourceSMBShare
-        {
-            Name   = $CM
-            Path =  "c:\$CM"
-            Account = $DCComputerAccount
-            DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
-        }
-
-        AddUserToLocalAdminGroup AddADComputerToLocalAdminGroup {
-            Name = "$PrimarySiteName"
-            DomainName = $DomainName
-            DependsOn = "[FileReadAccessShare]CMSourceSMBShare"
-        }
-
-        RegisterTaskScheduler InstallAndUpdateSCCM
-        {
-            TaskName = "ScriptWorkFlow"
-            ScriptName = "ScriptWorkFlow.ps1"
-            ScriptPath = $PSScriptRoot
-            ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $ClientName $Configuration $CurrentRole $LogFolder $CSName $PSName"
-            Ensure = "Present"
-            DependsOn = "[AddUserToLocalAdminGroup]AddADComputerToLocalAdminGroup"
         }
     }
 }
