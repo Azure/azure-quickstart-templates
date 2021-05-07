@@ -1,12 +1,13 @@
 @description('The location in which the resources should be deployed.')
 param location string = resourceGroup().location
 
+param acctName string = 'bicep-with-prereqs-${uniqueString(resourceGroup().id)}'
 param dbName string = 'db1'
 
 resource acct 'Microsoft.DocumentDB/databaseAccounts@2021-03-15' = {
-  name: 'acct1'
+  name: acctName
+  location: location
   properties: {
-    enableFreeTier: true
     databaseAccountOfferType: 'Standard'
     consistencyPolicy: {
       defaultConsistencyLevel: 'Session'
@@ -19,8 +20,9 @@ resource acct 'Microsoft.DocumentDB/databaseAccounts@2021-03-15' = {
   }
 }
 
-resource db 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
+resource db 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-03-15' = {
   // 2021-04-15
+  location: location
   name: '${acct.name}/$dbName'
   properties: {
     resource: {
