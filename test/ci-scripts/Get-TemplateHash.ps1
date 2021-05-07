@@ -27,6 +27,9 @@ if ($bearerToken -eq "") {
     $azContext = Get-AzContext
     $profileClient = New-Object Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient($azProfile)
     $bearerToken = ($profileClient.AcquireAccessToken($azContext.Tenant.TenantId)).AccessToken
+    if (!$bearerToken) {
+        Write-Error "Could not retrieve token"
+    }
 }
 $uri = "https://management.azure.com/providers/Microsoft.Resources/calculateTemplateHash?api-version=2019-10-01"
 $Headers = @{
@@ -59,7 +62,7 @@ catch {
 }
 
 Write-Host "Template hash: $templateHash"
-if (!($templateHash -gt 0)) {
+if (!$templateHash -or !($templateHash -gt 0)) {
     Write-Error "Failed to get hash for: $templateFilePath"
 }
 
