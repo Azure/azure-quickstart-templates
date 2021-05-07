@@ -172,11 +172,12 @@ dpkg-reconfigure locales
 apt-get update
 apt-get install -y python2.7 sudo python-pil python-pip python-setuptools python-imaging python-mysqldb python-ldap python-urllib3 \
 openjdk-8-jre memcached python-memcache pwgen curl openssl poppler-utils libpython2.7 libreoffice \
-libreoffice-script-provider-python ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy nginx python-requests zfs-fuse
+libreoffice-script-provider-python ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy nginx python-requests zfsutils-linux
 
 # -------------------------------------------
 # Create seafile-data with the help of ZFS
 # -------------------------------------------
+zpool destroy default
 zpool create -f ${ZPOOL_NAME} /dev/sdc
 zpool set cachefile=/etc/zfs/zpool.cache ${ZPOOL_NAME}
 zfs create ${ZPOOL_NAME}/${ZFS_DATASET}
