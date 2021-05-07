@@ -13,7 +13,7 @@ param (
     [string] $ttkFolder = $ENV:TTK_FOLDER
 )
 
-Import-Module "$($ttkFolder)/arm-ttk/arm-ttk.psd1" -Verbose
+Import-Module "$($ttkFolder)/arm-ttk/arm-ttk.psd1"
 
 $templatePath = "$($SampleFolder)/$MainTemplateDeploymentFilename"
 Write-Host "Calling Test-AzureTemplate on $templatePath"
