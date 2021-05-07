@@ -4,7 +4,7 @@ param location string = resourceGroup().location
 param acctName string = 'bicep-with-prereqs-${uniqueString(resourceGroup().id)}'
 param dbName string = 'db1'
 
-resource acct 'Microsoft.DocumentDB/databaseAccounts@2021-03-15' = {
+resource acct 'Microsoft.DocumentDB/databaseAccounts@2021-01-15' = {
   name: acctName
   location: location
   properties: {
