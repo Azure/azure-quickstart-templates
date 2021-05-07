@@ -59,4 +59,8 @@ catch {
 }
 
 Write-Host "Template hash: $templateHash"
+if (!($templateHash -gt 0)) {
+    Write-Error "Failed to get hash for: $templateFilePath"
+}
+
 Return $templateHash
