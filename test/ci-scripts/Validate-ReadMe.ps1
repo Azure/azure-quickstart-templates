@@ -92,21 +92,18 @@ $readme = Get-Content "$SampleFolder/$ReadMeFileName" -Raw
 
 $dumpHelp = $false
 $helpMessage = @"
-****************************************************
-See below for expected markup to copy and paste
-****************************************************
+`n**** SEE BELOW FOR EXPECTED MARKUP TO COPY AND PASTE INTO THE README ****
 "@
 # header on first line
 if (-not ($readme.StartsWith("# "))) {
-    Write-Error "Readme must start with # header, not: $($readme[0])"
+    Write-Error "Readme must start with # header, not: $($readme[0])`n$helpMessage"
 }
 
 #proper src attribute for badges
 foreach ($badge in $badgeLinks) {
     if (-not ($readme -clike "*$badge*")) {
         $dumpHelp = $true
-        Write-Host $helpMessage
-        Write-Error "Readme is missing badge: $badge"
+        Write-Error "Readme is missing badge: $badge`n$helpMessage"
     }
 }
 
@@ -115,8 +112,7 @@ foreach ($link in $links) {
     #Write-Host $link
     if (-not ($readme -clike "*$link*")) {
         $dumpHelp = $true
-        Write-Host $helpMessage
-        Write-Error "Readme must have a button with the link: $link"
+        Write-Error "Readme must have a button with the link: $link`n$helpMessage"
     }
 }
 
@@ -124,26 +120,22 @@ foreach ($link in $links) {
 # if ($bicepSupported) {
 #     if (-not ($readme.Contains($BicepImage))) {
 #         $dumpHelp = $true
-#         Write-Host $helpMessage
-#         Write-Error "Readme must have the following image markdown: $BicepImage"
+#         Write-Error "Readme must have the following image markdown: $BicepImage`n$helpMessage"
 #     }
 # }
 
 #Now make sure the readme does not contain buttons for unsupported clouds/features - search the readme case insensitively
 if (!$supportedEnvironments.Contains("AzureUSGovernment") -and $readme -like "*$($GovLinkMarkDown[1])*") {
     $dumpHelp = $true
-    Write-Host $helpMessage
-    Write-Error "Readme contains link to $($GovLinkMarkDown[1]) but sample is not supported in AzureUSGovernment"
+    Write-Error "Readme contains link to $($GovLinkMarkDown[1]) but sample is not supported in AzureUSGovernment`n$helpMessage"
 }
 if (!$supportedEnvironments.Contains("AzureCloud") -and $readme -like "*$($PublicLinkMarkDown[1])*") {
     $dumpHelp = $true
-    Write-Host $helpMessage
-    Write-Error "Readme contains link to $($PublicLinkMarkDown[1]) but sample is not supported in AzureCloud"
+    Write-Error "Readme contains link to $($PublicLinkMarkDown[1]) but sample is not supported in AzureCloud`n$helpMessage"
 }
 # if (!$bicepSupported -and $readme -like "*$($BicepLogoLink)*") {
 #     $dumpHelp = $true
-#     Write-Host $helpMessage
-#     Write-Error "Readme contains link to $($BicepLogoLink) but sample does not include a bicep template"
+#     Write-Error "Readme contains link to $($BicepLogoLink) but sample does not include a bicep template`n$helpMessage"
 # }
 
 if ( $dumpHelp ) {
@@ -169,11 +161,16 @@ $GovButton
 $ARMVizButton   
 "@
 
+    Write-Host ""
     Write-Host "***************************************************************************************"
     Write-Host "Copy and paste the following markdown to the README just under the top line's heading:"
     Write-Host "***************************************************************************************"
     Write-Host $md
-    Write-Host "`n"
+    Write-Host ""
+    Write-Host "***************************************************************************************"
+    Write-Host "End of copy and paste for README"
+    Write-Host "***************************************************************************************"
+    Write-Host ""
 }
 
 # pipeline variable should default to FAIL

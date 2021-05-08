@@ -9,7 +9,7 @@
             [switch]$removeGeneratorMetadata
         ) {
             $cmdlet = "$(Split-Path $PSCommandPath -Parent)/../ci-scripts/Get-TemplateHash.ps1".Replace('.Tests.ps1', '.ps1')
-            . $cmdlet $templateFilePath $bearerToken -removeGeneratorMetadata:$removeGeneratorMetadata
+            . $cmdlet $templateFilePath $bearerToken -RemoveGeneratorMetadata:$removeGeneratorMetadata
         }
     }
     

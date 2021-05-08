@@ -115,7 +115,7 @@ if (!$TtkFolder) {
         Return
     }
 }
-Write-Host "Validating JSON best practices"
+Write-Host "Validating JSON best practices (using ARM TTK)"
 $validateBPOutput =
 & $PSScriptRoot/Test-BestPractices.ps1 `
     -SampleFolder $SampleFolder `

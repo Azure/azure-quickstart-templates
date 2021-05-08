@@ -54,11 +54,13 @@ if ($bicepSupported) {
 
     # If this is a PR, compare it against the JSON file included in the sample
     if ($isPR) {
-        $hashesMatch = & $PSScriptRoot/Validate-TemplateHash.ps1 `
+        $templatesMatch = & $PSScriptRoot/Compare-Templates.ps1 `
             -TemplateFilePathExpected $CompiledJsonPath `
             -TemplateFilePathActual $MainTemplatePathJson `
-            -ErrorAction Ignore # Ignore so we can write the following error message
-        if (!$hashesMatch) {
+            -RemoveGeneratorMetadata `
+            -WriteToHost `
+            -ErrorAction Ignore # Ignore so we can write the following error message instead
+        if (!$templatesMatch) {
             Write-Error ("The JSON in the sample does not match the JSON built from bicep.`n" `
                     + "Either copy the expected output from the log into $MainTemplateFilenameJson or run the command ``bicep build $mainTemplateFilenameBicep --outfile $MainTemplateFilenameJson`` in your sample folder using bicep version $BicepVersion")
         }

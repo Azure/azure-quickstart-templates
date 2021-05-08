@@ -58,3 +58,28 @@ function Get-SampleRootPath([string] $SampleFolder = ".") {
 function Get-RelativePath([string] $base, [string] $destination) {
     return [System.IO.Path]::GetRelativePath($base, $destination)
 }
+
+function Remove-GeneratorMetadata(
+    [string] $jsonContent
+) {
+    # Remove the top-level metadata the generator information is there, including the bicep version, and this would
+    # affect file comparisons where only the bicep version differs
+    $json = ConvertFrom-Json $jsonContent
+    if ($json) {
+        $json.PSObject.properties.remove('metadata')
+    } else {
+        Write-Error "Template is empty"
+    }
+    return ConvertTo-JSON $json -Depth 100
+}
+
+function Convert-StringToLines(
+    [string] $content
+) {
+    <#
+        .SYNOPSIS
+        Converts a multi-line string to an array of strings, each element corresponding to a line
+    #>
+    
+    return $content -split '\r\n|\n|\r'
+}

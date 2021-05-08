@@ -4,20 +4,8 @@
     # If this is set, the hash obtained will *not* be the official template hash that Azure would compute.
     [switch][Parameter(Mandatory = $false)] $removeGeneratorMetadata
 )
-function RemoveGeneratorMetadata(
-    [object] $jsonContent
-) {
-    if ($removeGeneratorMetadata) {
-        # Remove the top-level metadata the generator information is there, including the bicep version, and this would
-        # affect file comparisons where only the bicep version differs
-        $json = ConvertFrom-Json $jsonContent 
-        $json.PSObject.properties.remove('metadata')
-        return ConvertTo-JSON $json -Depth 100
-    }
-    else {
-        return $jsonContent
-    }
-}
+
+Import-Module "$PSScriptRoot/Local.psm1" -Force
 
 # TODO - this could now be updated to use Invoke-AzRestMethod that handles authn, so token steps could be removed.
 if ($bearerToken -eq "") {
@@ -39,9 +27,14 @@ $Headers = @{
 # END TODO
 
 $raw = Get-Content -Path $templateFilePath -Raw -ErrorAction Stop
-$withoutGeneratorMetadata = RemoveGeneratorMetadata $raw -ErrorAction Stop
+if ($RemoveGeneratorMetadata) {
+    $withoutGeneratorMetadata = Remove-GeneratorMetadata $raw
+}
+else {
+    $withoutGeneratorMetadata= $raw
+}
 
-if ($withoutGeneratorMetadata -eq $null -or $withoutGeneratorMetadata -eq "") {
+if ($null -eq $withoutGeneratorMetadata -or $withoutGeneratorMetadata -eq "") {
     Write-Error "JSON is empty"
 }
 
