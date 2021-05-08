@@ -2,13 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "domainAdminUsername": {
+        "adUsername": {
             "type": "string",
             "metadata": {
                 "description": "The name of the administrator account of the new VM and domain"
             }
         },
-        "domainAdminPassword": {
+        "adPassword": {
             "type": "securestring",
             "metadata": {
                 "description": "The password for the administrator account of the new VM and domain"
@@ -20,16 +20,16 @@
                 "description": "The FQDN of the Active Directory Domain to be created"
             }
         },
-        "lbDnsPrefix": {
+        "dnsPrefix": {
             "type": "string",
             "metadata": {
                 "description": "The DNS prefix for the public IP address used by the Load Balancer"
             }
         },
-        "controllerVmSize": {
-            "type": "string",
+        "vmDnsPrefix": {
+            "type": "array",
             "metadata": {
-                "description": "Size of the VM for the controller"
+                "description": "Unique public DNS prefix for the deployment"
             }
         },
         "location": {
@@ -39,393 +39,87 @@
                 "description": "Location for all resources."
             }
         },
-        "controllerVmName": {
-            "type": "string",
-            "metadata": {
-                "description": "Virtual machine name."
-            }
-        },
-        "virtualNetworkName": {
-            "type": "string",
-            "metadata": {
-                "description": "Virtual network name."
-            }
-        },
-        "virtualNetworkAddressRange": {
-            "type": "string",
-            "defaultValue": "10.0.0.0/16",
-            "metadata": {
-                "description": "Virtual network address range."
-            }
-        },
-        "loadBalancerFrontEndIPName": {
-            "type": "string",
-            "metadata": {
-                "description": "Load balancer front end IP address name."
-            }
-        },
-        "backendAddressPoolName": {
-            "type": "string",
-            "metadata": {
-                "description": "Backend address pool name."
-            }
-        },
-        "inboundNatRulesName": {
-            "type": "string",
-            "metadata": {
-                "description": "Inbound NAT rules name."
-            }
-        },
-        "controllerNetworkInterfaceName": {
-            "type": "string",
-            "metadata": {
-                "description": "Network interface name."
-            }
-        },
-        "privateIPAddress": {
-            "type": "string",
-            "defaultValue": "10.0.0.4",
-            "metadata": {
-                "description": "Private IP address."
-            }
-        },
-        "subnetName": {
-            "type": "string",
-            "metadata": {
-                "description": "Subnet name."
-            }
-        },
-        "subnetRange": {
-            "type": "string",
-            "defaultValue": "10.0.0.0/24",
-            "metadata": {
-                "description": "Subnet IP range."
-            }
-        },
-        "controllerPublicIPAddressName": {
-            "type": "string",
-            "metadata": {
-                "description": "Subnet IP range."
-            }
-        },
-        "availabilitySetName": {
-            "type": "string",
-            "metadata": {
-                "description": "Availability set name."
-            }
-        },
-        "loadBalancerName": {
-            "type": "string",
-            "metadata": {
-                "description": "Load balancer name."
-            }
-        },
         "vmSize": {
-        "type": "string",
-        "metadata": {
-          "description": "Size of VM that is joining the domain."
+            "type": "string",
+            "defaultValue": "Standard_DS1_V2",
+            "metadata": {
+                "description": "Size of VM that is joining the domain."
         }
       },
-        "vmNetworkInterfaceName": {
-            "type": "string",
-            "metadata": {
-                "description": "Network interface name of the VM that is joining the domain."
-            }
+        "virtualNetworkName": {
+          "type": "string",
+          "metadata": {
+            "description": "The name of the virtual network for the domain controller."
+          }
         },
-        "vmAdminUsername": {
+        "subnetName": {
+          "type": "securestring",
+          "metadata": {
+            "description": "The name of the subnet for the domain controller."
+          }
+        },
+        "adminUsername": {
           "type": "string",
           "metadata": {
             "description": "The name of the administrator of the new VM that is joining the domain."
           }
         },
-        "vmAdminPassword": {
+        "adminPassword": {
           "type": "securestring",
           "metadata": {
             "description": "The password for the administrator account of the new VM that is joining the domain."
           }
-        },
-        "vmName": {
-          "type": "array",
-          "metadata": {
-            "description": "The name of the VM that is joining the domain."
-          }
         }
     },
     "variables": {
-        "domainAdminUsername": "[parameters('domainAdminUsername')]",
-        "domainAdminPassword": "[parameters('domainAdminPassword')]",
-        "domainName": "[parameters('domainName')]",
-        "vmNames": "[parameters('vmName')]"
+        "adUsername": "[parameters('adUsername')]",
+        "adPassword": "[parameters('adPassword')]",
+        "vmNames": "[parameters('vmDnsPrefix')]"
     },
     "resources": [
-        {
-            "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2019-02-01",
-            "name": "[parameters('controllerPublicIPAddressName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "publicIPAllocationMethod": "Static",
-                "dnsSettings": {
-                    "domainNameLabel": "[parameters('lbDnsPrefix')]"
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Compute/availabilitySets",
-            "apiVersion": "2019-03-01",
-            "location": "[parameters('location')]",
-            "name": "[parameters('availabilitySetName')]",
-            "properties": {
-                "PlatformUpdateDomainCount": 20,
-                "PlatformFaultDomainCount": 2
-            },
-            "sku": {
-                "name": "Aligned"
-            }
-        },
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2018-11-01",
-            "name": "VNet",
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/active-directory/active-directory-new-domain/nestedtemplates/vnet.json",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "virtualNetworkName": {
-                        "value": "[parameters('virtualNetworkName')]"
-                    },
-                    "virtualNetworkAddressRange": {
-                        "value": "[parameters('virtualNetworkAddressRange')]"
-                    },
-                    "subnetName": {
-                        "value": "[parameters('subnetName')]"
-                    },
-                    "subnetRange": {
-                        "value": "[parameters('subnetRange')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    }
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Network/loadBalancers",
-            "apiVersion": "2019-02-01",
-            "name": "[parameters('loadBalancerName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[parameters('controllerPublicIPAddressName')]"
-            ],
-            "properties": {
-                "frontendIPConfigurations": [
-                    {
-                        "name": "[parameters('loadBalancerFrontEndIPName')]",
-                        "properties": {
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('controllerPublicIPAddressName'))]"
-                            }
-                        }
-                    }
-                ],
-                "backendAddressPools": [
-                    {
-                        "name": "[parameters('backendAddressPoolName')]"
-                    }
-                ],
-                "inboundNatRules": [
-                    {
-                        "name": "[parameters('inboundNatRulesName')]",
-                        "properties": {
-                            "frontendIPConfiguration": {
-                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', parameters('loadBalancerName'), parameters('loadBalancerFrontEndIPName'))]"
-                            },
-                            "protocol": "Tcp",
-                            "frontendPort": 3389,
-                            "backendPort": 3389,
-                            "enableFloatingIP": false
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2019-02-01",
-            "name": "[parameters('controllerNetworkInterfaceName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "VNet",
-                "[parameters('loadBalancerName')]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig1",
-                        "properties": {
-                            "privateIPAllocationMethod": "Static",
-                            "privateIPAddress": "[parameters('privateIPAddress')]",
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
-                            },
-                            "loadBalancerBackendAddressPools": [
-                                {
-                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancerName'), parameters('backendAddressPoolName'))]"
-                                }
-                            ],
-                            "loadBalancerInboundNatRules": [
-                                {
-                                    "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', parameters('loadBalancerName'), parameters('inboundNatRulesName'))]"
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2019-03-01",
-            "name": "[parameters('controllerVmName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[parameters('controllerNetworkInterfaceName')]",
-                "[parameters('availabilitySetName')]",
-                "[parameters('loadBalancerName')]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[parameters('controllerVmSize')]"
-                },
-                "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
-                },
-                "osProfile": {
-                    "computerName": "[parameters('controllerVmName')]",
-                    "adminUsername": "[parameters('domainAdminUsername')]",
-                    "adminPassword": "[parameters('domainAdminPassword')]"
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "MicrosoftWindowsServer",
-                        "offer": "WindowsServer",
-                        "sku": "2016-Datacenter",
-                        "version": "latest"
-                    },
-                    "osDisk": {
-                        "name": "[concat(parameters('controllerVmName'),'_OSDisk')]",
-                        "caching": "ReadOnly",
-                        "createOption": "FromImage",
-                        "managedDisk": {
-                            "storageAccountType": "StandardSSD_LRS"
-                        }
-                    },
-                    "dataDisks": [
-                        {
-                            "name": "[concat(parameters('controllerVmName'), '_DataDisk')]",
-                            "caching": "ReadWrite",
-                            "createOption": "Empty",
-                            "diskSizeGB": 20,
-                            "managedDisk": {
-                                "storageAccountType": "StandardSSD_LRS"
-                            },
-                            "lun": 0
-                        }
-                    ]
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('controllerNetworkInterfaceName'))]"
-                        }
-                    ]
-                }
-            },
-            "resources": [
-                {
-                    "type": "extensions",
-                    "apiVersion": "2019-03-01",
-                    "name": "CreateADForest",
-                    "location": "[parameters('location')]",
-                    "dependsOn": [
-                        "[parameters('controllerVmName')]"
-                    ],
-                    "properties": {
-                        "publisher": "Microsoft.Powershell",
-                        "type": "DSC",
-                        "typeHandlerVersion": "2.19",
-                        "autoUpgradeMinorVersion": true,
-                        "settings": {
-                            "ModulesUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/active-directory/active-directory-new-domain/DSC/CreateADPDC.zip",
-                            "ConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
-                            "Properties": {
-                                "DomainName": "[parameters('domainName')]",
-                                "AdminCreds": {
-                                    "UserName": "[parameters('domainAdminUsername')]",
-                                    "Password": "PrivateSettingsRef:AdminPassword"
-                                }
-                            }
-                        },
-                        "protectedSettings": {
-                            "Items": {
-                                "AdminPassword": "[parameters('domainAdminPassword')]"
-                            }
-                        }
-                    }
-                }
-            ]
-        },
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2018-11-01",
-            "name": "UpdateVNetDNS",
-            "dependsOn": [
-                "CreateADForest"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/active-directory/active-directory-new-domain/nestedtemplates/vnet-with-dns-server.json",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "virtualNetworkName": {
-                        "value": "[parameters('virtualNetworkName')]"
-                    },
-                    "virtualNetworkAddressRange": {
-                        "value": "[parameters('virtualNetworkAddressRange')]"
-                    },
-                    "subnetName": {
-                        "value": "[parameters('subnetName')]"
-                    },
-                    "subnetRange": {
-                        "value": "[parameters('subnetRange')]"
-                    },
-                    "DNSServerAddress": {
-                        "value": [
-                            "[parameters('privateIPAddress')]"
-                        ]
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    }
-                }
-            }
-        },
+     {
+         "name": "createADController",
+         "type": "Microsoft.Resources/deployments",
+         "apiVersion": "2020-06-01",
+         "properties": {
+             "mode": "Incremental",
+             "templateLink": {
+                 "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/modules/active-directory-new-domain/0.9/azuredeploy.json",
+                 "contentVersion": "1.0.0.0"
+             },
+             "parameters": {
+                 "adminUsername": {
+                     "value": "[parameters('adUsername')]"
+                 },
+                 "adminPassword": {
+                     "value": "[parameters('adPassword')]"
+                 },
+                 "domainName": {
+                     "value": "[parameters('domainName')]"
+                 },
+                 "dnsPrefix": {
+                     "value": "[parameters('dnsPrefix')]"
+                 },
+                 "virtualNetworkName": {
+                     "value": "[parameters('virtualNetworkName')]"
+                 },
+                 "subnetName": {
+                     "value": "[parameters('subnetName')]"
+                 }
+             }
+         }
+     },
     {
       "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(parameters('vmName')[copyIndex()], '-nic')]",
+      "name": "[concat(parameters('vmDnsPrefix')[copyIndex()], '-nic')]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
-        "count": "[length(parameters('vmName'))]"
+        "count": "[length(parameters('vmDnsPrefix'))]"
       },
       "dependsOn": [
-        "VNet"
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -442,29 +136,13 @@
       }
     },
     {
-        "apiVersion": "2015-06-15",
-        "type": "Microsoft.Network/publicIPAddresses",
-        "name": "[concat(parameters('vmName')[copyIndex()], '-pip')]",
-        "location": "[parameters('location')]",
-        "copy": {
-          "name": "pipLoop",
-          "count": "[length(parameters('vmName'))]"
-        },
-        "properties": {
-          "publicIPAllocationMethod": "Dynamic",
-          "dnsSettings": {
-            "domainNameLabel": "[parameters('vmName')[copyIndex()]]"
-          }
-       }
-    },
-    {
       "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('vmName')[copyIndex()]]",
+      "name": "[parameters('vmDnsPrefix')[copyIndex()]]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "vmLoop",
-        "count": "[length(parameters('vmName'))]"
+        "count": "[length(parameters('vmDnsPrefix'))]"
       },
       "dependsOn": [
         "nicLoop"
@@ -474,9 +152,9 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('vmName')[copyIndex()]]",
-          "adminUsername": "[parameters('vmAdminUsername')]",
-          "adminPassword": "[parameters('vmAdminPassword')]"
+          "computerName": "[parameters('vmDnsPrefix')[copyIndex()]]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
            "imageReference": {
@@ -486,7 +164,7 @@
                "version": "latest"
            },
            "osDisk": {
-               "name": "[concat(parameters('vmName')[copyIndex()],'_OSDisk')]",
+               "name": "[concat(parameters('vmDnsPrefix')[copyIndex()],'_OSDisk')]",
                "caching": "ReadOnly",
                "createOption": "FromImage",
                "managedDisk": {
@@ -496,26 +174,26 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-               "id": "[resourceId('Microsoft.Network/networkInterfaces/',concat(parameters('vmNetworkInterfaceName')[copyIndex()], '-nic'))]"
+               "id": "[resourceId('Microsoft.Network/networkInterfaces/',concat(parameters('vmDnsPrefix')[copyIndex()], '-nic'))]"
             }
           ]
         }
       }
     }
   }
-    ],
+],
     "outputs": {
-        "domainAdminUsername": {
-            "type": "string",
-            "value": "[variables('domainAdminUsername')]"
-        },
-        "domainAdminPassword": {
-            "type": "string",
-            "value": "[variables('domainAdminPassword')]"
-        },
         "domainName": {
             "type": "string",
-            "value": "[variables('domainName')]"
+            "value": "[reference('createADController').outputs.domainName.value]"
+        },
+        "adUsername": {
+            "type": "string",
+            "value": "[variables('adUsername')]"
+        },
+        "adPassword": {
+            "type": "string",
+            "value": "[variables('adPassword')]"
         },
         "vmNames": {
             "type": "array",
