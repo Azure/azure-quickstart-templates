@@ -8,4 +8,4 @@
     'newStorageAccountType'='Premium_LRS';
 }
 
-.\deployscaleset.ps1 @args 
+.\deployscaleset.ps1 @args
