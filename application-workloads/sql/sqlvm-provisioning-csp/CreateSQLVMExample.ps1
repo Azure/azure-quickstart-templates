@@ -1,4 +1,4 @@
-﻿. "$PSScriptRoot\New-SqlServerVirtualMachine.ps1"
+. "$PSScriptRoot\New-SqlServerVirtualMachine.ps1"
 
 
 $PlainPassword = "Pa55word1"
