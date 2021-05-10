@@ -1,4 +1,4 @@
-﻿configuration ConfigureDCVM
+configuration ConfigureDCVM
 {
     param
     (
