@@ -5,15 +5,15 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# TFS 2017 Update 2
-$TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=850949'
+# TFS 2017 Update 3
+$TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=857132'
 $InstallDirectory = 'C:\Program Files\Microsoft Team Foundation Server 15.0'
 $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
 
-# Checks if TFS is installed, if not downloads and runs the web installer
+# Checks if TFS is installed
 function Ensure-TfsInstalled()
 {
-    # Check if TFS is already installed
+    # Check if TFS is already installed.
     $tfsInstalled = $false
 
     if(Test-Path $InstallKey)
@@ -29,8 +29,8 @@ function Ensure-TfsInstalled()
 
     if(-not $tfsInstalled)
     {
-        Write-Verbose "Installing TFS using Web Installer"
-        # Download TFS install to a temp folder, then run it
+        Write-Verbose "Installing TFS using ISO"
+        # Download TFS and mount it
         $parent = [System.IO.Path]::GetTempPath()
         [string] $name = [System.Guid]::NewGuid()
         [string] $fullPath = Join-Path $parent $name
@@ -38,16 +38,20 @@ function Ensure-TfsInstalled()
         try 
         {
             New-Item -ItemType Directory -Path $fullPath
-            $serverLocation = Join-Path $fullPath 'tfsserver.exe'
 
-            Invoke-WebRequest -UseBasicParsing -Uri $TfsDownloadUrl -OutFile $serverLocation
+            Invoke-WebRequest -UseBasicParsing -Uri $TfsDownloadUrl -OutFile $fullPath\tfsserver2017.3.1_enu.iso
+
+            $mountResult = Mount-DiskImage $fullPath\tfsserver2017.3.1_enu.iso -PassThru
+            $driveLetter = ($mountResult | Get-Volume).DriveLetter
             
-            $process = Start-Process -FilePath $serverLocation -ArgumentList '/quiet' -PassThru
+            $process = Start-Process -FilePath $driveLetter":\TfsServer2017.3.1.exe" -ArgumentList '/quiet' -PassThru -Wait
             $process.WaitForExit()
+            Start-Sleep -Seconds 90
         }
         finally 
         {
-            Remove-Item $fullPath -Recurse -Force -ErrorAction SilentlyContinue
+            Dismount-DiskImage -ImagePath $fullPath\tfsserver2017.3.1_enu.iso
+            Remove-Item $fullPath\tfsserver2017.3.1_enu.iso -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
     else
@@ -60,7 +64,7 @@ function Ensure-TfsInstalled()
 function Configure-TfsBasic()
 {
     # Run tfsconfig to do the unattend install
-    $path = Join-Path $InstallDirectory '\tools\tfsconfig.exe'
+    $path = Join-Path $InstallDirectory '\Tools\tfsconfig.exe'
     $tfsConfigArgs = 'unattend /configure /type:Basic /inputs:"InstallSqlExpress=True"'
 
     Write-Verbose "Running tfsconfig..."
