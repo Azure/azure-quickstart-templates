@@ -1,13 +1,6 @@
 param(
   [string] $Source,
-  [string] $Destination,
-
-  # Set default url to fetch azcopy
-  ## get latest: curl -s -D- https://aka.ms/downloadazcopy-v10-linux | grep ^Location
-  ## 10.10.0: sporadic vhd corruption issue / fatal error lifecyleMgr.go:38 (https://azcopyvnext.azureedge.net/release20210415/azcopy_linux_amd64_10.10.0.tar.gz)
-  ## 10.9.0: sporadic vhd corruption issue https://azcopyvnext.azureedge.net/release20210226/azcopy_linux_amd64_10.9.0.tar.gz
-  ## 10.8.0: validated https://azcopyvnext.azureedge.net/release20201211/azcopy_linux_amd64_10.8.0.tar.gz
-  [string] $azcopyArchiveUrl = 'https://azcopyvnext.azureedge.net/release20201211/azcopy_linux_amd64_10.8.0.tar.gz'
+  [string] $Destination
 )
 
 ##### Validate Parameters
@@ -17,7 +10,7 @@ if (! ([System.Uri]::IsWellFormedUriString($Source,[System.UriKind]::Absolute)))
 }
 
 if (! ([System.Uri]::IsWellFormedUriString($Destination,[System.UriKind]::Absolute))) {
-  Throw 'The Destination URI parameter is probably not well formatted. Please check and retry.'
+  Throw 'The Destination URI parameter is probably not well formatted. The URI of a Storage Account Container with a SAS Token is expected. Please check and retry.'
 }
 
 ##### Parameters
@@ -35,22 +28,7 @@ New-Item -Type Directory -ErrorAction SilentlyContinue $temp_path
 
 $timestamp = Get-Date -Format 'yyMMddHHmmss'
 
-##### Fetch prerequisites
-
-Invoke-WebRequest -Uri $azcopyArchiveUrl -Outfile azcopy-linux.tar.gz
-tar xf azcopy-linux.tar.gz
-Move-Item azcopy_linux_*/azcopy . -Force
-
-##### Check destination is actually writable or fail
-
-$testFileName = 'Test-{0}' -f $timestamp
-New-Item -Force -Type File -Name $testFileName
-./azcopy copy $testFileName "$uriWritableStorageAccountBlobContainerSasToken"
-if (! $?) {
-  Throw 'Cannot upload into the Storage Account Container. Please check the Destination parameter contains the URI of Storage Account Container with the SAS Token'
-}
-
-##### Download for processing
+##### Prereqs
 
 Write-Output 'Increase file share quota to 4TB instead of 2GB before downloading and expanding'
 $QuotaGiB = '4096'
@@ -62,6 +40,7 @@ Get-AzStorageAccount -ResourceGroupName $ResourceGroupName | Where-Object { $_.S
   }
 }
 
+##### Fetch and process
 
 Write-Output 'Download the ZIP archive'
 $archive_path='{0}/archive-{1}.zip' -f $temp_path,$timestamp
@@ -76,21 +55,29 @@ Expand-Archive -Path $archive_path -DestinationPath $expanded_archive_path -Forc
 ##### Upload to Azure Storage account
 
 Write-Output 'Upload extracted VHD file(s)'
-$vhd_filepath='{0}/*.vhd' -f  $expanded_archive_path
-# Temp to fix copy issue due to low resources ./azcopy copy "$vhd_filepath" "$uriWritableStorageAccountBlobContainerSasToken" --put-md5
-./azcopy copy "$vhd_filepath" "$uriWritableStorageAccountBlobContainerSasToken"
-
-##### Output
 
 $DeploymentScriptOutputs = @{}
 $DeploymentScriptOutputs['vhdBlobUriList'] = @{}
 $DeploymentScriptOutputs['vhdBlobSHA256List'] = @{}
 
 $StorageAccountContainerUri = ($uriWritableStorageAccountBlobContainerSasToken -split [Regex]::Escape('?'))[0]
-Get-Item $vhd_filepath | % {
-  $VHDBlobName = $_.Name
-  $vhdBlobUri = "$StorageAccountContainerUri/$VHDBlobName"
-  $hash = (Get-FileHash -Algorithm SHA256 -Path $_).Hash
-  $DeploymentScriptOutputs['vhdBlobUriList'][$_.Name] = $vhdBlobUri
-  $DeploymentScriptOutputs['vhdBlobSHA256List'][$_.Name] = $hash
+$StorageAccountName = (([System.Uri]$uriWritableStorageAccountBlobContainerSasToken).Host -split [Regex]::Escape('.'))[0]
+$ContainerName = ($StorageAccountContainerUri -split '/')[-1]  # Last element
+$StorageAccountContainerSASToken = ($uriWritableStorageAccountBlobContainerSasToken -split [Regex]::Escape('?'))[1]
+$StorageAccountContext = New-AzStorageContext -StorageAccountName $StorageAccountName -SasToken $StorageAccountContainerSASToken
+
+$vhd_filepath='{0}/*.vhd' -f  $expanded_archive_path
+
+Get-Item $vhd_filepath | ForEach-Object {
+  $localFilePath = $_
+  $vhdBlobName = $localFilePath.Name
+  $vhdBlobUri = '{0}/{1}' -f $StorageAccountContainerUri,$vhdBlobName
+
+  $hash = (Get-FileHash -Algorithm SHA256 -Path $localFilePath).Hash
+  $metadata = @{'SHA256' = $hash; }
+
+  Write-Output 'Uploading ' + $vhdBlobName
+  Set-AzStorageBlobContent -File $localFilePath -Context $StorageAccountContext -Container $ContainerName -Blob $vhdBlobName -BlobType Page -Metadata $metadata -Force
+  $DeploymentScriptOutputs['vhdBlobUriList'][$vhdBlobName] = $vhdBlobUri
+  $DeploymentScriptOutputs['vhdBlobSHA256List'][$vhdBlobName] = $hash
 }
