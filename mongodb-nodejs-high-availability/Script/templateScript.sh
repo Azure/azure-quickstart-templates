@@ -1,5 +1,7 @@
 sudo mv /var/lib/waagent/Microsoft.Azure.Extensions.CustomScript-2.0.0/download/0/app.js /opt/app.js
 
+export DEBIAN_FRONTEND=noninteractive
+
 # Install updates
 sudo apt-get -y update
 
