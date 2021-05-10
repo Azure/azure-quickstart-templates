@@ -1,17 +1,17 @@
 # Secure SonarQube VM with Azure SQL DB  
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/sonarqube-azuresql/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/sonarqube-azuresql/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sonarqube/sonarqube-azuresql/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sonarqube/sonarqube-azuresql/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/sonarqube-azuresql/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/sonarqube-azuresql/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sonarqube/sonarqube-azuresql/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sonarqube/sonarqube-azuresql/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/sonarqube-azuresql/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/sonarqube-azuresql/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sonarqube/sonarqube-azuresql/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sonarqube/sonarqube-azuresql/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
-[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsonarqube%2Fsonarqube-azuresql%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsonarqube%2Fsonarqube-azuresql%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsonarqube%2Fsonarqube-azuresql%2Fazuredeploy.json)
 
 ## Version 1.0
 
@@ -19,8 +19,8 @@ This template deploys an Azure SQL Server, Azure SQL DB, Windows Server 2012R2 V
 
 Once the deployment is complete you can increase the resources provided to SonarQube by changing the VM from a Standard DS1 v2 machine to any larger DS_x_ v2 machine without the need to redeploy SonarQube or migrate any data.
 
-[License](https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/sonarqube-azuresql/oss/License.txt)  
-[Third Party Notices](https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/sonarqube-azuresql/oss/ThirdPartyNotices.txt)
+[License](https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/application-workloads/sonarqube/sonarqube-azuresql/oss/License.txt)  
+[Third Party Notices](https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/application-workloads/sonarqube/sonarqube-azuresql/oss/ThirdPartyNotices.txt)
 
 ### Note
 
