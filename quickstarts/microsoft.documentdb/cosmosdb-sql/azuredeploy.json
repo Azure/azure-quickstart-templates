@@ -1,10 +1,17 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.255.40792",
+      "templateHash": "18246509320363749893"
+    }
+  },
   "parameters": {
     "accountName": {
       "type": "string",
-      "defaultValue": "[concat('sql-', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('sql-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Cosmos DB account name, max length 44 characters"
       }
@@ -31,36 +38,45 @@
     "defaultConsistencyLevel": {
       "type": "string",
       "defaultValue": "Session",
-      "allowedValues": [ "Eventual", "ConsistentPrefix", "Session", "BoundedStaleness", "Strong" ],
       "metadata": {
         "description": "The default consistency level of the Cosmos DB account."
-      }
+      },
+      "allowedValues": [
+        "Eventual",
+        "ConsistentPrefix",
+        "Session",
+        "BoundedStaleness",
+        "Strong"
+      ]
     },
     "maxStalenessPrefix": {
       "type": "int",
       "defaultValue": 100000,
-      "minValue": 10,
-      "maxValue": 2147483647,
       "metadata": {
         "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000."
-      }
+      },
+      "maxValue": 2147483647,
+      "minValue": 10
     },
     "maxIntervalInSeconds": {
       "type": "int",
       "defaultValue": 300,
-      "minValue": 5,
-      "maxValue": 86400,
       "metadata": {
         "description": "Max lag time (minutes). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
-      }
+      },
+      "maxValue": 86400,
+      "minValue": 5
     },
     "automaticFailover": {
       "type": "bool",
       "defaultValue": true,
-      "allowedValues": [ true, false ],
       "metadata": {
         "description": "Enable automatic failover for regions"
-      }
+      },
+      "allowedValues": [
+        true,
+        false
+      ]
     },
     "databaseName": {
       "type": "string",
@@ -79,15 +95,16 @@
     "throughput": {
       "type": "int",
       "defaultValue": 400,
-      "minValue": 400,
-      "maxValue": 1000000,
       "metadata": {
         "description": "The throughput for the container"
-      }
+      },
+      "maxValue": 1000000,
+      "minValue": 400
     }
   },
+  "functions": [],
   "variables": {
-    "accountName": "[toLower(parameters('accountName'))]",
+    "accountName_var": "[toLower(parameters('accountName'))]",
     "consistencyPolicy": {
       "Eventual": {
         "defaultConsistencyLevel": "Eventual"
@@ -123,8 +140,8 @@
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2021-01-15",
-      "name": "[variables('accountName')]",
+      "apiVersion": "2021-04-15",
+      "name": "[variables('accountName_var')]",
       "location": "[parameters('location')]",
       "kind": "GlobalDocumentDB",
       "properties": {
@@ -136,20 +153,21 @@
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
-      "apiVersion": "2021-01-15",
-      "name": "[concat(variables('accountName'), '/', parameters('databaseName'))]",
-      "dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]" ],
+      "apiVersion": "2021-04-15",
+      "name": "[format('{0}/{1}', variables('accountName_var'), parameters('databaseName'))]",
       "properties": {
         "resource": {
           "id": "[parameters('databaseName')]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]"
+      ]
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
-      "apiVersion": "2021-01-15",
-      "name": "[concat(variables('accountName'), '/', parameters('databaseName'), '/', parameters('containerName'))]",
-      "dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName'), parameters('databaseName'))]" ],
+      "apiVersion": "2021-04-15",
+      "name": "[format('{0}/{1}', format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), parameters('containerName'))]",
       "properties": {
         "resource": {
           "id": "[parameters('containerName')]",
@@ -185,7 +203,7 @@
             ],
             "spatialIndexes": [
               {
-                "path": "/path/to/geojson/property/?",
+                "path": "/location/*",
                 "types": [
                   "Point",
                   "Polygon",
@@ -206,8 +224,13 @@
             ]
           }
         },
-        "options": { "throughput": "[parameters('throughput')]" }
-      }
+        "options": {
+          "throughput": "[parameters('throughput')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', split(format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), '/')[0], split(format('{0}/{1}', variables('accountName_var'), parameters('databaseName')), '/')[1])]"
+      ]
     }
   ]
 }
