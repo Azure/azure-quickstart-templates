@@ -15,7 +15,7 @@ $ResourceGroupName = ${Env:ResourceGroupName}
 $StartTime = Get-Date
 $EndTime = $startTime.AddHours(2.0)
 
-##### Create a VDH archive zip
+##### Create a VHD archive zip
 
 $timestamp = (Get-Date -Format 'yyMMddhhmmss')
 $vhdZipArchive = 'fake-vhd-disk-archive-{0}.zip' -f $timestamp
