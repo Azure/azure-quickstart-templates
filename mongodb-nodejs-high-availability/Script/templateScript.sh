@@ -6,8 +6,7 @@ sudo apt-get -y update
 
 sudo apt-get -y install nodejs
 sudo apt-get -y install npm
-sudo npm -y install express
-sudo npm -y install mongodb
+sudo apt-get install -y mongodb-org
 
 
 
