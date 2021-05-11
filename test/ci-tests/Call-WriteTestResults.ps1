@@ -2,7 +2,7 @@
 # TODO: Turn this into a test.
 $ENV:SAMPLE_FOLDER = "."
 $ENV:SAMPLE_NAME = Split-Path (Resolve-Path $ENV:SAMPLE_FOLDER) -Leaf
-$ENV:STORAGE_ACCOUNT_NAME = "azureqsbicep"
+$ENV:STORAGE_ACCOUNT_NAME = "azureqsbicep" # TODO
 $ENV:RESULT_BEST_PRACTICE = "FAIL"
 $ENV:RESULT_CREDSCAN = "PASS"
 $ENV:BUILD_REASON = "BatchedCI" # PullRequest/BatchedCI/IndividualCI/Manual

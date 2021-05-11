@@ -3,8 +3,7 @@ param(
     [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
     [string]$StorageAccountName = "azurequickstartsservice",
     [string]$containerName = "ttk",
-    # TODO: Change back to latest
-    [string]$folderName = "bicep",
+    [string]$folderName = "latest",
     [string]$ttkFileName = "arm-template-toolkit.zip",
     [switch]$Publish
 )

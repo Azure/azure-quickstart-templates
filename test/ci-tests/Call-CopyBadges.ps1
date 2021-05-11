@@ -3,7 +3,7 @@
 
 Import-Module "$PSScriptRoot/../ci-scripts/Local.psm1" -force
 
-$StorageAccountName = "azureqsbicep"
+$StorageAccountName = "azureqsbicep" # TODO
 $StorageAccountKey = "$ENV:STORAGE_ACCOUNT_KEY"
 
 if (($StorageAccountKey -eq "") -or ($null -eq $StorageAccountKey)) {

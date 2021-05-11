@@ -7,17 +7,8 @@ param(
     [switch] $bicepSupported = ($ENV:BICEP_SUPPORTED -eq "true")
 )
 
-# TODO: Kludge for while we're in the cloned repo, otherwise scheduled runs of non-bicep-converted samples get dinged for using the wrong badges
 Write-Host "StorageAccountName: $StorageAccountName"
 Write-Host "bicepSupported: $bicepSupported"
-#if (!$bicepSupported) {
-if ($true) {
-    Write-Host "changing to $azurequickstartsservice"
-    $StorageAccountName = "azurequickstartsservice"
-}
-Write-Host "StorageAccountName: $StorageAccountName"
-Write-Host "bicepSupported: $bicepSupported"
-# END KLUDGE
 
 $s = $sampleName.Replace("\", "/")
 $sEncoded = $sampleName.Replace("\", "%2F")
