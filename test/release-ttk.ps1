@@ -22,7 +22,10 @@ Compress-Archive -DestinationPath "AzTemplateToolkit.zip" -Path $releaseFiles -F
 Remove-Item ".\template-tests" -Recurse
 ### End Temp step
 
+$Target = "Target: storage account $StorageAccountName, container $containerName, folder $folderName"
+
 if ($Publish) {
+    Write-Host "Publishing to $Target"
     $ctx = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroupName).Context
     Set-AzStorageBlobContent -Container $containerName `
         -File $ttkFileName `
@@ -30,4 +33,8 @@ if ($Publish) {
         -Context $ctx `
         -Force -Verbose `
         -Properties @{"ContentType" = "application/x-zip-compressed"; "CacheControl" = "no-cache" }
+    Write-Host "Published"
+}
+else {
+    Write-Host "If -Publish flag had been set, this would have published to $Target"
 }
