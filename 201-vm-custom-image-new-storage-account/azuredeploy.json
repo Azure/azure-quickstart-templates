@@ -4,7 +4,6 @@
   "parameters": {
     "transferVmName": {
       "type": "string",
-      "defaultValue": "TransferVM",
       "minLength": 3,
       "maxLength": 15,
       "metadata": {
@@ -20,7 +19,6 @@
     },
     "newVmName": {
       "type": "string",
-      "defaultValue": "NewVM",
       "minLength": 3,
       "maxLength": 15,
       "metadata": {
@@ -41,16 +39,17 @@
         "description": "Local administrator password, complex password is required, do not use any variation of the password word because it will be rejected."
       }
     },
-    "sourceStorageAccountResourceGroup": {
-      "type": "string",
-      "metadata": {
-        "description": "Resource group name of the source storage account."
-      }
-    },
     "sourceImageURI": {
       "type": "string",
       "metadata": {
         "description": "Full URIs for one or more custom images (VHDs) that should be copied to the deployment storage account to spin up new VMs from them. URLs must be comma separated."
+      }
+    },
+    "sourceStorageAccountResourceGroup": {
+      "type": "string",
+      "defaultValue":"",
+      "metadata": {
+        "description": "Resource group name of the source storage account. If the Source VHDs are publicly shared, you can keep the default value. Else, make sure you have proper permission on the Resource Group."
       }
     },
     "customImageName": {
@@ -84,6 +83,7 @@
   },
   "variables": {
     "sourceStorageAccountName": "[substring(split(parameters('sourceImageURI'), '.')[0], 8)]",
+    "storageAccountKey":"[if(equals(parameters('sourceStorageAccountResourceGroup'), ''), '', listKeys(resourceId(parameters('sourceStorageAccountResourceGroup'),'Microsoft.Storage/storageAccounts', variables('sourceStorageAccountName')), '2017-10-01').keys[0].value)]",
     "vmCount": 2,
     "vmNames": [
       "[parameters('transferVmName')]",
@@ -264,7 +264,7 @@
               ]
             },
             "protectedSettings": {
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', 'ImageTransfer.ps1 -SourceImage ', parameters('sourceImageURI'), ' -SourceSAKey ', listKeys(resourceId(parameters('sourceStorageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', variables('sourceStorageAccountName')), '2017-10-01').keys[0].value, ' -DestinationURI ', concat(reference(variables('storageAccountName')).primaryEndpoints.blob, variables('vhdStorageAccountContainerName')), ' -DestinationSAKey ', listKeys(concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName')), '2017-10-01').keys[0].value)]"
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', 'ImageTransfer.ps1 -SourceImage ', parameters('sourceImageURI'), ' -SourceSAKey ', variables('storageAccountKey'), ' -DestinationURI ', concat(reference(variables('storageAccountName')).primaryEndpoints.blob, variables('vhdStorageAccountContainerName')), ' -DestinationSAKey ', listKeys(concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName')), '2017-10-01').keys[0].value)]"
             }
           }
         }
