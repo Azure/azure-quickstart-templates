@@ -1,4 +1,4 @@
-﻿configuration Configuration
+configuration Configuration
 {
    param
    (
