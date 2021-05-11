@@ -2,6 +2,20 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+     "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shibboleth-singlevm-ubuntu/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -64,7 +78,7 @@
     "adminPasswordOrKey": {
       "type": "securestring",
       "metadata": {
-        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended.."
       }
     }
   },
@@ -73,7 +87,6 @@
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "ubuntuOSVersion": "16.04-LTS",
-    "OSDiskName": "[concat(parameters('uniqueNamePrefix'),'Disk')]",
     "nicName": "[concat(parameters('uniqueNamePrefix'),'Nic')]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -81,13 +94,9 @@
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(parameters('uniqueNamePrefix'),'IP')]",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
     "vmName": "[concat(parameters('uniqueNamePrefix'),'VM')]",
     "virtualNetworkName": "[concat(parameters('uniqueNamePrefix'),'VNet')]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "installScriptName": "install_shibboleth_idp.sh",
-    "installScriptUri": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shibboleth-singlevm-ubuntu/', variables('installScriptName'))]",
-    "installCommand": "[concat('sh ', variables('installScriptName'), ' ', parameters('uniqueNamePrefix'), ' ', parameters('location'))]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -226,11 +235,11 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[variables('installScriptUri')]"
+            "[uri(parameters('_artifactsLocation'), concat('install_shibboleth_idp.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[variables('installCommand')]"
+          "commandToExecute": "[concat('sh install_shibboleth_idp.sh', ' ', parameters('uniqueNamePrefix'), ' ', parameters('location'))]"
         }
       }
     }
