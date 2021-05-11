@@ -49,6 +49,8 @@ main() {
     . /tmp/sasinstall.env
     # find type of server and handle some OS-specific setups
     if [ -f /etc/redhat-release ]; then
+        # Kludge provided by Azure to resolve expired certificate issue
+        sudo yum update -y --disablerepo='*' --enablerepo='*microsoft*'
         # Install necessary packages
         yum install -y yum-utils
         yum install -y python3 gcc time
