@@ -68,25 +68,19 @@ fi
 
 clear
 cat <<EOF
-
   This script installs the community edition of the Seafile Server on a Ubuntu 16.04 (Xenial) 64bit
   - Newest Seafile server version, MariaDB, Memcached, NGINX -
   -----------------------------------------------------------------
-
   This installer is meant to run on a freshly installed machine
   only. If you run it on a production server things can and
   probably will go terrible wrong and you will loose valuable
   data!
-
   For questions or suggestions please contact us at
   support@seafile.com
-
   -----------------------------------------------------------------
-
   Possible options:
   1 = Seafile Community (Free) Edition (CE)
   2 = Seafile Professional Edition (PRO)
-
 EOF
 
 if [[ ${SEAFILE_PRO} == "" ]]; then
@@ -165,17 +159,25 @@ then
   echo "  Aborting because directory /opt/seafile/ already exist" ; exit 1
 fi
 
+export DEBIAN_FRONTEND=noninteractive
+export LANGUAGE=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+locale-gen en_US.UTF-8
+dpkg-reconfigure locales
+
 # -------------------------------------------
 # Additional requirements
 # -------------------------------------------
 apt-get update
-apt-get install -y python2.7 sudo python-pip python-setuptools python-imaging python-mysqldb python-ldap python-urllib3 \
+apt-get install -y python2.7 sudo python-pil python-pip python-setuptools python-imaging python-mysqldb python-ldap python-urllib3 \
 openjdk-8-jre memcached python-memcache pwgen curl openssl poppler-utils libpython2.7 libreoffice \
-libreoffice-script-provider-python ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy nginx python-requests zfs
+libreoffice-script-provider-python ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy nginx python-requests zfsutils-linux
 
 # -------------------------------------------
 # Create seafile-data with the help of ZFS
 # -------------------------------------------
+
 zpool create -f ${ZPOOL_NAME} /dev/sdc
 zpool set cachefile=/etc/zfs/zpool.cache ${ZPOOL_NAME}
 zfs create ${ZPOOL_NAME}/${ZFS_DATASET}
@@ -187,9 +189,7 @@ cat > /etc/nginx/sites-available/seafile.conf <<'EOF'
 server {
       listen 80;
       server_name  "${SEAFILE_ADMIN}";
-
       proxy_set_header X-Forwarded-For $remote_addr;
-
       location / {
           fastcgi_pass    127.0.0.1:8000;
           fastcgi_param   SCRIPT_FILENAME     $document_root$fastcgi_script_name;
@@ -203,7 +203,6 @@ server {
           fastcgi_param   SERVER_PORT         $server_port;
           fastcgi_param   SERVER_NAME         $server_name;
           fastcgi_param   REMOTE_ADDR         $remote_addr;
-
           access_log      /var/log/nginx/seahub.access.log;
           error_log       /var/log/nginx/seahub.error.log;
       }
@@ -230,9 +229,7 @@ server {
         fastcgi_param   SERVER_PORT         $server_port;
         fastcgi_param   SERVER_NAME         $server_name;
         fastcgi_param   REMOTE_ADDR         $remote_addr;
-
         client_max_body_size 0;
-
         access_log      /var/log/nginx/seafdav.access.log;
         error_log       /var/log/nginx/seafdav.error.log;
     }
@@ -281,20 +278,16 @@ cat > /etc/init.d/seafile-server <<'EOF'
 # Short-Description: Seafile server
 # Description:       Start Seafile server
 ### END INIT INFO
-
 # Author: Alexander Jackson <alexander.jackson@seafile.com.de>
-
 # Change the value of "seafile_dir" to your path of seafile installation
 seafile_dir=/opt/seafile
 script_path=${seafile_dir}/seafile-server-latest
 seafile_init_log=${seafile_dir}/logs/seafile.init.log
 seahub_init_log=${seafile_dir}/logs/seahub.init.log
-
 # Change the value of fastcgi to true if fastcgi is to be used
 fastcgi=true
 # Set the port of fastcgi, default is 8000. Change it if you need different.
 fastcgi_port=8000
-
 case "$1" in
         start)
                 ${script_path}/seafile.sh start >> ${seafile_init_log}
@@ -400,14 +393,12 @@ sed -i 's/share_name = .*/share_name = \/seafdav/' ${DEFAULT_CONF_DIR}/seafdav.c
 # Configuring seahub_settings.py
 # -------------------------------------------
 cat >> ${DEST_SETTINGS_PY} <<EOF
-
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
     'LOCATION': '127.0.0.1:11211',
     }
 }
-
 # EMAIL_USE_TLS                       = False
 # EMAIL_HOST                          = 'localhost'
 # EMAIL_HOST_USER                     = ''
@@ -415,7 +406,6 @@ CACHES = {
 # EMAIL_PORT                          = '25'
 # DEFAULT_FROM_EMAIL                  = EMAIL_HOST_USER
 # SERVER_EMAIL                        = EMAIL_HOST_USER
-
 TIME_ZONE                           = '${TIME_ZONE}'
 SITE_BASE                           = 'http://${IP_OR_DOMAIN}'
 SITE_NAME                           = 'Seafile Server'
@@ -430,7 +420,6 @@ FILE_PREVIEW_MAX_SIZE               = 30 * 1024 * 1024
 SESSION_COOKIE_AGE                  = 60 * 60 * 24 * 7 * 2
 SESSION_SAVE_EVERY_REQUEST          = False
 SESSION_EXPIRE_AT_BROWSER_CLOSE     = False
-
 FILE_SERVER_ROOT                    = 'http://${IP_OR_DOMAIN}/seafhttp'
 EOF
 
@@ -481,66 +470,37 @@ service seafile-server start
 # Final report
 # -------------------------------------------
 cat > ${TOPDIR}/aio_seafile-server.log<<EOF
-
   Your Seafile server is installed
   -----------------------------------------------------------------
-
   Server Address:      http://${IP_OR_DOMAIN}
-
   Seafile Admin:       ${SEAFILE_ADMIN}
   Admin Password:      ${SEAFILE_ADMIN_PW}
-
   Seafile Data Dir:    ${SEAFILE_DATA_DIR}
-
   Seafile DB Credentials:  Check /opt/seafile.my.cnf
   Root DB Credentials:     Check /root/.my.cnf
-
   This report is also saved to ${TOPDIR}/aio_seafile-server.log
-
-
-
   Next you should manually complete the following steps
   -----------------------------------------------------------------
-
   1) Run seafile-server-change-address to add your Seafile servers DNS name
-
   2) If this server is behind a firewall, you need to ensure that
      tcp port 80 is open.
-
   3) Seahub tries to send emails via the local server. Install and
      configure Postfix for this to work.
-
-
-
-
   Optional steps
   -----------------------------------------------------------------
-
   1) Check seahub_settings.py and customize it to fit your needs. Consult
      http://manual.seafile.com/config/seahub_settings_py.html for possible switches.
-
   2) Setup NGINX with official SSL certificate.
-
   3) Secure server with iptables based firewall. For instance: UFW or shorewall
-
   4) Harden system with port knocking, fail2ban, etc.
-
   5) Enable unattended installation of security updates. Check
      https://wiki.Ubuntu.org/UnattendedUpgrades for details.
-
   6) Implement a backup routine for your Seafile server.
-
   7) Update NGINX worker processes to reflect the number of CPU cores.
-
-
-
-
   Seafile support options
   -----------------------------------------------------------------
-
   For free community support visit:   https://bbs.seafile.com
   For paid commercial support visit:  https://seafile.com
-
 EOF
 
 chmod 600 ${TOPDIR}/aio_seafile-server.log

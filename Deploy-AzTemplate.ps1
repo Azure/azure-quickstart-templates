@@ -104,10 +104,11 @@ Write-Host "Running a $deploymentScope scoped deployment..."
 $ArtifactsLocationName = '_artifactsLocation'
 $ArtifactsLocationSasTokenName = '_artifactsLocationSasToken'
 $ArtifactsLocationParameter = $TemplateJson | Select-Object -expand 'parameters' -ErrorAction Ignore | Select-Object -Expand $ArtifactsLocationName -ErrorAction Ignore
+$ArtifactsLocationSasTokenParameter = $TemplateJson | Select-Object -expand 'parameters' -ErrorAction Ignore | Select-Object -Expand $ArtifactsLocationSasTokenName -ErrorAction Ignore
 $useAbsolutePathStaging = $($ArtifactsLocationParameter -ne $null)
 
 # if the switch is set or the standard parameter is present in the template, upload all artifacts
-if ($UploadArtifacts -Or $useAbsolutePathStaging) {
+if ($UploadArtifacts -Or $useAbsolutePathStaging -or $ArtifactsLocationSasTokenParameter) {
     # Convert relative paths to absolute paths if needed
     $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $ArtifactStagingDirectory))
     $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))
