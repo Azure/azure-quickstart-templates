@@ -1,7 +1,6 @@
 param(
     $BuildSourcesDirectory = "$ENV:BUILD_SOURCESDIRECTORY",
-    $StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
-    $StorageAccountName = "azurequickstartsservice",
+    [string]$StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME,
     $TableName = "QuickStartsMetadataService",
     [Parameter(mandatory = $true)]$StorageAccountKey
 )
@@ -15,12 +14,12 @@ Remove old row and create new table row (i.e. update if exists)
 #>
 
 $badges = @{
-    PublicLastTestDate  = "https://azurequickstartsservice.blob.core.windows.net/badges/%sample.folder%/PublicLastTestDate.svg";
-    PublicDeployment    = "https://azurequickstartsservice.blob.core.windows.net/badges/%sample.folder%/PublicDeployment.svg";
-    FairfaxLastTestDate = "https://azurequickstartsservice.blob.core.windows.net/badges/%sample.folder%/FairfaxLastTestDate.svg";
-    FairfaxDeployment   = "https://azurequickstartsservice.blob.core.windows.net/badges/%sample.folder%/FairfaxDeployment.svg";
-    BestPracticeResult  = "https://azurequickstartsservice.blob.core.windows.net/badges/%sample.folder%/BestPracticeResult.svg";
-    CredScanResult      = "https://azurequickstartsservice.blob.core.windows.net/badges/%sample.folder%/CredScanResult.svg";
+    PublicLastTestDate  = "https://$(StorageAccountName).blob.core.windows.net/badges/%sample.folder%/PublicLastTestDate.svg";
+    PublicDeployment    = "https://$(StorageAccountName).blob.core.windows.net/badges/%sample.folder%/PublicDeployment.svg";
+    FairfaxLastTestDate = "https://$(StorageAccountName).blob.core.windows.net/badges/%sample.folder%/FairfaxLastTestDate.svg";
+    FairfaxDeployment   = "https://$(StorageAccountName).blob.core.windows.net/badges/%sample.folder%/FairfaxDeployment.svg";
+    BestPracticeResult  = "https://$(StorageAccountName).blob.core.windows.net/badges/%sample.folder%/BestPracticeResult.svg";
+    CredScanResult      = "https://$(StorageAccountName).blob.core.windows.net/badges/%sample.folder%/CredScanResult.svg";
 }
 
 # Get all the samples
