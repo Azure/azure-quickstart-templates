@@ -5,7 +5,7 @@
     "virtualMachineName": {
       "type": "string",
       "metadata": {
-        "description": "SQL Server Virtual Machine Name"
+        "description": "SQL Server Virtual Machine Name."
       }
     },
     "virtualMachineSize": {
@@ -36,7 +36,7 @@
         "Premium_LRS",
         "Standard_LRS"
       ],
-      "defaultValue": "Premium_LRS"
+      "defaultValue": "Standard_LRS"
     },
     "virtualNetworkName": {
       "type": "string",
@@ -222,17 +222,17 @@
           },
           "dataDisks": [
             {
-              "name": "[concat(parameters('virtualMachineName'), '_DataDisk-1')]",
+              "name": "[concat(parameters('virtualMachineName'), '_DataDisk-4')]",
               "createOption": "Empty",
               "lun": 0,
-              "diskSizeGB": 1023,
+              "diskSizeGB": 256,
               "caching": "ReadOnly"
             },
             {
-              "name": "[concat(parameters('virtualMachineName'), '_DataDisk-2')]",
+              "name": "[concat(parameters('virtualMachineName'), '_DataDisk-5')]",
               "createOption": "Empty",
               "lun": 1,
-              "diskSizeGB": 1023,
+              "diskSizeGB": 256,
               "caching": "ReadOnly"
             }
           ]
@@ -247,40 +247,59 @@
       }
     },
     {
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('virtualMachineName'), '/SqlIaasExtension')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
       ],
       "properties": {
         "type": "SqlIaaSAgent",
         "publisher": "Microsoft.SqlServer.Management",
         "typeHandlerVersion": "1.2",
-        "autoUpgradeMinorVersion": true,
+        "autoUpgradeMinorVersion": "true",
         "settings": {
           "AutoTelemetrySettings": {
             "Region": "[parameters('location')]"
           },
-          "KeyVaultCredentialSettings": {
+          "AutoPatchingSettings": {
+            "PatchCategory": "WindowsMandatoryUpdates",
             "Enable": true,
-            "CredentialName": "[parameters('sqlAkvCredentialName')]"
+            "DayOfWeek": "Sunday",
+            "MaintenanceWindowStartingHour": "2",
+            "MaintenanceWindowDuration": "60"
+          },
+          "KeyVaultCredentialSettings": {
+            "Enable": false,
+            "CredentialName": ""
+          },
+          "ServerConfigurationsManagementSettings": {
+            "SQLConnectivityUpdateSettings": {
+              "ConnectivityType": "Private",
+              "Port": "1433"
+            },
+            "SQLWorkloadTypeUpdateSettings": {
+              "SQLWorkloadType": "GENERAL"
+            },
+            "SQLStorageUpdateSettings": {
+              "DiskCount": "1",
+              "NumberOfColumns": "1",
+              "StartingDeviceID": "2",
+              "DiskConfigurationType": "NEW"
+            },
+            "AdditionalFeaturesServerConfigurations": {
+              "IsRServicesEnabled": "false"
+            }
           }
         },
-        "protectedSettings": {
-          "PrivateKeyVaultCredentialSettings": {
-            "AzureKeyVaultUrl": "[parameters('sqlAkvUrl')]",
-            "ServicePrincipalName": "[parameters('sqlAkvPrincipalName')]",
-            "ServicePrincipalSecret": "[parameters('sqlAkvPrincipalSecret')]"
-          }
-        }
+        "protectedSettings": {}
       }
     },
     {
       "type": "Microsoft.Resources/deployments",
       "name": "prepareSqlVmDeployment",
-      "apiVersion": "2019-05-10",
+      "apiVersion": "2020-06-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'SqlIaasExtension')]"
       ],
@@ -335,7 +354,7 @@
     {
       "name": "[parameters('virtualNetworkName')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
@@ -356,7 +375,7 @@
     {
       "name": "[parameters('networkInterfaceName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
@@ -386,11 +405,8 @@
     {
       "name": "[parameters('publicIpAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
-      "sku":{
-        "name":"Basic"
-      },
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIpAddressType')]"
       }
@@ -398,7 +414,7 @@
     {
       "name": "[parameters('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
