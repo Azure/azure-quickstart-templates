@@ -8,8 +8,7 @@ Then, when the PR is merged, the CI pipeline copies the badges to the "badges" f
 
 param(
     [string]$SampleName = $ENV:SAMPLE_NAME, # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
-    [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
-    [string]$StorageAccountName = "azurequickstartsservice",
+    [string]$StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME,
     [string]$TableName = "QuickStartsMetadataService",
     [string]$TableNamePRs = "QuickStartsMetadataServicePRs",
     [Parameter(mandatory = $true)]$StorageAccountKey
@@ -40,6 +39,10 @@ $blobs | Remove-AzStorageBlob -Verbose -Force
 # TODO if there is no row in the PR table, this won't end well...
 Write-Host "Fetching row for: $RowKey in Table: $cloudTablePRs"
 $r = Get-AzTableRow -table $cloudTablePRs -ColumnName "RowKey" -Value $RowKey -Operator Equal
+if ($null -eq $r) {
+    Write-Error "Could not find row with key $RowKey in table $cloudTablePRs"
+    Return
+}
 Write-Host "Result from Table: $r"
 
 # change the status before copying the row/data to the "Live" table

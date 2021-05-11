@@ -1,9 +1,8 @@
 ﻿param(
     $BuildSourcesDirectory = "$ENV:BUILD_SOURCESDIRECTORY",
-    $StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
-    $StorageAccountName = "azurequickstartsservice",
+    [string]$StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME,
     $TableName = "QuickStartsMetadataService",
-    [Parameter(mandatory=$true)]$StorageAccountKey, 
+    [Parameter(mandatory = $true)]$StorageAccountKey, 
     $ResultDeploymentLastTestDateParameter = "$ENV:RESULT_DEPLOYMENT_LAST_TEST_DATE_PARAMETER", # sort based on the cloud we're testing FF or Public
     $ResultDeploymentParameter = "$ENV:RESULT_DEPLOYMENT_PARAMETER", #also cloud specific
     $PurgeOldRows = $true
@@ -30,12 +29,15 @@ Else set the sample folder to run the test
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
 $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
 $t = Get-AzTableRow -table $cloudTable
+Write-Host "Retrieved $($t.Length) rows"
 
 # Get all the samples
+Write-Host "Searching all sample folders in '$BuildSourcesDirectory'..."
 $ArtifactFilePaths = Get-ChildItem $BuildSourcesDirectory\metadata.json -Recurse -File | ForEach-Object -Process { $_.FullName }
+Write-Host "Found $($ArtifactFilePaths.Length) samples"
 
 # if this is empty, then everything would be removed from the table which is probably not the intent, so throw and get out
-if($ArtifactFilePaths.Count -eq 0){
+if ($ArtifactFilePaths.Count -eq 0) {
     Write-Error "No metadata.json files found in $BuildSourcesDirectory"
     throw
 }
@@ -53,7 +55,8 @@ foreach ($SourcePath in $ArtifactFilePaths) {
     $MetadataJson = Get-Content $SourcePath -Raw | ConvertFrom-Json
 
     # Get the sample's path off of the root, replace any path chars with "@" since the rowkey for table storage does not allow / or \ (among other things)
-    $RowKey = (Split-Path $SourcePath -Parent).Replace("$(Resolve-Path $BuildSourcesDirectory)\", "").Replace("\", "@").Replace("/", "@")
+    $SamplePath = Split-Path ([System.IO.Path]::GetRelativePath($BuildSourcesDirectory, $SourcePath).toString()) -Parent
+    $RowKey = $SamplePath.Replace("\", "@").Replace("/", "@")
 
     Write-Host "RowKey from path: $RowKey"
 
@@ -85,14 +88,14 @@ foreach ($SourcePath in $ArtifactFilePaths) {
         $p.Add("status", "Live") # if it's in master, it's live
         $p.Add($($ResultDeploymentParameter + "BuildNumber"), $ENV:BUILD_BUILDNUMBER)
 
-        Write-Host "Adding new row..."
+        Write-Host "Adding new row for $Rowkey..."
+        $p | Format-Table
         Add-AzTableRow -table $cloudTable `
             -partitionKey $MetadataJson.type `
             -rowKey $RowKey `
             -property $p
     }
 }
-
 
 #Get the updated table
 $t = Get-AzTableRow -table $cloudTable
@@ -108,7 +111,7 @@ if ($PurgeOldRows) {
         $SampleFound = (Test-Path -Path $PathToSample)
         Write-Host "Metadata path: $PathToSample > Found: $SampleFound"
 
-        if($SampleFound){
+        if ($SampleFound) {
             $MetadataJson = Get-Content $PathToSample -Raw | ConvertFrom-Json
         }
 
@@ -120,7 +123,8 @@ if ($PurgeOldRows) {
             $r | Out-String
             $r | Remove-AzTableRow -Table $cloudTable # TODO This seems to be causing failures, need more testing on it
 
-        } elseif(($r.PartitionKey -ne $MetadataJson.type -and ![string]::IsNullOrWhiteSpace($MetadataJson.type))){
+        }
+        elseif (($r.PartitionKey -ne $MetadataJson.type -and ![string]::IsNullOrWhiteSpace($MetadataJson.type))) {
             
             #if the type has changed, update the type - this will create a new row since we use the partition key we so need to delete the old row
             Write-Host "Metadata type has changed from `'$($r.PartitionKey)`' to `'$($MetadataJson.type)`' on $PathToSample"
@@ -159,6 +163,6 @@ Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
 
 # Not sure we need this in the scheduled build but here it is:
 
-$sampleName = $FolderString.Replace("$ENV:BUILD_SOURCESDIRECTORY\", "")
+$sampleName = $FolderString.Replace("$ENV:BUILD_SOURCESDIRECTORY\", "") # sampleName is actually a relative path, could be for instance "demos/100-my-sample"
 Write-Output "Using sample name: $sampleName"
 Write-Host "##vso[task.setvariable variable=sample.name]$sampleName"
