@@ -5,8 +5,16 @@ set -e
 date
 ps axjf
 
+AZUREUSER=$2
+HOMEDIR="/home/$AZUREUSER"
+GROESTLCOINPATH="$HOMEDIR/.groestlcoin"
+VMNAME=`hostname`
+echo "User: $AZUREUSER"
+echo "User home dir: $HOMEDIR"
+echo "User Groestlcoin path: $GROESLCOINPATH"
+echo "vmname: $VMNAME"
 
-if [[ $1 = 'From_Source' ]]; then
+if [[ $1 = 'From_PPA' ]]; then
 
 #################################################################
 # Update Ubuntu and install prerequisites for running Groestlcoin Core   #
@@ -22,7 +30,7 @@ echo "nproc: $NPROC"
 #################################################################
 # Install all necessary packages for building Groestlcoin Core from source  #
 #################################################################
-sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev pwgen dialog apt-utils
+sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev
 
 #################################################################
 # Build Groestlcoin Core from source                                     #
@@ -46,12 +54,12 @@ fi
 #################################################################
 # Strip executables                                                     #
 #################################################################
-strip /usr/local/groestlcoind /usr/local/groestlcoin-cli /usr/local/groestlcoin-tx /usr/local/groestlcoin-wallet /usr/local/groestlcoin-util
+strip /usr/local/groestlcoin/src/groestlcoind /usr/local/groestlcoin/src/groestlcoin-cli /usr/local/groestlcoin/src/groestlcoin-tx /usr/local/groestlcoin/src/groestlcoin-wallet /usr/local/groestlcoin/src/groestlcoin-util
 
 #################################################################
 # Move executables to /usr/bin                                           #
 #################################################################
-sudo mv /usr/local/groestlcoind /usr/local/groestlcoin-cli /usr/local/groestlcoin-tx /usr/local/groestlcoin-wallet /usr/local/groestlcoin-util /usr/bin
+sudo mv /usr/local/groestlcoin/src/groestlcoind /usr/local/groestlcoin/src/groestlcoin-cli /usr/local/groestlcoin/src/groestlcoin-tx /usr/local/groestlcoin/src/groestlcoin-wallet /usr/local/groestlcoin/src/groestlcoin-util /usr/bin
 
 else
 #################################################################
@@ -66,22 +74,27 @@ fi
 ################################################################
 # Create Groestlcoin Core Directory                                      #
 ################################################################
-file=$HOME/.groestlcoin
-if [ ! -e "$file" ]
+if [ ! -e "$GROESTLCOINPATH" ]
 then
-	mkdir $HOME/.groestlcoin
+	su - $AZUREUSER -c "mkdir $GROESTLCOINPATH"
 fi
 
 #################################################################
-# Install all necessary packages for building Groestlcoin Core from ppa  #
+# Install pwgen for generating pronounceable RPC username and password for configuration file #
 #################################################################
-sudo apt-get -y install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libcrypto++-dev libevent-dev git automake bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev libdb5.3 libdb5.3-dev libdb5.3++-dev libsqlite3-dev libnatpmp-dev pwgen dialog apt-utils
+sudo apt-get -y install pwgen
 
 ################################################################
 # Create configuration File                                              #
 ################################################################
-rpcp=$(pwgen -ncsB 35 1)
-printf '%s\n%s\n%s\nrpcpassword=%s\n' 'daemon=1' 'server=1' 'rpcuser=groestlcoinrpc' $rpcp | tee $HOME/.groestlcoin/groestlcoin.conf
+su - $AZUREUSER -c "touch $GROESTLCOINPATH/groestlcoin.conf"
+rpcu=$(pwgen -ncsB 35 1)
+rpcp=$(pwgen -ncsB 75 1)
+echo "rpcuser="$rpcu"
+rpcpassword="$rpcp"
+server=1
+listen=1
+daemon=1" > $GROESTLCOINPATH/groestlcoin.conf
 
 ################################################################
 # Configure to auto start at boot                                        #
@@ -97,6 +110,6 @@ fi
 ################################################################
 # Start Groestlcoin Core                                                 #
 ################################################################
-/usr/bin/groestlcoind
-echo "Groestlcoin Core has been setup successfully and is running..."
+su - $AZUREUSER -c "groestlcoind"
+echo "Groestlcoin Core has been setup successfully and is running $$"
 exit 0

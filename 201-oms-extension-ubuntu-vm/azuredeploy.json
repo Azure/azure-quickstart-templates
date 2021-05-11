@@ -2,16 +2,10 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "workspaceId": {
+    "workspaceName": {
       "type": "string",
       "metadata": {
-        "description": "workspace id"
-      }
-    },
-    "workspaceKey": {
-      "type": "string",
-      "metadata": {
-        "description": "workspace key"
+        "description": "workspace id."
       }
     },
     "adminUsername": {
@@ -28,15 +22,14 @@
     },
     "ubuntuOSVersion": {
       "type": "string",
-      "defaultValue": "14.04.5-LTS",
-      "allowedValues": [
-        "12.04.5-LTS",
-        "14.04.5-LTS",
-        "15.10",
-        "16.04.0-LTS"
-      ],
       "metadata": {
-        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.10."
+        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "The size of the VM."
       }
     },
     "location": {
@@ -44,6 +37,12 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
+      }
+    },
+    "nsgName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the NSG."
       }
     },
     "authenticationType": {
@@ -72,6 +71,7 @@
     "OSDiskName": "osdiskforlinuxsimple",
     "nicName": "myVMNic",
     "addressPrefix": "10.0.0.0/16",
+    "nsgName": "[parameters('nsgName')]",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "storageAccountType": "Standard_LRS",
@@ -79,7 +79,6 @@
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
     "vmName": "MyUbuntuVM",
-    "vmSize": "Standard_D1",
     "virtualNetworkName": "MyVNET",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "linuxConfiguration": {
@@ -117,10 +116,40 @@
       }
     },
     {
+        "type": "Microsoft.Network/networkSecurityGroups",
+        "apiVersion": "2020-11-01",
+        "name": "[parameters('nsgName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+            "securityRules": [
+                {
+                    "name": "AllowInternet",
+                    "properties": {
+                        "protocol": "*",
+                        "sourcePortRange": "*",
+                        "destinationPortRange": "*",
+                        "sourceAddressPrefix": "*",
+                        "destinationAddressPrefix": "Internet",
+                        "access": "Allow",
+                        "priority": 100,
+                        "direction": "Outbound",
+                        "sourcePortRanges": [],
+                        "destinationPortRanges": [],
+                        "sourceAddressPrefixes": [],
+                        "destinationAddressPrefixes": []
+                    }
+                }
+            ]
+        }
+    },
+    {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [ 
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]" 
+        ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -131,7 +160,10 @@
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+              }
             }
           }
         ]
@@ -174,7 +206,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -205,33 +237,31 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
+            "storageUri": "[concat('http://', variables('storageAccountName'), '.blob.', environment().suffixes.storage)]"
           }
         }
-      },
-      "resources": [
-        {
+      }
+    },
+     {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(variables('vmName'), '/Microsoft.EnterpriseCloud.Monitoring')]",
-          "apiVersion": "2017-03-30",
+          "name": "[concat(variables('vmName'),'/OMSExtension')]",
+          "apiVersion": "2018-06-01",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines',variables('vmName'))]"
           ],
           "properties": {
             "publisher": "Microsoft.EnterpriseCloud.Monitoring",
             "type": "OmsAgentForLinux",
-            "typeHandlerVersion": "1.6",
+            "typeHandlerVersion": "1.10",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "workspaceId": "[parameters('workspaceId')]"
+              "workspaceId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2020-08-01').customerId]"
             },
             "protectedSettings": {
-              "workspaceKey": "[parameters('workspaceKey')]"
-            }
-          }
+              "workspaceKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2020-08-01').primarySharedKey]"
         }
-      ]
+      }
     }
   ]
 }
