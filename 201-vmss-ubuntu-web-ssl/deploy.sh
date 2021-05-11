@@ -101,4 +101,4 @@ azure config mode arm
 
 #Start deployment
 echo "Starting deployment..."
-azure group deployment create --resource-group $resourceGroupName --template-file $templateFilePath --parameters-file $parametersFilePath
+New-AzResourceGroupDeployment --resource-group $resourceGroupName --template-file $templateFilePath --parameters-file $parametersFilePath
