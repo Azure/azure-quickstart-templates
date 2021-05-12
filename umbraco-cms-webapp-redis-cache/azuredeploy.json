@@ -2,10 +2,28 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+     "actionGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the action group."
+      }
+    },
+    "actionGroupShortName": {
+      "type": "string",
+      "metadata": {
+        "description": "The short name of the action group."
+      }
+    },
+    "appInsightsResource": {
+      "type": "string",
+      "metadata": {
+        "description": "The id of the underlying Application Insights resource."
+      }
+    },
     "appName": {
       "type": "string",
       "metadata": {
-        "description": "Name of azure web app"
+        "description": "Name of azure web app."
       }
     },
     "appServiceTier": {
@@ -16,7 +34,7 @@
       ],
       "defaultValue": "Standard",
       "metadata": {
-        "description": "Choose either Standard or Premium Azure Web Apps pricing tiers. It defaults to Standard"
+        "description": "Choose either Standard or Premium Azure Web Apps pricing tiers. It defaults to Standard."
       }
     },
     "appServiceWorkerSize": {
@@ -109,6 +127,12 @@
         "description": "Redis Cache appServiceTier - Basic , Standard"
       }
     },
+    "emails": {
+      "type": "array",
+      "metadata": {
+        "description": "A list of strings representing the email addresses to send alerts to."
+      }
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -124,6 +148,23 @@
     "appServicePlanName": "[concat(parameters('appName'), 'serviceplan')]"
   },
   "resources": [
+    {
+      "name": "[parameters('actionGroupName')]",
+      "type": "microsoft.insights/actionGroups",
+      "apiVersion": "2019-06-01",
+      "location": "global",
+      "properties": {
+        "groupShortName": "[parameters('actionGroupShortName')]",
+        "enabled": true,
+        "emailReceivers": [
+          {
+            "name": "test",
+            "emailAddress": "[parameters('emails')[0]]",
+            "useCommonAlertSchema": true
+          }
+        ]
+      }
+    },
     {
       "apiVersion": "2014-04-01-preview",
       "name": "[parameters('redisCacheName')]",
@@ -301,9 +342,9 @@
           {
             "name": "Default",
             "capacity": {
-              "minimum": "1",
-              "maximum": "2",
-              "default": "1"
+              "minimum": 1,
+              "maximum": 2,
+              "default": 1
             },
             "rules": [
               {
@@ -320,7 +361,7 @@
                 "scaleAction": {
                   "direction": "Increase",
                   "type": "ChangeCount",
-                  "value": "1",
+                  "value": 1,
                   "cooldown": "PT10M"
                 }
               },
@@ -338,7 +379,7 @@
                 "scaleAction": {
                   "direction": "Decrease",
                   "type": "ChangeCount",
-                  "value": "1",
+                  "value": 1,
                   "cooldown": "PT1H"
                 }
               }
@@ -351,76 +392,63 @@
       }
     },
     {
-      "apiVersion": "2014-04-01",
       "name": "[concat('ServerErrors ', parameters('appName'))]",
-      "type": "microsoft.insights/alertrules",
-      "location": "[variables('appInsightsRegion')]",
-      "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('appName'))]": "Resource"
-      },
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
       "dependsOn": [
         "[concat('Microsoft.Web/sites/', parameters('appName'))]"
       ],
-      "properties": {
-        "name": "[concat('ServerErrors ', parameters('appName'))]",
-        "description": "[concat(parameters('appName'), ' has some server errors, status code 5xx.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('appName'))]",
-            "metricName": "Http5xx"
-          },
-          "operator": "GreaterThan",
-          "threshold": 0,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
-        }
-      }
-    },
-    {
-      "apiVersion": "2014-04-01",
-      "name": "[concat('ForbiddenRequests ', parameters('appName'))]",
-      "type": "microsoft.insights/alertrules",
-      "location": "[variables('appInsightsRegion')]",
       "tags": {
         "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('appName'))]": "Resource"
       },
-      "dependsOn": [
-        "[concat('Microsoft.Web/sites/', parameters('appName'))]"
-      ],
       "properties": {
-        "name": "[concat('ForbiddenRequests ', parameters('appName'))]",
-        "description": "[concat(parameters('appName'), ' has some requests that are forbidden, status code 403.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('appName'))]",
-            "metricName": "Http403"
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Web/sites/', parameters('appName'))]"
+        ],
+        "targetResourceType" : "Microsoft.Web/sites",
+        "targetResourceRegion": "[parameters('location')]",
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "[concat('Microsoft.Web/sites', parameters('appName'), '-5XX-errors')]",
+              "metricName": "Http5xx",
+              "dimensions": [],
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            },
+            {
+              "name": "[concat('Microsoft.Web/sites', parameters('appName'), '-403-errors')]",
+              "metricName": "Http403",
+              "dimensions": [],
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "componentId": "[parameters('appInsightsResource')]",
+          "metricName": "[concat(parameters('appName'), 'server errors')]"
           },
-          "operator": "GreaterThan",
-          "threshold": 0,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
-        }
+            "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups',parameters('actionGroupName'))]"
+          }
+        ]
       }
     },
-    {
-      "apiVersion": "2014-04-01",
-      "name": "[concat('CPUHigh ', variables('appServicePlanName'))]",
-      "type": "microsoft.insights/alertrules",
-      "location": "[variables('appInsightsRegion')]",
+    { 
+      "name": "[concat('The average CPU is high across all the instances of ', variables('appServicePlanName'))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
       "tags": {
         "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]": "Resource"
       },
@@ -428,32 +456,43 @@
         "[concat('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
       ],
       "properties": {
-        "name": "[concat('CPUHigh ', variables('appServicePlanName'))]",
-        "description": "[concat('The average CPU is high across all the instances of ', variables('appServicePlanName'))]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]",
-            "metricName": "CpuPercentage"
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+        ],
+        "targetResourceType" : "Microsoft.Web/serverfarms",
+        "targetResourceRegion": "[parameters('location')]",
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "[concat('Microsoft.Web/serverfarms/', variables('appServicePlanName'), '-cpupercentage')]",
+              "metricName": "CpuPercentage",
+              "dimensions": [],
+              "operator": "GreaterThan",
+              "threshold": 90,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "componentId": "[parameters('appInsightsResource')]",
+          "metricName": "[concat('The average CPU is high across all the instances of ', variables('appServicePlanName'))]"
           },
-          "operator": "GreaterThan",
-          "threshold": 90,
-          "windowSize": "PT15M"
-        },
-        "action": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
-        }
+            "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups',parameters('actionGroupName'))]"
+          }
+        ]
       }
     },
     {
-      "apiVersion": "2014-04-01",
       "name": "[concat('LongHttpQueue ', variables('appServicePlanName'))]",
-      "type": "microsoft.insights/alertrules",
-      "location": "[variables('appInsightsRegion')]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
       "tags": {
         "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]": "Resource"
       },
@@ -461,40 +500,36 @@
         "[concat('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
       ],
       "properties": {
-        "name": "[concat('LongHttpQueue ', variables('appServicePlanName'))]",
-        "description": "[concat('The HTTP queue for the instances of ', variables('appServicePlanName'), ' has a large number of pending requests.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]",
-            "metricName": "HttpQueueLength"
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+        ],
+        "targetResourceType" : "Microsoft.Web/serverfarms",
+        "targetResourceRegion": "[parameters('location')]",
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "[concat('Microsoft.Web/serverfarms/', variables('appServicePlanName'), '-httpqueuelegth')]",
+              "metricName": "HttpQueueLength",
+              "dimensions": [],
+              "operator": "GreaterThan",
+              "threshold": 100,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "componentId": "[parameters('appInsightsResource')]",
+          "metricName": "[concat('The HTTP queue for the instances of ', variables('appServicePlanName'), ' has a large number of pending requests.')]"
           },
-          "operator": "GreaterThan",
-          "threshold": 100,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
-        }
-      }
-    },
-    {
-      "apiVersion": "2014-04-01",
-      "name": "[concat(parameters('appName'),'-appin')]",
-      "type": "microsoft.insights/components",
-      "location": "[variables('appInsightsRegion')]",
-      "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('appName'))]": "Resource"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Web/sites/', parameters('appName'))]"
-      ],
-      "properties": {
-        "applicationId": "[parameters('appName')]"
+            "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups',parameters('actionGroupName'))]"
+          }
+        ]
       }
     },
     {
