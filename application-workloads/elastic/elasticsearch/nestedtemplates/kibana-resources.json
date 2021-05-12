@@ -4,7 +4,7 @@
   "parameters": {
     "namespace": {
       "type": "string",
-      "defaultValue": "jumpbox",
+      "defaultValue": "kibana",
       "metadata": {
         "description": "The namespace prefix for resources created by this template"
       }
@@ -36,7 +36,7 @@
     "osSettings": {
       "type": "object",
       "metadata": {
-        "description": "Elasticsearch deployment platform settings"
+        "description": "Platform and OS settings"
       }
     },
     "vmSize": {
@@ -71,7 +71,7 @@
           {
             "name": "SSH",
             "properties": {
-              "description": "Allows SSH traffic",
+              "description": "Allows inbound SSH traffic from anyone",
               "protocol": "Tcp",
               "sourcePortRange": "[parameters('osSettings').managementPort]",
               "destinationPortRange": "[parameters('osSettings').managementPort]",
@@ -79,6 +79,20 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Kibana",
+            "properties": {
+              "description": "Allows inbound Kibana HTTP traffic from anyone",
+              "protocol": "Tcp",
+              "sourcePortRange": "5601",
+              "destinationPortRange": "5601",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
               "direction": "Inbound"
             }
           }
@@ -118,7 +132,6 @@
               "subnet": {
                 "id": "[variables('subnetRef')]"
               }
-
             }
           }
         ]
@@ -137,7 +150,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "jumpbox",
+          "computerName": "kibana",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('authSet').password]",
           "linuxConfiguration": "[parameters('osSettings').linuxConfiguration]"
@@ -157,11 +170,27 @@
             }
           ]
         }
-      }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "installkibana",
+          "apiVersion": "2019-12-01",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+          ],
+          "properties": "[parameters('osSettings').extensionSettings.kibana]"
+        }
+      ]
     }
   ],
   "outputs": {
-    "jumpbox-pip": {
+    "kibana-url": {
+      "type": "string",
+      "value": "[concat('http://', reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))).ipAddress, ':5601')]"
+    },
+    "kibana-ip": {
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))).ipAddress]"
     }
