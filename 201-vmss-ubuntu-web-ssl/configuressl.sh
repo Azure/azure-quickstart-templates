@@ -75,7 +75,7 @@ if [ ! -z "$2" ]
         sslcafilename=$cacertprint'.crt'
         echo "CA cert file" $sslcafilename
         fullpath=/var/lib/waagent/$sslcafilename
-        if [ -f $fullpath ]
+        if [! -f $fullpath ]
         then
             cp $fullpath /etc/ssl/certs/
         else
