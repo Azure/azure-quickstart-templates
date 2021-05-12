@@ -65,31 +65,26 @@
       "defaultValue": "Standard_D8s_v3",
       "type": "String",
       "allowedValues": [
-        "Standard_B1ms",
-        "Standard_D2s_v3",
         "Standard_D8s_v3",
         "Standard_D16s_v3",
         "Standard_D32s_v3",
-	"Standard_E32ds_v4"
+        "Standard_E32ds_v4"
       ]
     },
     "Metadata VM Size": {
       "defaultValue": "Standard_D8s_v3",
       "type": "String",
       "allowedValues": [
-        "Standard_B1ms",
-        "Standard_D2s_v3",
         "Standard_D8s_v3",
         "Standard_D16s_v3",
         "Standard_D32s_v3",
-	"Standard_E32ds_v4"
+        "Standard_E32ds_v4"
       ]
     },
     "Visual Analytics Worker Count": {
       "defaultValue": 2,
       "type": "Int",
       "allowedValues": [
-        1,
         2,
         3,
         4,
@@ -100,24 +95,20 @@
       "defaultValue": "Standard_D8s_v3",
       "type": "String",
       "allowedValues": [
-        "Standard_B1ms",
-        "Standard_D2s_v3",
         "Standard_D8s_v3",
         "Standard_D16s_v3",
         "Standard_D32s_v3",
-	"Standard_E32ds_v4"
+        "Standard_E32ds_v4"
       ]
     },
     "Visual Analytics Worker Size": {
       "defaultValue": "Standard_D8s_v3",
       "type": "String",
       "allowedValues": [
-        "Standard_B1ms",
-        "Standard_D2s_v3",
         "Standard_D8s_v3",
         "Standard_D16s_v3",
         "Standard_D32s_v3",
-	"Standard_E32ds_v4"
+        "Standard_E32ds_v4"
       ]
     },
     "Proximity PlacementGroup Name": {
@@ -481,6 +472,20 @@
             }
           },
           {
+            "name": "allow_https_port_8441",
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8441",
+              "sourceAddressPrefix": "[variables('webIngressLocation')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 501,
+              "direction": "Inbound"
+            }
+          },
+          {
             "name": "allow_nat_ingress",
             "type": "Microsoft.Network/networkSecurityGroups/securityRules",
             "properties": {
@@ -490,7 +495,7 @@
               "sourceAddressPrefix": "[concat(reference(resourceId('Microsoft.Network/publicIPAddresses', 'nat_publicIP')).ipAddress, '/32')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 501,
+              "priority": 503,
               "direction": "Inbound"
             }
           },
@@ -639,7 +644,8 @@
       "name": "[variables('midtierEndpoint')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('jumpEndpoint'))]"
       ],
       "location": "[variables('location')]",
       "properties": {
@@ -670,7 +676,8 @@
       "name": "[variables('metadataEndpoint')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('midtierEndpoint'))]"
       ],
       "location": "[variables('location')]",
       "properties": {
@@ -701,7 +708,8 @@
       "name": "[variables('vaEndpoint')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('metadataEndpoint'))]"
       ],
       "location": "[variables('location')]",
       "properties": {
@@ -1067,6 +1075,12 @@
             "properties": {
               "port": 443
             }
+          },
+          {
+            "name": "port_8441",
+            "properties": {
+              "port": 8441
+            }
           }
         ],
         "backendAddressPools": [
@@ -1081,6 +1095,16 @@
             "name": "http-setting",
             "properties": {
               "port": 7980,
+              "protocol": "Http",
+              "cookieBasedAffinity": "Disabled",
+              "pickHostNameFromBackendAddress": false,
+              "requestTimeout": 60
+            }
+          },
+          {
+            "name": "http-setting-2",
+            "properties": {
+              "port": 7080,
               "protocol": "Http",
               "cookieBasedAffinity": "Disabled",
               "pickHostNameFromBackendAddress": false,
@@ -1104,6 +1128,22 @@
               },
               "requireServerNameIndication": false
             }
+          },
+          {
+            "name": "http-listener-8441",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendIPConfigurations/appGwPublicFrontendIp')]"
+              },
+              "frontendPort": {
+                "id": "[concat(resourceid('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendPorts/port_8441')]"
+              },
+              "protocol": "Https",
+              "sslCertificate": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/sslCertificates', 'loadbalancer', 'appGatewayFrontendCertificate')]"
+              },
+              "requireServerNameIndication": false
+            }
           }
         ],
         "requestRoutingRules": [
@@ -1120,6 +1160,39 @@
               "backendHttpSettings": {
                 "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendHttpSettingsCollection/http-setting')]"
               }
+            }
+          },
+          {
+            "name": "rule2",
+            "properties": {
+              "ruleType": "Basic",
+              "httpListener": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-8441')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendAddressPools/midtierAddressPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendHttpSettingsCollection/http-setting-2')]"
+              }
+            }
+          }
+        ],
+        "redirectConfigurations": [
+          {
+            "name": "rule3",
+            "properties": {
+              "redirectType": "Permanent",
+              "targetListener": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-8441')]"
+              },
+              "includePath": true,
+              "includeQueryString": true,
+              "requestRoutingRules": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/requestRoutingRules/rule3')]"
+                }
+              ]
             }
           }
         ],
@@ -1825,6 +1898,10 @@
     "SASStudio": {
       "type": "string",
       "value": "[concat('https://', reference(resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')).dnsSettings.fqdn, '/SASStudio')]"
+    },
+    "SASEnvironmentManager": {
+      "type": "string",
+      "value": "[concat('https://', reference(resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')).dnsSettings.fqdn, ':8441/')]"
     }
   }
 }

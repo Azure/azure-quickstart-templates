@@ -47,6 +47,7 @@ ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_
 ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=va_workers sas_action=stop"
 ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=va_controllers sas_action=stop"
 ansible-playbook -i ${INVENTORY_FILE} -v run_sas_servers.yaml --extra-vars "sas_hosts=metadata_servers sas_action=stop"
+#ansible-playbook -i ${INVENTORY_FILE} -v run_hadoop_servers.yaml --extra-vars "hadoop_hosts=va_controllers hadoop_action=stop"
 
 COUNT=$(grep -c 'SAS_ERROR:'  "/tmp/${LOG_FILE}")
 if (( $COUNT != 0 )); then
