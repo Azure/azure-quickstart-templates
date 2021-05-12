@@ -15,6 +15,12 @@
         "description": "The description of this Shared Image Gallery resource."
       }
     },
+    "sourceVHDuri": {
+      "type": "string",
+      "metadata": {
+        "description": "URI of the VHD to be used to create Image Version."
+      }
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -25,7 +31,8 @@
   },
   "variables": {
     "galleryName": "[uniqueString(resourceGroup().id)]",
-    "imageName": "[concat(variables('galleryName'), '/', parameters('galleryImageDefinitionName'))]"
+    "imageName": "[concat(variables('galleryName'), '/', parameters('galleryImageDefinitionName'))]",
+    "diskname":"[concat('GeneralizedOSdisk',uniqueString(resourceGroup().id))]"
   },
   "resources": [
     {
@@ -66,6 +73,24 @@
           }
         }
       }
+    },
+    {
+      "name": "[variables('diskname')]",
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {
+        "osType": "Windows",
+        "creationData": {
+          "createOption": "Import",
+          "sourceUri": "[parameters('sourceVHDuri')]"
+        },
+        "diskSizeGB": 127
+      }
     }
   ],
   "outputs": {
@@ -76,6 +101,10 @@
     "galleryImageDefinitionName": {
       "type": "string",
       "value": "[parameters('galleryImageDefinitionName')]"
+    },
+    "managedDiskID": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Compute/disks', variables('diskname'))]"
     }
   }
 }
