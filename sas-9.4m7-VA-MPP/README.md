@@ -61,6 +61,8 @@ The SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visu
 
 To determine the appropriate sizes of these resources, we recommend that you work with your SAS account team to form a hardware estimate and use the instance sizes from the hardware estimate. See [Best Practices for Using Microsoft Azure with SAS](https://communities.sas.com/t5/Administration-and-Deployment/Best-Practices-for-Using-Microsoft-Azure-with-SAS/m-p/676833#M19680) for more information.
 
+**Note:** While the Standard_B2ms VM size is available, it should only be used to create a deployment without a SAS installation (i.e. leave the SAS Depot Location parameter blank) for exploratory reasons. Using the Standard_B2ms size with a SAS installation will result in a failed deployment, as that size is too small to support SAS.
+
 <a name="architecture"></a>
 ## Architecture
 
