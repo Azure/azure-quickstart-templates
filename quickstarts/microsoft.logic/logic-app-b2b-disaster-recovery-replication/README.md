@@ -1,15 +1,17 @@
 # Azure Logic Apps - B2B Disaster Recovery replication
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-b2b-disaster-recovery-replication/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-b2b-disaster-recovery-replication/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-b2b-disaster-recovery-replication/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-b2b-disaster-recovery-replication/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-b2b-disaster-recovery-replication/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-b2b-disaster-recovery-replication/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-b2b-disaster-recovery-replication/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-b2b-disaster-recovery-replication/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-b2b-disaster-recovery-replication/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-b2b-disaster-recovery-replication/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-b2b-disaster-recovery-replication/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-b2b-disaster-recovery-replication/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-logic-app-b2b-disaster-recovery-replication%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-logic-app-b2b-disaster-recovery-replication%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogic-app-b2b-disaster-recovery-replication%2Fazuredeploy.json)  
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)]( https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogic-app-b2b-disaster-recovery-replication%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogic-app-b2b-disaster-recovery-replication%2Fazuredeploy.json)
 
 This template demonstrates B2B Disaster Recovery replication using Logic Apps. Creates replication Logic Apps for AS2 MIC, generated and received X12 and Edifact control numbers. Each Logic App's trigger points to a primary site integration account. Each Logic App's action points to a secondary site integration account. Primary and secondary sites must have prerequisite Integration Accounts deployed (Integration Accounts are not deployed as part of this template). Furthermore to see the replication happen the primary site must have Logic Apps deployed with X12 Encode and/or Decode action(s) and AS2 Encode action. (Logic Apps for X12/AS2 Encode and Decode are not deployed as part of this template).
 It is recommended that the primary site and secondary site are deployed in different regions and different resource group. The replication Logic Apps should be deployed to the secondary site, region and resource group. Hence this template parameters include the resource group of the primary integration account and assume that the secondary integration account is in the same resource group as where the template is deployed.
@@ -24,14 +26,14 @@ You need to provide the Integration Account Names for the prerequisite primary a
 ## Usage
 
 Once the deployment is completed, you should see the following resources in the resource group blade in the Azure Portal. NOTE that the secondary integration account is not deployed as part of this template.
-![Image of Azure resources](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-b2b-disaster-recovery-replication/images/azure-resources.png "Azure resources")
+![Image of Azure resources](images/azure-resources.png"Azure resources")
 
 ### X12/Edifact DR Logic App ###
 - In order for control numbers to be replicated, X12/Edifact encode and/or decode activity must happen on the primary site Logic App which X12/Edifact action uses the primary Integration Account. Send a test message to your pre-requisite Logic App.
 - The replication Logic Apps will trigger every 1 minute by default. If the test message you sent was less than a minute ago, you may click 'Run Trigger' 'When_a_control_number_is_...' to generate an immediate run. The logic app run will contain the replication of all the control numbers that was modified by the X12/Edifact Encode/Decode operations in the 1 minute window since previous trigger run.
-![Image of History for Control Number replication Logic App](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-b2b-disaster-recovery-replication/images/cn-replication-history.png "History for Control Number replication Logic App")
+![Image of History for Control Number replication Logic App](images/cn-replication-history.png"History for Control Number replication Logic App")
 - You can look into the run history and input/output for each action for these logic apps for replication results.
-![Image of Run details for Control Number replication Logic App](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-b2b-disaster-recovery-replication/images/cn-run-details.png "Run details for Control Number replication Logic App")
+![Image of Run details for Control Number replication Logic App](images/cn-run-details.png"Run details for Control Number replication Logic App")
 - To perform a disaster recovery:
   - Disable the X12/Edifact Encode-Decode Logic Apps on the primary site and the replication Logic Apps for Generated and Received control numbers.
   - Use the Azure PowerShell cmdlet Get-AzureRmIntegrationAccountGeneratedIcn (Associated with Encode Actions) and Set-AzureRmIntegrationAccountGeneratedIcn (Associated with Decode Actions) to increment the Interchange Control Number for each of your sent agreements on the secondary Integration Account. This change may take up to 15 seconds to take effect.
