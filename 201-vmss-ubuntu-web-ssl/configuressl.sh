@@ -77,6 +77,7 @@ if [ ! -z "$2" ]
         fullpath=/var/lib/waagent/$sslcafilename
         if [! -f $fullpath ]
         then
+            rm $fullpath /etc/ssl/certs/
             cp $fullpath /etc/ssl/certs/
         else
             echo "Cert missing: " $fullpath
