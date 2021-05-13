@@ -14,7 +14,7 @@ stagecustomscript()
         azure storage account create $scriptstorageaccount -g $resourceGroupName -l $resourceGroupLocation --kind Storage --sku-name LRS
     fi
 
-    key=$(azure storage account keys list $scriptstorageaccount -g $resourceGroupName | grep -o 'key1\s*[^ ]*' | cut -d' ' -f3)
+    key=$(azure storage account keys list $scriptstorageaccount -g $resourceGroupName | grep -o 'key1\s*[^ ]*' | cut -d' ' -f3) | head -1
     echo Uploading custom script to $scriptstorageaccount
 
     containername='scripts'
