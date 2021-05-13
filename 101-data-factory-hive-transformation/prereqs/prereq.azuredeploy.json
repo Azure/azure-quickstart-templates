@@ -76,14 +76,24 @@
            "name": "[parameters('storageAccountName')]",
            "apiVersion": "2019-06-01",
            "location": "[parameters('location')]",
+           "dependsOn": [
+             "[variables('roleDefinitionName')]"
+           ],
            "sku": {
              "name": "[parameters('storageAccountType')]"
            },
            "kind": "StorageV2",
-           "dependsOn": [
-             "[variables('roleDefinitionName')]"
-           ]
-         },
+           "resources": [
+        {
+          "type": "blobServices/containers",
+          "apiVersion": "2019-06-01",
+          "name": "[variables('containerName')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+          ]
+        }
+      ]
+    },    
          {
            "type": "Microsoft.Resources/deploymentScripts",
            "apiVersion": "2020-10-01",
@@ -91,6 +101,7 @@
            "location": "[parameters('location')]",
            "dependsOn": [
              "[parameters('storageAccountName')]",
+             "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), variables('containerName'))]",
              "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]"
            ],
             "kind": "AzurePowerShell",
@@ -105,18 +116,7 @@
               "forceUpdateTag": "1",
               "azPowerShellVersion": "3.0",
               "arguments": "[format('-storageAccountName {0} -resourceGroupName {1} -container {2} -blob {3}', parameters('storageAccountName'), resourceGroup().name, variables('containerName'), variables('blob'))]",
-              "scriptContent": "
-                      param(
-                         [string] $storageAccountName,
-                         [string] $resourceGroupName,
-                         [string] $container,
-                         [string] $blob
-                     )
-                     
-                     $storageAccount = Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName      
-                     $context = $storageAccount.Context
-                     Set-AzStorageBlobContent -Container $container -File $blob -Blob $blob -Context $context -Force
-                     ",
+              "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('prereqs/script', parameters('_artifactsLocationSasToken')))]",
               "timeout": "PT5M",
               "cleanupPreference": "OnSuccess",
               "retentionInterval": "P1D"
