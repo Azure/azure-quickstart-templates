@@ -132,7 +132,7 @@ downloadAllFiles() {
     curl --retry 10 --max-time 60 --fail --silent --show-error "$file_list_url" > file_list.txt
     while read line; do
     file_name="$(echo "$line" | cut -f1 -d'|')"
-    chmod_attr="$(echo "$line" | cut -f2 -d'|')"
+    chmod_attr="$(echo "$line" | sed 's/\r$//' | cut -f2 -d'|')"
     directory="$(dirname "$line")"
     target_directory="${INSTALL_DIR}/$directory"
     target_file_name="${INSTALL_DIR}/${file_name}"
