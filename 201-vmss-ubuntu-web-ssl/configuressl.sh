@@ -68,7 +68,7 @@ sed -i 's/#*SSLCertificateFile.*$/SSLCertificateFile \/etc\/ssl\/certs\/'$sslcer
 echo "keyfile"
 sed -i 's/#*SSLCertificateKeyFile.*$/SSLCertificateKeyFile \/etc\/ssl\/private\/'$sslkeyfilename'/g' /etc/apache2/sites-enabled/default-ssl.conf
 
-if [ ! -z "$2" ]
+if [ -z "$2" ]
     then
         echo "CA cert thumbprint present. Configuring ..."
         cacertprint=$2
