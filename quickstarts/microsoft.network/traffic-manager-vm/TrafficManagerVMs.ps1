@@ -1,4 +1,4 @@
-﻿#
+#
 #  This PowerShell script shows how to create a sample traffic manager profile from the accompanying template.
 #  As DNS names need to be unique, please edit azuredeploy.parameters.json and replace the values marked with '#####'
 #
