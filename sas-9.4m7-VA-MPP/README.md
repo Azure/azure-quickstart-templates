@@ -343,4 +343,3 @@ To restart the services using the start and stop scripts, perform the following 
 9. From the Shared access signature window, select the *Container* and *Object* check boxes under *Allowed resource types*.
 10. Specify an end date. The end date specifies the expiration date of your SAS Token.  You might want to specify a date that is a year in the future.
 11. Copy and paste the string under *SAS Token*. Save to a known location.
-
