@@ -77,7 +77,8 @@
             "apiVersion": "2019-06-01",
             "location": "[parameters('location')]",
             "sku": {
-              "name": "[parameters('storageAccountType')]"
+              "name": "[parameters('storageAccountType')]",
+              "tier": "Standard"
             },
             "kind": "StorageV2",
             "dependsOn": [
@@ -86,15 +87,17 @@
         },
         {
             "type": "Microsoft.Resources/deploymentScripts",
-            "apiVersion": "2020-10-01",
+            "apiVersion": "2020-06-01",
             "name": "uploadScripts",
             "location": "[parameters('location')]",
             "dependsOn": [
-              "[parameters('storageAccountName')]"
+              "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleDefinitionName'))]",
+              "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]",
+              "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
             ],
             "kind": "AzurePowerShell",
             "identity": {
-              "type": "userAssigned",
+              "type": "UserAssigned",
               "userAssignedIdentities": {
                 "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]": {
                 }
@@ -103,7 +106,7 @@
             "properties": {
               "forceUpdateTag": "1",
               "azPowerShellVersion": "3.0",
-              "arguments": "[format(' -storageAccountName {0} -resourceGroupName {1} -container {2} -blob {3}', parameters('storageAccountName'), resourceGroup().name, variables('containerName'), variables('blob'))]",
+              "arguments": "[format('-storageAccountName {0} -resourceGroupName {1} -container {2} -blob {3}', parameters('storageAccountName'), resourceGroup().name, variables('containerName'), variables('blob'))]",
               "primaryScriptUri": "[uri(parameters('_artifactsLocation'), concat('prereqs/uploadScripts.ps1', parameters('_artifactsLocationSasToken')))]",
               "timeout": "PT5M",
               "cleanupPreference": "OnSuccess",
@@ -118,7 +121,7 @@
         },
         "storageAccountKey": {
           "type": "string",
-          "value": "[listkeys(variables('storageAccountName'), '2019-06-01').keys[0].value]"
+          "value": "[listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value]"
         },
         "storageAccountResourceGroup": {
           "type": "string",
