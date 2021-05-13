@@ -15,10 +15,6 @@
 
 **Note:** The SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics is an example architecture only. It is not intended for production use. Specifically, the Quickstart provides an example of how a SAS Visual Analytics in SAS 9.4 workload  and a SAS Visual Statistics in SAS 9.4 workload running in a massively parallel processing (MPP) environment with SAS LASR Analytic Server, can be run on Azure.  When running in an MPP environment, the SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics deploys Apache Hadoop.  As stated in the [SAS 9.4 Support for Hadoop policy](https://support.sas.com/en/documentation/third-party-software-reference/9-4/support-for-hadoop.html), SAS does not provide support for the installation or administration of Apache Hadoop.  For support with these issues, please refer to the Apache Hadoop open-source community.  The intent of the SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics is to provide customers an opportunity to test deployments on the cloud before committing to a lift and shift from their current on-premises deployments.
 
-<a name="Deploybutton"></a>
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsas-9.4m7-VA-MPP%2Fazuredeploy.json)
-
-
 ## Contents
 1. [Overview](#Overview)
     1. [Costs and Licenses](#Costs)        
