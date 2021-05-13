@@ -1,4 +1,4 @@
-﻿function New-SqlServerVirtualMachine()
+function New-SqlServerVirtualMachine()
 {
     #<#
 	#.Synopsis

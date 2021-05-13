@@ -1,4 +1,4 @@
-﻿function SetupAzureResourceManagementSubscription
+function SetupAzureResourceManagementSubscription
 {
     #<#
     #.Synopsis
