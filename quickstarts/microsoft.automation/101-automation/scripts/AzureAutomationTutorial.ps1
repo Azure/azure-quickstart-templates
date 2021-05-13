@@ -1,4 +1,4 @@
-﻿<#
+<#
     .DESCRIPTION
         An example runbook which gets all the ARM resources using the Run As Account (Service Principal)
 
