@@ -17,7 +17,7 @@
     "dbAdministratorLoginPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Database admin user password."
+        "description": "Database admin user password"
       }
     },
     "nonAdminDatabaseUserName": {
@@ -56,7 +56,7 @@
       "name": "[variables('dbServerName')]",
       "type": "Microsoft.Sql/servers",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-11-01-preview",
+      "apiVersion": "2014-04-01-preview",
       "properties": {
         "administratorLogin": "[parameters('dbAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('dbAdministratorLoginPassword')]",
@@ -64,12 +64,12 @@
       },
       "resources": [
         {
-          "apiVersion": "2020-11-01-preview",
+          "apiVersion": "2014-04-01-preview",
           "name": "[variables('dbName')]",
           "type": "databases",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers/', variables('dbServerName'))]"
+            "[concat('Microsoft.Sql/servers/', variables('dbServerName'))]"
           ],
           "properties": {
             "edition": "[variables('dbEdition')]",
@@ -78,12 +78,12 @@
           }
         },
         {
-          "apiVersion": "2020-11-01-preview",
+          "apiVersion": "2014-04-01-preview",
           "name": "AllowAllWindowsAzureIps",
           "type": "firewallrules",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers/', variables('dbServerName'))]"
+            "[concat('Microsoft.Sql/servers/', variables('dbServerName'))]"
           ],
           "properties": {
             "endIpAddress": "0.0.0.0",
@@ -93,7 +93,7 @@
       ]
     },
     {
-      "apiVersion": "2020-12-01",
+      "apiVersion": "2014-06-01",
       "name": "[variables('appServicePlanName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[parameters('location')]",
@@ -108,16 +108,16 @@
     {
       "type": "Microsoft.Media/mediaServices",
       "name": "[variables('mediaServicesAccountName')]",
-      "apiVersion": "2018-07-01",
+      "apiVersion": "2015-10-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
       ],
       "properties": {
         "storageAccounts": [
           {
             "id": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-            "type": "Primary"
+            "isPrimary": true
           }
         ]
       },
@@ -135,7 +135,7 @@
       "properties": {}
     },
     {
-      "apiVersion": "2020-12-01",
+      "apiVersion": "2015-02-01",
       "name": "[parameters('appName')]",
       "type": "Microsoft.Web/Sites",
       "location": "[parameters('location')]",
@@ -143,7 +143,7 @@
         "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "empty"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverFarms/', variables('appServicePlanName'))]"
+        "[concat('Microsoft.Web/serverFarms/', variables('appServicePlanName'))]"
       ],
       "properties": {
         "name": "[parameters('appName')]",
@@ -152,13 +152,13 @@
       },
       "resources": [
         {
-          "apiVersion": "2020-12-01",
+          "apiVersion": "2015-04-01",
           "name": "MSDeploy",
           "type": "Extensions",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
-            "[resourceId('Microsoft.Sql/servers/databases', variables('dbServerName'), variables('dbName'))]",
-            "[resourceId('Microsoft.Media/mediaservices', variables('mediaServicesAccountName'))]"
+            "[concat('Microsoft.Web/Sites/', parameters('appName'))]",
+            "[concat('Microsoft.Sql/servers/', variables('dbServerName'), '/databases/', variables('dbName'))]",
+            "[concat('Microsoft.Media/mediaservices/', variables('mediaServicesAccountName'))]"
           ],
           "properties": {
             "packageUri": "https://auxmktplceprod.blob.core.windows.net/packages/Orchard.Web.1.10.x-AMS.zip",
@@ -176,12 +176,12 @@
           }
         },
         {
-          "apiVersion": "2020-12-01",
+          "apiVersion": "2015-04-01",
           "name": "connectionstrings",
           "type": "config",
           "dependsOn": [
             "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
-            "[resourceId('Microsoft.Sql/servers/databases', variables('dbServerName'), variables('dbName'))]",
+            "[concat('Microsoft.Sql/servers/', variables('dbServerName'), '/databases/', variables('dbName'))]",
             "[concat('Microsoft.Web/Sites/', parameters('appName'), '/Extensions/MSDeploy')]"
           ],
           "properties": {
@@ -192,18 +192,18 @@
           }
         },
         {
-          "apiVersion": "2020-12-01",
+          "apiVersion": "2015-04-01",
           "name": "appsettings",
           "type": "config",
           "dependsOn": [
             "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
-            "[resourceId('Microsoft.Media/mediaservices/', variables('mediaServicesAccountName'))]",
+            "[concat('Microsoft.Media/mediaservices/', variables('mediaServicesAccountName'))]",
             "[concat('Microsoft.Web/Sites/', parameters('appName'), '/Extensions/MSDeploy')]"
           ],
           "properties": {
             "defaultRecipe": "Video Portal",
             "Azure.MediaServices.AccountName": "[variables('mediaServicesAccountName')]",
-            "Azure.MediaServices.StorageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2018-07-01').primaryKey]"
+            "Azure.MediaServices.StorageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value]"
           }
         },
         {
@@ -211,7 +211,7 @@
           "name": "web",
           "type": "config",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites/', parameters('appName'))]",
+            "[concat('Microsoft.Web/Sites/', parameters('appName'))]",
             "[concat('Microsoft.Web/Sites/', parameters('appName'), '/Extensions/MSDeploy')]"
           ],
           "properties": {
