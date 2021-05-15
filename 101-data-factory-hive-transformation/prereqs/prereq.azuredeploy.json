@@ -33,7 +33,7 @@
            "metadata": {
              "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
            },
-           "defaultValue": "[deployment().properties.templateLink.uri]"
+           "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-data-factory-hive-transformation/"
          },
          "_artifactsLocationSasToken": {
            "type": "securestring",
@@ -47,8 +47,9 @@
       "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
       "roleDefinitionName": "[guid(parameters('identityName'), variables('roleDefinitionId'), resourceGroup().id)]",
       "containerName": "adfgetstarted",
+      "blobName": "adfgetstarted",
       "storageAccountName": "[parameters('storageAccountName')]",
-      "blob": "[uri(parameters('_artifactsLocation'), concat('prereqs/uploadScripts.ps1', parameters('_artifactsLocationSasToken')))]"
+      "scriptLocation": "[uri(parameters('_artifactsLocation'), concat('prereqs/uploadScripts.ps1', parameters('_artifactsLocationSasToken')))]"
     },
     "resources": [
          {
@@ -72,28 +73,29 @@
            }
          },
          {
-           "type": "Microsoft.Storage/storageAccounts",
-           "name": "[parameters('storageAccountName')]",
-           "apiVersion": "2019-06-01",
-           "location": "[parameters('location')]",
-           "dependsOn": [
-             "[variables('roleDefinitionName')]"
-           ],
-           "sku": {
-             "name": "[parameters('storageAccountType')]"
-           },
-           "kind": "StorageV2",
-           "resources": [
-        {
-          "type": "blobServices/containers",
-          "apiVersion": "2019-06-01",
-          "name": "[variables('containerName')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
-          ]
-        }
-      ]
-    },    
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+              "name": "Standard_LRS",
+              "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+              "accessTier": "Hot"
+            },
+            "resources": [
+              {
+                "type": "blobServices/containers",
+                "apiVersion": "2019-06-01",
+                "name": "[concat('default/', variables('containerName'))]",
+                "dependsOn": [
+                  "[parameters('storageAccountName')]"
+                ]
+              }
+            ]
+          },  
          {
            "type": "Microsoft.Resources/deploymentScripts",
            "apiVersion": "2020-10-01",
@@ -114,8 +116,8 @@
             "properties": {
               "forceUpdateTag": "1",
               "azPowerShellVersion": "3.0",
-              "arguments": "[format('-storageAccountName {0} -resourceGroupName {1} -container {2} -blob {3}', parameters('storageAccountName'), resourceGroup().name, variables('containerName'), variables('blob'))]",
-              "primaryScriptUri": "[variables('blob')]",
+              "arguments": "[format('-storageAccountName {0} -resourceGroupName {1} -container {2} -blob {3}', parameters('storageAccountName'), resourceGroup().name, variables('containerName'), variables('blobName'))]",
+              "primaryScriptUri": "[variables('scriptLocation')]",
               "timeout": "PT5M",
               "cleanupPreference": "OnSuccess",
               "retentionInterval": "P1D"
