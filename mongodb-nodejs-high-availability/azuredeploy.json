@@ -73,6 +73,20 @@
         "description": "The Ubuntu version for the front end VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.2-LTS, 12.04.3-LTS, 12.04.4-LTS, 12.04.5-LTS, 12.10, 14.04.5-LTS, 14.10, 15.10."
       }
     },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mongodb-nodejs-high-availability/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
     "jumpbox": {
       "type": "string",
       "defaultValue": "Enabled",
@@ -128,7 +142,7 @@
       "numberOfMembers": 1,
       "totalMemberCount": 2,
       "arbiter": "Enabled",
-      "vmTemplate": "[concat(variables('templateBaseUrl'), 'member-resources-D1.json')]",
+      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('member-resources-D1.json', parameters('_artifactsLocationSasToken')))]",
       "storageAccountCount": 1,
       "dataDiskSize": 100
     },
@@ -138,7 +152,7 @@
       "numberOfMembers": 2,
       "totalMemberCount": 3,
       "arbiter": "Disabled",
-      "vmTemplate": "[concat(variables('templateBaseUrl'), 'member-resources-D1.json')]",
+      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('member-resources-D1.json', parameters('_artifactsLocationSasToken')))]",
       "storageAccountCount": 1,
       "dataDiskSize": 100
     },
@@ -148,7 +162,7 @@
       "numberOfMembers": 3,
       "totalMemberCount": 4,
       "arbiter": "Enabled",
-      "vmTemplate": "[concat(variables('templateBaseUrl'), 'member-resources-D2.json')]",
+      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('member-resources-D2.json', parameters('_artifactsLocationSasToken')))]",
       "storageAccountCount": 2,
       "dataDiskSize": 250
     },
@@ -158,7 +172,7 @@
       "numberOfMembers": 7,
       "totalMemberCount": 8,
       "arbiter": "Enabled",
-      "vmTemplate": "[concat(variables('templateBaseUrl'), 'member-resources-D2.json')]",
+      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('member-resources-D2.json', parameters('_artifactsLocationSasToken')))]",
       "storageAccountCount": 4,
       "dataDiskSize": 250
     },
@@ -168,7 +182,7 @@
       "numberOfMembers": 7,
       "totalMemberCount": 8,
       "arbiter": "Enabled",
-      "vmTemplate": "[concat(variables('templateBaseUrl'), 'member-resources-D3.json')]",
+      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('member-resources-D3.json', parameters('_artifactsLocationSasToken')))]",
       "storageAccountCount": 4,
       "dataDiskSize": 500
     },
@@ -178,7 +192,7 @@
       "numberOfMembers": 15,
       "totalMemberCount": 16,
       "arbiter": "Disabled",
-      "vmTemplate": "[concat(variables('templateBaseUrl'), 'member-resources-D3.json')]",
+      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('member-resources-D3.json', parameters('_artifactsLocationSasToken')))]",
       "storageAccountCount": 8,
       "dataDiskSize": 500
     },
@@ -192,16 +206,14 @@
     },
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
     "sharedScriptUrl": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/', variables('osFamilySpec').osName, '/')]",
-    "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mongodb-nodejs-high-availability/",
-    "templateBaseUrl": "[variables('scriptUrl')]",
     "jumpboxTemplateEnabled": "jumpbox-resources.json",
     "jumpboxTemplateDisabled": "empty-resources.json",
     "arbiterTemplateEnabled": "arbiter-resources.json",
     "arbiterTemplateDisabled": "empty-resources.json",
-    "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
-    "jumpboxTemplateUrl": "[concat(variables('templateBaseUrl'), variables(concat('jumpboxTemplate', parameters('jumpbox'))))]",
-    "arbiterTemplateUrl": "[concat(variables('templateBaseUrl'), variables(concat('arbiterTemplate', variables('clusterSpec').arbiter)))]",
-    "frontendnodeserverTemplateUrl": "[concat(variables('templateBaseUrl'), 'frontend-resource.json')]",
+    "sharedTemplateUrl": "[concat(parameters('_artifactsLocation'), 'shared-resources.json')]",
+    "jumpboxTemplateUrl": "[concat(parameters('_artifactsLocation'), variables(concat('jumpboxTemplate', parameters('jumpbox'))))]",
+    "arbiterTemplateUrl": "[concat(parameters('_artifactsLocation'), variables(concat('arbiterTemplate', variables('clusterSpec').arbiter)))]",
+    "frontendnodeserverTemplateUrl": "[concat(parameters('_artifactsLocation'), 'frontend-resource.json')]",
     "commonSettings": {
       "availabilitySetName": "mongodbAvailSet"
     },
@@ -233,7 +245,7 @@
     "installCommand": "[concat('bash mongodb-', variables('osFamilySpec').osName, '-install.sh', ' -i ', variables('osFamilySpec').installerBaseUrl, ' -b ', variables('osFamilySpec').installerPackages, ' -r ', parameters('replicaSetName'), ' -k ', parameters('replicaSetKey'), ' -u ', parameters('adminUsername'), ' -p ', parameters('adminPassword'), ' -x ', variables('networkSettings').machineIpPrefix, ' -n ', variables('clusterSpec').totalMemberCount)]",
     "vmScripts": {
       "scriptsToDownload": [
-        "[concat(variables('scriptUrl'), 'mongodb-', variables('osFamilySpec').osName, '-install.sh')]",
+        "[uri(parameters('_artifactsLocation'), concat('mongodb-', variables('osFamilySpec').osName, '-install.sh', parameters('_artifactsLocationSasToken')))]",
         "[concat(variables('sharedScriptUrl'), 'vm-disk-utils-0.1.sh')]"
       ],
       "regularNodeInstallCommand": "[variables('installCommand')]",
