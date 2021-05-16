@@ -1,10 +1,3 @@
-[CmdletBinding()]
-param(
-    [string] $SqlInstance,
-    [string] $userName,
-    [Security.SecureString] $password
-)
-
 $ErrorActionPreference = 'Stop'
 
 # TFS 2017 Update 3
@@ -84,6 +77,11 @@ function Download-PsTools()
 
 # Runs tfsconfig to configure TFS on the machine
 function Configure-TfsRemoteSql()
+     param(
+         [string] $SqlInstance,
+         [string] $userName,
+         [string] $password
+     )
 {
     # Run tfsconfig to do the unattend install
     $path = Join-Path $InstallDirectory '\tools\tfsconfig.exe'
@@ -93,7 +91,7 @@ function Configure-TfsRemoteSql()
     # The System account running this script for the VM Extension is not allowed to impersonate, 
     # so we can't use Start-Process with the -Credential parameter to run setup as a domain user with access to SQL
     # Instead we'll use psexec.exe from the PsTools Suite (https://docs.microsoft.com/en-us/sysinternals/downloads/pstools)
-    & $PSScriptRoot\PsTools\psexec.exe -h -accepteula -u "$userName" -p "$password" "$path" unattend /configure /type:Standard /inputs:"SqlInstance=$SqlInstance"
+    & $PSScriptRoot\PsTools\psexec.exe -h -accepteula -u $userName -p $password "$path" unattend /configure /type:Standard /inputs:"SqlInstance=$SqlInstance"
     
     if($LASTEXITCODE)
     {
