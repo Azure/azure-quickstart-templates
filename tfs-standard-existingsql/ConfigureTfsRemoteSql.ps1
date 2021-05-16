@@ -2,17 +2,19 @@
 param(
     [string] $SqlInstance,
     [string] $userName,
-    [string] $password
+    [Security.SecureString] $password
 )
 
 $ErrorActionPreference = 'Stop'
 
 # TFS 2017 Update 3
+$sqlPwd = $password
+[Security.SecureString] $sqlPwd = ConvertTo-SecureString $password -AsPlainText -Force
 $TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=857132'
 $InstallDirectory = 'C:\Program Files\Microsoft Team Foundation Server 15.0'
 $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
-$PsToolsDownloadUrl = 'https://download.sysinternals.com/files/PSTools.zip'
 
+# Checks if TFS is installed
 function Ensure-TfsInstalled()
 {
     # Check if TFS is already installed.
@@ -32,6 +34,7 @@ function Ensure-TfsInstalled()
     if(-not $tfsInstalled)
     {
         Write-Verbose "Installing TFS using ISO"
+        # Download TFS and mount it
         $parent = [System.IO.Path]::GetTempPath()
         [string] $name = [System.Guid]::NewGuid()
         [string] $fullPath = Join-Path $parent $name
@@ -60,7 +63,6 @@ function Ensure-TfsInstalled()
         Write-Verbose "TFS is already installed"
     }
 }
-
 function Download-PsTools()
 {
     [string] $downloadPath = Join-Path $PSScriptRoot "PSTools.zip"
@@ -86,13 +88,15 @@ function Download-PsTools()
 function Configure-TfsRemoteSql()
 {
     # Run tfsconfig to do the unattend install
-    $path = Join-Path $InstallDirectory '\Tools\tfsconfig.exe'
-    & $PSScriptRoot\PsTools\psexec.exe -h -accepteula -u $userName -p $password "$path" unattend /configure /type:Standard /inputs:"SqlInstance=$SqlInstance"
+    $path = Join-Path $InstallDirectory '\tools\tfsconfig.exe'
 
     Write-Verbose "Running tfsconfig..."
 
-    Invoke-Expression "& '$path' $tfsConfigArgs"
-
+    # The System account running this script for the VM Extension is not allowed to impersonate, 
+    # so we can't use Start-Process with the -Credential parameter to run setup as a domain user with access to SQL
+    # Instead we'll use psexec.exe from the PsTools Suite (https://docs.microsoft.com/en-us/sysinternals/downloads/pstools)
+    & $PSScriptRoot\PsTools\psexec.exe -h -accepteula -u "$userName" -p "$sqlPwd" "$path" unattend /configure /type:Standard /inputs:"SqlInstance=$SqlInstance"
+    
     if($LASTEXITCODE)
     {
         throw "tfsconfig.exe failed with exit code $LASTEXITCODE . Check the TFS logs for more information"
