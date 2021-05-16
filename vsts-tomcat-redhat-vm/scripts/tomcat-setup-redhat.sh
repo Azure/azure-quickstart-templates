@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # Install Apache2, Tomcat7 and then build mod-jk package
+yum update -y --disablerepo='*' --enablerepo='*microsoft*'
 yum install -y httpd
 yum install -y tomcat 
 yum install -y tomcat-webapps tomcat-admin-webapps 
@@ -233,7 +234,3 @@ sleep 20
 # Restart the ftp service:
 service vsftpd restart 
 systemctl enable vsftpd 
-
-chown $1:tomcat /home/$1/install.progress.txt
-chown $1:tomcat /home/$1/install.out.txt
-
