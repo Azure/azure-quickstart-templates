@@ -47,9 +47,8 @@
       "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
       "roleDefinitionName": "[guid(parameters('identityName'), variables('roleDefinitionId'), resourceGroup().id)]",
       "containerName": "adfgetstarted",
-      "blobName": "adfgetstarted",
-      "storageAccountName": "[parameters('storageAccountName')]",
-      "scriptLocation": "[uri(parameters('_artifactsLocation'), concat('prereqs/uploadScripts.ps1', parameters('_artifactsLocationSasToken')))]"
+      "blobName": "[uri(parameters('_artifactsLocation'), concat('prereq/script', parameters('_artifactsLocationSasToken')))]",
+      "storageAccountName": "[parameters('storageAccountName')]"
     },
     "resources": [
          {
@@ -105,7 +104,7 @@
              "[parameters('storageAccountName')]",
              "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]"
            ],
-            "kind": "AzurePowerShell",
+            "kind": "AzureCLI",
              "identity": {
                "type": "userAssigned",
                "userAssignedIdentities": {
@@ -117,7 +116,13 @@
               "forceUpdateTag": "1",
               "azPowerShellVersion": "3.0",
               "arguments": "[format('-storageAccountName {0} -resourceGroupName {1} -container {2} -blob {3}', parameters('storageAccountName'), resourceGroup().name, variables('containerName'), variables('blobName'))]",
-              "primaryScriptUri": "[variables('scriptLocation')]",
+              "scriptContent": "
+                   param(
+                   [string] $storageAccountName,
+                   [string] $resourceGroupName,
+                   [string] $container,
+                   [string] $blob
+                   az storage blob upload-batch --destination $container --account-name $storageAccountName --destination-path script --source $blob",
               "timeout": "PT5M",
               "cleanupPreference": "OnSuccess",
               "retentionInterval": "P1D"
