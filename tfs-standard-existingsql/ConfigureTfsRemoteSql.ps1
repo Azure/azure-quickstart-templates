@@ -76,13 +76,12 @@ function Download-PsTools()
 }
 
 # Runs tfsconfig to configure TFS on the machine
-function Configure-TfsRemoteSql()
+function Configure-TfsRemoteSql {
      param(
          [string] $SqlInstance,
          [string] $userName,
          [string] $password
      )
-{
     # Run tfsconfig to do the unattend install
     $path = Join-Path $InstallDirectory '\tools\tfsconfig.exe'
 
