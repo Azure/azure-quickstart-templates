@@ -53,7 +53,7 @@ then
     templateFile="$artifactsStagingDirectory$defaultTemplateFile"
 fi
 
-if [[ $isBicep ]]
+if [[ $isBicep = true ]]
 then
     bicep build $templateFile
     # after building the script will work with the json file
