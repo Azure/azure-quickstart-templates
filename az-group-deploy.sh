@@ -82,7 +82,7 @@ templateDirectory="$( dirname "$templateFile")"
 
 if [[ -z $resourceGroupName ]]
 then
-    resourceGroupName=$(basename "${artifactsStagingDirectory}")
+    resourceGroupName=$(basename $(cd "${artifactsStagingDirectory}" && pwd))
 fi
 
 parameterJson=$( cat "$parametersFile" | jq '.parameters' )
