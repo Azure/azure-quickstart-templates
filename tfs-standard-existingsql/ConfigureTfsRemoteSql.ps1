@@ -1,13 +1,11 @@
 $ErrorActionPreference = 'Stop'
 
-# TFS 2017 Update 3
-$TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=857132'
-$InstallDirectory = 'C:\Program Files\Microsoft Team Foundation Server 15.0'
-$InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
-
 # Checks if TFS is installed
 function Ensure-TfsInstalled()
 {
+    # TFS 2017 Update 3
+    $TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=857132'
+    $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
     # Check if TFS is already installed.
     $tfsInstalled = $false
 
@@ -83,7 +81,7 @@ function Configure-TfsRemoteSql {
          [string] $password
      )
     # Run tfsconfig to do the unattend install
-    $path = Join-Path $InstallDirectory '\tools\tfsconfig.exe'
+    $path = Join-Path $InstallDirectory 'C:\Program Files\Microsoft Team Foundation Server 15.0\tools\tfsconfig.exe'
 
     Write-Verbose "Running tfsconfig..."
 
