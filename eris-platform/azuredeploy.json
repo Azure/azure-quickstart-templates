@@ -31,16 +31,6 @@
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_A1",
-      "allowedValues": [
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_D1",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4"
-      ],
       "metadata": {
         "description": "Size of VM"
       }
@@ -67,6 +57,20 @@
       "type": "securestring",
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "_artifactsLocation": {
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/eris-platform/",
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "defaultValue": "",
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       }
     }
   },
@@ -179,8 +183,8 @@
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -205,8 +209,8 @@
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -246,7 +250,7 @@
       "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -262,7 +266,7 @@
       "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '/extensions/docker-for-eris')]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'), '/extensions/docker-for-eris')]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -271,7 +275,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/eris-platform/setup.sh"
+            "[uri(parameters('_artifactsLocation'), concat('setup.sh', parameters('_artifactsLocationSasToken')))]"
           ],
           "commandToExecute": "[concat('bash setup.sh ', parameters('adminUsername'), ' ', parameters('servicesToStart'), ' ', parameters('chainsToStart'))]"
         }
