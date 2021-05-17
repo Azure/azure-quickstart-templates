@@ -1,4 +1,4 @@
-# Azure Active Directory Domain Service (AADDS) template
+# Azure Active Directory Domain Service (AADDS) template 
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/PublicDeployment.svg)

@@ -1,17 +1,9 @@
-#Install pip
-apt-get update
-apt-get install python-pip python-dev build-essential -y
-pip install proxy.py
+#!/bin/bash
 
-host=`ifconfig eth0 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}'`
+sudo apt-get update
+sudo dpkg --configure -a
+sudo apt-get install -y build-essential libssl-dev libffi-dev software-properties-common python3-pip
 
-init_script="/etc/init/pythonproxy.conf"
-echo "#Python Proxy"                                >  $init_script
-echo ""                                             >> $init_script
-echo "description \"A http proxy service\""         >> $init_script
-echo "author \"Yue Zhang<yuezha@microsoft.com>\""   >> $init_script
-echo ""                                             >> $init_script
-echo "exec proxy.py --host $host --port 8888"                                   >> $init_script
+pip3 install --upgrade proxy.py
 
-service pythonproxy start
-
+python3 -m proxy > /dev/null 2>&1 &

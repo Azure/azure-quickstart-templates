@@ -154,7 +154,7 @@ New Features:
 
 * Added B-series (burstable) VM, very suitable to run DCs cheaply. 
 * Added Standard SSD disks, and made the choice for disk type explicit. 
-* Added the possibilty to deploy to a location different to that of the Resource Group.
+* Added the possibility to deploy to a location different to that of the Resource Group.
 * general cleanup: updated all APIs to the most recent ones, updated DSC modules to the latest.
 
 ### Update December 2018

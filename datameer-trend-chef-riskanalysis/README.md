@@ -66,8 +66,8 @@ In its current state, solution templates come with licenses built-in – there m
 ##  4. Target Audience
 The target audience for these solution templates are 
 * **Business Decision Maker, IT Data Analyst** - or anybody w/i the organization who cares for the managing risk on Business transactions
-* **IT Decision Maker & Infrastructure Architects** - or any personnel w/i the organization that's responsibile for managing Infrastructure risk
-* **IT Decision Maker & Infrastructure Architects** - or any personnel w/i the organization that's responsibile for DevOps/IT Configuration management
+* **IT Decision Maker & Infrastructure Architects** - or any personnel w/i the organization that's responsible for managing Infrastructure risk
+* **IT Decision Maker & Infrastructure Architects** - or any personnel w/i the organization that's responsible for DevOps/IT Configuration management
 *  and lastly, but very importantly - **IT professionals** who need to stand-up and/or deploy infrastructure stacks.
 
 ##  5. Prerequisites

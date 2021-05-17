@@ -36,7 +36,7 @@ Once the prerequisites are complete, you can deploy the template.
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-automation-solution%2Fazuredeploy.json) 
 
-Once the template is successfully deployed the following solution should now be visable in your OMS workspace.
+Once the template is successfully deployed the following solution should now be visible in your OMS workspace.
 
 ![alt text](images/AutomationTile.PNG "Azure Automation Job Monitoring")
 

@@ -57,7 +57,7 @@ Alternatively, you can configure all your variables in the "azuredeploy.paramete
 
 `az group deployment create --name moodle-autoscale --resource-group <stackname> --template-file azuredeploy.json --parameters azuredeploy.parameters.json`
 
-Note that `siteURL` is a special case in the `azuredeploy.parameters.json` files. If you do not define a value for `siteURL` or if you leave it as the default "www.example.org" this value will be overwritten by the template to be a calculated value for the public load balancers of your deployment. This allows you to experiment with this Moodle template without configuring a new domain name whilst still enabling Moodle to be configured with a production URL when appropriate. See the next section for instructions on retrieving the generated DNS name if necesary.
+Note that `siteURL` is a special case in the `azuredeploy.parameters.json` files. If you do not define a value for `siteURL` or if you leave it as the default "www.example.org" this value will be overwritten by the template to be a calculated value for the public load balancers of your deployment. This allows you to experiment with this Moodle template without configuring a new domain name whilst still enabling Moodle to be configured with a production URL when appropriate. See the next section for instructions on retrieving the generated DNS name if necessary.
 
 Depending on what tiers you selected for VMs and the database you will be looking at roughly 1-2 hours for a full deploy. See below for selectable parameters.
 

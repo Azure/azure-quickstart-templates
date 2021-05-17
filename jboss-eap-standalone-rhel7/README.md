@@ -44,7 +44,7 @@ To create the VM, you will need to:
 
 ## After you Deploy to Azure
 
-Once you create the VM, open a web broser and got to http://<PUBLIC_HOSTNAME>:8080/dukes/ and you should see the applicaiton running
+Once you create the VM, open a web broser and got to http://<PUBLIC_HOSTNAME>:8080/dukes/ and you should see the application running
 If you want to access the administration console go to http://<PUBLIC_HOSTNAME>:8080 and click on the link Administration Console 
 
 ## Notes

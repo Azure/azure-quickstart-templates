@@ -10,7 +10,7 @@ To provide these initial assignments, a **Global Administrator** for the AAD mus
 
 The **Global Administrator** must do the following to enable template deployments:
 
-- Grant the **User Access Administrator** role to a principal which can be done [via REST](https://docs.microsoft.com/en-us/rest/api/authorization/globaladministrator/elevateaccess#code-try-0) or the [Azure Portal](https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/Properties) - this will grant the user executing this command permission to perform the next step - intially this step is performed by the aad global admin granting that global admin permsions to assign roles.
+- Grant the **User Access Administrator** role to a principal which can be done [via REST](https://docs.microsoft.com/en-us/rest/api/authorization/globaladministrator/elevateaccess#code-try-0) or the [Azure Portal](https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/Properties) - this will grant the user executing this command permission to perform the next step - initially this step is performed by the aad global admin granting that global admin permsions to assign roles.
 
 - Assign the **Owner** role to the principal that needs to perform role assignments.  Note if the template being deployed does not require owner permissions like the other tenant samples in the repo, then **Contributor** permission may be sufficient.  In this case, we are assigning another principal (or self) the permission to assign roles.
 

@@ -1,0 +1,179 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "basics": [
+      {
+        "name": "vmName",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Virtual machine name",
+        "toolTip": "The name of the virtual machine",
+        "defaultValue": "myTVM",
+        "constraints": {
+          "required": true,
+          "regex": "^[a-z0-9A-Z-]{3,15}$",
+          "validationMessage": "The virtual machine Name must be between 3 and 15 characters long and contain letters, numbers and hyphens only."
+        },
+        "visible": true
+      },
+      {
+        "name": "os",
+        "type": "Microsoft.Common.DropDown",
+        "label": "Linux OS",
+        "toolTip": "The OS for the virtual machine",
+        "defaultValue": "Ubuntu-1804",
+        "constraints": {
+          "allowedValues": [
+            {
+              "value": "Ubuntu-1804",
+              "label": "Ubuntu-1804"
+            },
+            {
+              "value": "Ubuntu-2004",
+              "label": "Ubuntu-2004"
+            },
+            {
+              "value": "RHEL-83",
+              "label": "RHEL-83"
+            },
+            {
+              "value": "SUSE-15-SP2",
+              "label": "SUSE-15-SP2"
+            }
+          ],
+          "required": true
+        },
+        "visible": true
+      },
+      {
+        "name": "vmSize",
+        "type": "Microsoft.Compute.SizeSelector",
+        "label": "Virtual machine size",
+        "toolTip": "The size of the virtual machine",
+        "recommendedSizes": [
+          "Standard_D2s_v3"
+        ],
+        "osPlatform": "Linux",
+        "count": "1",
+        "constraints": {
+          "required": true
+        },
+        "visible": true
+      },
+      {
+        "name": "adminUsername",
+        "type": "Microsoft.Compute.UserNameTextBox",
+        "label": "Username",
+        "toolTip": "Admin username for the virtual machine",
+        "osPlatform": "Linux",
+        "constraints": {
+          "required": true
+        },
+        "visible": true
+      },
+      {
+        "name": "credentials",
+        "type": "Microsoft.Compute.CredentialsCombo",
+        "label": {
+          "authenticationType": "Authentication type",
+          "password": "Password",
+          "confirmPassword": "Confirm password",
+          "sshPublicKey": "SSH public key"
+        },
+        "toolTip": {
+          "authenticationType": "Type of authentication to use on the virtual machine. SSH Public Key is recommended",
+          "password": "Admin password for the virtual machine",
+          "sshPublicKey": "SSH Public Key for the virtual machine"
+        },
+        "constraints": {
+          "required": true,
+          "customPasswordRegex": "^(?=.*[A-Z])(?=.*[.!@#$%^&*()-_=+])(?=.*[0-9])(?=.*[a-z]).{12,40}$",
+          "customValidationMessage": "Password must be at least 12 characters long, and contain upper case, lower case, number and symbol"
+        },
+        "options": {
+          "hideConfirmation": false,
+          "hidePassword": false
+        },
+        "osPlatform": "Linux",
+        "visible": true
+      },
+      {
+        "name": "secureBoot",
+        "type": "Microsoft.Common.CheckBox",
+        "label": "Secure Boot setting",
+        "toolTip": "The Secure Boot setting of the virtual machine",
+        "constraints": {
+          "required": false
+        },
+        "visible": true
+      },
+      {
+        "name": "vTPM",
+        "type": "Microsoft.Common.CheckBox",
+        "label": "vTPM setting",
+        "toolTip": "The vTPM setting of the virtual machine",
+        "constraints": {
+          "required": false
+        },
+        "visible": true
+      }
+    ],
+    "steps": [
+      {
+        "name": "Networking",
+        "label": "Networking",
+        "subLabel": {
+          "preValidation": "Configure the virtual machine's network settings",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Networking",
+        "elements": [
+          {
+            "name": "publicIpAddress",
+            "type": "Microsoft.Network.PublicIpAddressCombo",
+            "label": {
+              "publicIpAddress": "Public IP Address for the virtual machine",
+              "domainNameLabel": "DNS Prefix for the public IP Address"
+            },
+            "toolTip": {
+              "publicIpAddress": "Public IP Address for the virtual machine",
+              "domainNameLabel": "DNS Prefix for the public IP Address, must be globally unique"
+            },
+            "defaultValue": {
+              "publicIpAddressName": "[toLower(concat(basics('vmName'), '-ip-', take(replace(guid(), '-', ''), 6)))]",
+              "domainNameLabel": "[toLower(concat(basics('vmName'), '-dn-', take(replace(guid(), '-', ''), 6)))]"
+            },
+            "options": {
+              "hideExisting": true,
+              "hideNone": true
+            },
+            "constraints": {
+              "required": {
+                "domainNameLabel": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "vmName": "[basics('vmName')]",
+      "os": "[basics('os')]",
+      "vmSize": "[basics('vmSize')]",
+      "adminUsername": "[basics('adminUsername')]",
+      "authenticationType": "[basics('credentials').authenticationType]",
+      "adminPasswordOrKey": "[if(equals(basics('credentials').authenticationType, 'password'), basics('credentials').password, basics('credentials').sshPublicKey)]",
+      "secureBoot": "[if(equals(basics('secureBoot'), true), 'true', 'false')]",
+      "vTPM": "[if(equals(basics('vTPM'), true), 'true', 'false')]",
+      "location": "[location()]",
+      "dnsLabelPrefix": "[steps('Networking').publicIpAddress.domainNameLabel]",
+      "publicIpName": "[steps('Networking').publicIpAddress.name]",
+      "publicIPAllocationMethod": "[steps('Networking').publicIpAddress.publicIPAllocationMethod]",
+      "publicIpSku": "[steps('Networking').publicIpAddress.sku]",
+      "nicName": "[toLower(concat(basics('vmName'), '-nic-', take(replace(guid(), '-', ''), 6)))]",
+      "virtualNetworkName": "[toLower(concat(basics('vmName'), '-vnet-', take(replace(guid(), '-', ''), 6)))]",
+      "networkSecurityGroupName": "[toLower(concat(basics('vmName'), '-nsg-', take(replace(guid(), '-', ''), 6)))]"
+    }
+  }
+}

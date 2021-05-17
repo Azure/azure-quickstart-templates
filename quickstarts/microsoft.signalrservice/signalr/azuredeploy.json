@@ -1,0 +1,161 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "name": {
+      "type": "string",
+      "defaultValue": "[uniqueString(resourceGroup().id)]",
+      "metadata": {
+        "description": "The globally unique name of the SignalR resource to create."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the SignalR resource."
+      }
+    },
+    "pricingTier": {
+      "type": "string",
+      "defaultValue": "Standard_S1",
+      "allowedValues": [
+        "Free_F1",
+        "Standard_S1"
+      ],
+      "metadata": {
+        "description": "The pricing tier of the SignalR resource."
+      }
+    },
+    "capacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "allowedValues": [
+        1,
+        2,
+        5,
+        10,
+        20,
+        50,
+        100
+      ],
+      "metadata": {
+        "description": "The number of SignalR Unit."
+      }
+    },
+    "serviceMode": {
+      "type": "string",
+      "defaultValue": "Default",
+      "allowedValues": [
+        "Default",
+        "Serverless",
+        "Classic"
+      ],
+      "metadata": {
+        "description": "Visit https://github.com/Azure/azure-signalr/blob/dev/docs/faq.md#service-mode to understand SignalR Service Mode."
+      }
+    },
+    "enableConnectivityLogs": {
+      "type": "string",
+      "defaultValue": "true",
+      "allowedValues": [
+        "true",
+        "false"
+      ]
+    },
+    "enableMessagingLogs": {
+      "type": "string",
+      "defaultValue": "true",
+      "allowedValues": [
+        "true",
+        "false"
+      ]
+    },
+    "enableLiveTrace": {
+      "type": "string",
+      "defaultValue": "true",
+      "allowedValues": [
+        "true",
+        "false"
+      ]
+    },
+    "allowedOrigins": {
+      "type": "array",
+      "defaultValue": [
+        "https://foo.com",
+        "https://bar.com"
+      ],
+      "metadata": {
+        "description": "Set the list of origins that should be allowed to make cross-origin calls."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.SignalRService/SignalR",
+      "apiVersion": "2020-07-01-preview",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "capacity": "[parameters('capacity')]",
+        "name": "[parameters('pricingTier')]"
+      },
+      "kind": "SignalR",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "tls": {
+          "clientCertEnabled": false
+        },
+        "features": [
+          {
+            "flag": "ServiceMode",
+            "value": "[parameters('serviceMode')]"
+          },
+          {
+            "flag": "EnableConnectivityLogs",
+            "value": "[parameters('enableConnectivityLogs')]"
+          },
+          {
+            "flag": "EnableMessagingLogs",
+            "value": "[parameters('enableMessagingLogs')]"
+          },
+          {
+            "flag": "EnableLiveTrace",
+            "value": "[parameters('enableLiveTrace')]"
+          }
+        ],
+        "cors": {
+          "allowedOrigins": "[parameters('allowedOrigins')]"
+        },
+        "networkACLs": {
+          "defaultAction": "deny",
+          "publicNetwork": {
+            "allow": [
+              "ClientConnection"
+            ]
+          },
+          "privateEndpoints": [
+            {
+              "name": "mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e",
+              "allow": [
+                "ServerConnection"
+              ]
+            }
+          ]
+        },
+        "upstream": {
+          "templates": [
+            {
+              "categoryPattern": "*",
+              "eventPattern": "connect,disconnect",
+              "hubPattern": "*",
+              "urlTemplate": "https://example.com/chat/api/connect"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
