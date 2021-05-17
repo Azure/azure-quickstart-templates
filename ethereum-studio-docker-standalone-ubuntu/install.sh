@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export DEBIAN_FRONTEND=noninteractive
+
 sudo apt-get -y update
 sudo apt-get install -y docker.io
 
