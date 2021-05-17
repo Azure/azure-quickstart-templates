@@ -155,7 +155,7 @@
       "type": "string",
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sas-9.4m7-VA-MPP/",
       "metadata": {
-        "description": "For a standard deployment, keep the default.  The https URL to the base of the deployment files in Microsoft Azure. If a SAS key is needed, please do not include the SAS key in the URL. Instead, add the part after and include the question mark to the _artifactsLocationSasToken variable. ex. https://(STORAGE_ACCOUNT).file.core.windows.net/(SHARE_NAME)/(SUBDIRECTORY_NAME)/"
+        "description": "For a standard deployment, keep the default.  The https URL to the base of the deployment files in Microsoft Azure. If a SAS key is needed, please do not include the SAS key in the URL. Instead, add the part after and include the question mark to the _artifactsLocationSasToken variable. ex. https://(STORAGE_ACCOUNT)/(SHARE_NAME)/(SUBDIRECTORY_NAME)/"
       }
     }
   },
@@ -208,6 +208,7 @@
     "metadataSize": "[parameters('Metadata VM Size')]",
     "metadataCount": 1,
     "sshKey": "[parameters('ssh Key for VM Access')]",
+    "jumpvmSize": "Standard_B2ms",
     "vaControllerSize": "[parameters('Visual Analytics Controller Size')]",
     "vaWorkerSize": "[parameters('Visual Analytics Worker Size')]",
     "vaWorkerCount": "[parameters('Visual Analytics Worker Count')]",
@@ -391,8 +392,7 @@
       ],
       "location": "[variables('location')]",
       "properties": {
-        "securityRules": [
-        ]
+
       }
     },
     {
@@ -405,8 +405,7 @@
       ],
       "location": "[variables('location')]",
       "properties": {
-        "securityRules": [
-        ]
+
       }
     },
     {
@@ -419,8 +418,7 @@
       ],
       "location": "[variables('location')]",
       "properties": {
-        "securityRules": [
-        ]
+        
       }
     },
     {
@@ -640,7 +638,7 @@
           }
         ],
         "subnet": {
-          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/jump_subnet')]"
+          "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'jump_subnet')]"
         }
       }
     },
@@ -672,7 +670,7 @@
           }
         ],
         "subnet": {
-          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/midtier_subnet')]"
+          "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'midtier_subnet')]"
         }
       }
     },
@@ -704,7 +702,7 @@
           }
         ],
         "subnet": {
-          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/metadata_subnet')]"
+          "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'metadata_subnet')]"
         }
       }
     },
@@ -736,7 +734,7 @@
           }
         ],
         "subnet": {
-          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/va_subnet')]"
+          "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'va_subnet')]"
         }
       }
     },
@@ -758,7 +756,6 @@
               "subnet": {
                 "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'jump_subnet')]"
               },
-              "applicationGatewayBackendAddressPools": [],
               "primary": true,
               "privateIPAddressVersion": "IPv4",
               "publicIPAddress": {
@@ -767,9 +764,6 @@
             }
           }
         ],
-        "dnsSettings": {
-          "dnsServers": []
-        },
         "enableAcceleratedNetworking": false,
         "enableIPForwarding": false
       }
@@ -796,10 +790,6 @@
               }
             }
           ],
-        "dnsSettings": {
-          "dnsServers": [
-          ]
-        },
         "enableAcceleratedNetworking": "[if(or(startsWith(variables('metadataSize'),'Standard_B'), equals(variables('metadataSize'), 'Standard_D2s_v3')), 'false', 'true')]",
         "enableIPForwarding": false
       },
@@ -830,11 +820,6 @@
             }
           }
         ],
-        "dnsSettings": {
-          "dnsServers": [
-
-          ]
-        },
         "enableAcceleratedNetworking": "[if(or(startsWith(variables('vaControllerSize'),'Standard_B'), equals(variables('vaControllerSize'), 'Standard_D2s_v3')), 'false', 'true')]",
         "enableIPForwarding": false
       }
@@ -861,10 +846,6 @@
             }
           }
         ],
-        "dnsSettings": {
-          "dnsServers": [
-          ]
-        },
         "enableAcceleratedNetworking": "[if(or(startsWith(variables('vaWorkerSize'),'Standard_B'), equals(variables('vaWorkerSize'), 'Standard_D2s_v3')), 'false', 'true')]",
         "enableIPForwarding": false
       },
@@ -893,7 +874,7 @@
               },
               "applicationGatewayBackendAddressPools": [
                 {
-                  "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendAddressPools/midtierAddressPool')]"
+                  "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', 'loadbalancer', 'midtierAddressPool')]"
                 }
               ],
               "primary": true,
@@ -901,10 +882,6 @@
             }
           }
         ],
-        "dnsSettings": {
-          "dnsServers": [
-          ]
-        },
         "enableAcceleratedNetworking": "[if(or(startsWith(variables('midtierSize'), 'Standard_B'), equals(variables('midtierSize'), 'Standard_D2s_v3')), 'false', 'true')]",
         "enableIPForwarding": false
       }
@@ -933,10 +910,6 @@
             }
           }
         ],
-        "dnsSettings": {
-          "dnsServers": [
-          ]
-        },
         "enableAcceleratedNetworking": "[if(or(startsWith(variables('midtierSize'), 'Standard_B'), equals(variables('midtierSize'), 'Standard_D2s_v3')), 'false', 'true')]",
         "enableIPForwarding": false
       },
@@ -960,7 +933,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_B2ms"
+          "vmSize": "[variables('jumpvmSize')]"
         },
         "proximityPlacementGroup": {
           "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
@@ -1123,10 +1096,10 @@
             "name": "http-listener-443",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendIPConfigurations/appGwPublicFrontendIp')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', 'loadbalancer', 'appGwPublicFrontendIp')]"
               },
               "frontendPort": {
-                "id": "[concat(resourceid('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendPorts/port_443')]"
+                "id": "[resourceid('Microsoft.Network/applicationGateways/frontendPorts', 'loadbalancer', 'port_443')]"
               },
               "protocol": "Https",
               "sslCertificate": {
@@ -1139,10 +1112,10 @@
             "name": "http-listener-8441",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendIPConfigurations/appGwPublicFrontendIp')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', 'loadbalancer', 'appGwPublicFrontendIp')]"
               },
               "frontendPort": {
-                "id": "[concat(resourceid('Microsoft.Network/applicationGateways', 'loadbalancer'), '/frontendPorts/port_8441')]"
+                "id": "[resourceid('Microsoft.Network/applicationGateways/frontendPorts', 'loadbalancer', 'port_8441')]"
               },
               "protocol": "Https",
               "sslCertificate": {
@@ -1158,13 +1131,13 @@
             "properties": {
               "ruleType": "Basic",
               "httpListener": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-443')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', 'loadbalancer', 'http-listener-443')]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendAddressPools/midtierAddressPool')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', 'loadbalancer', 'midtierAddressPool')]"
               },
               "backendHttpSettings": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendHttpSettingsCollection/http-setting')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', 'loadbalancer', 'http-setting')]"
               }
             }
           },
@@ -1173,13 +1146,13 @@
             "properties": {
               "ruleType": "Basic",
               "httpListener": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-8441')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', 'loadbalancer', 'http-listener-8441')]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendAddressPools/midtierAddressPool')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', 'loadbalancer', 'midtierAddressPool')]"
               },
               "backendHttpSettings": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/backendHttpSettingsCollection/http-setting-2')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', 'loadbalancer', 'http-setting-2')]"
               }
             }
           }
@@ -1190,13 +1163,13 @@
             "properties": {
               "redirectType": "Permanent",
               "targetListener": {
-                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/httpListeners/http-listener-8441')]"
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', 'loadbalancer', 'http-listener-8441')]"
               },
               "includePath": true,
               "includeQueryString": true,
               "requestRoutingRules": [
                 {
-                  "id": "[concat(resourceId('Microsoft.Network/applicationGateways', 'loadbalancer'), '/requestRoutingRules/rule3')]"
+                  "id": "[resourceId('Microsoft.Network/applicationGateways/requestRoutingRules', 'loadbalancer', 'rule3')]"
                 }
               ]
             }
@@ -1648,7 +1621,7 @@
           "vmName": {
             "value": "jumpvm"
           },
-          "commandToExecute": {
+          "command": {
             "value": "[concat('set -o pipefail; ./SetupJump.sh \"1\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'), '2019-06-01').keys[0].value, '\" \"', variables('artifactsLocation'), '\" \"', variables('sasToken'), '\" \"', variables('sasDepot'), '\" \"', variables('midtierCount'), '\" \"', variables('metadataCount'), '\" \"', variables('vaWorkerCount'), '\" \"', variables('sasPassword'), '\" \"', variables('azurePassword'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')).dnsSettings.fqdn, '\" \"', subscription().displayName, '\" \"', resourceGroup().name, '\" \"', variables('sasPlanFile'), '\" \"', variables('hadoopVersion'), '\" \"', variables('hadoopHome'), '\" \"', variables('hdatHome'), '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('jumpEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\" 2>&1 | tee /tmp/prerequisites.log')]"
           },
           "_artifactsLocation": {
@@ -1680,7 +1653,7 @@
           "vmName": {
             "value": "jumpvm"
           },
-          "commandToExecute": {
+          "command": {
             "value": "[concat('set -o pipefail; ./SetupJump.sh \"2\" 2>&1 | tee /tmp/runPhase2_CertificateExport_1.log')]"
           },
           "_artifactsLocation": {
@@ -1711,7 +1684,7 @@
           "vmName": {
             "value": "jumpvm"
           },
-          "commandToExecute": {
+          "command": {
             "value": "[concat('set -o pipefail; ./SetupJump.sh \"3\" 2>&1 | tee /tmp/runPhase3_CertificateExport_2.log')]"
           },
           "_artifactsLocation": {
@@ -1742,7 +1715,7 @@
           "vmName": {
             "value": "jumpvm"
           },
-          "commandToExecute": {
+          "command": {
             "value": "[concat('set -o pipefail; ./SetupJump.sh \"4\" 2>&1 | tee /tmp/runPhase4_SASInstallPart1.log')]"
           },
           "_artifactsLocation": {
@@ -1773,7 +1746,7 @@
           "vmName": {
             "value": "jumpvm"
           },
-          "commandToExecute": {
+          "command": {
             "value": "[concat('set -o pipefail; /sas/install/scripts/SetupJumpInstallSAS.sh 2>&1 | tee /tmp/runPhase4_SASInstallPart2.log')]"
           },
           "_artifactsLocation": {
@@ -1804,7 +1777,7 @@
           "vmName": {
             "value": "jumpvm"
           },
-          "commandToExecute": {
+          "command": {
             "value": "[concat('set -o pipefail; /sas/install/scripts/SetupJumpInstallSAS.sh 2>&1 | tee /tmp/runPhase4_SASInstallPart3.log')]"
           },
           "_artifactsLocation": {
@@ -1835,7 +1808,7 @@
           "vmName": {
             "value": "jumpvm"
           },
-          "commandToExecute": {
+          "command": {
             "value": "[concat('set -o pipefail; /sas/install/scripts/SetupJumpInstallSAS.sh 2>&1 | tee /tmp/runPhase4_SASInstallPart4.log')]"
           },
           "_artifactsLocation": {
@@ -1866,7 +1839,7 @@
           "vmName": {
             "value": "jumpvm"
           },
-          "commandToExecute": {
+          "command": {
             "value": "[concat('set -o pipefail; /sas/install/scripts/SetupJumpInstallSAS.sh 2>&1 | tee /tmp/runPhase4_SASInstallPart5.log')]"
           },
           "_artifactsLocation": {
