@@ -44,6 +44,20 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "_artifactsLocation": {
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ethereum-studio-docker-standalone-ubuntu/",
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "defaultValue": "",
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
     }
   },
   "variables": {
@@ -263,31 +277,22 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/', variables('extensionName'))]",
-      "apiVersion": "2015-06-15",
+      "name": "[concat(variables('vmName'),'/installcustomscript')]",
+      "apiVersion": "2015-05-01-preview",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
-        "type": "DockerExtension",
-        "typeHandlerVersion": "1.0",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "compose": {
-            "ethereum-studio": {
-              "image": "ethercamp/ide",
-              "environment": [
-                "MODE=standalone"
-              ],
-              "ports": [
-                "0.0.0.0:80:8181",
-                "0.0.0.0:8555:8555",
-                "0.0.0.0:8080:8080"
-              ]
-            }
-          }
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('install.sh', parameters('_artifactsLocationSasToken')))]"
+          ],
+          "commandToExecute": "sh install.sh"
         }
       }
     }
