@@ -257,9 +257,9 @@ configuration ConfigSQLAO
             DependsOn = @("[WindowsFeature]FCPS","[xComputer]DomainJoin")
         }
 
-        Script CloudWitness
+        Script scripts
         {
-            SetScript = "Set-ClusterQuorum -CloudWitness -AccountName ${witnessStorageName} -AccessKey $($witnessStorageKey.GetNetworkCredential().Password)"
+            SetScript = "Set-ClusterQuorum -scripts -AccountName ${witnessStorageName} -AccessKey $($witnessStorageKey.GetNetworkCredential().Password)"
             TestScript = "(Get-ClusterQuorum).QuorumResource.Name -eq 'Cloud Witness'"
             GetScript = "@{Ensure = if ((Get-ClusterQuorum).QuorumResource.Name -eq 'Cloud Witness') {'Present'} else {'Absent'}}"
             DependsOn = "[xCluster]FailoverCluster"
