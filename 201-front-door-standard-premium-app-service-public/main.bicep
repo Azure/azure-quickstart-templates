@@ -61,7 +61,7 @@ resource app 'Microsoft.Web/sites@2020-06-01' = {
           priority: 100
           headers: {
             'x-azure-fdid': [
-              frontDoorProfile.properties.frontDoorId
+              frontDoorProfile.properties.frontdoorId
             ]
           }
           name: 'Allow traffic from Front Door'
@@ -72,7 +72,8 @@ resource app 'Microsoft.Web/sites@2020-06-01' = {
 }
 
 resource frontDoorEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
-  name: '${frontDoorProfile.name}/${frontDoorEndpointName}'
+  name: frontDoorEndpointName
+  parent: frontDoorProfile
   location: 'global'
   properties: {
     originResponseTimeoutSeconds: 240
@@ -81,7 +82,8 @@ resource frontDoorEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
 }
 
 resource frontDoorOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
-  name: '${frontDoorProfile.name}/${frontDoorOriginGroupName}'
+  name: frontDoorOriginGroupName
+  parent: frontDoorProfile
   properties: {
     loadBalancingSettings: {
       sampleSize: 4
@@ -97,7 +99,8 @@ resource frontDoorOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' =
 }
 
 resource frontDoorOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
-  name: '${frontDoorOriginGroup.name}/${frontDoorOriginName}'
+  name: frontDoorOriginName
+  parent: frontDoorOriginGroup
   properties: {
     hostName: app.properties.defaultHostName
     httpPort: 80
@@ -109,7 +112,11 @@ resource frontDoorOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01
 }
 
 resource frontDoorRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
-  name: '${frontDoorEndpoint.name}/${frontDoorRouteName}'
+  name: frontDoorRouteName
+  parent: frontDoorEndpoint
+  dependsOn: [
+    frontDoorOrigin // This explicit dependency is required to ensure that the origin group is not empty when the route is created.
+  ]
   properties: {
     originGroup: {
       id: frontDoorOriginGroup.id

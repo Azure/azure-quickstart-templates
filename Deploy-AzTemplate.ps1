@@ -18,7 +18,8 @@ Param(
     [string] $Mode = "Incremental",
     [string] $DeploymentName = ((Split-Path $TemplateFile -LeafBase) + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')),
     [string] $ManagementGroupId,
-    [switch] $Dev
+    [switch] $Dev,
+    [switch] $bicep
 )
 
 try {
@@ -39,9 +40,24 @@ $OptionalParameters = New-Object -TypeName Hashtable
 $TemplateArgs = New-Object -TypeName Hashtable
 $ArtifactStagingDirectory = ($ArtifactStagingDirectory.TrimEnd('/')).TrimEnd('\')
 
-# if the template file isn't found, try the another default
+# if the bicep switch is set, and the templateFile arg was the default, swap .json for .bicep
+$isBicep = ($bicep -or $TemplateFile.EndsWith('.bicep'))
+if ($isBicep){
+    $defaultTemplateFile = '\main.bicep'
+} else {
+    $defaultTemplateFile = '\azuredeploy.json'
+}
+
+# if the template file isn't found, try another default
 if (!(Test-Path $TemplateFile)) { 
-    $TemplateFile = $ArtifactStagingDirectory + '\azuredeploy.json'
+    $TemplateFile = $ArtifactStagingDirectory + $defaultTemplateFile
+}
+
+# build the bicep file
+if ($isBicep){
+    bicep build $TemplateFile
+    # now point the deployment to the json file that was just build
+    $TemplateFile = $TemplateFile.Replace('.bicep', '.json')
 }
 
 Write-Host "Using template file:  $TemplateFile"
@@ -88,10 +104,11 @@ Write-Host "Running a $deploymentScope scoped deployment..."
 $ArtifactsLocationName = '_artifactsLocation'
 $ArtifactsLocationSasTokenName = '_artifactsLocationSasToken'
 $ArtifactsLocationParameter = $TemplateJson | Select-Object -expand 'parameters' -ErrorAction Ignore | Select-Object -Expand $ArtifactsLocationName -ErrorAction Ignore
+$ArtifactsLocationSasTokenParameter = $TemplateJson | Select-Object -expand 'parameters' -ErrorAction Ignore | Select-Object -Expand $ArtifactsLocationSasTokenName -ErrorAction Ignore
 $useAbsolutePathStaging = $($ArtifactsLocationParameter -ne $null)
 
 # if the switch is set or the standard parameter is present in the template, upload all artifacts
-if ($UploadArtifacts -Or $useAbsolutePathStaging) {
+if ($UploadArtifacts -Or $useAbsolutePathStaging -or $ArtifactsLocationSasTokenParameter) {
     # Convert relative paths to absolute paths if needed
     $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $ArtifactStagingDirectory))
     $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))

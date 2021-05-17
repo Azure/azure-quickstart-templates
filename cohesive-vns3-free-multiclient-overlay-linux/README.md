@@ -12,7 +12,6 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcohesive-vns3-free-multiclient-overlay-linux%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcohesive-vns3-free-multiclient-overlay-linux%2Fazuredeploy.json)
 
 
-
 ### Introduction
 This Quickstart automates the process of deploying a Cohesive Networks VNS3 overlay network in Azure.
 
@@ -64,7 +63,7 @@ The following resources are deployed as part of the solution:
 
 A VNS3 4.4.3 Free controller running on a Standard_B1ms instance.
 
-Upto 5 Ubuntu 16.04.0-LTS VM's running on a Standard_B1ms instance.
+Up to 5 Ubuntu 16.04.0-LTS VM's running on a Standard_B1ms instance.
 
 VNET, Subnet, NSG's, NIC & PIP's
 

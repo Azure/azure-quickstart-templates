@@ -4,15 +4,14 @@ param(
     [string] $BuildReason = $ENV:BUILD_REASON
 )
 
-$ErrorView = "NormalView" # this is working around a bug in Azure DevOps with PS Core and inline scripts https://github.com/microsoft/azure-pipelines-agent/issues/2853
-
 #get the file content
-Write-Output "Testing file: $SampleFolder\metadata.json"
+Write-host "Validating metadata file: $SampleFolder\metadata.json"
 $metadata = Get-Content -Path "$SampleFolder\metadata.json" -Raw 
 
 #Check metadata.json against the schema
+Write-host "Validating contents against JSON schema from https://aka.ms/azure-quickstart-templates-metadata-schema"
 $schema = Invoke-WebRequest -Uri "https://aka.ms/azure-quickstart-templates-metadata-schema" -UseBasicParsing
-$metadata | Test-Json -Schema $schema.content 
+$metadata | Test-Json -Schema $schema.content
 
 #Make sure the date has been updated
 $rawDate = ($metadata | convertfrom-json).dateUpdated
@@ -54,9 +53,9 @@ else {
 # if there is a docOwner, we need to notify that owner via a PR comment
 $docOwner = ($metadata | convertfrom-json).docOwner
 Write-Host "docOwner: $docOwner"
-if ($null -ne $docOwner){
-    $msg = "@$docOwner - check this PR for updates that may be needed to documentation that references this sample.  [this is an automated message]"
-    Write-Host "##vso[task.setvariable variable=docOwner.message]$msg"    
+if ($null -ne $docOwner) {
+    $msg = "@$docOwner - check this PR for updates that may be needed to documentation that references this sample.  [This is an automated message. You are receiving it because you are listed as the docOwner in metadata.json.]"
+    Write-Host "##vso[task.setvariable variable=docOwner.message]$msg"
 }
 
 $s = $supportedEnvironments | ConvertTo-Json -Compress
@@ -73,7 +72,13 @@ if (!$IsCloudSupported) {
 $validationType = ($metadata | convertfrom-json).validationType
 Write-Output "Validation type from metadata.json: $validationType"
 
-if($validationType -eq "Manual"){
+if ($validationType -eq "Manual") {
     Write-Host "##vso[task.setvariable variable=validation.type]$validationType"
     Write-Host "##vso[task.setvariable variable=result.deployment]Not Supported" # set this so the pipeline does not run deployment will be overridden in the test results step
+}
+
+# pipeline variable should default to FAIL
+Write-Host "Count: $($error.count)"
+if ($error.count -eq 0) {
+    Write-Host "##vso[task.setvariable variable=result.metadata]PASS"
 }

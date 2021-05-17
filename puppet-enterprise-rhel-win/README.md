@@ -55,7 +55,7 @@ This template will deploy:
 
 This uses RHEL 7.2 image which is a PAY AS YOU GO image and doesn't require the user to license it, it will be licensed automatically after the instance is launched first time and user will be charged hourly in addition to Microsoft's Linux VM rates.  Click [here](https://azure.microsoft.com/en-gb/pricing/details/virtual-machines/linux/#red-hat) for pricing details.
 
-A complimentary license for Puppet Enterprise is included with this template which can be used to manage upto 10 nodes. Should you need to manage more than 10 nodes, contact [Puppet Sales](https://puppet.com/company/contact-sales?ccn=product-puppet_enterprise&cid=701G0000000FblQ&ls=puppet-enterprise).
+A complimentary license for Puppet Enterprise is included with this template which can be used to manage up to 10 nodes. Should you need to manage more than 10 nodes, contact [Puppet Sales](https://puppet.com/company/contact-sales?ccn=product-puppet_enterprise&cid=701G0000000FblQ&ls=puppet-enterprise).
 
 ## Prerequisites 
 

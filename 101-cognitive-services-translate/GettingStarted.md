@@ -20,7 +20,7 @@ Those are the parameters on the template. Some of them are already with the valu
 
 Parameter         | Suggested value     | Description
 :--------------- |:-------------      |:---------------------
-**cognitiveServiceName** |*location*-*name*-*enviroment* i.e.:  uks-name-tst  | A globally unique name of azure cognitive services. I recommend you to use the notation above, that will help to create a unique name for your Cognitive Service. The name must use alphanumeric and underscore characters only. There is a 35 character limit to this field.
+**cognitiveServiceName** |*location*-*name*-*environment* i.e.:  uks-name-tst  | A globally unique name of azure cognitive services. I recommend you to use the notation above, that will help to create a unique name for your Cognitive Service. The name must use alphanumeric and underscore characters only. There is a 35 character limit to this field.
 **location**| The default location | Select the geographic location for your resource group.
 **Resource Group**| your resource group |  That is the Resource Group that you need to deploy your resources.
 **sku**| F0  |  Sku is an identifier for the product that we need. F0 is for the most basic characteristics.

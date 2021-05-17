@@ -60,7 +60,7 @@ one will be created by the script or reused if it already exists (think of this 
 
 ## Contribution Guide
 
-To make sure your template is added to Azure.com index, please follow these guidelines. Any templates that are out of compliance will be added to the **blacklist** and not be indexed on Azure.com
+To make sure your template is added to Azure.com index, please follow these guidelines. Any templates that are out of compliance will be added to the **blocklist** and not be indexed on Azure.com
 
 ## Files, folders and naming conventions
 
