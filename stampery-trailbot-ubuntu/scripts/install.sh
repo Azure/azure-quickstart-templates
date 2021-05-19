@@ -7,8 +7,8 @@ curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
 
 export DEBIAN_FRONTEND=noninteractive
 
-sudo apt-get -y update
-sudo apt-get install -y git nodejs rng-tools mailutils build-essential
+apt-get -y update
+apt-get install -y git nodejs rng-tools mailutils build-essential
 
 #################################################################
 # Get the watcher code and install its npm dependencies         #
