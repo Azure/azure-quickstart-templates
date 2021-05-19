@@ -4,11 +4,11 @@
   "parameters": {
     "virtualNetworkName": {
       "type": "string",
-       "defaultValue": "[concat('vnet', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[concat('vnet', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Virtual network name"
       }
-    },   
+    },
     "firewallName": {
       "type": "string",
       "defaultValue": "",
@@ -40,27 +40,27 @@
         "description": "Location for all resources."
       }
     },
-     "infraipgroup": {
+    "infraipgroup": {
       "defaultValue": "[concat(parameters('location'),'-infra-ipgroup','-',uniqueString(resourceGroup().id))]",
       "type": "String"
-     },
-     "workloadipgroup": {
+    },
+    "workloadipgroup": {
       "defaultValue": "[concat(parameters('location'),'-workload-ipgroup','-',uniqueString(resourceGroup().id))]",
       "type": "String"
-     },
+    },
     "firewallPolicyName": {
       "defaultValue": "[concat(parameters('firewallName'),'-','firewallPolicy')]",
       "type": "String"
     }
-},
+  },
   "variables": {
     "vnetAddressPrefix": "10.10.0.0/24",
     "azureFirewallSubnetPrefix": "10.10.0.0/25",
     "publicIPNamePrefix": "publicIP",
-    "azurepublicIpname": "[variables('publicIPNamePrefix')]",    
+    "azurepublicIpname": "[variables('publicIPNamePrefix')]",
     "azureFirewallSubnetName": "AzureFirewallSubnet",
     "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
-    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPNamePrefix'))]",    
+    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPNamePrefix'))]",
     "azureFirewallSubnetJSON": "[json(format('{{\"id\": \"{0}\"}}', variables('azureFirewallSubnetId')))]",
     "copy": [
       {
@@ -80,27 +80,27 @@
   },
   "resources": [
     {
-       "type": "Microsoft.Network/ipGroups",
+      "type": "Microsoft.Network/ipGroups",
       "apiVersion": "2019-12-01",
       "name": "[parameters('workloadipgroup')]",
       "location": "[parameters('location')]",
       "properties": {
-        "ipAddresses": [ 
-             "10.20.0.0/24",
-             "10.30.0.0/24"          
-           ]
+        "ipAddresses": [
+          "10.20.0.0/24",
+          "10.30.0.0/24"
+        ]
       }
     },
     {
-       "type": "Microsoft.Network/ipGroups",
+      "type": "Microsoft.Network/ipGroups",
       "apiVersion": "2019-12-01",
       "name": "[parameters('infraipgroup')]",
       "location": "[parameters('location')]",
       "properties": {
-        "ipAddresses": [ 
-           "10.40.0.0/24",
-           "10.50.0.0/24"        
-          ]
+        "ipAddresses": [
+          "10.40.0.0/24",
+          "10.50.0.0/24"
+        ]
       }
     },
     {
@@ -125,8 +125,8 @@
             }
           }
         ],
-        "enableDdosProtection": false              
-      }      
+        "enableDdosProtection": false
+      }
     },
     {
       "name": "[concat(variables('azurepublicIpname'), add(copyIndex(), 1))]",
@@ -151,147 +151,147 @@
       "name": "[parameters('firewallPolicyName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "threatIntelMode": "Alert"        
+        "threatIntelMode": "Alert"
       }
     },
     {
-        "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
-        "apiVersion": "2020-05-01",
-        "name": "[concat(parameters('firewallPolicyName'), '/DefaultNetworkRuleCollectionGroup')]",
-        "location": "[parameters('location')]",
-        "dependsOn": [
-            "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
-            "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]",
-            "[resourceId('Microsoft.Network/firewallPolicies',parameters('firewallPolicyName'))]"
-         ],
-        "properties" : {
-           "priority": 200,
-           "ruleCollections": [
-            {
-                "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
-                "action": {
-                    "type": "Allow"
-                },
-               "name": "azure-global-services-nrc",
-               "priority": 1250,  
-                "rules": [                
-                {
-                    "ruleType": "NetworkRule",
-                    "name": "time-windows",
-                    "ipProtocols": [
-                    "UDP"
-                    ],
-                    "destinationAddresses": [
-                        "13.86.101.172"
-                    ],
-                    "sourceIpGroups": [
-                      "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
-                      "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
-                      ],
-                    "destinationPorts": [
-                        "123"                   
-                    ]
-                }
-              ]         
-            }
-          ]
-        }
+      "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+      "apiVersion": "2020-05-01",
+      "name": "[concat(parameters('firewallPolicyName'), '/DefaultNetworkRuleCollectionGroup')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
+        "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]",
+        "[resourceId('Microsoft.Network/firewallPolicies',parameters('firewallPolicyName'))]"
+      ],
+      "properties": {
+        "priority": 200,
+        "ruleCollections": [
+          {
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "action": {
+              "type": "Allow"
+            },
+            "name": "azure-global-services-nrc",
+            "priority": 1250,
+            "rules": [
+              {
+                "ruleType": "NetworkRule",
+                "name": "time-windows",
+                "ipProtocols": [
+                  "UDP"
+                ],
+                "destinationAddresses": [
+                  "13.86.101.172"
+                ],
+                "sourceIpGroups": [
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
+                ],
+                "destinationPorts": [
+                  "123"
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
-         "apiVersion": "2020-05-01",
-         "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
-         "name": "[concat(parameters('firewallPolicyName'), '/DefaultApplicationRuleCollectionGroup')]",
-         "location": "[parameters('location')]", 
-         "dependsOn": [
-            "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
-            "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]",
-            "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups',parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]"            
-         ],      
-         "properties" : {
-            "priority": 300,
-            "ruleCollections": [
-            {
-              "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
-              "name": "global-rule-url-arc",
-              "priority": 1000,
-                "action": {
-                "type": "Allow"
-                },
-              "rules": [
-                {
-                    "ruleType": "ApplicationRule",
-                    "name": "winupdate-rule-01",
-                    "protocols": [
-                        {
-                           "protocolType": "Https",
-                            "port": 443
-                        },
-                        {
-                           "protocolType": "Http",
-                            "port": 80
-                        }
-                        ],
-                    "fqdnTags": ["WindowsUpdate"],
-                    "terminateTLS": false,
-                    "sourceIpGroups": [
-                      "[resourceId('Microsoft.Network/ipGroups',parameters('workloadipgroup'))]",
-                      "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
-                      ]
-                }
-              ]            
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+      "name": "[concat(parameters('firewallPolicyName'), '/DefaultApplicationRuleCollectionGroup')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
+        "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]",
+        "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups',parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]"
+      ],
+      "properties": {
+        "priority": 300,
+        "ruleCollections": [
+          {
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "name": "global-rule-url-arc",
+            "priority": 1000,
+            "action": {
+              "type": "Allow"
             },
-            {
-                "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
-                    "action": {
-                    "type": "Allow"
-                },
-                "name": "Global-rules-arc",
-                "priority": 1202,
-                "rules": [
-                {
-                    "ruleType": "ApplicationRule",
-                    "name": "gobal-rule-01",
-                    "protocols": [
-                        {
-                           "protocolType": "Https",
-                            "port": 443
-                        }
-                        ],
-                    "targetFqdns": [                                                   
-                            "www.microsoft.com"                                              
-                        ],
-                    "terminateTLS": false,
-                    "sourceIpGroups": [
-                       "[resourceId('Microsoft.Network/ipGroups',parameters('workloadipgroup'))]",
-                       "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
-                      ]
-                }               
-              ]            
-            }
-         ]
-       }
-    },     
+            "rules": [
+              {
+                "ruleType": "ApplicationRule",
+                "name": "winupdate-rule-01",
+                "protocols": [
+                  {
+                    "protocolType": "Https",
+                    "port": 443
+                  },
+                  {
+                    "protocolType": "Http",
+                    "port": 80
+                  }
+                ],
+                "fqdnTags": [ "WindowsUpdate" ],
+                "terminateTLS": false,
+                "sourceIpGroups": [
+                  "[resourceId('Microsoft.Network/ipGroups',parameters('workloadipgroup'))]",
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
+                ]
+              }
+            ]
+          },
+          {
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "action": {
+              "type": "Allow"
+            },
+            "name": "Global-rules-arc",
+            "priority": 1202,
+            "rules": [
+              {
+                "ruleType": "ApplicationRule",
+                "name": "global-rule-01",
+                "protocols": [
+                  {
+                    "protocolType": "Https",
+                    "port": 443
+                  }
+                ],
+                "targetFqdns": [
+                  "www.microsoft.com"
+                ],
+                "terminateTLS": false,
+                "sourceIpGroups": [
+                  "[resourceId('Microsoft.Network/ipGroups',parameters('workloadipgroup'))]",
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
     {
-        "apiVersion": "2019-04-01",
-        "type": "Microsoft.Network/azureFirewalls",
-        "name": "[parameters('firewallName')]",
-        "location": "[parameters('location')]",
-        "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), parameters('availabilityZones'))]",
-        "dependsOn": [            
-            "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-            "publicIpCopy",
-            "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
-            "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]",
-            "[resourceId('Microsoft.Network/firewallPolicies',parameters('firewallPolicyName'))]",
-            "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups',parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]",
-            "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups',parameters('firewallPolicyName'), 'DefaultApplicationRuleCollectionGroup')]"         
-            ],
-        "properties": {
-            "ipConfigurations": "[variables('azureFirewallIpConfigurations')]",
-            "firewallPolicy":{
-                "id": "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]"
-            }
+      "apiVersion": "2019-04-01",
+      "type": "Microsoft.Network/azureFirewalls",
+      "name": "[parameters('firewallName')]",
+      "location": "[parameters('location')]",
+      "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), parameters('availabilityZones'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "publicIpCopy",
+        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
+        "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]",
+        "[resourceId('Microsoft.Network/firewallPolicies',parameters('firewallPolicyName'))]",
+        "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups',parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]",
+        "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups',parameters('firewallPolicyName'), 'DefaultApplicationRuleCollectionGroup')]"
+      ],
+      "properties": {
+        "ipConfigurations": "[variables('azureFirewallIpConfigurations')]",
+        "firewallPolicy": {
+          "id": "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]"
         }
+      }
     }
   ]
 }
