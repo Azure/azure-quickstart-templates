@@ -24,7 +24,8 @@ Parameters are the inputs to a template or module, describe each which creates t
 | :------------- | :----------: | :------------- |
 | output1 | string | Describe the output and how it might be used.
 
-### ApiVersions 
+### ApiVersions
+
 List those used by the module, may be a list of multiple are used.
 
 ```apiVersion: 2019-12-01```
