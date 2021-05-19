@@ -21,63 +21,63 @@
           "metadata": {
             "description": "Location of the Data Lake store."
           }
-        },
-        "identityName": {
-          "type": "string",
-          "metadata": {
-            "description": "The name of the assigned identity."
-          }
         }
     },
     "variables": {
       "adlName": "[parameters('adlAccountName')]",
+      "identityName": "adlContributor",
       "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-      "roleDefinitionName": "[guid(parameters('identityName'), variables('roleDefinitionId'), resourceGroup().id)]",
+      "roleDefinitionName": "[guid(variables('identityName'), variables('roleDefinitionId'), resourceGroup().id)]",
       "fsName": "adlfs",
       "folderName": "quickstarts/"
     },
     "resources": [
         {
-            "type": "Microsoft.DataLakeStore/accounts",
-            "name": "[parameters('adlAccountName')]",
-            "location": "[parameters('adlLocation')]",
-            "apiVersion": "2016-11-01",
-            "properties": {
-                "newTier": "Consumption",
-                "encryptionState": "Disabled"
-            }
-        },
-        {
             "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-            "name": "[parameters('identityName')]",
+            "name": "[variables('identityName')]",
             "apiVersion": "2018-11-30",
             "location": "[parameters('adlLocation')]"
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2020-04-01-preview",
-            "scope": "[resourceGroup().id]",
             "name": "[variables('roleDefinitionName')]",
             "properties": {
+              "scope": "[resourceGroup().id]",
               "roleDefinitionId": "[variables('roleDefinitionId')]",
-              "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))).principalId]",
+              "principalId": "[reference(variables('identityName')).principalId]",
               "principalType": "ServicePrincipal"
             },
             "dependsOn": [
-              "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]",
-              "[resourceId('Microsoft.DataLakeStore/accounts', parameters('adlAccountName'))]"
+              "[variables('identityName')]"
             ]
+        },
+        {
+            "type": "Microsoft.DataLakeStore/accounts",
+            "name": "[parameters('adlAccountName')]",
+            "location": "[parameters('adlLocation')]",
+            "apiVersion": "2016-11-01",
+            "dependsOn": [
+              "[variables('roleDefinitionName')]"
+            ],
+            "properties": {
+                "newTier": "Consumption",
+                "encryptionState": "Disabled"
+            }
         },
         {
             "type": "Microsoft.Resources/deploymentScripts",
             "apiVersion": "2020-10-01",
             "name": "createAdlFolder",
             "location": "[parameters('adlLocation')]",
+            "dependsOn": [
+              "[resourceId('Microsoft.DataLakeStore/accounts',parameters('adlAccountName'))]"
+            ],
             "kind": "AzurePowerShell",
             "identity": {
               "type": "userAssigned",
               "userAssignedIdentities": {
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]": {
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]": {
                 }
               }
             },
