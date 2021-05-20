@@ -6,6 +6,7 @@
 curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
 
 export DEBIAN_FRONTEND=noninteractive
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1655A0AB68576280
 
 apt-get -y update
 apt-get install -y git nodejs rng-tools mailutils build-essential
