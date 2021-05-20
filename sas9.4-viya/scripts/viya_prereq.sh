@@ -49,18 +49,25 @@ cifs_server_fqdn=${19}
 EOF
 
 
-#Updating the Azure Cli Repo
-rpm --import https://packages.microsoft.com/keys/microsoft.asc;sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
-# Installing the azure CLI
+##Updating the Azure Cli Repo
+rpm --import https://packages.microsoft.com/keys/microsoft.asc
+echo -e "[azure-cli]
+name=Azure CLI
+baseurl=https://packages.microsoft.com/yumrepos/azure-cli
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.microsoft.com/keys/microsoft.asc" | tee /etc/yum.repos.d/azure-cli.repo
+##Installing the azure CLI
 yum install azure-cli -y
-fail_if_error $? "Error: Azure cli installation failed"
+fail_if_error $? "Azure Cli Installation failed"
 
+##Ansible Installation
 if ! type -p ansible;  then
-   # install Ansible
-    curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-    sudo python get-pip.py
+    # install Ansible
+    curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/pip/2.7/get-pip.py" -o "get-pip.py"
+    python get-pip.py
     pip install 'ansible==2.8.3'
-    fail_if_error $? "Error: Ansible client installation is failed"
+	fail_if_error $? "Pip Installation failed"
 fi
 
 #Stop & Disable the firewalld(Iptables)
