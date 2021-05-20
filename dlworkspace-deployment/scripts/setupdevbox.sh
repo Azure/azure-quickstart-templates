@@ -17,42 +17,36 @@ sudo apt-get install -y --no-install-recommends \
         ca-certificates \
         sshpass
 
-# Install docker
-which docker
-if [ $? -eq 0 ]
-then
-docker --version
-## docker already installed
-else
-curl -q https://get.docker.com/ | sudo bash
-fi
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+apt-get update
+apt-get install -y docker-ce
 
 username=$1
 shift
 
 sudo usermod -aG docker $username
 
-sudo apt-get install -y --no-install-recommends python-yaml python-jinja2 python-setuptools python-tzlocal python-pycurl
+apt-get install -y --no-install-recommends python-yaml python-jinja2 python-setuptools python-tzlocal python-pycurl
 
-git clone http://github.com/Microsoft/DLWorkspace /home/$username/dlworkspace
-cd /home/$username/dlworkspace
-git fetch --all
-git checkout ARMTemplate
+git clone http://github.com/Microsoft/DLWorkspace /home/$username/DLWorkspace
+git -C /home/$username/DLWorkspace fetch --all
+git -C /home/$username/DLWorkspace checkout ARMTemplate
 
 # Create configuration files, config.yaml, and cluster.yaml
-cd /home/$username/dlworkspace/src/ClusterBootstrap
-../ARM/createconfig.py genconfig --outfile /home/$username/dlworkspace/src/ClusterBootstrap/config.yaml --admin_username $username "$@"
-./az_tools.py --default_admin_username $username --noaz genconfig
+/home/$username/DLWorkspace/src/ARM/createconfig.py genconfig --outfile /home/$username/DLWorkspace/src/ClusterBootstrap/config.yaml --admin_username $username "$@"
+/home/$username/DLWorkspace/src/ClusterBootstrap/az_tools.py --default_admin_username $username --noaz genconfig
 
 # Generate SSH keys
-./deploy.py -y build
+/home/$username/DLWorkspace/src/ClusterBootstrap/deploy.py -y build
 
 # Copy ssh keys
-../ARM/createconfig.py sshkey --admin_username $username "$@"
+/home/$username/DLWorkspace/src/ARM/createconfig.py sshkey --admin_username $username "$@"
 
 # change owner to $username
-chown -R $username /home/$username/dlworkspace
+chown -R $username /home/$username/DLWorkspace
 
 # run deploy script in docker group, using user $username
-sudo -H -u $username sg docker -c "bash /home/$username/dlworkspace/src/ARM/deploycluster.sh $username"
+sudo -H -u $username sg docker -c "bash /home/$username/DLWorkspace/src/ARM/deploycluster.sh $username"
 
