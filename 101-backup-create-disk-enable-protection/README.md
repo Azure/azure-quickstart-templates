@@ -13,7 +13,7 @@
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-create-disk-enable-protection%2Fazuredeploy.json)
 
-### This template create disk and enables protection via Azure Backup.
+### This template creates a disk and enables protection via Azure Backup.
 
 A disaster recovery and data protection strategy keeps your business running when unexpected events occur.
 
