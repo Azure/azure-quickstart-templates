@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 echo "Welcome to configuressl.sh"
 echo "Number of parameters was: " $#
 
@@ -92,7 +94,7 @@ fi
 # on VM init, so won't be able to grab the dpkg lock immediately
 until apt-get -y update && apt-get -y install apache2 git
 do
-  echo "Trying again..."
+  echo "Trying again"
   sleep 2
 done
 
