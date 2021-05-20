@@ -2,20 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "storagename": {
-            "type": "string",
-            "defaultValue":"[concat('labvmstrg', uniqueString(resourceGroup().id))]",
-            "metadata": {
-                "description":"Unique Storage Account name"
-            }
-        },
-        "vm-dns": {
-            "type": "string",
-            "defaultValue": "[concat('labvm-',uniqueString(resourceGroup().id))]",
-            "metadata": {
-                "description": "VM DNS Label prefix"
-            }
-        },
         "adminUser": {
             "type": "string",
             "metadata": {
@@ -33,8 +19,7 @@
             "defaultValue": "Standard_D8s_v3",
             "allowedValues": [
                 "Standard_D4s_v3",
-                "Standard_D8s_v3",
-                "Standard_D8s_v4"
+                "Standard_D8s_v3"
             ],
             "metadata": {
                 "description": "VM Size for lab-vm"
@@ -63,13 +48,15 @@
         }
     },
     "variables":{
-        "scriptUrl": "[uri(parameters('_artifactsLocation'),concat('installscript.ps1',parameters('_artifactsLocationSasToken')))]"
+        "scriptUrl": "[uri(parameters('_artifactsLocation'),concat('installscript.ps1',parameters('_artifactsLocationSasToken')))]",
+        "storagename": "[concat('labvmstrg', uniqueString(resourceGroup().id))]",
+        "vm-dns": "[concat('labvm-',uniqueString(resourceGroup().id))]"
     },
     "resources": [    
         {
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2019-06-01",
-            "name": "[toLower(parameters('storagename'))]",
+            "name": "[toLower(variables('storagename'))]",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "Standard_LRS"
@@ -91,7 +78,7 @@
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
                 "dnsSettings": {
-                    "domainNameLabel": "[parameters('vm-dns')]"
+                    "domainNameLabel": "[variables('vm-dns')]"
                 }
             }
         },
@@ -184,7 +171,7 @@
             "name": "vsLab",
             "location": "[parameters('location')]",
             "dependsOn": [ 
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storagename'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storagename'))]",
                 "[resourceId('Microsoft.Network/networkInterfaces', 'vslab-nic')]"
             ],
             "tags": {
@@ -218,12 +205,6 @@
                             "id": "[resourceId('Microsoft.Network/networkInterfaces', 'vslab-nic')]"
                         }
                     ]
-                },
-                "diagnosticsProfile": {
-                    "bootDiagnostics": {
-                        "enabled": true,
-                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('storagename'))).primaryEndpoints.blob]"
-                    }
                 }
             }
         },
