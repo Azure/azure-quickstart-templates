@@ -2,8 +2,8 @@
 
 export DEBIAN_FRONTEND=noninteractive
 
-sudo apt-get update
-sudo apt-get install -y --no-install-recommends \
+apt-get update
+apt-get install -y --no-install-recommends \
         apt-utils \
         software-properties-common \
         git \
@@ -11,13 +11,12 @@ sudo apt-get install -y --no-install-recommends \
         python-pip \
         wget \
         cpio \
-        mkisofs \
         apt-transport-https \
         openssh-client \
         ca-certificates \
         sshpass
 
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
 add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
 apt-get update
