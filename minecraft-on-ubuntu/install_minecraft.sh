@@ -21,28 +21,10 @@ SERVER_JAR_URL="curl -L https://minecraft.net/en-us/download/server/ | grep -Eo 
 server_jar=server.jar
 
 # add and update repos
-while ! echo y | apt-get install -y software-properties-common; do
-    sleep 10
-    apt-get install -y software-properties-common
-done
+sudo apt-get update
 
-while ! echo y | apt-add-repository -y ppa:linuxuprising/java; do
-    sleep 10
-    apt-add-repository -y ppa:linuxuprising/java
-done
-
-while ! echo y | apt-get update; do
-    sleep 10
-    apt-get update
-done
-
-# Install Java12
-echo oracle-java12-installer shared/accepted-oracle-license-v1-2 select true | /usr/bin/debconf-set-selections
-
-while ! echo y | apt-get install -y oracle-java12-installer; do
-    sleep 10
-    apt-get install -y oracle-java12-installer
-done
+# install jre
+sudo apt-get -y install default-jre
 
 # create user and install folder
 adduser --system --no-create-home --home $minecraft_server_path $minecraft_user
