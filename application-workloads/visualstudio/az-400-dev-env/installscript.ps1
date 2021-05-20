@@ -9,7 +9,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 New-LocalGroup -Name docker-users -Description "Users of Docker Desktop"
 Add-LocalGroupMember -Group 'docker-users' -Member $UserName
 
-choco install docker-desktop git vscode firefox -y
+choco install docker-desktop git vscode firefox azure-cli -y
 
 $trig = New-ScheduledTaskTrigger -AtLogOn 
 $task = New-ScheduledTaskAction -Execute "C:\Program Files\Docker\Docker\Docker Desktop.exe" 
