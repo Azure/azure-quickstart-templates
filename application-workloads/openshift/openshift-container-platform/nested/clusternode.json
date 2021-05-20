@@ -1,0 +1,151 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"location": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "Datacenter Region Location"
+			}
+		},
+		"sshKeyPath": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "SSH Public Key Path"
+			}
+		},
+		"sshPublicKey": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "SSH Public Key"
+			}
+		},
+		"adminUsername": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "Admin Username"
+			}
+		},
+		"dataDiskSize": {
+			"type": "int",
+			"metadata": {
+				"description": "Size of Data Disk"
+			}
+		},
+		"vmSize": {
+			"type": "string",
+			"metadata": {
+				"description": "VM Size"
+			}
+		},
+		"hostname": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "VM Hostname"
+			}
+		},
+		"role": {
+			"type": "string",
+			"metadata": {
+				"description": "VM Role for tag"
+			}
+		},
+		"vmStorageType": {
+			"type": "string",
+			"metadata": {
+				"description": "VM Storage Type"
+			}
+		},
+		"diagStorageAccount": {
+			"type": "string",
+			"metadata": {
+				"description": "Diagnostics Storage Account"
+			}
+		},
+		"imageReference": {
+			"type": "object",
+			"metadata": {
+				"description": "Image Reference"
+			}
+		},
+		"redHatTags": {
+			"type": "object",
+			"metadata": {
+				"description": "Red Hat Tags"
+			}
+		}
+	},
+	"variables": {
+		"dataDisks": [{
+			"name": "[concat(parameters('hostName'), '-dataDisk')]",
+			"diskSizeGB": "[parameters('dataDiskSize')]",
+			"lun": 0,
+			"managedDisk": {
+				"storageAccountType": "[parameters('vmStorageType')]"
+			},
+			"createOption": "Empty"
+		}]
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Compute/virtualMachines",
+			"name": "[parameters('hostname')]",
+			"location": "[parameters('location')]",
+			"apiVersion": "2019-07-01",
+			"tags": {
+				"Role": "[parameters('role')]",
+				"app": "[parameters('redHatTags').app]",
+				"version": "[parameters('redHatTags').version]"
+			},
+			"properties": {
+				"hardwareProfile": {
+					"vmSize": "[parameters('vmSize')]"
+				},
+				"osProfile": {
+					"computerName": "[parameters('hostname')]",
+					"adminUsername": "[parameters('adminUsername')]",
+					"linuxConfiguration": {
+						"disablePasswordAuthentication": true,
+						"ssh": {
+							"publicKeys": [{
+								"path": "[parameters('sshKeyPath')]",
+								"keyData": "[parameters('sshPublicKey')]"
+							}]
+						}
+					}
+				},
+				"storageProfile": {
+					"imageReference": "[parameters('imageReference')]",
+					"osDisk": {
+						"name": "[concat(parameters('hostName'), '-osdisk')]",
+						"managedDisk": {
+							"storageAccountType": "[parameters('vmStorageType')]"
+						},
+						"caching": "ReadWrite",
+						"createOption": "FromImage",
+						"diskSizeGB": 256,
+						"osType": "Linux"
+					},
+					"dataDisks": "[if(equals(parameters('hostName'), 'bastionNode'), json('null'), variables('dataDisks'))]"
+				},
+				"networkProfile": {
+					"networkInterfaces": [{
+						"id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('hostname'), '-nic'))]"
+					}]
+				},
+				"diagnosticsProfile": {
+					"bootDiagnostics": {
+						"enabled": true,
+						"storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('diagStorageAccount')), '2019-06-01').primaryEndpoints['blob']]"
+					}
+				}
+			}
+		}
+	],
+	"outputs": {}
+}
