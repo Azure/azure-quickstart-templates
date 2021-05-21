@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+export DEBIAN_FRONTEND=noninteractive
+
 cloud_type="azure"
 location=$1 #this is the location of the seed, not necessarily of this node
 unique_string=$2
