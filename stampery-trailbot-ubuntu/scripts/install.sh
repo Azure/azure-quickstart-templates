@@ -1,12 +1,15 @@
 #!/bin/bash
 
-set -e
-
 #################################################################
 # Update Ubuntu and install prerequisites for running Trailbot  #
 #################################################################
 curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
-DEBIAN_FRONTEND=noninteractive apt-get install -y git nodejs rng-tools mailutils build-essential
+
+export DEBIAN_FRONTEND=noninteractive
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1655A0AB68576280
+
+apt-get -y update
+apt-get install -y git nodejs rng-tools mailutils build-essential
 
 #################################################################
 # Get the watcher code and install its npm dependencies         #
