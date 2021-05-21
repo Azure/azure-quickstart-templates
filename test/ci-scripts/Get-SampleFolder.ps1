@@ -1,5 +1,5 @@
 <#
-This script will find the sample folder for the PR - Test are run on that folder only
+This script will find the sample folder for the PR - Tests are run on that folder only
 If the PR contains more than one sample the build must fail
 If the PR does not contain changes to a sample folder, it will currently fail but we'll TODO this to
 pass the build in order to trigger a manual review
@@ -82,11 +82,11 @@ If ($FolderArray.count -gt 1) {
     Write-Error "### Error ### The Pull request contains file changes from $($FolderArray.count) scenario folders. A pull request can only contain changes to files from a single scenario folder."
 }
 
-# Update pipeline variable with the sample folder
+# Update pipeline variable with the sample folder and name
 $FolderString = $FolderArray[0]
 Write-Output "Using sample folder: $FolderString"
 Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
 
-$sampleName = $FolderString.Replace("$ENV:BUILD_SOURCESDIRECTORY\", "")
+$sampleName = $FolderString.Replace("$ENV:BUILD_SOURCESDIRECTORY\", "").Replace("$ENV:BUILD_SOURCESDIRECTORY/", "")
 Write-Output "Using sample name: $sampleName"
 Write-Host "##vso[task.setvariable variable=sample.name]$sampleName"

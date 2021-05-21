@@ -4,8 +4,14 @@
 GITHUB_CLIENT=$1
 GITHUB_SECRET=$2
 
+export DEBIAN_FRONTEND=noninteractive
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
 # retrieve latest package updates
 apt-get update
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+apt-get install -y docker-ce
 
 # install dependencies
 apt-get install -y linux-image-extra-$(uname -r) libsqlite3-dev
