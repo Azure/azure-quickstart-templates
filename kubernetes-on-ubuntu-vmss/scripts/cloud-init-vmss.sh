@@ -18,6 +18,7 @@ SUBNET_NAME=$7
 VNET_NAME=$8
 
 export DEBIAN_FRONTEND=noninteractive
+export HOME=/root
 
 installDeps() {
     # update and upgrade packages
