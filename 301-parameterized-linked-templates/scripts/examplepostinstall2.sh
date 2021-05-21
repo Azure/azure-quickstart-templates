@@ -1,4 +1,5 @@
 #!/bin/bash
+sudo yum update -y --disablerepo='*' --enablerepo='*microsoft*'
 echo ExamplePostInstall2.sh was run at $(date)
 if hash zypper; then
   zypper install -y python3-pip screen
