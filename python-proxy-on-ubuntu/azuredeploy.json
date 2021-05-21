@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
+    "storageAccountName": {
       "type": "string",
       "metadata": {
         "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed"
@@ -13,6 +13,20 @@
       "metadata": {
         "description": "Unique dns name for public ip"
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     },
     "adminUsername": {
       "type": "string",
@@ -34,16 +48,16 @@
         "description": "Image Offer"
       }
     },
-    "imageSKU": {
+    "imageSku": {
       "type": "string",
-      "defaultValue": "14.04.5-LTS",
+      "defaultValue": "18.04-LTS",
       "metadata": {
         "description": "Image SKU"
       }
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A0",
+      "defaultValue": "Standard_DS1_V2",
       "metadata": {
         "description": "Size of the Virtual Machine"
       }
@@ -99,14 +113,13 @@
   },
   "variables": {
     "addressPrefix": "10.0.0.0/16",
-    "subnet1Name": "Subnet-1",
-    "subnet2Name": "Subnet-2",
+    "subnet1Name": "subnet1",
+    "subnet2Name": "subnet2",
     "subnet1Prefix": "10.0.0.0/24",
     "subnet2Prefix": "10.0.1.0/24",
     "publicIPAddressType": "Dynamic",
     "storageAccountType": "Standard_LRS",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('subnet1Name'))]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -122,7 +135,7 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
+      "name": "[parameters('storageAccountName')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[parameters('location')]",
       "properties": {
@@ -200,7 +213,7 @@
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
       ],
       "properties": {
@@ -243,8 +256,8 @@
             {
               "enableDirectServerReturn": "False",
               "endpointName": "Http",
-              "privatePort": 8888,
-              "publicPort": 8888,
+              "privatePort": 8899,
+              "publicPort": 8899,
               "protocol": "Tcp"
             }
           ]
@@ -266,7 +279,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/python-proxy-on-ubuntu/python-proxy-install-ubuntu.sh"
+            "[uri(parameters('_artifactsLocation'), concat('python-proxy-install-ubuntu.sh', parameters('_artifactsLocationSasToken')))]"
           ],
           "commandToExecute": "sh python-proxy-install-ubuntu.sh"
         }
