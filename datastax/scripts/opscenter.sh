@@ -17,7 +17,6 @@ echo seed_node_dns_name $seed_node_dns_name
 wget https://github.com/DSPN/install-datastax/archive/1.0.zip
 apt-get -y install unzip
 unzip 1.0.zip
-cd install-datastax-1.0/bin
 
-./opscenter.sh $cloud_type $seed_node_dns_name
+install-datastax-ubuntu-1.0/bin/opscenter.sh $cloud_type $seed_node_dns_name
 
