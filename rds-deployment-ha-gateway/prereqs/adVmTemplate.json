@@ -1,0 +1,202 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "apiProfile": "2018-03-01-hybrid",
+  "parameters": {
+    "windowsImagePublisher": {
+      "type": "string",
+      "metadata": {
+        "description": "The Publisher of Windows Image"
+      },
+      "defaultValue": "MicrosoftWindowsServer"
+    },
+    "windowsImageOffer": {
+      "type": "string",
+      "metadata": {
+        "description": "The offer of Windows Image"
+      },
+      "defaultValue": "WindowsServer"
+    },
+    "windowsImageSKU": {
+      "type": "string",
+      "allowedValues": [
+        "2012-R2-Datacenter",
+        "2016-Datacenter"
+      ],
+      "metadata": {
+        "description": "The SKU Name of Windows Image"
+      },
+      "defaultValue": "2016-Datacenter"
+    },
+    "windowsImageVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "The Version of Windows Image"
+      },
+      "defaultValue": "latest"
+    },
+    "dataDiskSize": {
+      "type": "int",
+      "metadata": {
+        "description": "Size of the VM data disk in GB"
+      },
+      "defaultValue": 2
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM Name"
+      }
+    },
+    "storageAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The Storage Account Name"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "metadata": {
+        "description": "The type of the Storage Account created"
+      },
+      "defaultValue": "Standard_LRS"
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Administrator of the new VMs and Domain"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the Administrator account of the new VMs and Domain"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "The size of the AD VMs Created"
+      },
+      "defaultValue": "Standard_A2"
+    },
+    "subnetResourceID": {
+      "type": "string",
+      "metadata": {
+        "description": "the resource id of the subnet"
+      }
+    },
+    "adRDPNATRuleID": {
+      "type": "string",
+      "metadata": {
+        "description": "the resource id of the RDP NAT rule"
+      }
+    },
+    "adDNicName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Nic attached to the ad VM"
+      }
+    },
+    "primaryAdIpAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "PrimaryIPAddress if AD VM"
+      }
+    }
+  },
+  "variables": {
+    "vmvhdContainerName": "vhds"
+  },
+  "resources": [
+    {
+      "name": "[parameters('storageAccount')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "sku": {
+          "name": "[parameters('StorageAccountType')]"
+      },
+      "kind": "Storage", 
+      "properties": {}
+    },
+    {
+      "name": "[parameters('adDNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('primaryAdIpAddress')]",
+              "subnet": {
+                "id": "[parameters('subnetResourceID')]"
+              },
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[parameters('adRDPNATRuleID')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccount'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces',parameters('adDNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('windowsImagePublisher')]",
+            "offer": "[parameters('windowsImageOffer')]",
+            "sku": "[parameters('windowsImageSKU')]",
+            "version": "[parameters('windowsImageVersion')]"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount')),providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob ,variables('vmvhdContainerName'),'/', parameters('vmName'), '0','-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "vhd": {
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount')),providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob ,variables('vmvhdContainerName'),'/', parameters('vmName'), '0','data-1.vhd')]"
+              },
+              "name": "[concat(parameters('vmName'), '0','-data-disk1')]",
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 0
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('adDNicName'))]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
