@@ -11,7 +11,7 @@
     },
     "accountName": {
       "type": "string",
-      "defaultValue": "[format('stor{0}', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('storage{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the Azure Storage account to create. This must be globally unique."
       }
@@ -54,23 +54,26 @@
   },
   "resources": [
     {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2018-11-30",
+      "name": "[variables('managedIdentityName')]",
+      "location": "[parameters('location')]"
+    },
+    {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2019-06-01",
       "name": "[parameters('accountName')]",
       "location": "[parameters('location')]",
       "kind": "StorageV2",
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]" // creating a delay to fix 'Principal Not Found'
+      ],
       "sku": {
         "name": "[parameters('skuName')]"
       },
       "properties": {
         "supportsHttpsTrafficOnly": false
       }
-    },
-    {
-      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-      "apiVersion": "2018-11-30",
-      "name": "[variables('managedIdentityName')]",
-      "location": "[parameters('location')]"
     },
     {
       "type": "Microsoft.Authorization/roleAssignments",
