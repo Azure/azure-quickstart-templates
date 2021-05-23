@@ -211,7 +211,8 @@ install_lustre_centos_hpc_65()
 
 	# Download stable Lustre client source targeting specific CentOS 6.5 kernel
 	# This code will be used to create the RPM for the currently running kernel
-	wget https://downloads.hpdd.intel.com/public/lustre/lustre-2.7.0/el6/client/SRPMS/lustre-client-2.7.0-2.6.32_504.8.1.el6.x86_64.src.rpm
+	#wget https://downloads.hpdd.intel.com/public/lustre/lustre-2.7.0/el6/client/SRPMS/lustre-client-2.7.0-2.6.32_504.8.1.el6.x86_64.src.rpm
+	wget https://downloads.whamcloud.com/public/lustre/lustre-2.7.0/el6.6/client/SRPMS/lustre-client-2.7.0-2.6.32_504.8.1.el6.x86_64.src.rpm
 
 	# Download current kernel-devel package from CentOS vault
 	wget --tries 10 --retry-connrefused --waitretry 15 http://vault.centos.org/6.5/updates/x86_64/Packages/kernel-devel-$(uname -r).rpm
@@ -259,7 +260,8 @@ install_lustre_centos_hpc_71()
 
 	# Download stable Lustre client source targeting specific CentOS 7.0 kernel
 	# This code will be used to create the RPM for the currently running kernel
-	wget https://downloads.hpdd.intel.com/public/lustre/lustre-2.7.0/el7/client/SRPMS/lustre-client-2.7.0-3.10.0_123.20.1.el7.x86_64.src.rpm
+	#wget https://downloads.hpdd.intel.com/public/lustre/lustre-2.7.0/el7/client/SRPMS/lustre-client-2.7.0-3.10.0_123.20.1.el7.x86_64.src.rpm
+	wget https://downloads.whamcloud.com/public/lustre/lustre-2.7.0/el7/client/SRPMS/lustre-client-2.7.0-3.10.0_123.20.1.el7.x86_64.src.rpm
 
 	# Download current kernel-devel package from CentOS vault
 	wget --tries 10 --retry-connrefused --waitretry 15 http://vault.centos.org/7.1.1503/updates/x86_64/Packages/kernel-devel-$(uname -r).rpm
