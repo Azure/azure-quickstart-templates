@@ -1,0 +1,34 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "privateDnsZoneName": {
+            "type": "string",
+            "metadata": {
+                "description": "private DNS zone name"
+            }
+        },
+        "privateLinkNicIpConfig": {
+            "type": "object",
+            "metadata": {
+                "description": "private endpoint Nic ipConfiguration array resource id"
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/privateDnsZones/A",
+            "name": "[concat(parameters('privateDnsZoneName'),'/', split(parameters('privateLinkNicIpConfig').properties.privateLinkConnectionProperties.fqdns[copyIndex()], '.')[0])]",
+            "location": "global",
+            "apiVersion": "2020-01-01",
+            "copy": {
+                "name": "dnsZoneCopy",
+                "count": "[length(parameters('privateLinkNicIpConfig').properties.privateLinkConnectionProperties.fqdns)]"
+            },
+            "properties": {
+                "aRecords": "[concat(json(concat('[{\"ipv4Address\":\"', parameters('privateLinkNicIpConfig').properties.privateIPAddress,'\"}]')))]",
+                "ttl": 3600
+            }
+        }
+    ]
+}

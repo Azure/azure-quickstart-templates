@@ -50,7 +50,6 @@
     },
     "virtualNetworkName": {
       "type": "string",
-      "defaultValue": "vnet",
       "metadata": {
         "description": "Virtual network name"
       }
@@ -62,25 +61,11 @@
         "description": "Virtual network address prefix"
       }
     },
-    "subnetDmzName": {
-      "type": "string",
-      "defaultValue": "Subnet-DMZ",
-      "metadata": {
-        "description": "Name of the DMZ subnet for VMs that will be accessible from the web"
-      }
-    },
     "subnetDmzPrefix": {
       "type": "string",
       "defaultValue": "10.1.0.0/24",
       "metadata": {
         "description": "Address prefix for the DMZ subnet"
-      }
-    },
-    "subnetMemcachedName": {
-      "type": "string",
-      "defaultValue": "Subnet-Memcached",
-      "metadata": {
-        "description": "Name of the Memcached subnet for VMs that are accessible from the DMZ but do not have public IPs"
       }
     },
     "subnetMemcachedPrefix": {
@@ -96,21 +81,34 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/memcached-multi-vm-ubuntu/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
+    "subnetMemcachedName": "[concat(parameters('virtualNetworkName'), '-subnet')]",
+    "subnetDmzName": "[concat(parameters('virtualNetworkName'), '-dmzsubnet')]",
     "imageReference": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
       "sku": "14.04.5-LTS",
       "version": "latest"
     },
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-    "subnetDmzRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetDmzName'))]",
-    "subnetMemcachedRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetMemcachedName'))]",
-    "memcachedMachineNamePrefix": "memcached",
-    "scriptUrlInstallMemcached": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/memcached-multi-vm-ubuntu/install_memcached.sh",
-    "scriptUrlInstallApache": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/memcached-multi-vm-ubuntu/install_apache.sh"
+    "subnetDmzRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), variables('subnetDmzName'))]",
+    "subnetMemcachedRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), variables('subnetMemcachedName'))]",
+    "memcachedMachineNamePrefix": "memcached"
   },
   "resources": [
     {
@@ -135,13 +133,13 @@
         },
         "subnets": [
           {
-            "name": "[parameters('subnetDmzName')]",
+            "name": "[variables('subnetDmzName')]",
             "properties": {
               "addressPrefix": "[parameters('subnetDmzPrefix')]"
             }
           },
           {
-            "name": "[parameters('subnetMemcachedName')]",
+            "name": "[variables('subnetMemcachedName')]",
             "properties": {
               "addressPrefix": "[parameters('subnetMemcachedPrefix')]"
             }
@@ -167,7 +165,7 @@
       "name": "nicapache",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -196,7 +194,7 @@
         "count": "[parameters('numberOfMemcachedInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -218,8 +216,8 @@
       "name": "[parameters('domainName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', 'nicapache')]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', 'nicapache')]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -233,7 +231,7 @@
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "[concat(variables('domainName'),'_OSDisk')]", 
+            "name": "[concat(parameters('domainName'),'_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -274,7 +272,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('newStorageAccountName'), '.blob.core.windows.net/vhds/', variables('memcachedMachineNamePrefix'), copyindex(), '-osdisk.vhd')]"
+              "uri": "[concat('http://', parameters('newStorageAccountName'), '.blob.', environment().suffixes.storage, '/vhds/', variables('memcachedMachineNamePrefix'), copyindex(), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -309,9 +307,9 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[variables('scriptUrlInstallMemcached')]"
+            "[uri(parameters('_artifactsLocation'), concat('install_memcached.sh', parameters('_artifactsLocationSasToken')))]"
           ],
-          "commandToExecute": "[concat('sh install_memcached.sh ', copyindex(), ' ', reference(concat('nicmemcached', copyindex())).ipConfigurations[0].properties.privateIPAddress, ' ', reference('nicapache').ipConfigurations[0].properties.privateIPAddress)]"
+          "commandToExecute": "[concat('sh install_memcached.sh ', ' ', reference(concat('nicmemcached', copyindex())).ipConfigurations[0].properties.privateIPAddress, ' ', reference('nicapache').ipConfigurations[0].properties.privateIPAddress)]"
         }
       }
     },
@@ -330,7 +328,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[variables('scriptUrlInstallApache')]"
+            "[uri(parameters('_artifactsLocation'), concat('install_apache.sh', parameters('_artifactsLocationSasToken')))]"
           ],
           "commandToExecute": "[concat('sh install_apache.sh ', parameters('numberOfMemcachedInstances'), ' ', parameters('subnetMemcachedPrefix'))]"
         }
