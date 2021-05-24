@@ -1,5 +1,15 @@
 # Gexp Private Node
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/expanse/go-expanse-on-ubuntu/PublicLastTestDate.svg)
+![Azure Public Test Result]( https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/expanse/go-expanse-on-ubuntu/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/expanse/go-expanse-on-ubuntu/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result]( https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/expanse/go-expanse-on-ubuntu/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/expanse/go-expanse-on-ubuntu/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/expanse/go-expanse-on-ubuntu/CredScanResult.svg)
+
+
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/PublicDeployment.svg" />&nbsp;
 
@@ -12,6 +22,7 @@
 This Microsoft Azure template deploys a single Expanse client with a private chain for development and testing.
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fexpanse%2Fgo-expanse-on-ubuntu%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fexpanse%2Fgo-expanse-on-ubuntu%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fexpanse%2Fgo-expanse-on-ubuntu%2Fazuredeploy.json) 
 
 Once your deployment is complete you will have a expanse environment with:
