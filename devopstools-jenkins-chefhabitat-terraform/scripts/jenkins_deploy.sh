@@ -11,18 +11,18 @@ passwd=`cat /var/lib/jenkins/secrets/initialAdminPassword`
 url="localhost:8080"
 echo "$2,$3,$4,${15}" >> $srcdir/mongodbvhdurl.secrets
 
-# Configure Repos for Azure Cli 2.0
-echo "---Configure Repos for Azure Cli 2.0---" >> $LOG
-echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | sudo tee /etc/apt/sources.list.d/azure-cli.list >> $LOG
-sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893 >> $LOG
+export DEBIAN_FRONTEND=noninteractive
 
-# Repository Updates
-echo "---Repository Updates---"	>> $LOG
-sudo apt-get update
+apt-get update
+apt-get -y install ca-certificates curl apt-transport-https lsb-release gnupg
 
-#Installing Packages
-echo "---Installing Packages---"	>> $LOG
-sudo apt-get -y install apt-transport-https azure-cli html-xml-utils xmlstarlet jq >> $LOG
+curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+
+AZ_REPO=$(lsb_release -cs)
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list
+sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893
+
+apt-get -y install azure-cli html-xml-utils xmlstarlet jq >> $LOG
 
 #Download the Required Jenkins Files
 echo "---Download the Required Jenkins Files---" >> $LOG
