@@ -1,4 +1,4 @@
-﻿#Azure Application Gateway Log Analyzer using GoAccess
+﻿# Azure Application Gateway Log Analyzer using GoAccess
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/application-gateway-logviewer-goaccess/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/application-gateway-logviewer-goaccess/PublicDeployment.svg)
