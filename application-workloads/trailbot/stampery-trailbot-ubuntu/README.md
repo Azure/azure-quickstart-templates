@@ -1,4 +1,4 @@
-#[<img style="width:100%;" src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dist/images/banner.png">](https://trailbot.io)
+# [<img style="width:100%;" src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dist/images/banner.png">](https://trailbot.io)
 
 # Secure Ubuntu by Trailbot
 
