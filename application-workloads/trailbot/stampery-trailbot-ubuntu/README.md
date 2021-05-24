@@ -1,4 +1,4 @@
-[<img style="width:100%;" src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dist/images/banner.png">](https://trailbot.io)
+#[<img style="width:100%;" src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dist/images/banner.png">](https://trailbot.io)
 
 # Secure Ubuntu by Trailbot
 
@@ -19,7 +19,9 @@ You can manage your Smart Policies and audit trails by using the [Trailbot Clien
 
 All the files and logs watched in this VM will have the [Stamper Smart Policy](https://github.com/trailbot/stamper-policy) configured by default, so every time such files are modified, their hashes will be embedded in both the Ethereum and Bitcoin blockchains by using the [Stampery API](https://stampery.com/tech).
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Ftrailbot%2Fstampery-trailbot-ubuntu%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Ftrailbot%2Fstampery-trailbot-ubuntu%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Ftrailbot%2Fstampery-trailbot-ubuntu%2Fazuredeploy.json)  
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Ftrailbot%2Fstampery-trailbot-ubuntu%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Ftrailbot%2Fstampery-trailbot-ubuntu%2Fazuredeploy.json)
 
 
 
