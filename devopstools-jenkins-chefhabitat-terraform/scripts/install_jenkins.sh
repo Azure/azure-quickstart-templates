@@ -196,13 +196,20 @@ fi
 
 sudo add-apt-repository ppa:openjdk-r/ppa --yes
 
-echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/azure-cli/ wheezy main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
-sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893
-sudo apt-get install apt-transport-https
-sudo apt-get update --yes
+export DEBIAN_FRONTEND=noninteractive
 
-#install openjdk8
-sudo apt-get install openjdk-8-jre openjdk-8-jre-headless openjdk-8-jdk --yes
+apt-get update
+apt-get -y install ca-certificates curl apt-transport-https lsb-release gnupg
+
+curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+
+AZ_REPO=$(lsb_release -cs)
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list
+apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893
+
+apt get update
+
+apt-get -y install azure-cli openjdk-8-jre openjdk-8-jre-headless openjdk-8-jdk --yes
 
 #install jenkins
 if [[ ${jenkins_release_type} == 'verified' ]]; then
