@@ -4,16 +4,25 @@ password=$2
 tenantID=$3
 storageAcc=$4
 subscriptionID=$5
-echo "---Configure Repos for Azure Cli 2.0---"
-echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
-sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893
-sudo apt-get update
-sudo apt-get install apt-transport-https azure-cli openjdk-8-jdk -y
+apt-get update
+
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+apt-get -y install ca-certificates curl apt-transport-https lsb-release gnupg
+
+curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+
+AZ_REPO=$(lsb_release -cs)
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list
+
+apt-get -y install azure-cli openjdk-8-jdk
+
 addgroup hab
-sudo useradd -g hab hab
-usermod -aG sudo hab
+useradd -g hab hab
+usermod -aG hab
 sleep 30
-curl https://raw.githubusercontent.com/habitat-sh/habitat/master/components/hab/install.sh | sudo bash
+curl https://raw.githubusercontent.com/habitat-sh/habitat/master/components/hab/install.sh | bash
 mkdir /scripts
 echo "#!/bin/sh" >> /scripts/uploadhart.sh
 echo "HARTFILE=\$1" >> /scripts/uploadhart.sh
