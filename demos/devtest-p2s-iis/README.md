@@ -1,4 +1,3 @@
-
 # DevTest environment with P2S VPN and Win-IIS
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/devtest-p2s-iis/PublicLastTestDate.svg)
