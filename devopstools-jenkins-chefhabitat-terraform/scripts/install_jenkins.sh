@@ -209,7 +209,7 @@ apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893
 
 apt get update
 
-apt-get -y install azure-cli openjdk-8-jre openjdk-8-jre-headless openjdk-8-jdk --yes
+apt-get -y install azure-cli openjdk-8-jre openjdk-8-jre-headless openjdk-8-jdk
 
 #install jenkins
 if [[ ${jenkins_release_type} == 'verified' ]]; then
