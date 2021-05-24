@@ -13,16 +13,16 @@ echo "$2,$3,$4,${15}" >> $srcdir/mongodbvhdurl.secrets
 
 export DEBIAN_FRONTEND=noninteractive
 
-apt-get update
-apt-get -y install ca-certificates curl apt-transport-https lsb-release gnupg
+sudo apt-get update
+sudo apt-get -y install ca-certificates curl apt-transport-https lsb-release gnupg
 
-curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
 
 AZ_REPO=$(lsb_release -cs)
-echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
 sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893
 
-apt-get -y install azure-cli html-xml-utils xmlstarlet jq >> $LOG
+sudo apt-get -y install azure-cli html-xml-utils xmlstarlet jq >> $LOG
 
 #Download the Required Jenkins Files
 echo "---Download the Required Jenkins Files---" >> $LOG
