@@ -1,7 +1,5 @@
 #!/bin/bash
 
-export DEBIAN_FRONTEND=noninteractive
-
 apt-get update
 apt-get install -y openvpn
 apt-get install -y ruby
