@@ -30,10 +30,6 @@ param maxStalenessPrefix int = 100000
 @description('Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400.')
 param maxIntervalInSeconds int = 300
 
-@allowed([
-  true
-  false
-])
 @description('Enable automatic failover for regions')
 param automaticFailover bool = true
 
