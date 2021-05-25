@@ -64,13 +64,20 @@ wget $bosh_cli_url
 chmod +x ./bosh-cli-*
 mv ./bosh-cli-* /usr/local/bin/bosh
 
-# https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-apt?view=azure-cli-latest#install
-echo "Installing Azure CLI"
+export DEBIAN_FRONTEND=noninteractive
+
+sudo pt-get update
+sudo apt-get -y install ca-certificates curl apt-transport-https lsb-release gnupg
+
+curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+
 AZ_REPO=$(lsb_release -cs)
-echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list
-curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-retryop "apt-get install apt-transport-https"
-retryop "apt-get update && apt-get install azure-cli"
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893
+
+sudo apt get update
+
+sudo apt-get -y install azure-cli openjdk-8-jdk
 
 echo "Creating the containers (bosh and stemcell) and the table (stemcells) in the default storage account"
 default_storage_account=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME)
