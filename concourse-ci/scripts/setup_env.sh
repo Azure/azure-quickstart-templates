@@ -77,7 +77,7 @@ sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893
 
 sudo apt get update
 
-sudo apt-get -y install azure-cli openjdk-8-jdk
+sudo apt-get -y install azure-cli
 
 echo "Creating the containers (bosh and stemcell) and the table (stemcells) in the default storage account"
 default_storage_account=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME)
