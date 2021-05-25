@@ -53,20 +53,6 @@
       "metadata": {
         "description": "Size of the VM"
       }
-    },
-    "_artifactsLocation": {
-        "type": "string",
-        "metadata": {
-            "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-        },
-        "defaultValue": "[deployment().properties.templateLink.uri]"
-      },
-    "_artifactsLocationSasToken": {
-        "type": "securestring",
-        "metadata": {
-            "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
-        },
-        "defaultValue": ""
     }
   },
   "variables": {
@@ -74,7 +60,21 @@
     "storageAccountName": "[concat(uniqueString(resourceGroup().id), 'haproxysa')]",
     "numberOfHAproxyInstances": 2,
     "masterHAproxyInstanceIndex": 0,
+    "haproxyVMScripts": {
+      "fileUris": [
+        "[concat(variables('scriptsBaseUrl'), 'haproxyvm-configure.sh')]",
+        "[concat(variables('scriptsBaseUrl'), 'keepalived-action.sh')]",
+        "[concat(variables('scriptsBaseUrl'), 'keepalived-check-appsvc.sh')]"
+      ],
+      "commandToExecute": "[concat('sudo bash -x haproxyvm-configure.sh ', ' -a ', parameters('appVMNamePrefix'), '0 -a ', parameters('appVMNamePrefix'), '1 -p ', variables('appVMPort'), ' -l ', parameters('lbDNSLabelPrefix'), '.', resourceGroup().location, '.cloudapp.azure.com -t ', variables('lbVIPPort'), ' -m ', parameters('haproxyVMNamePrefix'), '0 -b ', parameters('haproxyVMNamePrefix'), '1')]"
+    },
     "numberOfAppInstances": 2,
+    "appVMScripts": {
+      "fileUris": [
+        "[concat(variables('scriptsBaseUrl'), 'apache-setup.sh')]"
+      ],
+      "commandToExecute": "sudo bash apache-setup.sh"
+    },
     "appVMPort": 80,
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
@@ -466,6 +466,8 @@
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
+          "fileUris": "[variables('appVMScripts').fileUris]",
+          "commandToExecute": "[variables('appVMScripts').commandToExecute]"
         }
       }
     },
@@ -488,15 +490,8 @@
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "fileUris": [
-            "[uri(parameters('_artifactsLocation'), concat('haproxyvm-configure.sh', parameters('_artifactsLocationSasToken')))]",
-            "[uri(parameters('_artifactsLocation'), concat('keepalived-action.sh', parameters('_artifactsLocationSasToken')))]",
-            "[uri(parameters('_artifactsLocation'), concat('keepalived-check-appsvc.sh', parameters('_artifactsLocationSasToken')))]",
-            "[uri(parameters('_artifactsLocation'), concat('apache-setup.sh', parameters('_artifactsLocationSasToken')))]"
-          ]
-        },
-        "protectedSettings": {
-          "commandToExecute": "[concat('sudo bash -x haproxyvm-configure.sh ', ' -a ', parameters('appVMNamePrefix'), '0 -a ', parameters('appVMNamePrefix'), '1 -p ', variables('appVMPort'), ' -l ', parameters('lbDNSLabelPrefix'), '.', resourceGroup().location, '.cloudapp.azure.com -t ', variables('lbVIPPort'), ' -m ', parameters('haproxyVMNamePrefix'), '0 -b ', parameters('haproxyVMNamePrefix'), '1')]"
+          "fileUris": "[variables('haproxyVMScripts').fileUris]",
+          "commandToExecute": "[variables('haproxyVMScripts').commandToExecute]"
         }
       }
     }
