@@ -14,12 +14,26 @@
         "description": "Admin password"
       }
     },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Default Virtual Machine Size"
+      },
+      "defaultValue": "Standard_DS1_v2"
+    },     
     "dnsNameforIPv4LbIP": {
       "type": "string",
       "metadata": {
         "description": "DNS prefix for IPv4 IP Address of the load balancer. It must be lowercase and match the regex: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$."
       }
     },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Default location"
+      },
+      "defaultValue": "[resourceGroup().location]"
+    },    
     "dnsNameforIPv6LbIP": {
       "type": "string",
       "metadata": {
@@ -56,8 +70,8 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2016-04-30-preview",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": 2,
         "platformUpdateDomainCount": 2,
@@ -68,7 +82,7 @@
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('ipv4PublicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAddressVersion": "IPv4",
         "publicIPAllocationMethod": "[variables('ipv4PublicIPAddressType')]",
@@ -81,7 +95,7 @@
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('ipv6PublicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAddressVersion": "IPv6",
         "publicIPAllocationMethod": "[variables('ipv6PublicIPAddressType')]",
@@ -95,14 +109,14 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2019-08-01",
       "name": "[variables('networkSecurityGroupName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {}
     },
     {
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
@@ -129,14 +143,14 @@
       "apiVersion": "2018-01-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicNamePrefix'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -179,10 +193,10 @@
       "apiVersion": "2016-03-30",
       "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('ipv4PublicIPAddressName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('ipv6PublicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('ipv4PublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('ipv6PublicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -296,17 +310,17 @@
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfInstances')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNamePrefix'), copyindex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicNamePrefix'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
         },
         "hardwareProfile": {
-          "vmSize": "Standard_DS1_v2"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[concat(variables('vmNamePrefix'), copyIndex())]",
