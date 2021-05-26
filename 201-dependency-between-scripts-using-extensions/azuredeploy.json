@@ -2,12 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "This is the name of the your storage account"
-      }
-    },
     "dnsNameForPublicIP": {
       "type": "string",
       "metadata": {
@@ -22,6 +16,7 @@
     },
     "vmSize": {
       "type": "string",
+      "defaultValue": "Standard_D2_v3",
       "metadata": {
         "description": "Size of VM"
       }
@@ -33,63 +28,44 @@
         "description": "Location for all resources."
       }
     },
-    "authenticationType": {
-      "type": "string",
-      "defaultValue": "sshPublicKey",
-      "allowedValues": [
-        "sshPublicKey",
-        "password"
-      ],
-      "metadata": {
-        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
-      }
-    },
-    "adminPasswordOrKey": {
+    "adminPassword": {
       "type": "securestring",
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+          },
+          "defaultValue": "[deployment().properties.templateLink.uri]"
+      },
+    "_artifactsLocationSasToken": {
+        "type": "securestring",
+        "metadata": {
+            "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+        },
+        "defaultValue": ""
     }
   },
   "variables": {
     "addressPrefix": "10.0.0.0/16",
     "imagePublisher": "Canonical",
     "imageVersion": "latest",
-    "imageSKU": "12.04.5-LTS",
+    "imageSKU": "18.04-LTS",
     "imageOffer": "UbuntuServer",
-    "subnet1Name": "Subnet-1",
-    "subnet1Prefix": "10.0.0.0/24",
+    "subnetName": "Subnet-1",
+    "subnetPrefix": "10.0.0.0/24",
     "publicIPAddressType": "Dynamic",
     "publicIPAddressName": "myPublicIP",
     "storageAccountType": "Standard_LRS",
     "vmName": "myVM",
     "virtualNetworkName": "myVNET",
     "nicName": "myVMNic",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
-    "installMongoTemplateurl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-dependency-between-scripts-using-extensions/install-mongo.json",
-    "linuxConfiguration": {
-      "disablePasswordAuthentication": true,
-      "ssh": {
-        "publicKeys": [
-          {
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-            "keyData": "[parameters('adminPasswordOrKey')]"
-          }
-        ]
-      }
-    }
+    "subnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets/',variables('virtualNetworkName'),variables('subnetName'))]"
   },
   "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -115,9 +91,9 @@
         },
         "subnets": [
           {
-            "name": "[variables('subnet1Name')]",
+            "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnet1Prefix')]"
+              "addressPrefix": "[variables('subnetPrefix')]"
             }
           }
         ]
@@ -142,7 +118,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
               },
               "subnet": {
-                "id": "[variables('subnet1Ref')]"
+                "id": "[variables('subnetID')]"
               }
             }
           }
@@ -150,12 +126,11 @@
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2021-03-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -165,8 +140,12 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxConfiguration": {
+            "patchSettings": {
+              "patchMode": "ImageDefault"
+            }
+          }
         },
         "storageProfile": {
           "imageReference": {
@@ -176,7 +155,10 @@
             "version": "[variables('imageVersion')]"
           },
           "osDisk": {
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('storageAccountType')]"
+            }
           }
         },
         "networkProfile": {
@@ -185,19 +167,13 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
             }
           ]
-        },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
-          }
         }
       }
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/configuremongo')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
@@ -209,7 +185,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-dependency-between-scripts-using-extensions/mongo-configure-ubuntu.sh"
+            "[uri(parameters('_artifactsLocation'), concat('scripts/mongo-configure-ubuntu.sh', parameters('_artifactsLocationSasToken')))]"
           ],
           "commandToExecute": "sh mongo-configure-ubuntu.sh"
         }
@@ -225,12 +201,15 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('installMongoTemplateurl')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('templates/install-mongo.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "vmName": {
             "value": "[variables('vmName')]"
+          },
+          "mongoinstalluri": {
+            "value": "[uri(parameters('_artifactsLocation'), concat('scripts/mongo-install-ubuntu.sh', parameters('_artifactsLocationSasToken')))]"
           }
         }
       }
