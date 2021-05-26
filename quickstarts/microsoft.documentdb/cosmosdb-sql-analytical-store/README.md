@@ -9,6 +9,8 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql-analytical-store/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql-analytical-store/CredScanResult.svg)
 
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-sql-analytical-store/BicepVersion.svg)
+
 This template creates an Azure Cosmos account for Core (SQL) API with a database and container configured with autoscale and analytical store.
 
 Below are the parameters which can be user configured in the parameters file or template including:
