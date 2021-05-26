@@ -36,7 +36,7 @@ param
 	[Parameter(Mandatory=$true)]
 	[string]$SourceImage,
 
-	[Parameter(Mandatory=$true)]
+	[Parameter(Mandatory=$false)]
 	[string]$SourceSAKey,
 
 	[Parameter(Mandatory=$true)]
@@ -220,8 +220,12 @@ try
 		"   azCopyLogFile = $azCopyLogFile" | Out-File "c:\$scriptName.txt" -Append
 
 		"   Running AzCopy Tool..." | Out-File "c:\$scriptName.txt" -Append
-		& $AzCopyTool "/Source:$SourceURIContainer","/SourceKey:$SourceSAKey", "/Dest:$DestinationURI", "/DestKey:$DestinationSAKey", "/Pattern:$blobName", "/Y" , "/V:$azCopyLogFile", "/Z:$PSScriptRoot", "/NC:20"
-
+		if($SourceSAKey -ne $null){
+			& $AzCopyTool "/Source:$SourceURIContainer","/SourceKey:$SourceSAKey", "/Dest:$DestinationURI", "/DestKey:$DestinationSAKey", "/Pattern:$blobName", "/Y" , "/V:$azCopyLogFile", "/Z:$PSScriptRoot", "/NC:20"
+		}
+		else{
+			& $AzCopyTool "/Source:$SourceURIContainer", "/Dest:$DestinationURI", "/DestKey:$DestinationSAKey", "/Pattern:$blobName", "/Y" , "/V:$azCopyLogFile", "/Z:$PSScriptRoot", "/NC:20"
+		}
 		"   Checking blob copy status..." | Out-File "c:\$scriptName.txt" -Append
 		# Checking blob copy status
 		$result = getBlobCompletionStatus -AzCopyLogFile $azCopyLogFile
