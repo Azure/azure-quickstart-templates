@@ -85,10 +85,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": ""
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "github": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image/shared/",
     "images": {
       "Windows Server 2012 Datacenter": {
         "sku": "2012-Datacenter",
@@ -130,15 +143,15 @@
         "Publisher": "Microsoft.Compute",
         "Name": "CustomScriptExtension",
         "Version": "1.7",
-        "script": "[concat(variables('github'), 'configureSAPVM.ps1')]",
-        "scriptCall": "powershell.exe -ExecutionPolicy bypass -File configureSAPVM.ps1"
+        "script": "[uri(parameters('_artifactsLocation'), concat('shared/configureSAPVM.ps1', parameters('_artifactsLocationSasToken')))]",
+        "scriptCall": "powershell.exe -ExecutionPolicy Unrestricted -File shared\\configureSAPVM.ps1"
       },
       "Linux": {
         "Publisher": "Microsoft.Azure.Extensions",
         "Name": "CustomScript",
         "Version": "2.0",
-        "script": "[concat(variables('github'), 'configureSAPVM.sh')]",
-        "scriptCall": "sh configureSAPVM.sh"
+        "script": "[uri(parameters('_artifactsLocation'), concat('shared/configureSAPVM.sh', parameters('_artifactsLocationSasToken')))]",
+        "scriptCall": "sh shared/configureSAPVM.sh"
       }
     },
     "cseExtPublisher": "[variables('csExtension')[variables('internalOSType')].Publisher]",
@@ -152,10 +165,10 @@
     "vmSizes": {
       "Small < 2.000 SAPS": {
         "Premium": {
-          "size": "Standard_DS11"
+          "size": "Standard_DS2_v2"
         },
         "Standard": {
-          "size": "Standard_D11"
+          "size": "Standard_DS2_v2"
         }
       },
       "Medium < 9.000 SAPS": {
@@ -184,18 +197,6 @@
       }
     },
     "vmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('storageType')].size]",
-    "nicConfigurations": {
-      "new": {
-        "countPublicIp": 1,
-        "countNSG": 1
-      },
-      "existing": {
-        "countPublicIp": 0,
-        "countNSG": 0
-      }
-    },
-    "countPublicIp": "[variables('nicConfigurations')[parameters('newOrExistingSubnet')].countPublicIp]",
-    "countNSG": "[variables('nicConfigurations')[parameters('newOrExistingSubnet')].countNSG]",
     "sidlower": "[toLower(parameters('sapSystemId'))]",
     "vmName": "[concat(variables('sidlower'), '-servercs')]",
     "storageAccountName": "[concat(variables('sidlower'), uniqueString(variables('sidlower'), resourceGroup().id))]",
@@ -213,9 +214,7 @@
     "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentName'), 'nsg')]",
     "nestedDeploymentNameNIC": "[concat(variables('nestedDeploymentName'), 'nic')]",
     "nestedDeploymentNamePIP": "[concat(variables('nestedDeploymentName'), 'pip')]",
-    "osDiskType": "image",
-    "apiVerion": "2015-06-15",
-    "apiVerionRm": "2015-01-01"
+    "osDiskType": "image"
   },
   "resources": [
     {
@@ -234,7 +233,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'vnet.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/', parameters('newOrExistingSubnet'), 'vnet.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -260,7 +259,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'nic-config.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/nic-config.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -292,7 +291,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'os-disk-parts.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/os-disk-parts.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -326,8 +325,8 @@
           "vmName": {
             "value": "[variables('vmName')]"
           },
-          "storageAccountName": {
-            "value": "[variables('storageAccountName')]"
+          "storageAccountUri": {
+            "value": "[reference(variables('storageAccountName'), '2017-10-01').primaryEndpoints['blob']]"
           }
         }
       }
@@ -339,7 +338,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'pip.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/', parameters('newOrExistingSubnet'), 'pip.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -359,7 +358,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'nsg.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/', parameters('newOrExistingSubnet'), 'nsg.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -409,7 +408,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'cs-server-', variables('vmSize'), '_multiNIC_No.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('shared/cs-server-', variables('vmSize'), '_multiNIC_No.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -437,8 +436,8 @@
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
           },
-          "storageAccountName": {
-            "value": "[variables('storageAccountName')]"
+          "storageAccountUri": {
+            "value": "[reference(variables('storageAccountName'), '2017-10-01').primaryEndpoints['blob']]"
           },
           "nicName": {
             "value": "[variables('nicName')]"
