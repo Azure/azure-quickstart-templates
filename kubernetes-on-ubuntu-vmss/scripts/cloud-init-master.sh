@@ -15,6 +15,8 @@ RESOURCE_GROUP=$3
 SUB=$4
 TENANT=$5
 
+export DEBIAN_FRONTEND=noninteractive
+
 installDeps() {
     # update and upgrade packages
     apt-get update && apt-get upgrade -y
@@ -32,6 +34,7 @@ installDeps() {
 }
 
 setupKubeadm() {
+    export HOME=/root
     # initialize master
     kubeadm init --pod-network-cidr=192.168.0.0/16  --token $KUBEADM_TOKEN
 

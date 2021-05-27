@@ -13,7 +13,7 @@
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-front-door-premium-function-private-link%2Fazuredeploy.json)    
 
-This template deploys a Front Door Standard/Premium (Preview) with an Azure Funtions origin, using a private endpoint to access the Azure Functions application.
+This template deploys a Front Door Standard/Premium (Preview) with an Azure Functions origin, using a private endpoint to access the Azure Functions application.
 
 ## Sample overview and deployed resources
 

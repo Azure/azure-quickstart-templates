@@ -15,7 +15,7 @@
 
 My team mate [Scott Semyan](http://github.com//ssemyan) and I recently worked on the web site for the [2016 DNCC](http://demconvention.com).
 One of security principles we followed was to have no inbound ports to our web servers. 
-To enable secure continuous deployment Scott and I put together a clever configuration of a continous pull from a private git repo using read-only [SSH deploy keys](https://gist.github.com/zhujunsan/a0becf82ade50ed06115). 
+To enable secure continuous deployment Scott and I put together a clever configuration of a continuous pull from a private git repo using read-only [SSH deploy keys](https://gist.github.com/zhujunsan/a0becf82ade50ed06115). 
 
 ## Configure git
 Git access via SSH requires a **private** key to the repo on the web server. We want to treat the key as very sensitive information and deploy securely. See note on deploying from Azure Key Vault below.

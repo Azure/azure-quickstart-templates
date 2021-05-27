@@ -90,6 +90,18 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "clusterNodeSize": {
+      "type": "string",
+      "defaultValue": "Standard_D12",
+      "allowedValues": [
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14"
+      ],
+      "metadata": {
+        "description": "All nodes will be deployed using the specified hardware profile: D12(4 CPU Cores, 28GB of RAM), D13(8 CPU Cores, 56GB of RAM), D14(16 CPU Cores, 112 GB of RAM)."
+      }
     }
   },
   "variables": {
@@ -143,7 +155,7 @@
       ],
       "tags": {},
       "properties": {
-        "clusterVersion": "3.2",
+        "clusterVersion": "3.6",
         "osType": "Linux",
         "clusterDefinition": {
           "kind": "[parameters('clusterType')]",
@@ -158,7 +170,7 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[concat(parameters('clusterStorageAccountName'),'.blob.core.windows.net')]",
+              "name": "[replace(replace(concat(reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('clusterStorageAccountName')), '2019-06-01').primaryEndpoints.blob),'https:',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
               "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
@@ -171,7 +183,7 @@
               "name": "headnode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "Large"
+                "vmSize": "[parameters('clusterNodeSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -185,7 +197,7 @@
               },
               "scriptActions": [
                 {
-                  "name": "setenvironmentvariable",
+                  "name": "setenvironmentvariableHeadNode",
                   "uri": "[parameters('scriptActionUri')]",
                   "parameters": "headnode"
                 }
@@ -195,7 +207,7 @@
               "name": "workernode",
               "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
               "hardwareProfile": {
-                "vmSize": "Large"
+                "vmSize": "[parameters('clusterNodeSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -209,7 +221,7 @@
               },
               "scriptActions": [
                 {
-                  "name": "setenvironmentvariable",
+                  "name": "setenvironmentvariableWorkerNode",
                   "uri": "[parameters('scriptActionUri')]",
                   "parameters": "workernode"
                 }
@@ -219,7 +231,7 @@
               "name": "zookeepernode",
               "targetInstanceCount": 3,
               "hardwareProfile": {
-                "vmSize": "[variables(concat(parameters('clusterType'),'ZookeeperSize'))]"
+                "vmSize": "[parameters('clusterNodeSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -233,7 +245,7 @@
               },
               "scriptActions": [
                 {
-                  "name": "setenvironmentvariable",
+                  "name": "setenvironmentvariableZookeeperNode",
                   "uri": "[parameters('scriptActionUri')]",
                   "parameters": "zookeepernode"
                 }

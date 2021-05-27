@@ -45,6 +45,7 @@ resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2020
   properties: {
     roleDefinitionId: storageAccountContributorRoleDefinitionId
     principalId: managedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
@@ -54,6 +55,7 @@ resource roleAssignmentStorageBlobDataContributor 'Microsoft.Authorization/roleA
   properties: {
     roleDefinitionId: storageAccountStorageBlobDataContributorRoleDefinitionId
     principalId: managedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 

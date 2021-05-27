@@ -1,0 +1,430 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.1",
+    "parameters": {
+        "managedInstanceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Enter managed instance name."
+            }
+        },
+        "administratorLogin": {
+            "type": "string",
+            "metadata": {
+                "description": "Enter user name."
+            }
+        },
+        "administratorLoginPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Enter password."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Enter location. If you leave this field blank resource group location would be used."
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "defaultValue": "SQLMI-VNET",
+            "metadata": {
+                "description": "Enter virtual network name. If you leave this field blank name will be created by the template."
+            }
+        },
+        "addressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "Enter virtual network address prefix."
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "ManagedInstance",
+            "metadata": {
+                "description": "Enter subnet name."
+            }
+        },
+        "subnetPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "description": "Enter subnet address prefix."
+            }
+        },
+        "managementSubnetName": {
+            "type": "string",
+            "defaultValue": "Management",
+            "metadata": {
+                "description": "Enter management subnet name."
+            }
+        },
+        "managementSubnetPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.1.0/24",
+            "metadata": {
+                "description": "Enter management subnet address prefix."
+            }
+        },
+        "skuName": {
+            "type": "string",
+            "allowedValues":[
+                "GP_Gen5",
+                "BC_Gen5"
+            ],
+            "defaultValue": "GP_Gen5",
+            "metadata": {
+                "description": "Enter sku name."
+            }
+        },
+        "vCores": {
+            "type": "int",
+            "defaultValue": 16,
+            "allowedValues":[
+                8,
+                16,
+                24,
+                32,
+                40,
+                64,
+                80
+            ],              
+            "metadata": {
+                "description": "Enter number of vCores."
+            }
+        },
+        "storageSizeInGB": {
+            "type": "int",         
+            "defaultValue": 256,
+            "minValue": 32,
+            "maxValue": 8192,
+            "metadata": {
+                "description": "Enter storage size."
+            }
+        },
+        "licenseType": {
+            "type": "string",
+            "defaultValue": "LicenseIncluded",
+            "allowedValues":[
+                "BasePrice",
+                "LicenseIncluded"
+            ],             
+            "metadata": {
+                "description": "Enter license type."
+            }
+        },        
+        "virtualMachineSize": {
+            "type": "string",
+            "defaultValue": "Standard_B2s",         
+            "metadata": {
+                "description": "Enter virtual machine size."
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            },
+            "defaultValue": ""
+        }        
+    },
+    "variables": {
+        "networkSecurityGroupName": "[concat('SQLMI-', parameters('managedInstanceName'), '-NSG')]",
+        "routeTableName": "[concat('SQLMI-', parameters('managedInstanceName'), '-Route-Table')]",
+        "virtualMachineName": "[concat(take(parameters('managedInstanceName'),13), 'JB')]",
+        "networkInterfaceName": "[concat('SQLMI-', parameters('managedInstanceName'), '-JB-NIC')]",
+        "publicIpAddressName": "[concat('SQLMI-', parameters('managedInstanceName'), '-JB-IP')]",
+        "jbNetworkSecurityGroupName": "[concat('SQLMI-', parameters('managedInstanceName'), '-JB-NSG')]",
+        "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('installSSMS.ps1', parameters('_artifactsLocationSasToken')))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-06-01",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('networkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+              "securityRules": [
+                  {
+                    "name": "allow_tds_inbound",
+                    "properties": {
+                      "description": "Allow access to data",
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "1433",
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 1000,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "allow_redirect_inbound",
+                    "properties": {
+                        "description": "Allow inbound redirect traffic to Managed Instance inside the virtual network",
+                        "protocol": "Tcp",
+                        "sourcePortRange": "*",
+                        "destinationPortRange": "11000-11999",
+                        "sourceAddressPrefix": "VirtualNetwork",
+                        "destinationAddressPrefix": "*",
+                        "access": "Allow",
+                        "priority": 1100,
+                        "direction": "Inbound"
+                    }
+                  },                   
+                  {
+                    "name": "deny_all_inbound",
+                    "properties": {
+                      "description": "Deny all other inbound traffic",
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "*",
+                      "access": "Deny",
+                      "priority": 4096,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "deny_all_outbound",
+                    "properties": {
+                      "description": "Deny all other outbound traffic",
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "*",
+                      "access": "Deny",
+                      "priority": 4096,
+                      "direction": "Outbound"
+                    }
+                  }
+              ]
+            }
+        },        
+        {
+            "type": "Microsoft.Network/routeTables",
+            "name": "[variables('routeTableName')]",
+            "apiVersion": "2019-06-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "disableBgpRoutePropagation": false
+            }
+        },
+        {
+            "name": "[parameters('virtualNetworkName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-06-01",
+            "dependsOn":[
+                "[variables('routeTableName')]",
+                "[variables('networkSecurityGroupName')]"
+            ],
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetPrefix')]",
+                            "routeTable": {
+                                "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
+                            },
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                            },
+                            "delegations": [
+                                {
+                                    "name": "miDelegation",
+                                    "properties": {
+                                        "serviceName": "Microsoft.Sql/managedInstances"
+                                    }
+                                }
+                            ]	  
+                        }
+                    },
+                    {
+                        "name": "[parameters('managementSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('managementSubnetPrefix')]"
+                        }
+                    }                    
+                ]
+            }
+        },   
+        {
+            "type": "Microsoft.Sql/managedInstances",
+            "apiVersion": "2019-06-01-preview",
+            "dependsOn":[
+                "[parameters('virtualNetworkName')]"
+            ],
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "location": "[parameters('location')]",
+            "name": "[parameters('managedInstanceName')]",
+            "sku": {
+                "name": "[parameters('skuName')]"
+            },
+            "properties": {
+                "administratorLogin": "[parameters('administratorLogin')]",
+                "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+                "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+                "storageSizeInGB": "[parameters('storageSizeInGB')]",
+                "vCores": "[parameters('vCores')]",
+                "licenseType": "[parameters('licenseType')]"
+            }
+        },        
+        {
+            "name": "[variables('virtualMachineName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-12-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('networkInterfaceName')]"
+            ],
+            "properties": {
+                "osProfile": {
+                    "computerName": "[variables('virtualMachineName')]",
+                    "adminUsername": "[parameters('administratorLogin')]",
+                    "adminPassword": "[parameters('administratorLoginPassword')]",
+                    "windowsConfiguration": {
+                        "provisionVmAgent": "true"
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2016-Datacenter",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS"
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                  "name": "SetupSSMS",
+                  "type": "extensions",
+                  "location": "[parameters('location')]",
+                  "apiVersion": "2019-12-01",
+                  "dependsOn": [
+                    "[variables('virtualMachineName')]"
+                  ],
+                  "tags": {
+                    "displayName": "SetupSSMS"
+                  },
+                  "properties": {
+                    "publisher": "Microsoft.Compute",
+                    "type": "CustomScriptExtension",
+                    "typeHandlerVersion": "1.9",
+                    "autoUpgradeMinorVersion": true,
+                    "settings": {
+                      "fileUris": [
+                        "[variables('scriptFileUri')]"
+                      ],
+                      "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File installSSMS.ps1"
+                    }
+                  }
+                }
+              ]            
+        },
+
+        {
+            "name": "[variables('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-06-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[parameters('virtualNetworkName')]",
+                "[variables('publicIpAddressName')]",
+                "[variables('jbNetworkSecurityGroupName')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('managementSubnetName'))]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('jbNetworkSecurityGroupName'))]"
+                }
+            }
+        },
+        {
+            "name": "[variables('publicIpAddressName')]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2019-06-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIpAllocationMethod": "Dynamic"
+            },
+            "sku": {
+                "name": "Basic"
+            }
+        },
+        {
+            "name": "[variables('jbNetworkSecurityGroupName')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-06-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "RDP",
+                        "properties": {
+                            "priority": 300,
+                            "protocol": "Tcp",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "3389"
+                        }
+                    }
+                ]
+            }
+        }        
+    ]
+}

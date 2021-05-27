@@ -4,20 +4,9 @@
   "parameters": {
     "vmSize": {
       "type": "string",
-      "allowedValues": [
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_D1",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4"
-      ],
       "metadata": {
         "description": "Size of vm, e.g: Standard_D2"
-      },
-      "defaultValue": "Standard_D2"
+      }
     },
     "username": {
       "type": "string",
@@ -81,14 +70,26 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      }
     }
   },
   "variables": {
     "scenarioPrefix": "puppetAgentLinux",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "ubuntuOSVersion": "14.04.5-LTS",
-    "OSDiskName": "[concat(variables('scenarioPrefix'),'OSDisk')]",
+    "ubuntuOSVersion": "18.04-LTS",
     "nicName": "[concat(variables('scenarioPrefix'),'Nic')]",
     "vnetAddressPrefix": "10.0.0.0/16",
     "subnetName": "[concat(variables('scenarioPrefix'),'Subnet')]",
@@ -96,11 +97,10 @@
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(variables('scenarioPrefix'),'PublicIp')]",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
     "vmName": "[concat(variables('scenarioPrefix'),'VM')]",
     "virtualNetworkName": "[concat(variables('scenarioPrefix'),'Vnet')]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "fileUris": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/puppet-agent-linux/install_puppet_agent.sh",
+    "fileUris": "[uri(parameters('_artifactsLocation'), concat('install_puppet_agent.sh', parameters('_artifactsLocationSasToken')))]",
     "commandToExecute": "[concat('./install_puppet_agent.sh ', parameters('pupmstrIP'), ' ', parameters('pupmstrFQDN'), ' ', parameters('pupmstrInternalFQDN'))]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
@@ -163,8 +163,8 @@
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -189,8 +189,8 @@
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -230,7 +230,7 @@
       "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -238,7 +238,9 @@
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "fileUris": "[split(variables('fileUris'), ' ')]",
+          "fileUris": [
+            "[variables('fileUris')]"
+          ],
           "commandToExecute": "[variables('commandToExecute')]"
         }
       }

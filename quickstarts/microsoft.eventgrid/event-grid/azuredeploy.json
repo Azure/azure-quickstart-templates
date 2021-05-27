@@ -1,0 +1,66 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "eventGridTopicName": {
+      "type": "string",
+      "defaultValue": "[format('topic-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Event Grid custom topic."
+      }
+    },
+    "eventGridSubscriptionName": {
+      "type": "string",
+      "defaultValue": "[format('sub-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Event Grid custom topic's subscription."
+      }
+    },
+    "eventGridSubscriptionUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "The webhook URL to send the subscription events to. This URL must be valid and must be prepared to accept the Event Grid webhook URL challenge request."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location in which the Event Grid resources should be deployed."
+      }
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.EventGrid/topics",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('eventGridTopicName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.EventGrid/eventSubscriptions",
+      "apiVersion": "2020-06-01",
+      "scope": "[format('Microsoft.EventGrid/topics/{0}', parameters('eventGridTopicName'))]",
+      "name": "[parameters('eventGridSubscriptionName')]",
+      "properties": {
+        "destination": {
+          "endpointType": "WebHook",
+          "properties": {
+            "endpointUrl": "[parameters('eventGridSubscriptionUrl')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventGrid/topics', parameters('eventGridTopicName'))]"
+      ]
+    }
+  ],
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.1.62928",
+      "templateHash": "11275484167198272818"
+    }
+  }
+}

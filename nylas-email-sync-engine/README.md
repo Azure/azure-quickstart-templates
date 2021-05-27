@@ -8,8 +8,9 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/nylas-email-sync-engine/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/nylas-email-sync-engine/CredScanResult.svg)
-
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnylas-email-sync-engine%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnylas-email-sync-engine%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnylas-email-sync-engine%2Fazuredeploy.json)  
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnylas-email-sync-engine%2Fazuredeploy.json)  
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnylas-email-sync-engine%2Fazuredeploy.json)
 
 This template deploys the Nylas Sync Engine on a Debian VM in Azure. This allows you to sync your email with the Nylas N1 email client on a Linux OS like Ubuntu.
 
@@ -40,7 +41,7 @@ You can get a list of all connected accounts by requesting `http://<your-vms-pub
 
 >2.  In it's current form this endpoint requires no authentication. To deploy this securely you will need to roll your own security layer (nginx reverse proxy etc.) in front of the endpoint.
 
-For subsequent requests to retreive mail, contacts, and calendar data, your app should pass the `account_id` value from the previous step as the "username" parameter in HTTP Basic auth. For example:
+For subsequent requests to retrieve mail, contacts, and calendar data, your app should pass the `account_id` value from the previous step as the "username" parameter in HTTP Basic auth. For example:
 
 ```bash
 $ curl --user 'ACCOUNT_ID_VALUE_HERE:' http://<your-vms-public-ip>:5555/threads
