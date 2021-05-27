@@ -55,7 +55,7 @@ else {
 }
 
 Write-Host "Updating LIVE table with..."
-$r | fl *
+$r | Format-List *
 
 $p = @{ }
 foreach ($i in $r.PSObject.Properties) {
