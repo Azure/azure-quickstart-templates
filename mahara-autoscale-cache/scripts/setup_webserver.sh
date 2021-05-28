@@ -48,6 +48,8 @@ echo $nfsVmName >> /tmp/vars.txt
 echo $htmlLocalCopySwitch >> /tmp/vars.txt
 echo $azFQDN >> /tmp/vars.txt
 
+export DEBIAN_FRONTEND=noninteractive
+
 . ./helper_functions.sh
 
 configure_site_url ${siteFQDN} ${azFQDN}
@@ -56,18 +58,17 @@ check_fileServerType_param $fileServerType
 
 {
   # make sure the system does automatic update
-  sudo apt-get -y update
+  sudo add-apt-repository universe
+  sudo apt-get update
   sudo apt-get -y install unattended-upgrades
 
   # install pre-requisites
-  sudo apt-get -y install python-software-properties unzip rsyslog
-
-  sudo apt-get -y install postgresql-client mysql-client git
+  sudo apt-get -y install python-software-properties unzip rsyslog postgresql-client mysql-client git
 
   if [ $fileServerType = "gluster" ]; then
     #configure gluster repository & install gluster client
     sudo add-apt-repository ppa:gluster/glusterfs-3.8 -y
-    sudo apt-get -y update
+    sudo apt-get update
     sudo apt-get -y install glusterfs-client
   elif [ "$fileServerType" = "azurefiles" ]; then
     sudo apt-get -y install cifs-utils
@@ -89,8 +90,7 @@ check_fileServerType_param $fileServerType
   fi
 
   # Mahara requirements
-  sudo apt-get install -y graphviz aspell php-soap php-json php-bcmath php-gd php-pgsql php-mysql php-xmlrpc php-intl php-xml php-bz2
-  install_php_sql_driver
+  sudo apt-get install -y graphviz aspell php-soap php-json php-bcmath php-gd php-pgsql php5-mysql php-xmlrpc php-intl php-xml php-bz2
 
   if [ $fileServerType = "gluster" ]; then
     # Mount gluster fs for /mahara
