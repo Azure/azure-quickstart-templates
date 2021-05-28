@@ -2,6 +2,20 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            },
+            "defaultValue": ""
+        },
         "dnsLabelPrefix": {
             "type": "string",
             "metadata": {
@@ -74,10 +88,6 @@
         },
         "imageSKU": {
             "type": "string",
-            "allowedValues": [
-                "2012-R2-Datacenter",
-                "2016-Datacenter"
-            ],
             "metadata": {
                 "description": "Windows server SKU"
             },
@@ -120,8 +130,7 @@
         "imagePublisher": "MicrosoftWindowsServer",
         "imageOffer": "WindowsServer",
         "subnet-id": "[resourceId(parameters('existingVnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVnet'), parameters('existingSubnet'))]",
-        "publicIpRef": "publicIp",
-        "assetLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment"
+        "publicIpRef": "publicIp"
     },
     "resources": [
         {
@@ -347,7 +356,7 @@
                         "typeHandlerVersion": "2.76",
                         "autoUpgradeMinorVersion": true,
                         "settings": {
-                            "ModulesUrl": "[concat(variables('assetLocation'),'/Configuration.zip')]",
+                            "ModulesUrl": "[uri(parameters('_artifactsLocation'), concat('Configuration.zip', parameters('_artifactsLocationSasToken')))]",
                             "ConfigurationFunction": "Configuration.ps1\\Gateway",
                             "properties": {
                                 "DomainName": "[parameters('adDomainName')]",
@@ -380,14 +389,14 @@
                         "autoUpgradeMinorVersion": true,
                         "settings": {
                             "fileUris": [
-                                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment-ha-gateway/Scripts/WebAndGwFarmAdd_PostConfig1.1.ps1"
+                                "[uri(parameters('_artifactsLocation'), concat('WebAndGwFarmAdd_PostConfig1.1.ps1', parameters('_artifactsLocationSasToken')))]"
                             ]
                         },
                         "protectedSettings": {
                             "Items": {
                                 "AdminPassword": "[parameters('adminPassword')]"
                             },
-                            "commandToExecute": "[Concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', 'WebAndGwFarmAdd_PostConfig1.1.ps1',' ','-username \"',parameters('adminusername'),'\" ', '-password \"',parameters('adminpassword'),'\" ','-BrokerServer \"',parameters('BrokerServer'),'\" ','-WebURL \"',parameters('WebURL'),'\" ','-Domainname \"',parameters('adDomainName'),'\" ','-DomainNetbios \"',parameters('DomainNetbios'),'\" ','-numberofwebServers ',parameters('numberOfWebGwInstances'))]"
+                            "commandToExecute": "[Concat('powershell.exe -ExecutionPolicy Unrestricted -File Scripts/WebAndGwFarmAdd_PostConfig1.1.ps1', ' ', '-username \"',parameters('adminusername'),'\" ', '-password \"',parameters('adminpassword'),'\" ','-BrokerServer \"',parameters('BrokerServer'),'\" ','-WebURL \"',parameters('WebURL'),'\" ','-Domainname \"',parameters('adDomainName'),'\" ','-DomainNetbios \"',parameters('DomainNetbios'),'\" ','-numberofwebServers ',parameters('numberOfWebGwInstances'))]"
                         }
                     }
                 }
