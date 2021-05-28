@@ -158,7 +158,7 @@ install_zookeeper()
 	mkdir -p /var/lib/zookeeper
 	cd /var/lib/zookeeper
 	wget "http://mirrors.ukfast.co.uk/sites/ftp.apache.org/zookeeper/stable/apache-zookeeper-3.6.3.tar.gz"
-	tar -xvf "zookeeper-3.4.9.tar.gz"
+	tar -xvf "apache-zookeeper-3.6.3.tar.gz"
 
 	touch zookeeper-3.4.9/conf/zoo.cfg
 
