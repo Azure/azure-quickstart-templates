@@ -2,17 +2,16 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "image": {
+    "imageSku": {
       "type": "string",
-      "defaultValue": "OpenLogic:CentOS-HPC:7.1",
+      "defaultValue": "8.0",
       "allowedValues": [
-        "OpenLogic:CentOS-HPC:7.1",
-        "OpenLogic:CentOS-HPC:6.5",
-        "OpenLogic:CentOS:6.6",
-        "OpenLogic:CentOS:7.0"
+        "6.6",
+        "7.0",
+        "8.0"
       ],
       "metadata": {
-        "description": "OpenLogic CentOS version to use. CentOS-HPC includes RDMA drivers for compute-to-compute MPI InfiniBand on A8 and A9 VM sizes."
+        "description": "OpenLogic CentOS version to use"
       }
     },
     "adminUsername": {
@@ -61,14 +60,13 @@
     },
     "vmNamePrefix": {
       "type": "string",
-      "defaultValue": "lustre",
       "metadata": {
         "description": "Prefix for the virtual machine names"
       }
     },
     "clientVmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2_v2",
+      "defaultValue": "Standard_D2_v3",
       "metadata": {
         "description": "Size of the Lustre client VM"
       }
@@ -82,7 +80,7 @@
     },
     "filesystemName": {
       "type": "string",
-      "defaultValue": "scratch",
+      "defaultValue": "lustre",
       "metadata": {
         "description": "Name of the Lustre filesystem exposed by the Lustre MGS node"
       }
@@ -105,6 +103,13 @@
         "description": "Storage account type (e.g. Premium_LRS or Standard_LRS). Make sure to select Premium_LRS only when using DS-series or GS-series Virtual Machines."
       }
     },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Default location for the resources"
+      }
+    },
     "existingVnetResourceGroupName": {
       "type": "string",
       "metadata": {
@@ -113,14 +118,12 @@
     },
     "existingVnetName": {
       "type": "string",
-      "defaultValue": "vnet-lustre",
       "metadata": {
         "description": "Existing Virtual Network name (e.g. vnet-lustre)"
       }
     },
     "existingSubnetClientsName": {
       "type": "string",
-      "defaultValue": "subnet-lustre-clients",
       "metadata": {
         "description": "Lustre clients will be deployed into this subnet within the existing Virtual Network"
       }
@@ -142,41 +145,22 @@
   },
   "variables": {
     "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
-    "imageReference_OpenLogic:CentOS-HPC:7.1": {
-      "publisher": "OpenLogic",
-      "offer": "CentOS-HPC",
-      "sku": "7.1",
-      "version": "latest"
-    },
-    "imageReference_OpenLogic:CentOS-HPC:6.5": {
-      "publisher": "OpenLogic",
-      "offer": "CentOS-HPC",
-      "sku": "6.5",
-      "version": "latest"
-    },
-    "imageReference_OpenLogic:CentOS:7.0": {
-      "publisher": "OpenLogic",
+    "imageReference": {
+      "publisher": "openlogic",
       "offer": "CentOS",
-      "sku": "7.0",
+      "sku": "[parameters('imageSku')]",
       "version": "latest"
     },
-    "imageReference_OpenLogic:CentOS:6.6": {
-      "publisher": "OpenLogic",
-      "offer": "CentOS",
-      "sku": "6.6",
-      "version": "latest"
-    },
-    "imageReference": "[variables(concat('imageReference_',parameters('image')))]",
     "clientAvailabilitySetSettings": {
       "name": "[concat(parameters('clientAvailabilitySetName'))]",
       "faultDomainCount": "2",
       "updateDomainCount": "3"
     },
+    "scriptUrlLustreClient": "[uri(parameters('_artifactsLocation'), concat('lustre_client.sh', parameters('_artifactsLocationSasToken')))]",
     "vnetID": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('existingVnetName'))]",
     "subnetClientsID": "[concat(variables('vnetID'), '/subnets/', parameters('existingSubnetClientsName'))]",
-    "scriptUrlLustreClient": "[uri(parameters('_artifactsLocation'), concat('lustre_client.sh', parameters('_artifactsLocationSasToken')))]",
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
-    "linuxConfiguration_sshPublicKey": {
+    "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
         "publicKeys": [
@@ -186,16 +170,14 @@
           }
         ]
       }
-    },
-    "linuxConfiguration_password": { },
-    "linuxConfiguration": "[variables(concat('linuxConfiguration_',parameters('authenticationType')))]"
+    }
   },
   "resources": [
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
       }
@@ -204,7 +186,7 @@
       "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('clientAvailabilitySetSettings').name]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
         },
@@ -217,7 +199,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('vmNamePrefix'),'client0')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "idleTimeoutInMinutes": 4,
@@ -230,7 +212,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('vmNamePrefix'), 'client0')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', parameters('vmNamePrefix'), 'client0')]"
       ],
@@ -255,7 +237,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex(1))]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "clientNicCopy",
         "count": "[sub(parameters('clientCount'),1)]"
@@ -278,7 +260,7 @@
       "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('clientAvailabilitySetSettings').name)]",
@@ -302,7 +284,7 @@
           "computerName": "[concat(parameters('vmNamePrefix'), 'client', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": "[variables('linuxConfiguration')]"
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
@@ -325,7 +307,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex(), '/init')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('vmNamePrefix'),'client',copyIndex()))]"
       ],
@@ -335,14 +317,14 @@
       },
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
-		"type": "CustomScript",
-		"typeHandlerVersion": "2.0",
-		"autoUpgradeMinorVersion": true,
-        "settings": {
-          "fileUris": [
-            "[variables('scriptUrlLustreClient')]"
-          ],
-          "commandToExecute": "[concat('bash lustre_client.sh', ' -n ', parameters('image'), ' -i ', copyIndex(), ' -d 0', ' -m ', parameters('mgsIpAddress'), ' -l ', reference(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmNamePrefix'), 'client', copyIndex()))).ipConfigurations[0].properties.privateIPAddress, ' -f ', parameters('filesystemName'))]"
+    		"type": "CustomScript",
+    		"typeHandlerVersion": "2.0",
+    		"autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[variables('scriptUrlLustreClient')]"
+            ],
+          "commandToExecute": "[concat('bash lustre_client.sh -n CLIENTCENTOS', parameters('imageSku'), ' -i ', copyIndex(), ' -d 0', ' -m ', parameters('mgsIpAddress'), ' -l ', reference(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmNamePrefix'), 'client', copyIndex()))).ipConfigurations[0].properties.privateIPAddress, ' -f ', parameters('filesystemName'))]"
         }
       }
     }
