@@ -48,8 +48,6 @@ echo $nfsVmName >> /tmp/vars.txt
 echo $htmlLocalCopySwitch >> /tmp/vars.txt
 echo $azFQDN >> /tmp/vars.txt
 
-export DEBIAN_FRONTEND=noninteractive
-
 . ./helper_functions.sh
 
 configure_site_url ${siteFQDN} ${azFQDN}
@@ -58,7 +56,6 @@ check_fileServerType_param $fileServerType
 
 {
   # make sure the system does automatic update
-  sudo add-apt-repository universe
   sudo apt-get update
   sudo apt-get -y install unattended-upgrades
 
@@ -75,7 +72,7 @@ check_fileServerType_param $fileServerType
   fi
 
   # install the base stack
-  sudo apt-get -y install varnish php php-cli php-curl php-zip php-pear php-mbstring php-dev mcrypt
+  sudo apt-get -y install varnish php php-cli php-curl php-zip php-pear php-mbstring php-dev php5-mcrypt
 
   if [ "$webServerType" = "nginx" -o "$httpsTermination" = "VMSS" ]; then
     sudo apt-get -y install nginx
