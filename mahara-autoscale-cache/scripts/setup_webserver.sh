@@ -56,6 +56,7 @@ check_fileServerType_param $fileServerType
 
 {
   sudo apt clean
+  sudo add-apt-repository universe
 
   # make sure the system does automatic update
   sudo apt-get update
