@@ -55,6 +55,8 @@ configure_site_url ${siteFQDN} ${azFQDN}
 check_fileServerType_param $fileServerType
 
 {
+  sudo apt clean
+
   # make sure the system does automatic update
   sudo apt-get update
   sudo apt-get -y install unattended-upgrades
