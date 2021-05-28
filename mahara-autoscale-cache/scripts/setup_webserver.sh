@@ -57,6 +57,8 @@ check_fileServerType_param $fileServerType
 {
   export DEBIAN_FRONTEND=noninteractive
 
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C
+
   sudo apt clean
   sudo add-apt-repository universe
   sudo add-apt-repository ppa:ondrej/php
