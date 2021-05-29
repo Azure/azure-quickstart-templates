@@ -4,7 +4,7 @@
   "parameters": {
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-DDoS-Attack-Prevention/",
+      "defaultValue": "[deployment().properties.templatelink.uri]",
       "metadata": {
         "description": "this will be the location for artifacts"
       }
@@ -18,12 +18,7 @@
     },
     "location": {
       "type": "string",
-      "allowedValues": [
-        "East US",
-        "West Europe",
-        "Southeast Asia",
-        "Australia Southeast"
-      ],
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "your resources will be created in this location"
       }
@@ -161,13 +156,13 @@
       }
     ],
     "vmName": "[concat(parameters('vmNamePrefix'),'-with-ddos')]",
-    "omsTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.loganalytics/workspaces.json'),parameters('_artifactsLocationSasToken'))]",
-    "vnetTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.network/virtualnetworks.json'),parameters('_artifactsLocationSasToken'))]",
-    "nsgTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.network/nsg.json'),parameters('_artifactsLocationSasToken'))]",
-    "pipTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.network/publicipaddress.json'),parameters('_artifactsLocationSasToken'))]",
-    "nicTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.network/nic-with-pip.json'),parameters('_artifactsLocationSasToken'))]",
-    "vmTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.compute/vm.windows.json'),parameters('_artifactsLocationSasToken'))]",
-    "dscScriptUri": "[concat(uri(parameters('_artifactsLocation'),'DSC/DesiredStateConfig.ps1.zip'),parameters('_artifactsLocationSasToken'))]"
+    "omsTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.loganalytics/workspaces.json',parameters('_artifactsLocationSasToken')))]",
+    "vnetTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.network/virtualnetworks.json',parameters('_artifactsLocationSasToken')))]",
+    "nsgTemplateUri": "[uri(parameters('_artifactsLocation'),concat('nested/microsoft.network/nsg.json', parameters('_artifactsLocationSasToken')))]",
+    "pipTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.network/publicipaddress.json',parameters('_artifactsLocationSasToken')))]",
+    "nicTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.network/nic-with-pip.json',parameters('_artifactsLocationSasToken')))]",
+    "vmTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.compute/vm.windows.json',parameters('_artifactsLocationSasToken')))]",
+    "dscScriptUri": "[uri(parameters('_artifactsLocation'), concat('DSC/DesiredStateConfig.ps1.zip',parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
     {
@@ -398,11 +393,22 @@
         "protectedSettings": {}
       }
     },
-    {
-      "type": "microsoft.insights/alertrules",
+     {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2019-06-01",
+      "name": "ddosactiongroup",
+      "location": "Global",
+      "properties": {
+        "groupShortName": "ddosag",
+        "enabled": true,
+        "emailReceivers": "[parameters('emailToSendAlertsTo')]"
+      }
+    },
+     {
+      "type": "microsoft.insights/metricAlerts",
       "name": "DDoS-attack-metric-alert-rule",
-      "apiVersion": "2016-03-01",
-      "location": "[parameters('location')]",
+       "apiVersion": "2018-03-01",
+      "location": "global",
       "dependsOn": [
         "[concat(variables('vmName'),'-pip','-resource')]"
       ],
@@ -410,29 +416,43 @@
         "name": "DDoS attack alert",
         "description": "Under DDoS attack alert",
         "isEnabled": true,
-        "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-            "resourceUri": "[reference(concat(variables('vmName'),'-pip','-resource')).outputs.publicIPResourceId.value]",
-            "metricNamespace": null,
-            "metricName": "IfUnderDDoSAttack"
-          },
-          "operator": "GreaterThanOrEqual",
-          "threshold": 1,
-          "windowSize": "PT5M"
+                "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[reference(concat(variables('vmName'),'-pip','-resource')).outputs.publicIPResourceId.value]"
+        ],
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "additionalProperties": {},
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            { 
+              "metricNamespace": "MatricAlerts",
+              "metricName": "IfUnderDDoSAttack",
+              "operator": "GreaterThanOrEqual",
+              "threshold": 1,
+              "windowSize": "PT5M",
+              "name":"ddoscriteria",
+              "additionalProperties": {},
+              "criterionType": "StaticThresholdCriterion",
+              "timeAggregation": "Minimum"
+            }
+          ]
         },
         "actions": [
           {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-            "sendToServiceOwners": true,
-            "customEmails": [
-              "[parameters('emailToSendAlertsTo')]"
-            ]
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', 'ddosactiongroup')]",
+            "webHookProperties": {}
           }
         ]
       }
     }
   ],
-  "outputs": {}
+    "outputs": {
+    "actionGroupId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Insights/actionGroups', 'ddosactiongroup')]"
+    }
+  }
 }
