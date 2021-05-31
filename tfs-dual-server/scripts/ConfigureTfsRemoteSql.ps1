@@ -2,17 +2,16 @@
 param(
     [string] $SqlInstance,
     [string] $userName,
-    [Security.SecureString] $password
+    [string] $password
 )
 
 $ErrorActionPreference = 'Stop'
 
 # TFS 2017 Update 3
-[string]$sqlPwd = $password
-[Security.SecureString] $sqlPwd = ConvertTo-SecureString $password -AsPlainText -Force
 $TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=857132'
 $InstallDirectory = 'C:\Program Files\Microsoft Team Foundation Server 15.0'
 $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
+$PsToolsDownloadUrl = 'https://download.sysinternals.com/files/PSTools.zip'
 
 # Checks if TFS is installed
 function Ensure-TfsInstalled()
