@@ -15,7 +15,7 @@ $PsToolsDownloadUrl = 'https://download.sysinternals.com/files/PSTools.zip'
 function Ensure-TfsInstalled()
 {
     # TFS 2017 Update 3
-    # Check if TFS is already installed.
+    # Check if TFS is already installed
     $tfsInstalled = $false
 
     if(Test-Path $InstallKey)
