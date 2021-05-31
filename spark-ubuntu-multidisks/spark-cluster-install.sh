@@ -130,7 +130,7 @@ setup_datadisks() {
 install_pre()
 {
 # First install pre-requisites
-	sudo  apt-get -y update
+	sudo  apt-get update
 
 	echo "Installing Java"
 	add-apt-repository -y ppa:webupd8team/java
