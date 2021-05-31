@@ -11,7 +11,6 @@ $TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=857132'
 $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
 $PsToolsDownloadUrl = 'https://download.sysinternals.com/files/PSTools.zip'
 
-# Checks if TFS is installed
 function Ensure-TfsInstalled()
 {
     # TFS 2017 Update 3
