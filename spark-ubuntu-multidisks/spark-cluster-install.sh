@@ -196,7 +196,7 @@ install_spark()
 	sudo chown -R spark:spark ${DATADIR}/spark
 	sudo chmod 4755 ${DATADIR}/spark/tmp
 
-#	Fifth let�s do a quick test
+#	Fifth let's do a quick test
 #	cd /usr/local/spark
 #	bin/run-example SparkPi 10
 
