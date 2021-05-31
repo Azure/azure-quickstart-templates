@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
     [string] $SqlInstance,
+    [string] $domainName,
     [string] $userName,
     [string] $password
 )
@@ -87,6 +88,8 @@ function Configure-TfsRemoteSql()
 {
     # Run tfsconfig to do the unattend install
     $path = Join-Path $InstallDirectory '\tools\tfsconfig.exe'
+    $dname = $domainName.Split(".")[0]
+    $userName = "${dname}\\${userName}"
 
     Write-Verbose "Running tfsconfig..."
 
