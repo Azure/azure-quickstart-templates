@@ -1,12 +1,20 @@
+[CmdletBinding()]
+param(
+    [string] $SqlInstance,
+    [string] $userName,
+    [string] $password
+)
+
 $ErrorActionPreference = 'Stop'
+
+$TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=857132'
+$InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
+$PsToolsDownloadUrl = 'https://download.sysinternals.com/files/PSTools.zip'
 
 # Checks if TFS is installed
 function Ensure-TfsInstalled()
 {
     # TFS 2017 Update 3
-    $TfsDownloadUrl = 'https://go.microsoft.com/fwlink/?LinkId=857132'
-    $InstallKey = 'HKLM:\SOFTWARE\Microsoft\DevDiv\tfs\Servicing\15.0\serverCore'
-    $PsToolsDownloadUrl = 'https://download.sysinternals.com/files/PSTools.zip'
     # Check if TFS is already installed.
     $tfsInstalled = $false
 
@@ -74,15 +82,10 @@ function Download-PsTools()
     }
 }
 
-# Runs tfsconfig to configure TFS on the machine
-function Configure-TfsRemoteSql {
-     param(
-         [string] $SqlInstance,
-         [string] $userName,
-         [string] $password
-     )
+function Configure-TfsRemoteSql()
+{
     # Run tfsconfig to do the unattend install
-    $path = Join-Path $InstallDirectory 'C:\Program Files\Microsoft Team Foundation Server 15.0\tools\tfsconfig.exe'
+    $path = Join-Path $InstallDirectory '\tools\tfsconfig.exe'
 
     Write-Verbose "Running tfsconfig..."
 
