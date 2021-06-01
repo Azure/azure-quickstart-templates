@@ -21,5 +21,3 @@ The empty edge node virtual machine size must meet the worker node vm size requi
 The template uses a simple "dummy" script to simulate application installation and prepare a clean empty edgenode and attach it to the cluster.
 
 For more information about creating and using edge node, see <a href="https://docs.microsoft.com/azure/hdinsight/hdinsight-apps-use-edge-node">Use empty edge nodes in HDInsight
-
-
