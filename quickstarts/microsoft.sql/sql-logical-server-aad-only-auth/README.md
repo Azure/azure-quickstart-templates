@@ -19,6 +19,7 @@ This template allows you to create an [Azure SQL logical server](https://docs.mi
 
 ## Deployment steps
 
+- Click the **Deploy to Azure** button and fill in the parameters to deploy a sample Azure SQL logical server with [Azure AD-only authentication](https://docs.microsoft.com/azure/azure-sql/database/authentication-aad-only-auth) enabled.
 - An Azure AD admin will need to be set in order to enable [Azure AD-only authentication](https://docs.microsoft.com/azure/azure-sql/database/authentication-aad-only-auth).
 - Choose an Azure AD admin for the deployment. You will find the user Object ID by going to the [Azure portal](https://portal.azure.com) and navigating to your **Azure Active Directory** resource. Under **Manage**, select **Users**. Search for the user you want to set as the Azure AD admin for your Azure SQL server. Select the user, and under their **Profile** page, you will see the **Object ID**.
 - The Tenant ID can be found in the **Overview** page of your **Azure Active Directory** resource.
