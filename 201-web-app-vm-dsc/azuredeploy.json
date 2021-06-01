@@ -54,12 +54,6 @@
         "description": "This is the DNS name of the Virtual Machine"
       }
     },
-    "configurationFunction": {
-      "type": "string",
-      "metadata": {
-        "description": "This is the link to the Web Deploy package to be deployed to the Virtual Machine. It is a github URL in this example."
-      }
-    },
     "DatabaseServerName": {
       "type": "string",
       "metadata": {
@@ -68,6 +62,13 @@
     },
     "DatabaseServerLocation": {
       "type": "string",
+      "metadata": {
+        "description": "This is database server location"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "This is database server location"
       }
@@ -108,17 +109,19 @@
         "description": "This is database edition"
       }
     },
-    "modulesUrl": {
+    "_artifactsLocation": {
       "type": "string",
       "metadata": {
-        "description": "This is the URL for downloading the PowerShell DSC module. In this case it should be the link to a zip file hosted under an Azure storage container"
-      }
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
-    "webdeploypkg": {
-      "type": "string",
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
       "metadata": {
-        "description": "This is the link to the Web Deploy package for the website that's going to be deployed to the Virtual Machine"
-      }
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
@@ -132,7 +135,6 @@
     "subnet2Prefix": "10.0.1.0/24",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
     "publicIPAddressName": "[concat(parameters('vmName'), '-PublicIP-VM')]",
-    "storageAccountType": "Standard_LRS",
     "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
@@ -140,7 +142,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "PublicIPAddress"
       },
@@ -156,7 +158,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2019-08-01",
       "name": "[variables('networkSecurityGroupName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -192,7 +194,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
@@ -228,13 +230,13 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "NetworkInterface"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -257,12 +259,12 @@
       "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "VirtualMachine"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -298,10 +300,10 @@
         {
           "name": "DSCExt1",
           "type": "extensions",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "2015-05-01-preview",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
           ],
           "tags": {
             "displayName": "DSCExt1"
@@ -312,11 +314,11 @@
             "typeHandlerVersion": "2.19",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "modulesUrl": "[parameters('modulesUrl')]",
+              "modulesUrl": "[uri(parameters('_artifactsLocation'), concat('ConfigureWebServer.ps1.zip', parameters('_artifactsLocationSasToken')))]",
               "configurationFunction": "ConfigureWebServer.ps1\\Main",
               "properties": {
                 "MachineName": "[parameters('vmName')]",
-                "WebDeployPackagePath": "[parameters('webdeploypkg')]",
+                "WebDeployPackagePath": "[uri(parameters('_artifactsLocation'), concat('WebApplication3.zip', parameters('_artifactsLocationSasToken')))]",
                 "UserName": "[parameters('adminUsername')]",
                 "Password": "[parameters('adminPassword')]",
                 "DbServerName": "[parameters('DatabaseServerName')]",
@@ -350,7 +352,7 @@
           "location": "[parameters('DatabaseServerLocation')]",
           "apiVersion": "2014-04-01-preview",
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', parameters('DatabaseServerName'))]"
+            "[resourceId('Microsoft.Sql/servers/', parameters('DatabaseServerName'))]"
           ],
           "properties": {
             "startIpAddress": "0.0.0.0",
@@ -363,7 +365,7 @@
           "location": "[parameters('DatabaseServerLocation')]",
           "apiVersion": "2014-04-01-preview",
           "dependsOn": [
-            "[parameters('DatabaseServerName')]"
+            "[resourceId('Microsoft.Sql/servers/', parameters('DatabaseServerName'))]"
           ],
           "tags": {
             "displayName": "cawadb1"
