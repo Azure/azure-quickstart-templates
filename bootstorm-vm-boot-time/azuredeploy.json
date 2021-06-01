@@ -33,6 +33,20 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+          "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bootstorm-vm-boot-time/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+          "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
@@ -51,16 +65,14 @@
     "vmOsSku": "2012-R2-Datacenter",
     "vmAdminUsername": "vmadministrator",
     "vmAdminPassword": "pwd0a!8b7",
-    "vmName": "[concat('vm', uniqueString(resourceGroup().id))]",,
+    "vmName": "[concat('vm', uniqueString(resourceGroup().id))]",
     "vmSize": "Standard_A2",
     "vmNicName": "[concat('nc', uniqueString(resourceGroup().id))]",
     "virtualNetworkName": "[concat('vn', uniqueString(resourceGroup().id))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "nsgName": "[concat('ng', uniqueString(resourceGroup().id))]",
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
-    "modulesPath": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bootstorm-vm-boot-time/",
-    "moduleVMBootAll": "VMBootAll.zip",
-    "modulesUrlVMBootAll": "[concat(variables('modulesPath'),variables('moduleVMBootAll'))]",
+    "modulesUrlVMBootAll": "[uri(parameters('_artifactsLocation'), concat('VMBootAll.zip', parameters('_artifactsLocationSasToken')))]",
     "configurationFunctionVMBootAll": "VMBootAll.ps1\\ConfigureVMBootAll"
   },
   "resources": [
@@ -114,7 +126,7 @@
       "name": "[variables('virtualNetworkName')]",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
       ],
       "properties": {
         "addressSpace": {
@@ -141,8 +153,8 @@
       "name": "[variables('vmNicName')]",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -171,7 +183,7 @@
         "count": "[parameters('vmCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -193,8 +205,8 @@
       "name": "[variables('vmName')]",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('uniqueStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/',variables('vmNicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/',variables('uniqueStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/',variables('vmNicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -243,7 +255,7 @@
         "count": "[parameters('vmCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('uniqueStorageAccountName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/',variables('uniqueStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/',variables('vmNicName'),copyIndex())]"
       ],
       "properties": {
@@ -286,10 +298,14 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/dscExtension')]",
+      "name": "[concat(variables('vmName'),copyIndex(), '/dscExtension')]",
       "location": "[variables('location')]",
+      "copy": {
+        "name": "extensionLoop",
+        "count": "[parameters('vmCount')]"
+      },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/',variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
