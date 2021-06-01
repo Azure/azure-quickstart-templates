@@ -15,4 +15,4 @@
 
 This template allows you to create an [Azure SQL Database Managed Instance](https://docs.microsoft.com/azure/azure-sql/managed-instance/sql-managed-instance-paas-overview) with [Azure AD-only authentication](https://docs.microsoft.com/azure/azure-sql/database/authentication-aad-only-auth) enabled.
 
-`Tags: Azure, SQL logical server, Azure AD-only authentication`
+`Tags: Azure, SQL Managed Instance, Azure AD-only authentication`
