@@ -30,24 +30,6 @@
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_A1",
-      "allowedValues": [
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A6",
-        "Standard_A7",
-        "Standard_A8",
-        "Standard_A9",
-        "Standard_A10",
-        "Standard_A11",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4",
-        "Standard_D11",
-        "Standard_D12",
-        "Standard_D13",
-        "Standard_D14"
-      ],
       "metadata": {
         "description": "Size of the Virtual Machine."
       }
@@ -75,31 +57,39 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "ubuntuOSVersion": "16.04-LTS",
-    "OSDiskName": "osDisk",
     "nsgName": "[concat(parameters('vmName'),'NeoNSG')]",
     "nicName": "[concat(parameters('vmName'),'NeoNIC')]",
-    "dockerExtensionName": "DockerExtension",
-    "azureVMUtilsName": "vmCustomizationExt",
-    "azureVMUtilsScriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/docker-neo4j/extras/setup_data_disk.sh",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(parameters('vmName'),'NeoPublicIP')]",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
     "vmName": "[parameters('vmName')]",
     "vmSize": "[parameters('vmSize')]",
     "virtualNetworkName": "[concat(parameters('vmName'),'NeoVNET')]",
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "dataDisk1VhdName": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmName'),'dataDisk1.vhd')]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -167,8 +157,8 @@
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -259,8 +249,8 @@
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -304,8 +294,8 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/', variables('azureVMUtilsName'))]",
-      "apiVersion": "2015-05-01-preview",
+      "name": "[concat(variables('vmName'), '/setupDataDisk')]",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
@@ -317,7 +307,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[variables('azureVMUtilsScriptUrl')]"
+            "[uri(parameters('_artifactsLocation'), concat('scripts/setup_data_disk.sh', parameters('_artifactsLocationSasToken')))]"
           ],
           "commandToExecute": "bash setup_data_disk.sh"
         }
@@ -325,11 +315,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/', variables('dockerExtensionName'))]",
-      "apiVersion": "2015-05-01-preview",
+      "name": "[concat(variables('vmName'), '/neo4jDocker')]",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'),'/','extensions/',variables('azureVMUtilsName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'),'/extensions/setupDataDisk')]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
