@@ -23,6 +23,7 @@
     },
     "appVmCount": {
       "type": "int",
+      "minValue": 1,
       "maxValue": 20,
       "defaultValue": 1,
       "metadata": {
@@ -135,17 +136,16 @@
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
     "storageAccountType": "Premium_LRS",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'vhdsa')]",
-    "vhdBlobContainer": "vhds",
     "lbName": "openedx-loadbalancer",
     "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
-    "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]",
-    "lbProbeLMSID": "[concat(variables('lbID'),'/probes/tcpProbeLMS')]",
-    "lbProbeCMSID": "[concat(variables('lbID'),'/probes/tcpProbeCMS')]",
-    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontend')]"
+    "lbPoolID": "[resourceId(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]",
+    "lbProbeLMSID": "[resourceId(variables('lbID'),'/probes/tcpProbeLMS')]",
+    "lbProbeCMSID": "[resourceId(variables('lbID'),'/probes/tcpProbeCMS')]",
+    "frontEndIPConfigID": "[resourceId(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontend')]"
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-01-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
@@ -281,9 +281,9 @@
       "name": "[concat(variables('appVmName'), copyIndex(), '-nic')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/loadBalancers/',variables('lbName'))]",
-        "[concat('Microsoft.Network/loadBalancers/',variables('lbName'), '/inboundNatRules/SSH-VM', copyIndex())]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', concat(variables('lbName'), '/inboundNatRules/SSH-VM', copyIndex()))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -296,12 +296,12 @@
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]"
+                  "id": "[resourceId(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/SSH-VM', copyIndex())]"
+                  "id": "[resourceId(variables('lbID'),'/inboundNatRules/SSH-VM', copyIndex())]"
                 }
               ]
             }
@@ -319,8 +319,8 @@
       "name": "[concat(variables('mySqlVmName'), '-nic')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('mySqlPublicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('mySqlPublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -345,8 +345,8 @@
       "name": "[concat(variables('mongoVmName'), '-nic')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('mongoPublicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('mongoPublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -371,7 +371,7 @@
       "type": "Microsoft.Network/loadBalancers",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/',variables('appPublicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/',variables('appPublicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -476,7 +476,7 @@
       "name": "[concat(variables('lbName'), '/SSH-VM', copyIndex())]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/',variables('lbName'))]"
+        "[resourceId('Microsoft.Network/loadBalancers/',variables('lbName'))]"
       ],
       "properties": {
         "frontendIPConfiguration": {
@@ -498,9 +498,9 @@
       "name": "[concat(variables('appVmName'),copyIndex())]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('appVmName'), copyIndex(), '-nic')]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat( variables('appVmName'), copyIndex(), '-nic'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -546,8 +546,8 @@
       "name": "[variables('mySqlVmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('mySqlVmName'), '-nic')]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('mySqlVmName'), '-nic'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -586,8 +586,8 @@
       "name": "[variables('mongoVmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('mongoVmName'), '-nic')]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('mongoVmName'), '-nic'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -626,7 +626,7 @@
       "name": "[concat(variables('appVmName'), '0', '/installscript')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('appVmName'), '0')]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat( variables('appVmName'), '0'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
