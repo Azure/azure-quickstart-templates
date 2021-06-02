@@ -5,30 +5,9 @@
         "location": {
             "type": "string",
             "metadata": {
-                "description": "The Azure Region location in which the source resources should be deployed. E.g. westus (Azure Public)"
+                "description": "The Azure Region location in which the resources should be deployed. E.g. westus (Azure Public)"
             },            
             "defaultValue": "[resourceGroup().location]"
-        },
-        "_artifactsLocation": {
-          "type": "string",
-          "metadata": {
-              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-          },
-          "defaultValue": "[deployment().properties.templateLink.uri]"
-        },
-        "_artifactsLocationSasToken": {
-          "type": "securestring",
-          "metadata": {
-              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
-          },
-          "defaultValue": ""
-        },
-        "locationDestination": {
-            "type": "string",
-            "metadata": {
-                "description": "The Azure Region location in which the source resources should be deployed. E.g. francecentral (Azure Public)"
-            },            
-            "defaultValue": "[parameters('location')]"
         },
         "storageAccountNameDestination": {
             "type": "string",
@@ -60,28 +39,23 @@
             "metadata": {
                 "description": "Storage Account SKU"
             }
-        },
-      "forceUpdateTag": {
-          "type": "string",
-          "defaultValue": "[newGuid()]",
-          "metadata": {
-              "description": "forceUpdateTag property, used to force the execution of the script resource when no other properties have changed."
-          }
-      }
+        }
     },
     "variables": {
-        "deploymentScriptFileUriCreateDestination": "[uri(parameters('_artifactsLocation'), concat('CreateWritableBlobContainerUri.ps1', parameters('_artifactsLocationSasToken')))]",
- 
-        "userAssignedIdentityName": "[concat('ImportVHD-FromZipArchive-Prereq-worker-',uniqueString(resourceGroup().id))]",
-        "deploymentScriptNameCreateDestination" : "CreateWritableBlobContainerUri",
-        "forceUpdateTag" : "[parameters('forceUpdateTag')]"
+        "listAccountSasRequestContent": {
+            "signedServices": "bfqt",
+            "signedPermission": "rwdlacup",
+            "signedStart": "2021-06-02T00:00:00Z",
+            "signedExpiry": "2021-10-30T00:00:00Z",
+            "signedResourceTypes": "sco"
+        }
     },
     "resources": [
         {
             "apiVersion": "2021-02-01",
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[parameters('storageAccountNameDestination')]",
-            "location": "[parameters('locationDestination')]",
+            "location": "[parameters('location')]",
             "sku": {
                 "name": "[parameters('storageAccountSkuName')]"
             },
@@ -99,42 +73,12 @@
                     }
                 }
             ]
-        },
-        {
-            "type": "Microsoft.Resources/deploymentScripts",
-            "apiVersion": "2020-10-01",
-            "name": "[variables('deploymentScriptNameCreateDestination')]",
-            "location": "[parameters('locationDestination')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountNameDestination'))]"
-            ],
-            "identity": {
-                "type": "UserAssigned",
-                "userAssignedIdentities": {
-                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('userAssignedIdentityName'))]": {}
-                }
-            },        
-            "kind": "AzurePowerShell",
-            "properties": {
-                "azPowerShellVersion": "5.5",
-                "cleanupPreference": "OnSuccess",
-                "arguments": "[concat('-StorageAccountName \\\"',parameters('storageAccountNameDestination'),'\\\"',' ','-BlobContainerName \\\"',parameters('blobContainerNameDestination'),'\\\"')]",
-                "environmentVariables": [
-                {
-                    "name": "ResourceGroupName",
-                    "value": "[resourceGroup().name]"
-                }
-                ],
-                "primaryScriptUri" : "[variables('deploymentScriptFileUriCreateDestination')]",
-                "forceUpdateTag": "[variables('forceUpdateTag')]",
-                "retentionInterval": "PT2H"
-            }
         }
     ],
     "outputs" : {
         "uriWritableStorageAccountBlobContainerSasToken": {
             "type": "string",
-            "value": "[reference(variables('deploymentScriptNameCreateDestination')).outputs.uriWritableStorageAccountBlobContainerSasToken]"
+            "value" : "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountNameDestination'))).primaryEndpoints.blob, parameters('blobContainerNameDestination'), '?', listAccountSas(parameters('storageAccountNameDestination'), '2021-04-01', variables('listAccountSasRequestContent')).accountSasToken)]"
         }
     }
 }
