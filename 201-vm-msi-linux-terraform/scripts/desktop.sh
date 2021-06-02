@@ -2,7 +2,7 @@
 
 logger -t devvm "Desktop Install started: $?"
 
-sudo apt-get -y update
+sudo apt-get update
 
 sudo apt-get -q=2 -y install xrdp
 
@@ -16,7 +16,7 @@ sudo apt-add-repository -y ppa:ubuntu-mate-dev/ppa
 
 sudo apt-add-repository -y ppa:ubuntu-mate-dev/trusty-mate
 
-sudo apt-get -y update
+sudo apt-get update
 
 sudo apt-get -y upgrade
 
