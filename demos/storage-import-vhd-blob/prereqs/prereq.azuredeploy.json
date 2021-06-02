@@ -23,27 +23,6 @@
           },
           "defaultValue": ""
         },
-        "locationSource": {
-            "type": "string",
-            "metadata": {
-                "description": "The Azure Region location in which the source resources should be deployed. E.g. westus (Azure Public)"
-            },            
-            "defaultValue": "[parameters('location')]"
-        },
-        "storageAccountNameSource": {
-            "type": "string",
-            "defaultValue": "[concat('source', uniqueString(resourceGroup().id))]",
-            "metadata": {
-                "description": "Name of Storage Account."
-            }
-        },
-        "blobContainerNameSource": {
-            "type":"string",
-            "defaultValue" : "vhd",
-            "metadata":{
-                "description" : "Name of the Blob Container"
-            }
-        },
         "locationDestination": {
             "type": "string",
             "metadata": {
@@ -91,87 +70,13 @@
       }
     },
     "variables": {
-        "deploymentScriptFileUriCreateSource": "[uri(parameters('_artifactsLocation'), concat('CreateVHDBlobUri.ps1', parameters('_artifactsLocationSasToken')))]",
         "deploymentScriptFileUriCreateDestination": "[uri(parameters('_artifactsLocation'), concat('CreateWritableBlobContainerUri.ps1', parameters('_artifactsLocationSasToken')))]",
  
         "userAssignedIdentityName": "[concat('ImportVHD-FromZipArchive-Prereq-worker-',uniqueString(resourceGroup().id))]",
-        "roleAssignmentName": "[guid(concat(variables('userAssignedIdentityName'),resourceGroup().id, 'contributor'))]",
-        "deploymentScriptNameCreateSource" : "CreateVHDBlobUri",
         "deploymentScriptNameCreateDestination" : "CreateWritableBlobContainerUri",
         "forceUpdateTag" : "[parameters('forceUpdateTag')]"
     },
     "resources": [
-        {
-            "apiVersion": "2021-02-01",
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[parameters('storageAccountNameSource')]",
-            "location": "[parameters('locationSource')]",
-            "sku": {
-                "name": "[parameters('storageAccountSkuName')]"
-            },
-            "kind": "[parameters('storageAccountKind')]",
-            "resources": [
-                {
-                    "name": "[concat('default/', parameters('blobContainerNameSource'))]",
-                    "type": "blobServices/containers",
-                    "apiVersion": "2021-02-01",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountNameSource'))]"
-                    ],
-                    "properties": {
-                        "publicAccess": "Blob"
-                    }
-                }
-            ]
-        },
-        {
-            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-            "apiVersion": "2018-11-30",
-            "name": "[variables('userAssignedIdentityName')]",
-            "location": "[parameters('locationSource')]"
-        },
-        {
-            "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "2018-09-01-preview",
-            "name": "[variables('roleAssignmentName')]",
-            "dependsOn": [ "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName'))]" ],
-            "properties": {
-                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName')), '2015-08-31-preview').principalId]",
-                "scope": "[resourceGroup().id]",
-                "principalType": "ServicePrincipal"
-            }
-        },
-        {
-            "type": "Microsoft.Resources/deploymentScripts",
-            "apiVersion": "2020-10-01",
-            "name": "[variables('deploymentScriptNameCreateSource')]",
-            "location": "[parameters('locationSource')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountNameSource'))]"
-            ],
-            "identity": {
-                "type": "UserAssigned",
-                "userAssignedIdentities": {
-                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('userAssignedIdentityName'))]": {}
-                }
-            },        
-            "kind": "AzurePowerShell",
-            "properties": {
-                "azPowerShellVersion": "5.5",
-                "cleanupPreference": "OnSuccess",
-                "arguments": "[concat('-StorageAccountName \\\"',parameters('storageAccountNameSource'),'\\\"',' ','-BlobContainerName \\\"',parameters('blobContainerNameSource'),'\\\"')]",
-                "environmentVariables": [
-                    {
-                        "name": "ResourceGroupName",
-                        "value": "[resourceGroup().name]"
-                    }
-                ],
-                "primaryScriptUri" : "[variables('deploymentScriptFileUriCreateSource')]",
-                "forceUpdateTag": "[variables('forceUpdateTag')]",
-                "retentionInterval": "PT2H"
-            }
-        },
         {
             "apiVersion": "2019-06-01",
             "type": "Microsoft.Storage/storageAccounts",
@@ -227,10 +132,6 @@
         }
     ],
     "outputs" : {
-        "uriVHDBlobSasToken": {
-            "type": "string",
-            "value": "[reference(variables('deploymentScriptNameCreateSource')).outputs.uriVHDBlobSasToken]"
-        },
         "uriWritableStorageAccountBlobContainerSasToken": {
             "type": "string",
             "value": "[reference(variables('deploymentScriptNameCreateDestination')).outputs.uriWritableStorageAccountBlobContainerSasToken]"
