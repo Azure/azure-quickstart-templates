@@ -22,19 +22,6 @@ In case the source is a Blob and you got the URI ready for the transfer, this AR
 
 - URI with a SAS Token having write permissions to an existing Blob Container of Storage Account.
 
-## Deployment steps
-
-1. Hit the "Deploy to Azure" button above
-2. Set usual fields:
-    - Subscription
-    - Resource Group: create a new. For example: Temporary-ImportVHD
-    - Region: any Azure Region. For example: francecentral
-3. Fill the parameters
-    - *Location: Can be skipped. It sets the Azure region for the temporary resources. Keeping [resourceGroup().location] will use the region set above for the resource group. Other Azure Region can be set, for example francecentral
-    - Source: URI of a Blob (VHD to copy)
-    - Destination: URI with SAS Token having write permisson to the destination Blob Container
-4. Hit "Review + create", then hit "Create" and wait for the deployment
-
 ## Usage
 
 It might take few minutes depending on the size of the VHD and the location.
