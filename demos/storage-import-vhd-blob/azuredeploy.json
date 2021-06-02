@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.210508",
+    "contentVersion": "1.0.0.210602",
     "parameters": {
         "location": {
             "type": "string",
@@ -54,7 +54,7 @@
                 },
                 "template": {
                     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.210508",
+                    "contentVersion": "1.0.0.210602",
                     "parameters": {
                         "location": {
                             "type": "string",
@@ -94,59 +94,22 @@
                     "variables": {
                         "uriVHDBlobSasToken": "[parameters('Source')]",
                         "uriWritableStorageAccountBlobContainerSasToken": "[parameters('Destination')]",
-                        "userAssignedIdentityName": "[concat('ImportVHD-FromBlobUri-worker-',uniqueString(resourceGroup().id))]",
-                        "roleAssignmentName": "[guid(concat(variables('userAssignedIdentityName'),resourceGroup().id, 'contributor'))]",
                         "forceUpdateTag": "[parameters('forceUpdateTag')]"
                     },
                     "resources": [
-                        {
-                            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-                            "apiVersion": "2018-11-30",
-                            "name": "[variables('userAssignedIdentityName')]",
-                            "location": "[parameters('location')]"
-                        },
-                        {
-                            "type": "Microsoft.Authorization/roleAssignments",
-                            "apiVersion": "2018-09-01-preview",
-                            "name": "[variables('roleAssignmentName')]",
-                            "dependsOn": [
-                                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName'))]"
-                            ],
-                            "properties": {
-                                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-                                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName')), '2015-08-31-preview').principalId]",
-                                "scope": "[resourceGroup().id]",
-                                "principalType": "ServicePrincipal"
-                            }
-                        },
                         {
                             "type": "Microsoft.Resources/deploymentScripts",
                             "apiVersion": "2020-10-01",
                             "name": "[parameters('deploymentScriptName')]",
                             "location": "[parameters('location')]",
-                            "dependsOn": [
-                                "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleAssignmentName'))]"
-                            ],
-                            "identity": {
-                                "type": "UserAssigned",
-                                "userAssignedIdentities": {
-                                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('userAssignedIdentityName'))]": {}
-                                }
-                            },
                             "kind": "AzurePowerShell",
                             "properties": {
                                 "azPowerShellVersion": "5.5",
                                 "cleanupPreference": "OnSuccess",
                                 "arguments": "[concat('-Source \\\"',variables('uriVHDBlobSasToken'),'\\\"',' ','-Destination \\\"',variables('uriWritableStorageAccountBlobContainerSasToken'),'\\\"')]",
-                                "environmentVariables": [
-                                    {
-                                        "name": "ResourceGroupName",
-                                        "value": "[resourceGroup().name]"
-                                    }
-                                ],
                                 "forceUpdateTag": "[variables('forceUpdateTag')]",
                                 "retentionInterval": "PT4H",
-                                "scriptContent": "param( \n     [string] $Source, \n     [string] $Destination, \n  \n   # Set default url to fetch azcopy \n   ## get latest: curl -s -D- https://aka.ms/downloadazcopy-v10-linux | grep ^Location \n   ## 10.10.0: sporadic vhd corruption issue / fatal error lifecyleMgr.go:38 (https://azcopyvnext.azureedge.net/release20210415/azcopy_linux_amd64_10.10.0.tar.gz) \n   ## 10.9.0: sporadic vhd corruption issue https://azcopyvnext.azureedge.net/release20210226/azcopy_linux_amd64_10.9.0.tar.gz \n   ## 10.8.0: validated https://azcopyvnext.azureedge.net/release20201211/azcopy_linux_amd64_10.8.0.tar.gz \n   [string] $azcopyArchiveUrl = 'https://azcopyvnext.azureedge.net/release20201211/azcopy_linux_amd64_10.8.0.tar.gz' \n ) \n  \n ##### Validate Parameters \n  \n if (! ([System.Uri]::IsWellFormedUriString($Source,[System.UriKind]::Absolute))) { \n     Throw 'The Source URL parameter is probably not well formatted. Please check and retry.' \n } \n  \n if (! ([System.Uri]::IsWellFormedUriString($Destination,[System.UriKind]::Absolute))) { \n     Throw 'The Destination URI parameter is probably not well formatted. Please check and retry.' \n } \n  \n ##### Parameters \n  \n $uriVhdBlob = $Source \n $uriWritableStorageAccountBlobContainerSasToken = $Destination \n  \n $ResourceGroupName = ${Env:ResourceGroupName} \n  \n ##### Variables \n  \n $base_path='/mnt/azscripts' \n $temp_path='{0}/temp' -f $base_path \n New-Item -Type Directory -ErrorAction SilentlyContinue $temp_path \n  \n ##### Fetch prerequisites \n  \n Invoke-WebRequest -Uri $azcopyArchiveUrl -Outfile azcopy-linux.tar.gz \n tar xf azcopy-linux.tar.gz \n Move-Item azcopy_linux_*/azcopy . -Force \n  \n ##### Upload to Azure Storage account \n  \n Write-Output 'Copy Blob' \n ./azcopy copy \"$uriVhdBlob\" \"$uriWritableStorageAccountBlobContainerSasToken\" \n  \n if (! $?) { \n     Throw 'Error during upload into the Storage Account Container. Please check source and destination parameters and retry' \n } \n  \n ##### Output \n  \n $DeploymentScriptOutputs = @{} \n $VhdBlobName = $uriVhdBlob -replace '.*/(?<name>.*.VHD).*','${name}' \n $DeploymentScriptOutputs['vhdBlobName'] = $VhdBlobName \n $StorageAccountContainerUri = ($uriWritableStorageAccountBlobContainerSasToken -split [Regex]::Escape('?'))[0] \n $DeploymentScriptOutputs['vhdBlobUri'] = '{0}/{1}' -f $StorageAccountContainerUri,$VhdBlobName \n "
+                                "scriptContent": "param( \n     [string] $Source, \n     [string] $Destination, \n  \n   # Set default url to fetch azcopy \n   ## get latest: curl -s -D- https://aka.ms/downloadazcopy-v10-linux | grep ^Location \n   ## 10.10.0: sporadic vhd corruption issue / fatal error lifecyleMgr.go:38 (https://azcopyvnext.azureedge.net/release20210415/azcopy_linux_amd64_10.10.0.tar.gz) \n   ## 10.9.0: sporadic vhd corruption issue https://azcopyvnext.azureedge.net/release20210226/azcopy_linux_amd64_10.9.0.tar.gz \n   ## 10.8.0: validated https://azcopyvnext.azureedge.net/release20201211/azcopy_linux_amd64_10.8.0.tar.gz \n   [string] $azcopyArchiveUrl = 'https://azcopyvnext.azureedge.net/release20201211/azcopy_linux_amd64_10.8.0.tar.gz' \n ) \n  \n ##### Validate Parameters \n  \n if (! ([System.Uri]::IsWellFormedUriString($Source,[System.UriKind]::Absolute))) { \n     Throw 'The Source URL parameter is probably not well formatted. Please check and retry.' \n } \n  \n if (! ([System.Uri]::IsWellFormedUriString($Destination,[System.UriKind]::Absolute))) { \n     Throw 'The Destination URI parameter is probably not well formatted. Please check and retry.' \n } \n  \n ##### Parameters \n  \n $uriVhdBlob = $Source \n $uriWritableStorageAccountBlobContainerSasToken = $Destination \n ##### Variables \n  \n $base_path='/mnt/azscripts' \n $temp_path='{0}/temp' -f $base_path \n New-Item -Type Directory -ErrorAction SilentlyContinue $temp_path \n  \n ##### Fetch prerequisites \n  \n Invoke-WebRequest -Uri $azcopyArchiveUrl -Outfile azcopy-linux.tar.gz \n tar xf azcopy-linux.tar.gz \n Move-Item azcopy_linux_*/azcopy . -Force \n  \n ##### Upload to Azure Storage account \n  \n Write-Output 'Copy Blob' \n ./azcopy copy \"$uriVhdBlob\" \"$uriWritableStorageAccountBlobContainerSasToken\" \n  \n if (! $?) { \n     Throw 'Error during upload into the Storage Account Container. Please check source and destination parameters and retry' \n } \n  \n ##### Output \n  \n $DeploymentScriptOutputs = @{} \n $VhdBlobName = $uriVhdBlob -replace '.*/(?<name>.*.VHD).*','${name}' \n $DeploymentScriptOutputs['vhdBlobName'] = $VhdBlobName \n $StorageAccountContainerUri = ($uriWritableStorageAccountBlobContainerSasToken -split [Regex]::Escape('?'))[0] \n $DeploymentScriptOutputs['vhdBlobUri'] = '{0}/{1}' -f $StorageAccountContainerUri,$VhdBlobName \n "
                             }
                         }
                     ],
