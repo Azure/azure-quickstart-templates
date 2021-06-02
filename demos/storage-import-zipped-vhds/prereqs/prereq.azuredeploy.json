@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.210601",
+    "contentVersion": "1.0.0.210602",
     "parameters": {
         "location": {
             "type": "string",
@@ -8,20 +8,6 @@
                 "description": "The Azure Region location in which the source resources should be deployed. E.g. westus (Azure Public)"
             },            
             "defaultValue": "[resourceGroup().location]"
-        },
-        "_artifactsLocation": {
-          "type": "string",
-          "metadata": {
-              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-          },
-          "defaultValue": "[deployment().properties.templateLink.uri]"
-        },
-        "_artifactsLocationSasToken": {
-          "type": "securestring",
-          "metadata": {
-              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
-          },
-          "defaultValue": ""
         },
         "locationSource": {
             "type": "string",
@@ -90,15 +76,18 @@
           }
       }
     },
-    "variables": {
-        "deploymentScriptFileUriCreateSource": "[uri(parameters('_artifactsLocation'), concat('CreateVHDZipArchiveUrl.ps1', parameters('_artifactsLocationSasToken')))]",
-        "deploymentScriptFileUriCreateDestination": "[uri(parameters('_artifactsLocation'), concat('CreateWritableBlobContainerUri.ps1', parameters('_artifactsLocationSasToken')))]",
- 
+    "variables": {       
         "userAssignedIdentityName": "[concat('ImportVHD-FromZipArchive-Prereq-worker-',uniqueString(resourceGroup().id))]",
         "roleAssignmentName": "[guid(concat(variables('userAssignedIdentityName'),resourceGroup().id, 'contributor'))]",
         "deploymentScriptNameCreateSource" : "CreateVHDZipArchiveUrl",
-        "deploymentScriptNameCreateDestination" : "CreateWritableBlobContainerUri",
-        "forceUpdateTag" : "[parameters('forceUpdateTag')]"
+        "forceUpdateTag" : "[parameters('forceUpdateTag')]",
+        "listAccountSasRequestContent": {
+            "signedServices": "bfqt",
+            "signedPermission": "rwdlacup",
+            "signedStart": "2021-06-02T00:00:00Z",
+            "signedExpiry": "2021-10-30T00:00:00Z",
+            "signedResourceTypes": "sco"
+        }        
     },
     "resources": [
         {
@@ -160,20 +149,27 @@
             "properties": {
                 "azPowerShellVersion": "5.5",
                 "cleanupPreference": "OnSuccess",
-                "arguments": "[concat('-StorageAccountName \\\"',parameters('storageAccountNameSource'),'\\\"',' ','-BlobContainerName \\\"',parameters('blobContainerNameSource'),'\\\"')]",
                 "environmentVariables": [
                     {
                         "name": "ResourceGroupName",
                         "value": "[resourceGroup().name]"
-                    }
+                    },
+                    {
+                        "name": "StorageAccountName",
+                        "value": "[parameters('storageAccountNameSource')]"
+                    },
+                    {
+                        "name": "BlobContainerName",
+                        "value": "[parameters('blobContainerNameSource')]"
+                    }                                        
                 ],
-                "primaryScriptUri" : "[variables('deploymentScriptFileUriCreateSource')]",
                 "forceUpdateTag": "[variables('forceUpdateTag')]",
-                "retentionInterval": "PT2H"
+                "retentionInterval": "PT2H",
+                "scriptContent" : "# 210602 \n  \n ##### Parameters \n  \n $StorageAccountName = ${Env:StorageAccountName} \n $BlobContainerName = ${Env:BlobContainerName} \n $ResourceGroupName = ${Env:ResourceGroupName} \n  \n ##### Variables \n  \n $StartTime = Get-Date \n $EndTime = $startTime.AddHours(2.0) \n  \n ##### Create a VHD archive zip \n  \n $timestamp = (Get-Date -Format 'yyMMddhhmmss') \n $vhdZipArchive = 'fake-vhd-disk-archive-{0}.zip' -f $timestamp \n  \n New-Item -Force -Type File -Name ('fake-vhd-disk1-{0}.vhd' -f $timestamp)  \n New-Item -Force -Type File -Name ('fake-vhd-disk2-{0}.vhd' -f $timestamp) \n New-Item -Force -Type File -Name ('fake-vhd-disk3-{0}.vhd' -f $timestamp) \n New-Item -Force -Type File -Name ('fake-readme-{0}.md' -f $timestamp) \n  \n Compress-Archive -Force -Path 'fake*' -DestinationPath $vhdZipArchive              \n  \n ##### Storage account \n  \n $StorageAccount = Get-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageAccountName \n $Blob = Set-AzStorageBlobContent -File $vhdZipArchive -Container $BlobContainerName -blob $vhdZipArchive -context $StorageAccount.Context \n $urlVHDZipArchive = New-AzStorageBlobSASToken -FullUri -Context $StorageAccount.Context -Container $BlobContainerName -Blob $vhdZipArchive -Permission r -StartTime $StartTime -ExpiryTime $EndTime \n  \n ##### Output \n $DeploymentScriptOutputs = @{} \n $DeploymentScriptOutputs['urlVHDZipArchive'] = $urlVHDZipArchive \n "
             }
         },
         {
-            "apiVersion": "2019-06-01",
+            "apiVersion": "2021-02-01",
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[parameters('storageAccountNameDestination')]",
             "location": "[parameters('locationDestination')]",
@@ -185,7 +181,7 @@
                 {
                     "name": "[concat('default/', parameters('blobContainerNameDestination'))]",
                     "type": "blobServices/containers",
-                    "apiVersion": "2019-06-01",
+                    "apiVersion": "2021-02-01",
                     "dependsOn": [
                         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountNameDestination'))]"
                     ],
@@ -194,36 +190,6 @@
                     }
                 }
             ]
-        },
-        {
-            "type": "Microsoft.Resources/deploymentScripts",
-            "apiVersion": "2020-10-01",
-            "name": "[variables('deploymentScriptNameCreateDestination')]",
-            "location": "[parameters('locationDestination')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountNameDestination'))]"
-            ],
-            "identity": {
-                "type": "UserAssigned",
-                "userAssignedIdentities": {
-                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('userAssignedIdentityName'))]": {}
-                }
-            },        
-            "kind": "AzurePowerShell",
-            "properties": {
-                "azPowerShellVersion": "5.5",
-                "cleanupPreference": "OnSuccess",
-                "arguments": "[concat('-StorageAccountName \\\"',parameters('storageAccountNameDestination'),'\\\"',' ','-BlobContainerName \\\"',parameters('blobContainerNameDestination'),'\\\"')]",
-                "environmentVariables": [
-                {
-                    "name": "ResourceGroupName",
-                    "value": "[resourceGroup().name]"
-                }
-                ],
-                "primaryScriptUri" : "[variables('deploymentScriptFileUriCreateDestination')]",
-                "forceUpdateTag": "[variables('forceUpdateTag')]",
-                "retentionInterval": "PT2H"
-            }
         }
     ],
     "outputs" : {
@@ -233,7 +199,7 @@
         },
         "uriWritableStorageAccountBlobContainerSasToken": {
             "type": "string",
-            "value": "[reference(variables('deploymentScriptNameCreateDestination')).outputs.uriWritableStorageAccountBlobContainerSasToken]"
+            "value" : "[concat(reference(parameters('storageAccountNameDestination')).primaryEndpoints.blob, parameters('blobContainerNameDestination'), '?', listAccountSas(parameters('storageAccountNameDestination'), '2021-04-01', variables('listAccountSasRequestContent')).accountSasToken)]"
         }
     }
 }
