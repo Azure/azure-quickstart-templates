@@ -15,8 +15,6 @@
 
 This sample creates a SQL Database at the "Basic" service level.  The template can support other tiers of service, details for each service can be found here:
 
-[SQL Database Pricing](https://azure.microsoft.com/en-us/pricing/details/sql-database/)
+[SQL Database Pricing](https://azure.microsoft.com/pricing/details/sql-database/)
 
-For more information about Transparent Data Encryption (TDE), see [Transparent Data Encryption with Azure SQL Database](https://msdn.microsoft.com/en-us/library/dn948096.aspx).
-
-
+For more information about Transparent Data Encryption (TDE), see [Transparent Data Encryption with Azure SQL Database](https://msdn.microsoft.com/library/dn948096.aspx).

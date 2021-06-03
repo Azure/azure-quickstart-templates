@@ -23,6 +23,9 @@ param(
 
 $azdoResourceGroups = @()
 
+# TODO - this create noise in the log but is probably helpful to check once in a while - we disable here so running the nested script will still show them
+Set-Item Env:\SuppressAzurePowerShellBreakingChangeWarnings "true"
+
 if($ResourceGroupNames.count -ne 0){
     foreach($rgName in $ResourceGroupNames){
         $azdoResourceGroups += @{"ResourceGroupName" = $rgName}
@@ -49,5 +52,7 @@ foreach($rg in $azdoResourceGroups){
         Sleep $SleepTime
         Write-Host "Second Attempt on ResourceGroup: $($rg.ResourceGroupName)"
         & $TTKPath/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName ($rg.ResourceGroupName) -verbose -ErrorAction $SecondErrorAction
+    } else {
+        Write-Host "ResourceGroup Not found (delete success)"
     }
 }

@@ -60,13 +60,21 @@ one will be created by the script or reused if it already exists (think of this 
 
 ## Contribution Guide
 
-To make sure your template is added to Azure.com index, please follow these guidelines. Any templates that are out of compliance will be added to the **blacklist** and not be indexed on Azure.com
+To make sure your template is added to Azure.com index, please follow these guidelines. Any templates that are out of compliance will be added to the **blocklist** and not be indexed on Azure.com
 
 ## Files, folders and naming conventions
 
-1. Every deployment template and its associated files must be contained in its own **folder**. Name this folder something that describes what your template does. Usually this naming pattern looks like **appName-osName** or **level-platformCapability** (e.g. 101-vm-user-image)
+1. Every deployment template and its associated files must be contained in its own **folder**. Name this folder something that describes what your template does. Usually this naming pattern looks like **someresource-someconfiguration** or **some-platform-Capability-to-demo** (e.g. vm-from-user-image or active-directory-new-domain)
 
-+ **Required** - Numbering should start at 101. 100 is reserved for things that need to be at the top.
++ **Required** - samples should be located in the appropriate subfolder, not in the root.
+  + **application-workloads** - contains templates that model specific application workloads for use in Azure.  After deploying the workload users should be able to utilize the application as in a production environment.
+  + **demos** - contains samples that demonstrate a particular workload or capability of the Azure platform.  After deploying the sample users should be able to exercise those capabilities described.  These samples are typically not meant to be general purpose or production workloads, though some may be suitable after modification
+  + **managementgroup-deployments** - contains sample templates that must be deployed at the management group scope.
+  + **modules** - contains reusable templates or modules that can be used to simplify the creation of common or standard resources.  These can also be used as prereqs for samples in this repo.
+  + **quickstarts** - contains sample templates that can be used to quickly provision a single or set of resources to for the purposes of evaluating the infrastructure.
+  + **subscription-deployments** - contains sample templates that must be deployed at the subscription scope.
+  + **tenant-deployments** - contains sample templates that must be deployed at the tenant scope.
+
 + **Protip** - Try to keep the name of your template folder short so that it fits inside the Github folder name column width.
 
 1. Github uses ASCII for ordering files and folder. For consistent ordering **create all files and folders in lowercase**. The only **exception** to this guideline is the **README.md**, that should be in the format **UPPERCASE.lowercase**.
@@ -92,6 +100,7 @@ To make sure your template is added to Azure.com index, please follow these guid
 ![alt text](/1-CONTRIBUTION-GUIDE/images/namingConvention.png "Files, folders and naming conventions")
 
 + Pull Request Guidelines
+
 1. A single PR should reference a single template.  There shouldn't be multiple templates being referenced in a single PR
 1. For each PR created the contributor needs to acknowledge the Contribution and Best Practices Guide.
 1. Each PR will run through the [arm-ttk](https://github.com/Azure/arm-ttk) to ensure best practices

@@ -40,7 +40,7 @@ This template will deploy:
 
 <img src="images/onPremApp.jpg"/> 
 
-Post migration of the app and db using the guide, your Azure enviroment will be as per the below diagram
+Post migration of the app and db using the guide, your Azure environment will be as per the below diagram
 <img src="images/ContainerApp.jpg"/> 
 ## Licenses and Costs
 This uses Ubuntu Linux image which is freely available and no license is required to deploy the same. User will be charged hourly for Azure’s Linux VM rates. Click [here](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/Canonical.UbuntuServer?tab=PlansAndPrice) for pricing details.

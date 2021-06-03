@@ -1,0 +1,224 @@
+{
+  "contentVersion": "1.0.0.0",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "parameters": {
+    "dataFactoryName": {
+      "type": "string",
+      "defaultValue": "[uniquestring(resourceGroup().id)]",
+      "metadata": {
+        "description": "Name of the data factory. Must be globally unique."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of the data factory."
+      }
+    },
+    "storageAccountResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of Source Azure Storage account."
+      }
+    },
+    "blobContainer": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the blob container in the Azure Storage account."
+      }
+    },
+    "inputBlobFolder": {
+      "type": "string",
+      "metadata": {
+        "description": "The folder in the blob container that has the input file."
+      }
+    },
+    "inputBlobName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the input file/blob."
+      }
+    },
+    "mysqlResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of target Azure Database for MySQL Server."
+      }
+    },
+    "mysqlUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "UserName of the target Azure Database for MySQL Server."
+      }
+    },
+    "mysqlPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password of the target Azure Database for MySQL Server."
+      }
+    },
+    "mysqlDatabase": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the target database in the Azure Database for MySQL."
+      }
+    },
+    "mysqlTableName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the target table in the Azure Database for MySQL."
+      }
+    }
+  },
+  "variables": {
+    "azureStorageLinkedServiceName": "Tutorial2-AzureStorageLinkedService",
+    "azureMySqlDatabaseLinkedServiceName": "Tutorial2-AzureMySqlDatabaseLinkedService",
+    "inputDatasetName": "Tutorial2_InputBlobDataset",
+    "outputDatasetName": "Tutorial2_OutputMySqlDataset",
+    "pipelineName": "Tutorial2-CopyFromBlobToMySqlPipeline"
+  },
+  "resources": [
+    {
+      "name": "[parameters('dataFactoryName')]",
+      "apiVersion": "2018-06-01",
+      "type": "Microsoft.DataFactory/factories",
+      "location": "[parameters('location')]",
+      "properties": {},
+      "resources": [
+        {
+          "type": "linkedservices",
+          "name": "[variables('azureStorageLinkedServiceName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "type": "AzureStorage",
+            "description": "Azure Storage linked service",
+            "typeProperties": {
+              "connectionString": {
+                "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', split(split(reference(parameters('storageAccountResourceId'), '2019-04-01').primaryEndpoints.blob, '/')[2], '.')[0], ';AccountKey=', listKeys(parameters('storageAccountResourceId'), '2019-04-01').keys[0].value)]",
+                "type": "SecureString"
+              }
+            }
+          }
+        },
+        {
+          "type": "linkedservices",
+          "name": "[variables('azureMySqlDatabaseLinkedServiceName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "type": "AzureMySql",
+            "description": "Azure Database for MySQL linked service",
+            "typeProperties": {
+              "connectionString": {
+                "value": "[concat('Server=', reference(parameters('mysqlResourceId'), '2017-12-01').fullyQualifiedDomainName, ';Port=3306;Database=' ,parameters('mysqlDatabase'), ';UID=', parameters('mysqlUserName'), ';PWD=', parameters('mysqlPassword'), ';SslMode=Preferred;')]",
+                "type": "SecureString"
+              }
+            }
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('inputDatasetName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('azureStorageLinkedServiceName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "type": "AzureBlob",
+            "structure": [
+              {
+                "name": "firstname",
+                "type": "string"
+              },
+              {
+                "name": "lastname",
+                "type": "string"
+              }
+            ],
+            "typeProperties": {
+              "format": {
+                "type": "TextFormat",
+                "columnDelimiter": ",",
+                "nullValue": "\\N",
+                "treatEmptyAsNull": false,
+                "firstRowAsHeader": false
+              },
+              "folderPath": "[concat(parameters('blobContainer'), '/', parameters('inputBlobFolder'), '/')]",
+              "fileName": "[parameters('inputBlobName')]"
+            },
+            "linkedServiceName": {
+              "referenceName": "[variables('azureStorageLinkedServiceName')]",
+              "type": "LinkedServiceReference"
+            }
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('outputDatasetName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('azureMySqlDatabaseLinkedServiceName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "type": "AzureMySqlTable",
+            "typeProperties": {
+              "tableName": "[parameters('mysqlTableName')]"
+            },
+            "linkedServiceName": {
+              "referenceName": "[variables('azureMySqlDatabaseLinkedServiceName')]",
+              "type": "LinkedServiceReference"
+            }
+          }
+        },
+        {
+          "type": "pipelines",
+          "name": "[variables('pipelineName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('inputDatasetName')]",
+            "[variables('outputDatasetName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "activities": [
+              {
+                "type": "Copy",
+                "typeProperties": {
+                  "source": {
+                    "type": "BlobSource",
+                    "recursive": true
+                  },
+                  "sink": {
+                    "type": "AzureMySqlSink",
+                    "writeBatchSize": 10000
+                  }
+                },
+                "name": "MyCopyActivity",
+                "inputs": [
+                  {
+                    "referenceName": "[variables('inputDatasetName')]",
+                    "type": "DatasetReference"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "referenceName": "[variables('outputDatasetName')]",
+                    "type": "DatasetReference"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

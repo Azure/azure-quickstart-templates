@@ -1,0 +1,105 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sqlServerName": {
+      "type": "string",
+      "defaultValue": "[concat('sql', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The SQL Logical Server name."
+      }
+    },
+    "sqlAdministratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "The administrator username of the SQL Server."
+      }
+    },
+    "sqlAdministratorPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The administrator password of the SQL Server."
+      }
+    },
+    "dataWarehouseName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Data Warehouse."
+      }
+    },
+    "transparentDataEncryption": {
+      "type": "string",
+      "defaultValue": "Enabled",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "metadata": {
+        "description": "Enable/Disable Transparent Data Encryption"
+      }
+    },
+    "serviceLevelObjective": {
+      "type": "string",
+      "defaultValue": "DW400c",
+      "metadata": {
+        "description": "Performance Level"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Resource location"
+      }
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[parameters('sqlServerName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdministratorPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "type": "databases",
+          "apiVersion": "2020-02-02-preview",
+          "name": "[parameters('dataWarehouseName')]",
+          "location": "[parameters('location')]",
+          "kind": "v12.0,user,datawarehouse",
+          "dependsOn": [
+            "[parameters('sqlServerName')]"
+          ],
+          "properties": {
+            "edition": "DataWarehouse",
+            "status": "Online",
+            "requestedServiceObjectiveName": "[parameters('serviceLevelObjective')]",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "readScale": "Disabled",
+            "zoneRedundant": false,
+            "isUpgradeRequested": false
+          },
+          "resources": [
+            {
+              "comments": "Transparent Data Encryption",
+              "type": "transparentDataEncryption",
+              "apiVersion": "2017-03-01-preview",
+              "name": "current",
+              "dependsOn": [
+                "[parameters('dataWarehouseName')]"
+              ],
+              "properties": {
+                "status": "[parameters('transparentDataEncryption')]"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
