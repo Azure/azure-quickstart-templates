@@ -109,22 +109,23 @@
     }
   },
   "variables": {
-    "clusterStorageAccountName": "[concat('clustrstg',uniqueString(resourceGroup().id))]"
+    "clusterStorageAccountName": "[concat('clustrstg',uniqueString(resourceGroup().id))]",
+    "storageAccountType": "Standard_LRS"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('clusterStorageAccountName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2021-01-01",
+      "apiVersion": "2020-08-01-preview",
       "kind": "StorageV2",
       "sku": {
-        "name": "Standard_LRS"
+        "name": "[variables('storageAccountType')]"
         }
     },
     { 
-      "type": "Microsoft.HDInsight/clusters",
       "name": "[parameters('clusterName')]",
+      "type": "Microsoft.HDInsight/clusters",
       "location": "[parameters('location')]",
       "apiVersion": "2018-06-01-preview",
       "dependsOn": [
@@ -143,16 +144,6 @@
               "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
             }
           }
-        },
-        "storageProfile": {
-          "storageaccounts": [
-            {
-              "name": "[format('{0}.blob.{1}', variables('clusterStorageAccountName'), environment().suffixes.storage)]",
-              "isDefault": true,
-              "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2021-01-01').keys[0].value]"
-            } 
-          ]
         },
         "computeProfile": {
           "roles": [
@@ -183,7 +174,17 @@
               }
             }
           ]
-        }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2020-08-01-preview').primaryEndpoints.blob,'https://',''),'/','')]",
+              "isDefault": true,
+              "container": "[parameters('clusterName')]",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2020-08-01-preview').keys[0].value]"
+            }
+          ]
+        }        
       }
     }
   ],
