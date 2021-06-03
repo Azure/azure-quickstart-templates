@@ -63,31 +63,32 @@
     }
   },
   "variables": {
-    "clusterStorageAccountName": "[concat('clustrstg',uniqueString(resourceGroup().id))]"
+    "clusterStorageAccountName": "[concat('clustrstg',uniqueString(resourceGroup().id))]",
+    "storageAccountType": "Standard_LRS"
   },
   "resources": [
-    {
-      "name": "[variables('clusterStorageAccountName')]",
+     {
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[ResourceGroup().location]",
-      "apiVersion": "2015-05-01-preview",
-      "dependsOn": [],
-      "tags": {},
-      "properties": {
-        "accountType": "Standard_LRS"
-      }
+      "name": "[variables('clusterStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-06-01",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {}
     },
     {
       "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-03-01-preview",
+      "apiVersion": "2018-06-01-preview",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]"
       ],
       "tags": {},
       "properties": {
-        "clusterVersion": "3.4",
+        "clusterVersion": "4.0",
         "osType": "Linux",
         "tier": "standard",
         "clusterDefinition": {
@@ -103,10 +104,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[concat(variables('clusterStorageAccountName'),'.blob.core.windows.net')]",
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2019-06-01').primaryEndpoints.blob,'https://',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')),'2015-05-01-preview').key1]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2019-06-01').keys[0].value]"
             }
           ]
         },
@@ -116,7 +117,7 @@
               "name": "headnode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "Standard_D3"
+                "vmSize": "Standard_E4_v3"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -129,7 +130,7 @@
               "name": "workernode",
               "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
               "hardwareProfile": {
-                "vmSize": "Standard_D3"
+                "vmSize": "Standard_E4_v3"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
