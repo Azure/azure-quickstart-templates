@@ -110,12 +110,17 @@
       }
     ],
     "webAppName": "[concat('xss-attack-webapp','-',substring(uniqueString(resourceGroup().id),0,5))]",
+    "webAppDeployment": "[concat('xss-attack-webapp','-',substring(uniqueString(resourceGroup().id),0,5), '-resource')]",
+    "connectionStrinDeployment": "[concat(variables('webAppName'),'-connectionStrings','-resource')]",
     "httpProbeName": "aseProbeHTTP",
     "httpsProbeName": "aseProbeHTTPS",
     "aspName": "[concat('xss-attack-asp','-',substring(uniqueString(resourceGroup().id),0,5))]",
+    "aspDeployment": "[concat('xss-attack-asp','-',substring(uniqueString(resourceGroup().id),0,5), '-resource')]",
     "diagStorageAccName": "[concat('xssattack','stg',substring(uniqueString(resourceGroup().id),0,5))]",
+    "diagStorageAccDeployment": "[concat('xssattack','stg',substring(uniqueString(resourceGroup().id),0,5), '-resource')]",
     "appServiceConnectionType": "SQLAzure",
     "sqlServerName": "[concat('xssattackserver',substring(uniqueString(resourceGroup().id),0,5))]",
+    "sqlServerDeployment": "[concat('xssattackserver',substring(uniqueString(resourceGroup().id),0,5), '-resource')]",
     "omsTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.loganalytics/workspaces.json'),parameters('_artifactsLocationSasToken'))]",
     "vnetTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.network/virtualnetworks.json'),parameters('_artifactsLocationSasToken'))]",
     "pipTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.network/publicipaddress.json'),parameters('_artifactsLocationSasToken'))]",
@@ -133,7 +138,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-06-01",
       "name": "deploy-xss-attack-oms-resource",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -161,8 +166,8 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
-      "name": "[concat(variables('vnetName'),'-resource')]",
+      "apiVersion": "2020-06-01",
+      "name": "xss-appgw-vnet-resource",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
@@ -189,7 +194,7 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-06-01",
       "name": "[concat(variables('applicationGateways')[copyIndex()].name,'-pip','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -221,7 +226,7 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-06-01",
       "name": "[concat('deploy-',variables('applicationGateways')[copyIndex()].name,'-applicationgateway','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -230,7 +235,7 @@
       },
       "dependsOn": [
         "copy-appgateway-pip",
-        "[concat(variables('vnetName'),'-resource')]"
+        "xss-appgw-vnet-resource"
       ],
       "properties": {
         "mode": "Incremental",
@@ -310,8 +315,7 @@
                   "FrontendPort": {
                     "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts',variables('applicationGateways')[copyIndex()].name, 'appGatewayFrontendPort')]"
                   },
-                  "Protocol": "Http",
-                  "SslCertificate": null
+                  "Protocol": "Http"
                 }
               }
             ]
@@ -371,8 +375,8 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
-      "name": "[concat(variables('diagStorageAccName'),'-resource')]",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('diagStorageAccDeployment')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
@@ -393,8 +397,8 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
-      "name": "[concat(variables('aspName'),'-resource')]",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('aspDeployment')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
@@ -415,11 +419,11 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
-      "name": "[concat(variables('webAppName'),'-resource')]",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('webAppDeployment')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('aspName'),'-resource')]"
+        "[variables('aspDeployment')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -443,12 +447,12 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
-      "name": "[concat(variables('webAppName'),'-connectionStrings','-resource')]",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('connectionStrinDeployment')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('webAppName'),'-resource')]",
-        "[concat(variables('databases')[0].name,'-database','-resource')]"
+        "[variables('webAppDeployment')]",
+        "contosoclinic-database--resource"
       ],
       "properties": {
         "mode": "Incremental",
@@ -472,11 +476,11 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-06-01",
       "name": "[concat(variables('webAppName'),'-msdeploy','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('webAppName'),'-connectionStrings','-resource')]"
+        "[variables('connectionStrinDeployment')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -500,8 +504,8 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
-      "name": "[concat(variables('sqlServerName'),'-resource')]",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('sqlServerDeployment')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
@@ -528,12 +532,12 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
-      "name": "[concat(variables('sqlServerName'),'-auditingSettings','-resource')]",
+      "apiVersion": "2020-06-01",
+      "name": "sqlServerName-auditingSettings-resource",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('sqlServerName'),'-resource')]",
-        "[concat(variables('diagStorageAccName'),'-resource')]"
+        "[variables('sqlServerDeployment')]",
+        "[variables('diagStorageAccDeployment')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -551,11 +555,11 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-06-01",
       "name": "[concat(variables('sqlServerName'),'-securityAlertPolicies','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('sqlServerName'),'-auditingSettings','-resource')]"
+        "sqlServerName-auditingSettings-resource"
       ],
       "properties": {
         "mode": "Incremental",
@@ -576,11 +580,11 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
-      "name": "[concat(variables('databases')[0].name,'-database','-resource')]",
+      "apiVersion": "2020-06-01",
+      "name": "contosoclinic-database--resource",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('sqlServerName'),'-resource')]"
+        "[variables('sqlServerDeployment')]"
       ],
       "properties": {
         "mode": "Incremental",
