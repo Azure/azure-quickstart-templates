@@ -14,8 +14,8 @@ Node $NodeName
 				DebugMode = 'ForceModuleImport'
 
 			}
-		cChocoinstaller Install {
-				InstallDir            = "C:\Choco"	   
+		cChocoinstaller InstallChoco {
+				InstallDir  = "C:\Choco"	   
 			}
 		cChocoPackageInstaller installIometer {
 				Name        = "iometer"
