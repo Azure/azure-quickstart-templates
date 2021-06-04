@@ -109,28 +109,39 @@
         "description": "Enter the name for diagnostic settings configuration."
       }
     },
-    "diagnosticWorkspaceId": {
+    "logAnalyticsWorkspaceName": {
       "type": "string",
+      "defaultValue": "[concat('sqlmi-laws-', uniqueString(resourceGroup().id, deployment().name))]",
       "metadata": {
-        "description": "Enter the id of diagnostic workspace. Example: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/MyResourceGroup/providers/microsoft.operationalinsights/workspaces/MyWorkspace"
+        "description": "Enter the name of diagnostic workspace."
       }
     },
-    "storageAccountId": {
+    "storageAccountName": {
       "type": "string",
+      "defaultValue": "[concat('sqlmisa', uniqueString(resourceGroup().id, deployment().name))]",
       "metadata": {
-        "description": "Enter the id of storage account that will be used for collecting logs and metrics. Example: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/MyResourceGroup/providers/Microsoft.Storage/storageAccounts/mystorageaccount"
+        "description": "Enter the name of storage account"
       }      
     },
     "eventHubAuthorizationRuleId": {
       "type": "string",
+      "defaultValue": "RootManageSharedAccessKey",
       "metadata": {
-        "description": "Enter the id of authorization rule that will be used for event hub. Example: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/MyResourceGroup/providers/Microsoft.EventHub/namespaces/MyNameSpace/authorizationrules/RootManageSharedAccessKey"
+        "description": "Name of Namespace Authorization Rule."
+      }
+    },
+    "eventHubNamespaceName": {
+      "type": "string",
+      "defaultValue": "[concat('sqlmi-eh-space-', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Event Hubs namespace."
       }
     },
     "eventHubName": {
       "type": "string",
+      "defaultValue": "[concat('sqlmi-eh-', uniqueString(resourceGroup().id))]",
       "metadata": {
-        "description": "Enter the name of the event hub that will be used for logs and metrics. Example: myEventhub"
+        "description": "The name of the Event Hubs namespace."
       }
     }
   },
@@ -277,16 +288,68 @@
       }
     },
     {
+      "apiVersion": "2018-01-01-preview",
+      "name": "[parameters('eventHubNamespaceName')]",
+      "type": "Microsoft.EventHub/namespaces",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard"
+      },
+      "properties": {},
+      "resources": [
+        {
+          "apiVersion": "2017-04-01",
+          "name": "[parameters('eventHubName')]",
+          "type": "eventhubs",
+          "dependsOn": [
+            "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNamespaceName'))]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2020-08-01",
+      "name": "[parameters('logAnalyticsWorkspaceName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": "120",
+        "features": {
+          "searchVersion": 1,
+          "legacy": 0,
+          "enableLogAccessUsingOnlyResourcePermissions": "true"
+        }
+      }
+    },
+    {
       "type": "Microsoft.sql/managedInstances/providers/diagnosticSettings",
       "apiVersion": "2017-05-01-preview",
       "name": "[concat(parameters('managedInstanceName'),'/microsoft.insights/', parameters('diagnosticSettingName'))]",
       "dependsOn": [
-        "[parameters('managedInstanceName')]"
+        "[parameters('managedInstanceName')]",
+        "[parameters('storageAccountName')]",
+        "[parameters('logAnalyticsWorkspaceName')]",
+        "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNamespaceName'))]"
       ],
       "properties": {
-        "workspaceId": "[parameters('diagnosticWorkspaceId')]",
-        "storageAccountId": "[parameters('storageAccountId')]",
-        "eventHubAuthorizationRuleId": "[parameters('eventHubAuthorizationRuleId')]",
+        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]",
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "eventHubAuthorizationRuleId": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), parameters('eventhubAuthorizationRuleName'))]",
         "eventHubName": "[parameters('eventHubName')]",
         "logs": [
           {
