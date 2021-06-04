@@ -44,6 +44,13 @@
             "description": "Minimum instance count for Application Gateway"
          }
       },
+      "maxCapacity": {
+         "type": "int",
+         "defaultValue": 10,
+         "metadata": {
+            "description": "Maximum instance count for Application Gateway"
+         }
+      },
       "frontendPort": {
          "type": "int",
          "defaultValue": 80,
@@ -74,14 +81,14 @@
       },
       "cookieBasedAffinity": {
          "type": "string",
-         "allowedValues": [
-            "Enabled",
-            "Disabled"
-         ],
          "defaultValue": "Disabled",
          "metadata": {
             "description": "Cookie based affinity"
-         }
+         },
+         "allowedValues": [
+            "Enabled",
+            "Disabled"
+         ]
       },
       "location": {
          "type": "string",
@@ -91,14 +98,15 @@
          }
       }
    },
+   "functions": [],
    "variables": {
-      "appGwPublicIpName": "[concat(parameters('applicationGatewayName'), '-pip')]",
+      "appGwPublicIpName": "[format('{0}-pip', parameters('applicationGatewayName'))]",
       "appGwSize": "Standard_v2"
    },
    "resources": [
       {
-         "apiVersion": "2020-05-01",
          "type": "Microsoft.Network/virtualNetworks",
+         "apiVersion": "2020-06-01",
          "name": "[parameters('virtualNetworkName')]",
          "location": "[parameters('location')]",
          "properties": {
@@ -118,8 +126,8 @@
          }
       },
       {
-         "apiVersion": "2020-05-01",
          "type": "Microsoft.Network/publicIPAddresses",
+         "apiVersion": "2020-06-01",
          "name": "[variables('appGwPublicIpName')]",
          "location": "[parameters('location')]",
          "sku": {
@@ -130,21 +138,18 @@
          }
       },
       {
-         "apiVersion": "2020-05-01",
-         "name": "[parameters('applicationGatewayName')]",
          "type": "Microsoft.Network/applicationGateways",
+         "apiVersion": "2020-06-01",
+         "name": "[parameters('applicationGatewayName')]",
          "location": "[parameters('location')]",
-         "dependsOn": [
-            "[resourceId('Microsoft.Network/publicIPAddresses',variables('appGwPublicIpName'))]",
-            "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
-         ],
          "properties": {
             "sku": {
                "name": "[variables('appGwSize')]",
                "tier": "Standard_v2"
             },
             "autoscaleConfiguration": {
-               "minCapacity": "[parameters('minCapacity')]"
+               "minCapacity": "[parameters('minCapacity')]",
+               "maxCapacity": "[parameters('maxCapacity')]"
             },
             "gatewayIPConfigurations": [
                {
@@ -160,7 +165,7 @@
                {
                   "name": "appGatewayFrontendIP",
                   "properties": {
-                     "PublicIPAddress": {
+                     "publicIPAddress": {
                         "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('appGwPublicIpName'))]"
                      }
                   }
@@ -170,7 +175,7 @@
                {
                   "name": "appGatewayFrontendPort",
                   "properties": {
-                     "Port": "[parameters('frontendPort')]"
+                     "port": "[parameters('frontendPort')]"
                   }
                }
             ],
@@ -178,7 +183,7 @@
                {
                   "name": "appGatewayBackendPool",
                   "properties": {
-                     "BackendAddresses": "[parameters('backendIPAddresses')]"
+                     "backendAddresses": "[parameters('backendIPAddresses')]"
                   }
                }
             ],
@@ -186,9 +191,9 @@
                {
                   "name": "appGatewayBackendHttpSettings",
                   "properties": {
-                     "Port": "[parameters('backendPort')]",
-                     "Protocol": "Http",
-                     "CookieBasedAffinity": "[parameters('cookieBasedAffinity')]"
+                     "port": "[parameters('backendPort')]",
+                     "protocol": "Http",
+                     "cookieBasedAffinity": "[parameters('cookieBasedAffinity')]"
                   }
                }
             ],
@@ -196,21 +201,21 @@
                {
                   "name": "appGatewayHttpListener",
                   "properties": {
-                     "FrontendIpConfiguration": {
+                     "frontendIPConfiguration": {
                         "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', parameters('applicationGatewayName'), 'appGatewayFrontendIP')]"
                      },
-                     "FrontendPort": {
+                     "frontendPort": {
                         "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', parameters('applicationGatewayName'), 'appGatewayFrontendPort')]"
                      },
-                     "Protocol": "Http"
+                     "protocol": "Http"
                   }
                }
             ],
             "requestRoutingRules": [
                {
-                  "Name": "rule1",
+                  "name": "rule1",
                   "properties": {
-                     "RuleType": "Basic",
+                     "ruleType": "Basic",
                      "httpListener": {
                         "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', parameters('applicationGatewayName'), 'appGatewayHttpListener')]"
                      },
@@ -223,7 +228,11 @@
                   }
                }
             ]
-         }
+         },
+         "dependsOn": [
+            "[resourceId('Microsoft.Network/publicIPAddresses', variables('appGwPublicIpName'))]",
+            "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+         ]
       }
    ]
 }
