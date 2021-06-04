@@ -127,22 +127,22 @@ setup_datadisks() {
 	fi
 }
 
+export DEBIAN_FRONTEND=noninteractive
+
 install_pre()
 {
 # First install pre-requisites
-	sudo  apt-get update
+	apt-get update
 
 	echo "Installing Java"
 	add-apt-repository -y ppa:webupd8team/java
-	apt-get -y update
-	echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
-	echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
-	apt-get -y install oracle-java7-installer
-	sudo ntpdate pool.ntp.org
-	sudo apt-get -y install ntp
-	sudo apt-get -y install python-software-properties
-	sudo apt-get -y update
-	sudo apt-get -y install git
+	apt-get update
+	apt-get -y install default-jre
+	ntpdate pool.ntp.org
+	apt-get -y install ntp
+	apt-get -y install python-software-properties
+	apt-get update
+	apt-get -y install git
 }
 
 # Install spark
@@ -174,16 +174,16 @@ install_spark()
 
 #	Third create a spark user with proper privileges and ssh keys.
 
-	sudo addgroup spark
-	sudo useradd -g spark spark
-	sudo adduser spark sudo
-	sudo mkdir /home/spark
-	sudo chown spark:spark /home/spark
+	addgroup spark
+    useradd -g spark spark
+	adduser spark sudo
+	mkdir /home/spark
+	chown spark:spark /home/spark
 
 #	Add to sudoers file:
 
 	echo "spark ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/90-cloud-init-users
-	sudo chown -R spark:spark /usr/local/spark/
+	chown -R spark:spark /usr/local/spark/
 
 #	Setting passwordless ssh for root
 
@@ -192,9 +192,9 @@ install_spark()
 
 #	Fourth setup some Apache Spark working directories with proper user permissions
 
-	sudo mkdir -p ${DATADIR}/spark/{logs,work,tmp,pids}
-	sudo chown -R spark:spark ${DATADIR}/spark
-	sudo chmod 4755 ${DATADIR}/spark/tmp
+	mkdir -p ${DATADIR}/spark/{logs,work,tmp,pids}
+	chown -R spark:spark ${DATADIR}/spark
+	chmod 4755 ${DATADIR}/spark/tmp
 
 #	Fifth let's do a quick test
 #	cd /usr/local/spark
