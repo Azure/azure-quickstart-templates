@@ -62,38 +62,40 @@ install_spark()
 	tar -xzvf $TMP_DIR/$FILE_NAME --directory $INSTALL_DIR
 
 	echo "Configuring Spark"
-	cd $SPARK_HOME/conf
-	cp -p spark-env.sh.template spark-env.sh
+	cp -p $SPARK_HOME/conf/spark-env.sh.template $SPARK_HOME/conf/spark-env.sh
+	chmod o+w $SPARK_HOME/conf/spark-env.sh
 	touch spark-env.sh
 
-	echo 'export SPARK_WORKER_MEMORY="1g"' >> spark-env.sh
-	echo 'export SPARK_DRIVER_MEMORY="1g"' >> spark-env.sh
-	echo 'export SPARK_REPL_MEM="2g"' >> spark-env.sh
-	echo 'export SPARK_WORKER_PORT=9000' >> spark-env.sh
-	echo 'export SPARK_CONF_DIR="$SPARK_HOME/conf"' >> spark-env.sh
-	echo 'export SPARK_TMP_DIR="/var/spark/tmp"' >> spark-env.sh
-	echo 'export SPARK_PID_DIR="/var/spark/pids"' >> spark-env.sh
-	echo 'export SPARK_LOG_DIR="/var/spark/logs"' >> spark-env.sh
-	echo 'export SPARK_WORKER_DIR="/var/spark/work"' >> spark-env.sh
-	echo 'export SPARK_LOCAL_DIRS="/var/spark/tmp"' >> spark-env.sh
-	echo 'export SPARK_COMMON_OPTS="$SPARK_COMMON_OPTS -Dspark.kryoserializer.buffer.mb=32 "' >> spark-env.sh
-	echo 'export SPARK_MASTER_OPTS=" $LOG4J -Dspark.log.file=/var/spark/logs/master.log "' >> spark-env.sh
-	echo 'export SPARK_WORKER_OPTS=" $LOG4J -Dspark.log.file=/var/spark/logs/worker.log "' >> spark-env.sh
-	echo 'export SPARK_EXECUTOR_OPTS=" $LOG4J -Djava.io.tmpdir=/var/spark/tmp/executor "' >> spark-env.sh
-	echo 'export SPARK_REPL_OPTS=" -Djava.io.tmpdir=/var/spark/tmp/repl/\$USER "' >> spark-env.sh
-	echo 'export SPARK_APP_OPTS=" -Djava.io.tmpdir=/var/spark/tmp/app/\$USER "' >> spark-env.sh
-	echo 'export PYSPARK_PYTHON="/usr/bin/python"' >> spark-env.sh
-	echo "export SPARK_MASTER_IP=\"$MASTERIP\"" >> spark-env.sh
-	echo 'export SPARK_MASTER_PORT=7077' >> spark-env.sh
-	echo "export SPARK_PUBLIC_DNS=\"$MASTERIP\"" >> spark-env.sh
+	echo 'export SPARK_WORKER_MEMORY="1g"' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_DRIVER_MEMORY="1g"' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_REPL_MEM="2g"' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_WORKER_PORT=9000' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_CONF_DIR="$SPARK_HOME/conf"' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_TMP_DIR="/var/spark/tmp"' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_PID_DIR="/var/spark/pids"' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_LOG_DIR="/var/spark/logs"' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_WORKER_DIR="/var/spark/work"' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_LOCAL_DIRS="/var/spark/tmp"' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_COMMON_OPTS="$SPARK_COMMON_OPTS -Dspark.kryoserializer.buffer.mb=32 "' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_MASTER_OPTS=" $LOG4J -Dspark.log.file=/var/spark/logs/master.log "' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_WORKER_OPTS=" $LOG4J -Dspark.log.file=/var/spark/logs/worker.log "' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_EXECUTOR_OPTS=" $LOG4J -Djava.io.tmpdir=/var/spark/tmp/executor "' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_REPL_OPTS=" -Djava.io.tmpdir=/var/spark/tmp/repl/\$USER "' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export SPARK_APP_OPTS=" -Djava.io.tmpdir=/var/spark/tmp/app/\$USER "' >> $SPARK_HOME/conf/spark-env.sh
+	echo 'export PYSPARK_PYTHON="/usr/bin/python"' >> $SPARK_HOME/conf/spark-env.sh
+	echo "export SPARK_MASTER_IP=\"$MASTERIP\"" >> $SPARK_HOME/conf/spark-env.shspark-env.sh
+	echo 'export SPARK_MASTER_PORT=7077' >> $SPARK_HOME/conf/spark-env.sh
+	echo "export SPARK_PUBLIC_DNS=\"$MASTERIP\"" >> $SPARK_HOME/conf/spark-env.sh
 
 	cp -p spark-defaults.conf.template spark-defaults.conf
+	
+	chmod o+w $SPARK_HOME/conf/spark-defaults.conf
 	touch spark-defaults.conf
 
-	echo "spark.master            spark://${MASTERIP}:7077" >> spark-defaults.conf
-	echo 'spark.executor.memory   512m' >> spark-defaults.conf
-	echo 'spark.eventLog.enabled  true' >> spark-defaults.conf
-	echo 'spark.serializer        org.apache.spark.serializer.KryoSerializer' >> spark-defaults.conf
+	echo "spark.master            spark://${MASTERIP}:7077" >> $SPARK_HOME/conf/spark-defaults.conf
+	echo 'spark.executor.memory   512m' >> $SPARK_HOME/conf/spark-defaults.conf
+	echo 'spark.eventLog.enabled  true' >> $SPARK_HOME/conf/spark-defaults.conf
+	echo 'spark.serializer        org.apache.spark.serializer.KryoSerializer' >> $SPARK_HOME/conf/spark-defaults.conf
 
 	echo "Setting permissions"
 	chown -R spark:spark $INSTALL_DIR
@@ -109,33 +111,33 @@ install_spark()
 		SPARKSERVICE_NAME="spark-master.service"
 	fi
 
-	cd /etc/systemd/system
-	touch $SPARKSERVICE_NAME
+	touch /etc/systemd/system/$SPARKSERVICE_NAME
+	chmod o+w /etc/systemd/system/$SPARKSERVICE_NAME
 
-	echo '[Unit]' >> $SPARKSERVICE_NAME
-	echo 'Description=Spark Service' >> $SPARKSERVICE_NAME
-	echo 'After=network.target' >> $SPARKSERVICE_NAME
+	echo '[Unit]' >> /etc/systemd/system/$SPARKSERVICE_NAME
+	echo 'Description=Spark Service' >> /etc/systemd/system/$SPARKSERVICE_NAME
+	echo 'After=network.target' >> /etc/systemd/system/$SPARKSERVICE_NAME
 
-	echo '[Service]' >> $SPARKSERVICE_NAME
-	echo 'User=spark' >> $SPARKSERVICE_NAME
-	echo 'Type=forking' >> $SPARKSERVICE_NAME
+	echo '[Service]' >> /etc/systemd/system/$SPARKSERVICE_NAME
+	echo 'User=spark' >> /etc/systemd/system/$SPARKSERVICE_NAME
+	echo 'Type=forking' >> /etc/systemd/system/$SPARKSERVICE_NAME
 
 	if [ "$RUNAS" = "slave" ];
 	then
-		echo "ExecStart=$SPARK_HOME/sbin/start-slave.sh spark://$MASTERIP:7077" >> $SPARKSERVICE_NAME
-		echo "ExecStop=$SPARK_HOME/sbin/stop-slave.sh" >> $SPARKSERVICE_NAME
+		echo "ExecStart=$SPARK_HOME/sbin/start-slave.sh spark://$MASTERIP:7077" >> /etc/systemd/system/$SPARKSERVICE_NAME
+		echo "ExecStop=$SPARK_HOME/sbin/stop-slave.sh" >> /etc/systemd/system/$SPARKSERVICE_NAME
 	else
-		echo "ExecStart=$SPARK_HOME/sbin/start-master.sh" >> $SPARKSERVICE_NAME
-		echo "ExecStop=$SPARK_HOME/sbin/stop-master.sh" >> $SPARKSERVICE_NAME
+		echo "ExecStart=$SPARK_HOME/sbin/start-master.sh" >> /etc/systemd/system/$SPARKSERVICE_NAME
+		echo "ExecStop=$SPARK_HOME/sbin/stop-master.sh" >> /etc/systemd/system/$SPARKSERVICE_NAME
 	fi
 
-	echo '[Install]' >> $SPARKSERVICE_NAME
-	echo 'WantedBy=multi-user.target' >> $SPARKSERVICE_NAME
+	echo '[Install]' >> /etc/systemd/system/$SPARKSERVICE_NAME
+	echo 'WantedBy=multi-user.target' >> /etc/systemd/system/$SPARKSERVICE_NAME
 
-	systemctl enable $SPARKSERVICE_NAME
+	systemctl enable /etc/systemd/system/$SPARKSERVICE_NAME
 
 	echo "Starting $SPARKSERVICE_NAME"
-	systemctl start $SPARKSERVICE_NAME
+	systemctl start /etc/systemd/system/$SPARKSERVICE_NAME
 }
 
 # need to run with sudo

@@ -9,14 +9,14 @@ install_dependencies()
 install_cassandra()
 {
 	echo "Adding YUM Repo for DataStax"
-	cd /etc/yum.repos.d/
-	touch datastax.repo
+	touch /etc/yum.repos.d/datastax.repo
+	chmod o+w /etc/yum.repos.d/datastax.repo
 
-	echo '[datastax-ddc]' >> datastax.repo
-	echo 'name = DataStax Repo for Apache Cassandra' >> datastax.repo
-	echo 'baseurl = http://rpm.datastax.com/datastax-ddc/3.2' >> datastax.repo
-	echo 'enabled = 1' >> datastax.repo
-	echo 'gpgcheck = 0' >> datastax.repo
+	echo '[datastax-ddc]' >> /etc/yum.repos.d/datastax.repo
+	echo 'name = DataStax Repo for Apache Cassandra' >> /etc/yum.repos.d/datastax.repo
+	echo 'baseurl = http://rpm.datastax.com/datastax-ddc/3.2' >> /etc/yum.repos.d/datastax.repo
+	echo 'enabled = 1' >> /etc/yum.repos.d/datastax.repo
+	echo 'gpgcheck = 0' >> /etc/yum.repos.d/datastax.repo
 
 	echo "Installing datastax-ddc"
 	yum -y -q install datastax-ddc
