@@ -25,7 +25,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/coscale/coscale-dev-env/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -40,13 +40,25 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "vmUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for VM"
+      },
+      "defaultValue": "cs"
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "description"
+      },
+      "defaultValue": "Standard_DS4_v2"
     }
   },
   "variables": {
     "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'stg')]",
-    "vmStorageAccountContainerName": "vdh",
     "publicDnsName": "[concat('coscale-', uniquestring(resourceGroup().id))]",
-    "vmSize": "Standard_DS4_v2",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
@@ -54,14 +66,13 @@
     "nicName": "coscaleNic",
     "networkSecurityGroupName": "coscaleNSG",
     "publicIPAddressName": "coscalePublicIP",
-    "vmUser": "cs",
     "vmPublicKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCkbtWpHEyZYJ+Eyl+jFVUYOH+YBqGAAvyl9oJRzWieJlDp9PucYhbtlXTm7VhlSZvFi7MtcJoxzlQqk1FoNsUPtPyrCtVz8uEHS4FZiuOhb1UFLMayInfXWUWzBt0EEbELlgipRpqGgsi+pn3P07C+8VcBXhAPpMn7Y3qb3txlr7tCCowk8XbXE+MFwfLMXqHavgzIcI++6zECQoFCjb1ktpiAPcP/HkzNDJ2r3tAWyJWOMs1GH3f67corKaKh54LCmQRJS1FAUEnb9da4Xn+Tgx16f42aBF4gY5CEmg2NZ4tvbgE7hXKxJY0TEBTQ1zjUgv92gXOuGcRgu+XM8fut CoScaleAzure",
     "virtualNetworkName": "coscaleVNET",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-01-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
       "location": "[parameters('location')]",
@@ -157,9 +168,9 @@
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -187,19 +198,19 @@
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "osProfile": {
           "computerName": "[variables('vmName')]",
-          "adminUsername": "[variables('vmUser')]",
+          "adminUsername": "[parameters('vmUserName')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
-                  "path": "[concat('/home/', variables('vmUser'), '/.ssh/authorized_keys')]",
+                  "path": "[concat('/home/', parameters('vmUserName'), '/.ssh/authorized_keys')]",
                   "keyData": "[variables('vmPublicKey')]"
                 }
               ]
@@ -207,7 +218,7 @@
           }
         },
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -246,7 +257,7 @@
           "apiVersion": "2015-06-15",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
           ],
           "properties": {
             "publisher": "Microsoft.Azure.Extensions",
@@ -256,7 +267,9 @@
             "settings": {
               "fileUris": [
                 "[concat(parameters('_artifactsLocation'), 'install.sh', parameters('_artifactsLocationSasToken'))]"
-              ],
+              ]
+            },
+            "protectedSettings": {
               "commandToExecute": "[concat('bash install.sh ', parameters('coscaleKey'), ' ', parameters('coscaleEmail'), ' ', parameters('coscalePassword'), ' ', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
             }
           }
