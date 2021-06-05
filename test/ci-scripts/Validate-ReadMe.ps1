@@ -11,7 +11,7 @@ Write-Host "StorageAccountName: $StorageAccountName"
 Write-Host "bicepSupported: $bicepSupported"
 
 $s = $sampleName.Replace("\", "/")
-$sEncoded = $sampleName.Replace("\", "%2F")
+$sEncoded = $sampleName.Replace("\", "%2F").Replace("/", "%2F")
 
 $PublicLinkMarkDown = @(
     "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"
