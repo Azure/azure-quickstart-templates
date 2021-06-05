@@ -55,26 +55,33 @@ configure_site_url ${siteFQDN} ${azFQDN}
 check_fileServerType_param $fileServerType
 
 {
+  export DEBIAN_FRONTEND=noninteractive
+
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C
+
+  sudo apt clean
+  sudo add-apt-repository universe
+  sudo add-apt-repository ppa:ondrej/php
+  sudo apt-get install php5.6
+
   # make sure the system does automatic update
-  sudo apt-get -y update
+  sudo apt-get update
   sudo apt-get -y install unattended-upgrades
 
   # install pre-requisites
-  sudo apt-get -y install python-software-properties unzip rsyslog
-
-  sudo apt-get -y install postgresql-client mysql-client git
+  sudo apt-get -y install software-properties-common unzip rsyslog postgresql-client mysql-client git
 
   if [ $fileServerType = "gluster" ]; then
     #configure gluster repository & install gluster client
     sudo add-apt-repository ppa:gluster/glusterfs-3.8 -y
-    sudo apt-get -y update
+    sudo apt-get update
     sudo apt-get -y install glusterfs-client
   elif [ "$fileServerType" = "azurefiles" ]; then
     sudo apt-get -y install cifs-utils
   fi
 
   # install the base stack
-  sudo apt-get -y install varnish php php-cli php-curl php-zip php-pear php-mbstring php-dev mcrypt
+  sudo apt-get -y install varnish php5.6-cli php5.6-curl php5.6-zip php5.6-mbstring php5.6-dev php5.6-mcrypt
 
   if [ "$webServerType" = "nginx" -o "$httpsTermination" = "VMSS" ]; then
     sudo apt-get -y install nginx
@@ -85,12 +92,11 @@ check_fileServerType_param $fileServerType
     sudo apt-get -y install apache2 libapache2-mod-php
   else
     # for nginx-only option
-    sudo apt-get -y install php-fpm
+    sudo apt-get -y install php5.6-fpm
   fi
 
   # Mahara requirements
-  sudo apt-get install -y graphviz aspell php-soap php-json php-bcmath php-gd php-pgsql php-mysql php-xmlrpc php-intl php-xml php-bz2
-  install_php_sql_driver
+  sudo apt-get install -y graphviz aspell php5.6-soap php5.6-json php5.6-bcmath php5.6-gd php5.6-pgsql php5.6-mysql php5.6-xmlrpc php5.6-intl php5.6-xml php5.6-bz2
 
   if [ $fileServerType = "gluster" ]; then
     # Mount gluster fs for /mahara

@@ -36,11 +36,11 @@
       "metadata": {
         "description": "Desired Size of the VM. Any valid option accepted but if you choose premium storage type you must choose a DS class VM size."
       },
-      "defaultValue": "Standard_DS2"
+      "defaultValue": "Standard_D2_v2"
     },
     "vmVisualStudioVersion": {
       "type": "string",
-      "defaultValue": "VS-2017-Comm-WS2016",
+      "defaultValue": "VS-2017-Ent-Latest-WS2016",
       "allowedValues": [
         "VS-2015-Comm-VSU3-AzureSDK-29-WS2012R2",
         "VS-2015-Comm-VSU3-AzureSDK-291-WS2012R2",
@@ -50,7 +50,8 @@
         "VS-2017-Comm-WS2016",
         "VS-2017-Ent-Latest-Preview-WS2016",
         "VS-2017-Ent-Latest-WS2016",
-        "VS-2017-Ent-WS2016"        
+        "VS-2017-Ent-WS2016",
+        "vs-2019-preview-ws2016"
       ],
       "metadata": {
         "description": "Which version of Visual Studio you would like to deploy"
@@ -95,6 +96,13 @@
       },
       "defaultValue": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/visual-studio-vstsbuildagent-vm/"
     },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -110,11 +118,11 @@
     "vnet01Subnet1Prefix": "10.0.0.0/24",
     "vmImagePublisher": "MicrosoftVisualStudio",
     "vmImageOffer": "VisualStudio",
-    "vmOSDiskName": "VMOSDisk",
     "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Vnet01', variables('vnet01Subnet1Name'))]",
-    "vmStorageAccountContainerName": "vhds",
     "vmNicName": "[concat(parameters('vmName'), 'NetworkInterface')]",
-    "vmIP01Name": "VMIP01"
+    "vmIP01Name": "VMIP01",
+    "vstsAgentName": "[concat('agent-', parameters('vmName'))]",
+    "vstsParameters": "[concat('-vstsAccount ', parameters('vstsAccount'), ' -personalAccessToken ', parameters('personalAccessToken'), ' -AgentName ', variables('vstsAgentName'),' -PoolName ', parameters('poolName'), ' -runAsAutoLogon ', parameters('enableAutologon'), ' -vmAdminUserName ', parameters('vmAdminUsername'), ' -vmAdminPassword ', parameters('vmAdminPassword'))]"
   },
   "resources": [
     {
@@ -161,8 +169,8 @@
       "location": "[parameters('location')]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', 'Vnet01')]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('vmIP01Name'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', 'Vnet01')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('vmIP01Name'))]"
       ],
       "tags": {
         "displayName": "VMNic01"
@@ -190,8 +198,8 @@
       "location": "[parameters('location')]",
       "apiVersion": "2017-03-30",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
       ],
       "tags": {
         "displayName": "VM01"
@@ -231,9 +239,9 @@
           "name": "CustomScript",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2015-05-01-preview",
+          "apiVersion": "2017-03-30",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
           ],
           "properties": {
             "publisher": "Microsoft.Compute",
@@ -241,9 +249,9 @@
             "typeHandlerVersion": "1.4",
             "settings": {
               "fileUris": [
-                "[concat(parameters('_artifactsLocation'),'/InstallVSTSAgent.ps1')]"
+                "[uri(parameters('_artifactsLocation'), concat('InstallVSTSAgent.ps1', parameters('_artifactsLocationSasToken')))]"
               ],
-              "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -Command .\\InstallVSTSAgent.ps1 -vstsAccount ', parameters('vstsAccount'), ' -personalAccessToken ', parameters('personalAccessToken'), ' -AgentName ', parameters('vmName'), ' -PoolName ', parameters('poolName'), ' -runAsAutoLogon ', parameters('enableAutologon'), ' -vmAdminUserName ', parameters('vmAdminUserName'), ' -vmAdminPassword ', parameters('vmAdminPassword'))]"
+              "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -Command \"& {', './', 'InstallVstsAgent.ps1', ' ', variables('vstsParameters'), '}\"')]"
             }
           }
         }

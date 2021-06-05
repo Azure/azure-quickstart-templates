@@ -39,7 +39,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-hdinsight-linux-with-edge-node"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-hdinsight-linux-with-edge-node/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -79,21 +79,21 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('clusterStorageAccountName')]",
-      "apiVersion": "2016-01-01",
       "location": "[parameters('location')]",
+      "apiVersion": "2019-06-01",
       "sku": {
         "name": "[variables('storageAccountType')]"
       },
-      "kind": "Storage",
-      "properties": {}
+        "kind": "Storage",
+        "properties": {}
     },
     {
       "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-03-01-preview",
+      "apiVersion": "2018-06-01-preview",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]"
       ],
       "tags": {},
       "properties": {
@@ -112,10 +112,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2016-01-01').primaryEndpoints.blob,'https://',''),'/','')]",
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2019-06-01').primaryEndpoints.blob,'https://',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2016-01-01').keys[0].value]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2019-06-01').keys[0].value]"
             }
           ]
         },
@@ -125,7 +125,7 @@
               "name": "headnode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "Standard_D3_v2"
+                "vmSize": "Standard_E4_v3"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -138,7 +138,7 @@
               "name": "workernode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "Standard_D3_v2"
+                "vmSize": "Standard_E4_v3"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -154,9 +154,9 @@
     {
       "name": "[concat(parameters('clusterName'),'/', variables('applicationName'))]",
       "type": "Microsoft.HDInsight/clusters/applications",
-      "apiVersion": "2015-03-01-preview",
+      "apiVersion": "2018-06-01-preview",
       "dependsOn": [
-        "[concat('Microsoft.HDInsight/clusters/',parameters('clusterName'))]"
+        "[resourceId('Microsoft.HDInsight/clusters/',parameters('clusterName'))]"
       ],
       "properties": {
         "marketPlaceIdentifier": "EmptyNode",
@@ -166,7 +166,7 @@
               "name": "edgenode",
               "targetInstanceCount": 1,
               "hardwareProfile": {
-                "vmSize": "Standard_D3_v2"
+                "vmSize": "Standard_E4_v3"
               }
             }
           ]
@@ -174,14 +174,19 @@
         "installScriptActions": [
           {
             "name": "[concat('emptynode','-' ,uniquestring(variables('applicationName')))]",
-            "uri": "[concat(parameters('_artifactsLocation'), '/', parameters('installScriptActionFolder'), '/', parameters('installScriptAction'), parameters('_artifactsLocationSasToken'))]",
+            "uri": "[uri(parameters('_artifactsLocation'), concat(parameters('installScriptActionFolder'), '/', parameters('installScriptAction'), parameters('_artifactsLocationSasToken')))]",
             "roles": [
               "edgenode"
             ]
           }
         ],
-        "uninstallScriptActions": [],
-        "httpsEndpoints": [],
+        "sshEndpoints": [
+          {
+            "location": "[concat(variables('applicationName'),'.',parameters('clusterName'),'-ssh.azurehdinsight.net')]",
+            "destinationPort": 22,
+            "publicPort": 22
+          }
+        ],
         "applicationType": "CustomApplication"
       }
     }
