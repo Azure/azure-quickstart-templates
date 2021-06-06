@@ -87,7 +87,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/demos/memcached-multi-vm-ubuntu/"
+      "defaultValue": "[deployment().properties.templatelink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -108,16 +108,17 @@
     },
     "subnetDmzRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), variables('subnetDmzName'))]",
     "subnetMemcachedRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), variables('subnetMemcachedName'))]",
-    "memcachedMachineNamePrefix": "memcached"
+    "memcachedMachineNamePrefix": "memcached",
+    "storageAccountType": "Standard_LRS"
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2021-01-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "Standard_LRS"
+      "sku": {
+        "name": "[variables('storageAccountType')]"
       }
     },
     {
@@ -255,8 +256,8 @@
         "count": "[parameters('numberOfMemcachedInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', 'nicmemcached', copyindex())]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', 'nicmemcached', copyindex())]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -297,8 +298,8 @@
         "count": "[parameters('numberOfMemcachedInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', concat(variables('memcachedMachineNamePrefix'), copyindex()))]",
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('domainName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('memcachedMachineNamePrefix'), copyindex()))]",
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('domainName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -319,7 +320,7 @@
       "name": "[concat(parameters('domainName'), '/install_apache')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('domainName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('domainName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
