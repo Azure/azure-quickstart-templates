@@ -31,7 +31,7 @@ sudo apt-get -y update --fix-missing
 ## Enable IPv4 forwarding
 echo "net.ipv4.conf.all.forwarding=1" | sudo tee -a /etc/sysctl.conf 
 echo "net.ipv4.conf.default.forwarding=1" | sudo tee -a /etc/sysctl.conf 
-sysctl -p
+sudo sysctl -p
 
 ## Create a folder for the quagga logs
 echo "creating folder for quagga logs"
