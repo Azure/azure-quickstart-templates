@@ -16,8 +16,6 @@ To deploy Virtual Machines based on specialized disk images you need to import V
 
 In the case there are multiple VHD files compressed in a single ZIP and you got the URL to fetch the ZIP archive, this ARM template will ease the job: Download, Extract and Import into an existing Storage Account Blob Container.
 
-Simply hit "Deploy to Azure" button.
-
 ## Prerequisites
 
 - URL of a ZIP Archive containing VHD files
@@ -26,11 +24,15 @@ Simply hit "Deploy to Azure" button.
 
 ## Usage
 
-When the deployment is done, you can start using the .VHD blobs that have been imported in the Storage Account, for example creating Disk or Image resources and then Virtual Machines.
+It is simple to use directly to do a quick manual import.
+
+Hit the "Deploy to Azure" button above to open in the Azure Portal, simply fill the Source parameter with the URL of the ZIP Archive and the Destination with the URI of the Blob Container and launch the deployment.
+
+When the deployment is done, you can start to use the .VHD blobs that have been imported in the Storage Account, for example creating Disk or Image resources and then Virtual Machines.
 
 ### Demo
 
-This template is used by the [Riverbed Community Cookbooks simple demo for NetIM](https://github.com/riverbed/Riverbed-Community-Toolkit/tree/master/NetIM/Azure-Cloud-Cookbooks/101-netim-simple-demo).
+The ARM Template of the [Riverbed Community Cookbooks simple demo for NetIM](https://github.com/riverbed/Riverbed-Community-Toolkit/tree/master/NetIM/Azure-Cloud-Cookbooks/101-netim-simple-demo) is an example where the *storage-import-zipped-vhds* template is nested to fecth the VHD required to create some specialized Virtual Machines.
 
 ## Notes
 
