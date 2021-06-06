@@ -56,23 +56,82 @@
           "description": "Specifies the Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter, 2016-Nano-Server, 2016-Datacenter-with-Containers, 2016-Datacenter."
         }
       },
-      "vmCount": {
-            "type": "int",
-            "defaultValue": 2,
-            "metadata": {
-                "description": "Number of LAB-VM tobe deployed"
-            }
+      "scheduleRunTime": {
+      "type": "string",
+      "defaultValue": "05:30",
+      "metadata": {
+        "description": "Time of day when backup should be triggered in 24 hour HH:MM format, where MM must be 00 or 30. (Ignore if using existing Backup Policy)."
+      }
+    },
+    "timeZone": {
+      "type": "string",
+      "defaultValue": "UTC",
+      "metadata": {
+        "description": "Any valid timezone, for example: UTC, Pacific Standard Time. Refer: https://msdn.microsoft.com/en-us/library/gg154758.aspx (Ignore if using existing Backup Policy)."
+      }
+    },
+    "dailyRetentionDurationCount": {
+      "type": "int",
+      "defaultValue": 30,
+      "metadata": {
+        "description": "Number of days for which the daily backup is to be retained. (Ignore if using existing Backup Policy)."
+      }
+    },
+    "daysOfTheWeek": {
+      "type": "array",
+      "defaultValue": [ "Sunday", "Tuesday", "Thursday" ],
+      "metadata": {
+        "description": "Array of days on which backup is to be performed for Weekly Retention. (Ignore if using existing Backup Policy)."
+      }
+    },
+    "weeklyRetentionDurationCount": {
+      "type": "int",
+      "defaultValue": 12,
+      "metadata": {
+        "description": "Number of weeks for which the weekly backup is to be retained. (Ignore if using existing Backup Policy)."
+      }
+    },
+    "monthlyRetentionDurationCount": {
+      "type": "int",
+      "defaultValue": 60,
+      "metadata": {
+        "description": "Number of months for which the monthly backup is to be retained. Backup will be performed on the 1st day of every month. (Ignore if using existing Backup Policy)."
+      }
+    },
+    "monthsOfYear": {
+      "type": "array",
+      "defaultValue": [ "January", "May", "September" ],
+      "metadata": {
+        "description": "Array of months on which backup is to be performed for Yearly Retention. Backup will be performed on the 1st day of each month of year provided. (Ignore if using existing Backup Policy)."
+      }
+    },
+    "yearlyRetentionDurationCount": {
+      "type": "int",
+      "defaultValue": 10,
+      "metadata": {
+        "description": "Number of years for which the yearly backup is to be retained. (Ignore if using existing Backup Policy)."
+      }
+    },
+     "vmCount": {
+           "type": "int",
+           "defaultValue": 2,
+           "metadata": {
+               "description": "Number of LAB-VM tobe deployed"
+           }
         }
     },
     "variables": {
       "storageAccountName": "[concat(parameters('projectName'), 'store')]",
-      "vNetAddressPrefix": "10.0.0.0/16",
-      "vNetSubnetName": "default",
-      "vNetSubnetAddressPrefix": "10.0.0.0/24",
+      "vnetAddressPrefix": "10.0.0.0/16",
+      "subnetName": "default",
+      "subnetAddressPrefix": "10.0.0.0/24",
       "vmName": "[concat(parameters('projectName'), '-vm')]",
-      "vNetName": "vnet01",
+      "vnetName": "vnet01",
       "vaultName": "[concat(parameters('projectName'), '-vault')]",
-      "networkSecurityGroupName": "default-NSG"
+      "policyName": "[concat(parameters('projectName'), '-backupPolicy')]",
+      "networkSecurityGroupName": "default-NSG",
+      "backupManagementType": "AzureStorage",
+      "scheduleRunTimes": [ "[concat('2020-01-01T', parameters('scheduleRunTime'), ':00Z')]" ]
     },
     "resources": [
       {
@@ -128,7 +187,7 @@
       {
         "type": "Microsoft.Network/virtualNetworks",
         "apiVersion": "2020-06-01",
-        "name": "[variables('vNetName')]",
+        "name": "[variables('vnetName')]",
         "location": "[parameters('location')]",
         "dependsOn": [
           "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
@@ -141,9 +200,9 @@
           },
           "subnets": [
             {
-              "name": "[variables('vNetSubnetName')]",
+              "name": "[variables('subnetName')]",
               "properties": {
-                "addressPrefix": "[variables('vNetSubnetAddressPrefix')]",
+                "addressPrefix": "[variables('subnetAddressPrefix')]",
                 "networkSecurityGroup": {
                   "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
                 }
@@ -163,7 +222,7 @@
             },
             "dependsOn": [
                 "vmpipcopy",
-                "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
             ],
         "properties": {
           "ipConfigurations": [
@@ -172,10 +231,10 @@
               "properties": {
                 "privateIPAllocationMethod": "Dynamic",
                 "publicIPAddress": {
-                  "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('vm-nic-', copyindex()))]"
+                  "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat('pip-', copyindex()))]"
                 },
                 "subnet": {
-                  "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), variables('vNetSubnetName'))]"
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
                 }
               }
             }
@@ -248,8 +307,77 @@
           "tier": "Standard"
         },
         "properties": {}
+      },
+      {
+      "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+      "apiVersion": "2020-02-02",
+      "name": "[concat(variables('vaultName'), '/', variables('policyName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults', variables('vaultName'))]"
+      ],
+      "properties": {
+        "backupManagementType": "[variables('backupManagementType')]",
+        "schedulePolicy": {
+          "scheduleRunFrequency": "Daily",
+          "scheduleRunTimes": "[variables('scheduleRunTimes')]",
+          "schedulePolicyType": "SimpleSchedulePolicy"
+        },
+        "retentionPolicy": {
+          "dailySchedule": {
+            "retentionTimes": "[variables('scheduleRunTimes')]",
+            "retentionDuration": {
+              "count": "[parameters('dailyRetentionDurationCount')]",
+              "durationType": "Days"
+            }
+          },
+          "weeklySchedule": {
+            "daysOfTheWeek": "[parameters('daysOfTheWeek')]",
+            "retentionTimes": "[variables('scheduleRunTimes')]",
+            "retentionDuration": {
+              "count": "[parameters('weeklyRetentionDurationCount')]",
+              "durationType": "Weeks"
+            }
+          },
+          "monthlySchedule": {
+            "retentionScheduleFormatType": "Daily",
+            "retentionScheduleDaily": {
+              "daysOfTheMonth": [
+                {
+                  "date": 1,
+                  "isLast": false
+                }
+              ]
+            },
+            "retentionTimes": "[variables('scheduleRunTimes')]",
+            "retentionDuration": {
+              "count": "[parameters('monthlyRetentionDurationCount')]",
+              "durationType": "Months"
+            }
+          },
+          "yearlySchedule": {
+            "retentionScheduleFormatType": "Daily",
+            "monthsOfYear": "[parameters('monthsOfYear')]",
+            "retentionScheduleDaily": {
+              "daysOfTheMonth": [
+                {
+                  "date": 1,
+                  "isLast": false
+                }
+              ]
+            },
+            "retentionTimes": "[variables('scheduleRunTimes')]",
+            "retentionDuration": {
+              "count": "[parameters('yearlyRetentionDurationCount')]",
+              "durationType": "Years"
+            }
+          },
+          "retentionPolicyType": "LongTermRetentionPolicy"
+        },
+        "timeZone": "[parameters('timeZone')]",
+        "workLoadType": "AzureFileShare"
       }
-    ],
+    }
+  ],
     "outputs": {
         "vmName": {
             "type": "array",
@@ -265,6 +393,10 @@
         "recoveryVaultName": {
             "type": "string",
             "value": "[variables('vaultName')]"
+        },
+        "policyName": {
+            "type": "string",
+            "value": "[variables('policyName')]"
         }
      }
   }
