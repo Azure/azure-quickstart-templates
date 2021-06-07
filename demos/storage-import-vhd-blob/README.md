@@ -24,15 +24,16 @@ In case the source is a Blob and you got the URI ready for the transfer, this AR
 
 ## Usage
 
+It can be used to quickly import a VHD. Hit the "Deploy to Azure" button above to open in the Azure Portal and then just fill the Source and Destination parameters before launching the deployment. 
+
 It might take few minutes depending on the size of the VHD and the location.
 
 When the deployment is done, you can start using the VHD that has been imported as a Blob in the Storage Account Container.
-
 For example create Disk or Image resources and then some Virtual Machines.
 
 ### Demo
 
-This template is used by the [Riverbed Community Cookbooks simple demo for AppResponse](https://github.com/riverbed/Riverbed-Community-Toolkit/tree/master/AppResponse/Azure-Cloud-Cookbooks/101-appresponse-simple-demo)
+TThe ARM Template of the [Riverbed Community Cookbooks simple demo for AppResponse](https://github.com/riverbed/Riverbed-Community-Toolkit/tree/master/AppResponse/Azure-Cloud-Cookbooks/101-appresponse-simple-demo) is an example where the *storage-import-vhd-blob* template is nested to fecth the VHD required to create some specialized Virtual Machines.
 
 ## Notes
 

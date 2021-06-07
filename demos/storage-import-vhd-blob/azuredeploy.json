@@ -1,131 +1,70 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.210602",
+    "contentVersion": "1.0.0.210607",
     "parameters": {
+        "Source": {
+            "type": "securestring",
+            "metadata": {
+                "description": "URI of the VHD to fetch (Blob URI with SAS Token)"
+            }
+        },
+        "Destination": {
+            "type": "securestring",
+            "metadata": {
+                "description": "URI of the Storage Account container with a writable SAS Token"
+            }
+        },
+        "forceUpdateTag": {
+            "type": "string",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "Used to force the execution when redeploying the template with the same parameters. Default: [newGuid()]"
+            }
+        },
         "location": {
             "type": "string",
             "defaultValue": "[resourceGroup().location]",
             "metadata": {
-                "description": "The location in which the resources should be deployed."
-            }
-        },
-        "Source": {
-            "type": "string",
-            "metadata": {
-                "description": "URI of the VHD to fetch (Blob URI with SAS Token). For example: https://source-blob-storage-name.blob.core .windows.net/source-container-name?sv=1234&spr=https&sig=1234"
-            }
-        },
-        "Destination": {
-            "type": "string",
-            "metadata": {
-                "description": "URI of the Storage Account container with a writable SAS Token. For example: https://blob-storage.blob.core .windows.net/my-container-name?sv=123412341234&spr=https&sig=123412341234"
+                "description": "The location in which the resources should be deployed. Default: [resourceGroup().location]"
             }
         }
     },
     "variables": {
         "uriVHDBlobSasToken": "[parameters('Source')]",
         "uriWritableStorageAccountBlobContainerSasToken": "[parameters('Destination')]",
-        "nestedTemplateName_ImportVHD-FromBlobUri": "[concat('ImportVHD-FromBlobUri-',uniqueString(parameters('Source'),uniqueString(parameters('Destination'))))]"
+        "deploymentScriptName": "[concat('ImportVHD-FromBlobUri-',uniqueString(parameters('Source'),uniqueString(parameters('Destination'))))]",
+        "forceUpdateTag": "[parameters('forceUpdateTag')]"
     },
     "resources": [
         {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2021-04-01",
-            "name": "[variables('nestedTemplateName_ImportVHD-FromBlobUri')]",
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "[variables('deploymentScriptName')]",
+            "location": "[parameters('location')]",
+            "kind": "AzurePowerShell",
             "properties": {
-                "mode": "Incremental",
-                "expressionEvaluationOptions": {
-                    "scope": "inner"
-                },
-                "parameters": {
-                    "location": {
-                        "value": "[parameters('location')]"
+                "azPowerShellVersion": "5.5",
+                "cleanupPreference": "OnSuccess",
+                "environmentVariables": [
+                    {
+                        "name": "Source",
+                        "secureValue": "[variables('uriVHDBlobSasToken')]"
                     },
-                    "Source": {
-                        "value": "[variables('uriVHDBlobSasToken')]"
-                    },
-                    "Destination": {
-                        "value": "[variables('uriWritableStorageAccountBlobContainerSasToken')]"
-                    },
-                    "deploymentScriptName" : {
-                        "value": "[variables('nestedTemplateName_ImportVHD-FromBlobUri')]"
+                    {
+                        "name": "Destination",
+                        "secureValue": "[variables('uriWritableStorageAccountBlobContainerSasToken')]"
                     }
-                },
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.210602",
-                    "parameters": {
-                        "location": {
-                            "type": "string",
-                            "defaultValue": "",
-                            "metadata": {
-                                "description": "The location in which the resources should be deployed."
-                            }
-                        },
-                        "Source": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "URI of a Blob to fetch (Blob URI with SAS Token). For example: https://source-blob-storage-name.blob.core .windows.net/source-container-name/blob?sv=1234&spr=https&sig=1234"
-                            }
-                        },
-                        "Destination": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "URI of a Storage Account container with a writable SAS Token. For example: https:// blob-storage-name.blob.core .windows.net/container-name?sp=racwl&st=2021-01-01T12:00:00&se=2021-02-01T12:00:00&spr=https&sv=2021-01-01&sig=123412341234"
-                            }
-                        },
-                        "deploymentScriptName": {
-                            "type": "string",
-                            "defaultValue": "ImportVHD-FromBlobUri",
-                            "metadata": {
-                                "description": "Name of the deployment script"
-                            }
-                        },
-                        "forceUpdateTag": {
-                            "type": "string",
-                            "defaultValue": "[newGuid()]",
-                            "metadata": {
-                                "description": "forceUpdateTag property, used to force the execution of the script resource when no other properties have changed."
-                            }
-                        }
-                    },
-                    "functions": [],
-                    "variables": {
-                        "uriVHDBlobSasToken": "[parameters('Source')]",
-                        "uriWritableStorageAccountBlobContainerSasToken": "[parameters('Destination')]",
-                        "forceUpdateTag": "[parameters('forceUpdateTag')]"
-                    },
-                    "resources": [
-                        {
-                            "type": "Microsoft.Resources/deploymentScripts",
-                            "apiVersion": "2020-10-01",
-                            "name": "[parameters('deploymentScriptName')]",
-                            "location": "[parameters('location')]",
-                            "kind": "AzurePowerShell",
-                            "properties": {
-                                "azPowerShellVersion": "5.5",
-                                "cleanupPreference": "OnSuccess",
-                                "arguments": "[concat('-Source \\\"',variables('uriVHDBlobSasToken'),'\\\"',' ','-Destination \\\"',variables('uriWritableStorageAccountBlobContainerSasToken'),'\\\"')]",
-                                "forceUpdateTag": "[variables('forceUpdateTag')]",
-                                "retentionInterval": "PT4H",
-                                "scriptContent": "param( \n     [string] $Source, \n     [string] $Destination, \n  \n   # Set default url to fetch azcopy \n   ## get latest: curl -s -D- https://aka.ms/downloadazcopy-v10-linux | grep ^Location \n   ## 10.10.0: sporadic vhd corruption issue / fatal error lifecyleMgr.go:38 (https://azcopyvnext.azureedge.net/release20210415/azcopy_linux_amd64_10.10.0.tar.gz) \n   ## 10.9.0: sporadic vhd corruption issue https://azcopyvnext.azureedge.net/release20210226/azcopy_linux_amd64_10.9.0.tar.gz \n   ## 10.8.0: validated https://azcopyvnext.azureedge.net/release20201211/azcopy_linux_amd64_10.8.0.tar.gz \n   [string] $azcopyArchiveUrl = 'https://azcopyvnext.azureedge.net/release20201211/azcopy_linux_amd64_10.8.0.tar.gz' \n ) \n  \n ##### Validate Parameters \n  \n if (! ([System.Uri]::IsWellFormedUriString($Source,[System.UriKind]::Absolute))) { \n     Throw 'The Source URL parameter is probably not well formatted. Please check and retry.' \n } \n  \n if (! ([System.Uri]::IsWellFormedUriString($Destination,[System.UriKind]::Absolute))) { \n     Throw 'The Destination URI parameter is probably not well formatted. Please check and retry.' \n } \n  \n ##### Parameters \n  \n $uriVhdBlob = $Source \n $uriWritableStorageAccountBlobContainerSasToken = $Destination \n ##### Variables \n  \n $base_path='/mnt/azscripts' \n $temp_path='{0}/temp' -f $base_path \n New-Item -Type Directory -ErrorAction SilentlyContinue $temp_path \n  \n ##### Fetch prerequisites \n  \n Invoke-WebRequest -Uri $azcopyArchiveUrl -Outfile azcopy-linux.tar.gz \n tar xf azcopy-linux.tar.gz \n Move-Item azcopy_linux_*/azcopy . -Force \n  \n ##### Upload to Azure Storage account \n  \n Write-Output 'Copy Blob' \n ./azcopy copy \"$uriVhdBlob\" \"$uriWritableStorageAccountBlobContainerSasToken\" \n  \n if (! $?) { \n     Throw 'Error during upload into the Storage Account Container. Please check source and destination parameters and retry' \n } \n  \n ##### Output \n  \n $DeploymentScriptOutputs = @{} \n $VhdBlobName = $uriVhdBlob -replace '.*/(?<name>.*.VHD).*','${name}' \n $DeploymentScriptOutputs['vhdBlobName'] = $VhdBlobName \n $StorageAccountContainerUri = ($uriWritableStorageAccountBlobContainerSasToken -split [Regex]::Escape('?'))[0] \n $DeploymentScriptOutputs['vhdBlobUri'] = '{0}/{1}' -f $StorageAccountContainerUri,$VhdBlobName \n "
-                            }
-                        }
-                    ],
-                    "outputs": {
-                        "vhdBlobUri": {
-                            "type": "string",
-                            "value": "[reference(parameters('deploymentScriptName')).outputs.vhdBlobUri]"
-                        }
-                    }
-                }
+                ],                
+                "forceUpdateTag": "[variables('forceUpdateTag')]",
+                "retentionInterval": "PT4H",
+                "scriptContent": "# 210607 \n  \n param( \n # Set default url to fetch azcopy  \n ## get latest: curl -s -D- https://aka.ms/downloadazcopy-v10-linux | grep ^Location  \n ## 10.10.0: sporadic vhd corruption issue / fatal error lifecyleMgr.go:38 (https://azcopyvnext.azureedge.net/release20210415/azcopy_linux_amd64_10.10.0.tar.gz)  \n ## 10.9.0: sporadic vhd corruption issue https://azcopyvnext.azureedge.net/release20210226/azcopy_linux_amd64_10.9.0.tar.gz  \n ## 10.8.0: validated https://azcopyvnext.azureedge.net/release20201211/azcopy_linux_amd64_10.8.0.tar.gz  \n [string] $azcopyArchiveUrl = 'https://azcopyvnext.azureedge.net/release20201211/azcopy_linux_amd64_10.8.0.tar.gz'  \n ) \n  \n ##### Parameters  \n  \n $uriVhdBlob = ${Env:Source} \n $uriWritableStorageAccountBlobContainerSasToken = ${Env:Destination} \n  \n ##### Validate Parameters \n  \n if (! ([System.Uri]::IsWellFormedUriString($uriVhdBlob,[System.UriKind]::Absolute))) { \n     Throw 'The Source URI parameter is probably not well formatted. Please check and retry.' \n } \n  \n if (! ([System.Uri]::IsWellFormedUriString($uriWritableStorageAccountBlobContainerSasToken,[System.UriKind]::Absolute))) {  \n     Throw 'The Destination URI parameter is probably not well formatted. Please check and retry.' \n } \n  \n ##### Variables \n  \n $base_path='/mnt/azscripts' \n $temp_path='{0}/temp' -f $base_path \n New-Item -Type Directory -ErrorAction SilentlyContinue $temp_path \n  \n ##### Fetch prerequisites \n  \n Invoke-WebRequest -Uri $azcopyArchiveUrl -Outfile azcopy-linux.tar.gz \n tar xf azcopy-linux.tar.gz \n Move-Item azcopy_linux_*/azcopy . -Force \n  \n ##### Upload to Azure Storage account \n  \n Write-Output 'Copy Blob' \n ./azcopy copy \"$uriVhdBlob\" \"$uriWritableStorageAccountBlobContainerSasToken\" \n  \n if (! $?) { \n     Throw 'Error during upload into the Storage Account Container. Please check source and destination parameters and retry' \n } \n  \n ##### Output \n  \n $DeploymentScriptOutputs = @{} \n $VhdBlobName = $uriVhdBlob -replace '.*/(?<name>.*.VHD).*','${name}' \n $DeploymentScriptOutputs['vhdBlobName'] = $VhdBlobName \n $StorageAccountContainerUri = ($uriWritableStorageAccountBlobContainerSasToken -split [Regex]::Escape('?'))[0] \n $DeploymentScriptOutputs['vhdBlobUri'] = '{0}/{1}' -f $StorageAccountContainerUri,$VhdBlobName \n "
             }
         }
     ],
     "outputs": {
         "vhdBlobUri": {
             "type": "string",
-            "value": "[reference(variables('nestedTemplateName_ImportVHD-FromBlobUri')).outputs.vhdBlobUri.value]"
+            "value": "[reference(variables('deploymentScriptName')).outputs.vhdBlobUri]"
         }
     }
 }
