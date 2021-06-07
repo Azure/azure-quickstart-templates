@@ -15,16 +15,6 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerregistry%2Fcontainer-registry%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerregistry%2Fcontainer-registry%2Fazuredeploy.json)
 
-To deploy this template using the scripts from the root of this repo:
-
-```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory 'quickstarts/microsoft.containerregistry/container-registry'
-```
-
-```bash
-azure-group-deploy.sh -a 'quickstarts/microsoft.containerregistry/container-registry' -l eastus -u
-```
-
 This template deploys an Azure Container Registry. Azure Container Registry is a PaaS offer for creating your own Docker image registry.
 
 `Tags: Azure Container Registry, Docker`
