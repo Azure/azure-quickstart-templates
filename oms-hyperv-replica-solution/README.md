@@ -49,7 +49,7 @@ A community OMS Solution that helps you manage Hyper-V replica. It gives you vis
 
 ![Hyper-V Replica OMS Solution](images/hypervReplicaOMSSchedule.png "Azure Automation Schedule")
 
-4) Link the schedule to the 'Publish-omsHyperVReplica.ps1' Run Book, also selecting the location the Run Book should run to your on premises Hybrid Runbook Worker group. You will be asked to fill in the computerName parameter, this is a list of the servers you want to monitor, each server is seperated by a semi-colon - ';'.
+4) Link the schedule to the 'Publish-omsHyperVReplica.ps1' Run Book, also selecting the location the Run Book should run to your on premises Hybrid Runbook Worker group. You will be asked to fill in the computerName parameter, this is a list of the servers you want to monitor, each server is separated by a semi-colon - ';'.
 
 ![Hyper-V Replica OMS Solution](images/hypervReplicaOMSLinkSchedule.png "Azure Automation Linking Schedule")
 

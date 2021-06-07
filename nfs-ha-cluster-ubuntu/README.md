@@ -63,7 +63,7 @@ As illustrated in the cluster diagram above, the deployed HA-NFS cluster consist
 
 The usual highly available clustering on non-cloud environment is achieved by a fixed secondary IP address that is attached to the master node and fails over to the secondary node. However, an IP address fail-over is not straightforward in Azure (and probably other cloud environments as well). Therefore, we use a load balancer (an internal one with a private front-end IP address on the same subnet) to route traffic only to the master node. For that purpose, the probe responder runs only on the master node (on port 61000 as `/bin/nc` for TCP probing) and it also fails over to the secondary with other core services (DRBD, NFS and etc).
 
-Because we have to use a load balancer for the highly availble front-end IP address, we need to make the various NFS-related service ports (e.g., rpdbind, statd, lockd, ...) statically assigned on each VM. In our templates, you'll see that those ports are statically bound to 2000-2005 and the load balancer is configured for the ports as such.
+Because we have to use a load balancer for the highly available front-end IP address, we need to make the various NFS-related service ports (e.g., rpdbind, statd, lockd, ...) statically assigned on each VM. In our templates, you'll see that those ports are statically bound to 2000-2005 and the load balancer is configured for the ports as such.
 
 ## TO-DO
 

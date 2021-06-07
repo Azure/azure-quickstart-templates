@@ -1,0 +1,212 @@
+{
+   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+      "clusterName": {
+         "type": "string",
+         "defaultValue": "[concat('hdi-', uniqueString(resourceGroup().id))]",
+         "metadata": {
+            "description": "The name of the cluster to create."
+         }
+      },
+      "clusterVersion": {
+         "type": "string",
+         "defaultValue": "4.0",
+         "metadata": {
+            "description": "The HDInsight version to deploy."
+         }
+      },
+      "headNodeSize": {
+         "type": "string",
+         "defaultValue": "Standard_E4_v3",
+         "allowedValues": [
+           "Standard_A4_v2",
+           "Standard_A8_v2",
+           "Standard_E2_v3",
+           "Standard_E4_v3",
+           "Standard_E8_v3",
+           "Standard_E16_v3",
+           "Standard_E20_v3",
+           "Standard_E32_v3",
+           "Standard_E48_v3"
+         ],
+         "metadata": {
+            "description": "The VM size of the head nodes."
+         }
+      },
+      "workerNodeSize": {
+         "type": "string",
+         "defaultValue": "Standard_E8_v3",
+         "allowedValues": [
+            "Standard_A4_v2",
+            "Standard_A8_v2",
+            "Standard_E2_v3",
+            "Standard_E4_v3",
+            "Standard_E8_v3",
+            "Standard_E16_v3",
+            "Standard_E20_v3",
+            "Standard_E32_v3",
+            "Standard_E48_v3"
+         ],
+         "metadata": {
+            "description": "The VM size of the worker nodes."
+         }
+      },
+      "workerNodeCount": {
+         "type": "int",
+         "defaultValue": 4,
+         "metadata": {
+            "description": "The number of worker nodes in the cluster."
+         }
+      },
+      "clusterLoginUserName": {
+         "type": "string",
+         "metadata": {
+            "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+         }
+      },
+      "clusterLoginPassword": {
+         "type": "securestring",
+         "minLength": 10,
+         "metadata": {
+           "description": "The password must be at least 10 characters in length and must contain at least one digit, one upper case letter, one lower case letter, and one non-alphanumeric character except (single-quote, double-quote, backslash, right-bracket, full-stop). Also, the password must not contain 3 consecutive characters from the cluster username or SSH username."
+         }
+      },
+      "sshUserName": {
+         "type": "string",
+         "metadata": {
+            "description": "These credentials can be used to remotely access the cluster."
+         }
+      },
+      "sshPassword": {
+         "type": "securestring",
+         "minLength": 6,
+         "maxLength": 72,
+         "metadata": {
+           "description": "SSH password must be 6-72 characters long and must contain at least one digit, one upper case letter, and one lower case letter.  It must not contain any 3 consecutive characters from the cluster login name"
+         }
+      },
+      "existingClusterStorageResourceGroup": {
+         "type": "string",
+         "defaultValue": "[resourceGroup().name]",
+         "metadata": {
+            "description": "The resource group name of the storage account to use as the cluster's default storage."
+         }
+      },
+      "existingClusterStorageAccountName": {
+         "type": "string",
+         "metadata": {
+            "description": "The name of the storage account to use as the cluster's default storage."
+         }
+      },
+      "newOrExistingClusterStorageContainerName": {
+         "type": "string",
+         "metadata": {
+            "description": "The name of the storage container to use."
+         }
+      },
+      "existingVirtualNetworkResourceGroup": {
+         "type": "string",
+         "defaultValue": "[resourceGroup().name]",
+         "metadata": {
+            "description": "The existing virtual network resource group name."
+         }
+      },
+      "existingVirtualNetworkName": {
+         "type": "string",
+         "metadata": {
+            "description": "The existing virtual network name."
+         }
+      },
+      "existingVirtualNetworkSubnetName": {
+         "type": "string",
+         "metadata": {
+            "description": "The existing virtual network subnet name."
+         }
+      },
+      "location": {
+         "type": "string",
+         "defaultValue": "[resourceGroup().location]",
+         "metadata": {
+            "description": "Location for all resources."
+         }
+      }
+   },
+   "resources": [
+      {
+         "name": "[parameters('clusterName')]",
+         "type": "Microsoft.HDInsight/clusters",
+         "location": "[parameters('location')]",
+         "apiVersion": "2018-06-01-preview",
+         "properties": {
+            "clusterVersion": "[parameters('clusterVersion')]",
+            "osType": "Linux",
+            "clusterDefinition": {
+               "kind": "hadoop",
+               "configurations": {
+                  "gateway": {
+                     "restAuthCredential.isEnabled": true,
+                     "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+                     "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+                  }
+               }
+            },
+            "storageProfile": {
+               "storageaccounts": [
+                  {
+                     "name": "[replace(replace(reference(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts/', parameters('existingClusterStorageAccountName')), '2019-06-01').primaryEndpoints.blob,'https:',''),'/','')]",
+                     "isDefault": true,
+                     "container": "[parameters('newOrExistingClusterStorageContainerName')]",
+                     "key": "[listKeys(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('existingClusterStorageAccountName')), '2019-06-01').keys[0].value]"
+                  }
+               ]
+            },
+            "minSupportedTlsVersion": "1.2",
+            "computeProfile": {
+               "roles": [
+                  {
+                     "name": "headnode",
+                     "targetInstanceCount": 2,
+                     "hardwareProfile": {
+                        "vmSize": "[parameters('headNodeSize')]"
+                     },
+                     "osProfile": {
+                        "linuxOperatingSystemProfile": {
+                           "username": "[parameters('sshUserName')]",
+                           "password": "[parameters('sshPassword')]"
+                        }
+                     },
+                     "virtualNetworkProfile": {
+                        "id": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName'))]",
+                        "subnet": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingVirtualNetworkSubnetName'))]"
+                     }
+                  },
+                  {
+                     "name": "workernode",
+                     "targetInstanceCount": "[parameters('workerNodeCount')]",
+                     "hardwareProfile": {
+                        "vmSize": "[parameters('workerNodeSize')]"
+                     },
+                     "osProfile": {
+                        "linuxOperatingSystemProfile": {
+                           "username": "[parameters('sshUserName')]",
+                           "password": "[parameters('sshPassword')]"
+                        }
+                     },
+                     "virtualNetworkProfile": {
+                        "id": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName'))]",
+                        "subnet": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingVirtualNetworkSubnetName'))]"
+                     }
+                  }
+               ]
+            }
+         }
+      }
+   ],
+   "outputs": {
+      "cluster": {
+         "type": "object",
+         "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+      }
+   }
+}

@@ -1,0 +1,68 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "suffix": {
+            "type": "string",
+            "metadata": {
+                "description": "naming suffix based on resource group name hash"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "location to deploy the storage account"
+            }
+        },
+        "vNets": {
+            "type": "array",
+            "metadata": {
+                "description": "array of JSON virtual network objects"
+            }
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-11-01",
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "name": "[concat(parameters('vNets')[0].name, '-', parameters('suffix'), '/peering-to-', parameters('vnets')[copyIndex(1)].name, '-', parameters('suffix'))]",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "hubPeeringCopy",
+                "count": "[sub(length(parameters('vNets')), 1)]"
+            },
+            "properties": {
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false,
+                "remoteVirtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('vNets')[copyIndex(1)].name, '-', parameters('suffix')))]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2018-11-01",
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "name": "[concat(parameters('vNets')[copyIndex(1)].name, '-', parameters('suffix'), '/peering-to-', parameters('vNets')[0].name, '-', parameters('suffix'))]",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "spokePeeringCopy",
+                "count": "[sub(length(parameters('vNets')), 1)]"
+            },
+            "properties": {
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false,
+                "remoteVirtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('vNets')[0].name, '-', parameters('suffix')))]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}

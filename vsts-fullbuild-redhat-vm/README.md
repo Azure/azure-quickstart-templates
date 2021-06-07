@@ -34,7 +34,7 @@ To create the VM, you will need to:
 
 1. Know the Team Services URL (e.g. https://myaccount.visualstudio.com)
 
-2. Create or obtain a Personal Access Token (PAT) from Team Services which has *"Build (read and execute)"* and *"Agent Pools (read, manage)"* priviledges/capabilities
+2. Create or obtain a Personal Access Token (PAT) from Team Services which has *"Build (read and execute)"* and *"Agent Pools (read, manage)"* privileges/capabilities
 (see https://www.visualstudio.com/en-us/docs/setup-admin/team-services/use-personal-access-tokens-to-authenticate).
 
 3. Create or obtain a build agent pool in Team Services (or use "Default")
@@ -59,7 +59,7 @@ then you can SSH into the VM and check the installation log.  To do this:
 * Once logged onto the VM, in the top directory of the account should be a file called *"vsts.install.log.txt"*.  Use the 
 *cat* command to display its contents (i.e. **cat vsts.install.log.txt**).  Look for any errors in this file to indicate what failed 
 in starting up the VSTS build agent.  The most common mistake is not having the correct permissions for the PAT (see #2 above for more guidance).
-* If the agent started sucessfully and is running but an expected tool or software is not working from a build task (e.g. a build task can't find
+* If the agent started successfully and is running but an expected tool or software is not working from a build task (e.g. a build task can't find
 maven or java or ...), then you can check the file *"install.progress.txt"* in the top level directory to see if one of the packages
 may have failed to install or had errors (**cat install.progress.txt**).
 

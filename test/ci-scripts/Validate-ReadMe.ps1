@@ -1,57 +1,62 @@
 param(
     [string] $SampleFolder = $ENV:SAMPLE_FOLDER, # this is the path to the sample
-    [string] $SampleName = $ENV:SAMPLE_NAME,  # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
+    [string] $SampleName = $ENV:SAMPLE_NAME, # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
+    [string] $StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME,
     [string] $ReadMeFileName = "README.md",
-    [string] $supportedEnvironmentsJson = $ENV:SUPPORTED_ENVIRONMENTS # the minified json array from metadata.json
+    [string] $supportedEnvironmentsJson = $ENV:SUPPORTED_ENVIRONMENTS, # the minified json array from metadata.json
+    [switch] $bicepSupported = ($ENV:BICEP_SUPPORTED -eq "true")
 )
 
-$ErrorView = "NormalView" # this is working around a bug in Azure DevOps with PS Core and inline scripts https://github.com/microsoft/azure-pipelines-agent/issues/2853
-
-<#
-TODO linting - is there a pipeline tool for this ?
-#>
+Write-Host "StorageAccountName: $StorageAccountName"
+Write-Host "bicepSupported: $bicepSupported"
 
 $s = $sampleName.Replace("\", "/")
-$sEncoded = $sampleName.Replace("\", "%2F")
+$sEncoded = $sampleName.Replace("\", "%2F").Replace("/", "%2F")
 
-$PublicLinkMarkDown=@(
+$PublicLinkMarkDown = @(
     "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"
     "https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F$sEncoded%2Fazuredeploy.json"
 )
-$GovLinkMarkDown=@(
+$GovLinkMarkDown = @(
     "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true"
     "https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F$sEncoded%2Fazuredeploy.json"
 )
-$ARMVizMarkDown=@(
+$ARMVizMarkDown = @(
     "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"
     "http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F$sEncoded%2Fazuredeploy.json"
 )
+# $BicepLogoLink = 
+# "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/bicepLogoSmall.svg?sanitize=true"
 $badgeLinks = @(
-    "https://azurequickstartsservice.blob.core.windows.net/badges/$s/PublicLastTestDate.svg",
-    "https://azurequickstartsservice.blob.core.windows.net/badges/$s/PublicDeployment.svg",
-    "https://azurequickstartsservice.blob.core.windows.net/badges/$s/FairfaxLastTestDate.svg",
-    "https://azurequickstartsservice.blob.core.windows.net/badges/$s/FairfaxDeployment.svg",
-    "https://azurequickstartsservice.blob.core.windows.net/badges/$s/BestPracticeResult.svg",
-    "https://azurequickstartsservice.blob.core.windows.net/badges/$s/CredScanResult.svg"
+    "https://$StorageAccountName.blob.core.windows.net/badges/$s/PublicLastTestDate.svg",
+    "https://$StorageAccountName.blob.core.windows.net/badges/$s/PublicDeployment.svg",
+    "https://$StorageAccountName.blob.core.windows.net/badges/$s/FairfaxLastTestDate.svg",
+    "https://$StorageAccountName.blob.core.windows.net/badges/$s/FairfaxDeployment.svg",
+    "https://$StorageAccountName.blob.core.windows.net/badges/$s/BestPracticeResult.svg",
+    "https://$StorageAccountName.blob.core.windows.net/badges/$s/CredScanResult.svg"
 )
+if ($bicepSupported) {
+    $BadgeLinks += "https://$StorageAccountName.blob.core.windows.net/badges/$s/BicepVersion.svg"
+}
 
 # Determine which "Deploy to Azure" buttons we need for each cloud
 $PublicLinks = @()
 $PublicButton = $null
 $GovLinks = @()
 $GovButton = $null
+# $BicepImage = $null
 
 Write-Host "Supported Environments Found: $supportedEnvironmentsJson"
 $supportedEnvironments = ($supportedEnvironmentsJson | ConvertFrom-JSON -AsHashTable)
 #$supportedEnvironments | Out-string
 #Write-Host $supportedEnvironments.GetType()
 
-if($supportedEnvironments.Contains("AzureCloud")){
+if ($supportedEnvironments.Contains("AzureCloud")) {
     $PublicLinks = $PublicLinkMarkDown
     $PublicButton = "[![Deploy To Azure]($($PublicLinks[0]))]($($PublicLinks[1]))"
 }
 
-if($supportedEnvironments.Contains("AzureUSGovernment")){
+if ($supportedEnvironments.Contains("AzureUSGovernment")) {
     $GovLinks = $GovLinkMarkDown
     $GovButton = "[![Deploy To Azure US Gov]($($GovLinks[0]))]($($GovLinks[1]))"
 }
@@ -59,48 +64,77 @@ if($supportedEnvironments.Contains("AzureUSGovernment")){
 $ARMVizLinks = $ARMVizMarkDown
 $ARMVizButton = "[![Visualize]($($ARMVizLinks[0]))]($($ARMVizLinks[1]))"
 
+# Determine whether bicep logo should appear
+# if ($bicepSupported) {
+#     $BicepImage = "![Bicep Logo]($($BicepLogoLink))"   
+# }
+
 $links = $ARMVizLinks + $PublicLinks + $GovLinks
 
-
 Write-Output "Testing file: $SampleFolder/$ReadMeFileName"
+
+# Confirm the filename is README.md (with that exact casing)
+$readmeFile = (Get-Item $SampleFolder).GetFiles($ReadMeFileName)
+if ($readmeFile.Name -cne 'README.md') {
+    Write-Error "Readme file must be named README.md (with that exact casing)."
+}
+
 $readme = Get-Content "$SampleFolder/$ReadMeFileName" -Raw
 
 $dumpHelp = $false
+$helpMessage = @"
+`n**** SEE BELOW FOR EXPECTED MARKUP TO COPY AND PASTE INTO THE README ****
+"@
 # header on first line
-if(-not ($readme.StartsWith("# "))){
-    Write-Error "Readme must start with # header, not: $($readme[0])"
+if (-not ($readme.StartsWith("# "))) {
+    Write-Error "Readme must start with # header, not: $($readme[0])`n$helpMessage"
 }
 
 #proper src attribute for badges
-foreach($badge in $badgeLinks){
-    if(-not ($readme -clike "*$badge*")){
+foreach ($badge in $badgeLinks) {
+    if (-not ($readme -clike "*$badge*")) {
         $dumpHelp = $true
-        Write-Error "Readme is missing badge: $badge"
+        Write-Error "Readme is missing badge: $badge`n$helpMessage"
     }
 }
 
 #Proper href and src attribute for buttons
-foreach($link in $links){
-        #Write-Host $link
-    if(-not ($readme -clike "*$link*")){
+foreach ($link in $links) {
+    #Write-Host $link
+    if (-not ($readme -clike "*$link*")) {
         $dumpHelp = $true
-        Write-Error "Readme must have a button with the link: $link"
+        Write-Error "Readme must have a button with the link: $link`n$helpMessage"
     }
 }
 
-#Now make sure the readme does not contain buttons for unsupported clouds - search the readme case insensitively
-if(!$supportedEnvironments.Contains("AzureUSGovernment") -and $readme -like "*$($GovLinkMarkDown[1])*"){
-    $dumpHelp = $true
-    Write-Error "$($GovLinkMarkDown[1])"
-    Write-Error "Readme contains link to $($GovLinkMarkDown[1]) and sample is not supported in AzureUSGovernment"
-}
-if(!$supportedEnvironments.Contains("AzureCloud") -and $readme -like "*$($PublicLinkMarkDown[1])*"){
-    $dumpHelp = $true
-    Write-Error "Readme contains link to $($PublicLinkMarkDown[1]) and sample is not supported in AzureCloud"
-}
+#Proper bicep logo image
+# if ($bicepSupported) {
+#     if (-not ($readme.Contains($BicepImage))) {
+#         $dumpHelp = $true
+#         Write-Error "Readme must have the following image markdown: $BicepImage`n$helpMessage"
+#     }
+# }
 
-if( $dumpHelp ){
-    
+#Now make sure the readme does not contain buttons for unsupported clouds/features - search the readme case insensitively
+if (!$supportedEnvironments.Contains("AzureUSGovernment") -and $readme -like "*$($GovLinkMarkDown[1])*") {
+    $dumpHelp = $true
+    Write-Error "Readme contains link to $($GovLinkMarkDown[1]) but sample is not supported in AzureUSGovernment`n$helpMessage"
+}
+if (!$supportedEnvironments.Contains("AzureCloud") -and $readme -like "*$($PublicLinkMarkDown[1])*") {
+    $dumpHelp = $true
+    Write-Error "Readme contains link to $($PublicLinkMarkDown[1]) but sample is not supported in AzureCloud`n$helpMessage"
+}
+# if (!$bicepSupported -and $readme -like "*$($BicepLogoLink)*") {
+#     $dumpHelp = $true
+#     Write-Error "Readme contains link to $($BicepLogoLink) but sample does not include a bicep template`n$helpMessage"
+# }
+
+if ( $dumpHelp ) {
+  
+    if ($bicepSupported) {
+        $bicepBadge = "`n![Bicep Version]($($BadgeLinks[6]))"
+    }
+
     $md = @"
 
 ![Azure Public Test Date]($($BadgeLinks[0]))
@@ -111,13 +145,27 @@ if( $dumpHelp ){
 
 ![Best Practice Check]($($BadgeLinks[4]))
 ![Cred Scan Check]($($BadgeLinks[5]))
+$bicepBadge
 
 $PublicButton
 $GovButton
-$ARMVizButton    
+$ARMVizButton   
 "@
 
-    Write-Output "Ensure the following markdown is at the top of the README under the heading:`n"
-    Write-Output $md
+    Write-Host ""
+    Write-Host "***************************************************************************************"
+    Write-Host "Copy and paste the following markdown to the README just under the top line's heading:"
+    Write-Host "***************************************************************************************"
+    Write-Host $md
+    Write-Host ""
+    Write-Host "***************************************************************************************"
+    Write-Host "End of copy and paste for README"
+    Write-Host "***************************************************************************************"
+    Write-Host ""
+}
 
+# pipeline variable should default to FAIL
+Write-Host "Count: $($error.count)"
+if ($error.count -eq 0) {
+    Write-Host "##vso[task.setvariable variable=result.readme]PASS"
 }

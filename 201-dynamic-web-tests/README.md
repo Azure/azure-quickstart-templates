@@ -30,7 +30,7 @@ This template will help you quickly spin up any number of [Application Insights]
 }
 ```
 
-The `guid` field is an arbitrary guid for the test. The `locations` field is a collection of locations to perform the test from. Here is a table of the valid locations, and their corresponding `Id` code. Due to historical reasons, the `Id` code sometimes does not match the actual location where the webtest is occuring.
+The `guid` field is an arbitrary guid for the test. The `locations` field is a collection of locations to perform the test from. Here is a table of the valid locations, and their corresponding `Id` code. Due to historical reasons, the `Id` code sometimes does not match the actual location where the webtest is occurring.
 
 | Name | Id          |
 | ------------- | ----------- |

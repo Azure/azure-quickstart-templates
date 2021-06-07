@@ -1,0 +1,149 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage account name for the Hello World managed application"
+      }
+    }
+  },
+  "variables": {
+    "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+    "metricAlertSuffix": "availability-over-0",
+    "metricAlertName": "[concat(parameters('storageAccountName'),'-', variables('metricAlertSuffix'))]",
+    "metricAlertDescription": "Availability over 0",
+    "activityLogAlertSuffix": "keys-regeneration",
+    "activityLogAlertName": "[concat(parameters('storageAccountName'),'-', variables('activityLogAlertSuffix'))]",
+    "activityLogAlertDescription": "Used capacity over 0",
+    "actionGroupName": "sa-ama-test-ag",
+    "actionGroupShortName": "saamaag",
+    "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', variables('actionGroupName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageAccountName')]",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "Storage"
+    },
+    {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('actionGroupName')]",
+      "dependsOn": [
+        "[variables('storageAccountId')]"
+      ],
+      "location": "Global",
+      "properties": {
+        "enabled": true,
+        "groupShortName": "[variables('actionGroupShortName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/metricAlerts",
+      "name": "[variables('metricAlertName')]",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/actionGroups', variables('actionGroupName'))]"
+      ],
+      "properties": {
+        "description": "[variables('metricAlertDescription')]",
+        "severity": 4,
+        "enabled": true,
+        "scopes": [
+          "[variables('storageAccountId')]"
+        ],
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "templateType": 8,
+        "criteria": {
+          "allOf": [
+            {
+              "threshold": 0,
+              "name": "Metric1",
+              "metricNamespace": "Microsoft.Storage/storageAccounts",
+              "metricName": "Availability",
+              "operator": "GreaterThan",
+              "timeAggregation": "Average",
+              "monitorTemplateType": 8
+            }
+          ],
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+        },
+        "autoMitigate": true,
+        "actions": [
+          {
+            "actionGroupId": "[variables('actionGroupId')]"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Insights/activityLogAlerts",
+      "name": "[variables('activityLogAlertName')]",
+      "apiVersion": "2017-04-01",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/actionGroups', variables('actionGroupName'))]"
+      ],
+      "properties": {
+        "scopes": [
+          "[subscription().id]"
+        ],
+        "description": "[variables('activityLogAlertDescription')]",
+        "condition": {
+          "allOf": [
+            {
+              "field": "category",
+              "equals": "Administrative"
+            },
+            {
+              "field": "resourceId",
+              "equals": "[variables('storageAccountId')]"
+            },
+            {
+              "field": "operationName",
+              "equals": "Microsoft.Storage/storageAccounts/regeneratekey/action"
+            },
+            {
+              "field": "status",
+              "equals": "Started"
+            }
+          ]
+        },
+        "actions": {
+          "actionGroups": [
+            {
+              "actionGroupId": "[variables('actionGroupId')]"
+            }
+          ]
+        },
+        "enabled": true
+      }
+    }
+  ],
+  "outputs": {
+    "storageEndpoint": {
+      "type": "string",
+      "value": "[reference(variables('storageAccountId'), '2019-06-01').primaryEndpoints.blob]"
+    },
+    "storageAccountId": {
+      "type": "string",
+      "value": "[variables('storageAccountId')]"
+    }
+  }
+}

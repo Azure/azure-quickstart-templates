@@ -1,0 +1,176 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "tenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "The tenant ID that you Azure subscription is in."
+      }
+    },
+    "webAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Web app."
+      }
+    },
+    "webAppClientId": {
+      "type": "string",
+      "metadata": {
+        "description": "The client ID of the application identity that is used to secure the Web app."
+      }
+    },
+    "logicAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the logic app to create."
+      }
+    },
+    "logicAppClientID": {
+      "type": "string",
+      "metadata": {
+        "description": "The client ID of the application identity that the Logic app has to call your Web app."
+      }
+    },
+    "logicAppClientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The client secret (key or password) of the application identity that the Logic app has to call your Web app."
+      }
+    },
+    "svcPlanName": {
+      "type": "string",
+      "defaultValue": "Plan",
+      "metadata": {
+        "description": "The name of the App Service plan to create for hosting the logic app."
+      }
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Free",
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "The pricing tier for the App Service plan."
+      }
+    },
+    "svcPlanSize": {
+      "defaultValue": "S1",
+      "type": "string",
+      "metadata": {
+        "description": "The instance size of the app."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-12-01",
+      "name": "[parameters('svcPlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('svcPlanSize')]",
+        "tier": "[parameters('sku')]",
+        "capacity": 1
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "kind": "api",
+      "apiVersion": "2020-12-01",
+      "name": "[parameters('webAppName')]",
+      "location": "[parameters('location')]",
+      "resources": [
+        {
+          "apiVersion": "2018-11-01",
+          "name": "web",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('webAppName'))]"
+          ],
+          "properties": {
+            "siteAuthEnabled": true,
+            "siteAuthSettings": {
+              "clientId": "[parameters('webAppClientId')]",
+              "issuer": "[concat('https://sts.windows.net/', parameters('tenantId') , '/')]"
+            }
+          }
+        }
+      ],
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', parameters('svcPlanName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('svcPlanName'))]"
+      }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2019-05-01",
+      "name": "[parameters('logicAppName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+      ],
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "clientSecret": {
+              "type": "SecureString",
+              "defaultValue": "<<Specify the secret for this logic app's application identity in the parameters>>"
+            }
+          },
+          "triggers": {
+            "recurrence": {
+              "type": "recurrence",
+              "recurrence": {
+                "frequency": "Hour",
+                "interval": 1
+              }
+            }
+          },
+          "actions": {
+            "pingSite": {
+              "type": "Http",
+              "inputs": {
+                "uri": "[concat('https://', reference(resourceId('Microsoft.Web/sites', parameters('webAppName'))).hostNames[0])]",
+                "method": "Get",
+                "authentication": {
+                  "type": "ActiveDirectoryOAuth",
+                  "tenant": "[parameters('tenantId')]",
+                  "audience": "[parameters('webAppClientId')]",
+                  "clientId": "[parameters('logicAppClientId')]",
+                  "secret": "@parameters('clientSecret')"
+                }
+              }
+            }
+          },
+          "outputs": {
+            "result": {
+              "type": "string",
+              "value": "@actions('pingSite').code"
+            }
+          }
+        },
+        "parameters": {
+          "clientSecret": {
+            "value": "[parameters('logicAppClientSecret')]"
+          }
+        }
+      }
+    }
+  ]
+}
