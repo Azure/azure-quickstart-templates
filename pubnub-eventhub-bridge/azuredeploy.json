@@ -16,7 +16,7 @@
     },
     "Azure Datacenter Location": {
       "type": "string",
-      "defaultValue": "westus",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Must be westus unless you ensure all components are in the same region.  See README for more information."
       }
@@ -57,10 +57,9 @@
       }
     },
     "Azure Service Plan": {
-      "defaultValue": "USWestBasic",
       "type": "string",
       "metadata": {
-        "description": "Must be USWestBasic unless you ensure all components are in the same region.  See README for more information."
+        "description": "Must be USBasic unless you ensure all components are in the same region.  See README for more information."
       }
     },
     "Azure Ingress Event Hub Name": {
@@ -100,10 +99,10 @@
     }
   },
   "variables": {
-    "location": "[parameters('location')]",
     "sbVersion": "2015-08-01",
     "ehInAuthorizationRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('Event Hub Namespace'), parameters('Azure Ingress Event Hub Name'), parameters('Azure Ingress SAS Policy Name'))]",
-    "ehOutAuthorizationRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('Event Hub Namespace'), parameters('Azure Egress Event Hub Name'), parameters('Azure Egress SAS Policy Name'))]"
+    "ehOutAuthorizationRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('Event Hub Namespace'), parameters('Azure Egress Event Hub Name'), parameters('Azure Egress SAS Policy Name'))]",
+    "endpoint":  "[if(contains(parameters('location'), 'gov'), '.azurewebsites.us', '.azurewebsites.net')]"
   },
   "resources": [
     {
@@ -141,7 +140,7 @@
               ],
               "name": "[parameters('Azure Ingress SAS Policy Name')]",
               "apiVersion": "2015-08-01",
-              "location": "[variables('location')]",
+              "location": "[parameters('location')]",
               "properties": {
                 "rights": [
                   "Send",
@@ -160,7 +159,7 @@
             "[concat('Microsoft.EventHub/namespaces/', parameters('Event Hub Namespace'),'/eventhubs/',parameters('Azure Ingress Event Hub Name'))]"
           ],
           "apiVersion": "2015-08-01",
-          "location": "[variables('location')]",
+          "location": "[parameters('location')]",
           "properties": {
             "messageRetentionInDays": 1,
             "partitionCount": 2
@@ -174,7 +173,7 @@
               ],
               "name": "[parameters('Azure Egress SAS Policy Name')]",
               "apiVersion": "2015-08-01",
-              "location": "[variables('location')]",
+              "location": "[parameters('location')]",
               "properties": {
                 "rights": [
                   "Send",
@@ -198,7 +197,7 @@
       },
       "name": "[parameters('Azure Service Plan')]",
       "apiVersion": "2015-08-01",
-      "location": "[variables('location')]",
+      "location": "[parameters('location')]",
       "properties": {
         "name": "[parameters('Azure Service Plan')]",
         "numberOfWorkers": 1
@@ -211,25 +210,25 @@
       "type": "Microsoft.Web/sites",
       "name": "[parameters('Azure Webjob Name')]",
       "apiVersion": "2015-08-01",
-      "location": "[variables('location')]",
+      "location": "[parameters('location')]",
       "properties": {
         "name": "[parameters('Azure Webjob Name')]",
         "hostNames": [
-          "[concat(parameters('Azure Webjob Name'),'.azurewebsites.net')]"
+          "[concat(parameters('Azure Webjob Name'), variables('endpoint'))]"
         ],
         "enabledHostNames": [
-          "[concat(parameters('Azure Webjob Name'),'.azurewebsites.net')]",
-          "[concat(parameters('Azure Webjob Name'),'.scm.azurewebsites.net')]"
+          "[concat(parameters('Azure Webjob Name'), variables('endpoint'))]",
+          "[concat(parameters('Azure Webjob Name'),'.scm', variables('endpoint'))]"
         ],
         "hostNameSslStates": [
           {
-            "name": "[concat(parameters('Azure Webjob Name'),'.azurewebsites.net')]",
+            "name": "[concat(parameters('Azure Webjob Name'), variables('endpoint'))]",
             "sslState": 0,
             "thumbprint": null,
             "ipBasedSslState": 0
           },
           {
-            "name": "[concat(parameters('Azure Webjob Name'),'.scm.azurewebsites.net')]",
+            "name": "[concat(parameters('Azure Webjob Name'),'.scm', variables('endpoint'))]",
             "sslState": 0,
             "thumbprint": null,
             "ipBasedSslState": 0

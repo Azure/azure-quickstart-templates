@@ -118,11 +118,9 @@ done
 install_java()
 {
     log "Installing Java"
-    add-apt-repository -y ppa:webupd8team/java
-    apt-get -y update
-    echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
-    echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
-    apt-get -y install oracle-java7-installer
+    apt-get update
+    apt-get -y install openjdk-8-jdk
+    export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 }
 
 # Expand a list of successive IP range defined by a starting address prefix (e.g. 10.0.0.1) and the number of machines in the range
@@ -132,7 +130,7 @@ expand_ip_range_for_server_properties() {
     IFS='-' read -a HOST_IPS <<< "$1"
     for (( n=0 ; n<("${HOST_IPS[1]}"+0) ; n++))
     do
-        echo "server.$(expr ${n} + 1)=${HOST_IPS[0]}${n}:2888:3888" >> zookeeper-3.4.6/conf/zoo.cfg
+        echo "server.$(expr ${n} + 1)=${HOST_IPS[0]}${n}:2888:3888" >> apache-zookeeper-3.6.3/conf/zoo.cfg
     done
 }
 
@@ -155,24 +153,21 @@ expand_ip_range() {
 # Install Zookeeper - can expose zookeeper version
 install_zookeeper()
 {
-	mkdir -p /var/lib/zookeeper
-	cd /var/lib/zookeeper
-	wget "http://mirrors.ukfast.co.uk/sites/ftp.apache.org/zookeeper/stable/zookeeper-3.4.9.tar.gz"
-	tar -xvf "zookeeper-3.4.9.tar.gz"
+  apt-get update
+	apt-get -y install zookeeperd
+  mkdir /usr/local/zookeeper/data
+  chmod -R 755 /usr/local/zookeeper/data
 
-	touch zookeeper-3.4.9/conf/zoo.cfg
-
-	echo "tickTime=2000" >> zookeeper-3.4.9/conf/zoo.cfg
-	echo "dataDir=/var/lib/zookeeper" >> zookeeper-3.4.9/conf/zoo.cfg
-	echo "clientPort=2181" >> zookeeper-3.4.9/conf/zoo.cfg
-	echo "initLimit=5" >> zookeeper-3.4.9/conf/zoo.cfg
-	echo "syncLimit=2" >> zookeeper-3.4.9/conf/zoo.cfg
-	# OLD Test echo "server.1=${ZOOKEEPER_IP_PREFIX}:2888:3888" >> zookeeper-3.4.6/conf/zoo.cfg
+	echo "tickTime=2000" > /etc/zookeeper/conf/zoo.cfg
+	echo "dataDir=/usr/local/zookeeper/data" > /etc/zookeeper/conf/zoo.cfg
+	echo "clientPort=2181" > /etc/zookeeper/conf/zoo.cfg
+	echo "initLimit=5" > /etc/zookeeper/conf/zoo.cfg
+	echo "syncLimit=2" > /etc/zookeeper/conf/zoo.cfg
 	$(expand_ip_range_for_server_properties "${ZOOKEEPER_IP_PREFIX}-${INSTANCE_COUNT}")
 
-	echo $(($1+1)) >> /var/lib/zookeeper/myid
+	echo $(($1+1)) >> /usr/share/zookeeper/myid
 
-	zookeeper-3.4.9/bin/zkServer.sh start
+	/usr/share/zookeeper/bin/zkServer.sh start
 }
 
 # Install kafka
