@@ -1,6 +1,4 @@
-﻿
-
-# Provision a Spark 2.0 Cluster on Suse Linux Enterprise Server
+﻿# Provision a Spark 2.0 Cluster on Suse Linux Enterprise Server
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/spark/spark-2.0-on-suse/spark-2.0-on-suse/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/spark/spark-2.0-on-suse/spark-2.0-on-suse/PublicDeployment.svg)
