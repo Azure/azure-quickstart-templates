@@ -1,0 +1,72 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "suffix": {
+            "type": "string",
+            "metadata": {
+                "description": "virtual network name sufix based on resource group hash"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "location to dpeloy the vnet"
+            }
+        },
+        "vNets": {
+            "type": "object",
+            "metadata": {
+                "description": "JSON input object defining Vnets and subnets. The first network in the array is assumed to be the hub netwkr and will be peered to all subsequent networks"
+            }
+        }
+    },
+    "variables": {
+        "copy": [
+            {
+                "name": "subnets",
+                "count": "[length(parameters('vNets').subnets)]",
+                "input": {
+                    "name": "[parameters('vNets').subnets[copyIndex('subnets')].name]",
+                    "properties": {
+                        "addressPrefix": "[parameters('vNets').subnets[copyIndex('subnets')].addressPrefix]",
+                        "delegations": "[if(equals(parameters('vNets').subnets[copyIndex('subnets')].delegations, json('null')), json('null'), parameters('vNets').subnets[copyIndex('subnets')].delegations)]",
+                        "privateEndpointNetworkPolicies": "[if(equals(parameters('vNets').subnets[copyIndex('subnets')].privateEndpointNetworkPolicies, json('null')), json('null'), parameters('vNets').subnets[copyIndex('subnets')].privateEndpointNetworkPolicies)]",
+                        "privateLinkServiceNetworkPolicies": "[if(equals(parameters('vNets').subnets[copyIndex('subnets')].privateLinkServiceNetworkPolicies, json('null')), json('null'), parameters('vNets').subnets[copyIndex('subnets')].privateLinkServiceNetworkPolicies)]",
+                        "routeTable": "[if(equals(parameters('vNets').subnets[copyIndex('subnets')].udrName, json('null')), json('null'), json(concat('{\"id\": \"', resourceId('Microsoft.Network/routeTables', concat(parameters('vNets').subnets[copyIndex('subnets')].udrName, '-rt-', parameters('suffix'))), '\"}', '\"}')))]",
+                        "networkSecurityGroup": "[if(equals(parameters('vNets').subnets[copyIndex('subnets')].nsgName, json('null')), json('null'), json(concat('{\"id\": \"', resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vNets').subnets[copyIndex('subnets')].nsgName, '-nsg-', parameters('suffix'))), '\"}', '\"}')))]"
+                    },
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', concat(parameters('vNets').name, '-', parameters('suffix')), parameters('vNets').subnets[copyIndex('subnets')].name)]"
+                }
+            }
+        ]
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('vNets').name, '-', parameters('suffix'))]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[parameters('location')]",
+            "apiVersion": "2020-08-01",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('vNets').addressPrefixes]"
+                },
+                "subnets": "[variables('subnets')]"
+            }
+        }
+    ],
+    "outputs": {
+        "subnetResourceIds": {
+            "type": "array",
+            "value": "[variables('subnets')]"
+        },
+        "vnetRef": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Network/virtualNetworks/', concat(parameters('vNets').name, '-', parameters('suffix')))]"
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "value": "[concat(parameters('vNets').name, '-', parameters('suffix'))]"
+        }
+    }
+}

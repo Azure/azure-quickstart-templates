@@ -1,0 +1,77 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "wafPolicyName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the WAF policy"
+            }
+        },
+        "GeofilteringAction": {
+            "type": "string",
+            "allowedValues": [
+                "Allow",
+                "Block",
+                "Log"
+            ],
+            "metadata": {
+                "description": "Type of Action based on the match filter. Must be Allow, Block or Log."
+            }
+        },
+        "GeoMatch": {
+            "type": "string",
+            "metadata": {
+                "description": "The geographical region to be matched based on ISO 3166-1 alpha-2"
+            }
+        },
+        "wafMode": {
+            "type": "string",
+            "allowedValues": [
+                "Detection",
+                "Prevention"
+            ],
+            "defaultValue": "Detection",
+            "metadata": {
+                "description": "Describes if it is in detection mode or prevention mode at policy level."
+            }
+        }
+    },
+    "variables": {
+        "wafLocation": "global"
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-11-01",
+            "type": "Microsoft.Network/FrontDoorWebApplicationFirewallPolicies",
+            "name": "[parameters('wafPolicyName')]",
+            "location": "[variables('wafLocation')]",            
+            "properties": {
+                "policySettings": {
+                    "mode": "[parameters('wafMode')]",
+                    "enabledState": "Enabled"
+                },
+                "customRules": {
+                    "rules": [
+                        {
+                            "name": "Rule1",
+                            "priority": 1,
+                            "ruleType": "MatchRule",
+                            "matchConditions": [
+                                {
+                                    "matchVariable": "RemoteAddr",
+                                    "operator": "GeoMatch",
+                                    "matchValue": [
+                                        "[parameters('GeoMatch')]"
+                                    ]
+                                }
+                            ],
+                            "action": "[parameters('GeofilteringAction')]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

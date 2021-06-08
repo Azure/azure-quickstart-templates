@@ -68,16 +68,12 @@
     },
     "tenantID": {
       "type": "string",
-      "minLength": 36,
-      "maxLength": 36,
       "metadata": {
         "description": "ID of the tenant. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
       }
     },
     "clientID": {
       "type": "string",
-      "minLength": 36,
-      "maxLength": 36,
       "metadata": {
         "description": "ID of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
       }
@@ -124,6 +120,13 @@
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
     },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "For a standard deployment, leave empty. If you are running from a blob template, then provide the Shared Access Signature token (starting with a ?) that grants authorization to the private template. "
+      }
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -135,7 +138,6 @@
   "variables": {
     "defaultStorageAccountName": "[concat('concourse', uniqueString(resourceGroup().id))]",
     "storageAccountType": "Standard_RAGRS",
-    "vmStorageAccountContainerName": "vhds",
     "storageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName'))]",
     "virtualNetworkName": "vnet",
     "virtualNetworkAddressSpace": "10.0.0.0/16",
@@ -159,19 +161,19 @@
     "baseUriAzureCloud": "[parameters('_artifactsLocation')]",
     "baseUriAzureChinaCloud": "https://cloudfoundry.blob.core.chinacloudapi.cn/bosh-setup/",
     "filesToDownload": [
-      "[uri(variables('baseUriAzureCloud'), 'scripts/setup_env.sh')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/bosh.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/cpi.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/custom-cpi-release.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/custom-environment.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/use-managed-disks.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/use-azure-dns.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/jumpbox-user.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/keep-failed-or-unreachable-vms.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/cloud-config.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/concourse.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/use-mirror-releases-for-bosh.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/use-mirror-releases-for-concourse.yml')]"
+      "[uri(variables('baseUriAzureCloud'), concat('scripts/setup_env.sh', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/bosh.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/cpi.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/custom-cpi-release.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/custom-environment.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-managed-disks.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-azure-dns.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/jumpbox-user.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/keep-failed-or-unreachable-vms.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/cloud-config.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/concourse.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-mirror-releases-for-bosh.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-mirror-releases-for-concourse.yml', parameters('_artifactsLocationSasToken')))]"
     ],
     "environmentAzureCloud": {
       "serviceHostBase": "core.windows.net",
@@ -489,7 +491,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('baseUriAzureCloud'), 'generate-customdata.json')]",
+          "uri": "[uri(variables('baseUriAzureCloud'), concat('generate-customdata.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -596,7 +598,7 @@
           "fileUris": "[variables('filesToDownload')]"
         },
         "protectedSettings": {
-	  "commandToExecute": "[concat('bash -l -c \"./setup_env.sh', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' ', parameters('clientSecret'), ' 2>&1 | tee /home/', parameters('jumpboxUsername'), '/install.log\"')]"
+	          "commandToExecute": "[concat('bash -l -c \"./setup_env.sh', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' ', parameters('clientSecret'), ' 2>&1 | tee /home/', parameters('jumpboxUsername'), '/install.log\"')]"
         }
       }
     }

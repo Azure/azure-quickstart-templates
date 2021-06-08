@@ -20,7 +20,7 @@
       "defaultValue": "demo-vnet",
       "minLength": 1,
       "metadata": {
-        "description": "The name of the virtual network resource."
+        "description": "The name of the virtual network resource"
       }
     },
     "vmPIPDnsName": {
@@ -66,17 +66,18 @@
     ],
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vm1ImageOffer": "WindowsServer",
-    "vmOSDiskName": "[concat(variables('vmName'),'-','OSDisk')]",
-    "vmSize": "Standard_DS3_v2",
+    "vmSize": "Standard_DS2_v2",
     "vmName": "demo-01",
-    "vmWindowsOSVersion": "2016-Datacenter",
+    "vmWindowsOSVersion": "2019-Datacenter",
     "vmSubnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName')), '/subnets/', variables('vNetSubnet1Name'))]",
-    "vmContainerName": "vhds",
     "vmNicName": "[concat(variables('vmName'),'-nic-','0')]",
     "vmPIPName": "[concat(variables('vmName'),'-PIP')]",
-    "dscResourceFolder": "dsc",
-    "dscResourceConfig": "vmDemo",
-    "networkSecurityGroupName": "default-NSG"
+    "networkSecurityGroupName": "default-NSG",
+    "dscConfigureVM": {
+      "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('dsc/vmDemo.zip', parameters('_artifactsLocationSasToken')))]",
+      "script": "vmDemo.ps1",
+      "function": "vmDemo"
+    }
   },
   "resources": [
     {
@@ -216,21 +217,21 @@
             {
               "name": "[concat(variables('vmName'),'_DataDisk1')]",
               "lun": 0,
-              "diskSizeGB": "100",
+              "diskSizeGB": 100,
               "caching": "None",
               "createOption": "Empty"
             },
             {
               "name": "[concat(variables('vmName'),'_DataDisk2')]",
               "lun": 1,
-              "diskSizeGB": "100",
+              "diskSizeGB": 100,
               "caching": "ReadOnly",
               "createOption": "Empty"
             },
             {
               "name": "[concat(variables('vmName'),'_DataDisk3')]",
               "lun": 2,
-              "diskSizeGB": "100",
+              "diskSizeGB": 100,
               "caching": "ReadWrite",
               "createOption": "Empty"
             },
@@ -251,6 +252,7 @@
           ]
         }
       },
+      
       "resources": [
         {
           "name": "DSC",
@@ -258,7 +260,7 @@
           "location": "[parameters('location')]",
           "apiVersion": "2016-03-30",
           "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
           ],
           "tags": {
             "displayName": "[concat(variables('vmName'),'/','DSC')]"
@@ -270,15 +272,17 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "configuration": {
-                "url": "[uri(parameters('_artifactsLocation'), concat(variables('dscResourceFolder'), '/', variables('dscResourceConfig'), '.zip', parameters('_artifactsLocationSasToken')))]",
-                "script": "[concat(variables('dscResourceConfig'),'.ps1')]",
-                "function": "[variables('dscResourceConfig')]"
+                "configuration": {
+                "url": "[variables('dscConfigureVM').scriptFileUri]",
+                "script": "[variables('dscConfigureVM').script]",
+                "function": "[variables('dscConfigureVM').function]"
               },
               "configurationArguments": {
                 "nodeName": "[variables('vmName')]"
               }
             },
             "protectedSettings": {}
+            }
           }
         }
       ]

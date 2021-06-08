@@ -53,7 +53,7 @@ then
     templateFile="$artifactsStagingDirectory$defaultTemplateFile"
 fi
 
-if [[ $isBicep ]]
+if [[ $isBicep = true ]]
 then
     bicep build $templateFile
     # after building the script will work with the json file
@@ -82,7 +82,7 @@ templateDirectory="$( dirname "$templateFile")"
 
 if [[ -z $resourceGroupName ]]
 then
-    resourceGroupName=$(basename "${artifactsStagingDirectory}")
+    resourceGroupName=$(basename $(cd "${artifactsStagingDirectory}" && pwd))
 fi
 
 parameterJson=$( cat "$parametersFile" | jq '.parameters' )
@@ -165,15 +165,15 @@ if [[ $validateOnly ]]
 then
     if [[ $uploadArtifacts || $_artifactsLocationParameter != null ]]
     then
-        az group deployment validate -g "$resourceGroupName" --template-uri $templateUri --parameters "$parameterJson" --verbose
+        az deployment group validate -g "$resourceGroupName" --template-uri $templateUri --parameters "$parameterJson" --verbose
     else
-        az group deployment validate -g "$resourceGroupName" --template-file $templateFile --parameters "$parameterJson" --verbose
+        az deployment group validate -g "$resourceGroupName" --template-file $templateFile --parameters "$parameterJson" --verbose
     fi
 else
     if [[ $uploadArtifacts || $_artifactsLocationParameter != null ]]
     then
-        az group deployment create -g "$resourceGroupName" -n AzureRMSamples --template-uri $templateUri --parameters "$parameterJson" --verbose
+        az deployment group create -g "$resourceGroupName" -n AzureRMSamples --template-uri $templateUri --parameters "$parameterJson" --verbose
     else
-        az group deployment create -g "$resourceGroupName" -n AzureRMSamples --template-file $templateFile --parameters "$parameterJson" --verbose
+        az deployment group create -g "$resourceGroupName" -n AzureRMSamples --template-file $templateFile --parameters "$parameterJson" --verbose
     fi
 fi
