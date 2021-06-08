@@ -1,30 +1,30 @@
 @description('Name of new or existing vnet to which Azure Bastion should be deployed')
-param vnet_name string = 'vnet01'
+param vnetName string = 'vnet01'
 
 @description('IP prefix for available addresses in vnet address space')
-param vnet_ip_prefix string = '10.1.0.0/16'
+param vnetIpPrefix string = '10.1.0.0/16'
 
 @allowed([
   'new'
   'existing'
 ])
 @description('Specify whether to provision new vnet or deploy to existing vnet')
-param vnet_new_or_existing string = 'new'
+param vnetNewOrExisting string = 'new'
 
 @description('Bastion subnet IP prefix MUST be within vnet IP prefix address space')
-param bastion_subnet_ip_prefix string = '10.1.1.0/27'
+param bastionSubnetIpPrefix string = '10.1.1.0/27'
 
 @description('Name of Azure Bastion resource')
-param bastion_host_name string
+param bastionHostName string
 
 @description('Azure region for Bastion and virtual network')
 param location string = resourceGroup().location
 
-var public_ip_address_name = '${bastion_host_name}-pip'
-var bastion_subnet_name = 'AzureBastionSubnet'
+var publicIpAddressName = '${bastionHostName}-pip'
+var bastionSubnetName = 'AzureBastionSubnet'
 
-resource public_ip 'Microsoft.Network/publicIpAddresses@2020-05-01' = {
-  name: public_ip_address_name
+resource publicIp 'Microsoft.Network/publicIpAddresses@2020-05-01' = {
+  name: publicIpAddressName
   location: location
   sku: {
     name: 'Standard'
@@ -34,36 +34,36 @@ resource public_ip 'Microsoft.Network/publicIpAddresses@2020-05-01' = {
   }
 }
 
-resource virtual_network 'Microsoft.Network/virtualNetworks@2020-05-01' = if (vnet_new_or_existing == 'new') {
-  name: vnet_name
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-05-01' = if (vnetNewOrExisting == 'new') {
+  name: vnetName
   location: location
   properties: {
     addressSpace: {
       addressPrefixes: [
-        vnet_ip_prefix
+        vnetIpPrefix
       ]
     }
     subnets: [
       {
-        name: bastion_subnet_name
+        name: bastionSubnetName
         properties: {
-          addressPrefix: bastion_subnet_ip_prefix
+          addressPrefix: bastionSubnetIpPrefix
         }
       }
     ]
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-05-01' = if (vnet_new_or_existing == 'existing') {
-  parent: virtual_network
-  name: bastion_subnet_name
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-05-01' = if (vnetNewOrExisting == 'existing') {
+  parent: virtualNetwork
+  name: bastionSubnetName
   properties: {
-    addressPrefix: bastion_subnet_ip_prefix
+    addressPrefix: bastionSubnetIpPrefix
   }
 }
 
-resource bastion_host 'Microsoft.Network/bastionHosts@2020-05-01' = {
-  name: bastion_host_name
+resource bastionHost 'Microsoft.Network/bastionHosts@2020-05-01' = {
+  name: bastionHostName
   location: location
   properties: {
     ipConfigurations: [
@@ -74,13 +74,13 @@ resource bastion_host 'Microsoft.Network/bastionHosts@2020-05-01' = {
             id: subnet.id
           }
           publicIPAddress: {
-            id: public_ip.id
+            id: publicIp.id
           }
         }
       }
     ]
   }
   dependsOn: [
-    virtual_network
+    virtualNetwork
   ]
 }

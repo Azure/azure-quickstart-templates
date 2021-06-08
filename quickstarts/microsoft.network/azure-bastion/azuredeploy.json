@@ -5,25 +5,25 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1.14562",
-      "templateHash": "15947937236506639950"
+      "templateHash": "3445416549763625965"
     }
   },
   "parameters": {
-    "vnet_name": {
+    "vnetName": {
       "type": "string",
       "defaultValue": "vnet01",
       "metadata": {
         "description": "Name of new or existing vnet to which Azure Bastion should be deployed"
       }
     },
-    "vnet_ip_prefix": {
+    "vnetIpPrefix": {
       "type": "string",
       "defaultValue": "10.1.0.0/16",
       "metadata": {
         "description": "IP prefix for available addresses in vnet address space"
       }
     },
-    "vnet_new_or_existing": {
+    "vnetNewOrExisting": {
       "type": "string",
       "defaultValue": "new",
       "metadata": {
@@ -34,14 +34,14 @@
         "existing"
       ]
     },
-    "bastion_subnet_ip_prefix": {
+    "bastionSubnetIpPrefix": {
       "type": "string",
       "defaultValue": "10.1.1.0/27",
       "metadata": {
         "description": "Bastion subnet IP prefix MUST be within vnet IP prefix address space"
       }
     },
-    "bastion_host_name": {
+    "bastionHostName": {
       "type": "string",
       "metadata": {
         "description": "Name of Azure Bastion resource"
@@ -57,14 +57,14 @@
   },
   "functions": [],
   "variables": {
-    "public_ip_address_name": "[format('{0}-pip', parameters('bastion_host_name'))]",
-    "bastion_subnet_name": "AzureBastionSubnet"
+    "publicIpAddressName": "[format('{0}-pip', parameters('bastionHostName'))]",
+    "bastionSubnetName": "AzureBastionSubnet"
   },
   "resources": [
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2020-05-01",
-      "name": "[variables('public_ip_address_name')]",
+      "name": "[variables('publicIpAddressName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
@@ -74,43 +74,43 @@
       }
     },
     {
-      "condition": "[equals(parameters('vnet_new_or_existing'), 'new')]",
+      "condition": "[equals(parameters('vnetNewOrExisting'), 'new')]",
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2020-05-01",
-      "name": "[parameters('vnet_name')]",
+      "name": "[parameters('vnetName')]",
       "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[parameters('vnet_ip_prefix')]"
+            "[parameters('vnetIpPrefix')]"
           ]
         },
         "subnets": [
           {
-            "name": "[variables('bastion_subnet_name')]",
+            "name": "[variables('bastionSubnetName')]",
             "properties": {
-              "addressPrefix": "[parameters('bastion_subnet_ip_prefix')]"
+              "addressPrefix": "[parameters('bastionSubnetIpPrefix')]"
             }
           }
         ]
       }
     },
     {
-      "condition": "[equals(parameters('vnet_new_or_existing'), 'existing')]",
+      "condition": "[equals(parameters('vnetNewOrExisting'), 'existing')]",
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "apiVersion": "2020-05-01",
-      "name": "[format('{0}/{1}', parameters('vnet_name'), variables('bastion_subnet_name'))]",
+      "name": "[format('{0}/{1}', parameters('vnetName'), variables('bastionSubnetName'))]",
       "properties": {
-        "addressPrefix": "[parameters('bastion_subnet_ip_prefix')]"
+        "addressPrefix": "[parameters('bastionSubnetIpPrefix')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet_name'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
       ]
     },
     {
       "type": "Microsoft.Network/bastionHosts",
       "apiVersion": "2020-05-01",
-      "name": "[parameters('bastion_host_name')]",
+      "name": "[parameters('bastionHostName')]",
       "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
@@ -118,19 +118,19 @@
             "name": "IpConf",
             "properties": {
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'), variables('bastion_subnet_name'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('bastionSubnetName'))]"
               },
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('public_ip_address_name'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]"
               }
             }
           }
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('public_ip_address_name'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'), variables('bastion_subnet_name'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet_name'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('bastionSubnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
       ]
     }
   ]
