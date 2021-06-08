@@ -123,7 +123,7 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/intel-lustre/intel-lustre-clients-on-centos/",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
@@ -150,8 +150,6 @@
       "updateDomainCount": "3"
     },
     "scriptUrlLustreClient": "[uri(parameters('_artifactsLocation'), concat('lustre_client.sh', parameters('_artifactsLocationSasToken')))]",
-    "vnetID": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('existingVnetName'))]",
-    "subnetClientsID": "[concat(variables('vnetID'), '/subnets/', parameters('existingSubnetClientsName'))]",
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
@@ -167,16 +165,16 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-01-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('clientAvailabilitySetSettings').name]",
       "location": "[parameters('location')]",
@@ -189,7 +187,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('vmNamePrefix'),'client0')]",
       "location": "[parameters('location')]",
@@ -202,12 +200,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('vmNamePrefix'), 'client0')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('vmNamePrefix'), 'client0')]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(parameters('vmNamePrefix'), 'client0'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -219,7 +217,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmNamePrefix'), 'client0'))]"
               },
               "subnet": {
-                "id": "[variables('subnetClientsID')]"
+                "id": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubnetClientsName'))]"
               }
             }
           }
@@ -227,7 +225,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex(1))]",
       "location": "[parameters('location')]",
@@ -242,7 +240,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('subnetClientsID')]"
+                "id": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubnetClientsName'))]"
               }
             }
           }
@@ -250,14 +248,14 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex())]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('clientAvailabilitySetSettings').name)]",
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('vmNamePrefix'), 'client', copyIndex())]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('clientAvailabilitySetSettings').name)]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('vmNamePrefix'), 'client', copyIndex()))]"
       ],
       "copy": {
         "name": "clientVmCopy",
@@ -297,12 +295,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex(), '/init')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('vmNamePrefix'),'client',copyIndex()))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('vmNamePrefix'),'client',copyIndex()))]"
       ],
       "copy": {
         "name": "clientExtensionsCopy",
