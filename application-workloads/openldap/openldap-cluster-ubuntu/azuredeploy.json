@@ -102,7 +102,6 @@
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "ubuntuOSVersion": "14.04.5-LTS",
-    "OSDiskName": "[concat(parameters('namePrefix'),'Disk')]",
     "nicName": "[concat(parameters('namePrefix'),'Nic')]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -112,34 +111,27 @@
     "publicIPAddressName": "[concat(parameters('namePrefix'),'IP')]",
     "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
     "vmName": "[concat(parameters('namePrefix'),'VM')]",
     "virtualNetworkName": "[concat(parameters('namePrefix'),'VNet')]",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "availabilitySetName": "[concat(parameters('namePrefix'),'AvSet')]",
     "lbName": "[concat(parameters('namePrefix'),'LB')]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
-    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontend')]",
-    "lbProbeID": "[concat(variables('lbID'),'/probes/tcpProbe')]",
-    "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]",
     "installScriptName": "install_openldap.sh",
-    "installScriptUri": "[uri(parameters('_artifactsLocation'), concat(variables('installScriptName'), parameters('_artifactsLocationSasToken')))]",
     "installCommand": "[concat('bash ', variables('installScriptName'), ' ', parameters('vmAdminUsername'), ' ', parameters('vmAdminPassword'), ' ', parameters('directoryAdminPassword'), ' ', parameters('namePrefix'), ' ', parameters('location'), ' ', parameters('organization'), ' ',variables('privateIPAddressPrefix'), ' ', parameters('vmCount'))]"
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-01-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
+      "sku": {
+        "name": "[variables('storageAccountType')]"
       }
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
@@ -151,7 +143,7 @@
         
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -163,7 +155,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -184,13 +176,13 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'),copyIndex())]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/loadBalancers/',variables('lbName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/',variables('lbName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -200,16 +192,16 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[concat(variables('privateIPAddressPrefix'), copyindex())]",
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),'LoadBalancerBackend')]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/SSH-VM',copyindex())]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'),concat('SSH-VM',copyindex()))]"
                 }
               ]
             }
@@ -222,12 +214,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -250,7 +242,7 @@
             "name": "SSH-VM0",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 2200,
@@ -262,7 +254,7 @@
             "name": "SSH-VM1",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 2201,
@@ -274,7 +266,7 @@
             "name": "SSH-VM2",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 2202,
@@ -286,7 +278,7 @@
             "name": "SSH-VM3",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 2203,
@@ -298,7 +290,7 @@
             "name": "SSH-VM4",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 2204,
@@ -312,10 +304,10 @@
             "name": "HTTPRule",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
               },
               "backendAddressPool": {
-                "id": "[variables('lbPoolID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),'LoadBalancerBackend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
@@ -324,7 +316,7 @@
               "idleTimeoutInMinutes": 5,
               "loadDistribution": "SourceIP",
               "probe": {
-                "id": "[variables('lbProbeID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'),'tcpProbe')]"
               }
             }
           },
@@ -332,10 +324,10 @@
             "name": "HTTPSRule",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
               },
               "backendAddressPool": {
-                "id": "[variables('lbPoolID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),'LoadBalancerBackend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 443,
@@ -344,7 +336,7 @@
               "idleTimeoutInMinutes": 5,
               "loadDistribution": "SourceIP",
               "probe": {
-                "id": "[variables('lbProbeID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'),'tcpProbe')]"
               }
             }
           },
@@ -352,10 +344,10 @@
             "name": "LDAPRule",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
               },
               "backendAddressPool": {
-                "id": "[variables('lbPoolID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),'LoadBalancerBackend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 389,
@@ -364,7 +356,7 @@
               "idleTimeoutInMinutes": 5,
               "loadDistribution": "SourceIP",
               "probe": {
-                "id": "[variables('lbProbeID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'),'tcpProbe')]"
               }
             }
           }
@@ -383,14 +375,14 @@
       }
     },
     {
-      "apiVersion":"2017-03-30", 
+      "apiVersion":"2020-12-01", 
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'),copyIndex())]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/',concat(variables('nicName'),copyIndex()))]",
-        "[concat('Microsoft.Compute/availabilitySets/',variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/',concat(variables('nicName'),copyIndex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/',variables('availabilitySetName'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -433,10 +425,10 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(concat(variables('vmName'),copyIndex()),'/newuserscript')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',concat(variables('vmName'),copyIndex()))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/',concat(variables('vmName'),copyIndex()))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -445,7 +437,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[variables('installScriptUri')]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/',variables('installScriptName'), parameters('_artifactsLocationSasToken')))]",
             "[uri(parameters('_artifactsLocation'), concat('ldif/', 'forceTLS.ldif', parameters('_artifactsLocationSasToken')))]",
             "[uri(parameters('_artifactsLocation'), concat('ldif/', 'setTLSConfig.ldif', parameters('_artifactsLocationSasToken')))]",
             "[uri(parameters('_artifactsLocation'), concat('ldif/', 'config_1_loadSyncProvModule.ldif', parameters('_artifactsLocationSasToken')))]",
