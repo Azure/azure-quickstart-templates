@@ -20,6 +20,4 @@ In most cases, a blob container of an Azure storage account has been created. An
 You don't want to use the default storage account container for storing business data because:
 
 - A default storage account container can't be shared by two HDInsight clusters at the same time.
-- It is not recommended to reuse a blob container for multiple times. 
-
-If you want to create an HDInsight cluster with secure transfer enabled Azure storage accounts, make sure to use HDInsight version 3.6 or newer.  The default version is 3.5.  Only verion 3.6 or newer supports secure transfer enabled Azure Storage accounts.
+- It is not recommended to reuse a blob container for multiple times.
