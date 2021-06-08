@@ -67,7 +67,8 @@ function Remove-GeneratorMetadata(
     $json = ConvertFrom-Json $jsonContent
     if ($json) {
         $json.PSObject.properties.remove('metadata')
-    } else {
+    }
+    else {
         Write-Error "Template is empty"
     }
     return ConvertTo-JSON $json -Depth 100
@@ -81,5 +82,16 @@ function Convert-StringToLines(
         Converts a multi-line string to an array of strings, each element corresponding to a line
     #>
     
-    return $content -split '\r\n|\n|\r'
+    return @($content -split '\r\n|\n|\r')
+}
+
+function Convert-LinesToString(
+    [string[]] $lines
+) {
+    <#
+        .SYNOPSIS
+        Converts an array of strings, each element corresponding to a line, into a multi-line string
+    #>
+    
+    return $lines -join [System.Environment]::NewLine
 }

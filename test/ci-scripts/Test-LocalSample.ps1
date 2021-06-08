@@ -24,7 +24,8 @@ param(
     [string] $StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME ? $ENV:STORAGE_ACCOUNT_NAME : "azurequickstartsservice",
     [string] $CloudEnvironment = "AzureCloud", # AzureCloud/AzureUSGovernment
     [string] $TtkFolder = $ENV:TTK_FOLDER,
-    [string] $BicepPath = $ENV:BICEP_PATH ? $ENV:BICEP_PATH : "bicep"
+    [string] $BicepPath = $ENV:BICEP_PATH ? $ENV:BICEP_PATH : "bicep",
+    [switch] $Fix # If true, fixes will be made if possible
 )
 
 $ErrorActionPreference = "Continue"
@@ -97,10 +98,12 @@ $validateReadMeHostOutput =
     -ReadMeFileName "README.md" `
     -supportedEnvironmentsJson $supportedEnvironmentsJson `
     -bicepSupported:$bicepSupported `
+    -Fix:$Fix `
     6>&1
 Write-Output $validateReadMeHostOutput
 $vars = Find-VarsFromWriteHostOutput $validateReadMeHostOutput
 $resultReadMe = $vars["RESULT_README"] # will be null if fails
+$fixedReadme = $vars["FIXED_README"] -eq "TRUE"
 
 # Test-BestPractices
 if (!$TtkFolder) {
@@ -132,10 +135,17 @@ if ($null -ne $CompiledJsonFilename -and (Test-Path $CompiledJsonFilename)) {
 
 Write-host "Validation complete."
 
+$fixesMade = $fixedReadme
+if ($fixedReadme) {
+    Write-Warning "A fix has been made in the README. See details above."
+}
+
 if ($error) {
     $ErrorActionPreference = "Stop"
     Write-Error "*** ERRORS HAVE BEEN FOUND. SEE DETAILS ABOVE ***"
 }
 else {
-    Write-Host "No errors found."
+    if (!$fixesMade) {
+        Write-Host "No errors found."
+    }
 }
