@@ -36,22 +36,22 @@ The following resources are deployed as part of the solution
 
 Description Resource Provider 1
 
-+ **Resource type 1A**: Description Resource type 1A
-+ **Resource type 1B**: Description Resource type 1B
-+ **Resource type 1C**: Description Resource type 1C
+- **Resource type 1A**: Description Resource type 1A
+- **Resource type 1B**: Description Resource type 1B-
+- **Resource type 1C**: Description Resource type 1C
 
 ### Resource provider 2
 
 Description Resource Provider 2
 
-+ **Resource type 2A**: Description Resource type 2A
+- **Resource type 2A**: Description Resource type 2A
 
 ### Resource provider 3
 
 Description Resource Provider 3
 
-+ **Resource type 3A**: Description Resource type 3A
-+ **Resource type 3B**: Description Resource type 3B
+- **Resource type 3A**: Description Resource type 3A
+- **Resource type 3B**: Description Resource type 3B
 
 ## Prerequisites
 
