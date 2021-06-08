@@ -1,0 +1,105 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.210607",
+    "parameters": {
+        "Source": {
+            "type": "securestring",
+            "metadata": {
+                "description": "URL of a ZIP archive containing VHD images files. For example: https://provider.com/bin/support/azure-vhd.zip"
+            }
+        },
+        "Destination": {
+            "type": "securestring",
+            "metadata": {
+                "description": "URI of a Storage Account container with a writable SAS Token."
+            }
+        },
+        "forceUpdateTag": {
+            "type": "string",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "Used to force the execution when redeploying the template with the same parameters. Default: [newGuid()]"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location in which the resources should be deployed. Default: [resourceGroup().location]"
+            }
+        }
+    },
+    "variables": {
+        "urlVHDZipArchive": "[parameters('Source')]",
+        "uriWritableStorageAccountBlobContainerSasToken": "[parameters('Destination')]",
+        "deploymentScriptName": "[concat('ImportVHD-FromZipArchive-',uniqueString(parameters('Source'),uniqueString(parameters('Destination'))))]",
+        "userAssignedIdentityName": "[concat('ImportVHD-FromZipArchiveURL-worker-',uniqueString(resourceGroup().id))]",
+        "roleAssignmentName": "[guid(concat(variables('userAssignedIdentityName'),resourceGroup().id, 'contributor'))]",
+        "forceUpdateTag": "[parameters('forceUpdateTag')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "apiVersion": "2018-11-30",
+            "name": "[variables('userAssignedIdentityName')]",
+            "location": "[parameters('location')]"
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2018-09-01-preview",
+            "name": "[variables('roleAssignmentName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName'))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName')), '2015-08-31-preview').principalId]",
+                "scope": "[resourceGroup().id]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "[variables('deploymentScriptName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleAssignmentName'))]"
+            ],
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('userAssignedIdentityName'))]": {}
+                }
+            },
+            "kind": "AzurePowerShell",
+            "properties": {
+                "azPowerShellVersion": "5.5",
+                "cleanupPreference": "OnSuccess",
+                "environmentVariables": [
+                    {
+                        "name": "ResourceGroupName",
+                        "value": "[resourceGroup().name]"
+                    },
+                    {
+                        "name": "Source",
+                        "secureValue": "[variables('urlVHDZipArchive')]"
+                    },
+                    {
+                        "name": "Destination",
+                        "secureValue": "[variables('uriWritableStorageAccountBlobContainerSasToken')]"
+                    }
+                ],
+                "forceUpdateTag": "[variables('forceUpdateTag')]",
+                "retentionInterval": "PT4H",
+                "scriptContent": "# 210602 \n  \n ##### Parameters \n  \n $urlVHDZipArchive = ${Env:Source} \n $uriWritableStorageAccountBlobContainerSasToken = ${Env:Destination} \n $ResourceGroupName = ${Env:ResourceGroupName} \n  \n ##### Validate Parameters \n  \n if (! ([System.Uri]::IsWellFormedUriString($urlVHDZipArchive,[System.UriKind]::Absolute))) { \n   Throw 'The Source URL parameter is probably not well formatted. Please check and retry.' \n } \n  \n if (! ([System.Uri]::IsWellFormedUriString($uriWritableStorageAccountBlobContainerSasToken,[System.UriKind]::Absolute))) { \n   Throw 'The Destination URI parameter is probably not well formatted. The URI of a Storage Account Container with a SAS Token is expected. Please check and retry.' \n } \n  \n ##### Variables \n  \n $base_path='/mnt/azscripts' \n $temp_path='{0}/temp' -f $base_path \n New-Item -Type Directory -ErrorAction SilentlyContinue $temp_path \n  \n $timestamp = Get-Date -Format 'yyMMddHHmmss' \n  \n ##### Prereqs \n  \n Write-Output 'Increase file share quota to 4TB instead of 2GB before downloading and expanding' \n $QuotaGiB = '4096' \n Get-AzStorageAccount -ResourceGroupName $ResourceGroupName | Where-Object { $_.StorageAccountName -like '*azscripts' } | ForEach-Object { \n   $StorageAccount = $_ \n   Get-AzStorageShare -Context $StorageAccount.Context | ForEach-Object {  \n     $Share = $_ \n     Set-AzStorageShareQuota -ShareName $Share.Name -Context $StorageAccount.Context -Quota $QuotaGiB \n   } \n } \n  \n ##### Fetch and process \n  \n Write-Output 'Download the ZIP archive' \n $archive_path='{0}/archive-{1}.zip' -f $temp_path,$timestamp \n # Accelerate file download (initially using Invoke-WebRequest) \n (New-Object System.Net.WebClient).DownloadFile($urlVHDZipArchive, $archive_path) \n  \n Write-Output 'Expand locally' \n $expanded_archive_path ='{0}/expanded-{1}' -f $temp_path,$timestamp \n New-Item -Type Directory -ErrorAction SilentlyContinue $expanded_archive_path \n Expand-Archive -Path $archive_path -DestinationPath $expanded_archive_path -Force \n  \n ##### Upload to Azure Storage account \n  \n Write-Output 'Upload extracted VHD file(s)' \n  \n $DeploymentScriptOutputs = @{} \n $DeploymentScriptOutputs['vhdBlobUriList'] = @{} \n $DeploymentScriptOutputs['vhdBlobSHA256List'] = @{} \n  \n $StorageAccountContainerUri = ($uriWritableStorageAccountBlobContainerSasToken -split [Regex]::Escape('?'))[0] \n $StorageAccountName = (([System.Uri]$uriWritableStorageAccountBlobContainerSasToken).Host -split [Regex]::Escape('.'))[0] \n $ContainerName = ($StorageAccountContainerUri -split '/')[-1]  # Last element \n $StorageAccountContainerSASToken = ($uriWritableStorageAccountBlobContainerSasToken -split [Regex]::Escape('?'))[1] \n $StorageAccountContext = New-AzStorageContext -StorageAccountName $StorageAccountName -SasToken $StorageAccountContainerSASToken \n  \n $vhd_filepath='{0}/*.vhd' -f  $expanded_archive_path \n  \n Get-Item $vhd_filepath | ForEach-Object { \n   $localFilePath = $_ \n   $vhdBlobName = $localFilePath.Name \n   $vhdBlobUri = '{0}/{1}' -f $StorageAccountContainerUri,$vhdBlobName \n  \n   $hash = (Get-FileHash -Algorithm SHA256 -Path $localFilePath).Hash \n   $metadata = @{'SHA256' = $hash; } \n  \n   Write-Output 'Uploading ' + $vhdBlobName \n   Set-AzStorageBlobContent -File $localFilePath -Context $StorageAccountContext -Container $ContainerName -Blob $vhdBlobName -BlobType Page -Metadata $metadata -Force \n   $DeploymentScriptOutputs['vhdBlobUriList'][$vhdBlobName] = $vhdBlobUri \n   $DeploymentScriptOutputs['vhdBlobSHA256List'][$vhdBlobName] = $hash \n } \n "
+            }
+        }
+    ],
+    "outputs": {
+        "vhdBlobUriList": {
+            "type": "object",
+            "value": "[reference(variables('deploymentScriptName')).outputs.vhdBlobUriList]"
+        }
+    }
+}
