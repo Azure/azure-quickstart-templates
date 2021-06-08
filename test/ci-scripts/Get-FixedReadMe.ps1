@@ -1,6 +1,5 @@
 param(
     [string] $ReadmeContents,
-    [string[]] $BadgeLinks,
     [string] $ExpectedMarkdown
 )
 

@@ -161,13 +161,20 @@ $ARMVizButton
 "@
 
     if ($Fix) {
-        $fixed = & $PSScriptRoot/Fix-ReadMe.ps1 `
+        $fixed = & $PSScriptRoot/Get-FixedReadMe.ps1 `
             -ReadmeContents $readme `
-            -BadgeLinks $BadgeLinks `
             -ExpectedMarkdown $md
+
+        # Back up existing
+        $backup = New-TemporaryFile
+        mv $readmePath $backup
+
+        # Write new readme
         Set-Content $readmePath $fixed
+
         Write-Warning "***************************************************************************************"
         Write-Warning "Fixes have been made to $readmePath"
+        Write-Warning "Previous file was written to $backup"
         Write-Warning "***************************************************************************************"
         Write-Host "##vso[task.setvariable variable=fixed.readme]TRUE"
     }

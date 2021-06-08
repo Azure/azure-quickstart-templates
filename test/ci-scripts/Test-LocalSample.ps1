@@ -137,7 +137,7 @@ Write-host "Validation complete."
 
 $fixesMade = $fixedReadme
 if ($fixedReadme) {
-    Write-Warning "A fix has been made in the README"
+    Write-Warning "A fix has been made in the README. See details above."
 }
 
 if ($error) {
