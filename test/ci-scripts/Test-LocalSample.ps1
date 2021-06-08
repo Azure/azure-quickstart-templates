@@ -35,7 +35,7 @@ Import-Module "$PSScriptRoot/Local.psm1" -force
 $SampleFolder = Resolve-Path $SampleFolder
 $SampleName = SampleNameFromFolderPath $SampleFolder
 
-if (!(Test-Path "metadata.json")) {
+if (!(Test-Path (Join-Path $SampleFolder "metadata.json"))) {
     $ErrorActionPreference = "Stop"
     Write-Error "Test-LocalSample must be run from within a sample folder. This folder contains no metadata.json file."
     return
