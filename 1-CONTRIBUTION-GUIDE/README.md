@@ -143,6 +143,7 @@ resource symbolicName 'Resource.Provider/resourceType@apiVersion' = {
   comments:
   parent:
   scope:
+  name:
   location:
   zones:
   sku:
