@@ -2,13 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.210602",
     "parameters": {
-        "location": {
-            "type": "string",
-            "metadata": {
-                "description": "The Azure Region location in which the resources should be deployed. E.g. westus (Azure Public)"
-            },            
-            "defaultValue": "[resourceGroup().location]"
-        },
         "storageAccountNameDestination": {
             "type": "string",
             "defaultValue": "[concat('destination', uniqueString(resourceGroup().id))]",
@@ -17,15 +10,15 @@
             }
         },
         "blobContainerNameDestination": {
-            "type":"string",
-            "defaultValue" : "vhd",
-            "metadata":{
-                "description" : "Name of the Blob Container"
+            "type": "string",
+            "defaultValue": "vhd",
+            "metadata": {
+                "description": "Name of the Blob Container"
             }
         },
         "storageAccountKind": {
             "type": "string",
-            "defaultValue" : "StorageV2"
+            "defaultValue": "StorageV2"
         },
         "storageAccountSkuName": {
             "type": "string",
@@ -34,19 +27,58 @@
                 "Standard_LRS",
                 "Premium_LRS",
                 "Standard_ZRS",
-                "Standard_GRS"                               
+                "Standard_GRS"
             ],
             "metadata": {
                 "description": "Storage Account SKU"
             }
+        },
+        "keyVaultName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the name of the key vault."
+            }
+        },
+        "tenantId": {
+            "type": "string",
+            "defaultValue": "[subscription().tenantId]",
+            "metadata": {
+                "description": "Specifies the Azure Active Directory tenant ID that should be used for authenticating requests to the key vault. Get it by using Get-AzSubscription cmdlet."
+            }
+        },
+        "baseTime": {
+            "type": "string",
+            "defaultValue": "[utcNow('yyyy-MM-ddTHH:mm:00Z')]",
+            "metadata": {
+                "description": "Generates the start time for the SAS Token using a Storage Account Accepted ISO 8601 UTC formats (date time example: 2021-06-08T00:00:00Z)"
+            }
+        },
+        "expiry": {
+            "type": "string",
+            "defaultValue": "PT2H",
+            "metadata": {
+                "description": "Set of typical expiry to protect the Storage Account Container SAS Token using a standard format (for example: PT2H to add 2 hours)"
+            },
+            "allowedValues": [
+                "PT1H",
+                "PT2H",
+                "PT4H"
+            ]
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "The Azure Region location in which the resources should be deployed. E.g. westus (Azure Public)"
+            },
+            "defaultValue": "[resourceGroup().location]"
         }
     },
     "variables": {
         "listAccountSasRequestContent": {
             "signedServices": "bfqt",
             "signedPermission": "rwdlacup",
-            "signedStart": "2021-06-02T00:00:00Z",
-            "signedExpiry": "2021-10-30T00:00:00Z",
+            "signedStart": "[parameters('baseTime')]",
+            "signedExpiry": "[dateTimeAdd(parameters('baseTime'), parameters('expiry'))]",
             "signedResourceTypes": "sco"
         }
     },
@@ -73,12 +105,48 @@
                     }
                 }
             ]
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2019-09-01",
+            "name": "[parameters('keyVaultName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountNameDestination'))]"
+            ],
+            "location": "[parameters('location')]",
+            "properties": {
+                "enabledForDeployment": true,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": true,
+                "tenantId": "[parameters('tenantId')]",
+                "accessPolicies": [],
+                "sku": {
+                    "name": "Standard",
+                    "family": "A"
+                },
+                "networkAcls": {
+                    "defaultAction": "Allow",
+                    "bypass": "AzureServices"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "apiVersion": "2019-09-01",
+            "name": "[concat(parameters('keyVaultName'), '/', 'Destination')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+            ],
+            "properties": {
+                "value": "[concat(reference(parameters('storageAccountNameDestination')).primaryEndpoints.blob, parameters('blobContainerNameDestination'), '?', listAccountSas(parameters('storageAccountNameDestination'), '2021-04-01', variables('listAccountSasRequestContent')).accountSasToken)]"
+            }
         }
     ],
-    "outputs" : {
-        "uriWritableStorageAccountBlobContainerSasToken": {
+    "outputs": {
+        "KeyVaultId": {
             "type": "string",
-            "value" : "[concat(reference(parameters('storageAccountNameDestination')).primaryEndpoints.blob, parameters('blobContainerNameDestination'), '?', listAccountSas(parameters('storageAccountNameDestination'), '2021-04-01', variables('listAccountSasRequestContent')).accountSasToken)]"
+            "value": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
         }
     }
 }
