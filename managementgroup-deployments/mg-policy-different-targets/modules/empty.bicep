@@ -1,0 +1,1 @@
+targetScope = 'managementGroup'
