@@ -4,11 +4,11 @@ param vnetName string = 'vnet01'
 @description('IP prefix for available addresses in vnet address space')
 param vnetIpPrefix string = '10.1.0.0/16'
 
+@description('Specify whether to provision new vnet or deploy to existing vnet')
 @allowed([
   'new'
   'existing'
 ])
-@description('Specify whether to provision new vnet or deploy to existing vnet')
 param vnetNewOrExisting string = 'new'
 
 @description('Bastion subnet IP prefix MUST be within vnet IP prefix address space')
