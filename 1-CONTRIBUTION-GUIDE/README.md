@@ -131,7 +131,34 @@ The decompiler is not guaranteed to produce correct Bicep code from JSON, so you
 1. Remove `_var`, `_param` and `_resource` prefixes if they are present in variables, parameters and resources.
 1. Use bicep concepts when possible
 1. See [decompiling](https://github.com/Azure/bicep/blob/main/docs/decompiling.md) for current limitations of the Bicep decompiler.
-1. See also [Best practices for Bicep](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/best-practices)
+1. The top-level elements of the file must be in this order (if they exist):
+  - targetScope
+  - parameters
+  - variables
+  - resources and modules references
+  - outputs
+7. Common resource properties, when present, should be authored consistently to provide for understandability and consumption of the code:
+```bicep
+resource symbolicName 'Resource.Provider/resourceType@apiVersion' = {
+  comments: ''
+  scope: // if any
+  parent: profile // if any
+  scope: // if any
+  location: location
+  zones: []
+  sku: {}
+  kind: ''
+  scale: ''
+  plan: {}
+  identity: {}
+  dependsOn: []
+  tags: {}
+  // Any other top-level properties go here, before 'properties'
+  properties: {}
+}
+```
+
+See also [Best practices for Bicep](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/best-practices)
 
 ## README.md
 
