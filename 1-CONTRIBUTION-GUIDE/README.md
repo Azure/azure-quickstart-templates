@@ -140,21 +140,20 @@ The decompiler is not guaranteed to produce correct Bicep code from JSON, so you
 7. Common resource properties, when present, should be authored consistently to provide for understandability and consumption of the code:
 ```bicep
 resource symbolicName 'Resource.Provider/resourceType@apiVersion' = {
-  comments: ''
-  scope: // if any
-  parent: profile // if any
-  scope: // if any
-  location: location
-  zones: []
-  sku: {}
-  kind: ''
-  scale: ''
-  plan: {}
-  identity: {}
-  dependsOn: []
-  tags: {}
-  // Any other top-level properties go here, before 'properties'
-  properties: {}
+  comments:
+  parent:
+  scope:
+  location:
+  zones:
+  sku:
+  kind:
+  scale:
+  plan:
+  identity:
+  dependsOn:
+  tags:
+  // Any other top-level properties should go here, before 'properties'
+  properties:
 }
 ```
 
