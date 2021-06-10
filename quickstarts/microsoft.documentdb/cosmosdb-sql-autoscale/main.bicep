@@ -91,7 +91,7 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-01-15'
 
 resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-01-15' = {
   parent: accountName_resource
-  name: '${databaseName}'
+  name: databaseName
   properties: {
     resource: {
       id: databaseName
