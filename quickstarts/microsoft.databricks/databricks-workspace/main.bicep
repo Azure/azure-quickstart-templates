@@ -23,14 +23,18 @@ resource ws 'Microsoft.Databricks/workspaces@2018-04-01' = {
     name: pricingTier
   }
   properties: {
-    // TODO: improve once we have scoping functions
-    managedResourceGroupId: subscriptionResourceId('Microsoft.Resources/resourceGroups', managedResourceGroupName)
+    managedResourceGroupId: managedRg.id
     parameters: {
       enableNoPublicIp: {
         value: disablePublicIp
       }
     }
   }
+}
+
+resource managedRg 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
+  scope: subscription()
+  name: managedResourceGroupName
 }
 
 output workspace object = ws.properties
