@@ -6,9 +6,24 @@
 
 To deploy this template, you need to have the following resources:
 
-1. The App Service Plan (serverFarm) resource name that the Web App is running.
-2. The domain should already be bound under Web App Custom Domain.
-3. Use the Resource Group where the App Service Plan is located to create the Managed Certificate.
+1. Create an App Service Plans (serverFarm)
+2. Create a App Services on the previous App Service Plan
+3. Add a root custom domain to the Web App. (i.e. contoso.com).  For that you will need:
+
+    a. Go the the App Services => Custom Domains and take note of IP Address and Custom Domain Verification ID
+
+    b. Under your dns zone (contoso.com) create 2 DNS records:
+
+    | Record | Type | Value                           |
+    | -------| ---- | ------------------------------- |
+    | @      |   A  |  (IP Address from step a)       |
+    | asuid  | TXT  |  (Custom Domain Verification ID)|
+    |        |      |                                 |
+ 
+    c. Add your root domain -> App Services => Custom Domains -> Add custom domain. (ie contoso.com).
+
+    More information can be found [here](https://docs.microsoft.com/en-us/azure/app-service/app-service-web-tutorial-custom-domain?tabs=cname).
+
 4. **Make sure you Web App does not have any Network restriction or redirection (such as http to https or to another url).**
 
 This arm deployment will:
@@ -16,28 +31,3 @@ This arm deployment will:
 1. Create a Managed Certificate (Free).
 
 The operation is expected to take some time.
-
-
-You can also deploy using the powershell:
-
-````
-#Connect-AzureRmAccount
-
-$subscription = "XXXXX-XXXX-XXX-XXXX-XXXXXXX"
-$resourceGroupName = "MyResourceGroupwheretheASPislocated"
-$appServicePlanName = "ASP-TEST-CERT"
-$subjectName = "contoso.com"
-
-Set-AzureRmContext -SubscriptionId $subscription
-
-$appServicePlan = Get-AzureRmResource `
-    | Where-Object {$_.ResourceGroupName -eq $resourceGroupName } `
-    | Where-Object {$_.Name -eq $appServicePlanName}
-
-New-AzureRMResourceGroupDeployment `
-    -ResourceGroupName $resourceGroupName `
-    -SubjectName $subjectName `
-    -AppServicePlanName $appServicePlanName `
-    -Location $appServicePlan.Location `
-    -TemplateFile "azuredeploy.json" 
-````
