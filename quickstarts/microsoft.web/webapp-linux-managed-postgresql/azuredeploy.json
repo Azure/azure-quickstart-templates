@@ -1,0 +1,196 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "siteName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of azure web app"
+            }
+        },
+        "administratorLogin": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "Database administrator login name"
+            }
+        },
+        "administratorLoginPassword": {
+            "type": "securestring",
+            "minLength": 8,
+            "maxLength": 128,
+            "metadata": {
+                "description": "Database administrator password"
+            }
+        },
+        "databaseSkucapacity": {
+            "type": "int",
+            "allowedValues": [
+                2,
+                4,
+                8,
+                16,
+                32
+            ],
+            "defaultValue": 2,
+            "metadata": {
+                "description": "Azure database for PostgreSQL vCores capacity"
+            }
+        },
+        "databaseSkuName": {
+            "type": "string",
+            "allowedValues": [
+                "GP_Gen5_2",
+                "GP_Gen5_4",
+                "GP_Gen5_8",
+                "GP_Gen5_16",
+                "GP_Gen5_32",
+                "MO_Gen5_2",
+                "MO_Gen5_4",
+                "MO_Gen5_8",
+                "MO_Gen5_16",
+                "B_Gen5_1",
+                "B_Gen5_2"
+            ],
+            "defaultValue": "GP_Gen5_2",
+            "metadata": {
+                "description": "Azure database for PostgreSQL sku name : "
+            }
+        },
+        "databaseSkuSizeMB": {
+            "type": "int",
+            "allowedValues": [
+                102400,
+                51200
+            ],
+            "defaultValue": 51200,
+            "metadata": {
+                "description": "Azure database for PostgreSQL Sku Size "
+            }
+        },
+        "databaseSkuTier": {
+            "type": "string",
+            "allowedValues": [
+                "GeneralPurpose",
+                "MemoryOptimized",
+                "Basic"
+            ],
+            "defaultValue": "GeneralPurpose",
+            "metadata": {
+                "description": "Azure database for PostgreSQL pricing tier"
+            }
+        },
+        "postgresqlVersion": {
+            "type": "string",
+            "allowedValues": [
+                "9.5",
+                "9.6"
+            ],
+            "defaultValue": "9.6",
+            "metadata": {
+                "description": "PostgreSQL version"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "variables": {
+        "databaseName": "[concat(parameters('siteName'), 'database')]",
+        "serverName": "[concat(parameters('siteName'), 'pgserver')]",
+        "hostingPlanName": "[concat(parameters('siteName'), 'serviceplan')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/sites",
+            "name": "[parameters('siteName')]",
+            "dependsOn": [
+                "[variables('hostingPlanName')]"
+            ],
+            "properties": {
+                "siteConfig": {
+                    "linuxFxVersion": "node|6.10",
+                    "connectionStrings": [
+                        {
+                            "name": "defaultConnection",
+                            "ConnectionString": "[concat('Database=', variables('databaseName'), ';Server=', reference(resourceId('Microsoft.DBforPostgreSQL/servers',variables('serverName'))).fullyQualifiedDomainName, ';User Id=',parameters('administratorLogin'),'@',variables('serverName') ,';Password=',parameters('administratorLoginPassword'))]",
+                            "type": "PostgreSQL"
+                        }
+                    ]
+                },
+                "name": "[parameters('siteName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+            },
+            "apiVersion": "2019-08-01",
+            "location": "[parameters('location')]"
+        },
+        {
+            "apiVersion": "2019-08-01",
+            "name": "[variables('hostingPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[parameters('location')]",
+            "properties": {
+                "name": "[variables('hostingPlanName')]",
+                "workerSizeId": "1",
+                "reserved": true,
+                "numberOfWorkers": "1"
+            },
+            "sku": {
+                "Tier": "Standard",
+                "Name": "S1"
+            },
+            "kind": "linux"
+        },
+        {
+            "apiVersion": "2017-12-01",
+            "location": "[parameters('location')]",
+            "name": "[variables('serverName')]",
+            "properties": {
+                "createMode": "Default",
+                "version": "[parameters('postgresqlVersion')]",
+                "administratorLogin": "[parameters('administratorLogin')]",
+                "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+                "storageMB": "[parameters('databaseSkuSizeMB')]"
+            },
+            "sku": {
+                "name": "[parameters('databaseSkuName')]",
+                "tier": "[parameters('databaseSkuTier')]",
+                "capacity": "[parameters('databaseSkucapacity')]",
+                "size": "[parameters('databaseSkuSizeMB')]",
+                "family": "Gen5"
+            },
+            "type": "Microsoft.DBforPostgreSQL/servers",
+            "resources": [
+                {
+                    "type": "firewallrules",
+                    "apiVersion": "2017-12-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DBforPostgreSQL/servers/', variables('serverName'))]"
+                    ],
+                    "location": "[parameters('location')]",
+                    "name": "[concat(variables('serverName'),'firewall')]",
+                    "properties": {
+                        "startIpAddress": "0.0.0.0",
+                        "endIpAddress": "255.255.255.255"
+                    }
+                },
+                {
+                    "name": "[variables('databaseName')]",
+                    "type": "databases",
+                    "apiVersion": "2017-12-01",
+                    "properties": {
+                        "charset": "utf8",
+                        "collation": "English_United States.1252"
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DBforPostgreSQL/servers/', variables('serverName'))]"
+                    ]
+                }
+            ]
+        }
+    ]
+}
