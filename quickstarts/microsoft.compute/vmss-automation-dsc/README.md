@@ -1,4 +1,3 @@
-
 # VM Scale Set Configuration managed by Azure Automation DSC
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-automation-dsc/PublicLastTestDate.svg)
