@@ -11,16 +11,11 @@
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Location for all resources."
-      }
+      "defaultValue": "[resourceGroup().location]"
     },
     "virtualNetworkName": {
       "type": "string",
-      "metadata": {
-        "description": "Virtual network name"
-      }
+      "defaultValue": "Vnet"
     },
     "accountName": {
       "type": "string",
@@ -34,16 +29,10 @@
       "allowedValues": [
         "Enabled",
         "Disabled"
-      ],
-      "metadata": {
-        "description": "Enable public network traffic to access the account; if set to Disabled, public network traffic will be blocked even before the private endpoint is created"
-      }
+      ]
     },
     "privateEndpointName": {
-      "type": "string",
-      "metadata": {
-        "description": "Private endpoint name"
-      }
+      "type": "string"
     }
   },
   "functions": [],
@@ -81,16 +70,35 @@
       }
     },
     {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/default', parameters('virtualNetworkName'))]",
+      "properties": {
+        "addressPrefix": "172.20.0.0/24",
+        "privateEndpointNetworkPolicies": "Disabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.DocumentDB/databaseAccounts",
       "apiVersion": "2021-04-15",
       "name": "[variables('accountName_var')]",
       "kind": "GlobalDocumentDB",
       "location": "[parameters('location')]",
       "properties": {
+        "createMode": "Default",
         "consistencyPolicy": {
           "defaultConsistencyLevel": "Session"
         },
-        "locations": "[variables('locations')]",
+        "locations": [
+          {
+            "locationName": "[parameters('location')]",
+            "failoverPriority": 0,
+            "isZoneRedundant": false
+          }
+        ],
         "databaseAccountOfferType": "Standard",
         "enableAutomaticFailover": false,
         "publicNetworkAccess": "[parameters('publicNetworkAccess')]"
