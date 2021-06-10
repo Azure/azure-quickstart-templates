@@ -37,7 +37,6 @@ param vnetName string = 'databricks-vnet'
 param workspaceName string
 
 var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(workspaceName, resourceGroup().id)}'
-var managedResourceGroupId = '${subscription().id}/resourceGroups/${managedResourceGroupName}'
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2020-05-01' = {
   location: location
@@ -187,8 +186,7 @@ resource ws 'Microsoft.Databricks/workspaces@2018-04-01' = {
     name: pricingTier
   }
   properties: {
-    // TODO: improve once we have scoping functions
-    managedResourceGroupId: managedResourceGroupId
+    managedResourceGroupId: managedResourceGroup.id
     parameters: {
       customVirtualNetworkId: {
         value: vnet.id
@@ -207,4 +205,9 @@ resource ws 'Microsoft.Databricks/workspaces@2018-04-01' = {
   dependsOn: [
     nsg
   ]
+}
+
+resource managedResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
+  scope: subscription()
+  name: managedResourceGroupName
 }
