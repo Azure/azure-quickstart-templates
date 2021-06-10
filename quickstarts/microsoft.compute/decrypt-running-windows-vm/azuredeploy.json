@@ -1,0 +1,83 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the virtual machine"
+      }
+    },
+    "volumeType": {
+      "type": "string",
+      "defaultValue": "All",
+      "allowedValues": [
+        "All",
+        "OS",
+        "Data"
+      ],
+      "metadata": {
+        "description": "Type of the volume OS or Data or All to perform decryption operation"
+      }
+    },
+    "sequenceVersion": {
+      "type": "string",
+      "defaultValue": "1.0",
+      "metadata": {
+        "description": "Pass in an unique value like a GUID everytime the operation needs to be force run"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "extensionName": "AzureDiskEncryption",
+    "extensionVersion": "1.1",
+    "encryptionOperation": "DisableEncryption",
+    "updateEncryptionSettingsUrl": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-decrypt-running-windows-vm/updateEncryptionSettings-',parameters('volumeType'),'.json')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/', variables('extensionName'))]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Security",
+        "type": "AzureDiskEncryption",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "forceUpdateTag": "[parameters('sequenceVersion')]",
+        "settings": {
+          "VolumeType": "[parameters('volumeType')]",
+          "EncryptionOperation": "[variables('encryptionOperation')]"
+        }
+      }
+    },
+    {
+      "name": "updatevm",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), variables('extensionName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('updateEncryptionSettingsUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          }
+        }
+      }
+    }
+  ]
+}
