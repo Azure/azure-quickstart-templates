@@ -1,0 +1,145 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "profileName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the CDN Profile"
+      }
+    },
+    "endpointName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the CDN Endpoint"
+      }
+    },
+    "originUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Url of the origin"
+      }
+    },
+    "CDNSku": {
+      "type": "string",
+      "metadata": {
+        "description": "CDN SKU names"
+      },
+      "defaultValue": "Standard_Microsoft",
+      "allowedValues": [
+        "Standard_Akamai",
+        "Standard_Verizon",
+        "Premium_Verizon",
+        "Standard_Microsoft"
+      ]
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('profileName')]",
+      "type": "Microsoft.Cdn/profiles",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-09-01",
+      "sku": {
+        "name": "[parameters('CDNSku')]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2019-04-15",
+          "dependsOn": [
+            "[resourceId('Microsoft.Cdn/profiles', parameters('profileName'))]"
+          ],
+          "location": "[parameters('location')]",
+          "name": "[parameters('endpointName')]",
+          "type": "endpoints",
+          "properties": {
+            "originHostHeader": "[parameters('originUrl')]",
+            "isHttpAllowed": true,
+            "isHttpsAllowed": true,
+            "queryStringCachingBehavior": "IgnoreQueryString",
+            "contentTypesToCompress": [
+              "text/plain",
+              "text/html",
+              "text/css",
+              "application/x-javascript",
+              "text/javascript"
+            ],
+            "isCompressionEnabled": true,
+            "origins": [
+              {
+                "name": "origin1",
+                "properties": {
+                  "hostName": "[parameters('originUrl')]"
+                }
+              }
+            ],          
+            "deliveryPolicy": {
+              "description": "Rewrite and Redirect",
+              "rules": [
+                  {
+                      "name" :  "PathRewriteBasedOnDeviceMatchCondition",
+                      "order": "1",
+                      "conditions": [
+                        {
+                          "name": "IsDevice",
+                          "parameters": {
+                              "@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleIsDeviceConditionParameters",
+                              "operator": "Equal",
+                              "matchValues": [
+                                  "Mobile"
+                              ]
+                          }
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "name": "UrlRewrite",
+                          "parameters": {
+                            "@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleUrlRewriteActionParameters",
+                            "sourcePattern": "/standard",
+                            "destination": "/mobile"
+                          }
+                        }
+                      ]
+                  },
+                  {
+                    "name" :  "HttpVersionBasedRedirect",
+                    "order": "2",
+                    "conditions": [
+                      {
+                        "name": "RequestScheme",
+                        "parameters": {
+                            "@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleRequestSchemeConditionParameters",
+                            "operator": "Equal",
+                            "matchValues": [
+                                "HTTP"
+                            ]
+                        }
+                      }
+                    ],
+                    "actions": [
+                      {
+                        "name": "UrlRedirect",
+                        "parameters": {
+                          "@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleUrlRedirectActionParameters",
+                          "redirectType": "Found",
+                          "destinationProtocol": "Https"
+                        }
+                      }
+                    ]
+                  }                                               
+              ]
+            }           
+          }
+        }
+      ]
+    }
+  ]
+}

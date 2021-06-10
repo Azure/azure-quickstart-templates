@@ -1,0 +1,145 @@
+{
+  "contentVersion": "1.0.0.0",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "parameters": {
+    "dataFactoryName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the data factory. Must be globally unique."
+      }
+    },
+    "dataFactoryLocation": {
+      "type": "string",
+      "allowedValues": [
+				"East US",
+				"East US 2",
+				"West Europe",
+				"Southeast Asia"
+      ],
+      "defaultValue": "East US",      
+      "metadata": {
+        "description": "Location of the data factory. Currently, only East US and East US 2 are supported. "
+      }
+    },
+    "azureStorageConnectionString": {
+      "type": "string",
+      "metadata": {
+        "description": "Connection string for the Azure Storage account."
+      }
+    },
+    "servicePrincipalId": {
+      "type": "string",
+      "metadata": {
+        "description": "The ID of the service principal that has permissions to create HDInsight clusters in your subscription."
+      }
+    },
+    "servicePrincipalKey": {
+      "type": "string",
+      "metadata": {
+        "description": "The access key of the service principal that has permissions to create HDInsight clusters in your subscription."
+      }
+    }    
+  },
+  "variables": {
+    "azureStorageLinkedServiceName": "Tutorial4_AzureStorageLinkedService",
+    "onDemandHDInsightLinkedServiceName": "Tutorial4_OnDemandHDInsightLinkedService",
+    "pipelineName": "Tutorial4_SparkPipeline",
+    "scriptRootPath": "adftutorial/spark/script",
+    "entryFilePath": "WordCount_Spark.py"    
+  },
+  "resources": [
+    {
+      "name": "[parameters('dataFactoryName')]",
+      "apiVersion": "2017-09-01-preview",
+      "type": "Microsoft.DataFactory/factories",
+      "location": "[parameters('dataFactoryLocation')]",
+      "properties": {},
+      "resources": [
+        {
+          "type": "linkedservices",
+          "name": "[variables('azureStorageLinkedServiceName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]"
+          ],
+          "apiVersion": "2017-09-01-preview",
+          "properties": {
+            "type": "AzureStorage",
+            "description": "Azure Storage linked service",
+            "typeProperties": {
+              "connectionString": {
+                "value": "[parameters('azureStorageConnectionString')]",
+                "type": "SecureString"
+              }
+            }
+          }
+        },
+        {
+          "type": "linkedservices",
+          "name": "[variables('onDemandHDInsightLinkedServiceName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('azureStorageLinkedServiceName')]"
+          ],
+          "apiVersion": "2017-09-01-preview",
+          "properties": {
+            "type": "HDInsightOnDemand",
+            "typeProperties": {
+                "clusterType": "spark",
+                "clusterSize": 4,
+                "timeToLive": "00:05:00",
+                "clusterResourceGroup": "[resourceGroup().name]",
+                "tenant": "[subscription().tenantId]",
+                "sparkVersion": "",
+                "servicePrincipalId": "[parameters('servicePrincipalId')]",                
+                "servicePrincipalKey": {
+                    "type": "SecureString",
+                    "value": "[parameters('servicePrincipalKey')]"
+                },
+                "linkedServiceName": {
+                    "referenceName": "[variables('azureStorageLinkedServiceName')]",
+                    "type": "LinkedServiceReference"
+                }
+            }
+          }
+        },        
+        {
+          "type": "pipelines",
+          "name": "[variables('pipelineName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('azureStorageLinkedServiceName')]",
+            "[variables('onDemandHDInsightLinkedServiceName')]"
+          ],
+          "apiVersion": "2017-09-01-preview",
+          "properties": {
+            "activities": [
+              {
+                "name": "MySparkActivity",
+                "type": "HDInsightSpark",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "7.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30
+                },
+                "typeProperties": {
+                    "rootPath": "[variables('scriptRootPath')]",
+                    "entryFilePath": "[variables('entryFilePath')]",
+                    "arguments": [],
+                    "sparkJobLinkedService": {
+                        "referenceName": "[variables('azureStorageLinkedServiceName')]",
+                        "type": "LinkedServiceReference"
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "[variables('onDemandHDInsightLinkedServiceName')]",
+                    "type": "LinkedServiceReference"
+                }
+              }              
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
