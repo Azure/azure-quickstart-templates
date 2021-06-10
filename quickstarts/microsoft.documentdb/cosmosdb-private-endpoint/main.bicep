@@ -7,11 +7,11 @@ param virtualNetworkName string
 @description('Cosmos DB account name, max length 44 characters')
 param accountName string
 
+@description('Enable public network traffic to access the account; if set to Disabled, public network traffic will be blocked even before the private endpoint is created')
 @allowed([
   'Enabled'
   'Disabled'
 ])
-@description('Enable public network traffic to access the account; if set to Disabled, public network traffic will be blocked even before the private endpoint is created')
 param publicNetworkAccess string = 'Enabled'
 
 @description('Private endpoint name')
