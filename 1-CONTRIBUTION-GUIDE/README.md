@@ -132,30 +132,43 @@ The decompiler is not guaranteed to produce correct Bicep code from JSON, so you
 1. Use bicep concepts when possible
 1. See [decompiling](https://github.com/Azure/bicep/blob/main/docs/decompiling.md) for current limitations of the Bicep decompiler.
 1. The top-level elements of the file must be in this order (if they exist):
-  - targetScope
-  - parameters
-  - variables
-  - resources and modules references
-  - outputs
-7. Common resource properties, when present, should be authored consistently to provide for understandability and consumption of the code:
+    - targetScope
+    - parameters
+    - variables
+    - resources and modules references
+    - outputs
+7. Parameters should have a `@description` or `@metadata` decorator, and if other decorators are present, `@description`/`@metadata` should come first. Place a blank line before and after each parameter.
 ```bicep
-resource symbolicName 'Resource.Provider/resourceType@apiVersion' = {
-  comments:
-  parent:
-  scope:
-  name:
-  location:
-  zones:
-  sku:
-  kind:
-  scale:
-  plan:
-  identity:
-  dependsOn:
-  tags:
-  // Any other top-level properties should go here, before 'properties'
-  properties:
-}
+    @description('The location into which the resources should be deployed.')
+    param location string = resourceGroup().location
+
+    @description('The name of the SKU to use when creating the Azure Storage account.')
+    @allowed([
+      'Standard_LRS'
+      'Standard_GRS'
+      'Standard_ZRS'
+      'Premium_LRS'
+    ])
+```
+8. Common resource properties, when present, should be authored consistently to provide for understandability and consumption of the code:
+```bicep
+    resource symbolicName 'Resource.Provider/resourceType@apiVersion' = {
+      comments:
+      parent:
+      scope:
+      name:
+      location:
+      zones:
+      sku:
+      kind:
+      scale:
+      plan:
+      identity:
+      dependsOn:
+      tags:
+      // Any other top-level properties should go here, before 'properties'
+      properties:
+    }
 ```
 
 See also [Best practices for Bicep](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/best-practices)
