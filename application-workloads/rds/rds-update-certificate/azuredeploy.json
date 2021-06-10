@@ -1,0 +1,127 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Key Vault name where the certificate is stored."
+      }
+    },
+    "certificateName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the certificate in the Azure Key Vault."
+      }
+    },
+    "applicationId": {
+      "type": "string",
+      "metadata": {
+        "description": "AD application Id used to access the certificate."
+      }
+    },
+    "applicationPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "AD application password."
+      }
+    },
+    "tenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "Tenant Id for whom the Secure Principal account was created."
+      }
+    },
+    "brokerVmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the RD Connection Broker VM resource in the deployment (the configure certificates script is executed on this VM)."
+      },
+      "defaultValue": "cb-vm"
+    },
+    "existingDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The FQDN of the AD domain"
+      }
+    },
+    "existingAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the domain account with administrative priviledges in the RDS deployment"
+      }
+    },
+    "existingAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the administrator account of the new VM and the domain"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/Azure-QuickStart-Templates/master/rds-update-certificate"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "p": {
+      "appid": "[concat(' -appId ', parameters('applicationId'))]",
+      "apppassword": "[concat(' -appPassword ', parameters('applicationPassword'))]",
+      "tenantid": "[concat(' -tenantId ', parameters('tenantId'))]",
+      "vault": "[concat(' -vaultName ', parameters('vaultName'))]",
+      "secret": "[concat(' -secretName ', parameters('certificateName'))]",
+      "adminUsername": "[concat(' -adminUsername ', parameters('existingAdminUsername'))]",
+      "adminPassword": "[concat(' -adminPassword ', parameters('existingAdminPassword'))]",
+      "adDomainName": "[concat(' -adDomainName ', parameters('existingDomainName'))]"
+    },
+    "scriptParameters": "[concat(variables('p').appid, variables('p').apppassword, variables('p').tenantid, variables('p').vault, variables('p').secret, variables('p').adminUsername, variables('p').adminPassword, variables('p').adDomainName)]",
+    "scriptFolder": "Scripts",
+    "scriptFileName": "Script.ps1",
+    "impersonateScript": "https://gallery.technet.microsoft.com/scriptcenter/Impersonate-a-User-9bfeff82/file/127189/1/New-ImpersonateUser.ps1",
+    "setPublishedNameScript": "https://gallery.technet.microsoft.com/Change-published-FQDN-for-2a029b80/file/103829/2/Set-RDPublishedName.ps1"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('brokerVmName'),'/customscript')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "script"
+      },
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.8",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('impersonateScript')]",
+            "[variables('setPublishedNameScript')]",
+            "[concat(parameters('_artifactsLocation'), '/', variables('scriptFolder'), '/', variables('scriptFileName'), parameters('_artifactsLocationSasToken'))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat( 'powershell -noninteractive -executionpolicy bypass -file ', variables('scriptFileName'), variables('scriptParameters'), ' >> script.log 2>&1' )]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
