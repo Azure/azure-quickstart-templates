@@ -1,0 +1,438 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/demos/ddos-attack-prevention/",
+      "metadata": {
+        "description": "this will be the location for artifacts"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "this will be the sas key to access artifacts"
+      }
+    },
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "East US",
+        "West Europe",
+        "Southeast Asia",
+        "Australia Southeast"
+      ],
+      "metadata": {
+        "description": "your resources will be created in this location"
+      }
+    },
+    "omsSku": {
+      "type": "string",
+      "defaultValue": "PerNode",
+      "allowedValues": [
+        "Free",
+        "Standalone",
+        "PerNode"
+      ],
+      "metadata": {
+        "description": "this will be you SKU for OMS"
+      }
+    },
+    "vNetName": {
+      "type": "string",
+      "defaultValue": "ddos-attack-vnet",
+      "metadata": {
+        "description": "this will be name of the VNET"
+      }
+    },
+    "vNetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/16",
+      "metadata": {
+        "description": "this will be address space for VNET"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "subnet-01",
+      "metadata": {
+        "description": "this will be name of the subnet"
+      }
+    },
+    "subnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/24",
+      "metadata": {
+        "description": "this will be address space for subnet"
+      }
+    },
+    "nsgNamePrefix": {
+      "type": "string",
+      "defaultValue": "ddos-attack",
+      "metadata": {
+        "description": "this will be prefix used for NSG"
+      }
+    },
+    "pipAddressType": {
+      "type": "string",
+      "defaultValue": "dynamic",
+      "allowedValues": [
+        "dynamic",
+        "static"
+      ],
+      "metadata": {
+        "description": "this will be the type of public IP address used for the VM name"
+      }
+    },
+    "vmNamePrefix": {
+      "type": "string",
+      "defaultValue": "vm",
+      "metadata": {
+        "description": "this will be the prefix used for the VM name"
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "this will be the user name of the VMs deployed"
+      }
+    },
+    "adminUserPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "this will be the password of the user created on the user"
+      }
+    },
+    "emailToSendAlertsTo": {
+      "type": "string",
+      "defaultValue": "dummy@contoso.com",
+      "metadata": {
+        "description": "attack email alerts will be sent to this email id"
+      }
+    }
+  },
+  "variables": {
+    "omsWorkspaceName": "[concat('DDOS-Attack','-',uniqueString(resourceGroup().id))]",
+    "omsSolutions": [
+      "Security",
+      "AzureActivity",
+      "AntiMalware"
+    ],
+    "tags": {
+      "scenario": "Vm-DDOS-Attack-Prevention"
+    },
+    "subnets": [
+      {
+        "name": "[parameters('subnetName')]",
+        "properties": {
+          "addressPrefix": "[parameters('subnetAddressSpace')]"
+        }
+      }
+    ],
+    "nsgName": "[concat(parameters('nsgNamePrefix'),'-','nsg')]",
+    "nsgSecurityRules": [
+      {
+        "name": "allow-inbound-http",
+        "properties": {
+          "protocol": "Tcp",
+          "sourcePortRange": "*",
+          "destinationPortRange": "80",
+          "sourceAddressPrefix": "*",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 1000,
+          "direction": "Inbound"
+        }
+      },
+      {
+        "name": "allow-inbound-rdp",
+        "properties": {
+          "protocol": "Tcp",
+          "sourcePortRange": "*",
+          "destinationPortRange": "3389",
+          "sourceAddressPrefix": "*",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 2000,
+          "direction": "Inbound"
+        }
+      }
+    ],
+    "vmName": "[concat(parameters('vmNamePrefix'),'-with-ddos')]",
+    "omsTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.loganalytics/workspaces.json'),parameters('_artifactsLocationSasToken'))]",
+    "vnetTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.network/virtualnetworks.json'),parameters('_artifactsLocationSasToken'))]",
+    "nsgTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.network/nsg.json'),parameters('_artifactsLocationSasToken'))]",
+    "pipTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.network/publicipaddress.json'),parameters('_artifactsLocationSasToken'))]",
+    "nicTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.network/nic-with-pip.json'),parameters('_artifactsLocationSasToken'))]",
+    "vmTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.compute/vm.windows.json'),parameters('_artifactsLocationSasToken'))]",
+    "dscScriptUri": "[concat(uri(parameters('_artifactsLocation'),'DSC/DesiredStateConfig.ps1.zip'),parameters('_artifactsLocationSasToken'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2018-05-01",
+      "name": "deploy-ddos-attack-oms-resource",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('omsTemplateUri')]"
+        },
+        "parameters": {
+          "omsWorkspaceName": {
+            "value": "[variables('omsWorkspaceName')]"
+          },
+          "omsSolutionsName": {
+            "value": "[variables('omsSolutions')]"
+          },
+          "sku": {
+            "value": "[parameters('omsSku')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2018-05-01",
+      "name": "[concat(parameters('vnetName'),'-','-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vnetTemplateUri')]"
+        },
+        "parameters": {
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "addressPrefix": {
+            "value": "[parameters('vNetAddressSpace')]"
+          },
+          "subnets": {
+            "value": "[variables('subnets')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2018-05-01",
+      "name": "[concat(variables('nsgName'),'-','-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nsgTemplateUri')]"
+        },
+        "parameters": {
+          "nsgName": {
+            "value": "[variables('nsgName')]"
+          },
+          "securityRules": {
+            "value": "[variables('nsgSecurityRules')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2018-05-01",
+      "name": "[concat(variables('vmName'),'-pip','-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('pipTemplateUri')]"
+        },
+        "parameters": {
+          "publicIPAddressName": {
+            "value": "[concat(variables('vmName'),'-pip')]"
+          },
+          "publicIPAddressType": {
+            "value": "[parameters('pipAddressType')]"
+          },
+          "dnsNameForPublicIP": {
+            "value": "[concat(variables('vmName'),uniqueString(resourceGroup().id, 'pip'),'-pip')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2018-05-01",
+      "name": "[concat(variables('vmName'),'-nic','-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat(variables('vmName'),'-pip','-resource')]",
+        "[concat(variables('nsgName'),'-','-resource')]",
+        "[concat(parameters('vnetName'),'-','-resource')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nicTemplateUri')]"
+        },
+        "parameters": {
+          "nicName": {
+            "value": "[concat(variables('vmName'),'-nic')]"
+          },
+          "publicIPAddressId": {
+            "value": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('vmName'),'-pip'))]"
+          },
+          "subnetId": {
+            "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'), variables('subnets')[0].name)]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "nsgId": {
+            "value": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2018-05-01",
+      "name": "[concat('deploy-',variables('vmName'),'-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat(variables('vmName'),'-nic','-resource')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vmTemplateUri')]"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[concat(variables('vmName'))]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUserName')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminUserPassword')]"
+          },
+          "nicId": {
+            "value": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmName'),'-nic'))]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(concat(variables('vmName')),'/OMSExtension')]",
+      "apiVersion": "2018-06-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('deploy-',variables('vmName'),'-resource')]",
+        "deploy-ddos-attack-oms-resource"
+      ],
+      "properties": {
+        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+        "type": "MicrosoftMonitoringAgent",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "workspaceId": "[reference('deploy-ddos-attack-oms-resource').outputs.workspaceId.value]"
+        },
+        "protectedSettings": {
+          "workspaceKey": "[reference('deploy-ddos-attack-oms-resource').outputs.workspaceKey.value]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/DSCExtension')]",
+      "apiVersion": "2018-06-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('deploy-',variables('vmName'),'-resource')]",
+        "deploy-ddos-attack-oms-resource"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.19",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "configuration": {
+            "url": "[variables('dscScriptUri')]",
+            "script": "DesiredStateConfig.ps1",
+            "function": "Main"
+          },
+          "configurationArguments": {
+            "MachineName": "[variables('vmName')]"
+          }
+        },
+        "protectedSettings": {}
+      }
+    },
+    {
+      "type": "microsoft.insights/alertrules",
+      "name": "DDoS-attack-metric-alert-rule",
+      "apiVersion": "2016-03-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat(variables('vmName'),'-pip','-resource')]"
+      ],
+      "properties": {
+        "name": "DDoS attack alert",
+        "description": "Under DDoS attack alert",
+        "isEnabled": true,
+        "condition": {
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
+          "dataSource": {
+            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
+            "resourceUri": "[reference(concat(variables('vmName'),'-pip','-resource')).outputs.publicIPResourceId.value]",
+            "metricNamespace": null,
+            "metricName": "IfUnderDDoSAttack"
+          },
+          "operator": "GreaterThanOrEqual",
+          "threshold": 1,
+          "windowSize": "PT5M"
+        },
+        "actions": [
+          {
+            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
+            "sendToServiceOwners": true,
+            "customEmails": [
+              "[parameters('emailToSendAlertsTo')]"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {}
+}
