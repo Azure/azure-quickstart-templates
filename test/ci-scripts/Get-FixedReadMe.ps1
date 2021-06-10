@@ -22,25 +22,32 @@ function DoesLineLookLikeBadgeLinkOrButton([string] $line) {
 $mark = "YAYBADGESYAY"
 $lines = Convert-StringToLines $readmeContents
 
+$expectedMsg = @"
+The expected markup for the readme is:
+$ExpectedMarkdown
+"@
+
 for ($i = 0; $i -lt $lines.Count; $i++) {
     if (DoesLineLookLikeBadgeLinkOrButton $lines[$i]) {
-        # Replace the line with the badge with a mark
+        # Replace the line with the badge with a marker
         $lines[$i] = $mark
     }
 }
 
 $fixed = Convert-LinesToString $lines
 if ($fixed -notlike "*$mark*") {
-    # No badges found at all        
-    throw "Unable to automatically fix README badges and buttons - no badges or buttons found"
+    # No badges found at all
+    Write-Warning $expectedMsg
+    throw "Unable to automatically fix README badges and buttons - no badges or buttons found."
 }
 else {
-    # Remove whole area of badges with optional blank lines between with a single mark
-    $fixed = $fixed -replace "$mark([`r`n]|$mark)+", "$mark"
+    # Remove whole area of badges (with optional blank lines between them) with a single marker
+    $fixed = $fixed -replace "$mark([`r`n]|$mark)*", "$mark"
 
     if ($fixed -match "(?ms)$mark.*$mark") {
         # There's more than one mark left, meaning the badges/buttons were not contiguous
-        throw "Unable to automatically fix README badges and buttons - badges/buttons are not contiguous in the README"
+        Write-Warning $expectedMsg
+        throw "Unable to automatically fix README badges and buttons - badges/buttons are not contiguous in the README. Either make them contiguous or fix manually."
     }
 
     # Replace the remaining mark with the expected markdown
