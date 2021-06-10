@@ -87,7 +87,8 @@ $badgesError = $false
 
 function Note-FixableError([string] $error) {
     if ($Fix) {
-        Write-Warning "Fix will be attempted for error: $error"
+        Write-Warning  $error
+        Write-Warning "Fix will be attempted"
     }
     else {
         $helpMessage = @"
