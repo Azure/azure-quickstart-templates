@@ -23,7 +23,7 @@ resource ws 'Microsoft.Databricks/workspaces@2018-04-01' = {
     name: pricingTier
   }
   properties: {
-    managedResourceGroupId: managedRg.id
+    managedResourceGroupId: managedResourceGroup.id
     parameters: {
       enableNoPublicIp: {
         value: disablePublicIp
@@ -32,7 +32,7 @@ resource ws 'Microsoft.Databricks/workspaces@2018-04-01' = {
   }
 }
 
-resource managedRg 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
+resource managedResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
   scope: subscription()
   name: managedResourceGroupName
 }
