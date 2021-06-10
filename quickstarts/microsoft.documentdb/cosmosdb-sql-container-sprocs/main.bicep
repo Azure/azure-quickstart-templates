@@ -10,6 +10,7 @@ param primaryRegion string
 @description('The secondary replica region for the Cosmos DB account.')
 param secondaryRegion string
 
+@description('The default consistency level of the Cosmos DB account.')
 @allowed([
   'Eventual'
   'ConsistentPrefix'
@@ -17,17 +18,16 @@ param secondaryRegion string
   'BoundedStaleness'
   'Strong'
 ])
-@description('The default consistency level of the Cosmos DB account.')
 param defaultConsistencyLevel string = 'Session'
 
+@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
 @minValue(10)
 @maxValue(2147483647)
-@description('Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000.')
 param maxStalenessPrefix int = 100000
 
+@description('Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400.')
 @minValue(5)
 @maxValue(86400)
-@description('Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400.')
 param maxIntervalInSeconds int = 300
 
 @description('Enable automatic failover for regions')
@@ -39,9 +39,9 @@ param databaseName string
 @description('The name for the Core (SQL) API container')
 param containerName string = 'container1'
 
+@description('The throughput for the container')
 @minValue(400)
 @maxValue(1000000)
-@description('The throughput for the container')
 param throughput int = 400
 
 var accountName_var = toLower(accountName)
