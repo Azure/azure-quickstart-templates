@@ -1,0 +1,185 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "gatewayType": {
+      "type": "string",
+      "defaultValue": "ExpressRoute",
+      "allowedValues": [
+        "ExpressRoute"
+      ],
+      "metadata": {
+        "description": "The type of gateway to deploy. For connecting to ExpressRoute circuits, the gateway must be of type ExpressRoute. Other types are Vpn."
+      }
+    },
+    "connectionType": {
+      "type": "string",
+      "defaultValue": "ExpressRoute",
+      "allowedValues": [
+        "ExpressRoute"
+      ],
+      "metadata": {
+        "description": "The type of connection. For connecting to ExpressRoute circuits, the connectionType must be of type ExpressRoute. Other types are IPsec and Vnet2Vnet."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the virtual network to create."
+      }
+    },
+    "addressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The address space in CIDR notation for the new virtual network."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the first subnet in the new virtual network."
+      }
+    },
+    "gatewaySubnet": {
+      "type": "string",
+      "defaultValue": "GatewaySubnet",
+      "allowedValues": [
+        "GatewaySubnet"
+      ],
+      "metadata": {
+        "description": "The name of the subnet where Gateway is to be deployed. This must always be named GatewaySubnet."
+      }
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The address range in CIDR notation for the first subnet."
+      }
+    },
+    "gatewaySubnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The address range in CIDR notation for the Gateway subnet. For ExpressRoute enabled Gateways, this must be minimum of /28."
+      }
+    },
+    "gatewayPublicIPName": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource name given to the public IP attached to the gateway."
+      }
+    },
+    "gatewayName": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource name given to the ExpressRoute gateway."
+      }
+    },
+    "connectionName": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource name given to the Connection which links VNet Gateway to ExpressRoute circuit."
+      }
+    },
+    "circuitName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the ExpressRoute circuit with which the VNet Gateway needs to connect. The Circuit must be already created successfully and must have its circuitProvisioningState property set to 'Enabled', and serviceProviderProvisioningState property set to 'Provisioned'. The Circuit must also have a BGP Peering of type AzurePrivatePeering."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'),parameters('gatewaySubnet'))]",
+    "routingWeight": 3
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]"
+            }
+          },
+          {
+            "name": "[parameters('gatewaySubnet')]",
+            "properties": {
+              "addressPrefix": "[parameters('gatewaySubnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('gatewayPublicIPName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "name": "[parameters('gatewayName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('gatewayPublicIPName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('gatewaySubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('gatewayPublicIPName'))]"
+              }
+            },
+            "name": "vnetGatewayConfig"
+          }
+        ],
+        "gatewayType": "[parameters('gatewayType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/connections",
+      "name": "[parameters('connectionName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworkGateways/', parameters('gatewayName'))]"
+      ],
+      "properties": {
+        "virtualNetworkGateway1": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways',parameters('gatewayName'))]"
+        },
+        "peer": {
+          "id": "[resourceId('Microsoft.Network/expressRouteCircuits',parameters('circuitName'))]"
+        },
+        "connectionType": "[parameters('connectionType')]",
+        "routingWeight": "[variables('routingWeight')]"
+      }
+    }
+  ]
+}
