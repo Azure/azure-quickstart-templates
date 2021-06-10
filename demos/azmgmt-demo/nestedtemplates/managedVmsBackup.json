@@ -1,0 +1,64 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "instanceCount": {
+      "type": "int"
+    },
+    "vmNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Azure Virtual Machines"
+      }
+    },
+    "vmRgName": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource group containing the virtual machines."
+      }
+    },
+    "omsRecoveryVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Recovery services vault name where the VMs will be backed up to. The default vaule is 'Backup-vault'."
+      }
+    },
+    "omsRecoveryVaultRegion": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the Backup Vault"
+      }
+    },
+    "platform": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify OS platform"
+      }
+    }
+  },
+  "variables": {
+    "backupFabric": "Azure",
+    "backupPolicy": "DefaultPolicy",
+    "v2VmType": "Microsoft.Compute/virtualMachines",
+    "v2VmContainer": "iaasvmcontainer;iaasvmcontainerv2;",
+    "v2Vm": "vm;iaasvmcontainerv2;"
+  },
+  "resources": [
+    {
+      "name": "[concat(parameters('omsRecoveryVaultName'), '/', variables('backupFabric'), '/', variables('v2VmContainer'), concat(parameters('vmRgName'),';',parameters('vmNamePrefix'), parameters('platform'),copyIndex()), '/', variables('v2Vm'), concat(parameters('vmRgName'),';',parameters('vmNamePrefix'), parameters('platform'), copyIndex()))]",
+      "apiVersion": "2016-12-01",
+      "location": "[parameters('omsRecoveryVaultRegion')]",
+      "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
+      "copy": {
+        "name": "iaasBackupCopy",
+        "count": "[parameters('instanceCount')]"
+      },
+      "properties": {
+        "protectedItemType": "[variables('v2VmType')]",
+        "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies',parameters('omsRecoveryVaultName'),variables('backupPolicy'))]",
+        "sourceResourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('vmRgName'), '/providers/Microsoft.Compute/virtualMachines/', parameters('vmNamePrefix'), parameters('platform'), copyIndex())]"
+      }
+    }
+  ],
+  "outputs": {}
+}
