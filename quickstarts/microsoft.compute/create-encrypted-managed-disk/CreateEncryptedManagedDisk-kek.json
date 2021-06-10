@@ -1,0 +1,87 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vhdUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage VHD Uri"
+      }
+    },
+    "managedDiskName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the managed disk to be copied"
+      }
+    },
+    "keyVaultResourceID": {
+      "type": "string",
+      "metadata": {
+        "description": "KeyVault resource id. Ex: /subscriptions/subscriptionid/resourceGroups/contosorg/providers/Microsoft.KeyVault/vaults/contosovault"
+      }
+    },
+    "keyVaultSecretUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "KeyVault secret Url. Ex: https://contosovault.vault.azure.net/secrets/contososecret/e088818e865e48488cf363af16dea596"
+      }
+    },
+    "kekUrl": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "KeyVault key encryption key Url. Ex: https://contosovault.vault.azure.net/keys/contosokek/562a4bb76b524a1493a6afe8e536ee78"
+      }
+    },
+    "kekVaultResourceID": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "KekVault resource id. Ex: /subscriptions/subscriptionid/resourceGroups/contosorg/providers/Microsoft.KeyVault/vaults/contosovault"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "location": "[parameters('location')]",
+    "storageAccountType": "Standard_LRS",
+    "diskSzie": "128"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/disks",
+      "name": "[parameters('managedDiskName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "creationData": {
+          "createOption": "Import",
+          "sourceUri": "[parameters('vhdUri')]"
+        },
+        "accountType": "[variables('storageAccountType')]",
+        "diskSizeGB": "[variables('diskSzie')]",
+        "encryptionSettings": {
+          "enabled": true,
+          "diskEncryptionKey": {
+            "sourceVault": {
+              "id": "[parameters('keyVaultResourceID')]"
+            },
+            "secretUrl": "[parameters('keyVaultSecretUrl')]"
+          },
+          "keyEncryptionKey": {
+            "sourceVault": {
+              "id": "[parameters('kekVaultResourceID')]"
+            },
+            "keyUrl": "[parameters('kekUrl')]"
+          }
+        }
+      }
+    }
+  ]
+}
