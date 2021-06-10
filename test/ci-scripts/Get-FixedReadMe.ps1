@@ -46,5 +46,5 @@ else {
     # Replace the remaining mark with the expected markdown
     $fixed = $fixed -replace "[`r`n]*$mark[`r`n]*", "$newLine$newLine$($ExpectedMarkdown.Trim())$newLine$newLine"
 
-    return $fixed
+    return $fixed.Trim()
 }
