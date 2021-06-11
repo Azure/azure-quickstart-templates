@@ -7,27 +7,27 @@ param location string = resourceGroup().location
 @description('The name of the network security group to create.')
 param nsgName string = 'databricks-nsg'
 
+@description('The pricing tier of workspace.')
 @allowed([
   'trial'
   'standard'
   'premium'
 ])
-@description('The pricing tier of workspace.')
 param pricingTier string = 'premium'
 
-@description('Cidr range for the private subnet.')
+@description('CIDR range for the private subnet.')
 param privateSubnetCidr string = '10.179.0.0/18'
 
 @description('The name of the private subnet to create.')
 param privateSubnetName string = 'private-subnet'
 
-@description('Cidr range for the public subnet..')
+@description('CIDR range for the public subnet..')
 param publicSubnetCidr string = '10.179.64.0/18'
 
 @description('The name of the public subnet to create.')
 param publicSubnetName string = 'public-subnet'
 
-@description('Cidr range for the vnet.')
+@description('CIDR range for the vnet.')
 param vnetCidr string = '10.179.0.0/16'
 
 @description('The name of the virtual network to create.')
@@ -37,6 +37,11 @@ param vnetName string = 'databricks-vnet'
 param workspaceName string
 
 var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(workspaceName, resourceGroup().id)}'
+
+resource managedResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
+  scope: subscription()
+  name: managedResourceGroupName
+}
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2020-05-01' = {
   location: location
@@ -205,9 +210,4 @@ resource ws 'Microsoft.Databricks/workspaces@2018-04-01' = {
   dependsOn: [
     nsg
   ]
-}
-
-resource managedResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
-  scope: subscription()
-  name: managedResourceGroupName
 }
