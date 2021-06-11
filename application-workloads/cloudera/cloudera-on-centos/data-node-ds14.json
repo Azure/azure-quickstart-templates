@@ -1,0 +1,263 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {
+    "vnetID": {
+      "type": "string"
+    },
+     "dnsNamePrefix": {
+      "type": "string"
+    },
+    "scriptsUri": {
+      "type": "string"
+    },
+    "vmCount": {
+      "type": "int"
+    },
+    "vmSpec": {
+      "type": "secureObject"
+    },
+    "networkSpec": {
+      "type": "object"
+    },
+    "clusterSpec": {
+      "type": "object"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "singleQuote": "'",
+    "masterIP": "[parameters('networkSpec').masterIP]",
+    "workerIP": "[parameters('networkSpec').workerIP]",
+    "vmName": "[concat(parameters('dnsNamePrefix'), '-dn')]",
+    "nicName": "[concat(variables('vmName'), '-nic')]",
+    "publicIPAddressName": "[concat(variables('vmName'), '-publicIP')]",
+    "securityGroupName": "[concat(parameters('dnsNamePrefix'), '-dn-sg')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('securityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "publicIPLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('dnsNamePrefix'), '-dn', copyIndex())]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), copyIndex())]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), copyIndex())]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
+      ],
+      "copy": {
+        "name": "dataNodeNicLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(parameters('networkSpec').ipOctet01, add(parameters('networkSpec').ipOctet2, div(copyIndex(parameters('networkSpec').datanodeIpOctet3), 256)), '.', mod(copyIndex(parameters('networkSpec').datanodeIpOctet3), 256))]",
+              "subnet": {
+                "id": "[concat(parameters('vnetID'), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), copyIndex()))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "name": "[concat(variables('vmName'), copyIndex())]",
+      "plan": {
+        "name": "cloudera-centos-6",
+        "publisher": "cloudera",
+        "product": "cloudera-centos-6"
+      },
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "dataNodeNicLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('vmSpec').dataNodeASName)]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSpec').vmSize]"
+        },
+        "osProfile": {
+          "computerName": "[reference(concat(variables('publicIPAddressName'), copyIndex())).dnsSettings.fqdn]",
+          "adminUsername": "[parameters('vmSpec').adminUsername]",
+          "adminPassword": "[parameters('vmSpec').adminPassword]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": false
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "cloudera",
+            "offer": "cloudera-centos-6",
+            "sku": "cloudera-centos-6",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmName'), copyIndex(),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(variables('vmName'), copyIndex(),'_DataDisk1')]",
+              "diskSizeGB": 512,
+              "lun": 0,
+              "createOption": "Empty"
+            },
+            {
+              "name":  "[concat(variables('vmName'), copyIndex(),'_DataDisk2')]", 
+              "diskSizeGB": 1023,
+              "lun": 1,
+              "createOption": "Empty"
+            },
+            {
+              "name":  "[concat(variables('vmName'), copyIndex(),'_DataDisk3')]",
+              "diskSizeGB": 1023,
+              "lun": 2,
+              "createOption": "Empty"
+            },
+            {
+              "name":  "[concat(variables('vmName'), copyIndex(),'_DataDisk4')]",
+              "diskSizeGB": 1023,
+              "lun": 3,
+              "createOption": "Empty"
+            },
+            {
+              "name":  "[concat(variables('vmName'), copyIndex(),'_DataDisk5')]",
+              "diskSizeGB": 1023,
+              "lun": 4,
+              "createOption": "Empty"
+            },
+            {
+              "name":  "[concat(variables('vmName'), copyIndex(),'_DataDisk6')]",
+              "diskSizeGB": 1023,
+              "lun": 5,
+              "createOption": "Empty"
+            },
+            {
+              "name":  "[concat(variables('vmName'), copyIndex(),'_DataDisk7')]",
+              "diskSizeGB": 1023,
+              "lun": 6,
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat(variables('vmName'), copyIndex(),'_DataDisk8')]",
+              "diskSizeGB": 1023,
+              "lun": 7,
+              "createOption": "Empty"
+            },
+            {
+              "name":  "[concat(variables('vmName'), copyIndex(),'_DataDisk9')]",
+              "diskSizeGB": 1023,
+              "lun": 8,
+              "createOption": "Empty"
+            },
+            {
+              "name":  "[concat(variables('vmName'), copyIndex(),'_DataDisk10')]",
+              "diskSizeGB": 1023,
+              "lun": 9,
+              "createOption": "Empty"
+            },
+            {
+              "name":  "[concat(variables('vmName'), copyIndex(),'_DataDisk11')]",
+              "diskSizeGB": 1023,
+              "lun": 10,
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), copyIndex()))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'), copyIndex(), '/prepareDisks')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "dataNodeNicLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyIndex())]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('scriptsUri'), '/scripts/prepare-datanode-disks.sh')]",
+            "[concat(parameters('scriptsUri'), '/scripts/initialize-node.sh')]"
+          ],
+          "commandToExecute": "[concat('sh initialize-node.sh ', variables('singleQuote'), variables('masterIP'), variables('singleQuote'), ' ', variables('singleQuote'), variables('workerIP'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('dnsNamePrefix'), variables('singleQuote'), ' ', variables('singleQuote'), reference(concat(variables('publicIPAddressName'), copyIndex())).dnsSettings.fqdn, variables('singleQuote'), ' ', variables('singleQuote'), parameters('clusterSpec').masterNodeCount, variables('singleQuote'), ' ', variables('singleQuote'), parameters('clusterSpec').dataNodeCount, variables('singleQuote'), ' ', variables('singleQuote'), parameters('vmSpec').adminUsername, variables('singleQuote'), ' ', 'datanode', ' >> /var/log/cloudera-azure-initialize.log 2>&1')]"
+        }
+      }
+    }
+  ]
+}

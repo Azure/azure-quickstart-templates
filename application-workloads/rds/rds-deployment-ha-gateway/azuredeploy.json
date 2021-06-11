@@ -1,0 +1,397 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dnsLabelPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
+            }
+        },
+        "loadBalancer": {
+            "type": "string",
+            "metadata": {
+                "description": "The Loadbalancer name must match from the RDS deployment. And default value taken by template is loadbalancer."
+            },
+            "defaultValue": "loadBalancer"
+        },
+        "backendAddressPools": {
+            "type": "string",
+            "defaultValue": "LBBAP",
+            "metadata": {
+                "description": "The backendAddressPools name must match from the RDS deployment. And default value taken by template is LBBAP."
+            }
+        },
+        "gw-AvailabilitySet": {
+            "type": "string",
+            "defaultValue": "gw-availabilityset",
+            "metadata": {
+                "description": "The gw-availabilityset name must match from the RDS deployment. And default value taken by template is gw-availabilityset."
+            }
+        },
+        "adDomainName": {
+            "type": "string",
+            "metadata": {
+                "description": "The FQDN of the AD domain"
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the administrator of the new VM and the domain. Exclusion list: 'administrator"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password for the administrator account of the new VM and the domain"
+            }
+        },
+        "numberOfWebGwInstances": {
+            "type": "int",
+            "defaultValue": 2,
+            "metadata": {
+                "description": "Number of RD Gateway instances"
+            }
+        },
+        "brokerServer": {
+            "type": "string",
+            "metadata": {
+                "description": "FQDN for Broker Server"
+            }
+        },
+        "WebURL": {
+            "type": "string",
+            "metadata": {
+                "description": "This is RD Gateway external FQDN. This shall be picked from existing basic RDS deploment."
+            }
+        },
+        "domainNetbios": {
+            "type": "string",
+            "metadata": {
+                "description": "Netbios Name for Domain"
+            }
+        },
+        "imageSKU": {
+            "type": "string",
+            "allowedValues": [
+                "2012-R2-Datacenter",
+                "2016-Datacenter"
+            ],
+            "metadata": {
+                "description": "Windows server SKU"
+            },
+            "defaultValue": "2016-Datacenter"
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_A2",
+            "metadata": {
+                "description": "Size for the new RD Gateway VMs"
+            }
+        },
+        "existingVnet": {
+            "type": "string",
+            "metadata": {
+                "description": "The vnet name of AD domain. For example johnvnet1"
+            }
+        },
+        "existingSubnet": {
+            "type": "string",
+            "metadata": {
+                "description": "The subnet name of AD domain. For example johnsubnet1"
+            }
+        },
+        "existingVnetResourceGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the resourceGroup for the vnet"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "variables": {
+        "imagePublisher": "MicrosoftWindowsServer",
+        "imageOffer": "WindowsServer",
+        "subnet-id": "[resourceId(parameters('existingVnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVnet'), parameters('existingSubnet'))]",
+        "publicIpRef": "publicIp",
+        "assetLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment"
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-03-30",
+            "type": "Microsoft.Compute/availabilitySets",
+            "location": "[parameters('location')]",
+            "name": "[parameters('gw-availabilityset')]",
+            "properties": {
+                "PlatformUpdateDomainCount": 20,
+                "PlatformFaultDomainCount": 2
+            },
+            "sku": {
+                "name": "Aligned"
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIpRef')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/loadBalancers",
+            "name": "[parameters('loadBalancer')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/',variables('publicIpRef'))]"
+            ],
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "LBFE",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIpRef'))]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[parameters('backendAddressPools')]"
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "LBRule01",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancer')),'/frontendIPConfigurations/LBFE')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancer')),'/backendAddressPools/',parameters('backendAddressPools'))]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPort": 443,
+                            "backendPort": 443,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 5,
+                            "loadDistribution": "SourceIPProtocol",
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancer')),'/probes/tcpProbe')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "LBRule02",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancer')),'/frontendIPConfigurations/LBFE')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancer')),'/backendAddressPools/',parameters('backendAddressPools'))]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPort": 3391,
+                            "backendPort": 3391,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 5,
+                            "loadDistribution": "SourceIPProtocol",
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancer')),'/probes/tcpProbe')]"
+                            }
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "tcpProbe",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 443,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    },
+                    {
+                        "name": "tcpProbe01",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 3391,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ],
+                "inboundNatRules": [
+                    {
+                        "name": "rdp",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancer')),'/frontendIPConfigurations/LBFE')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPort": 3389,
+                            "backendPort": 3389,
+                            "enableFloatingIP": false
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat('gw-',copyindex(),'-nic')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[parameters('location')]",
+            "apiVersion": "2017-06-01",
+            "copy": {
+                "name": "gw-nic-loop",
+                "count": "[parameters('numberOfWebGwInstances')]"
+            },
+            "dependsOn": [
+                "Microsoft.Network/loadBalancers/loadBalancer"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnet-id')]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/',parameters('backendAddressPools'))]"
+                                }
+                            ],
+                            "loadBalancerInboundNatRules": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat('gw-vm-',copyindex())]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[parameters('location')]",
+            "apiVersion": "2017-03-30",
+            "copy": {
+                "name": "gw-vm-loop",
+                "count": "[parameters('numberOfWebGwInstances')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', 'gw-availabilityset')]",
+                "[concat('Microsoft.Network/networkInterfaces/gw-',copyindex(),'-nic')]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'gw-availabilityset')]"
+                },
+                "osProfile": {
+                    "computerName": "[concat('gateway',copyindex())]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku": "[parameters('imageSKU')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[concat('gw-vm-',copyindex(),'_OSDisk')]",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS"
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('gw-',copyindex(),'-nic'))]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "name": "[concat('gw-vm-',copyindex(),'/Gateway')]",
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "location": "[parameters('location')]",
+                    "apiVersion": "2017-12-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Compute/virtualMachines', Concat('gw-vm-',copyindex()))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "2.76",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "ModulesUrl": "[concat(variables('assetLocation'),'/Configuration.zip')]",
+                            "ConfigurationFunction": "Configuration.ps1\\Gateway",
+                            "properties": {
+                                "DomainName": "[parameters('adDomainName')]",
+                                "AdminCreds": {
+                                    "UserName": "[parameters('adminUsername')]",
+                                    "Password": "PrivateSettingsRef:AdminPassword"
+                                }
+                            }
+                        },
+                        "protectedSettings": {
+                            "Items": {
+                                "AdminPassword": "[parameters('adminPassword')]"
+                            }
+                        }
+                    }
+                },
+                {
+                    "apiVersion": "2015-06-15",
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "name": "[concat('gw-vm-',copyindex(),'/WebAndGwFarmAdd_PostConfig1.1')]",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Compute/virtualMachines', Concat('gw-vm-',copyindex()))]",
+                        "[concat('Microsoft.Compute/virtualMachines/gw-vm-',copyindex(),'/extensions/','Gateway')]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Compute",
+                        "type": "CustomScriptExtension",
+                        "typeHandlerVersion": "1.9",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [
+                                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/rds/rds-deployment-ha-gateway/Scripts/WebAndGwFarmAdd_PostConfig1.1.ps1"
+                            ]
+                        },
+                        "protectedSettings": {
+                            "Items": {
+                                "AdminPassword": "[parameters('adminPassword')]"
+                            },
+                            "commandToExecute": "[Concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', 'WebAndGwFarmAdd_PostConfig1.1.ps1',' ','-username \"',parameters('adminusername'),'\" ', '-password \"',parameters('adminpassword'),'\" ','-BrokerServer \"',parameters('BrokerServer'),'\" ','-WebURL \"',parameters('WebURL'),'\" ','-Domainname \"',parameters('adDomainName'),'\" ','-DomainNetbios \"',parameters('DomainNetbios'),'\" ','-numberofwebServers ',parameters('numberOfWebGwInstances'))]"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

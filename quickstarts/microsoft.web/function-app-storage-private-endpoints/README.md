@@ -63,19 +63,3 @@ The following DNS zones are created in this sample:
 ### Application Insights
 
 [Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to [monitor the Azure Function](https://docs.microsoft.com/azure/azure-functions/functions-monitoring).
-
-### Optional in-line deployment script
-
-After the first time you configure the Function App to talk to the private endpoint-enabled Storage account, you may need to connect to the file system via Kudu (eg by performing a content deployment or by making a GET request to the Kudu /DebugConsole) to refresh the SMB connection so that the Function App can successfully retrieve the contents from the Storage account. The optional deployment script in this template automates these steps.
-
-The script will retrieve the site-level credentials from the publish profile and make an authenticated request to the Kudu /Debugconsole page of the Function App.
-
-To run the deployment script, set the postDeploymentScript parameter to either "azpowershell" or "azclibash" depending upon your deployment environment. If you set the value as "none", the inline deployment script won't get executed.
-
-#### Prerequisites to run the in-line deployment script
-
-You will need a user-assigned managed identity to run the script because the script performs ARM actions upon the Function App. The prereqs template creates a user-assigned managed identity.
-
-The managed identity must have resource permissions to download the Function App's publish profile. If the postDeploymentScript parameter in the main template is set to either "azpowershell" or "azclibash", the main template assigns the Contributor role to the managed identity in the scope of the Function App that is deployed. In order to do this, the deployment principal must have Microsoft.Authorization/roleAssignments/write permissions.
-
-Furthermore, the deployment principal must have the permissions described in [this document](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template#configure-the-minimum-permissions) in order to run the deployment script.

@@ -1,0 +1,168 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "jobId": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique GUID"
+      }
+    },
+    "sqlDWServerName": {
+      "type": "string",
+      "defaultValue": "testdwserver234.database.windows.net",
+      "metadata": {
+        "description": "Ex- inforp2ptest.database.windows.net"
+      }
+    },
+    "sqlDWDBName": {
+      "type": "string",
+      "defaultValue": "testdwdb234",
+      "metadata": {
+        "description": "SQL Datawarehouse Database Name"
+      }
+    },
+    "sqlDWDBAdminName": {
+      "type": "string",
+      "defaultValue": "sysgain",
+      "metadata": {
+        "description": "Sql Data Warehouse User Name"
+      }
+    },
+    "sqlDWAdminPassword": {
+      "type": "securestring",
+      "defaultValue": "Sysga1n4205!",
+      "metadata": {
+        "description": "Sql Data Warehouse Password"
+      }
+    },
+    "accountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the automation account. It should be unique"
+      }
+    },
+    "credentialName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for credentials"
+      }
+    },
+    "runbookName": {
+      "type": "string",
+      "defaultValue": "createtable",
+      "metadata": {
+        "description": "Name of the runbook"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "South Central US"
+    },
+    "scriptUri": {
+      "type": "string"
+    },
+    "runbookDescription": {
+      "type": "string",
+      "defaultValue": "Create a Database Table in User provided Datawarehouse"
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "Basic"
+    },
+    "informaticaTags": {
+      "type": "object"
+    },
+    "quickstartTags": {
+      "type": "object"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.Automation/automationAccounts",
+      "name": "[parameters('accountName')]",
+      "apiVersion": "2015-01-01-preview",
+      "location": "[parameters('location')]",
+      "tags": {
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('informaticaTags').provider]"
+      },
+      "properties": {
+        "sku": {
+          "name": "[parameters('sku')]"
+        }
+      },
+      "resources": [
+        {
+          "name": "[parameters('runbookName')]",
+          "type": "runbooks",
+          "apiVersion": "2015-01-01-preview",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'))]"
+          ],
+          "tags": {
+            "quickstartName": "[parameters('quickstartTags').name]",
+            "provider": "[parameters('informaticaTags').provider]"
+          },
+          "properties": {
+            "runbookType": "Script",
+            "logProgress": false,
+            "logVerbose": false,
+            "description": "[parameters('runbookDescription')]",
+            "publishContentLink": {
+              "uri": "[parameters('scriptUri')]",
+              "version": "1.0.0.0"
+            }
+          }
+        },
+        {
+          "name": "[parameters('credentialName')]",
+          "type": "credentials",
+          "apiVersion": "2015-01-01-preview",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'))]"
+          ],
+          "tags": {
+            "quickstartName": "[parameters('quickstartTags').name]",
+            "provider": "[parameters('informaticaTags').provider]"
+          },
+          "properties": {
+            "userName": "[parameters('sqlDWDBAdminName')]",
+            "password": "[parameters('sqlDWAdminPassword')]"
+          }
+        },
+        {
+          "name": "[concat(parameters('accountName'), '/', parameters('jobId'))]",
+          "type": "Microsoft.Automation/automationAccounts/jobs",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('location')]",
+          "tags": {
+            "key": "value",
+            "quickstartName": "[parameters('quickstartTags').name]",
+            "provider": "[parameters('informaticaTags').provider]"
+          },
+          "properties": {
+            "runbook": {
+              "name": "[parameters('runbookName')]"
+            },
+            "parameters": {
+              "credentialName": "[parameters('credentialName')]",
+              "ServerName": "[concat(parameters('sqlDWServerName'),'.database.windows.net')]",
+              "DatabaseName": "[parameters('sqlDWDBName')]",
+              "DBUsername": "[parameters('sqlDWDBAdminName')]",
+              "DBPassword": "[parameters('sqlDWAdminPassword')]"
+            }
+          },
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/credentials', parameters('accountName'), parameters('credentialName'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/runbooks', parameters('accountName'), parameters('runbookName'))]"
+          ]
+        }
+      ]
+    }
+  ]
+}
