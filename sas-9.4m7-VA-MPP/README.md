@@ -233,14 +233,14 @@ https://sas94-dpm1234567890-123e3.eastus.cloudapp.azure.com/SASVisualDataBuilder
 
 The easiest way to run SAS Management Console is to connect to the deployment using X11 port forwarding as follows:
 ```
-ssh -X -i <public key pem file> AzureUser@<jumpvm public IP address>
+ssh -X -i <public key pem file> <primary user name>@<jumpvm public IP address>
 ssh -X <vm name> 
 cd /opt/sas/SASHome/SASManagementConsole/9.4 
 ./sasmc & 
 ```
 For example, to run SAS Management Console on the *midtier-0* VM:
 ```
-ssh -X -i <public key pem file> AzureUser@<jumpvm public IP address>
+ssh -X -i <public key pem file> <primary user name>@<jumpvm public IP address>
 ssh -X midtier-0 
 cd /opt/sas/SASHome/SASManagementConsole/9.4 
 ./sasmc & 
@@ -261,11 +261,11 @@ Check the logs and services status by accessing the various VM instances from th
 2. Using the public IP address, SSH to the jumpvm: 
 
     ```
-   ssh -i <public key pem file> AzureUser@<jumpvm public IP address>
+   ssh -i <public key pem file> <primary user name>@<jumpvm public IP address>
    ```
    
    The jumpvm provides SSH access to the other VMs in the deployment: 
-   * SSH access using the AzureUser account 
+   * SSH access using the Primary User Name account 
    ```
    ssh <vm name>
    ```
@@ -298,7 +298,7 @@ To restart the services using the start and stop scripts, perform the following 
 2. Using the public IP address, SSH to the jumpvm: 
 
     ```
-   ssh -i <public key pem file> AzureUser@<jumpvm public IP address>
+   ssh -i <public key pem file> <primary user name>@<jumpvm public IP address>
    ```
  3. Log in to the Azure CLI:
  ```
