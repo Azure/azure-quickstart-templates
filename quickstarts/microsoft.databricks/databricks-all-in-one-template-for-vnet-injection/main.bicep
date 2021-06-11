@@ -207,7 +207,4 @@ resource ws 'Microsoft.Databricks/workspaces@2018-04-01' = {
       }
     }
   }
-  dependsOn: [
-    nsg
-  ]
 }
