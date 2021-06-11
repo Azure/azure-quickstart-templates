@@ -93,7 +93,7 @@ resource accountName_var 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
 
 resource accountName_var_tableName 'Microsoft.DocumentDB/databaseAccounts/tables@2021-04-15' = {
   parent: accountName_var
-  name: '${tableName}'
+  name: tableName
   properties: {
     resource: {
       id: tableName
