@@ -15,12 +15,12 @@ param runtime string = 'node'
 @description('The name of the function app that you wish to create.')
 param appName string = 'fnapp${uniqueString(resourceGroup().id)}'
 
+@description('Storage Account type')
 @allowed([
   'Standard_LRS'
   'Standard_GRS'
   'Standard_RAGRS'
 ])
-@description('Storage Account type')
 param storageAccountType string = 'Standard_LRS'
 
 @description('The name of the virtual network to be created.')
@@ -113,11 +113,11 @@ resource function 'Microsoft.Web/sites@2020-06-01' = {
         }
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix= ${environment().suffixes.storage};AccountKey=${listkeys(storageAccount.id, '2021-04-01').keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix= ${environment().suffixes.storage};AccountKey=${listkeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listkeys(storageAccount.id, '2021-04-01').keys[0].value};'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listkeys(storageAccount.id, storageAccount.apiVersion).keys[0].value};'
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
@@ -143,7 +143,12 @@ resource networkConfig 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
   parent: function
   name: 'virtualNetwork'
   properties: {
-    subnetResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, subnetName)
+    subnetResourceId: subnet.id
     swiftSupported: true
   }
+}
+
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing = {
+  parent: virtualNetwork
+  name: subnetName
 }
