@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "17969545983903238606"
+    }
+  },
   "parameters": {
     "clusterName": {
       "type": "string",
@@ -10,14 +17,14 @@
     },
     "clusterLoginUserName": {
       "type": "string",
-      "minLength": 2,
       "maxLength": 20,
+      "minLength": 2,
       "metadata": {
         "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards. The username must consist of digits, upper or lowercase letters, and/or the following special characters: (!#$%&'()-^_`{}~)."
       }
     },
     "clusterLoginPassword": {
-      "type": "securestring",
+      "type": "secureString",
       "minLength": 10,
       "metadata": {
         "description": "The password must be at least 10 characters in length and must contain at least one digit, one upper case letter, one lower case letter, and one non-alphanumeric character except (single-quote, double-quote, backslash, right-bracket, full-stop). Also, the password must not contain 3 consecutive characters from the cluster username or SSH username."
@@ -25,15 +32,15 @@
     },
     "sshUserName": {
       "type": "string",
-      "minLength":2,
+      "minLength": 2,
       "metadata": {
         "description": "These credentials can be used to remotely access the cluster. The sshUserName can only consit of digits, upper or lowercase letters, and/or the following special characters (%&'^_`{}~). Also, it cannot be the same as the cluster login username or a reserved word"
       }
     },
     "sshPassword": {
-      "type": "securestring",
-      "minLength": 6,
+      "type": "secureString",
       "maxLength": 72,
+      "minLength": 6,
       "metadata": {
         "description": "SSH password must be 6-72 characters long and must contain at least one digit, one upper case letter, and one lower case letter.  It must not contain any 3 consecutive characters from the cluster login name"
       }
@@ -45,7 +52,7 @@
         "description": "Location for all resources."
       }
     },
-    "HeadNodeVirtualMachineSize": {
+    "headNodeVirtualMachineSize": {
       "type": "string",
       "defaultValue": "Standard_E8_v3",
       "allowedValues": [
@@ -63,7 +70,7 @@
         "description": "This is the headnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
       }
     },
-    "WorkerNodeVirtualMachineSize": {
+    "workerNodeVirtualMachineSize": {
       "type": "string",
       "defaultValue": "Standard_E8_v3",
       "allowedValues": [
@@ -78,37 +85,27 @@
         "Standard_E48_v3"
       ],
       "metadata": {
-        "description": "This is the worerdnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
+        "description": "This is the workernode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
       }
     }
   },
-  "variables": {
-    "defaultStorageAccount": {
-      "name": "[concat('storage', uniqueString(resourceGroup().id))]",
-      "type": "Standard_LRS"
-    }
-  },
+  "functions": [],
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
-      "name": "[variables('defaultStorageAccount').name]",
+      "apiVersion": "2021-04-01",
+      "name": "[format('storage{0}', uniqueString(resourceGroup().id))]",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "[variables('defaultStorageAccount').type]"
+        "name": "Standard_LRS"
       },
-      "kind": "Storage",
-      "properties": {}
+      "kind": "StorageV2"
     },
     {
       "type": "Microsoft.HDInsight/clusters",
       "apiVersion": "2018-06-01-preview",
       "name": "[parameters('clusterName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts',variables('defaultStorageAccount').name)]"
-      ],
-
       "properties": {
         "clusterVersion": "4.0",
         "osType": "Linux",
@@ -126,10 +123,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name)).primaryEndpoints.blob,'https://',''),'/','')]",
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', format('storage{0}', uniqueString(resourceGroup().id)))).primaryEndpoints.blob, 'https://', ''), '/', '')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').keys[0].value]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', format('storage{0}', uniqueString(resourceGroup().id))), '2021-04-01').keys[0].value]"
             }
           ]
         },
@@ -139,7 +136,7 @@
               "name": "headnode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "[parameters('HeadNodeVirtualMachineSize')]"
+                "vmSize": "[parameters('headNodeVirtualMachineSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -152,7 +149,7 @@
               "name": "workernode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "[parameters('WorkerNodeVirtualMachineSize')]"
+                "vmSize": "[parameters('workerNodeVirtualMachineSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -163,13 +160,16 @@
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', format('storage{0}', uniqueString(resourceGroup().id)))]"
+      ]
     }
   ],
   "outputs": {
     "storage": {
       "type": "object",
-      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name))]"
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', format('storage{0}', uniqueString(resourceGroup().id))))]"
     },
     "cluster": {
       "type": "object",
