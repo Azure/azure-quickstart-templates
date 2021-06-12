@@ -9,7 +9,7 @@ param roleDefinitionId string
 @description('Unique name for the roleAssignment in the format of a guid')
 param roleAssignmentName string
 
-resource dontDeleteLock 'Microsoft.Authorization/locks@2017-04-01' = {
+resource dontDeleteLock 'Microsoft.Authorization/locks@2016-09-01' = {
   name: 'DontDelete'
   properties: {
     level: 'CanNotDelete'
