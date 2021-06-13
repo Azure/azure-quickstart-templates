@@ -1,0 +1,686 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "drupalVmSku": {
+      "defaultValue": "Standard_D2s_v3",
+      "type": "String",
+      "metadata": {
+        "description": "Size of Drupal VMs in the VM Scale Set."
+      }
+    },
+    "drupalVMDiskSku": {
+      "defaultValue": "StandardSSD_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Premium_LRS",
+        "StandardSSD_LRS"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "Storage account type for the cluster"
+      }
+    },
+    "drupalUbuntuOSVersion": {
+      "defaultValue": "18.04-LTS",
+      "allowedValues": [
+        "14.04.4-LTS",
+        "16.04-LTS",
+        "18.04-LTS"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "The Ubuntu version for the Drupal VM. This will pick a fully patched image of this given Ubuntu version."
+      }
+    },
+    "drupalAdminUser": {
+      "type": "String",
+      "metadata": {
+        "description": "Admin User for the Drupal installation."
+      }
+    },
+    "drupalAdminPassword": {
+      "type": "SecureString",
+      "metadata": {
+        "description": "Admin password for the Drupal installation."
+      }
+    },
+    "drupalVersion": {
+      "defaultValue": "8.1.1",
+      "allowedValues": [
+        "8.1.1"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "The Drupal Version to be installed"
+      }
+    },
+    "vmssName": {
+      "defaultValue": "[concat('vmss-', uniqueString(resourceGroup().id))]",
+      "minLength": 3,
+      "maxLength": 61,
+      "type": "String",
+      "metadata": {
+        "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
+      }
+    },
+    "instanceCount": {
+      "defaultValue": 2,
+      "minValue": 2,
+      "maxValue": 10,
+      "type": "Int",
+      "metadata": {
+        "description": "Number of Drupal VM instances (minimum and default instance count). Atleast 2 are recommended for high availability"
+      }
+    },
+    "maximumInstanceCount": {
+      "defaultValue": 10,
+      "minValue": 2,
+      "maxValue": 100,
+      "type": "Int",
+      "metadata": {
+        "description": "maximum number of drupal instances in the vm scale set"
+      }
+    },
+    "adminUsername": {
+      "type": "String",
+      "metadata": {
+        "description": "Admin username on all Drupal VMs, gluster VMs."
+      }
+    },
+    "authenticationType": {
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "SecureString",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "drupalInstallationDatabaseName": {
+      "defaultValue": "drupaldb",
+      "type": "String",
+      "metadata": {
+        "description": "The MySQL Database to which drupal will be installed"
+      }
+    },
+    "createNewMySQLServer": {
+      "defaultValue": "yes",
+      "allowedValues": [
+        "no",
+        "yes"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "If Yes new MySQL server will be provisioned using the mysql replication template"
+      }
+    },
+    "existingMySqlFQDN": {
+      "defaultValue": "none",
+      "type": "String",
+      "metadata": {
+        "description": "Fully qualified domain name of the existing mysql server.  Required if a new mySql server is not created."
+      }
+    },
+    "mySqlUser": {
+      "type": "String",
+      "metadata": {
+        "description": "mysql username. When creating New MySQL server using mysql replication template this will be admin."
+      }
+    },
+    "mySqlUserPassword": {
+      "type": "SecureString",
+      "metadata": {
+        "description": "mysql user password. For existing enter the existing password. In case of new MySQL server this will be the password for MySqL admin user"
+      }
+    },
+    "newMySqlDnsLabelPrefix": {
+      "defaultValue": "[concat('mysql-', uniqueString(resourceGroup().id))]",
+      "type": "String",
+      "metadata": {
+        "description": "Required when creating new MySQL server, FQDN of server will be using dnsLabelPrefix.location.cloudapp.azure.com"
+      }
+    },
+    "mySqlVmAdminUsername": {
+      "type": "String",
+      "metadata": {
+        "description": "Required when creating new MySQL server. User name to ssh in to the MySQL VMs"
+      }
+    },
+    "mySqlVmAuthenticationType": {
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "mySqlVmadminPasswordOrKey": {
+      "type": "SecureString",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "mySqlVmSize": {
+      "defaultValue": "Standard_D2s_v3",
+      "type": "String",
+      "metadata": {
+        "description": "Required when creating new MySQL server. size for the mySql VMs"
+      }
+    },
+    "mySqlOSVersion": {
+      "defaultValue": "CentOS 8.2",
+      "allowedValues": [
+        "CentOS 6.10",
+        "CentOS 7.8",
+        "CentOS 8.2",
+        "Ubuntu 14.04.5-LTS",
+        "Ubuntu 16.04-LTS",
+        "Ubuntu 18.04-LTS"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "Required when creating new MySQL server. VM OS version"
+      }
+    },
+    "virtualNetworkName": {
+      "defaultValue": "drupal-vnet",
+      "type": "String",
+      "metadata": {
+        "description": "Virtual network name for the cluster"
+      }
+    },
+    "virtualNetworkNewOrExisting": {
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "Identifies whether to use new or existing Virtual Network"
+      }
+    },
+    "virtualNetworkResourceGroupName": {
+      "defaultValue": "[resourceGroup().name]",
+      "type": "String",
+      "metadata": {
+        "description": "If using existing VNet, specifies the resource group for the existing VNet"
+      }
+    },
+    "subnetName": {
+      "defaultValue": "drupal-subnet",
+      "type": "String",
+      "metadata": {
+        "description": "subnet name for the MySQL nodes"
+      }
+    },
+    "virtualNetworkAddressPrefix": {
+      "defaultValue": "10.0.0.0/16",
+      "type": "String",
+      "metadata": {
+        "description": "IP address in CIDR for virtual network"
+      }
+    },
+    "subnetAddressPrefix": {
+      "defaultValue": "10.0.1.0/24",
+      "type": "String",
+      "metadata": {
+        "description": "IP address in CIDR for db subnetq"
+      }
+    },
+    "subnetStartAddress": {
+      "defaultValue": "10.0.1.4",
+      "type": "String",
+      "metadata": {
+        "description": "Start IP address in the subnet for the VMs"
+      }
+    },
+    "_artifactsLocation": {
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "type": "String",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "defaultValue": "",
+      "type": "SecureString",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    },
+    "storageAccountName": {
+      "defaultValue": "[concat('drupal', uniqueString(resourceGroup().id))]",
+      "type": "String",
+      "metadata": {
+        "description": "Specifies the name of the Azure Storage account used for the file share."
+      }
+    },
+    "fileShareName": {
+      "defaultValue": "drupal",
+      "minLength": 3,
+      "maxLength": 63,
+      "type": "String",
+      "metadata": {
+        "description": "Specifies the name of the File Share. File share names must be between 3 and 63 characters in length and use numbers, lower-case letters and dash (-) only."
+      }
+    },
+    "location": {
+      "defaultValue": "[resourceGroup().location]",
+      "type": "String",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "accountid": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticsStorageAccountName'))]",
+    "bePoolName": "bepool",
+    "diagnosticsStorageAccountName": "[concat('bootdiags', uniqueString(resourceGroup().id))]",
+    "ipConfigName": "ipconfig",
+    "lbPoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('bePoolName'))]",
+    "lbProbeID": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), 'tcpProbe')]",
+    "frontEndIPConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerName'),'loadBalancerFrontEnd')]",
+    "loadBalancerName": "[concat('lb-', parameters('vmssName'))]",
+    "longNamingInfix": "[toLower(parameters('vmssName'))]",
+    "natBackendPort": 22,
+    "natEndPort": 50119,
+    "natPoolName": "natpool",
+    "natStartPort": 50000,
+    "nicName": "[concat(parameters('vmssName'), 'nic')]",
+    "imageReference": {
+      "publisher": "Canonical",
+      "offer": "UbuntuServer",
+      "sku": "[parameters('drupalUbuntuOSVersion')]",
+      "version": "latest"
+    },
+    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+    "publicIPAddressName": "[concat(parameters('vmssName'), 'pip')]",
+    "storageAccountType": "Standard_LRS",
+    "wadcfgxend": "[concat('\"><MetricAggregation scheduledTransferPeriod=\"PT1H\"/><MetricAggregation scheduledTransferPeriod=\"PT1M\"/></Metrics></DiagnosticMonitorConfiguration></WadCfg>')]",
+    "wadcfgxstart": "[concat(variables('wadlogs'),variables('wadperfcounters1'),variables('wadperfcounters2'),'<Metrics resourceId=\"')]",
+    "wadlogs": "<WadCfg><DiagnosticMonitorConfiguration>",
+    "wadmetricsresourceid": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('vmssName'))]",
+    "wadperfcounters1": "<PerformanceCounters scheduledTransferPeriod=\"PT1M\"><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\AvailableMemory\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Memory available\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\PercentAvailableMemory\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Mem. percent available\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\UsedMemory\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Memory used\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\PercentUsedMemory\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Memory percentage\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\PercentUsedByCache\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Mem. used by cache\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentIdleTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU idle time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentUserTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU user time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentProcessorTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU percentage guest OS\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentIOWaitTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU IO wait time\" locale=\"en-us\"/></PerformanceCounterConfiguration>",
+    "wadperfcounters2": "<PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\BytesPerSecond\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk total bytes\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\ReadBytesPerSecond\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk read guest OS\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\WriteBytesPerSecond\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk write guest OS\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\TransfersPerSecond\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk transfers\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\ReadsPerSecond\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk reads\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\WritesPerSecond\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk writes\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\AverageReadTime\" sampleRate=\"PT15S\" unit=\"Seconds\"><annotation displayName=\"Disk read time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\AverageWriteTime\" sampleRate=\"PT15S\" unit=\"Seconds\"><annotation displayName=\"Disk write time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\AverageTransferTime\" sampleRate=\"PT15S\" unit=\"Seconds\"><annotation displayName=\"Disk transfer time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\AverageDiskQueueLength\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Disk queue length\" locale=\"en-us\"/></PerformanceCounterConfiguration></PerformanceCounters>",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "accessTier": "Hot"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+      "apiVersion": "2019-06-01",
+      "name": "[concat(parameters('storageAccountName'), '/default/', parameters('fileShareName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('diagnosticsStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage"
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('longNamingInfix')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('loadBalancerName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontEnd",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('publicIPAddressID')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('bePoolName')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "LBRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('frontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('lbPoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[variables('lbProbeID')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "tcpProbe",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ],
+        "inboundNatPools": [
+          {
+            "name": "[variables('natPoolName')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('frontEndIPConfigID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPortRangeStart": "[variables('natStartPort')]",
+              "frontendPortRangeEnd": "[variables('natEndPort')]",
+              "backendPort": "[variables('natBackendPort')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-07-01",
+      "name": "mysql",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-replication/azuredeploy.json",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "dnsName": {
+            "value": "[parameters('newMySqlDnsLabelPrefix')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmUserName": {
+            "value": "[parameters('mySqlVmAdminUsername')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('mySqlVmAdminPasswordOrKey')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('mySqlVmAuthenticationType')]"
+          },
+          "mysqlRootPassword": {
+            "value": "[parameters('mysqlUserPassword')]"
+          },
+          "mysqlReplicationPassword": {
+            "value": "[parameters('mySqlUserPassword')]"
+          },
+          "mysqlProbePassword": {
+            "value": "[parameters('mySqlUserPassword')]"
+          },
+          "vmSize": {
+            "value": "[parameters('mySqlVmSize')]"
+          },
+          "vmImage": {
+            "value": "[parameters('mySqlOSVersion')]"
+          },
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "virtualNetworkNewOrExisting": {
+            "value": "[parameters('virtualNetworkNewOrExisting')]"
+          },
+          "virtualNetworkResourceGroupName": {
+            "value": "[parameters('virtualNetworkResourceGroupName')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "virtualNetworkAddressPrefix": {
+            "value": "[parameters('virtualNetworkAddressPrefix')]"
+          },
+          "subnetAddressPrefix": {
+            "value": "[parameters('subnetAddressPrefix')]"
+          },
+          "subnetStartAddress": {
+            "value": "[parameters('subnetStartAddress')]"
+          }
+        }
+      },
+      "condition": "[equals(parameters('createNewMySQLServer'), 'yes')]"
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('vmssName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticsStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
+        "mysql"
+      ],
+      "sku": {
+        "name": "[parameters('drupalVmSku')]",
+        "tier": "Standard",
+        "capacity": "[parameters('instanceCount')]"
+      },
+      "properties": {
+        "overprovision": true,
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "caching": "ReadOnly",
+              "createOption": "FromImage",
+              "managedDisk": {
+                "storageAccountType": "[parameters('drupalVMDiskSku')]"
+              }
+            },
+            "imageReference": "[variables('imageReference')]"
+          },
+          "osProfile": {
+            "computerNamePrefix": "[parameters('vmssName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPasswordOrKey')]",
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "[variables('nicName')]",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "[variables('ipConfigName')]",
+                      "properties": {
+                        "subnet": {
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetworkName'), parameters('subnetName'))]"
+                        },
+                        "loadBalancerBackendAddressPools": [
+                          {
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('bePoolName'))]"
+                          }
+                        ],
+                        "loadBalancerInboundNatPools": [
+                          {
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('loadBalancerName'), variables('natPoolName'))]"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "drupalextension",
+                "properties": {
+                  "publisher": "Microsoft.Azure.Extensions",
+                  "type": "CustomScript",
+                  "typeHandlerVersion": "2.0",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "fileUris": [
+                      "[uri(parameters('_artifactsLocation'), concat('scripts/mount-azure-fileshare.sh', parameters('_artifactsLocationSasToken')))]",
+                      "[uri(parameters('_artifactsLocation'), concat('scripts/install_drupal.sh', parameters('_artifactsLocationSasToken')))]"
+                    ]
+                  },
+                  "protectedSettings": {
+                    "commandToExecute": "[format('bash mount-azure-fileshare.sh {0} ''{1}'' ''{2}'' ''{3}'' {4} {5};sudo bash install_drupal.sh -d ''{6}'' -u {7} -p ''{8}'' -s ''{9}'' -n {10} -P ''{11}'' -k {12} -z {13} -S {14}', parameters('storageAccountName'), listKeys(parameters('storageAccountName'), '2019-06-01').keys[0].value, parameters('fileShareName'), '/mnt/azurefiles-drupal', parameters('adminUsername'), environment().suffixes.storage, parameters('drupalVersion'), parameters('drupalAdminUser'), parameters('drupalAdminPassword'), parameters('existingMySqlFQDN'), parameters('mysqlUser'), parameters('mysqlUserPassword'), parameters('drupalInstallationDatabaseName'), parameters('createNewMySQLServer'), reference('mysql').outputs.fqdn.value)]"
+                  }
+                }
+              },
+              {
+                "name": "LinuxDiagnostic",
+                "properties": {
+                  "publisher": "Microsoft.OSTCExtensions",
+                  "type": "LinuxDiagnostic",
+                  "typeHandlerVersion": "2.3",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "xmlCfg": "[base64(concat(variables('wadcfgxstart'),variables('wadmetricsresourceid'),variables('wadcfgxend')))]",
+                    "storageAccount": "[variables('diagnosticsStorageAccountName')]"
+                  },
+                  "protectedSettings": {
+                    "storageAccountName": "[variables('diagnosticsStorageAccountName')]",
+                    "storageAccountKey": "[listkeys(variables('accountid'), '2019-06-01').keys[0].value]",
+                    "storageAccountEndPoint": "[concat('http://', environment().suffixes.storage)]"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/autoscaleSettings",
+      "apiVersion": "2015-04-01",
+      "name": "autoscalesetting",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('vmssName'))]"
+      ],
+      "properties": {
+        "name": "autoscalesetting",
+        "targetResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('vmssName'))]",
+        "enabled": true,
+        "profiles": [
+          {
+            "name": "Profile1",
+            "capacity": {
+              "minimum": "[parameters('instanceCount')]",
+              "maximum": "[parameters('maximumInstanceCount')]",
+              "default": "[parameters('instanceCount')]"
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "\\Processor\\PercentProcessorTime",
+                  "metricResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('vmssName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT5M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": 60
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT1M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "\\Processor\\PercentProcessorTime",
+                  "metricResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('vmssName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT5M",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": 50
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT1M"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

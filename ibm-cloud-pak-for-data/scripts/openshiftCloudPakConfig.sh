@@ -163,8 +163,8 @@ runuser -l $SUDOUSER -c "sleep 12m"
 
 #CPD Config
 runuser -l $SUDOUSER -c "wget https://raw.githubusercontent.com/IBM/cloud-pak/master/repo/case/ibm-cp-datacore-1.3.3.tgz -O $INSTALLERHOME/ibm-cp-datacore-1.3.3.tgz"
-runuser -l $SUDOUSER -c "wget https://github.com/IBM/cloud-pak-cli/releases/download/v3.6.1-2002/cloudctl-linux-amd64.tar.gz -O $INSTALLERHOME/cloudctl-linux-amd64.tar.gz"
-runuser -l $SUDOUSER -c "wget https://github.com/IBM/cloud-pak-cli/releases/download/v3.6.1-2002/cloudctl-linux-amd64.tar.gz.sig -O $INSTALLERHOME/cloudctl-linux-amd64.tar.gz.sig"
+runuser -l $SUDOUSER -c "wget https://github.com/IBM/cloud-pak-cli/releases/download/v3.7.0/cloudctl-linux-amd64.tar.gz -O $INSTALLERHOME/cloudctl-linux-amd64.tar.gz"
+runuser -l $SUDOUSER -c "wget https://github.com/IBM/cloud-pak-cli/releases/download/v3.7.0/cloudctl-linux-amd64.tar.gz.sig -O $INSTALLERHOME/cloudctl-linux-amd64.tar.gz.sig"
 runuser -l $SUDOUSER -c "(cd $INSTALLERHOME && tar -xf cloudctl-linux-amd64.tar.gz)"
 runuser -l $SUDOUSER -c "(cd $INSTALLERHOME && tar -xf ibm-cp-datacore-1.3.3.tgz)"
 runuser -l $SUDOUSER -c "chmod +x $INSTALLERHOME/cloudctl-linux-amd64"

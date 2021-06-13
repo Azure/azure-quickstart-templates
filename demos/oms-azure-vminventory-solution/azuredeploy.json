@@ -1,0 +1,1408 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "omsLogAnalyticsWorkspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Create new or use an existing Log Analytic Workspace"
+      }
+    },
+    "omsLogAnalyticsRegion": {
+      "type": "string",
+      "allowedValues": [
+        "westeurope",
+        "eastus",
+        "southeastasia",
+        "australiasoutheast",
+        "wescentralus"
+      ],
+      "metadata": {
+        "description": "Specify the Azure Region for your new or existing Log Analytics workspace"
+      }
+    },
+    "omsLogAnalyticsSku": {
+      "type": "string",
+      "defaultValue": "free",
+      "allowedValues": ["free", "standalone", "pernode"],
+      "metadata": {
+        "description": "Specify the SKU for Log Analytics"
+      }
+    },
+    "omsAutomationAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Use an existing Automation account or create a new"
+      }
+    },
+    "omsAutomationRegion": {
+      "type": "string",
+      "allowedValues": [
+        "westeurope",
+        "southeastasia",
+        "eastus2",
+        "southcentralus",
+        "japaneast",
+        "southeastasia",
+        "southcentralus",
+        "northeurope",
+        "canadacentral",
+        "australiasoutheast",
+        "centralindia",
+        "japaneast"
+      ],
+      "metadata": {
+        "description": "Specify the Azure Region for your OMS Automation Account"
+      }
+    },
+    "omsDataIngestionFrequency": {
+      "type": "int",
+      "defaultValue": 30,
+      "allowedValues": [15, 30, 60],
+      "metadata": {
+        "description": "Specify the Azure VM Inventory retrieval frequency"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/oms-azure-vminventory-solution",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    },
+    "ingestSchedulerGuid": {
+      "type": "string",
+      "defaultValue": "[newGuid()]",
+      "metadata": {
+        "description": "GUID for the schedule creation - automatically created at deploy"
+      }
+    }
+  },
+  "variables": {
+    "runbooks": {
+      "ingestParentRunbook": {
+        "name": "AzureVMInventory-MS-Mgmt",
+        "version": "1.0.0.1",
+        "description": "Runbook to automatically ingest Azure VM Inventory data and events into OMS Log Analytics",
+        "type": "PowerShell",
+        "Id": ""
+      },
+      "ingestSchedulerRunbook": {
+        "name": "AzureVMInventory-Schedules-MS-Mgmt",
+        "version": "1.0.0.1",
+        "description": "Runbook to automatically create required schedules for OMS Log Analytics ingestion",
+        "type": "PowerShell",
+        "Id": ""
+      }
+    },
+    "parentRunbookUri": "[concat(parameters('_artifactsLocation'),'/scripts/AzureVMInventory-MS-Mgmt.ps1', parameters('_artifactsLocationSasToken'))]",
+    "schedulerRunbookUri": "[concat(parameters('_artifactsLocation'),'/scripts/AzureVMInventory-Schedules-MS-Mgmt.ps1', parameters('_artifactsLocationSasToken'))]",
+    "omsSolutions": {
+      "customSolution": {
+        "name": "Azure VM Inventory",
+        "solutionName": "[concat('AzureVMInventory', '[', parameters('omsLogAnalyticsWorkspaceName'), ']')]",
+        "publisher": "volkanc@microsoft.com",
+        "displayName": "Azure VM Inventory",
+        "description": "Monitor Azure VMs deployed across subscriptions",
+        "author": "volkanc@microsoft.com"
+      }
+    },
+    "opsInsightWorkspaceID": "AzureVMInventory-OPSINSIGHTS_WS_ID",
+    "opsInsightWorkspaceIDType": "string",
+    "opsInsightWorkspaceIDDescription": "Value of the user's omsWorkspaceId",
+    "opsInsightWorkspaceKey": "AzureVMInventory-OPSINSIGHT_WS_KEY",
+    "opsInsightWorkspaceKeyType": "string",
+    "opsInsightWorkspaceKeyDescription": "Encrypted value of the user's omsWorkspaceKey",
+    "createScheduleAutomationAccountName": "AzureVMInventory-AzureAutomationAccount-MS-Mgmt",
+    "createScheduleAutomationAccountType": "string",
+    "createScheduleAutomationAccountDescription": "The name of the Automation Account",
+    "createScheduleResourceGroupName": "AzureVMInventory-AzureAutomationResourceGroup-MS-Mgmt",
+    "createScheduleResourceGroupType": "string",
+    "createScheduleResourceGroupDescription": "The name of the resource group",
+    "omsAutomationSku": "basic",
+    "ingestInterval": "1",
+    "ingestFrequency": "hour",
+    "ingestScheduleName": "AzureVMInventory-Scheduler-Hourly",
+    "collectDiskInventory": "1",
+    "collectNICandNSGInventory": "1",
+    "alertArray": [
+      {
+        "searchName": "Azure VMs in Stopped State",
+        "description": "Azure VMs which shutdown from within operating system  will continue incurring charges. Stop the VM from the portal to prevent unnecessary consumption.",
+        "severity": "warning",
+        "query": "Type=AzureVMInventory_CL MetricName_s=VMInventory Status_s=Stopped | measure countdistinct(ID_s) by AzureSubscription_s,VmName_s",
+        "alertTresholdValue": 0,
+        "operator": "gt",
+        "alertThrottleInMinutes": 60,
+        "alertBreach": 1,
+        "searchCategory": "Azure VM Inventory",
+        "scheduleIntervalInMinutes": 15,
+        "scheduleQueryTimeSpan": 15,
+        "alertName": "Azure VM Found in Stopped State"
+      },
+      {
+        "searchName": "Azure Quota Usage",
+        "description": "Each Azure Subscription has quotas for VM cores per region. If the quota is reached new VMs annot be created",
+        "severity": "critical",
+        "query": "Type=AzureVMInventory_CL MetricName_s=ARMVMUsageStats   | EXTEND div(product(currentValue_d,100),limit_d) as UsedPct | Measure Max(UsedPct) by Location_s,Usagemetric_s | where AggregatedValue >90",
+        "alertTresholdValue": 0,
+        "operator": "gt",
+        "alertThrottleInMinutes": 60,
+        "alertBreach": 1,
+        "searchCategory": "Azure VM Inventory",
+        "scheduleIntervalInMinutes": 60,
+        "scheduleQueryTimeSpan": 60,
+        "alertName": "Azure Quota Usage Reached  90% of the Subscription Quota"
+      }
+    ]
+  },
+  "resources": [
+    {
+      "name": "[parameters('omsLogAnalyticsWorkspaceName')]",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2015-11-01-preview",
+      "location": "[parameters('omsLogAnalyticsRegion')]",
+      "properties": {
+        "sku": {
+          "name": "[parameters('omsLogAnalyticsSku')]"
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-11-01-preview",
+          "name": "[variables('omsSolutions').customSolution.name]",
+          "type": "views",
+          "id": "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('omsLogAnalyticsWorkspaceName'), variables('omsSolutions').customSolution.name)]",
+          "dependsOn": [
+            "[Concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]"
+          ],
+          "properties": {
+            "Name": "[variables('omsSolutions').customSolution.name]",
+            "DisplayName": "[variables('omsSolutions').customSolution.displayName]",
+            "Description": "[variables('omsSolutions').customSolution.description]",
+            "Author": "[variables('omsSolutions').customSolution.author]",
+            "Source": "Local",
+            "Dashboard": [
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "VMs by Subscription",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "VM Count",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMInventory |measure countdistinct(ID_s) by AzureSubscription_s",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": []
+                    },
+                    "Options": {
+                      "colors": ["#9b4f96", "#00d8cc", "#00bcf2"],
+                      "valueColorMapping": []
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMInventory |measure countdistinct(ID_s) by AzureSubscription_s,Status_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "Subscription",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "VMs by Size",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Size",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMInventory  | measure countdistinct(VmName_s) by HWProfile_s",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": []
+                    },
+                    "Options": {
+                      "colors": ["#0072c6", "#fcd116", "#7fba00"],
+                      "valueColorMapping": []
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMInventory  | measure countdistinct(VmName_s) by HWProfile_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "VMSIZE",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "VMs by Location",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Location",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMInventory | measure countdistinct(VmName_s) by Location_s",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": []
+                    },
+                    "Options": {
+                      "colors": ["#55d455", "#ff8c00", "#eb3c00"],
+                      "valueColorMapping": []
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMInventory | measure countdistinct(VmName_s) by Location_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "Location",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "VM by Deployement Type",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Classic vs ARM",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMInventory | measure countdistinct(VmName_s) by DeploymentType_s",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": []
+                    },
+                    "Options": {
+                      "colors": ["#55d455", "#ff8c00", "#00bcf2"],
+                      "valueColorMapping": []
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMInventory | measure countdistinct(ID_s) by   AzureSubscription_s,DeploymentType_s,OperatingSystem_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "VMCount",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "LineChartCalloutBuilderBlade",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "VM Status",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "",
+                    "Subtitle": ""
+                  },
+                  "LineChart": {
+                    "Query": "[concat('Type=AzureVMInventory_CL MetricName_s=VMInventory  | measure countdistinct(VmName_s) by Status_s interval ', parameters('omsDataIngestionFrequency'),'Minutes')]",
+                    "Callout": {
+                      "Title": "Running",
+                      "Series": "Running",
+                      "Operation": "Last Sample"
+                    },
+                    "yAxis": {
+                      "isLogarithmic": false,
+                      "units": {
+                        "baseUnitType": "",
+                        "baseUnit": "",
+                        "displayUnit": ""
+                      },
+                      "customLabel": ""
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMInventory Status_s=Running |  measure countdistinct(VmName_s)  by  HWProfile_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "Size",
+                      "Value": "RuningVM"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "NumberTileListBuilderBlade",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "TAGGED VMs",
+                    "newGroup": true,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Tile": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMInventory |measure countdistinct(Tag_s) by AzureSubscription_s",
+                    "Legend": "Tagged VM Count"
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMInventory |measure countdistinct(VmName_s) by Tag_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "Computer",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "VMs by Subnet",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Subnets",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMNIC | measure countdistinct(VmName_s) by subnet_s",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": []
+                    },
+                    "Options": {
+                      "colors": ["#00bcf2", "#ffb900", "#009e49"],
+                      "valueColorMapping": []
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMNIC | measure countdistinct(VmName_s) by AzureSubscription_s,subnet_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "ColumnsTitle": {
+                      "Name": "Subscription",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "operation": "Summary",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "InputEndpoints ",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "No of VMs",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMEndpoint | measure countdistinct(VmName_s) by endpointName_s",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": []
+                    },
+                    "Options": {
+                      "colors": ["#00188f", "#0072c6", "#00bcf2"],
+                      "valueColorMapping": []
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMEndpoint | measure countdistinct(VmName_s) by endpointName_s,privatePort_d",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "ColumnsTitle": {
+                      "Name": "EndpointName",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "operation": "Summary",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "NSG Rules Applied",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "No of VMs",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMNSGrule | measure countdistinct(VmName_s) by RuleName_s",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": []
+                    },
+                    "Options": {
+                      "colors": ["#fcd116", "#0072c6", "#009e49"],
+                      "valueColorMapping": []
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMNSGrule | measure countdistinct(VmName_s) by RuleName_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "ColumnsTitle": {
+                      "Name": "Rule",
+                      "Value": "CountVM"
+                    },
+                    "Color": "#0072c6",
+                    "operation": "Summary",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "NSG - Allowed Ports ",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Count of Computers",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMNSGrule  access_s=Allow  | measure countdistinct(VmName_s) by destinationPortRange_s",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": []
+                    },
+                    "Options": {
+                      "colors": ["#00bcf2", "#7fba00", "#fcd116"],
+                      "valueColorMapping": []
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMNSGrule  access_s=Allow  | measure countdistinct(VmName_s) by sourcePortRange_s,destinationPortRange_s,protocol_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "ColumnsTitle": {
+                      "Name": "Source",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "operation": "Summary",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Cores Utilized",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Per Region",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "[concat('Type=AzureVMInventory_CL MetricName_s=ARMVMUsageStats TimeGenerated>NOW-', parameters('omsDataIngestionFrequency'),'Minutes  Usagemetric_s=cores |measure max(currentValue_d) by Location_s')]",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": []
+                    },
+                    "Options": {
+                      "colors": ["#0072c6", "#ffb900", "#009e49"],
+                      "valueColorMapping": []
+                    }
+                  },
+                  "List": {
+                    "Query": "[concat('Type=AzureVMInventory_CL MetricName_s=ARMVMUsageStats TimeGenerated>NOW-', parameters('omsDataIngestionFrequency'),'Minutes  Usagemetric_s=cores |measure max(currentValue_d) by AzureSubscription_s,Location_s')]",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "ColumnsTitle": {
+                      "Name": "Subscription",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "operation": "Summary",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Disk Count by IO",
+                    "newGroup": true,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "MAX DISK IO",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMDisk  | measure countdistinct(VHDUri_s) by MaxDiskIO_d",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": []
+                    },
+                    "Options": {
+                      "colors": ["#00bcf2", "#ffb900", "#009e49"],
+                      "valueColorMapping": []
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMDisk  | measure countdistinct(VHDUri_s) by DiskIOType_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "IOTYPE",
+                      "Value": "DiskCount"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Disks by Storage Account",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMDisk | measure countdistinct(VHDUri_s) by StorageAccount_s",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": []
+                    },
+                    "Options": {
+                      "colors": ["#0072c6", "#ffb900", "#55d455"],
+                      "valueColorMapping": []
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMDisk | measure countdistinct(VHDUri_s) by StorageAccount_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "StorageAccount",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "VM Extensions Inventory",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Extension Count",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMExtensions | measure countdistinct(VmName_s) by Extension_s",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": []
+                    },
+                    "Options": {
+                      "colors": ["#00bcf2", "#ffb900", "#009e49"],
+                      "valueColorMapping": []
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMExtensions | measure countdistinct(VmName_s) by Extension_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "Extension",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              }
+            ],
+            "OverviewTile": {
+              "Id": "LineChartCalloutBuilderTile",
+              "Type": "OverviewTile",
+              "Version": 0,
+              "Configuration": {
+                "LineChart": {
+                  "Query": "[concat('Type=AzureVMInventory_CL MetricName_s=VMInventory  | measure countdistinct(VmName_s) by Status_s interval ', parameters('omsDataIngestionFrequency'),'Minutes')]",
+                  "Callout": {
+                    "Title": "Running",
+                    "Series": "Running",
+                    "Operation": "Last Sample"
+                  },
+                  "yAxis": {
+                    "isLogarithmic": false,
+                    "units": {
+                      "baseUnitType": "",
+                      "baseUnit": "",
+                      "displayUnit": ""
+                    },
+                    "customLabel": ""
+                  }
+                },
+                "Advanced": {
+                  "DataFlowVerification": {
+                    "Enabled": false,
+                    "Query": "*",
+                    "Message": ""
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-10-31",
+      "location": "[parameters('omsAutomationRegion')]",
+      "name": "[parameters('omsAutomationAccountName')]",
+      "type": "Microsoft.Automation/automationAccounts",
+      "properties": {
+        "sku": {
+          "name": "[variables('omsAutomationSku')]"
+        }
+      },
+      "resources": [
+        {
+          "name": "[variables('opsInsightWorkspaceID')]",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "tags": {},
+          "properties": {
+            "description": "[variables('opsInsightWorkspaceIDDescription')]",
+            "isEncrypted": false,
+            "type": "[variables('opsInsightWorkspaceIDType')]",
+            "value": "[concat('\"',reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName')), '2015-11-01-preview').customerId,'\"')]"
+          }
+        },
+        {
+          "name": "[variables('opsInsightWorkspaceKey') ]",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "tags": {},
+          "properties": {
+            "description": "[variables('opsInsightWorkspaceKeyDescription')]",
+            "isEncrypted": 1,
+            "type": "[variables('opsInsightWorkspaceKeyType')]",
+            "value": "[concat('\"',listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName')), '2015-11-01-preview').primarySharedKey,'\"')]"
+          }
+        },
+        {
+          "name": "[variables('createScheduleAutomationAccountName')]",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "tags": {},
+          "properties": {
+            "description": "[variables('createScheduleAutomationAccountDescription')]",
+            "isEncrypted": false,
+            "type": "[variables('createScheduleAutomationAccountType')]",
+            "value": "[concat('\"', parameters('omsAutomationAccountName'),'\"')]"
+          }
+        },
+        {
+          "name": "[variables('createScheduleResourceGroupName')]",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "tags": {},
+          "properties": {
+            "description": "[variables('createScheduleResourceGroupDescription')]",
+            "isEncrypted": false,
+            "type": "[variables('createScheduleResourceGroupType')]",
+            "value": "[concat('\"', resourceGroup().name, '\"')]"
+          }
+        },
+        {
+          "name": "[variables('runbooks').ingestParentRunbook.name]",
+          "type": "runbooks",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('omsAutomationRegion')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceID'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceKey'))]"
+          ],
+          "tags": {},
+          "properties": {
+            "runbookType": "[variables('runbooks').ingestParentRunbook.type]",
+            "logProgress": false,
+            "logVerbose": false,
+            "description": "[variables('runbooks').ingestParentRunbook.description]",
+            "publishContentLink": {
+              "uri": "[variables('parentRunbookUri')]",
+              "version": "[variables('runbooks').ingestParentRunbook.version]"
+            }
+          }
+        },
+        {
+          "name": "[variables('runbooks').ingestSchedulerRunbook.name]",
+          "type": "runbooks",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('omsAutomationRegion')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceID'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceKey'))]"
+          ],
+          "tags": {},
+          "properties": {
+            "runbookType": "[variables('runbooks').ingestSchedulerRunbook.type]",
+            "logProgress": false,
+            "logVerbose": false,
+            "description": "[variables('runbooks').ingestSchedulerRunbook.description]",
+            "publishContentLink": {
+              "uri": "[variables('schedulerRunbookUri')]",
+              "version": "[variables('runbooks').ingestSchedulerRunbook.version]"
+            }
+          }
+        },
+        {
+          "name": "[concat(parameters('omsAutomationAccountName'), '/', variables('ingestscheduleName'),'-',parameters('ingestSchedulerGuid'))]",
+          "type": "microsoft.automation/automationAccounts/schedules",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('omsAutomationRegion')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/runbooks/', variables('runbooks').ingestSchedulerRunbook.name)]"
+          ],
+          "tags": {},
+          "properties": {
+            "description": "OMS Ingestion API Scheduler",
+            "startTime": "",
+            "isEnabled": "true",
+            "interval": "[variables('ingestInterval')]",
+            "frequency": "[variables('ingestFrequency')]"
+          }
+        },
+        {
+          "name": "[concat(parameters('omsAutomationAccountName'), '/', parameters('ingestSchedulerGuid'))]",
+          "type": "microsoft.automation/automationAccounts/jobSchedules",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('omsAutomationRegion')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/schedules/', variables('ingestscheduleName'),'-',parameters('ingestSchedulerGuid'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/runbooks/', variables('runbooks').ingestSchedulerRunbook.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "tags": {},
+          "properties": {
+            "schedule": {
+              "name": "[concat(variables('ingestscheduleName'),'-',parameters('ingestSchedulerGuid'))]"
+            },
+            "runbook": {
+              "name": "[variables('Runbooks').ingestSchedulerRunbook.name]"
+            }
+          }
+        },
+        {
+          "name": "[concat(parameters('omsAutomationAccountName'), '/', parameters('ingestSchedulerGuid'))]",
+          "type": "Microsoft.Automation/automationAccounts/jobs",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('omsAutomationRegion')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/runbooks/', variables('runbooks').ingestSchedulerRunbook.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/runbooks/', variables('runbooks').ingestParentRunbook.name)]"
+          ],
+          "tags": {},
+          "properties": {
+            "runbook": {
+              "name": "[variables('runbooks').ingestSchedulerRunbook.name]"
+            },
+            "parameters": {
+              "frequency": "[parameters('omsDataIngestionFrequency')]",
+              "getNICandNSG": "[variables('collectNICandNSGInventory')]",
+              "getDiskInfo": "[variables('collectDiskInventory')]",
+              "clearLocks": "1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "[variables('omsSolutions').customSolution.solutionName]",
+      "type": "Microsoft.OperationsManagement/solutions",
+      "apiVersion": "2015-11-01-preview",
+      "location": "[parameters('omsLogAnalyticsRegion')]",
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/views/', variables('omsSolutions').customSolution.name)]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/runbooks/', variables('runbooks').ingestSchedulerRunbook.name)]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/runbooks/', variables('runbooks').ingestParentRunbook.name)]"
+      ],
+      "plan": {
+        "name": "[variables('omsSolutions').customSolution.solutionName]",
+        "product": "[variables('omsSolutions').customSolution.name]",
+        "publisher": "[variables('omsSolutions').customSolution.publisher]",
+        "promotionCode": ""
+      },
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]",
+        "referencedResources": [],
+        "containedResources": [
+          "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('omsLogAnalyticsWorkspaceName'), variables('omsSolutions').customSolution.name)]",
+          "[resourceId('Microsoft.Automation/automationAccounts/runbooks/', parameters('omsAutomationAccountName'), variables('runbooks').ingestSchedulerRunbook.name)]",
+          "[resourceId('Microsoft.Automation/automationAccounts/runbooks/', parameters('omsAutomationAccountName'), variables('runbooks').ingestParentRunbook.name)]"
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+      "name": "[concat(parameters('omsLogAnalyticsWorkspaceName'), '/', tolower(variables('alertArray')[copyIndex()].searchCategory), '|', toLower(variables('alertArray')[copyIndex()].searchName))]",
+      "copy": {
+        "name": "savedsearchcopy",
+        "count": "[length(variables('alertArray'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/views/', variables('omsSolutions').customSolution.name)]"
+      ],
+      "properties": {
+        "etag": "*",
+        "query": "[variables('alertArray')[copyIndex()].query]",
+        "displayName": "[variables('alertArray')[copyIndex()].searchName]",
+        "category": "[variables('alertArray')[copyIndex()].searchCategory]"
+      }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "type": "Microsoft.OperationalInsights/workspaces/savedSearches/schedules",
+      "name": "[concat(parameters('omsLogAnalyticsWorkspaceName'), '/', tolower(variables('alertArray')[copyIndex()].searchCategory), '|', toLower(variables('alertArray')[copyIndex()].searchName), '/','schedule-',uniqueString(resourceGroup().id, deployment().name,parameters('omsLogAnalyticsWorkspaceName'), '/', variables('alertArray')[copyIndex()].searchCategory, '|', variables('alertArray')[copyIndex()].searchName))]",
+      "copy": {
+        "name": "schedulescopy",
+        "count": "[length(variables('alertArray'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/views/', variables('omsSolutions').customSolution.name)]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/savedSearches/', tolower(variables('alertArray')[copyIndex()].searchCategory), '|', toLower(variables('alertArray')[copyIndex()].searchName))]"
+      ],
+      "properties": {
+        "etag": "*",
+        "Interval": "[variables('alertArray')[copyIndex()].scheduleIntervalInMinutes]",
+        "QueryTimeSpan": "[variables('alertArray')[copyIndex()].scheduleQueryTimeSpan]",
+        "enabled": true
+      }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "type": "Microsoft.OperationalInsights/workspaces/savedSearches/schedules/actions",
+      "name": "[concat(parameters('omsLogAnalyticsWorkspaceName'), '/', tolower(variables('alertArray')[copyIndex()].searchCategory), '|', toLower(variables('alertArray')[copyIndex()].searchName), '/','schedule-',uniqueString(resourceGroup().id, deployment().name,parameters('omsLogAnalyticsWorkspaceName'), '/', variables('alertArray')[copyIndex()].searchCategory, '|', variables('alertArray')[copyIndex()].searchName), '/', 'alert-',uniqueString(resourceGroup().id, deployment().name,parameters('omsLogAnalyticsWorkspaceName'), '/', variables('alertArray')[copyIndex()].searchCategory, '|', variables('alertArray')[copyIndex()].searchName))]",
+      "copy": {
+        "name": "actioncopy",
+        "count": "[length(variables('alertArray'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/views/', variables('omsSolutions').customSolution.name)]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/savedSearches/', tolower(variables('alertArray')[copyIndex()].searchCategory), '|', toLower(variables('alertArray')[copyIndex()].searchName))]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/savedSearches/', tolower(variables('alertArray')[copyIndex()].searchCategory), '|', toLower(variables('alertArray')[copyIndex()].searchName), '/schedules/','schedule-',uniqueString(resourceGroup().id, deployment().name,parameters('omsLogAnalyticsWorkspaceName'), '/', variables('alertArray')[copyIndex()].searchCategory, '|', variables('alertArray')[copyIndex()].searchName))]"
+      ],
+      "properties": {
+        "etag": "*",
+        "Type": "Alert",
+        "Name": "[variables('alertArray')[copyIndex()].alertName]",
+        "Description": "[variables('alertArray')[copyIndex()].description]",
+        "Severity": "[variables('alertArray')[copyIndex()].severity]",
+        "Throttling": {
+          "DurationInMinutes": "[variables('alertArray')[copyIndex()].alertThrottleInMinutes]"
+        },
+        "Threshold": {
+          "Operator": "[variables('alertArray')[copyIndex()].operator]",
+          "Value": "[variables('alertArray')[copyIndex()].alertTresholdValue]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

@@ -1,0 +1,77 @@
+{
+    "variables": {
+        "client_id": "",
+        "client_secret": "",
+        "resource_group": "",
+        "storage_account": "",
+        "subscription_id": "",
+        "tenant_id": "",
+        "artifacts_location": "",
+        "azure_region": ""
+    },
+    "builders": [
+        {
+            "type": "azure-arm",
+            "client_id": "{{user `client_id`}}",
+            "client_secret": "{{user `client_secret`}}",
+            "resource_group_name": "{{user `resource_group`}}",
+            "storage_account": "{{user `storage_account`}}",
+            "subscription_id": "{{user `subscription_id`}}",
+            "tenant_id": "{{user `tenant_id`}}",
+            "capture_container_name": "mongodbimages",
+            "capture_name_prefix": "MongoDB",
+            "os_type": "Linux",
+            "image_publisher": "Canonical",
+            "image_offer": "UbuntuServer",
+            "image_sku": "16.04-LTS",
+            "azure_tags": {
+                "dept": "engineering",
+                "task": "image deployment"
+            },
+            "location": "{{user `azure_region`}}",
+            "vm_size": "Standard_D1_v2"
+        }
+    ],
+    "provisioners": [
+        {
+            "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "inline": [
+                "echo '---Configure Repos for Azure Cli 2.0---'",
+                "echo \"deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main\" | sudo tee /etc/apt/sources.list.d/azure-cli.list",
+                "sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893",
+                "echo \"deb https://packages.elastic.co/beats/apt stable main\" |  sudo tee -a /etc/apt/sources.list.d/beats.list",
+                "wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -",
+                "apt-get update",
+                "sudo apt-get install openjdk-8-jdk apt-transport-https azure-cli filebeat -y",
+                "addgroup hab",
+                "sudo useradd -g hab hab",
+                "usermod -aG sudo hab",
+                "sleep 30",
+                "mkdir /scripts",
+                "curl https://raw.githubusercontent.com/habitat-sh/habitat/master/components/hab/install.sh | sudo bash",
+                "wget -O /scripts/run_mongodb.sh \"{{user `artifacts_location`}}\"/scripts/run_mongodb.sh",
+                "echo \"#!/bin/sh\" >> /scripts/filebeat.sh",
+                "echo \"sudo mkdir -p /etc/pki/tls/certs\" >> /scripts/filebeat.sh",
+                "echo \"cd /etc/filebeat\" >> /scripts/filebeat.sh",
+                "echo \"rm filebeat.yml\" >> /scripts/filebeat.sh",
+                "echo \"wget \"{{user `artifacts_location`}}\"/scripts/filebeatdb.yml\" >> /scripts/filebeat.sh",
+                "echo \"cp filebeatdb.yml filebeat.yml\" >> /scripts/filebeat.sh",
+                "echo \"rm filebeatdb.yml\" >> /scripts/filebeat.sh",
+                "echo \"storageAccount=\"{{user `storage_account`}}\"\" >> /scripts/filebeat.sh",
+                "echo \"export AZURE_STORAGE_ACCOUNT=\"{{user `storage_account`}}\"\" >> /scripts/filebeat.sh",
+                "echo \"az login --service-principal -u \"{{user `client_id`}}\" --password \"{{user `client_secret`}}\" --tenant \"{{user `tenant_id`}}\" > /dev/null\" >> /scripts/filebeat.sh",
+                "echo \"az account set --subscription \"{{user `subscription_id`}}\"\" >> /scripts/filebeat.sh",
+                "echo \"cd /scripts/\" >> /scripts/filebeat.sh",
+                "echo \"az storage blob download --container-name kibanaclientkey --name logstash-forwarder.crt --file /etc/pki/tls/certs/logstash-forwarder.crt --output table\" >> /scripts/filebeat.sh",
+                "echo \"service filebeat restart\" >> /scripts/filebeat.sh",
+                "chmod +x /scripts/run_mongodb.sh",
+                "chmod +x /scripts/filebeat.sh",
+                "sed -i -e '13i/scripts/run_mongodb.sh\\' /etc/rc.local",
+                "sed -i -e '14i/scripts/filebeat.sh\\' /etc/rc.local",
+                "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+            ],
+            "inline_shebang": "/bin/sh -x",
+            "type": "shell"
+        }
+    ]
+}
