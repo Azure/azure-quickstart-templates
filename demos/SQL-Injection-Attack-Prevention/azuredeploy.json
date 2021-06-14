@@ -67,14 +67,12 @@
     },
     "bacpacUri": {
       "type": "string",
-      "defaultValue": "[if(equals(environment().name, 'AzureUSGovernment'), 'https://azbotstorageus.blob.core.usgovcloudapi.net/bacpacs/contosoclinic.bacpac', 'https://azbotstorage.blob.core.windows.net/bacpacs/contosoclinic.bacpac')]",
       "metadata": {
         "description": "The uri to the Contoso Clinic BacPac - must be hosted in Azure Storage, use the defaultValue if deploying from QuickStarts."
       }
     },
     "bacpacUriSasToken": {
       "type": "securestring",
-      "defaultValue": "?",
       "metadata": {
         "description": "The sasToken needed to access the Contoso Clinic BacPac - use the defaultValue of '?' if the file is not secured"
       }
@@ -115,10 +113,17 @@
     "httpProbeName": "aseProbeHTTP",
     "httpsProbeName": "aseProbeHTTPS",
     "diagStorageAccName": "[concat('sqlinjection','stg',substring(uniqueString(resourceGroup().id),0,5))]",
+    "diagStorageAccDeployment":  "[concat('sqlinjection','stg',substring(uniqueString(resourceGroup().id),0,5), '-resource')]",
+    "webAppDeployment": "[concat(variables('webAppName'),'-resource')]",
+    "dataBaseDeployment": "[concat(variables('database').name,'-database','-resource')]",
+    "aspDeploy": "[concat(variables('aspName'),'-resource')]",
+    "webAppConnectionSD": "[concat(variables('webAppName'),'-connectionStrings','-resource')]",
+    "sqlAuditDeploy": "[concat(variables('sqlServerName'),'-auditingSettings','-resource')]",
     "webAppName": "[concat('sql-injection-webapp','-',substring(uniqueString(resourceGroup().id),0,5))]",
     "aspName": "[concat('sql-injection-asp','-',substring(uniqueString(resourceGroup().id),0,5))]",
     "appServiceConnectionType": "SQLAzure",
     "sqlServerName": "[concat('sqlinjectionserver',substring(uniqueString(resourceGroup().id),0,5))]",
+    "sqlServerDeploy": "[concat('sqlinjectionserver',substring(uniqueString(resourceGroup().id),0,5), '-resource')]",
     "database": {
       "name": "contosoclinic",
       "edition": "Standard"
@@ -170,7 +175,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-06-01",
-      "name": "[concat(variables('vnetName'),'-resource')]",
+      "name": "sql-appgw-vnet-resource",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -237,7 +242,7 @@
       },
       "dependsOn": [
         "copy-appgateway-pip",
-        "[concat(variables('vnetName'),'-resource')]"
+        "sql-appgw-vnet-resource"
       ],
       "properties": {
         "mode": "Incremental",
@@ -378,7 +383,7 @@
     },
     {
       "apiVersion": "2020-06-01",
-      "name": "[concat(variables('diagStorageAccName'),'-resource')]",
+      "name": "[variables('diagStorageAccDeployment')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
@@ -400,7 +405,7 @@
     },
     {
       "apiVersion": "2020-06-01",
-      "name": "[concat(variables('aspName'),'-resource')]",
+      "name": "[variables('aspDeploy')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
@@ -422,10 +427,10 @@
     },
     {
       "apiVersion": "2020-06-01",
-      "name": "[concat(variables('webAppName'),'-resource')]",
+      "name": "[variables('webAppDeployment')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('aspName'),'-resource')]"
+        "[variables('aspDeploy')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -450,11 +455,11 @@
     },
     {
       "apiVersion": "2020-06-01",
-      "name": "[concat(variables('webAppName'),'-connectionStrings','-resource')]",
+      "name": "[variables('webAppConnectionSD')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('webAppName'),'-resource')]",
-        "[concat(variables('database').name,'-database','-resource')]"
+        "[variables('webAppDeployment')]",
+        "[variables('dataBaseDeployment')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -483,7 +488,7 @@
       "name": "[concat(variables('webAppName'),'-msdeploy','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('webAppName'),'-connectionStrings','-resource')]"
+        "[variables('webAppConnectionSD')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -508,7 +513,7 @@
     },
     {
       "apiVersion": "2020-06-01",
-      "name": "[concat(variables('sqlServerName'),'-resource')]",
+      "name": "[variables('sqlServerDeploy')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
@@ -536,11 +541,11 @@
     },
     {
       "apiVersion": "2020-06-01",
-      "name": "[concat(variables('sqlServerName'),'-auditingSettings','-resource')]",
+      "name": "[variables('sqlAuditDeploy')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('sqlServerName'),'-resource')]",
-        "[concat(variables('diagStorageAccName'),'-resource')]"
+        "[variables('sqlServerDeploy')]",
+        "[variables('diagStorageAccDeployment')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -562,7 +567,7 @@
       "name": "[concat(variables('sqlServerName'),'-securityAlertPolicies','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('sqlServerName'),'-auditingSettings','-resource')]"
+        "[variables('sqlAuditDeploy')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -584,10 +589,10 @@
     },
     {
       "apiVersion": "2020-06-01",
-      "name": "[concat(variables('database').name,'-database','-resource')]",
+      "name": "[variables('dataBaseDeployment')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('sqlServerName'),'-resource')]"
+        "[variables('sqlServerDeploy')]"
       ],
       "properties": {
         "mode": "Incremental",
