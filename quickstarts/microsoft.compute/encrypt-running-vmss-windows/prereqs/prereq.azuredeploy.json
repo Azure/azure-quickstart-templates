@@ -3,16 +3,15 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "adminUsername": {
+            "type": "string"
+        },
+        "location": {
             "type": "string",
-            "metadata": {
-                "description": ""
-            }
+            "defaultValue": ""
+
         },
         "adminPassword": {
-            "type": "securestring",
-            "metadata": {
-                "description": ""
-            }
+            "type": "securestring"
         }
     },
     "variables": {
@@ -28,8 +27,8 @@
     "resources": [{
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('virtualNetworkName')]",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2018-02-01",
+            "location": "[parameters('location')]",
+            "apiVersion": "2020-08-01",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -47,7 +46,7 @@
         {
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('publicIPAddressName')]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "apiVersion": "2018-02-01",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
@@ -59,10 +58,10 @@
         {
             "type": "Microsoft.Network/loadBalancers",
             "name": "[variables('loadBalancerName')]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "apiVersion": "2018-02-01",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+                "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
             ],
             "properties": {
                 "frontendIPConfigurations": [{
@@ -80,7 +79,7 @@
                     "name": "[variables('natPoolName')]",
                     "properties": {
                         "frontendIPConfiguration": {
-                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName')),'/frontendIPConfigurations/loadBalancerFrontEnd')]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations/loadBalancerFrontEnd',variables('loadBalancerName'))]"
                         },
                         "protocol": "tcp",
                         "frontendPortRangeStart": 50000,
@@ -93,11 +92,11 @@
         {
             "type": "Microsoft.Compute/virtualMachineScaleSets",
             "name": "[variables('existingVmssName')]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "apiVersion": "2017-03-30",
             "dependsOn": [
-                "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+                "[resourceId('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
             ],
             "identity": {
             "type": "SystemAssigned"
