@@ -146,9 +146,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
       ]
     }
   }
-  dependsOn: [
-    nsg
-  ]
 }
 
 resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-11-01' = {
