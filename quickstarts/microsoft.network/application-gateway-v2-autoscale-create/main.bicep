@@ -35,11 +35,11 @@ param backendIPAddresses array = [
   }
 ]
 
+@description('Cookie based affinity')
 @allowed([
   'Enabled'
   'Disabled'
 ])
-@description('Cookie based affinity')
 param cookieBasedAffinity string = 'Disabled'
 
 @description('Location for all resources.')
