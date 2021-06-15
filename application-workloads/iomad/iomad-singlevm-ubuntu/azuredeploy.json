@@ -8,12 +8,6 @@
         "description": "User name for the Virtual Machine administrator. Do not use simple names such as 'admin'."
       }
     },
-    "mySqlPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the MySQL 'root' admin user."
-      }
-    },
     "uniqueNamePrefix": {
       "type": "string",
       "metadata": {
@@ -54,27 +48,26 @@
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     },
-     "_artifactsLocation": {
-        "type": "string",
-        "metadata": {
-            "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-        },
-        "defaultValue": "[deployment().properties.templateLink.uri]"
-  },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
     "_artifactsLocationSasToken": {
-        "type": "securestring",
-        "metadata": {
-            "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
-        },
-        "defaultValue": ""
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
     }
-},
+  },
   "variables": {
     "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'iomad')]",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "ubuntuOSVersion": "14.04.5-LTS",
-    "OSDiskName": "[concat(parameters('uniqueNamePrefix'),'Disk')]",
     "nicName": "[concat(parameters('uniqueNamePrefix'),'Nic')]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -82,13 +75,9 @@
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(parameters('uniqueNamePrefix'),'IP')]",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
     "vmName": "[concat(parameters('uniqueNamePrefix'),'VM')]",
     "virtualNetworkName": "[concat(parameters('uniqueNamePrefix'),'VNet')]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "installScriptName": "install_lamp_iomad.sh",
-    "installScriptUri": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/iomad/iomad-singlevm-ubuntu/', variables('installScriptName'))]",
-    "installCommand": "[concat('sh ', variables('installScriptName'), ' ', parameters('mySqlPassword'))]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -103,16 +92,16 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-04-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
+      "sku": {
+        "name": "[variables('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -124,7 +113,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -145,13 +134,13 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceid('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceid('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -171,13 +160,13 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceid('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[resourceid('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -214,10 +203,10 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/newuserscript')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[resourceid('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -227,7 +216,7 @@
         "settings": {
           "fileUris": [
             "[uri(parameters('_artifactsLocation'), concat('install_lamp_iomad.sh', parameters('_artifactsLocationSasToken')))]"
-            ]
+          ]
         },
         "protectedSettings": {
           "commandToExecute": "sh install_lamp_iomad.sh"
