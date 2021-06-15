@@ -4,16 +4,17 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.3.255.40792",
-      "templateHash": "10459415818537170816"
+      "version": "0.4.1.14562",
+      "templateHash": "67786124345066191"
     }
   },
   "parameters": {
     "applicationName": {
       "type": "string",
       "defaultValue": "[format('to-do-app{0}', uniqueString(resourceGroup().id))]",
+      "maxLength": 30,
       "metadata": {
-        "description": "Application Name, max length 30 characters"
+        "description": "Application Name"
       }
     },
     "location": {
@@ -53,7 +54,7 @@
       "maxValue": 3,
       "minValue": 1
     },
-    "repositoryURL": {
+    "repositoryUrl": {
       "type": "string",
       "defaultValue": "https://github.com/Azure-Samples/cosmos-dotnet-core-todo-app.git",
       "metadata": {
@@ -84,15 +85,15 @@
   },
   "functions": [],
   "variables": {
-    "cosmosAccountName_var": "[toLower(parameters('applicationName'))]",
-    "webSiteName_var": "[parameters('applicationName')]",
-    "hostingPlanName_var": "[parameters('applicationName')]"
+    "cosmosAccountName": "[toLower(parameters('applicationName'))]",
+    "websiteName": "[parameters('applicationName')]",
+    "hostingPlanName": "[parameters('applicationName')]"
   },
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
       "apiVersion": "2021-04-15",
-      "name": "[variables('cosmosAccountName_var')]",
+      "name": "[variables('cosmosAccountName')]",
       "kind": "GlobalDocumentDB",
       "location": "[parameters('location')]",
       "properties": {
@@ -111,36 +112,30 @@
     },
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2019-08-01",
-      "name": "[variables('hostingPlanName_var')]",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('hostingPlanName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('appServicePlanTier')]",
         "capacity": "[parameters('appServicePlanInstances')]"
-      },
-      "properties": {
-        "name": "[variables('hostingPlanName_var')]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName_var'))]"
-      ]
+      }
     },
     {
       "type": "Microsoft.Web/sites",
-      "apiVersion": "2019-08-01",
-      "name": "[variables('webSiteName_var')]",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('websiteName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName_var'))]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
         "siteConfig": {
           "appSettings": [
             {
               "name": "CosmosDb:Account",
-              "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName_var'))).documentEndpoint]"
+              "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName'))).documentEndpoint]"
             },
             {
               "name": "CosmosDb:Key",
-              "value": "[listKeys(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName_var')), '2021-01-15').primaryMasterKey]"
+              "value": "[listKeys(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName')), '2021-04-15').primaryMasterKey]"
             },
             {
               "name": "CosmosDb:DatabaseName",
@@ -154,21 +149,21 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName_var'))]",
-        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName_var'))]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
       ]
     },
     {
       "type": "Microsoft.Web/sites/sourcecontrols",
-      "apiVersion": "2019-08-01",
-      "name": "[format('{0}/web', variables('webSiteName_var'))]",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/web', variables('websiteName'))]",
       "properties": {
-        "repoUrl": "[parameters('repositoryURL')]",
+        "repoUrl": "[parameters('repositoryUrl')]",
         "branch": "[parameters('branch')]",
         "isManualIntegration": true
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', variables('webSiteName_var'))]"
+        "[resourceId('Microsoft.Web/sites', variables('websiteName'))]"
       ]
     }
   ]

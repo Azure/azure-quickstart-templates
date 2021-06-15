@@ -1,0 +1,114 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for the Lustre nodes"
+      }
+    },
+    "vmNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix that will be used for all virtual machines in this Lustre cluster (e.g. lustre)"
+      }
+    },
+    "ossCount": {
+      "type": "int",
+      "metadata": {
+        "description": "The number of virtual machines instances to provision for OSS servers"
+      }
+    },
+    "filesystemName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Lustre filesytem (e.g. scratch, lustre, shared_data) that will mountable from clients as mgsip@tcp0:/filesystemname"
+      }
+    },
+    "scriptUrlMonitoring": {
+      "type": "string",
+      "metadata": {
+        "description": "URL of the script to setup Ganglia and Lustre Monitoring Tool on the nodes"
+      }
+    },
+    "mgsip": {
+      "type": "string",
+      "metadata": {
+        "description": "Management Server private IP address"
+      }
+    },
+    "mdsip0": {
+      "type": "string",
+      "metadata": {
+        "description": "Metadata Server private IP address"
+      }
+    },
+    "ossip0": {
+      "type": "string",
+      "metadata": {
+        "description": "Object Storage Server #0 private IP address"
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmNamePrefix'), 'mds', '/init')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[parameters('scriptUrlMonitoring')]"
+          ],
+          "commandToExecute": "[concat('sh monitoring.sh', ' -n MDS', ' -i 0 -d 1', ' -m ', parameters('mgsip'), ' -l 0.0.0.0 -f ', parameters('filesystemName'), ' -g ', parameters('mdsip0'), ' -h ', parameters('ossip0'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmNamePrefix'), 'oss', copyIndex(), '/init')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "ossExtensionsCopy",
+        "count": "[parameters('ossCount')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[parameters('scriptUrlMonitoring')]"
+          ],
+          "commandToExecute": "[concat('sh monitoring.sh', ' -n OSS', ' -i ', copyIndex(), ' -d 3', ' -m ', parameters('mgsip'), ' -l 0.0.0.0 -f ', parameters('filesystemName'), ' -g ', parameters('mdsip0'), ' -h ', parameters('ossip0'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmNamePrefix'), 'mgs', '/init')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[parameters('scriptUrlMonitoring')]"
+          ],
+          "commandToExecute": "[concat('sh monitoring.sh', ' -n MGS', ' -i 0 -d 2', ' -m ', parameters('mgsip'), ' -l 0.0.0.0 -f ', parameters('filesystemName'), ' -g ', parameters('mdsip0'), ' -h ', parameters('ossip0'))]"
+        }
+      }
+    }
+  ]
+}
