@@ -38,8 +38,7 @@
       "type": "string",
       "metadata": {
         "description": "DNS domain name for existing Active Directory domain"
-      },
-      "defaultValue": "contoso.com"
+      }
     },
     "adminUsername": {
       "type": "string",
@@ -65,18 +64,17 @@
         "description": "The SQL Server Service account password"
       }
     },
-    "existingVirtualNetworkId": {
-      "type": "string",
-      "metadata": {
-        "description": "Resource ID of the existing VNET. You can find the Resource ID for the VNET on the Properties blade of the VNET."
-      }
-    },
     "existingSqlSubnetName": {
       "type": "string",
       "metadata": {
         "description": "Name of the existing subnet in the existing VNET to which the SQL & Witness VMs should be deployed"
-      },
-      "defaultValue": "default"
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VNET"
+      }
     },
     "existingAdPDCVMName": {
       "type": "string",
@@ -90,14 +88,14 @@
       "metadata": {
         "description": "IP address of ILB for the SQL Server AlwaysOn listener to be created"
       },
-      "defaultValue": "10.0.1.10"
+      "defaultValue": "10.0.0.9"
     },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
         "description": "Location of resources that the script is dependent on such as linked templates and DSC modules"
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sql-server-2014-alwayson-existing-vnet-and-ad"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sql-server-2014-alwayson-existing-vnet-and-ad/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -115,8 +113,8 @@
     }
   },
   "variables": {
-    "sqlSubnetRef": "[concat(parameters('existingVirtualNetworkId'),'/subnets/',parameters('existingSqlSubnetName'))]",
-    "deploySqlClusterTemplateURL": "[concat(parameters('_artifactsLocation'),'/nested/deploy-sql-cluster.json',parameters('_artifactsLocationSasToken'))]",
+    "sqlSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSqlSubnetName'))]",
+    "deploySqlClusterTemplateURL": "[uri(parameters('_artifactsLocation'), concat('nested/deploy-sql-cluster.json',parameters('_artifactsLocationSasToken')))]",
     "deploySqlCluster": "deploySqlCluster"
   },
   "resources": [
@@ -138,6 +136,9 @@
           "domainName": {
             "value": "[parameters('existingDomainName')]"
           },
+          "diskType": {
+            "value": "[parameters('diskType')]"
+          },
           "dnsServerName": {
             "value": "[parameters('existingAdPDCVMName')]"
           },
@@ -152,9 +153,6 @@
           },
           "sqlServerServiceAccountPassword": {
             "value": "[parameters('sqlServerServiceAccountPassword')]"
-          },
-          "storageAccountType": {
-            "value": "Standard_LRS"
           },
           "nicSubnetUri": {
             "value": "[variables('sqlSubnetRef')]"
