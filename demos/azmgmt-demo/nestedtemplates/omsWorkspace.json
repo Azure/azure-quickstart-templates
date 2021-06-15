@@ -1,0 +1,123 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "omsWorkspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Assign a name for the Log Analytic Workspace Name"
+            }
+        },
+        "omsWorkspaceRegion": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the region for your Workspace"
+            }
+        }
+    },
+    "variables": {
+        "batch1": {
+            "solutions": [
+                {
+                    "name": "[concat('Security', '(', parameters('omsWorkspaceName'), ')')]",
+                    "marketplaceName": "Security"
+                },
+                {
+                    "name": "[concat('AgentHealthAssessment', '(', parameters('omsWorkspaceName'), ')')]",
+                    "marketplaceName": "AgentHealthAssessment"
+                },
+                {
+                    "name": "[concat('ChangeTracking', '(', parameters('omsWorkspaceName'), ')')]",
+                    "marketplaceName": "ChangeTracking"
+                },
+                {
+                    "name": "[concat('Updates', '(', parameters('omsWorkspaceName'), ')')]",
+                    "marketplaceName": "Updates"
+                },
+                {
+                    "name": "[concat('AzureActivity', '(', parameters('omsWorkspaceName'), ')')]",
+                    "marketplaceName": "AzureActivity"
+                },
+                {
+                    "name": "[concat('ServiceMap', '(', parameters('omsWorkspaceName'), ')')]",
+                    "marketplaceName": "ServiceMap"
+                },                
+                {
+                    "name": "[concat('AzureAutomation', '(', parameters('omsWorkspaceName'), ')')]",
+                    "marketplaceName": "AzureAutomation"
+                },
+                {
+                    "name": "[concat('AzureSQLAnalytics', '(', parameters('omsWorkspaceName'), ')')]",
+                    "marketplaceName": "AzureSQLAnalytics"
+                },
+                {
+                    "name": "[concat('AlertManagement', '(', parameters('omsWorkspaceName'), ')')]",
+                    "marketplaceName": "AlertManagement"
+                },
+                {
+                    "name": "[concat('AntiMalware', '(', parameters('omsWorkspaceName'), ')')]",
+                    "marketplaceName": "AntiMalware"
+                },
+                {
+                    "name": "[concat('AzureNSGAnalytics', '(', parameters('omsWorkspaceName'), ')')]",
+                    "marketplaceName": "AzureNSGAnalytics"
+                }                                                
+            ]
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-03-15-preview",
+            "location": "[parameters('omsWorkspaceRegion')]",
+            "name": "[parameters('omsWorkspaceName')]",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "comments": "Log Analytics workspace",
+            "properties": {
+                "sku": {
+                    "name": "pernode"
+                },
+                "features": {
+                    "legacy": 0,
+                    "searchVersion": 1
+                }                
+            },
+            "resources": [
+                {
+                    "name": "AzureActivityLog",
+                    "type": "datasources",
+                    "apiVersion": "2015-11-01-preview",
+                    "dependsOn": [
+                        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+                    ],
+                    "kind": "AzureActivityLog",
+                    "properties": {
+                        "linkedResourceId": "[concat(subscription().id, '/providers/Microsoft.Insights/eventTypes/management')]"
+                    }
+                }
+            ]
+        },
+        {
+            "apiVersion": "2015-11-01-preview",
+            "type": "Microsoft.OperationsManagement/solutions",
+            "name": "[concat(variables('batch1').solutions[copyIndex()].Name)]",
+            "location": "[parameters('omsWorkspaceRegion')]",
+            "dependsOn": [
+                "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+            ],
+            "copy": {
+                "name": "solutionCopy",
+                "count": "[length(variables('batch1').solutions)]"
+            },
+            "properties": {
+                "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('omsWorkspaceName'))]"
+            },
+            "plan": {
+                "name": "[variables('batch1').solutions[copyIndex()].name]",
+                "product": "[concat('OMSGallery/', variables('batch1').solutions[copyIndex()].marketplaceName)]",
+                "promotionCode": "",
+                "publisher": "Microsoft"
+            }
+        }
+    ],
+    "outputs": {}
+}
