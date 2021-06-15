@@ -31,6 +31,7 @@ echo "HADOOP_VERSION: ${HADOOP_VERSION}" >>/tmp/ansible_vars.yaml
 echo "HADOOP_HOME: '${HADOOP_HOME}'" >>/tmp/ansible_vars.yaml
 echo "HDAT_HOME: '${HDAT_HOME}'" >>/tmp/ansible_vars.yaml
 echo "sasFolder: '${sasFolder}'" >>/tmp/ansible_vars.yaml
+echo "INSTALL_USER: ${INSTALL_USER}" >>/tmp/ansible_vars.yaml
 
 setupForSASInstall() {
 	pushd ${INSTALL_DIR}/ansible
