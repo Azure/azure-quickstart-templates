@@ -34,7 +34,8 @@ resource publicIp 'Microsoft.Network/publicIpAddresses@2020-05-01' = {
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-05-01' = if (vnetNewOrExisting == 'new') {
+// if vnetNewOrExisting == 'new', create a new vnet and subnet
+resource newVirtualNetwork 'Microsoft.Network/virtualNetworks@2020-05-01' = if (vnetNewOrExisting == 'new') {
   name: vnetName
   location: location
   properties: {
@@ -54,8 +55,12 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-05-01' = if (vne
   }
 }
 
+// if vnetNewOrExisting == 'existing', reference an existing vnet and create a new subnet under it
+resource existingVirtualNetwork 'Microsoft.Network/virtualNetworks@2020-05-01' existing = if (vnetNewOrExisting == 'existing') {
+  name: vnetName
+}
 resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-05-01' = if (vnetNewOrExisting == 'existing') {
-  parent: virtualNetwork
+  parent: existingVirtualNetwork
   name: bastionSubnetName
   properties: {
     addressPrefix: bastionSubnetIpPrefix
@@ -65,6 +70,10 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-05-01' = if (vne
 resource bastionHost 'Microsoft.Network/bastionHosts@2020-05-01' = {
   name: bastionHostName
   location: location
+  dependsOn: [
+    newVirtualNetwork
+    existingVirtualNetwork
+  ]
   properties: {
     ipConfigurations: [
       {
@@ -80,7 +89,4 @@ resource bastionHost 'Microsoft.Network/bastionHosts@2020-05-01' = {
       }
     ]
   }
-  dependsOn: [
-    virtualNetwork
-  ]
 }
