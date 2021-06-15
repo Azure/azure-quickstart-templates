@@ -46,11 +46,10 @@ param multipleWriteLocations bool = false
 @description('Enable automatic failover for regions. Ignored when Multi-Master is enabled')
 param automaticFailover bool = true
 
-var accountName_var_var = toLower(accountName)
+var accountName_var_var_var = toLower(accountName)
 var apiType = {
   Sql: {
     kind: 'GlobalDocumentDB'
-    capabilities: []
   }
   MongoDB: {
     kind: 'MongoDB'
@@ -112,8 +111,8 @@ var locations = [
   }
 ]
 
-resource accountName_var 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var_var
+resource accountName_var_var 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
+  name: accountName_var_var_var
   location: location
   kind: apiType[api].kind
   properties: {
@@ -121,7 +120,7 @@ resource accountName_var 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
     locations: locations
     databaseAccountOfferType: 'Standard'
     enableAutomaticFailover: automaticFailover
-    capabilities: apiType[api].capabilities
+    capabilities: (contains(apiType, 'capabilities') ? apiType[api].capabilities : json('null'))
     enableMultipleWriteLocations: multipleWriteLocations
   }
 }
