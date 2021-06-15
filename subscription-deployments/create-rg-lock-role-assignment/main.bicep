@@ -25,8 +25,8 @@ resource newRg 'Microsoft.Resources/resourceGroups@2019-10-01' = {
 }
 
 module applyLock './applylock.bicep' = {
-  name: 'applyLock'
   scope: newRg
+  name: 'applyLock'
   params: {
     principalId: principalId
     roleDefinitionId: roleDefinitionId
