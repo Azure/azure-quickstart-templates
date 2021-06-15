@@ -53,7 +53,8 @@ The core component of this stack is Informatica Cloud, which is an application a
  
 You can find more information here: https://www.informatica.com/products/cloud-integration.html
 
-##Reference Architecture Diagram
+## Reference Architecture Diagram
+
 We are going to create an environment from which demos the Informatica Cloud use case using Azure Datafactory, HDInsight, SQL Datawarehouse and PowerBI 
 ![[](images/reference-arch.png)](images/reference-arch.png)
 

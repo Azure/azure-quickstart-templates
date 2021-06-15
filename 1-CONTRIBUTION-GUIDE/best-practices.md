@@ -141,7 +141,7 @@ The common properties should be authored consistently to provide for understanda
 
 ### Empty and Null Properties
 
-All empty or null properties that are not required must be exculded from the template samples.  This includes empty objects {}, arrays [], strings "", and any property that has a null value.
+All empty or null properties that are not required must be excluded from the template samples.  This includes empty objects {}, arrays [], strings "", and any property that has a null value.
 
 ### dependsOn  
 
