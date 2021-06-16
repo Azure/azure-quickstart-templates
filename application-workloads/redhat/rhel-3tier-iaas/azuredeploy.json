@@ -60,10 +60,16 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
-    }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2",
+      "metadata": {
+        "description":"Default VM Size"
+      }
+    }     
   },
   "variables": {
-    "vmSize": "Standard_D2_v2",
     "vmStorageAccountType": "Standard_GRS",
     "vmStorageAccountName": "[concat(uniqueString(resourceGroup().id),'storage')]",
     "diagStorageAccountName": "[concat(uniqueString(resourceGroup().id),'diagstorage')]",
@@ -126,7 +132,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[concat(variables('vmStorageAccountName'), copyindex(1))]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2021-01-01",
       "location": "[parameters('location')]",
       "comments": "4 Storage accounts used to store the VM disks for each tier",
       "tags": {
@@ -147,7 +153,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('diagStorageAccountName')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2021-01-01",
       "location": "[parameters('location')]",
       "comments": "Storage account used to store the diagnostics data",
       "tags": {
@@ -215,7 +221,6 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "properties": {
-        "securityRules": []
       }
     },
     {
@@ -230,7 +235,6 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "properties": {
-        "securityRules": []
       }
     },
     {
@@ -312,10 +316,10 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('webNSGName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('appNSGName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('databaseNSGName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('jumpNSGName'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('webNSGName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('appNSGName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('databaseNSGName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('jumpNSGName'))]"
       ],
       "properties": {
         "addressSpace": {
@@ -398,7 +402,7 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('weblbIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('weblbIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -490,7 +494,7 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -553,8 +557,8 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('webLoadBalancerName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('webLoadBalancerName'))]"
       ],
       "copy": {
         "name": "WebTierNicLoop",
@@ -591,8 +595,8 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('internalLoadBalancerName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('internalLoadBalancerName'))]"
       ],
       "copy": {
         "name": "AppTierNicLoop",
@@ -629,7 +633,7 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "copy": {
         "name": "DatabaseTierNicLoop",
@@ -661,7 +665,7 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -692,9 +696,9 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'1')]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('webTierVmNicName'), copyindex(1))]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availSetName'),'1')]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', concat(variables('vmStorageAccountName'),'1'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('webTierVmNicName'), copyindex(1)))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', concat(variables('availSetName'),'1'))]"
       ],
       "copy": {
         "name": "WebTierVMLoop",
@@ -705,7 +709,7 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets',concat(variables('availSetName'),'1'))]"
         },
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[concat('webserver',copyindex(1))]",
@@ -753,9 +757,9 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'2')]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('appTierVmNicName'), copyindex(1))]",
-        "[concat('Microsoft.Compute/availabilitySets/',variables('availSetName'),'2')]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', concat(variables('vmStorageAccountName'),'2'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('appTierVmNicName'), copyindex(1)))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/',concat(variables('availSetName'),'2'))]"
       ],
       "copy": {
         "name": "AppTierVMLoop",
@@ -766,7 +770,7 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets',concat(variables('availSetName'),'2'))]"
         },
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[concat('appserver',copyindex(1))]",
@@ -814,9 +818,9 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'3')]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('databaseTierVmNicName'), copyindex(1))]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availSetName'),'3')]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', concat(variables('vmStorageAccountName'),'3'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('databaseTierVmNicName'), copyindex(1)))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', concat(variables('availSetName'),'3'))]"
       ],
       "copy": {
         "name": "DatabaseTierVMLoop",
@@ -827,7 +831,7 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets',concat(variables('availSetName'),'3'))]"
         },
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[concat('databaseserver',copyindex(1))]",
@@ -875,12 +879,12 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'4')]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('jumpVmNicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', concat(variables('vmStorageAccountName'),'4'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('jumpVmNicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "jumpvm",
