@@ -1,0 +1,360 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "publicSshKey": {
+      "type": "string",
+      "metadata": {
+        "description": "So you can conntect the thing to the other thing."
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": "[concat('workspace', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the Azure Machine Learning service workspace."
+      }
+    },
+    "computeInstanceName": {
+      "type": "string",
+      "defaultValue": "[concat('ci', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of your compute instance"
+      }
+    },
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "australiaeast",
+        "brazilsouth",
+        "canadacentral",
+        "centralus",
+        "eastasia",
+        "eastus",
+        "eastus2",
+        "francecentral",
+        "japaneast",
+        "koreacentral",
+        "northcentralus",
+        "northeurope",
+        "southeastasia",
+        "southcentralus",
+        "uksouth",
+        "westcentralus",
+        "westus",
+        "westus2",
+        "westeurope"
+      ],
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies the location for all resources. try using one that doesn't overlap with your time zone."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "skynet",
+      "metadata": {
+        "description": "We recomend allowing the template to create the vnet for you."
+      }
+    }
+  },
+  "variables": {
+    "applicationInsightsName": "[concat('ai',uniqueString(resourceGroup().id))]",
+    "containerRegistryName": "[concat('cr',uniqueString(resourceGroup().id))]",
+    "keyVaultName": "[concat('kv',uniqueString(resourceGroup().id))]",
+    "storageAccountName": "[concat('sa',uniqueString(resourceGroup().id))]",
+    "storageAccountType": "Standard_LRS",
+    "subnet": "[concat(resourceGroup().id,'/providers/Microsoft.Network/virtualNetworks/',parameters('vnetName'),'/subnets/default')]",
+    "tenantId": "[subscription().tenantId]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-04-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "encryption": {
+          "services": {
+            "blob": {
+              "enabled": true
+            },
+            "file": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        },
+        "supportsHttpsTrafficOnly": true
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2018-02-14",
+      "name": "[variables('keyVaultName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "tenantId": "[variables('tenantId')]",
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        },
+        "accessPolicies": [
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2018-05-01-preview",
+      "name": "[variables('applicationInsightsName')]",
+      "location": "[if(or(equals(parameters('location'),'eastus2'),equals(parameters('location'),'westcentralus')),'southcentralus',parameters('location'))]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2019-11-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'mlnetsg')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24",
+              "delegations": [],
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'mlnetsg')]"
+              },
+              "privateEndpointNetworkPolicies": "Enabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+          }
+        ],
+        "virtualNetworkPeerings": [],
+        "enableDdosProtection": false,
+        "enableVmProtection": false
+      }
+    },
+    {
+      "type": "Microsoft.ContainerRegistry/registries",
+      "apiVersion": "2019-05-01",
+      "name": "[variables('containerRegistryName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "adminUserEnabled": true
+      }
+    },
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces",
+      "apiVersion": "2019-11-01",
+      "name": "[parameters('workspaceName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+        "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
+        "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))]",
+        "[concat(resourceGroup().id,'/providers/Microsoft.Network/virtualNetworks/',parameters('vnetName'))]"
+      ],
+      "identity": {
+        "type": "systemAssigned"
+      },
+      "properties": {
+        "friendlyName": "[parameters('workspaceName')]",
+        "keyVault": "[resourceId('Microsoft.KeyVault/vaults',variables('keyVaultName'))]",
+        "applicationInsights": "[resourceId('Microsoft.Insights/components',variables('applicationInsightsName'))]",
+        "containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries',variables('containerRegistryName'))]",
+        "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts/',variables('storageAccountName'))]"
+      }
+    },
+    {
+      "name": "[concat(parameters('workspaceName'), '/cpu-cluster')]",
+      "type": "Microsoft.MachineLearningServices/workspaces/computes",
+      "dependsOn": [
+        "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]"
+      ],
+      "apiVersion": "2018-11-19",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "location": "[parameters('location')]",
+      "tags": {},
+      "properties": {
+        "computeType": "AmlCompute",
+        "computeLocation": "[parameters('location')]",
+        "description": "cpu nodes",
+        "properties": {
+          "remoteLoginPortPublicAccess": "Enabled",
+          "scaleSettings": {
+            "maxNodeCount": 4,
+            "minNodeCount": 0
+          },
+          "subnet": {
+            "id": "[variables('subnet')]"
+          },
+          "userAccountCredentials": {
+            "adminUserName": "azureuser",
+            "adminUserSshPublicKey": "[parameters('publicSshKey')]"
+          },
+          "vmSize": "Standard_D3_v2"
+        }
+      }
+    },
+    {
+      "name": "[concat(parameters('workspaceName'), '/', parameters('computeInstanceName'))]",
+      "type": "Microsoft.MachineLearningServices/workspaces/computes",
+      "dependsOn": [
+        "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]"
+      ],
+      "apiVersion": "2019-11-01",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "location": "[parameters('location')]",
+      "tags": {},
+      "properties": {
+        "computeType": "ComputeInstance",
+        "computeLocation": "[parameters('location')]",
+        "description": "Where your notebook is run from.",
+        "properties": {
+          "applicationSharingPolicy": "Personal",
+          "remoteLoginPortPublicAccess": "Enabled",
+          "vmSize": "Standard_D3_v2",
+          "subnet": {
+            "id": "[variables('subnet')]"
+          },
+          "sshSettings": {
+            "sshPublicAccess": "Enabled",
+            "adminPublicKey": "[parameters('publicSshKey')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2018-11-19",
+      "dependsOn": [
+        "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "location": "[parameters('location')]",
+      "name": "[concat(parameters('workspaceName'), '/gpu-cluster')]",
+      "properties": {
+        "computeType": "AmlCompute",
+        "computeLocation": "[parameters('location')]",
+        "description": "gpu nodes",
+        "properties": {
+          "remoteLoginPortPublicAccess": "Enabled",
+          "scaleSettings": {
+            "maxNodeCount": 4,
+            "minNodeCount": 0
+          },
+          "subnet": {
+            "id": "[variables('subnet')]"
+          },
+          "userAccountCredentials": {
+            "adminUserName": "azureuser",
+            "adminUserSshPublicKey": "[parameters('publicSshKey')]"
+          },
+          "vmPriority": "LowPriority",
+          "vmSize": "Standard_NC6"
+        }
+      },
+      "tags": {},
+      "type": "Microsoft.MachineLearningServices/workspaces/computes"
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-11-01",
+      "name": "mlnetsg",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "BatchServiceRule",
+            "properties": {
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "29876-29877",
+              "sourceAddressPrefix": "BatchNodeManagement",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "JupyterServerPort",
+            "properties": {
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "44224",
+              "sourceAddressPrefix": "AzureMachineLearning",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 160,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "RemoteAccessRule-VM",
+            "properties": {
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 148,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "NodeAgentRule-DenyAll",
+            "properties": {
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "29876-29877",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 149,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
