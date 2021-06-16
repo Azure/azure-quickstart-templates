@@ -57,6 +57,10 @@
         }
     }
     
+    It 'adds links when none are found' {
+        Test "README.nolinks" $markdownWithBicep
+    }
+
     It 'makes no changes if already valid' {
         Test "README.nochanges" $markdownWithBicep
     }
