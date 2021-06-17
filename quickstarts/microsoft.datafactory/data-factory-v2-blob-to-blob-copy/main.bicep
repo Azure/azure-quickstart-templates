@@ -1,7 +1,7 @@
 @description('Data Factory Name')
 param dataFactoryName string = 'datafactory${uniqueString(resourceGroup().id)}'
 
-@description('Location of the data factory. Currently, only East US, East US 2, and West Europe are supported.')
+@description('Location of the data factory.')
 param location string = resourceGroup().location
 
 @description('Name of the Azure storage account that contains the input/output data.')
@@ -11,8 +11,8 @@ param storageAccountName string = 'storage${uniqueString(resourceGroup().id)}'
 param blobContainerName string = 'blob${uniqueString(resourceGroup().id)}'
 
 var dataFactoryLinkedServiceName = 'ArmtemplateStorageLinkedService'
-var DataFactoryDataSetInName = 'ArmtemplateTestDatasetIn'
-var DataFactoryDataSetOutName = 'ArmtemplateTestDatasetOut'
+var dataFactoryDataSetInName = 'ArmtemplateTestDatasetIn'
+var dataFactoryDataSetOutName = 'ArmtemplateTestDatasetOut'
 var pipelineName = 'ArmtemplateSampleCopyPipeline'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
@@ -49,10 +49,10 @@ resource dataFactoryLinkedService 'Microsoft.DataFactory/factories/linkedservice
 
 resource dataFactoryDataSetIn 'Microsoft.DataFactory/factories/datasets@2018-06-01' = {
   parent: dataFactory
-  name: DataFactoryDataSetInName
+  name: dataFactoryDataSetInName
   properties: {
     linkedServiceName: {
-      referenceName: dataFactoryLinkedServiceName
+      referenceName: dataFactoryLinkedService.name
       type: 'LinkedServiceReference'
     }
     type: 'Binary'
@@ -65,14 +65,11 @@ resource dataFactoryDataSetIn 'Microsoft.DataFactory/factories/datasets@2018-06-
       }
     }
   }
-  dependsOn: [
-    dataFactoryLinkedService
-  ]
 }
 
 resource dataFactoryDataSetOut 'Microsoft.DataFactory/factories/datasets@2018-06-01' = {
   parent: dataFactory
-  name: DataFactoryDataSetOutName
+  name: dataFactoryDataSetOutName
   properties: {
     linkedServiceName: {
       referenceName: dataFactoryLinkedService.name
@@ -122,21 +119,17 @@ resource dataFactoryPipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-
         }
         inputs: [
           {
-            referenceName: DataFactoryDataSetInName
+            referenceName: dataFactoryDataSetIn.name
             type: 'DatasetReference'
           }
         ]
         outputs: [
           {
-            referenceName: DataFactoryDataSetOutName
+            referenceName: dataFactoryDataSetOut.name
             type: 'DatasetReference'
           }
         ]
       })
     ]
   }
-  dependsOn: [
-    dataFactoryDataSetIn
-    dataFactoryDataSetOut
-  ]
 }
