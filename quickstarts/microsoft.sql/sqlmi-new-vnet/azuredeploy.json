@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.1",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "6566447512027820895"
+    }
+  },
   "parameters": {
     "managedInstanceName": {
       "type": "string",
@@ -15,7 +22,7 @@
       }
     },
     "administratorLoginPassword": {
-      "type": "securestring",
+      "type": "secureString",
       "metadata": {
         "description": "Enter password."
       }
@@ -85,8 +92,8 @@
     "storageSizeInGB": {
       "type": "int",
       "defaultValue": 256,
-      "minValue": 32,
       "maxValue": 8192,
+      "minValue": 32,
       "metadata": {
         "description": "Enter storage size."
       }
@@ -103,9 +110,10 @@
       }
     }
   },
+  "functions": [],
   "variables": {
-    "networkSecurityGroupName": "[concat('SQLMI-', parameters('managedInstanceName'), '-NSG')]",
-    "routeTableName": "[concat('SQLMI-', parameters('managedInstanceName'), '-Route-Table')]"
+    "networkSecurityGroupName": "[format('SQLMI-{0}-NSG', parameters('managedInstanceName'))]",
+    "routeTableName": "[format('SQLMI-{0}-Route-Table', parameters('managedInstanceName'))]"
   },
   "resources": [
     {
@@ -188,10 +196,6 @@
       "apiVersion": "2020-06-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[variables('routeTableName')]",
-        "[variables('networkSecurityGroupName')]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -211,7 +215,7 @@
               },
               "delegations": [
                 {
-                  "name": "miDelegation",
+                  "name": "managedInstanceDelegation",
                   "properties": {
                     "serviceName": "Microsoft.Sql/managedInstances"
                   }
@@ -220,7 +224,11 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+        "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
+      ]
     },
     {
       "type": "Microsoft.Sql/managedInstances",
@@ -233,9 +241,6 @@
       "identity": {
         "type": "SystemAssigned"
       },
-      "dependsOn": [
-        "[parameters('virtualNetworkName')]"
-      ],
       "properties": {
         "administratorLogin": "[parameters('administratorLogin')]",
         "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
@@ -243,7 +248,10 @@
         "storageSizeInGB": "[parameters('storageSizeInGB')]",
         "vCores": "[parameters('vCores')]",
         "licenseType": "[parameters('licenseType')]"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
     }
   ]
 }
