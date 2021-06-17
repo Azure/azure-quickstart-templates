@@ -11,7 +11,7 @@ configuration Configuration
         [Parameter(Mandatory)]
         [String]$PSName,
         [Parameter(Mandatory)]
-        [String]$ClientName,
+        [System.Array]$ClientName,
         [Parameter(Mandatory)]
         [String]$DNSIPAddress,
         [Parameter(Mandatory)]
@@ -26,8 +26,8 @@ configuration Configuration
     $DName = $DomainName.Split(".")[0]
     $PSComputerAccount = "$DName\$PSName$"
     $DPMPComputerAccount = "$DName\$DPMPName$"
-    $ClientComputerAccount = "$DName\$ClientName$"
-
+    $Clients = [system.String]::Join(",", $ClientName)
+    $ClientComputerAccount = "$DName\"+[system.String]::Join(",", $ClientName)+"$"   
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
 
     Node LOCALHOST
@@ -72,10 +72,11 @@ configuration Configuration
             Ensure = "Present"
             DependsOn = "[SetupDomain]FirstDS"
         }
+
         if ($ClientName -eq 'Empty')
         {
             File ShareFolder
-            {            
+            {
                 DestinationPath = $LogPath     
                 Type = 'Directory'            
                 Ensure = 'Present'
@@ -94,13 +95,13 @@ configuration Configuration
         {
             VerifyComputerJoinDomain WaitForClient
             {
-                ComputerName = $ClientName
+                ComputerName = $Clients
                 Ensure = "Present"
                 DependsOn = "[SetupDomain]FirstDS"
             }
 
             File ShareFolder
-            {            
+            {
                 DestinationPath = $LogPath     
                 Type = 'Directory'            
                 Ensure = 'Present'
@@ -109,8 +110,8 @@ configuration Configuration
 
             FileReadAccessShare DomainSMBShare
             {
-                Name   = $LogFolder
-                Path =  $LogPath
+                Name = $LogFolder
+                Path = $LogPath
                 Account = $PSComputerAccount,$DPMPComputerAccount,$ClientComputerAccount
                 DependsOn = "[File]ShareFolder"
             }
