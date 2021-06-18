@@ -21,6 +21,8 @@ unzip opensis.zip
 chown -R www-data opensis
 chmod -R 770 opensis
 
+apachectl restart
+
 # add port 8000 for admin access
 perl -0777 -p -i -e 's/Listen 80/Listen 80\nListen 8080/ig' /etc/apache2/ports.conf
 perl -0777 -p -i -e 's/\*:80/*:80 *:8080/g' /etc/apache2/sites-enabled/000-default.conf
