@@ -62,6 +62,16 @@
         "description": "Name of the subnet in the virtual network you want to use"
       }
     },
+    "vmsize": {
+      "type": "string",
+      "defaultValue": "Standard_D4_v2",
+      "metadata": {
+        "description": "vm size"
+      }
+    },
+    "uri": {
+      "type": "string"
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -78,15 +88,11 @@
     "uniqueStringValue": "[substring(variables('sequenceVersion'), 3, 7)]",
     "storageAccountType": "Standard_LRS",
     "vmName": "[concat('vm', variables('uniqueStringValue'))]",
-    "vmSize": "Standard_D4_v2",
     "storageAccountName": "[concat('storage', variables('uniqueStringValue'))]",
-    "vmStorageAccountContainerName": "vhd",
     "publicIPAddressName": "[concat('publicip', variables('uniqueStringValue'))]",
     "publicIPAddressType": "[parameters('publicIPAddressType')]",
     "nicName": "[concat('nic', variables('uniqueStringValue'))]",
-    "dataDisk1VhdName": "datadisk",
     "windowsOSVersion": "2012-R2-Datacenter",
-    "OSDiskName": "osdisk",
     "subnetRef": "[resourceId(parameters('existingVNetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVNetName'),  parameters('subnetName'))]",
     "agentGroupName": "[resourceGroup().name]"
   },
@@ -94,7 +100,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01-preview",
       "location": "[parameters('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -139,7 +145,7 @@
         ]
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddressName'),'i', copyIndex()))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddressName'),'i', copyIndex()))]"
       ]
     },
     {
@@ -153,7 +159,7 @@
       },
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[concat(variables('vmName'), 'i',copyIndex())]",
@@ -191,12 +197,12 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-04-01').primaryEndpoints['blob']]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2020-08-01-preview').primaryEndpoints['blob']]"
           }
         }
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), 'i', copyIndex()))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), 'i', copyIndex()))]"
       ]
     },
     {
@@ -216,13 +222,15 @@
         "autoUpgradeMinorVersion": false,
         "settings": {
           "fileUris": [
-            "https://elsprodch2su1.blob.core.windows.net/ets-containerfor-loadagentresources/bootstrap/ManageVSTSCloudLoadAgent.ps1"
-          ],
-          "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File .\\bootstrap\\ManageVSTSCloudLoadAgent.ps1 -TeamServicesAccountName ', parameters('azureDevOpsServicesAccount'), ' -PATToken ', parameters('personalAccessToken'), ' -AgentGroupName ', variables('agentGroupName') , ' -ConfigureAgent')]"
-        }
+            "[parameters('uri')]"
+          ] 
+        },
+        "protectedSettings": {
+        "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File .\\bootstrap\\ManageVSTSCloudLoadAgent.ps1 -TeamServicesAccountName ', parameters('azureDevOpsServicesAccount'), ' -PATToken ', parameters('personalAccessToken'), ' -AgentGroupName ', variables('agentGroupName') , ' -ConfigureAgent')]"
+      }
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',concat(variables('vmName'), 'i', copyIndex()))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/',concat(variables('vmName'), 'i', copyIndex()))]"
       ]
     }
   ]
