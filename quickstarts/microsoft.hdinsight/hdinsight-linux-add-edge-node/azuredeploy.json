@@ -1,0 +1,86 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the HDInsight cluster to be created. The cluster name must be globally unique."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    },
+    "installScriptActionFolder": {
+      "type": "string",
+      "defaultValue": "scripts",
+      "metadata": {
+        "description": "A script action you can run on the empty node to install or configure additiona software."
+      }
+    },
+    "installScriptAction": {
+      "type": "string",
+      "defaultValue": "EmptyNodeSetup.sh",      
+      "metadata": {
+        "description": "A script action you can run on the empty node to install or configure additiona software."
+      }
+    }
+  },
+  "variables": {
+    "applicationName": "new-edgenode"
+  },
+  "resources": [
+    {
+      "name": "[concat(parameters('clusterName'),'/', variables('applicationName'))]",
+      "type": "Microsoft.HDInsight/clusters/applications",
+      "apiVersion": "2018-06-01-preview",
+      "properties": {
+        "marketPlaceIdentifier": "EmptyNode",
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "edgenode",
+              "targetInstanceCount": 1,
+              "hardwareProfile": {
+                "vmSize": "Standard_E4_v3"
+              }
+            }
+          ]
+        },
+        "installScriptActions": [
+          {
+            "name": "[concat('emptynode','-' ,uniquestring(variables('applicationName')))]",
+            "uri": "[concat(parameters('_artifactsLocation'), parameters('installScriptActionFolder'), '/', parameters('installScriptAction'), parameters('_artifactsLocationSasToken'))]",
+            "roles": [
+              "edgenode"
+            ]
+          }
+        ],
+        "sshEndpoints": [
+          {
+            "location": "[concat(variables('applicationName'),'.',parameters('clusterName'),'-ssh.azurehdinsight.net')]",
+            "destinationPort": 22,
+            "publicPort": 22
+          }
+        ],
+        "applicationType": "CustomApplication"
+      }
+    }
+  ],
+  "outputs": {
+    "application": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters/applications/',parameters('clusterName'), variables('applicationName')))]"
+    }
+  }
+}
