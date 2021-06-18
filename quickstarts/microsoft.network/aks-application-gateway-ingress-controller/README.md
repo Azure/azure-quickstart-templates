@@ -1,7 +1,7 @@
-# Create an Azure Kubernetes Service cluster with the Application Gateway Ingress Controller #
+﻿# Create an Azure Kubernetes Service cluster with the Application Gateway Ingress Controller #
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/aks-application-gateway-ingress-controller/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/aks-application-gateway-ingress-controller/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/aks-application-gateway-ingress-controller/FairfaxLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/aks-application-gateway-ingress-controller/FairfaxDeployment.svg)
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/aks-application-gateway-ingress-controller/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/aks-application-gateway-ingress-controller/CredScanResult.svg)
