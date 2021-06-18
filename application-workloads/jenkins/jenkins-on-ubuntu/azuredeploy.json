@@ -50,13 +50,6 @@
         "description": "The size of the virtual machines used when provisioning Jenkins slave node(s)"
       }
     },
-    "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Location for all resources."
-      }
-    },
     "authenticationType": {
       "type": "string",
       "defaultValue": "sshPublicKey",
@@ -79,7 +72,7 @@
           "metadata": {
               "description": "The base URI where artifacts required by this template are located including a trailing '/'"
           },
-          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/jenkins/jenkins-on-ubuntu/"
+          "defaultValue": "[deployment().properties.templateLink.uri]"
       },
       "_artifactsLocationSasToken": {
           "type": "securestring",
@@ -87,7 +80,14 @@
               "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
           },
           "defaultValue": ""
+      },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
       }
+    }
   },
   "variables": {
     "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
@@ -140,7 +140,7 @@
     {
       "name": "shared",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2021-01-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -150,6 +150,9 @@
         "parameters": {
           "networkSettings": {
             "value": "[variables('networkSettings')]"
+          },
+          "location": {
+              "value": "[parameters('location')]" 
           }
         }
       }
@@ -159,7 +162,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -200,6 +203,9 @@
           },
           "adminPasswordOrKey": {
             "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+              "value": "[parameters('location')]" 
           }
         }
       }
@@ -209,8 +215,8 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]",
-        "[concat('Microsoft.Resources/deployments/', 'jenkMasterNode')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'jenkMasterNode')]"
       ],
       "copy": {
         "name": "vmLoop",
@@ -249,6 +255,9 @@
           },
           "adminPasswordOrKey": {
             "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+              "value": "[parameters('location')]" 
           }
         }
       }
