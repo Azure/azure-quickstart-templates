@@ -11,7 +11,7 @@ configuration Configuration
         [Parameter(Mandatory)]
         [String]$PSName,
         [Parameter(Mandatory)]
-        [String]$ClientName,
+        [System.Array]$ClientName,
         [Parameter(Mandatory)]
         [String]$DNSIPAddress,
         [Parameter(Mandatory)]
@@ -25,7 +25,7 @@ configuration Configuration
     $DName = $DomainName.Split(".")[0]
     $DCComputerAccount = "$DName\$DCName$"
     $DPMPComputerAccount = "$DName\$DPMPName$"
-    
+    $Clients = [system.String]::Join(",", $ClientName)
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
 
     Node LOCALHOST
@@ -103,8 +103,8 @@ configuration Configuration
 
         FileReadAccessShare DomainSMBShare
         {
-            Name   = $LogFolder
-            Path =  $LogPath
+            Name = $LogFolder
+            Path = $LogPath
             Account = $DCComputerAccount
             DependsOn = "[File]ShareFolder"
         }
@@ -135,8 +135,8 @@ configuration Configuration
 
         FileReadAccessShare CMSourceSMBShare
         {
-            Name   = $CM
-            Path =  "c:\$CM"
+            Name = $CM
+            Path = "c:\$CM"
             Account = $DCComputerAccount
             DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
         }
@@ -146,7 +146,7 @@ configuration Configuration
             TaskName = "ScriptWorkFlow"
             ScriptName = "ScriptWorkFlow.ps1"
             ScriptPath = $PSScriptRoot
-            ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $ClientName"
+            ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $Clients"
             Ensure = "Present"
             DependsOn = "[FileReadAccessShare]CMSourceSMBShare"
         }
