@@ -35,7 +35,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/demos/storage-iops-latency-throughput-demo/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -49,6 +49,16 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_DS2_v2"
+      ],
+      "defaultValue": "Standard_DS2_v2",
+      "metadata": {
+        "description": "VM Size"
       }
     }
   },
@@ -66,10 +76,8 @@
     ],
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vm1ImageOffer": "WindowsServer",
-    "vmSize": "Standard_DS2_v2",
     "vmName": "demo-01",
     "vmWindowsOSVersion": "2019-Datacenter",
-    "vmSubnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName')), '/subnets/', variables('vNetSubnet1Name'))]",
     "vmNicName": "[concat(variables('vmName'),'-nic-','0')]",
     "vmPIPName": "[concat(variables('vmName'),'-PIP')]",
     "networkSecurityGroupName": "default-NSG",
@@ -84,23 +92,22 @@
       "name": "[concat(variables('storageAccountNamePrefix')[copyIndex()],uniqueString(resourceGroup().id))]",
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-01-01",
       "copy": {
         "count": "[length(variables('storageAccountType'))]",
         "name": "storageAccountCopy"
       },
-      "dependsOn": [],
       "tags": {
         "displayName": "[concat(variables('storageAccountNamePrefix')[copyIndex()],uniqueString(resourceGroup().id))]"
       },
-      "properties": {
-        "accountType": "[variables('storageAccountType')[copyIndex()]]"
+      "sku": {
+        "name": "[variables('storageAccountType')[copyIndex()]]"
       }
     },
     {
       "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-08-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -125,7 +132,7 @@
       "name": "[parameters('vNetName')]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-08-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
@@ -155,7 +162,7 @@
       "name": "[variables('vmNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-08-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPIPName'))]"
@@ -170,7 +177,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('vmSubnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('vNetName'), variables('vNetSubnet1Name'))]"
               },
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPIPName'))]"
@@ -184,7 +191,7 @@
       "name": "[variables('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "dependsOn": [
         "storageAccountCopy",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
@@ -194,7 +201,7 @@
       },
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -258,7 +265,7 @@
           "name": "DSC",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2016-03-30",
+          "apiVersion": "2020-12-01",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
           ],
@@ -280,8 +287,7 @@
               "configurationArguments": {
                 "nodeName": "[variables('vmName')]"
               }
-            },
-            "protectedSettings": {}
+            }
             }
           }
         }
@@ -291,8 +297,7 @@
       "name": "[variables('vmPIPName')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
-      "dependsOn": [],
+      "apiVersion": "2020-08-01",
       "tags": {
         "displayName": "[variables('vmPIPName')]"
       },
