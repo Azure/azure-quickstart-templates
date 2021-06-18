@@ -20,7 +20,7 @@ This template deploys the latest Microsoft Endpoint Configuration Manager (Confi
 * a new AD domain controller
 * a standalone primary site with SQL Server, ADK and ConfigMgr installed. ConfigMgr is the latest general release
 * a remote site system server to host managemenent point and distribution point
-* a sccm client
+* sccm client
 
 Each VM has its own public IP address and is added to a subnet protected with a Network Security Group, which only allows RDP port from Internet. 
 
