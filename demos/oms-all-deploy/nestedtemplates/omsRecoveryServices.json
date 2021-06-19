@@ -4,14 +4,13 @@
   "parameters": {
     "omsRecoveryVaultName": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "aSRRecVault",
       "metadata": {
         "description": "Assign a name for the ASR Recovery Vault"
       }
     },
-    "omsRecoveryVaultRegion": {
+    "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Specify the region for your Recovery Vault"
       }
@@ -23,8 +22,8 @@
   },
   "resources": [
     {
-      "apiVersion": "2016-06-01",
-      "location": "[parameters('omsRecoveryVaultRegion')]",
+      "apiVersion": "2021-01-01",
+      "location": "[parameters('location')]",
       "name": "[parameters('omsRecoveryVaultName')]",
       "type": "Microsoft.RecoveryServices/vaults",
       "comments": "ASR Recovery Vault for OMS",
@@ -35,12 +34,12 @@
       "properties": {},
       "resources": [
         {
-          "apiVersion": "2016-06-01",
+          "apiVersion": "2021-03-01",
           "name": "HyperVPrimarySite",
           "type": "replicationFabrics",
           "id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics', parameters('omsRecoveryVaultName'), 'HyperVPrimarySite')]",
           "dependsOn": [
-            "[concat('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]"
+            "[resourceId('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]"
           ],
           "properties": {
             "friendlyName": "PrimarySite",
@@ -48,7 +47,7 @@
           }
         },
         {
-          "apiVersion": "2016-06-01",
+          "apiVersion": "2021-03-01",
           "name": "DefaultVMwarePolicy",
           "type": "replicationPolicies",
           "id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('omsRecoveryVaultName'), 'DefaultVMwarePolicy')]",
@@ -69,13 +68,13 @@
           }
         },
         {
-          "apiVersion": "2016-06-01",
+          "apiVersion": "2021-03-01",
           "name": "DefaultVMwarePolicy-failback",
           "type": "replicationPolicies",
           "id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('omsRecoveryVaultName'), 'DefaultVMwarePolicy-failback')]",
           "dependsOn": [
             "[resourceId('Microsoft.RecoveryServices/vaults', parameters('omsRecoveryVaultName'))]",
-            "[concat('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'), '/replicationPolicies/DefaultVMwarePolicy')]"
+            "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('omsRecoveryVaultName'), 'DefaultVMwarePolicy')]"
           ],
           "properties": {
             "subscriptionid": "[subscription().subscriptionId]",
@@ -90,12 +89,12 @@
           }
         },
         {
-          "apiVersion": "2016-06-01",
+          "apiVersion": "2021-03-01",
           "name": "DefaultHyperVPolicy",
           "type": "replicationPolicies",
           "id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('omsRecoveryVaultName'), 'DefaultHyperVPolicy')]",
           "dependsOn": [
-            "[concat('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]"
+            "[resourceId('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]"
           ],
           "properties": {
             "subscriptionId": "[subscription().subscriptionId]",
@@ -105,7 +104,6 @@
               "recoveryPointHistoryDurationInHours": 2,
               "applicationConsistentSnapshotFrequencyInHours": 0,
               "replicationInterval": 900,
-              "onlineReplicationStartTime": "",
               "activeStorageAccountId": "[reference(resourceId('Microsoft.Storage/storageAccounts/',variables('recoveryStorageAccountName')))]",
               "encryption": "Disable"
             }
@@ -114,13 +112,13 @@
       ]
     },
     {
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('omsRecoveryVaultRegion')]",
+      "apiVersion": "2021-04-01",
+      "location": "[parameters('location')]",
       "name": "[variables('recoveryStorageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "comments": "Storage account for ASR",
-      "properties": {
-        "accountType": "[variables('recoveryStorageType')]"
+      "sku": {
+        "name": "[variables('recoveryStorageType')]"
       }
     }
   ],
