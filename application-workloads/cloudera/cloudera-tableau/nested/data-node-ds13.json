@@ -11,8 +11,11 @@
     "dnsNamePrefix": {
       "type": "string"
     },
-    "scriptsUri": {
+    "_artifactsLocation": {
       "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring"
     },
     "storageAccount": {
       "type": "object"
@@ -59,6 +62,7 @@
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('securityGroupName')]",
+      "apiVersion": "2018-10-01",
       "location": "[parameters('location')]",
       "comments": "Shared Resources Network Security Group Rules",
       "tags": {
@@ -282,6 +286,7 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2018-07-01",
       "name": "[concat(copyIndex(), variables('storageAccountName'))]",
       "location": "[parameters('location')]",
       "comments": "Data Node storage account configurations",
@@ -299,6 +304,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2018-10-01",
       "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
       "location": "[parameters('location')]",
       "comments": "Data Node Public IP Address configuration",
@@ -319,6 +325,7 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2018-10-01",
       "name": "[concat(variables('nicName'), copyIndex())]",
       "location": "[parameters('location')]",
       "comments": "Data Node network interface configuration",
@@ -357,6 +364,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2018-10-01",
       "name": "[concat(variables('vmName'), copyIndex())]",
       "plan": {
         "name": "cloudera-centos-6",
@@ -476,6 +484,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2018-10-01",
       "name": "[concat(variables('vmName'), copyIndex(), '/prepareDisks')]",
       "location": "[parameters('location')]",
       "comments": "Data Node VM Extensions and scripts to configure the Cloudera cluster",
@@ -497,8 +506,8 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('scriptsUri'), '/scripts/prepare-datanode-disks.sh')]",
-            "[concat(parameters('scriptsUri'), '/scripts/initialize-node.sh')]"
+            "[uri(parameters('_artifactsLocation'), concat('scripts/prepare-datanode-disks.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/initialize-node.sh', parameters('_artifactsLocationSasToken')))]"
           ],
           "commandToExecute": "[concat('sh initialize-node.sh \"', variables('masterIP'), '\" \"', variables('workerIP'), '\" \"', parameters('dnsNamePrefix'), '\" \"', reference(concat(variables('publicIPAddressName'), copyIndex())).dnsSettings.fqdn, '\" ', parameters('clusterSpec').masterNodeCount, ' ', parameters('clusterSpec').dataNodeCount, ' \"', parameters('vmSpec').adminUsername, '\" ', 'datanode', ' >> /home/$ADMINUSER/initialize-datanode.log 2>&1')]"
         }
