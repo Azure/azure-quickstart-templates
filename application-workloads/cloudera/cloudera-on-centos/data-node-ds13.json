@@ -8,8 +8,11 @@
     "dnsNamePrefix": {
       "type": "string"
     },
-    "scriptsUri": {
+    "_artifactsLocation": {
       "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring"
     },
     "vmCount": {
       "type": "int"
@@ -44,6 +47,7 @@
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('securityGroupName')]",
+      "apiVersion": "2018-08-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -68,6 +72,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
       "location": "[parameters('location')]",
+      "apiVersion": "2018-08-01",
       "copy": {
         "name": "publicIPLoop",
         "count": "[parameters('vmCount')]"
@@ -82,6 +87,7 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyIndex())]",
+      "apiVersion": "2018-08-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), copyIndex())]",
@@ -114,7 +120,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2018-10-01",
       "name": "[concat(variables('vmName'), copyIndex())]",
       "plan": {
         "name": "cloudera-centos-6",
@@ -207,6 +213,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'), copyIndex(), '/prepareDisks')]",
+      "apiVersion": "2018-10-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "dataNodeNicLoop",
@@ -222,8 +229,8 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('scriptsUri'), '/scripts/prepare-datanode-disks.sh')]",
-            "[concat(parameters('scriptsUri'), '/scripts/initialize-node.sh')]"
+            "[uri(parameters('_artifactsLocation'), concat('scripts/prepare-datanode-disks.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/initialize-node.sh', parameters('_artifactsLocationSasToken')))]"
           ],
           "commandToExecute": "[concat('sh initialize-node.sh ', variables('singleQuote'), variables('masterIP'), variables('singleQuote'), ' ', variables('singleQuote'), variables('workerIP'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('dnsNamePrefix'), variables('singleQuote'), ' ', variables('singleQuote'), reference(concat(variables('publicIPAddressName'), copyIndex())).dnsSettings.fqdn, variables('singleQuote'), ' ', variables('singleQuote'), parameters('clusterSpec').masterNodeCount, variables('singleQuote'), ' ', variables('singleQuote'), parameters('clusterSpec').dataNodeCount, variables('singleQuote'), ' ', variables('singleQuote'), parameters('vmSpec').adminUsername, variables('singleQuote'), ' ', 'datanode', ' >> /var/log/cloudera-azure-initialize.log 2>&1')]"
         }

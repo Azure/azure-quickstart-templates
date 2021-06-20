@@ -128,16 +128,10 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_DS14",
+      "defaultValue": "Standard_DS2",
       "metadata": {
-        "description": "The size of the VMs deployed in the cluster (defaults to Standard_DS14)"
-      },
-      "allowedValues": [
-        "Standard_DS14",
-        "Standard_DS13",
-        "Standard_DS14_V2",
-        "Standard_DS13_V2"
-      ]
+        "description": "The size of the VMs deployed in the cluster"
+      }
     },
     "vmImage": {
       "type": "string",
@@ -229,18 +223,31 @@
         "Security / Compliance",
         "Storage"
       ]
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templatelink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "templateAPIVersion": "2015-11-01",
+    "templateAPIVersion": "2018-02-01",
     "resourceAPIVersion": "2015-06-15",
     "installCDH": "True",
     "addressPrefix": "[parameters('addressPrefix')]",
     "subnetPrefix": "[parameters('subnetPrefix')]",
     "scriptsUriDescription": "For Command Line Deployment, scriptsUri must point to an Azure-accessible location like: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudera-on-centos",
-    "scriptsUri": "[uri(deployment().properties.templateLink.uri, '.')]",
-    "share-resourcesUri": "[concat(variables('scriptsUri'), '/shared-resources-', parameters('vnetNewOrExisting'), '-vnet.json')]",
-    "data-nodeUri": "[concat(variables('scriptsUri'), '/data-node-', toLower(subString(parameters('vmSize'), 0, 13)), '.json')]",
+    "share-resourcesUri": "[uri(parameters('_artifactsLocation'), concat('shared-resources-', parameters('vnetNewOrExisting'), '-vnet.json', parameters('_artifactsLocationSasToken')))]",
+    "data-nodeUri": "[uri(parameters('_artifactsLocation'), concat('data-node-', toLower(subString(parameters('vmSize'), 0, 13)), '.json', parameters('_artifactsLocationSasToken')))]",
     "sa": "[parameters('masterNodeIPAddress')]",
     "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
     "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
@@ -330,7 +337,7 @@
     {
       "name": "shared-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-11-01",
+      "apiVersion": "2018-02-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -356,14 +363,14 @@
     {
       "name": "master-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-11-01",
+      "apiVersion": "2018-02-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/shared-resources"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/master-node.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('master-node.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.1"
         },
         "parameters": {
@@ -376,8 +383,11 @@
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
           },
-          "scriptsUri": {
-            "value": "[variables('scriptsUri')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           },
           "storageAccount": {
             "value": "[variables('masterStorageAccount')]"
@@ -400,7 +410,7 @@
     {
       "name": "data-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-11-01",
+      "apiVersion": "2018-02-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/shared-resources"
       ],
@@ -423,8 +433,11 @@
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
           },
-          "scriptsUri": {
-            "value": "[variables('scriptsUri')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           },
           "storageAccount": {
             "value": "[variables('workerStorageAccount')]"
@@ -447,7 +460,7 @@
     {
       "name": "setup-cloudera",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-11-01",
+      "apiVersion": "2018-02-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/data-node",
         "Microsoft.Resources/deployments/master-node"
@@ -455,7 +468,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/setup-cloudera.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('setup-cloudera.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.1"
         },
         "parameters": {
@@ -465,8 +478,11 @@
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
           },
-          "scriptsUri": {
-            "value": "[variables('scriptsUri')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           },
           "vmSpec": {
             "value": "[variables('vmSpec')]"
