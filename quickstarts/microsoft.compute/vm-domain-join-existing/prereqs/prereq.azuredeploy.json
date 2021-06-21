@@ -1,0 +1,207 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the administrator account of the new VM and domain"
+            }
+        },
+        "adPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password for the administrator account of the new VM and domain"
+            }
+        },
+        "domainName": {
+            "type": "string",
+            "metadata": {
+                "description": "The FQDN of the Active Directory Domain to be created"
+            }
+        },
+        "dnsPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "The DNS prefix for the public IP address used by the Load Balancer"
+            }
+        },
+        "vmDnsPrefix": {
+            "type": "array",
+            "metadata": {
+                "description": "Unique public DNS prefix for the deployment"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_DS1_V2",
+            "metadata": {
+                "description": "Size of VM that is joining the domain."
+        }
+      },
+        "virtualNetworkName": {
+          "type": "string",
+          "metadata": {
+            "description": "The name of the virtual network for the domain controller."
+          }
+        },
+        "subnetName": {
+          "type": "securestring",
+          "metadata": {
+            "description": "The name of the subnet for the domain controller."
+          }
+        },
+        "adminUsername": {
+          "type": "string",
+          "metadata": {
+            "description": "The name of the administrator of the new VM that is joining the domain."
+          }
+        },
+        "adminPassword": {
+          "type": "securestring",
+          "metadata": {
+            "description": "The password for the administrator account of the new VM that is joining the domain."
+          }
+        }
+    },
+    "variables": {
+        "adUsername": "[parameters('adUsername')]",
+        "adPassword": "[parameters('adPassword')]",
+        "vmNames": "[parameters('vmDnsPrefix')]",
+        "domainName": "[parameters('domainName')]"
+    },
+    "resources": [
+     {
+         "name": "createADController",
+         "type": "Microsoft.Resources/deployments",
+         "apiVersion": "2020-06-01",
+         "properties": {
+             "mode": "Incremental",
+             "templateLink": {
+                 "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/modules/active-directory-new-domain/0.9/azuredeploy.json",
+                 "contentVersion": "1.0.0.0"
+             },
+             "parameters": {
+                 "adminUsername": {
+                     "value": "[parameters('adUsername')]"
+                 },
+                 "adminPassword": {
+                     "value": "[parameters('adPassword')]"
+                 },
+                 "domainName": {
+                     "value": "[parameters('domainName')]"
+                 },
+                 "dnsPrefix": {
+                     "value": "[parameters('dnsPrefix')]"
+                 },
+                 "virtualNetworkName": {
+                     "value": "[parameters('virtualNetworkName')]"
+                 },
+                 "subnetName": {
+                     "value": "[parameters('subnetName')]"
+                 }
+             }
+         }
+     },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('vmDnsPrefix')[copyIndex()], '-nic')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[length(parameters('vmDnsPrefix'))]"
+      },
+      "dependsOn": [
+        "createADController"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmDnsPrefix')[copyIndex()]]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "vmLoop",
+        "count": "[length(parameters('vmDnsPrefix'))]"
+      },
+      "dependsOn": [
+        "nicLoop"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmDnsPrefix')[copyIndex()]]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+           "imageReference": {
+               "publisher": "MicrosoftWindowsServer",
+               "offer": "WindowsServer",
+               "sku": "2016-Datacenter",
+               "version": "latest"
+           },
+           "osDisk": {
+               "name": "[concat(parameters('vmDnsPrefix')[copyIndex()],'_OSDisk')]",
+               "caching": "ReadOnly",
+               "createOption": "FromImage",
+               "managedDisk": {
+                   "storageAccountType": "StandardSSD_LRS"
+               }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+               "id": "[resourceId('Microsoft.Network/networkInterfaces/',concat(parameters('vmDnsPrefix')[copyIndex()], '-nic'))]"
+            }
+          ]
+        }
+      }
+    }
+  }
+],
+    "outputs": {
+        "domainName": {
+            "type": "string",
+            "value": "[variables('domainName')]"
+        },
+        "adUsername": {
+            "type": "string",
+            "value": "[variables('adUsername')]"
+        },
+        "adPassword": {
+            "type": "string",
+            "value": "[variables('adPassword')]"
+        },
+        "vmNames": {
+            "type": "array",
+            "copy": {
+              "count": "[length(variables('vmNames'))]",
+              "input": "[variables('vmNames')]"
+            }
+        }
+    }
+}
