@@ -25,7 +25,7 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
 }
 
 resource cosmosDB 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
-  name: '${cosmosAccount.name}/${databaseName}'
+  name: '${cosmosAccount.name}/${toLower(databaseName)}'
   properties: {
     resource: {
       id: databaseName
