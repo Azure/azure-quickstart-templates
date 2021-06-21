@@ -102,7 +102,7 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/elk/diagnostics-eventhub-elk/",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "Change this value to your repo name if deploying from a fork"
       }
@@ -120,7 +120,21 @@
       "metadata": {
         "description": "Location for all resources."
       }
-    }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1",
+      "metadata": {
+        "description":"Default VM Size"
+      }
+    },
+    "esTemplateDeploy": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/elastic/elasticsearch/azuredeploy.json",
+      "metadata": {
+        "description":"Path to Elastic Search Deployment"
+      }
+    }          
   },
   "variables": {
     "storageAccountPrefix": "[concat(substring(uniqueString(resourceGroup().id, parameters('esClusterName')), 0, 6), substring(parameters('esClusterName'), 0, 3))]",
@@ -129,25 +143,23 @@
     "imageOffer": "UbuntuServer",
     "storageAccountType": "Standard_LRS",
     "vmName": "logstashvm1",
-    "vmSize": "Standard_D1",
     "vmNicName": "[concat(variables('vmName'), '-nic')]",
     "vmNsgName": "[concat(variables('vmName'), '-nsg')]",
     "vmPipName": "[concat(variables('vmName'), '-pip')]",
-    "virtualNetworkName": "elkvnet2",
-    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', 'other')]",
+    "virtualNetworkName": "elkvnet2", 
     "esHost": "10.0.2.100",
     "esTemplateBase": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/elastic/elasticsearch/",
     "esDeploymentName": "esDeploymentForDiagnosticsEventHubELK"
   },
   "resources": [
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2021-01-01",
       "name": "[variables('esDeploymentName')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('esTemplateBase'), 'azuredeploy.json')]",
+          "uri": "[parameters('esTemplateDeploy')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -288,7 +300,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPipName'))]"
               },
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'other')]"
               },
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vmNsgName'))]"
@@ -326,7 +338,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
