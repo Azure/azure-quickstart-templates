@@ -14,7 +14,7 @@
 
 This template shows an example of how to deploy an Azure API Management service within your own virtual network's subnet in Internal Mode. 
 The instance is deployed into 2 Zones and the Public IP of the instance comes from the Customers subscription. The Subnet is locked down to no access from Client from INTERNET. The Gateway, DeveloperPortal, Portal, GIT endpoint are only accessible from within the Virtual network.
-Being within the Virtual Network, the proxy gateway can connect to your Backend accessible only within your Virtual private network. 
+Being within the Virtual Network, the gateway can connect to your Backend accessible only within your Virtual private network. 
 
 - The template also deploys a NSG, which is based on the documentation here https://aka.ms/apim-vnet-common-issues
 - The template deploys a Virtual Network and a dedicated subnet, which will be used to host the API Management service.
