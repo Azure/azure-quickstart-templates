@@ -1,0 +1,259 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "omsAutomationAccountName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Assign a name for the Automation account"
+            }
+        },
+        "omsAutomationRegion": {
+            "type": "string",
+            "defaultValue": "West Europe",
+            "metadata": {
+                "description": "Specify the region for your Automation account"
+            }
+        },
+        "omsWorkspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the name of your existing OMS Automation account to store the configuration"
+            }
+        }
+    },
+    "variables": {
+        "assets": {
+            "psModules": {
+                "xPSDSC": {
+                    "name": "xPSDesiredStateConfiguration",
+                    "uri": "https://devopsgallerystorage.blob.core.windows.net/packages/xpsdesiredstateconfiguration.3.9.0.nupkg"
+                }
+            },
+            "aaVariables": {
+                "OMSWorkspaceId": {
+                    "name": "OMSWorkspaceId",
+                    "description": "Workspace ID for the Log Analytics workspace"
+                },
+                "OMSWorkspaceKey": {
+                    "name": "OMSWorkspaceKey",
+                    "description": "Primary key for the Log Analytics workspace"
+                },
+                "AzureSubscriptionId": {
+                    "name": "SubscriptionId",
+                    "description": "Azure subscription Id"
+                }
+            },
+            "dsc": {
+                "omsConfig": {
+                    "name": "OMS",
+                    "description": "DSC configuration for installing and configuring OMS agent",
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'scripts/oms.ps1')]"
+                },
+                "omsService": {
+                    "name": "OMSSERVICE",
+                    "description": "DSC configuration for keeping the OMS agent in a running state",
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'scripts/omsservice.ps1')]"
+                },
+                "omsAsrComplete": {
+                    "name": "OMSASR",
+                    "description": "DSC configuration for installing the OMS and Azure agent for protected machines for ASR",
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'scripts/omsasr.ps1')]"
+                }
+            },
+            "guids": {
+                "guid1": "[guid(parameters('omsAutomationAccountName'))]",
+                "guid2": "[guid(parameters('omsWorkspaceName'))]",
+                "guid3": "[guid(resourceGroup().id, deployment().name)]"
+            }
+        }
+    },
+    "resources": [
+        {
+            "name": "[parameters('omsAutomationAccountName')]",
+            "type": "Microsoft.Automation/automationAccounts",
+            "apiVersion": "2015-01-01-preview",
+            "location": "[parameters('omsAutomationRegion')]",
+            "properties": {
+                "sku": {
+                    "name": "OMS"
+                }
+            },
+            "resources": [
+                {
+                    "name": "[variables('assets').aaVariables.OMSWorkspaceId.name]",
+                    "type": "variables",
+                    "apiVersion": "2015-01-01-preview",
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+                    ],
+                    "tags": {},
+                    "properties": {
+                        "description": "[variables('assets').aaVariables.OMSWorkspaceId.description]",
+                        "value": "[concat('\"',reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2015-11-01-preview').customerId,'\"')]"
+                    }
+                },
+                {
+                    "name": "[variables('assets').aaVariables.OMSWorkspaceKey.name]",
+                    "type": "variables",
+                    "apiVersion": "2015-01-01-preview",
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+                    ],
+                    "tags": {},
+                    "properties": {
+                        "description": "Remote file for the passphrase",
+                        "value": "[concat('\"',listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2015-11-01-preview').primarySharedKey,'\"')]"
+                    }
+                },
+                {
+                    "name": "[variables('assets').aaVariables.AzureSubscriptionId.name]",
+                    "type": "variables",
+                    "apiVersion": "2015-01-01-preview",
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+                    ],
+                    "tags": {},
+                    "properties": {
+                        "description": "[variables('assets').aaVariables.AzureSubscriptionId.description]",
+                        "value": "[concat('\"',subscription().subscriptionId,'\"')]"
+                    }
+                },
+                {
+                    "name": "[variables('assets').psModules.xPSDSC.name]",
+                    "type": "Modules",
+                    "apiVersion": "2015-01-01-preview",
+                    "tags": {},
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Variables/', variables('assets').aaVariables.OMSWorkspaceId.name)]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Variables/', variables('assets').aaVariables.OMSWorkspaceKey.name)]"
+                    ],
+                    "properties": {
+                        "contentLink": {
+                            "uri": "[variables('assets').psModules.xPSDSC.uri]"
+                        }
+                    }
+                },
+                {
+                    "name": "[variables('assets').dsc.omsConfig.name]",
+                    "type": "Configurations",
+                    "apiVersion": "2015-01-01-preview",
+                    "location": "[parameters('omsAutomationRegion')]",
+                    "tags": {},
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Variables/', variables('assets').aaVariables.OMSWorkspaceId.name)]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Variables/', variables('assets').aaVariables.OMSWorkspaceKey.name)]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('assets').psModules.xPSDSC.name)]"
+                    ],
+                    "properties": {
+                        "logVerbose": false,
+                        "description": "[variables('assets').dsc.omsConfig.description]",
+                        "state": "Published",
+                        "overwrite": "true",
+                        "source": {
+                            "type": "uri",
+                            "value": "[variables('assets').dsc.omsConfig.uri]",
+                            "version": "1.0.0.0"
+                        }
+                    }
+                },
+                {
+                    "name": "[variables('assets').guids.guid1]",
+                    "type": "Compilationjobs",
+                    "apiVersion": "2015-01-01-preview",
+                    "tags": {},
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'),'/Configurations/', variables('assets').dsc.omsConfig.name)]"
+                    ],
+                    "properties": {
+                        "configuration": {
+                            "name": "[variables('assets').dsc.omsConfig.name]"
+                        }
+                    }
+                },
+                {
+                    "name": "[variables('assets').dsc.omsAsrComplete.name]",
+                    "type": "Configurations",
+                    "apiVersion": "2015-01-01-preview",
+                    "location": "[parameters('omsAutomationRegion')]",
+                    "tags": {},
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Variables/', variables('assets').aaVariables.OMSWorkspaceId.name)]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Variables/', variables('assets').aaVariables.OMSWorkspaceKey.name)]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('assets').psModules.xPSDSC.name)]"
+                    ],
+                    "properties": {
+                        "logVerbose": false,
+                        "description": "[variables('assets').dsc.omsAsrComplete.description]",
+                        "state": "Published",
+                        "overwrite": "true",
+                        "source": {
+                            "type": "uri",
+                            "value": "[variables('assets').dsc.omsAsrComplete.uri]",
+                            "version": "1.0.0.0"
+                        }
+                    }
+                },
+                {
+                    "name": "[variables('assets').guids.guid2]",
+                    "type": "Compilationjobs",
+                    "apiVersion": "2015-01-01-preview",
+                    "tags": {},
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'),'/Configurations/', variables('assets').dsc.omsAsrComplete.name)]"
+                    ],
+                    "properties": {
+                        "configuration": {
+                            "name": "[variables('assets').dsc.omsAsrComplete.name]"
+                        }
+                    }
+                },
+                {
+                    "name": "[variables('assets').dsc.omsService.name]",
+                    "type": "Configurations",
+                    "apiVersion": "2015-01-01-preview",
+                    "location": "[parameters('omsAutomationRegion')]",
+                    "tags": {},
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Variables/', variables('assets').aaVariables.OMSWorkspaceId.name)]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Variables/', variables('assets').aaVariables.OMSWorkspaceKey.name)]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('assets').psModules.xPSDSC.name)]"
+                    ],
+                    "properties": {
+                        "logVerbose": false,
+                        "description": "[variables('assets').dsc.omsService.description]",
+                        "state": "Published",
+                        "overwrite": "true",
+                        "source": {
+                            "type": "uri",
+                            "Value": "[variables('assets').dsc.omsService.uri]"
+                        }
+                    }
+                },
+                {
+                    "name": "[variables('assets').guids.guid3]",
+                    "type": "Compilationjobs",
+                    "apiVersion": "2015-01-01-preview",
+                    "tags": {},
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'),'/Configurations/', variables('assets').dsc.omsService.name)]"
+                    ],
+                    "properties": {
+                        "configuration": {
+                            "name": "[variables('assets').dsc.omsService.name]"
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "outputs": {}
+}

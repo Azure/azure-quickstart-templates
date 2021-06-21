@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "templateSpecFiles": {
+            "type": "array",
+            "metadata": {
+                "description": "An array of template files to deploy."
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "[concat('templateSpec-', replace(last(split(parameters('templateSpecFiles')[copyIndex()], '/')), '.json', ''))]",
+            "copy": {
+                "name": "templateSpecLoop",
+                "count": "[length(parameters('templateSpecFiles'))]"
+            },
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                },
+                "templateLink": {
+                    "relativePath": "[concat(parameters('templateSpecFiles')[copyIndex()], parameters('_artifactsLocationSasToken'))]"
+                }
+            }
+        }
+    ]
+}

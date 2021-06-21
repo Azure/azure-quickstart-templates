@@ -1,0 +1,150 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the virtual machine."
+            }
+        },
+        "cseExtName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Custom Script Extension"
+            }
+        },
+        "cseExtPublisher": {
+            "type": "string",
+            "metadata": {
+                "description": "The publisher of the Custom Script Extension"
+            }
+        },
+        "cseExtVersion": {
+            "type": "string",
+            "metadata": {
+                "description": "The version of the Custom Script Extension"
+            }
+        },
+        "sapArtifactsLocation": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The location of the SAR archives. The location should contain archives for SAPCAR, SAP Host Agent, SAPACEXT,  Microsoft Visual C++ Redistributable and the Microsoft ODBC driver for SQL Server."
+            }
+        },
+        "sapArtifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access sapArtifactsLocation."
+            },
+            "defaultValue": ""
+        },
+        "sapcarFilename": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The filename for the sapcar application that matches the operating system you deploy. sapcar is used to extract the archives you provide in other parameters."
+            }
+        },
+        "sapHostAgentArchiveFilename": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The filename of the SAP Host Agent archive. SAP Host Agent is deployed as part of this template depoyment."
+            }
+        },
+        "sapacExtArchiveFilename": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The filename of the SAP Adaptive Extensions. SAP Note 2343511 lists the minimum patch level required for Azure."
+            }
+        },
+        "vcRedistFilename": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The filename of the VC Runtime that is required to install the SAP Adaptive Extensions. This parameter is only required for Windows."
+            }
+        },
+        "sapadmPassword": {
+            "type": "securestring",
+            "minLength": 6,
+            "metadata": {
+                "description": "Password for the sapadm account."
+            }
+        },
+        "sapadmId": {
+            "type": "int",
+            "defaultValue": 790,
+            "metadata": {
+                "description": "The Linux User Id of the sapadm user. Not required for Windows."
+            }
+        },
+        "sapsysGid": {
+            "type": "int",
+            "defaultValue": 79,
+            "metadata": {
+                "description": "The Linux group id of the sapsys group. Not required for Windows."
+            }
+        },
+        "osType": {
+            "type": "string",
+            "allowedValues": [
+                "Linux",
+                "Windows"
+            ],
+            "metadata": {
+                "description": "Operating system type of the virtual machine."
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "variables": {
+        "commands": {
+            "Linux": "[concat('groupadd -g ', parameters('sapsysGid') , ' sapsys; useradd -u ', parameters('sapadmId') , ' -g ', parameters('sapsysGid') , ' sapadm; ./', parameters('sapcarFilename'), ' -xvf ', parameters('sapHostAgentArchiveFilename'), ' -R hostagent; pushd hostagent; ./saphostexec -install; popd; /usr/sap/hostctrl/exe/sapacosprep -a InstallAcExt -m ', parameters('sapacExtArchiveFilename'), '; echo ''sapadm:', parameters('sapadmPassword'), ''' | chpasswd')]",
+            "Windows": "[concat('.\\', parameters('vcRedistFilename'), ' /q /norestart /log vcredistinstall.log & .\\', parameters('sapcarFilename'), ' -xvf ', parameters('sapHostAgentArchiveFilename'), ' -R hostagent & pushd hostagent & echo ', parameters('sapadmPassword') , '| .\\saphostexec.exe -install & popd & \"C:\\Program Files\\SAP\\hostctrl\\exe\\sapacosprep.exe\" -a InstallAcExt -m ', parameters('sapacExtArchiveFilename'), '')]"
+        },
+        "files": {
+            "Linux": [
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('sapcarFilename'), parameters('sapArtifactsLocationSasToken')))]",
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('sapHostAgentArchiveFilename'), parameters('sapArtifactsLocationSasToken')))]",
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('sapacExtArchiveFilename'), parameters('sapArtifactsLocationSasToken')))]"
+            ],
+            "Windows": [
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('sapcarFilename'), parameters('sapArtifactsLocationSasToken')))]",
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('sapHostAgentArchiveFilename'), parameters('sapArtifactsLocationSasToken')))]",
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('sapacExtArchiveFilename'), parameters('sapArtifactsLocationSasToken')))]",
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('vcRedistFilename'), parameters('sapArtifactsLocationSasToken')))]"
+            ]
+        },
+        "command": "[variables('commands')[parameters('osType')]]",
+        "fileArray": "[variables('files')[parameters('osType')]]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmName'), '/', parameters('cseExtName'))]",
+            "apiVersion": "2020-12-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publisher": "[parameters('cseExtPublisher')]",
+                "type": "[parameters('cseExtName')]",
+                "typeHandlerVersion": "[parameters('cseExtVersion')]",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": "[variables('fileArray')]"
+                },
+                "protectedSettings": {
+                    "commandToExecute": "[variables('command')]"
+                }
+            }
+        }
+    ]
+}
