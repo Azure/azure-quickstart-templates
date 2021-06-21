@@ -48,23 +48,17 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource webApp 'Microsoft.Web/sites@2020-06-01' = {
+resource webApp 'Microsoft.Web/sites@2021-01-01' = {
   name: appName
   location: location
   kind: 'app'
   properties: {
     serverFarmId: appServicePlan.id
-  }
-  dependsOn: [
-    vnet
-  ]
-}
-
-resource webappVnet 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
-  parent: webApp
-  name: 'virtualNetwork'
-  properties: {
-    subnetResourceId: vnet.properties.subnets[0].id
-    swiftSupported: true
+    virtualNetworkSubnetId: vnet.properties.subnets[0].id
+    httpsOnly: true
+    siteConfig: {
+      vnetRouteAllEnabled: true
+      http20Enabled: true
+    }
   }
 }
