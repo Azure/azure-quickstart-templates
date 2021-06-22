@@ -92,7 +92,6 @@
     }
   },
   "variables": {
-    "templateBaseUrl": "[deployment().properties.templatelink.uri]",
     "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
     "tshirtSizeSmall": {
       "vmSize": "Standard_A1",
@@ -112,72 +111,7 @@
         "jumpbox": 0
       }
     },
-    "tshirtSizeMedium": {
-      "vmSize": "Standard_A3",
-      "diskSize": 1023,
-      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-8disk-resources.json', parameters('_artifactsLocationSasToken')))]",
-      "zookeeperCount": 3,
-      "brokerCount": 5,
-      "storage": {
-        "name": "[parameters('storageAccountNamePrefix')]",
-        "count": 2,
-        "pool": "db",
-        "map": [
-          0,
-          0,
-          0,
-          1,
-          1
-        ],
-        "jumpbox": 0
-      }
-    },
-    "tshirtSizeLarge": {
-      "vmSize": "Standard_A4",
-      "diskSize": 1023,
-      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-16disk-resources.json', parameters('_artifactsLocationSasToken')))]",
-      "zookeeperCount": 3,
-      "brokerCount": 5,
-      "storage": {
-        "name": "[parameters('storageAccountNamePrefix')]",
-        "count": 3,
-        "pool": "db",
-        "map": [
-          0,
-          0,
-          1,
-          1,
-          2
-        ],
-        "jumpbox": 0
-      }
-    },
-    "tshirtSizeXLarge": {
-      "vmSize": "Standard_A7",
-      "diskSize": 1023,
-      "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-16disk-resources.json', parameters('_artifactsLocationSasToken')))]",
-      "zookeeperCount": 5,
-      "brokerCount": 8,
-      "storage": {
-        "name": "[parameters('storageAccountNamePrefix')]",
-        "count": 4,
-        "pool": "db",
-        "map": [
-          0,
-          0,
-          1,
-          1,
-          2,
-          2,
-          3,
-          3
-        ],
-        "jumpbox": 0
-      }
-    },
     "tshirtSize": "[variables(concat('tshirtSize', parameters('tshirtSize')))]",
-    "jumpboxTemplateEnabled": "jumpbox-resources.json",
-    "jumpboxTemplateDisabled": "empty-resources.json",
     "vmTemplatezookeeper": "[uri(parameters('_artifactsLocation'), concat('zookeeper-resources.json', parameters('_artifactsLocationSasToken')))]",
     "jumpboxTemplateUrl": "[uri(parameters('_artifactsLocation'), concat(variables(concat('jumpboxTemplate',parameters('jumpbox'))), parameters('_artifactsLocationSasToken')))]",
     "osSettings": {
@@ -225,7 +159,7 @@
     {
       "name": "shared",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -234,8 +168,11 @@
         },
         "parameters": {
           "storageSettings": {
-            "value": "[variables('tshirtSize').storage]"
+            "value": "[concat(variables('tshirtSize'), 'storage')]"
           },
+        "location": {
+            "value": "[parameters('location')]"
+        },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
           },
@@ -248,9 +185,9 @@
     {
       "name": "zookeeper-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -261,6 +198,9 @@
         "parameters": {
           "adminPasswordOrKey": {
             "value": "[parameters('adminPasswordOrKey')]"
+          },
+        "location": {
+            "value": "[parameters('location')]"
           },
           "authenticationType": {
             "value": "[parameters('authenticationType')]"
@@ -278,14 +218,14 @@
             }
           },
           "storageSettings": {
-            "value": "[variables('tshirtSize').storage]"
+            "value": "[concat(variables('tshirtSize'), 'storage')]"
           },
           "machineSettings": {
             "value": {
-              "vmSize": "[variables('tshirtSize').vmSize]",
-              "diskSize": "[variables('tshirtSize').diskSize]",
-              "vmCount": "[variables('tshirtSize').zookeeperCount]",
-              "availabilitySet": "[variables('availabilitySetSettings').name]",
+              "vmSize": "[concat(variables('tshirtSize'),'vmSize')]",
+              "diskSize": "[concat(variables('tshirtSize'), 'diskSize')]",
+              "vmCount": "[concat(variables('tshirtSize'), 'zookeeperCount')]",
+              "availabilitySet": "[concat(variables('availabilitySetSettings'), 'name')]",
               "addprefix": "[variables('networkSettings').subnets.zookeeper.addprefix]"
             }
           }
@@ -295,14 +235,14 @@
     {
       "name": "broker-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'zookeeper-node')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'zookeeper-node')]"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('tshirtSize').vmTemplate]",
+          "uri": "[concat(variables('tshirtSize'), 'vmTemplate')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -325,14 +265,14 @@
             }
           },
           "storageSettings": {
-            "value": "[variables('tshirtSize').storage]"
+            "value": "[concat(variables('tshirtSize'), 'storage')]"
           },
           "machineSettingsbroker": {
             "value": {
-              "vmSize": "[variables('tshirtSize').vmSize]",
-              "diskSize": "[variables('tshirtSize').diskSize]",
-              "zookeeperCount": "[variables('tshirtSize').zookeeperCount]",
-              "vmCount": "[variables('tshirtSize').brokerCount]",
+              "vmSize": "[concat(variables('tshirtSize'), 'vmSize')]",
+              "diskSize": "[concat(variables('tshirtSize'), 'diskSize')]",
+              "zookeeperCount": "[concat(variables('tshirtSize'), 'zookeeperCount')]",
+              "vmCount": "[concat(variables('tshirtSize'), 'brokerCount')]",
               "availabilitySet": "[variables('availabilitySetSettings').name]",
               "zookeeperSubnet": "[variables('networkSettings').subnets.zookeeper.addprefix]",
               "addprefix": "[variables('networkSettings').subnets.data.addprefix]"
@@ -344,9 +284,9 @@
     {
       "name": "jumpbox",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -357,7 +297,7 @@
         "parameters": {
           "storageSettings": {
             "value": {
-              "name": "[concat(parameters('storageAccountNamePrefix'), variables('tshirtSize').storage.jumpbox)]"
+              "name": "[concat(parameters('storageAccountNamePrefix'), concat(variables('tshirtSize'), 'storage.jumpbox'))]"
             }
           },
           "dnsName": {
