@@ -7,10 +7,8 @@ param location string = resourceGroup().location
 @description('The name for the Core (SQL) database')
 param databaseName string
 
-var accountName_var = toLower(accountName)
-
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var
+resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
+  name: toLower(accountName)
   location: location
   properties: {
     enableFreeTier: true
@@ -26,8 +24,8 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15'
   }
 }
 
-resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
-  name: '${accountName_resource.name}/${databaseName}'
+resource cosmosDB 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
+  name: '${cosmosAccount.name}/${toLower(databaseName)}'
   properties: {
     resource: {
       id: databaseName
