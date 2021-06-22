@@ -168,7 +168,7 @@
             "metadata": {
                 "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
             },
-            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/sap/sap-lama-ascs/"
+            "defaultValue": "[deployment().properties.templateLink.uri]"
         },
         "_artifactsLocationSasToken": {
             "type": "securestring",
@@ -417,7 +417,7 @@
         {
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "[concat(variables('nsgName'))]",
-            "apiVersion": "2018-04-01",
+            "apiVersion": "2020-11-01",
             "location": "[parameters('location')]",
             "condition": "[equals(length(parameters('subnetId')), 0)]",
             "properties": {
@@ -427,10 +427,10 @@
         {
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('vnetName')]",
-            "apiVersion": "2018-04-01",
+            "apiVersion": "2020-11-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+                "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
             ],
             "condition": "[equals(length(parameters('subnetId')), 0)]",
             "properties": {
@@ -455,10 +455,10 @@
         {
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('nicName')]",
-            "apiVersion": "2017-06-01",
+            "apiVersion": "2020-11-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
             ],
             "properties": {
                 "ipConfigurations": "[variables('selectedIPConfig')]"
@@ -468,10 +468,10 @@
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('vmName'))]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+                "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
             ],
             "zones": "[variables('selectedZones')]",
-            "apiVersion": "2017-12-01",
+            "apiVersion": "2020-12-01",
             "location": "[parameters('location')]",
             "properties": {
                 "hardwareProfile": {
@@ -513,11 +513,11 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('vmName'), '/', variables('cseExtName'))]",
-            "apiVersion": "2017-12-01",
+            "apiVersion": "2020-12-01",
             "location": "[parameters('location')]",
             "condition": "[not(parameters('deployEmptyTarget'))]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
             ],
             "properties": {
                 "publisher": "[variables('cseExtPublisher')]",
@@ -535,12 +535,12 @@
             }
         },
         {
-            "apiVersion": "2018-02-01",
+            "apiVersion": "2020-06-01",
             "name": "[concat(deployment().name, '-installsaphostagent')]",
             "type": "Microsoft.Resources/deployments",
             "condition": "[greater(length(parameters('sapHostAgentArchiveFilename')), 0)]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '/extensions/', variables('cseExtName'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'), '/extensions/', variables('cseExtName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
