@@ -105,7 +105,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/sap/sap-3-tier-marketplace-image-multi-sid-db-md/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -123,7 +123,6 @@
         "publisher": "MicrosoftWindowsServer",
         "version": "latest",
         "OSType": "Windows",
-        "Plan": {},
         "UsePlan": false,
         "osDiskSize": 128
       },
@@ -133,7 +132,6 @@
         "publisher": "MicrosoftWindowsServer",
         "version": "latest",
         "OSType": "Windows",
-        "Plan": {},
         "UsePlan": false,
         "osDiskSize": 128
       },
@@ -143,7 +141,6 @@
         "publisher": "MicrosoftWindowsServer",
         "version": "latest",
         "OSType": "Windows",
-        "Plan": {},
         "UsePlan": false,
         "osDiskSize": 128
       },
@@ -153,7 +150,6 @@
         "publisher": "SUSE",
         "version": "latest",
         "OSType": "Linux",
-        "Plan": {},
         "UsePlan": false,
         "osDiskSize": 64
       },
@@ -163,7 +159,6 @@
         "publisher": "SUSE",
         "version": "latest",
         "OSType": "Linux",
-        "Plan": {},
         "UsePlan": false,
         "osDiskSize": 64
       },
@@ -173,7 +168,6 @@
         "publisher": "RedHat",
         "version": "latest",
         "OSType": "Linux",
-        "Plan": {},
         "UsePlan": false,
         "osDiskSize": 64
       },
@@ -183,7 +177,6 @@
         "publisher": "Oracle",
         "version": "latest",
         "OSType": "Linux",
-        "Plan": {},
         "UsePlan": false,
         "osDiskSize": 64
       }
@@ -793,7 +786,6 @@
     "probePortSQLDB": "probe",
     "probePortSQLCL": "probecl",
     "lbPrefixSQLDB": "lbsql",
-    "lbPrefixSQLcl": "lbsqlcl",
     "probePortInternalSQLDB": 62500,
     "probePortInternalSQLCL": 63500,
     "lbRulePrefixSQLDB": "[concat(variables('lbPrefixSQLDB'), 'Rule')]",
@@ -1019,17 +1011,17 @@
       "HANA": {
         "Linux": [
           {
-            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/backendAddressPools/', variables('backendPoolHANADB'))]"
+            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerNameDB'), variables('backendPoolHANADB'))]"
           }
         ]
       },
       "SQL": {
         "Windows": [
           {
-            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/backendAddressPools/', variables('backendPoolSQLDB'))]"
+            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerNameDB'),variables('backendPoolSQLDB'))]"
           },
           {
-            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/backendAddressPools/', variables('backendPoolSQLCL'))]"
+            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerNameDB'),variables('backendPoolSQLCL'))]"
           }
         ]
       }
@@ -1039,7 +1031,7 @@
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[concat(variables('nsgName'))]",
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2020-07-01",
       "location": "[parameters('location')]",
       "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
@@ -1049,10 +1041,10 @@
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2020-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
       ],
       "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
@@ -1077,7 +1069,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameDB')]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
@@ -1090,10 +1082,10 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('publicIpNameDB'), '-', copyIndex())]",
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2020-07-01",
       "condition": "[equals(length(parameters('subnetId')), 0)]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
       ],
       "location": "[parameters('location')]",
       "copy": {
@@ -1107,11 +1099,11 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerNameDB')]",
-      "apiVersion": "2018-04-01",
+      "apiVersion": "2020-07-01",
       "location": "[parameters('location')]",
       "condition": "[greater(variables('dbvmCount') , 1)]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": "[variables('lbFrontendConfigs')[parameters('dbtype')][variables('internalOSType')]]",
@@ -1123,15 +1115,15 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicNameDB'), '-', copyIndex())]",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2020-07-01",
       "copy": {
         "name": "dbNICLoop",
         "count": "[variables('dbvmCount')]"
       },
       "dependsOn": [
         "dbpipLoop",
-        "[concat('Microsoft.Network/virtualNetworks/',  variables('vnetName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNameDB'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/',  variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('loadBalancerNameDB'))]"
       ],
       "location": "[parameters('location')]",
       "properties": {
@@ -1160,9 +1152,9 @@
       },
       "dependsOn": [
         "dbNICLoop",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameDB'))]"
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('avSetNameDB'))]"
       ],
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "properties": {
         "availabilitySet": {
@@ -1207,7 +1199,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmNameDB'), '-', copyIndex(), '/', variables('cseExtName'))]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2020-12-01",
       "copy": {
         "name": "dbCSELoop",
         "count": "[variables('dbvmCount')]"
