@@ -16,7 +16,7 @@ param dataActions array = [
 @description('Object ID of the AAD identity. Must be a GUID.')
 param principalId string
 
-var accountName_var = toLower(accountName)
+var account_name = toLower(accountName)
 var locations = [
   {
     locationName: location
@@ -28,7 +28,7 @@ var roleDefinitionId = guid('sql-role-definition-', accountName_resource.id)
 var roleAssignmentId = guid('sql-role-assignment-', accountName_resource.id)
 
 resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var
+  name: account_name
   kind: 'GlobalDocumentDB'
   location: location
   properties: {
