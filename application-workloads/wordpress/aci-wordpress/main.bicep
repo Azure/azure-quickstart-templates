@@ -175,8 +175,8 @@ resource wpAci 'Microsoft.ContainerInstance/containerGroups@2019-12-01' = {
           ]
           resources: {
             requests: {
-              cpu: cpuCores
-              memoryInGB: memoryInGb
+              cpu: any(cpuCores)
+              memoryInGB: any(memoryInGb)
             }
           }
         }
