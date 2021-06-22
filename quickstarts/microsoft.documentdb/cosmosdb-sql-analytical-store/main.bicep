@@ -1,5 +1,5 @@
 @description('Cosmos DB account name')
-param accountName string = 'cosmos${uniqueString(resourceGroup().id)}'
+param accountName string = toLower('cosmos${uniqueString(resourceGroup().id)}')
 
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
@@ -35,7 +35,6 @@ param autoscaleMaxThroughput int = 4000
 @maxValue(2147483647)
 param analyticalStoreTTL int = -1
 
-var accountName_var = toLower(accountName)
 var locations = [
   {
     locationName: location
@@ -43,7 +42,7 @@ var locations = [
     isZoneRedundant: false
   }
 ]
-var throughputPolicy_var = {
+var throughput_policy = {
   Manual: {
     Throughput: manualProvisionedThroughput
   }
@@ -55,7 +54,7 @@ var throughputPolicy_var = {
 }
 
 resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var
+  name: accountName
   location: location
   properties: {
     consistencyPolicy: {
@@ -91,6 +90,6 @@ resource accountName_databaseName_containerName 'Microsoft.DocumentDB/databaseAc
       }
       analyticalStorageTtl: analyticalStoreTTL
     }
-    options: throughputPolicy_var[throughputPolicy]
+    options: throughput_policy[throughputPolicy]
   }
 }
