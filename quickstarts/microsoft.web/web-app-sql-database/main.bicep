@@ -73,7 +73,7 @@ resource allowAllWindowsAzureIps 'Microsoft.Sql/servers/firewallRules@2021-02-01
   }
 }
 
-resource hostingPlan 'Microsoft.Web/serverfarms@2021-01-01' = {
+resource hostingPlan 'Microsoft.Web/serverfarms@2020-12-01' = {
   name: hostingPlanName
   location: location
   tags: {
