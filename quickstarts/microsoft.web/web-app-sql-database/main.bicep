@@ -108,7 +108,7 @@ resource webSiteConnectionStrings 'Microsoft.Web/sites/config@2020-12-01' = {
   }
 }
 
-resource appInsights 'Microsoft.Insights/components@2020-02-02-preview' = {
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: 'AppInsights${website.name}'
   location: location
   tags: {
