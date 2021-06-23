@@ -180,10 +180,6 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-03-01' = {
       }
     }
   }
-  dependsOn: [
-    loadBalancer
-    virtualNetwork
-  ]
 }
 
 resource autoScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
@@ -244,7 +240,4 @@ resource autoScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
       }
     ]
   }
-  dependsOn: [
-    vmss
-  ]
 }
