@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "3768302599534911018"
+    }
+  },
   "parameters": {
     "skuName": {
       "type": "string",
@@ -26,8 +33,8 @@
     "skuCapacity": {
       "type": "int",
       "defaultValue": 1,
-      "minValue": 1,
       "maxValue": 3,
+      "minValue": 1,
       "metadata": {
         "description": "Describes plan's instance count"
       }
@@ -39,7 +46,7 @@
       }
     },
     "sqlAdministratorLoginPassword": {
-      "type": "securestring",
+      "type": "secureString",
       "metadata": {
         "description": "The password of the admin user of the SQL Server"
       }
@@ -52,64 +59,63 @@
       }
     }
   },
+  "functions": [],
   "variables": {
-    "hostingPlanName": "[concat('hostingplan', uniqueString(resourceGroup().id))]",
-    "webSiteName": "[concat('webSite', uniqueString(resourceGroup().id))]",
-    "sqlserverName": "[concat('sqlserver', uniqueString(resourceGroup().id))]",
+    "hostingPlanName": "[format('hostingplan{0}', uniqueString(resourceGroup().id))]",
+    "websiteName": "[format('website{0}', uniqueString(resourceGroup().id))]",
+    "sqlserverName": "[format('sqlServer{0}', uniqueString(resourceGroup().id))]",
     "databaseName": "sampledb"
   },
   "resources": [
     {
-      "name": "[variables('sqlserverName')]",
       "type": "Microsoft.Sql/servers",
+      "apiVersion": "2021-02-01-preview",
+      "name": "[variables('sqlserverName')]",
       "location": "[parameters('location')]",
       "tags": {
-        "displayName": "SqlServer"
+        "displayName": "SQL Server"
       },
-      "apiVersion": "2020-02-02-preview",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
         "version": "12.0"
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2021-02-01-preview",
+      "name": "[format('{0}/{1}', variables('sqlserverName'), variables('databaseName'))]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "Database"
       },
-      "resources": [
-        {
-          "name": "[variables('databaseName')]",
-          "type": "databases",
-          "location": "[parameters('location')]",
-          "tags": {
-            "displayName": "Database"
-          },
-          "apiVersion": "2020-02-02-preview",
-          "dependsOn": [
-            "[variables('sqlserverName')]"
-          ],
-          "properties": {
-            "edition": "Basic",
-            "collation": "SQL_Latin1_General_CP1_CI_AS",
-            "maxSizeBytes": "1073741824",
-            "requestedServiceObjectiveName": "Basic"
-          }
-        },
-        {
-          "type": "firewallrules",
-          "apiVersion": "2020-02-02-preview",
-          "dependsOn": [
-            "[variables('sqlserverName')]"
-          ],
-          "location": "[parameters('location')]",
-          "name": "AllowAllWindowsAzureIps",
-          "properties": {
-            "endIpAddress": "0.0.0.0",
-            "startIpAddress": "0.0.0.0"
-          }
-        }
+      "sku": {
+        "name": "Basic"
+      },
+      "properties": {
+        "collation": "SQL_Latin1_General_CP1_CI_AS",
+        "maxSizeBytes": 1073741824
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlserverName'))]"
       ]
     },
     {
-      "apiVersion": "2019-08-01",
-      "name": "[variables('hostingPlanName')]",
+      "type": "Microsoft.Sql/servers/firewallRules",
+      "apiVersion": "2021-02-01-preview",
+      "name": "[format('{0}/{1}', variables('sqlserverName'), 'AllowAllWindowsAzureIps')]",
+      "properties": {
+        "endIpAddress": "0.0.0.0",
+        "startIpAddress": "0.0.0.0"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlserverName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2021-01-01",
+      "name": "[variables('hostingPlanName')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "HostingPlan"
@@ -117,60 +123,55 @@
       "sku": {
         "name": "[parameters('skuName')]",
         "capacity": "[parameters('skuCapacity')]"
-      },
-      "properties": {
-        "name": "[variables('hostingPlanName')]"
       }
     },
     {
-      "apiVersion": "2019-08-01",
-      "name": "[variables('webSiteName')]",
       "type": "Microsoft.Web/sites",
+      "apiVersion": "2021-01-01",
+      "name": "[variables('websiteName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[variables('hostingPlanName')]"
-      ],
       "tags": {
-        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName')))]": "empty",
+        "[format('hidden-related:{0}', resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName')))]": "empty",
         "displayName": "Website"
       },
       "properties": {
-        "name": "[variables('webSiteName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
       },
-      "resources": [
-        {
-          "apiVersion": "2019-08-01",
-          "type": "config",
-          "name": "connectionstrings",
-          "dependsOn": [
-            "[variables('webSiteName')]"
-          ],
-          "properties": {
-            "DefaultConnection": {
-              "value": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('databaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', reference(resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ';Password=', parameters('sqlAdministratorLoginPassword'), ';')]",
-              "type": "SQLAzure"
-            }
-          }
-        }
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
       ]
     },
     {
-      "apiVersion": "2020-02-02-preview",
-      "name": "[concat('AppInsights', variables('webSiteName'))]",
-      "type": "Microsoft.Insights/components",
-      "location": "[parameters('location')]",
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2021-01-01",
+      "name": "[format('{0}/{1}', variables('websiteName'), 'connectionstrings')]",
+      "properties": {
+        "DefaultConnection": {
+          "value": "[format('Data Source=tcp:{0},1433;Initial Catalog={1};User Id={2}@{3};Password={4};', reference(resourceId('Microsoft.Sql/servers', variables('sqlserverName'))).fullyQualifiedDomainName, variables('databaseName'), parameters('sqlAdministratorLogin'), reference(resourceId('Microsoft.Sql/servers', variables('sqlserverName'))).fullyQualifiedDomainName, parameters('sqlAdministratorLoginPassword'))]",
+          "type": "SQLAzure"
+        }
+      },
       "dependsOn": [
-        "[variables('webSiteName')]"
-      ],
+        "[resourceId('Microsoft.Sql/servers', variables('sqlserverName'))]",
+        "[resourceId('Microsoft.Web/sites', variables('websiteName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[format('AppInsights{0}', variables('websiteName'))]",
+      "location": "[parameters('location')]",
       "tags": {
-        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', variables('webSiteName')))]": "Resource",
+        "[format('hidden-link:{0}', resourceId('Microsoft.Web/sites', variables('websiteName')))]": "Resource",
         "displayName": "AppInsightsComponent"
       },
+      "kind": "web",
       "properties": {
-        "ApplicationId": "[variables('webSiteName')]",
         "Application_Type": "web"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('websiteName'))]"
+      ]
     }
   ]
 }
