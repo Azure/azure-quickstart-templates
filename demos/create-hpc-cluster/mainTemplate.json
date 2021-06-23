@@ -163,12 +163,14 @@
     },
     "_artifactsLocation": {
         "type": "string",
+        "defaultValue": "[deployment().properties.templateLink.uri]",
         "metadata": {
             "description": "The location of resources, such as templates and DSC modules, that the template depends on"
         }
     },
     "_artifactsLocationSasToken": {
         "type": "securestring",
+        "defaultValue": "",
         "metadata": {
             "description": "Auto-generated token to access _artifactsLocation"
         }
@@ -225,7 +227,7 @@
       }
     },
     "curCNOSPlatformRelated": "[variables('cnOsPlatformRelated')[parameters('computeNodeImageOsPlatform')]]",
-    "computeNodeTemplateUrl": "[uri(parameters('_artifactsLocation'), concat(variables('curCNOSPlatformRelated').template, parameters('_artifactsLocationSasToken')))]",
+    "computeNodeTemplateUrl": "[uri(parameters('_artifactsLocation'), concat(variables('curCNOSPlatformRelated'),'template', parameters('_artifactsLocationSasToken')))]",
     "computeNodeCustomData": "[base64(concat('HPCClusterName=', parameters('clusterName'), '\r\nImageCategory=public\r\nImageName=', parameters('computeNodeImageOffer'), '-', parameters('computeNodeImageSku'), '\r\nVMSize=', parameters('computeNodeVMSize')))]",
     "adminBase64Password": "[base64(parameters('adminPassword'))]",
     "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', parameters('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', parameters('location'), '\" -ResourceGroup ', resourceGroup().name)]",
@@ -236,7 +238,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('hnStorageAccountName')]",
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2021-01-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -245,7 +247,7 @@
       "properties": {}
     },
     {
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -268,7 +270,7 @@
     {
       "name": "setupClusterPublicIP",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -292,13 +294,12 @@
       }
     },
     {
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicNameHN')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-        "Microsoft.Resources/deployments/setupClusterPublicIP"
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -319,10 +320,10 @@
       }
     },
     {
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[concat(variables('availabilitySetNamePrefix'), padLeft(string(copyIndex()), 2, '0'))]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
       },
@@ -336,13 +337,12 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2020-10-01",
       "type": "Microsoft.Resources/deployments",
       "name": "createHeadNode",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('hnStorageAccountName'))]",
-        "availabilitySetCopy"
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('hnStorageAccountName'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -385,7 +385,7 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2020-10-01",
       "type": "Microsoft.Resources/deployments",
       "name": "updateVNetDNS",
       "dependsOn": [
@@ -422,7 +422,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('clusterName'),'/configureHeadNode')]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/updateVNetDNS"
@@ -444,7 +444,7 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2020-10-01",
       "type": "Microsoft.Resources/deployments",
       "name": "[concat('create', parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'))]",
       "dependsOn": [
