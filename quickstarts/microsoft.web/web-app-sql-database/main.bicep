@@ -85,7 +85,7 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2020-12-01' = {
   }
 }
 
-resource website 'Microsoft.Web/sites@2021-01-01' = {
+resource website 'Microsoft.Web/sites@2020-12-01' = {
   name: websiteName
   location: location
   tags: {
@@ -97,7 +97,7 @@ resource website 'Microsoft.Web/sites@2021-01-01' = {
   }
 }
 
-resource webSiteConnectionStrings 'Microsoft.Web/sites/config@2021-01-01' = {
+resource webSiteConnectionStrings 'Microsoft.Web/sites/config@2020-12-01' = {
   parent: website
   name: 'connectionstrings'
   properties: {
