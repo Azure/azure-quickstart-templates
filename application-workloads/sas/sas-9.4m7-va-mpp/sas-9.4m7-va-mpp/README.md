@@ -1,16 +1,16 @@
-# SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics
+﻿# SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/sas-9.4m7-VA-MPP/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/sas-9.4m7-VA-MPP/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sas/sas-9.4m7-va-mpp/sas-9.4m7-va-mpp/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sas/sas-9.4m7-va-mpp/sas-9.4m7-va-mpp/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/sas-9.4m7-VA-MPP/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/sas-9.4m7-VA-MPP/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sas/sas-9.4m7-va-mpp/sas-9.4m7-va-mpp/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sas/sas-9.4m7-va-mpp/sas-9.4m7-va-mpp/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/sas-9.4m7-VA-MPP/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/sas-9.4m7-VA-MPP/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sas/sas-9.4m7-va-mpp/sas-9.4m7-va-mpp/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sas/sas-9.4m7-va-mpp/sas-9.4m7-va-mpp/CredScanResult.svg)
 
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsas-9.4m7-VA-MPP%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsas-9.4m7-VA-MPP%2Fazuredeploy.json)
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsas%2Fsas-9.4m7-va-mpp%2Fsas-9.4m7-va-mpp%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsas%2Fsas-9.4m7-va-mpp%2Fsas-9.4m7-va-mpp%2Fazuredeploy.json)
 
 
 **Note:** The SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics is an example architecture only. It is not intended for production use. Specifically, the Quickstart provides an example of how a SAS Visual Analytics in SAS 9.4 workload  and a SAS Visual Statistics in SAS 9.4 workload running in a massively parallel processing (MPP) environment with SAS LASR Analytic Server, can be run on Azure.  When running in an MPP environment, the SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics deploys Apache Hadoop.  As stated in the [SAS 9.4 Support for Hadoop policy](https://support.sas.com/en/documentation/third-party-software-reference/9-4/support-for-hadoop.html), SAS does not provide support for the installation or administration of Apache Hadoop.  For support with these issues, please refer to the Apache Hadoop open-source community.  The intent of the SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics is to provide customers an opportunity to test deployments on the cloud before committing to a lift and shift from their current on-premises deployments.
