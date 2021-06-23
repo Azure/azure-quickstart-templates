@@ -28,49 +28,48 @@
         "description": "The DNS name for the public IP address used by the Load Balancer infront of the DNS servers"
       }
     },
-    "assetLocation": {
+    "_artifactsLocation": {
       "type": "string",
       "metadata": {
         "description": "The location of resources, such as templates and scripts, that this script depends on"
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/custom-private-dns"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/custom-private-dns/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for all resources."
+        "description": "Location for all resources"
       }
     }
   },
   "variables": {
-    "adTemplate": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain-ha-2-dc/azuredeploy.json",
+    "adTemplateLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/active-directory/active-directory-new-domain-ha-2-dc/",
     "virtualNetworkName": "adVNet",
     "subnetName": "default",
     "adPDCVMName": "adPDC",
     "adBDCVMName": "adBDC",
     "subnetId": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')),'/subnets/',variables('subnetName'))]",
-    "serverTemplateFolder": "nested/server",
-    "serverTemplateFile": "setupserver.json",
-    "vmTemplate": "[concat(parameters('assetLocation'), '/nested/genericvm.json')]",
-    "winClientTemplateFolder": "nested/windows-client",
-    "linClientTemplateFolder": "nested/linux-client",
-    "winClientTemplateFile": "setupwinclient.json",
-    "linClientTemplateFile": "setuplinuxclient.json",
     "bdcRDPPort": 13389,
-    "pdcRDPPort": 3389,
-      "_artifactsLocationSasToken": ""
+    "pdcRDPPort": 3389
   },
   "resources": [
     {
       "comments": "This uses one of the other templates to deploy a pair of AD controllers",
       "name": "adDeployment",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2017-05-10",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('adTemplate')]",
+          "uri": "[concat(variables('adTemplateLocation'), 'azuredeploy.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {    
@@ -93,10 +92,10 @@
             "value":"[variables('bdcRDPPort')]"
           },
           "_artifactsLocation": {
-            "value": "parameters('assetLocation')"
+            "value": "[variables('adTemplateLocation')]"
           },
           "_artifactsLocationSasToken": {
-            "value":"[variables('_artifactsLocationSasToken')]"
+            "value":"[parameters('_artifactsLocationSasToken')]"
           },
           "location": {
             "value":"[parameters('location')]"
@@ -115,7 +114,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('assetLocation'),'/',variables('serverTemplateFolder'), '/', variables('serverTemplateFile'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/server/setupserver.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -128,11 +127,14 @@
           "vnetName": {
             "value": "[variables('virtualNetworkName')]"
           },
-          "relativeDownloadFolder": {
-            "value": "./"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
           },
-          "assetLocation": {
-            "value": "[concat(parameters('assetLocation'),'/',variables('serverTemplateFolder'))]"
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value":"[parameters('location')]"
           }
         }
       }
@@ -148,7 +150,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('vmTemplate')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/genericvm.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -172,6 +174,9 @@
           },
           "imageSKU": {
             "value": "2012-R2-Datacenter"
+          },
+          "location": {
+            "value":"[parameters('location')]"
           }
         }
       }
@@ -187,7 +192,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('assetLocation'),'/',variables('winClientTemplateFolder'), '/', variables('winClientTemplateFile'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/windows-client/setupwinclient.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -197,11 +202,14 @@
           "dnsZone": {
             "value": "[parameters('dnsZoneName')]"
           },
-          "relativeDownloadFolder": {
-            "value": "./"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
           },
-          "assetLocation": {
-            "value": "[concat(parameters('assetLocation'), '/', variables('winClientTemplateFolder'))]"
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value":"[parameters('location')]"
           }
         }
       }
@@ -217,7 +225,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('vmTemplate')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/genericvm.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -241,6 +249,9 @@
           },
           "imageSKU": {
             "value": "14.04.5-LTS"
+          },
+          "location": {
+            "value":"[parameters('location')]"
           }
         }
       }
@@ -256,7 +267,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('assetLocation'),'/',variables('linClientTemplateFolder'), '/', variables('linClientTemplateFile'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/linux-client/setuplinuxclient.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -266,8 +277,14 @@
           "dnsZone": {
             "value": "[parameters('dnsZoneName')]"
           },
-          "assetLocation": {
-            "value": "[concat(parameters('assetLocation'), '/', variables('linClientTemplateFolder'))]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value":"[parameters('location')]"
           }
         }
       }
