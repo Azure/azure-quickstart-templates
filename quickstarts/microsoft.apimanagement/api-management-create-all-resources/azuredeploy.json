@@ -47,12 +47,6 @@
         "description": "Mutual authentication certificate password."
       }
     },
-    "eventHubNamespaceConnectionString": {
-      "type": "securestring",
-      "metadata": {
-        "description": "EventHub connection string for logger."
-      }
-    },
     "googleClientSecret": {
       "type": "securestring",
       "metadata": {
@@ -95,17 +89,76 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "URI to artifacts location"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "secureString",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated"
+      },
+      "defaultValue": ""
+    },
+    "dnsNamePrefix": {
+      "type": "string",
+      "defaultValue": "[concat('ns', uniqueString(resourceGroup().id))]",
+      "minLength": 6,
+      "metadata": {
+          "description": "A prefix that will be added to created resource names and DNS URLs. Allowed characters: alphabets and numbers only. Resulting name must be maximum 24 characters (storage account maximum)"
+      }
     }
   },
   "variables": {
+    "eventHubSendPolicyName": "[concat(parameters('dnsNamePrefix'), '-send-policy')]",
+    "eventHubListenPolicy": "[concat(parameters('dnsNamePrefix'), '-listen-policy')]",
     "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]"
   },
   "resources": [
+    {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2020-06-01",
+        "name": "eventhub-deploy",
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[uri(parameters('_artifactsLocation'), concat('nested/namespaces.json', parameters('_artifactsLocationSasToken')))]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "eventHubNsName": {
+                    "value": "[parameters('dnsNamePrefix')]"
+                },
+                "eventHubName": {
+                    "value": "[parameters('dnsNamePrefix')]"
+                },
+                "eventHubSendPolicyName": {
+                    "value": "[variables('eventHubSendPolicyName')]"
+                },
+                "eventHubListenPolicy": {
+                    "value": "[variables('eventHubListenPolicy')]"
+                },
+                "tags": {
+                    "value": {}
+                },
+                "location": {
+                    "value": "[parameters('location')]"
+                }
+            }
+        }
+    },
     {
       "apiVersion": "2017-03-01",
       "name": "[variables('apiManagementServiceName')]",
       "type": "Microsoft.ApiManagement/service",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'eventhub-deploy')]"
+      ],
       "tags": {},
       "sku": {
         "name": "[parameters('sku')]",
@@ -135,7 +188,7 @@
             "[concat('Microsoft.ApiManagement/service/', variables('apiManagementServiceName'))]"
           ],
           "properties": {
-            "contentFormat": "SwaggerLinkJson",
+            "contentFormat": "swagger-link-json",
             "contentValue": "http://petstore.swagger.io/v2/swagger.json",
             "path": "examplepetstore"
           }
@@ -425,7 +478,7 @@
             "description": "Description for example logger",
             "credentials": {
               "name": "exampleEventHubName",
-              "connectionString": "[parameters('eventHubNamespaceConnectionString')]"
+              "connectionString": "[listKeys(resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('dnsNamePrefix'), parameters('dnsNamePrefix'), variables('eventHubSendPolicyName')), '2017-04-01').primaryConnectionString]"
             }
           }
         },
