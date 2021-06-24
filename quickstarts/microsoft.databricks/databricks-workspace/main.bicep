@@ -4,11 +4,11 @@ param disablePublicIp bool = false
 @description('The name of the Azure Databricks workspace to create.')
 param workspaceName string
 
+@description('The pricing tier of workspace.')
 @allowed([
   'standard'
   'premium'
 ])
-@description('The pricing tier of workspace.')
 param pricingTier string = 'premium'
 
 @description('Location for all resources.')
