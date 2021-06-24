@@ -4,7 +4,7 @@
   "parameters": {
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/kafka/kafka-on-ubuntu/",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
@@ -95,12 +95,6 @@
         "description": "The version of the Kafka package to be deployed on the cluster (or use 'stable' to pull in the latest and greatest)"
       }
     },
-    "kafkaClusterName": {
-      "type": "string",
-      "metadata": {
-        "description": "The arbitrary name of the Kafka cluster (maps to cluster's configuration file name)"
-      }
-    },
     "kafkaZooNodeIPAddressPrefix": {
       "type": "string",
       "defaultValue": "10.0.0.4",
@@ -147,7 +141,7 @@
     }
   },
   "variables": {
-    "vmStorageAccountContainerName": "vhd",
+
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
     "computerNamePrefix": "kafkanode",
     "sharedTemplateName": "shared-resources",
@@ -170,12 +164,13 @@
     "numberOfZookeeperInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfZookeeperInstances]",
     "numberOfKafkaInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfKafkaInstances]",
     "vmSize": "[variables(concat('tshirtSize', parameters('tshirtSize'))).vmSize]"
+
   },
   "resources": [
     {
       "name": "shared-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2021-04-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -204,9 +199,9 @@
     {
       "name": "jumpbox-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -237,7 +232,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('niczoo', copyindex())]",
       "location": "[parameters('location')]",
@@ -246,7 +241,7 @@
         "count": "[variables('numberOfZookeeperInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -264,7 +259,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('nic', copyindex())]",
       "location": "[parameters('location')]",
@@ -273,7 +268,7 @@
         "count": "[variables('numberOfKafkaInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -291,7 +286,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('zookprvm', copyindex())]",
       "location": "[parameters('location')]",
@@ -300,8 +295,8 @@
         "count": "[variables('numberOfZookeeperInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]",
-        "[concat('Microsoft.Network/networkInterfaces/', 'niczoo', copyindex())]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('niczoo', copyindex()))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -341,7 +336,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30", 
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('brokervm', copyindex())]",
       "location": "[parameters('location')]",
@@ -350,8 +345,8 @@
         "count": "[variables('numberOfKafkaInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]",
-        "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]",
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic', copyindex()))]",
         "virtualZookeeperMachineLoop"
       ],
       "properties": {
@@ -377,7 +372,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name":  "[concat('brokervm', copyindex(),'_OSDisk')]",
+            "name": "[concat('brokervm', copyindex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -394,15 +389,15 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat('zookprvm', copyindex(), '/installzoo')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineExtensionsLoop",
         "count": "[variables('numberOfZookeeperInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', 'zookprvm', copyindex())]",
-        "[concat('Microsoft.Network/networkInterfaces/', 'niczoo', copyindex())]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat('zookprvm', copyindex()))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('niczoo', copyindex()))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -420,15 +415,15 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat('brokervm', copyindex(), '/installkafka')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineExtensionsLoop",
         "count": "[variables('numberOfKafkaInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', 'brokervm', copyindex())]",
-        "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat('brokervm', copyindex()))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic', copyindex()))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
