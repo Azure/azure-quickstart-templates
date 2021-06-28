@@ -20,9 +20,6 @@
     "dnsname": {
       "type": "string"
     },
-    "neo4jNodes": {
-      "type": "int"
-    },
     "subnet": {
       "type": "object"
     },
@@ -31,7 +28,6 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
       }
@@ -44,8 +40,6 @@
     }
   },
   "variables": {
-    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
     "securityGroupName": "[concat(parameters('namespace'), parameters('vmbasename'), 'nsg')]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
@@ -61,7 +55,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('securityGroupName')]",
       "location": "[parameters('location')]",
@@ -99,7 +93,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'PublicIp')]",
       "location": "[parameters('location')]",
@@ -111,19 +105,19 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[concat(parameters('namespace'), 'set')]",
       "location": "[parameters('location')]",
       "properties": {}
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('namespace'), parameters('vmbasename'), 'PublicIp')]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/PublicIp', parameters('namespace'), parameters('vmbasename'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -136,7 +130,7 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[parameters('staticIp')]",
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',concat(parameters('subnet').vnet), parameters('subnet').name)]"
               },
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
@@ -147,12 +141,12 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -184,10 +178,10 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/lampInstall')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm')))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm')))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -195,7 +189,9 @@
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "fileUris": "[parameters('osSettings').scripts]",
+          "fileUris": "[parameters('osSettings').scripts]"
+      },
+        "protectedSettings": {
           "commandToExecute": "sudo bash install-lap.sh"
         }
       }
