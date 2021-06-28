@@ -8,7 +8,7 @@
         "description": "Name of the data factory. Must be globally unique."
       }
     },
-    "dataFactoryLocation": {
+    "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
@@ -32,6 +32,12 @@
       "metadata": {
         "description": "Connection string for the Azure SQL Data Warehouse"
       }
+    },
+    "databaseAdminPassword": {
+      "type": "string",
+      "metadata": {
+        "description": "DB Password"
+      }
     }
   },
   "variables": {
@@ -47,9 +53,9 @@
   "resources": [
     {
       "name": "[parameters('dataFactoryName')]",
-      "apiVersion": "2017-09-01-preview",
+      "apiVersion": "2018-06-01",
       "type": "Microsoft.DataFactory/factories",
-      "location": "[parameters('dataFactoryLocation')]",
+      "location": "[parameters('location')]",
       "properties": {},
       "resources": [
         {
@@ -58,7 +64,7 @@
           "dependsOn": [
             "[parameters('dataFactoryName')]"
           ],
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "type": "AzureStorage",
             "description": "Azure Storage linked service",
@@ -76,13 +82,13 @@
           "dependsOn": [
             "[parameters('dataFactoryName')]"
           ],
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "type": "AzureSqlDatabase",
             "description": "Azure SQL Database linked service",
             "typeProperties": {
               "connectionString": {
-                "value": "[parameters('azureSqlDatabaseConnectionString')]",
+                "value": "[concat(parameters('azureSqlDatabaseConnectionString'),parameters('databaseAdminPassword'))]",
                 "type": "SecureString"
               }
             }
@@ -94,13 +100,13 @@
           "dependsOn": [
             "[parameters('dataFactoryName')]"
           ],
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "type": "AzureSqlDW",
             "description": "Azure SQL Data Warehouse linked service",
             "typeProperties": {
               "connectionString": {
-                "value": "[parameters('azureSqllDataWarehouseConnectionString')]",
+                "value": "[concat(parameters('azureSqllDataWarehouseConnectionString'),parameters('databaseAdminPassword'))]",
                 "type": "SecureString"
               }
             }
@@ -109,7 +115,7 @@
         {
           "name": "[variables('inputDatasetName')]",
           "type": "datasets",
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "linkedServiceName": {
               "referenceName": "[variables('azureSqlDatabaseLinkedServiceName')]",
@@ -128,7 +134,7 @@
         {
           "name": "[variables('outputDatasetName')]",
           "type": "datasets",
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "linkedServiceName": {
               "referenceName": "[variables('azureSqlDataWareHouseLinkedServiceName')]",
@@ -160,14 +166,12 @@
             "[variables('inputDatasetName')]",
             "[variables('outputDatasetName')]"
           ],
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "activities": [
               {
                 "name": "IterateSQLTables",
-                "description": "",
                 "type": "ForEach",
-                "dependsOn": [],
                 "typeProperties": {
                   "items": {
                     "value": "@pipeline().parameters.tableList",
@@ -177,8 +181,6 @@
                     {
                       "name": "CopyData",
                       "type": "Copy",
-                      "dependsOn": [],
-                      "policy": {},
                       "typeProperties": {
                         "source": {
                           "type": "SqlSource",
@@ -235,15 +237,13 @@
         {
           "name": "[variables('pipelineName2')]",
           "type": "pipelines",
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "activities": [
               {
                 "name": "LookupTableList",
                 "description": " Retrieve the table list from Azure SQL database",
                 "type": "Lookup",
-                "dependsOn": [],
-                "policy": {},
                 "typeProperties": {
                   "source": {
                     "type": "SqlSource",
