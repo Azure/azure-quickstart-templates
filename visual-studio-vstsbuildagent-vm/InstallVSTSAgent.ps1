@@ -163,4 +163,3 @@ Pop-Location
 Write-Verbose "Agent install output: $LASTEXITCODE" -Verbose
 
 Write-Verbose "Exiting InstallVSTSAgent.ps1" -Verbose
-

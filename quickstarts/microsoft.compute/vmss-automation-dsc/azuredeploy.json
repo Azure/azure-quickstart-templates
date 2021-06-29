@@ -1,0 +1,286 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure location to deploy all resources"
+      },
+      "allowedValues": [
+        "japaneast",
+        "eastus2",
+        "westeurope",
+        "southeastasia",
+        "southcentralus",
+        "australiaeast",
+        "koreacentral",
+        "westus2",
+        "brazilsouth",
+        "uksouth",
+        "westcentralus",
+        "northeurope",
+        "canadacentral",
+        "australiasoutheast",
+        "centralindia",
+        "francecentral"
+        ]
+    },
+    "vmssName": {
+      "type": "string",
+      "metadata": {
+        "description": "Naming convention for the vm scale set"
+      },
+      "defaultValue": "srv"
+    },
+    "instanceCount": {
+      "type": "int",
+      "metadata": {
+        "description": "The number of vms to  provision initially in the scale set"
+      },
+      "defaultValue": 2
+    },
+    "virtualNetworkAddressRange": {
+      "type": "string",
+      "metadata": {
+        "description": "The address range of the new virtual network "
+      },
+      "defaultValue": "10.0.0.0/16"
+    },
+    "virtualNetworkSubnet": {
+      "type": "string",
+      "metadata": {
+        "description": "The address range of the subnet created in the new virtual network"
+      },
+      "defaultValue": "10.0.0.0/24"
+    },
+    "nicIPAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the new AD VM"
+      },
+      "defaultValue": "10.0.0.4"
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Administrator of the new VM and Domain"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the Administrator account of the new VM and Domain"
+      }
+    },
+    "VMSize": {
+      "type": "string",
+      "metadata": {
+        "description": "The size of the VM Created"
+      },
+      "defaultValue": "Standard_B2s"
+    },
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The full qualified domain name to be created"
+      },
+      "defaultValue": "contoso.local"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Path to the nested templates used in this deployment"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vmss-automation-dsc/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "string",
+      "metadata": {
+        "description": "SAS token to access artifacts location, if required"
+      },
+      "defaultValue": ""
+    },
+    "compileName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique value to identify compilation job"
+      },
+      "defaultValue": "[guid(resourceGroup().id, deployment().name)]"
+    }
+  },
+  "variables": {
+    "automationAccountName": "[concat('DSC-',take(guid(resourceGroup().id),5))]",
+    "publicIPAddressName": "PIP",
+    "publicIPAddressType": "Dynamic",
+    "virtualNetworkName": "Network",
+    "virtualNetworkSubnetName": "Subnet",
+    "virtualNetworkSubnets": [
+      {
+        "name": "[variables('virtualNetworkSubnetName')]",
+        "properties": {
+          "addressPrefix": "[parameters('virtualNetworkSubnet')]"
+        }
+      }
+    ],
+    "loadBalancerName": "LoadBalancer",
+    "nicName": "NIC",
+    "nicSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('virtualNetworkSubnetName'))]",
+    "provisionConfigurationURL": "[uri(parameters('_artifactsLocation'), concat('nested/provisionConfiguration.json', parameters('_artifactsLocationSasToken')))]",
+    "provisionNetworkURL": "[uri(parameters('_artifactsLocation'), concat('nested/provisionNetwork.json', parameters('_artifactsLocationSasToken')))]",
+    "provisionServerUrl": "[uri(parameters('_artifactsLocation'), concat('nested/provisionServer.json', parameters('_artifactsLocationSasToken')))]",
+    "provisionDNSUrl": "[uri(parameters('_artifactsLocation'), concat('nested/provisionDNS.json', parameters('_artifactsLocationSasToken')))]"
+  },
+  "resources": [
+    {
+      "name": "provisionConfiguration",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-02-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisionConfigurationURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "automationAccountName": {
+            "value": "[variables('automationAccountName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "compileName": {
+            "value": "[parameters('compileName')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "provisionNetwork",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-02-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisionNetworkURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressRange": {
+            "value": "[parameters('virtualNetworkAddressRange')]"
+          },
+          "virtualNetworkSubnets": {
+            "value": "[variables('virtualNetworkSubnets')]"
+          },
+          "publicIPAddressName": {
+            "value": "[variables('publicIPAddressName')]"
+          },
+          "publicIPAddressType": {
+            "value": "[variables('publicIPAddressType')]"
+          },
+          "loadBalancerName": {
+            "value": "[variables('loadBalancerName')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "provisionServer",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-02-01",
+      "dependsOn": [
+        "provisionNetwork",
+        "provisionConfiguration"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisionServerUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmssName": {
+            "value": "[parameters('vmssName')]"
+          },
+          "instanceCount": {
+            "value": "[parameters('instanceCount')]"
+          },
+          "VMSize": {
+            "value": "[parameters('VMSize')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "NicName": {
+            "value": "[variables('NicName')]"
+          },
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "subnetName": {
+            "value": "[variables('virtualNetworkSubnetName')]"
+          },
+          "loadBalancerName": {
+            "value": "[variables('loadBalancerName')]"
+          },
+          "automationAccountName": {
+            "value": "[variables('automationAccountName')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "provisionDNS",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-02-01",
+      "dependsOn": [
+        "provisionServer"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisionDNSUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressRange": {
+            "value": "[parameters('virtualNetworkAddressRange')]"
+          },
+          "virtualNetworkSubnets": {
+            "value": "[variables('virtualNetworkSubnets')]"
+          },
+          "dnsAddress": {
+            "value": [
+              "[parameters('nicIPAddress')]"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

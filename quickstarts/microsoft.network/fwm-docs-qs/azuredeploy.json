@@ -1,0 +1,477 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "String",
+      "metadata": {
+        "description": "Admin username for the servers"
+      }
+    },
+    "adminPassword": {
+      "type": "SecureString",
+      "metadata": {
+        "description": "Password for the admin account on the servers"
+      }
+    },
+    "location": {
+      "defaultValue": "[resourceGroup().location]",
+      "type": "String",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Size of the virtual machine."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualWans",
+      "apiVersion": "2020-06-01",
+      "name": "VWan-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "disableVpnEncryption": false,
+        "allowBranchToBranchTraffic": true,
+        "office365LocalBreakoutCategory": "None",
+        "type": "Standard"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs",
+      "apiVersion": "2020-06-01",
+      "name": "Hub-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualWans', 'VWan-01')]"
+      ],
+      "properties": {
+        "addressPrefix": "10.1.0.0/16",
+        "virtualWan": {
+          "id": "[resourceId('Microsoft.Network/virtualWans', 'VWan-01')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
+      "apiVersion": "2020-06-01",
+      "name": "Hub-01/hub-spoke",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]",
+        "[resourceId('Microsoft.Network/virtualHubs', 'Hub-01')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', 'Spoke-01')]",
+        "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', 'Hub-01', 'RT_VNet')]"
+      ],
+      "properties": {
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', 'Spoke-01')]"
+        },
+        "allowHubToRemoteVnetTransit": true,
+        "allowRemoteVnetToUseHubVnetGateways": false,
+        "enableInternetSecurity": true,
+        "routingConfiguration": {
+          "associatedRouteTable": {
+            "id": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', 'Hub-01', 'RT_VNet')]"
+          },
+          "propagatedRouteTables": {
+            "labels": [
+              "VNet"
+            ],
+            "ids": [
+              {
+                "id": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', 'Hub-01', 'RT_VNet')]"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/firewallPolicies",
+      "apiVersion": "2020-06-01",
+      "name": "Policy-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "threatIntelMode": "Alert"
+      }
+    },
+    {
+      "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+      "apiVersion": "2020-06-01",
+      "name": "Policy-01/DefaultApplicationRuleCollectionGroup",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/firewallPolicies', 'Policy-01')]"
+      ],
+      "properties": {
+        "priority": 300,
+        "ruleCollections": [
+          {
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "name": "RC-01",
+            "priority": 100,
+            "action": {
+              "type": "Allow"
+            },
+            "rules": [
+              {
+                "ruleType": "ApplicationRule",
+                "name": "Allow-msft",
+                "sourceAddresses": [
+                  "*"
+                ],                
+                "protocols": [
+                  {
+                    "port": "80",
+                    "protocolType": "http"
+                  },
+                  {
+                    "port": "443",
+                    "protocolType": "https"
+                  }
+                ],
+                "targetFqdns": [
+                  "*.microsoft.com"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/azureFirewalls",
+      "apiVersion": "2020-06-01",
+      "name": "AzfwTest",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualHubs', 'Hub-01')]",
+        "[resourceId('Microsoft.Network/firewallPolicies', 'Policy-01')]"
+      ],
+      "properties": {
+        "sku": {
+          "name": "AZFW_Hub",
+          "tier": "Standard"
+        },
+        "hubIPAddresses": {
+          "publicIPs": {
+            "count": 1
+          }
+        },
+        "virtualHub": {
+          "id": "[resourceId('Microsoft.Network/virtualHubs', 'Hub-01')]"
+        },
+        "firewallPolicy": {
+          "id": "[resourceId('Microsoft.Network/firewallPolicies', 'Policy-01')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
+      "name": "Spoke-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "enableDdosProtection": false,
+        "enableVmProtection": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2020-06-01",
+      "name": "Spoke-01/Workload-SN",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', 'Spoke-01')]"
+      ],
+      "properties": {
+        "addressPrefix": "10.0.1.0/24",
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2020-06-01",
+      "name": "Spoke-01/Jump-SN",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Spoke-01', 'Workload-SN')]",
+        "[resourceId('Microsoft.Network/routeTables', 'RT-01')]"
+      ],
+      "properties": {
+        "addressPrefix": "10.0.2.0/24",
+        "routeTable": {
+          "id": "[resourceId('Microsoft.Network/routeTables','RT-01')]"
+        },
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-06-01",
+      "name": "Jump-Srv",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'netInterface-jump-srv')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2019-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "osType": "Windows",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "StandardSSD_LRS"
+            },
+            "diskSizeGB": 127
+          }
+        },
+        "osProfile": {
+          "computerName": "Jump-Srv",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVMAgent": true,
+            "enableAutomaticUpdates": true
+          },
+          "allowExtensionOperations": true
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'netInterface-jump-srv')]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-06-01",
+      "name": "Workload-Srv",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'netInterface-workload-srv')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2019-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "osType": "Windows",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "StandardSSD_LRS"
+            },
+            "diskSizeGB": 127
+          }
+        },
+        "osProfile": {
+          "computerName": "Workload-Srv",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVMAgent": true,
+            "enableAutomaticUpdates": true
+          },
+          "allowExtensionOperations": true
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'netInterface-workload-srv')]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-06-01",
+      "name": "netInterface-workload-srv",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Spoke-01','Workload-SN')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-workload-srv')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Spoke-01', 'Workload-SN')]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4"
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": false,
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-workload-srv')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-06-01",
+      "name": "netInterface-jump-srv",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'publicIP-jump-srv')]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Spoke-01','Jump-SN')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-jump-srv')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'publicIP-jump-srv')]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Spoke-01', 'Jump-SN')]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4"
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": false,
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-jump-srv')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "nsg-jump-srv",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "RDP",
+            "properties": {
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 300,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "nsg-workload-srv",
+      "location": "[parameters('location')]",
+      "properties": {
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-06-01",
+      "name": "publicIP-jump-srv",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      }
+    },
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "2020-06-01",
+      "name": "RT-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "disableBgpRoutePropagation": false,
+        "routes": [
+          {
+            "name": "jump-to-inet",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "Internet"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs/hubRouteTables",
+      "apiVersion": "2020-06-01",
+      "name": "Hub-01/RT_VNet",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]"
+      ],
+      "properties": {
+        "routes": [
+          {
+            "name": "Workload-SNToFirewall",
+            "destinationType": "CIDR",
+            "destinations": [
+              "10.0.1.0/24"
+            ],
+            "nextHopType": "ResourceId",
+            "nextHop": "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]"
+          },
+          {
+            "name": "InternetToFirewall",
+            "destinationType": "CIDR",
+            "destinations": [
+              "0.0.0.0/0"
+            ],
+            "nextHopType": "ResourceId",
+            "nextHop": "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]"
+          }
+        ],
+        "labels": [
+          "VNet"
+        ]
+      }
+    }
+  ]
+}

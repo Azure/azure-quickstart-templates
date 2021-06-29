@@ -1,0 +1,77 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the virtual machine."
+            }
+        },
+        "command": {
+            "type": "string",
+            "metadata": {
+                "description": "The command to execute."
+            }
+        },
+        "files": {
+            "type": "array",
+            "metadata": {
+                "description": "The files that should be uploaded to the virtual machine."
+            }
+        },
+        "osType": {
+            "type": "string",
+            "allowedValues": [
+                "Linux",
+                "Windows"
+            ],
+            "metadata": {
+                "description": "Operating system type of the virtual machine."
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },    
+    "variables": {
+        "osConfigs": {
+            "Windows": {
+                "Publisher": "Microsoft.Compute",
+                "Name": "CustomScriptExtension",
+                "Version": "1.7"
+            },
+            "Linux": {
+                "Publisher": "Microsoft.Azure.Extensions",
+                "Name": "CustomScript",
+                "Version": "2.0"
+            }
+        },
+        "cseExtPublisher": "[variables('osConfigs')[parameters('osType')].Publisher]",
+        "cseExtName": "[variables('osConfigs')[parameters('osType')].Name]",
+        "cseExtVersion": "[variables('osConfigs')[parameters('osType')].Version]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmName'), '/', variables('cseExtName'))]",
+            "apiVersion": "2020-12-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publisher": "[variables('cseExtPublisher')]",
+                "type": "[variables('cseExtName')]",
+                "typeHandlerVersion": "[variables('cseExtVersion')]",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": "[parameters('files')]"
+                },
+                "protectedSettings": {
+                    "commandToExecute": "[parameters('command')]"
+                }
+            }
+        }
+    ]
+}

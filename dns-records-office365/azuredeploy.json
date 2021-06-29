@@ -17,7 +17,7 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dns-records-office365",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located."
       }
@@ -30,21 +30,16 @@
       "defaultValue": ""
     },
     "recordTypes": {
-      "type": "string",
+      "type": "array",
       "defaultValue": [
-        "mail;mdm;sfb"
+        "mail",
+        "mdm",
+        "sfb"
       ],
       "metadata": {
         "description": "A delimited list that defines the resources to create, acceptable values are (mail,mdm, and sfb). A combination of all or just one of the values can be used."
       }
     }
-  },
-  "variables": {
-    "delimiters": [
-      ",",
-      ";"
-    ],
-    "records": "[split(parameters('recordTypes'), variables('delimiters'))]"
   },
   "resources": [
     {
@@ -54,11 +49,11 @@
       "location": "global"
     },
     {
-      "name": "[concat('SettingUpDNSRecods','-',variables('records')[copyIndex()])]",
+      "name": "[concat('SettingUpDNSRecods','-',parameters('recordTypes')[copyIndex()])]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
         "name": "recordcopies",
-        "count": "[length(variables('records'))]"
+        "count": "[length(parameters('recordTypes'))]"
       },
       "apiVersion": "2015-01-01",
       "dependsOn": [
@@ -67,7 +62,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'),'/',variables('records')[copyIndex()],'.json',parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(parameters('recordTypes')[copyIndex()],'.json',parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
