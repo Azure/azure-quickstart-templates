@@ -4,7 +4,7 @@
   "parameters": {
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/kafka/kafka-on-ubuntu/",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
@@ -95,12 +95,6 @@
         "description": "The version of the Kafka package to be deployed on the cluster (or use 'stable' to pull in the latest and greatest)"
       }
     },
-    "kafkaClusterName": {
-      "type": "string",
-      "metadata": {
-        "description": "The arbitrary name of the Kafka cluster (maps to cluster's configuration file name)"
-      }
-    },
     "kafkaZooNodeIPAddressPrefix": {
       "type": "string",
       "defaultValue": "10.0.0.4",
@@ -128,11 +122,11 @@
     },
     "tshirtSize": {
       "type": "string",
-      "defaultValue": "S",
+      "defaultValue": "Size-S",
       "allowedValues": [
-        "S",
-        "M",
-        "L"
+        "Size-S",
+        "Size-M",
+        "Size-L"
       ],
       "metadata": {
         "description": "T-shirt size of the Kafka cluster"
@@ -147,35 +141,34 @@
     }
   },
   "variables": {
-    "vmStorageAccountContainerName": "vhd",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
     "computerNamePrefix": "kafkanode",
     "sharedTemplateName": "shared-resources",
     "jumpboxTemplateName": "jumpbox-resources-",
-    "tshirtSizeS": {
+    "Size-S": {
       "numberOfZookeeperInstances": 1,
       "numberOfKafkaInstances": 3,
       "vmSize": "Standard_A1"
     },
-    "tshirtSizeM": {
+    "Size-M": {
       "numberOfZookeeperInstances": 3,
       "numberOfKafkaInstances": 3,
       "vmSize": "Standard_A2"
     },
-    "tshirtSizeL": {
+    "Size-L": {
       "numberOfZookeeperInstances": 5,
       "numberOfKafkaInstances": 7,
       "vmSize": "Standard_A7"
     },
-    "numberOfZookeeperInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfZookeeperInstances]",
-    "numberOfKafkaInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfKafkaInstances]",
-    "vmSize": "[variables(concat('tshirtSize', parameters('tshirtSize'))).vmSize]"
+    "numberOfZookeeperInstances": "[variables(parameters('tshirtSize')).numberOfZookeeperInstances]",
+    "numberOfKafkaInstances": "[variables(parameters('tshirtSize')).numberOfKafkaInstances]",
+    "vmSize": "[variables(parameters('tshirtSize')).vmSize]"
   },
   "resources": [
     {
       "name": "shared-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-08-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -183,6 +176,9 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "location": {
+              "value": "[parameters('location')]"
+          },
           "storageAccountName": {
             "value": "[parameters('storageAccountName')]"
           },
@@ -204,9 +200,9 @@
     {
       "name": "jumpbox-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-08-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -221,8 +217,8 @@
           "subnetName": {
             "value": "[parameters('subnetName')]"
           },
-          "storageAccountName": {
-            "value": "[parameters('storageAccountName')]"
+          "location": {
+              "value": "[parameters('location')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -237,7 +233,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('niczoo', copyindex())]",
       "location": "[parameters('location')]",
@@ -246,7 +242,7 @@
         "count": "[variables('numberOfZookeeperInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -264,7 +260,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('nic', copyindex())]",
       "location": "[parameters('location')]",
@@ -273,7 +269,7 @@
         "count": "[variables('numberOfKafkaInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -291,7 +287,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('zookprvm', copyindex())]",
       "location": "[parameters('location')]",
@@ -300,7 +296,7 @@
         "count": "[variables('numberOfZookeeperInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]",
         "[concat('Microsoft.Network/networkInterfaces/', 'niczoo', copyindex())]"
       ],
       "properties": {
