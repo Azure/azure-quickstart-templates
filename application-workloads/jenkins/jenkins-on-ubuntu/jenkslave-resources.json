@@ -1,0 +1,136 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "vmbasename": {
+      "type": "string"
+    },
+    "masterNode": {
+      "type": "string"
+    },
+    "osSettings": {
+      "type": "object"
+    },
+    "vmSize": {
+      "type": "string"
+    },
+    "subnet": {
+      "type": "object"
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string"
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring"
+    }
+  },
+  "variables": {
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[concat(parameters('namespace'), 'set')]",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'nic')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('subnet').vnet, parameters('subnet').name)]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), parameters('vmbasename'), 'nic'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm'))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('osSettings').imageReference]",
+          "osDisk": {
+            "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm','_OSDisk'))]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('namespace'), parameters('vmbasename'), 'nic'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/jenkInstall')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('namespace'), parameters('vmbasename'), 'vm'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), parameters('vmbasename'), 'nic'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": "[parameters('osSettings').scripts]",
+          "commandToExecute": "[concat('bash jenkSlaveInstall.sh -m ', parameters('masterNode'), ' -s ', parameters('vmbasename') )]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

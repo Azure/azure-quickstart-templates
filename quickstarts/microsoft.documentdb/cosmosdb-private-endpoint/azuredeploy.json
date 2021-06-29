@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.539.46024",
+      "templateHash": "9532764811440232360"
+    }
+  },
   "parameters": {
     "location": {
       "type": "string",
@@ -39,8 +46,9 @@
       }
     }
   },
+  "functions": [],
   "variables": {
-    "accountName": "[toLower(parameters('accountName'))]",
+    "accountName_var": "[toLower(parameters('accountName'))]",
     "locations": [
       {
         "locationName": "[parameters('location')]",
@@ -51,9 +59,9 @@
   },
   "resources": [
     {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-07-01",
       "name": "[parameters('virtualNetworkName')]",
-      "type": "Microsoft.Network/VirtualNetworks",
-      "apiVersion": "2019-09-01",
       "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
@@ -74,8 +82,8 @@
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "name": "[variables('accountName')]",
-      "apiVersion": "2021-01-15",
+      "apiVersion": "2021-04-15",
+      "name": "[variables('accountName_var')]",
       "kind": "GlobalDocumentDB",
       "location": "[parameters('location')]",
       "properties": {
@@ -85,18 +93,13 @@
         "locations": "[variables('locations')]",
         "databaseAccountOfferType": "Standard",
         "enableAutomaticFailover": false,
-        "enableMultipleWriteLocations": false,
         "publicNetworkAccess": "[parameters('publicNetworkAccess')]"
       }
     },
     {
-      "name": "[parameters('privateEndpointName')]",
       "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2019-04-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]",
-        "[resourceId('Microsoft.Network/VirtualNetworks', parameters('virtualNetworkName'))]"
-      ],
+      "apiVersion": "2020-07-01",
+      "name": "[parameters('privateEndpointName')]",
       "location": "[parameters('location')]",
       "properties": {
         "subnet": {
@@ -106,14 +109,18 @@
           {
             "name": "MyConnection",
             "properties": {
-              "privateLinkServiceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]",
+              "privateLinkServiceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]",
               "groupIds": [
                 "Sql"
               ]
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
     }
   ]
 }

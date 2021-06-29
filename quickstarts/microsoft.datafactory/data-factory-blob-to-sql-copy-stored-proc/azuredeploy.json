@@ -1,0 +1,264 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure storage account that contains the data to be copied."
+      }
+    },
+    "storageAccountKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Key for the Azure storage account."
+      }
+    },
+    "sourceBlobContainer": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the blob container in the Azure Storage account."
+      }
+    },
+    "sourceBlobName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the blob in the container that has the data to be copied to Azure SQL Database table"
+      }
+    },
+    "sqlServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure SQL Server that will hold the output/copied data."
+      }
+    },
+    "sqlDatabaseName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Azure SQL Database in Azure SQL server copying data to."
+      }
+    },
+    "sqlUserID": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for access to Azure SQL Server."
+      }
+    },
+    "sqlPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the user to Azure SQL Server."
+      }
+    },
+    "sqlTargetTable": {
+      "type": "string",
+      "metadata": {
+        "description": "Table in the Azure SQL Database that will hold the copied data."
+      }
+    },
+    "sqlWriterTableType": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify a table type name to be used in the stored procedure. Copy activity makes the data being moved available in a temp table with this table type."
+      }
+    },
+    "sqlWriterStoredProcedureName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the stored procedure that upserts (updates/inserts) data into the target table."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "dataFactoryName": "[concat('CopyFromAzureBlobToAzureSQLDbSproc', uniqueString(resourceGroup().id))]",
+    "storageLinkedServiceName": "StorageLinkedService",
+    "sqlLinkedServiceName": "SqlLinkedService",
+    "storageDataset": "StorageDataset",
+    "intermediateDataset": "IntermediateDataset",
+    "sqlDataset": "SqlDataset",
+    "pipelineName": "BlobtoSqlDbCopyPipelineSproc"
+  },
+  "resources": [
+    {
+      "name": "[variables('dataFactoryName')]",
+      "apiVersion": "2015-10-01",
+      "type": "Microsoft.DataFactory/datafactories",
+      "location": "[parameters('location')]",
+      "resources": [
+        {
+          "type": "linkedservices",
+          "name": "[variables('storageLinkedServiceName')]",
+          "apiVersion": "2015-10-01",
+          "dependsOn": [
+            "[variables('dataFactoryName')]"
+          ],
+          "properties": {
+            "type": "AzureStorage",
+            "description": "Azure Storage Linked Service",
+            "typeProperties": {
+              "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',parameters('storageAccountKey'))]"
+            }
+          }
+        },
+        {
+          "type": "linkedservices",
+          "name": "[variables('sqlLinkedServiceName')]",
+          "apiVersion": "2015-10-01",
+          "dependsOn": [
+            "[variables('dataFactoryName')]"
+          ],
+          "properties": {
+            "type": "AzureSqlDatabase",
+            "description": "Azure SQL linked service",
+            "typeProperties": {
+              "connectionString": "[concat('Data Source=tcp:', parameters('sqlServerName'), '.database.windows.net,1433;Initial Catalog=', parameters('sqlDatabaseName'), ';Integrated Security=False;User ID=', parameters('sqlUserId'), ';Password=', parameters('sqlPassword'), ';Connect Timeout=30;Encrypt=True')]"
+            }
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('storageDataset')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('storageLinkedServiceName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "type": "AzureBlob",
+            "linkedServiceName": "[variables('storageLinkedServiceName')]",
+            "typeProperties": {
+              "folderPath": "[concat(parameters('sourceBlobContainer'), '/')]",
+              "fileName": "[parameters('sourceBlobName')]",
+              "format": {
+                "type": "TextFormat"
+              }
+            },
+            "availability": {
+              "frequency": "Hour",
+              "interval": 1
+            },
+            "external": true
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('intermediateDataset')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('sqlLinkedServiceName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "type": "AzureSqlTable",
+            "linkedServiceName": "[variables('sqlLinkedServiceName')]",
+            "typeProperties": {
+              "tableName": "[variables('intermediateDataset')]"
+            },
+            "availability": {
+              "frequency": "Hour",
+              "interval": 1
+            }
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('sqlDataset')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('sqlLinkedServiceName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "type": "AzureSqlTable",
+            "linkedServiceName": "[variables('sqlLinkedServiceName')]",
+            "typeProperties": {
+              "tableName": "[parameters('sqlTargetTable')]"
+            },
+            "availability": {
+              "frequency": "Hour",
+              "interval": 1
+            }
+          }
+        },
+        {
+          "type": "dataPipelines",
+          "name": "[variables('pipelineName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('storageLinkedServiceName')]",
+            "[variables('sqlLinkedServiceName')]",
+            "[variables('storageDataset')]",
+            "[variables('sqlDataset')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "description": "Copies data from Azure Blob to Sql DB while invoking stored procedure",
+            "activities": [
+              {
+                "name": "BlobtoSqlTableCopyActivity",
+                "type": "Copy",
+                "typeProperties": {
+                  "source": {
+                    "type": "BlobSource"
+                  },
+                  "sink": {
+                    "type": "SqlSink",
+                    "writeBatchSize": 0,
+                    "writeBatchTimeout": "00:00:00"
+                  }
+                },
+                "inputs": [
+                  {
+                    "name": "[variables('storageDataset')]"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "[variables('intermediateDataset')]"
+                  }
+                ]
+              },
+              {
+                "name": "SqlTabletoSqlDbSprocActivity",
+                "type": "SqlServerStoredProcedure",
+                "inputs": [
+                  {
+                    "name": "[variables('intermediateDataset')]"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "[variables('sqlDataset')]"
+                  }
+                ],
+                "typeProperties": {
+                  "storedProcedureName": "[parameters('sqlWriterStoredProcedureName')]"
+                },
+                "scheduler": {
+                  "frequency": "Hour",
+                  "interval": 1
+                },
+                "policy": {
+                  "timeout": "02:00:00",
+                  "concurrency": 1,
+                  "executionPriorityOrder": "NewestFirst",
+                  "retry": 3
+                }
+              }
+            ],
+            "start": "2016-10-01T00:00:00Z",
+            "end": "2016-10-02T00:00:00Z"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {}
+}

@@ -23,6 +23,7 @@
     },
     "appVmCount": {
       "type": "int",
+      "minValue": 1,
       "maxValue": 20,
       "defaultValue": 1,
       "metadata": {
@@ -110,10 +111,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
-    }
+    },
+    "_artifactsLocation": {
+        "type": "string",
+        "metadata": {
+            "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+        },
+        "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+        "type": "securestring",
+        "metadata": {
+            "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+        },
+        "defaultValue": ""
+    }    
   },
   "variables": {
-    "scriptDownloadUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/openedx-scalable-ubuntu/",
     "installScript": "install-openedx.sh",
     "installCommand": "[concat('bash -c ''nohup ./', variables('installScript'), ' ', parameters('appVmCount'), ' ', parameters('adminUsername'), ' ', parameters('adminPassword'), ' </dev/null &>/var/log/azure/openedx-install.log &''')]",
     "availabilitySetName": "avail-set",
@@ -127,7 +141,6 @@
     "mySqlPublicIPAddressName": "myPublicIPMySql",
     "mongoPublicIPAddressName": "myPublicIPMongo",
     "virtualNetworkName": "VNET",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "subnetName": "Subnet",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
@@ -135,26 +148,20 @@
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
     "storageAccountType": "Premium_LRS",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'vhdsa')]",
-    "vhdBlobContainer": "vhds",
-    "lbName": "openedx-loadbalancer",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
-    "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]",
-    "lbProbeLMSID": "[concat(variables('lbID'),'/probes/tcpProbeLMS')]",
-    "lbProbeCMSID": "[concat(variables('lbID'),'/probes/tcpProbeCMS')]",
-    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontend')]"
+    "lbName": "openedx-loadbalancer"
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-01-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
+      "sku": {
+        "name":"[variables('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "2017-12-01", 
+      "apiVersion": "2020-12-01", 
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
       "location": "[parameters('location')]",
@@ -167,7 +174,7 @@
             }
      },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('appPublicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -179,7 +186,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('mySqlPublicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -188,7 +195,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('mongoPublicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -197,7 +204,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -216,7 +223,7 @@
             "properties": {
               "addressPrefix": "[variables('subnetPrefix')]",
               "networkSecurityGroup": {
-                "id": "[variables('nsgID')]"
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]"
               }
             }
           }
@@ -224,7 +231,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgName')]",
       "location": "[parameters('location')]",
@@ -276,14 +283,14 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('appVmName'), copyIndex(), '-nic')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/loadBalancers/',variables('lbName'))]",
-        "[concat('Microsoft.Network/loadBalancers/',variables('lbName'), '/inboundNatRules/SSH-VM', copyIndex())]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/',variables('lbName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'),concat('SSH-VM', copyIndex()))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -292,16 +299,16 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),'LoadBalancerBackend')]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/SSH-VM', copyIndex())]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'),concat('SSH-VM', copyIndex()))]"
                 }
               ]
             }
@@ -314,13 +321,13 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('mySqlVmName'), '-nic')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('mySqlPublicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('mySqlPublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -332,7 +339,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('mySqlPublicIPAddressName'))]"
               },
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               }
             }
           }
@@ -340,13 +347,13 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('mongoVmName'), '-nic')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('mongoPublicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('mongoPublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -358,7 +365,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('mongoPublicIPAddressName'))]"
               },
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               }
             }
           }
@@ -366,12 +373,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/',variables('appPublicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/',variables('appPublicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -394,10 +401,10 @@
             "name": "LBRuleLMS",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
               },
               "backendAddressPool": {
-                "id": "[variables('lbPoolID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),'LoadBalancerBackend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
@@ -406,7 +413,7 @@
               "idleTimeoutInMinutes": 5,
               "loadDistribution": "SourceIP",
               "probe": {
-                "id": "[variables('lbProbeLMSID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'),'tcpProbeLMS')]"
               }
             }
           },
@@ -414,10 +421,10 @@
             "name": "LBRuleCMS",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
               },
               "backendAddressPool": {
-                "id": "[variables('lbPoolID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),'LoadBalancerBackend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 18010,
@@ -426,7 +433,7 @@
               "idleTimeoutInMinutes": 5,
               "loadDistribution": "SourceIP",
               "probe": {
-                "id": "[variables('lbProbeCMSID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'),'tcpProbeCMS')]"
               }
             }
           },
@@ -434,10 +441,10 @@
             "name": "LBRuleSSL",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
               },
               "backendAddressPool": {
-                "id": "[variables('lbPoolID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),'LoadBalancerBackend')]"
               },
               "protocol": "Tcp",
               "frontendPort": 443,
@@ -471,16 +478,16 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/loadBalancers/inboundNatRules",
       "name": "[concat(variables('lbName'), '/SSH-VM', copyIndex())]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/',variables('lbName'))]"
+        "[resourceId('Microsoft.Network/loadBalancers/',variables('lbName'))]"
       ],
       "properties": {
         "frontendIPConfiguration": {
-          "id": "[variables('frontEndIPConfigID')]"
+          "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
         },
         "protocol": "Tcp",
         "frontendPort": "[copyIndex(2220)]",
@@ -493,14 +500,14 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('appVmName'),copyIndex())]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('appVmName'), copyIndex(), '-nic')]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('appVmName'), copyIndex(), '-nic'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -541,13 +548,13 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('mySqlVmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('mySqlVmName'), '-nic')]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('mySqlVmName'), '-nic'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -581,13 +588,13 @@
       }
     },
     {
-      "apiVersion": "2017-03-30", 
+      "apiVersion": "2020-12-01", 
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('mongoVmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('mongoVmName'), '-nic')]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('mongoVmName'), '-nic'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -621,12 +628,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('appVmName'), '0', '/installscript')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('appVmName'), '0')]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('appVmName'),'0'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -635,9 +642,9 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('scriptDownloadUri'), variables('installScript'))]",
-            "[concat(variables('scriptDownloadUri'), 'server-vars.yml')]",
-            "[concat(variables('scriptDownloadUri'), 'inventory.ini')]"
+            "[uri(parameters('_artifactsLocation'), concat('scripts/install-openedx.sh', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/server-vars.yml', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('scripts/inventory.ini', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {

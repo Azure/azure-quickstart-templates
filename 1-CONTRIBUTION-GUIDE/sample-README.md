@@ -9,6 +9,12 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/CredScanResult.svg)
 
+```
+If the sample includes a main.bicep file:
+```
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/BicepVersion.svg)
+
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpath-to-sample%2Fazuredeploy.json)
 
 ```
@@ -36,22 +42,22 @@ The following resources are deployed as part of the solution
 
 Description Resource Provider 1
 
-+ **Resource type 1A**: Description Resource type 1A
-+ **Resource type 1B**: Description Resource type 1B
-+ **Resource type 1C**: Description Resource type 1C
+- **Resource type 1A**: Description Resource type 1A
+- **Resource type 1B**: Description Resource type 1B-
+- **Resource type 1C**: Description Resource type 1C
 
 ### Resource provider 2
 
 Description Resource Provider 2
 
-+ **Resource type 2A**: Description Resource type 2A
+- **Resource type 2A**: Description Resource type 2A
 
 ### Resource provider 3
 
 Description Resource Provider 3
 
-+ **Resource type 3A**: Description Resource type 3A
-+ **Resource type 3B**: Description Resource type 3B
+- **Resource type 3A**: Description Resource type 3A
+- **Resource type 3B**: Description Resource type 3B
 
 ## Prerequisites
 

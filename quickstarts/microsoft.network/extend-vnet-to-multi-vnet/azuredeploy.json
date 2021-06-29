@@ -1,0 +1,148 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sharedKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Shared key for the VNET connection."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the VNET."
+      }
+    },
+    "vnetLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the VNET."
+      }
+    },
+    "existingVnetLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the existing VNET."
+      }
+    },
+    "existingGatewayId": {
+      "type": "string",
+      "metadata": {
+        "description": "ID of the existing gateway."
+      }
+    },
+    "gatewaySubnetName": {
+      "type": "string",
+      "defaultValue": "GatewaySubnet",
+      "metadata": {
+        "description": "Name of the gateway subnet."
+      }
+    }
+  },
+  "variables": {
+    "vnetName": "[concat(parameters('vnetName'),'-vnet')]",
+    "pipName": "[concat(parameters('vnetName'),'-pip')]",
+    "gatewayName": "[concat(parameters('vnetName'),'-gw')]"
+  },
+
+  "resources": [
+  {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-11-01",
+      "name": "[variables('vnetName')]",
+      "location": "[parameters('vnetLocation')]",
+      "properties": {
+          "addressSpace": {
+              "addressPrefixes": [
+                  "10.0.0.0/16"
+              ]
+          },
+          "subnets": [
+              {
+                  "name": "[concat(variables('vnetName'),'-subnet')]",
+                  "properties": {
+                      "addressPrefix": "10.0.0.0/24",
+                      "privateEndpointNetworkPolicies": "Enabled",
+                      "privateLinkServiceNetworkPolicies": "Enabled"
+                  }
+              },
+              {
+                  "name": "[parameters('gatewaySubnetName')]",
+                  "properties": {
+                      "addressPrefix": "10.0.1.0/24",
+                      "privateEndpointNetworkPolicies": "Enabled",
+                      "privateLinkServiceNetworkPolicies": "Enabled"
+                  }
+              }
+          ],
+          "enableDdosProtection": false
+      }
+    },
+  {
+       "type": "Microsoft.Network/publicIPAddresses",
+       "apiVersion": "2020-11-01",
+       "name": "[variables('pipName')]",
+       "location": "[parameters('vnetLocation')]",
+       "properties": {
+           "publicIPAllocationMethod": "Dynamic"
+       }
+  },
+  {
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "apiVersion": "2020-11-01",
+      "name": "[variables('gatewayName')]",
+      "location": "[parameters('vnetLocation')]",
+      "dependsOn": [
+          "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "properties": {
+          "enablePrivateIpAddress": false,
+          "ipConfigurations": [
+              {
+                  "name": "default",
+                  "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "publicIPAddress": {
+                          "id": "[resourceId('Microsoft.Network/publicIPAddresses/', variables('pipName'))]"
+                      },
+                      "subnet": {
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), parameters('gatewaySubnetName'))]"
+                      }
+                  }
+              }
+          ],
+          "gatewayType": "Vpn",
+          "vpnType": "RouteBased",
+          "vpnGatewayGeneration": "Generation1"
+      }
+  },
+  {
+            "type": "Microsoft.Network/connections",
+            "apiVersion": "2020-11-01",
+            "name": "connection",
+            "location": "[parameters('existingVnetLocation')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('gatewayName'))]"
+             ],
+            "properties": {
+                "virtualNetworkGateway1": {
+                    "id": "[parameters('existingGatewayId')]"
+                },
+                "virtualNetworkGateway2": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('gatewayName'))]"
+                },
+                "connectionType": "Vnet2Vnet",
+                "connectionProtocol": "IKEv2",
+                "routingWeight": 0,
+                "sharedKey": "[parameters('sharedKey')]",
+                "enableBgp": false,
+                "useLocalAzureIpAddress": false,
+                "usePolicyBasedTrafficSelectors": false,
+                "expressRouteGatewayBypass": false,
+                "dpdTimeoutSeconds": 45,
+                "connectionMode": "Default"
+            }
+        }
+    ]
+}

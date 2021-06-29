@@ -14,30 +14,45 @@
         "description": "Specifies the location for workspace."
       }
     },
-      "identityType": {
-        "type": "string",
-        "defaultValue": "systemAssigned",
-        "allowedValues": [
-          "systemAssigned",
-          "userAssigned"
-        ],
-        "metadata": {
-          "description": "Specifies the identity type of the Azure Machine Learning workspace."
-        }
-      },
-      "primaryUserAssignedIdentityResourceGroup": {
-        "type": "string",
-        "defaultValue": "[resourceGroup().name]",
-        "metadata": {
-          "description": "Specifies the resource group of user assigned identity that represents the Azure Machine Learing workspace."
-        }
-      },
-      "primaryUserAssignedIdentityName": {
-        "type": "string",
-        "defaultValue": "",
-        "metadata": {
-          "description": "Specifies the name of user assigned identity that represents the Azure Machine Learing workspace."
-        }
+    "identityType": {
+      "type": "string",
+      "defaultValue": "systemAssigned",
+      "allowedValues": [
+        "systemAssigned",
+        "userAssigned",
+		"systemAssigned,userAssigned"
+      ],
+      "metadata": {
+        "description": "Specifies the identity type of the Azure Machine Learning workspace."
+      }
+    },
+    "primaryUserAssignedIdentityResourceGroup": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Specifies the resource group of user assigned identity that represents the Azure Machine Learing workspace."
+      }
+    },
+    "primaryUserAssignedIdentityName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specifies the name of user assigned identity that represents the Azure Machine Learing    workspace."
+      }
+    },
+	"cmkUserAssignedIdentityResourceGroup": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Specifies the resource group of user assigned identity that needs to be used to access the key for encryption."
+      }
+    },
+    "cmkUserAssignedIdentityName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specifies the name of user assigned identity that needs to be used to access the key for encryption."
+      }
     },
     "tagValues": {
       "type": "object",
@@ -405,10 +420,21 @@
       }
     },
     "defaultPEConnections": "[array(variables('privateEndpointSettings'))]",
-    "userAssignedIdentities": {
+	"userAssignedIdentities": "[union(variables('userAssignedIdentitiesPrimary'), variables('userAssignedIdentitiesCmk'))]",
+	"userAssignedIdentityPrimary": {
       "[variables('primaryUserAssignedIdentity')]": {}
     },
-    "primaryUserAssignedIdentity": "[resourceId(parameters('primaryUserAssignedIdentityResourceGroup'), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('primaryUserAssignedIdentityName'))]",
+	"userAssignedIdentitiesPrimary": "[if(not(equals(parameters('primaryUserAssignedIdentityName'), '')), variables('userAssignedIdentityPrimary'), json('{}'))]",
+	"primaryUserAssignedIdentity": "[resourceId(parameters('primaryUserAssignedIdentityResourceGroup'), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('primaryUserAssignedIdentityName'))]",
+	"userAssignedIdentityCmk": {
+      "[variables('cmkUserAssignedIdentity')]": {}
+    },
+	"userAssignedIdentitiesCmk": "[if(not(equals(parameters('cmkUserAssignedIdentityName'), '')), variables('userAssignedIdentityCmk'), json('{}'))]",
+	"cmkUserAssignedIdentity": "[resourceId(parameters('cmkUserAssignedIdentityResourceGroup'), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('cmkUserAssignedIdentityName'))]",
+	"encryptionUserAssignedIdentity": {
+		"userAssignedIdentity": "[variables('cmkUserAssignedIdentity')]"
+	},
+	"encryptionIdentity": "[if(not(equals(parameters('cmkUserAssignedIdentityName'), '')), variables('encryptionUserAssignedIdentity'), json('{}'))]",
     "azAppInsightsLocationMap": {
       "eastasia": "eastasia",
       "southeastasia": "southeastasia",
@@ -585,7 +611,7 @@
       "location": "[parameters('location')]",
       "identity": {
         "type": "[parameters('identityType')]",
-        "userAssignedIdentities": "[if(equals(parameters('identityType'), 'userAssigned'), variables('userAssignedIdentities'), json('null'))]"
+        "userAssignedIdentities": "[if(or(equals(parameters('identityType'), 'userAssigned'), equals(parameters('identityType'), 'systemAssigned,userAssigned')), variables('userAssignedIdentities'), json('null'))]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
@@ -604,6 +630,7 @@
         "primaryUserAssignedIdentity": "[if(equals(parameters('identityType'), 'userAssigned'), variables('primaryUserAssignedIdentity'), json('null'))]",
         "encryption": {
           "status": "[parameters('encryption_status')]",
+		  "identity": "[variables('encryptionIdentity')]",
           "keyVaultProperties": {
             "keyVaultArmId": "[parameters('cmk_keyvault')]",
             "keyIdentifier": "[parameters('resource_cmk_uri')]"

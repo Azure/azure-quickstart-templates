@@ -1,0 +1,162 @@
+- type: replace
+  path: /releases/-
+  value:
+    name: uaa
+    version: "64.0"
+    url: https://s3.amazonaws.com/bosh-compiled-release-tarballs/uaa-64.0-ubuntu-xenial-97.28-20181030-165754-391158715-20181030165806.tgz?versionId=v9ZRyeGVbtXdw79oHosFY_7ZMx_I2DLj
+    sha1: bece5470a905b9dc80a83a044162e69019b90f55
+
+# Switch Director to use UAA
+- type: replace
+  path: /instance_groups/name=bosh/properties/director/user_management/provider
+  value: uaa
+
+- type: remove
+  path: /instance_groups/name=bosh/properties/director/user_management/local
+
+- type: replace
+  path: /instance_groups/name=bosh/properties/director/user_management/uaa?/url
+  value: "https://((internal_ip)):8443"
+
+- type: replace
+  path: /instance_groups/name=bosh/properties/director/user_management/uaa/public_key?
+  value: ((uaa_jwt_signing_key.public_key))
+
+# Add UAA job
+- type: replace
+  path: /instance_groups/name=bosh/jobs/-
+  value:
+    name: uaa
+    release: uaa
+    properties:
+      encryption:
+        encryption_keys:
+        - label: uaa-encryption-key-1
+          passphrase: ((uaa_encryption_key_1))
+        active_key_label: uaa-encryption-key-1
+      uaa:
+        url: "https://((internal_ip)):8443"
+        port: -1
+        sslPrivateKey: ((uaa_ssl.private_key))
+        sslCertificate: ((uaa_ssl.certificate))
+        jwt:
+          policy:
+            active_key_id: uaa-jwt-key-1
+            keys:
+              uaa-jwt-key-1:
+                signingKey: ((uaa_jwt_signing_key.private_key))
+        scim:
+          groups:
+            bosh.admin: 'User has admin access on any Director'
+            bosh.read: 'User has read access on any Director'
+            bosh.stemcells.upload: 'User can upload new stemcells'
+            bosh.releases.upload: 'User can upload new releases'
+          users:
+          - name: admin
+            groups: [bosh.admin]
+            password: ((admin_password))
+        clients:
+          bosh_cli:
+            override: true
+            authorized-grant-types: password,refresh_token
+            scope: openid,bosh.admin,bosh.read,bosh.*.admin,bosh.*.read,bosh.teams.*.admin,bosh.teams.*.read
+            authorities: uaa.none
+            access-token-validity: 120 # 2 min
+            refresh-token-validity: 86400 # 1 day
+            secret: ""
+          admin:
+            override: true
+            authorized-grant-types: client_credentials
+            scope: ""
+            authorities: bosh.admin
+            secret: ((admin_password))
+          hm:
+            override: true
+            authorized-grant-types: client_credentials
+            scope: ""
+            authorities: bosh.admin
+            secret: ((hm_password))
+          uaa_admin:
+            override: true
+            authorized-grant-types: client_credentials
+            scope: ""
+            authorities: clients.read,clients.write,clients.secret,uaa.admin,scim.read,scim.write,password.write
+            secret: ((uaa_admin_client_secret))
+        login: {client_secret: ((uaa_login_client_secret))}
+        zones: {internal: {hostnames: []}}
+      login:
+        saml:
+          activeKeyId: uaa-saml-key-1
+          keys:
+            uaa-saml-key-1:
+              key: ((uaa_service_provider_ssl.private_key))
+              certificate: ((uaa_service_provider_ssl.certificate))
+              passphrase: ""
+      uaadb:
+        address: 127.0.0.1
+        port: 5432
+        db_scheme: postgresql
+        databases:
+        - tag: uaa
+          name: uaa
+        roles:
+        - tag: admin
+          name: postgres
+          password: ((postgres_password))
+
+- type: replace
+  path: /instance_groups/name=bosh/properties/postgres/additional_databases?/-
+  value: uaa
+
+# Switch HM to use UAA
+- type: replace
+  path: /instance_groups/name=bosh/properties/hm/director_account/client_id?
+  value: hm
+
+- type: replace
+  path: /instance_groups/name=bosh/properties/hm/director_account/client_secret?
+  value: ((hm_password))
+
+- type: replace
+  path: /variables/-
+  value:
+    name: uaa_jwt_signing_key
+    type: rsa
+
+- type: replace
+  path: /variables/-
+  value:
+    name: uaa_admin_client_secret
+    type: password
+
+- type: replace
+  path: /variables/-
+  value:
+    name: uaa_login_client_secret
+    type: password
+
+- type: replace
+  path: /variables/-
+  value:
+    name: uaa_encryption_key_1
+    type: password
+
+- type: replace
+  path: /variables/-
+  value:
+    name: uaa_ssl
+    type: certificate
+    options:
+      ca: default_ca
+      common_name: ((internal_ip))
+      alternative_names: [((internal_ip))]
+
+- type: replace
+  path: /variables/-
+  value:
+    name: uaa_service_provider_ssl
+    type: certificate
+    options:
+      ca: default_ca
+      common_name: ((internal_ip))
+      alternative_names: [((internal_ip))]

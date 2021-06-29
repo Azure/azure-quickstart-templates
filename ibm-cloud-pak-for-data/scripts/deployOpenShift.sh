@@ -44,6 +44,10 @@ export OUTBOUNDTYPE=${36}
 #Var
 export INSTALLERHOME=/home/$SUDOUSER/.openshift
 
+echo $(date) " - Disable and enable repo starting"
+sudo yum update -y --disablerepo=* --enablerepo="*microsoft*"
+echo $(date) " - Disable and enable repo completed"
+
 # Grow Root File System
 yum -y install cloud-utils-growpart.noarch
 echo $(date) " - Grow Root FS"
@@ -76,10 +80,10 @@ echo $(date) " - Install httpd-tools Complete"
 echo $(date) " - Download Binaries"
 runuser -l $SUDOUSER -c "mkdir -p /home/$SUDOUSER/.openshift"
 
-runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.12/openshift-install-linux-4.6.12.tar.gz"
-runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.12/openshift-client-linux-4.6.12.tar.gz"
-runuser -l $SUDOUSER -c "tar -xvf openshift-install-linux-4.6.12.tar.gz -C $INSTALLERHOME"
-runuser -l $SUDOUSER -c "sudo tar -xvf openshift-client-linux-4.6.12.tar.gz -C /usr/bin"
+runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.27/openshift-install-linux-4.6.27.tar.gz"
+runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.27/openshift-client-linux-4.6.27.tar.gz"
+runuser -l $SUDOUSER -c "tar -xvf openshift-install-linux-4.6.27.tar.gz -C $INSTALLERHOME"
+runuser -l $SUDOUSER -c "sudo tar -xvf openshift-client-linux-4.6.27.tar.gz -C /usr/bin"
 
 chmod +x /usr/bin/kubectl
 chmod +x /usr/bin/oc

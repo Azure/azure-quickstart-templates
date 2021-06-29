@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "16607361201936431976"
+    }
+  },
   "parameters": {
     "vmName": {
       "type": "string",
@@ -27,14 +34,14 @@
       }
     },
     "adminPasswordOrKey": {
-      "type": "securestring",
+      "type": "secureString",
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     },
     "dnsLabelPrefix": {
       "type": "string",
-      "defaultValue": "[toLower(concat('simplelinuxvm-', uniqueString(resourceGroup().id)))]",
+      "defaultValue": "[toLower(format('simplelinuxvm-{0}', uniqueString(resourceGroup().id)))]",
       "metadata": {
         "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
@@ -59,7 +66,7 @@
         "description": "Location for all resources."
       }
     },
-    "VmSize": {
+    "vmSize": {
       "type": "string",
       "defaultValue": "Standard_B2s",
       "metadata": {
@@ -88,10 +95,10 @@
       }
     }
   },
+  "functions": [],
   "variables": {
-    "publicIpAddressName": "[concat(parameters('vmName'), 'PublicIP' )]",
-    "networkInterfaceName": "[concat(parameters('vmName'),'NetInt')]",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+    "publicIPAddressName": "[format('{0}PublicIP', parameters('vmName'))]",
+    "networkInterfaceName": "[format('{0}NetInt', parameters('vmName'))]",
     "osDiskType": "Standard_LRS",
     "subnetAddressPrefix": "10.1.0.0/24",
     "addressPrefix": "10.1.0.0/16",
@@ -100,7 +107,7 @@
       "ssh": {
         "publicKeys": [
           {
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
             "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
@@ -113,30 +120,30 @@
       "apiVersion": "2020-06-01",
       "name": "[variables('networkInterfaceName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
               },
               "privateIPAllocationMethod": "Dynamic",
-              "publicIpAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               }
             }
           }
         ],
         "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('networkSecurityGroupName'))]"
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
@@ -149,7 +156,7 @@
             "name": "SSH",
             "properties": {
               "priority": 1000,
-              "protocol": "TCP",
+              "protocol": "Tcp",
               "access": "Allow",
               "direction": "Inbound",
               "sourceAddressPrefix": "*",
@@ -171,30 +178,32 @@
           "addressPrefixes": [
             "[variables('addressPrefix')]"
           ]
-        },
-        "subnets": [
-          {
-            "name": "[parameters('subnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetAddressPrefix')]",
-              "privateEndpointNetworkPolicies": "Enabled",
-              "privateLinkServiceNetworkPolicies": "Enabled"
-            }
-          }
-        ]
+        }
       }
     },
     {
-      "type": "Microsoft.Network/publicIpAddresses",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
       "apiVersion": "2020-06-01",
-      "name": "[variables('publicIpAddressName')]",
+      "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnetName'))]",
+      "properties": {
+        "addressPrefix": "[variables('subnetAddressPrefix')]",
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Basic",
-        "tier": "Regional"
+        "name": "Basic"
       },
       "properties": {
-        "publicIpAllocationMethod": "Dynamic",
+        "publicIPAllocationMethod": "Dynamic",
         "publicIPAddressVersion": "IPv4",
         "dnsSettings": {
           "domainNameLabel": "[parameters('dnsLabelPrefix')]"
@@ -207,16 +216,13 @@
       "apiVersion": "2020-06-01",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
-      ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[parameters('VmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "storageProfile": {
           "osDisk": {
-            "createOption": "fromImage",
+            "createOption": "FromImage",
             "managedDisk": {
               "storageAccountType": "[variables('osDiskType')]"
             }
@@ -239,9 +245,12 @@
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+      ]
     }
   ],
   "outputs": {
@@ -251,11 +260,11 @@
     },
     "hostname": {
       "type": "string",
-      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))).dnsSettings.fqdn]"
     },
     "sshCommand": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+      "value": "[format('ssh {0}@{1}', parameters('adminUsername'), reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))).dnsSettings.fqdn)]"
     }
   }
 }

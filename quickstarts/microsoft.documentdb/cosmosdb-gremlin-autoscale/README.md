@@ -9,6 +9,8 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-gremlin-autoscale/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-gremlin-autoscale/CredScanResult.svg)
 
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-gremlin-autoscale/BicepVersion.svg)
+
 This template creates an Azure Cosmos DB account for Gremlin API, provisioned for two regions, then provisions a database and a graph with autoscale throughput.
 
 Below are the parameters which can be configured in the parameters file or template including:

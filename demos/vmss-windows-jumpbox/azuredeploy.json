@@ -1,0 +1,282 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmSku": {
+      "type": "string",
+      "defaultValue": "Standard_A1_V2",
+      "metadata": {
+        "description": "Size of VMs in the VM Scale Set."
+      }
+    },
+    "windowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2019-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter",
+        "2016-Datacenter",
+        "2019-Datacenter"
+      ],
+      "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
+      }
+    },
+    "vmssName": {
+      "type": "string",
+      "metadata": {
+        "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
+      },
+      "maxLength": 61
+    },
+    "instanceCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of VM instances (100 or less)."
+      },
+      "minValue": 2,
+      "maxValue": 100
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username on all VMs."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password on all VMs."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Default location"
+      }
+    }
+  },
+  "variables": {
+    "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
+    "longNamingInfix": "[toLower(parameters('vmssName'))]",
+    "jumpBoxName": "[concat(variables('namingInfix'), 'jbox')]",
+    "jumpBoxSAName": "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), 'jumpboxsa')), 'jb')]",
+    "jumpBoxOSDiskName": "[concat(variables('jumpBoxName'), '_OSDisk')]",
+    "jumpBoxIPConfigName": "[concat(variables('jumpBoxName'), 'ipconfig')]",
+    "jumpBoxNicName": "[concat(variables('jumpBoxName'), 'nic')]",
+    "newStorageAccountSuffix": "[concat(variables('namingInfix'), 'sa')]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/24",
+    "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
+    "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+    "publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
+    "nicName": "[concat(variables('namingInfix'), 'nic')]",
+    "ipConfigName": "[concat(variables('namingInfix'), 'ipconfig')]",
+    "osType": {
+      "publisher": "MicrosoftWindowsServer",
+      "offer": "WindowsServer",
+      "sku": "[parameters('windowsOSVersion')]",
+      "version": "latest"
+    },
+    "imageReference": "[variables('osType')]",
+    "networkSecurityGroupName": "default-NSG"
+  },
+  "resources": [
+    {
+      "comments": "Default Network Security Group for template",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-07-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-07-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('jumpBoxSAName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2021-02-01",
+      "sku": {
+        "name": "Standard_LRS"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-07-01",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('longNamingInfix')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('jumpBoxNicName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-07-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[variables('jumpBoxIPConfigName')]",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('jumpBoxName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('jumpBoxSAName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('jumpBoxNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSku')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('jumpBoxName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('imageReference')]",
+          "osDisk": {
+            "name": "[variables('jumpBoxOSDiskName')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('jumpBoxNicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('jumpBoxSAName')), '2019-06-01').primaryEndpoints['blob']]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[variables('namingInfix')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ],
+      "sku": {
+        "name": "[parameters('vmSku')]",
+        "tier": "Standard",
+        "capacity": "[parameters('instanceCount')]"
+      },
+      "properties": {
+        "overprovision": "true",
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "createOption": "FromImage",
+              "caching": "ReadWrite"
+            },
+            "imageReference": "[variables('imageReference')]"
+          },
+          "osProfile": {
+            "computerNamePrefix": "[variables('namingInfix')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "[variables('nicName')]",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "[variables('ipConfigName')]",
+                      "properties": {
+                        "subnet": {
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
