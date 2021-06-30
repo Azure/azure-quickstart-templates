@@ -64,6 +64,13 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
       },
       "defaultValue": ""
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_F1",
+      "metadata": {
+        "description":"Default VM Size"
+      }
     }    
   },
   "variables": {
@@ -77,21 +84,17 @@
     "subnet1Prefix": "10.0.0.0/24",
     "publicIPAddressName": "[concat('myIP1',variables('baseName'))]",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
     "vmName": "[parameters('dnsLabelPrefix')]",
-    "vmSize": "Standard_F1",
     "virtualNetworkName": "MyVNET",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "storageAccountType": "Standard_LRS",
     "storageAccountName": "[concat('vsts1',variables('baseName'))]",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
     "vstsAccountUrl": "[concat('https://dev.azure.com/', parameters('vstsAccount'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('StorageAccountName')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2021-02-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[variables('storageAccountType')]"
@@ -100,7 +103,7 @@
       "properties": {}
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -112,7 +115,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -133,13 +136,13 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -151,7 +154,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
               },
               "subnet": {
-                "id": "[variables('subnet1Ref')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('virtualNetworkName'), variables('subnet1Name'))]"
               }
             }
           }
@@ -159,17 +162,17 @@
       }
     },
     {
-      "apiVersion":  "2017-03-30",
+      "apiVersion":  "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -201,10 +204,10 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/newuserscript')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",

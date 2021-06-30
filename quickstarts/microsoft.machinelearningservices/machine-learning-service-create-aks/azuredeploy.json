@@ -1,0 +1,245 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "webserviceName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Azure Machine Learning Web Service. This resource will be created in the same resource group as the workspace."
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": "mlworkspace",
+      "metadata": {
+        "description": "The name of the Azure Machine Learning Workspace."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location of the Azure Machine Learning Workspace."
+      }
+    },
+    "environmentName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Azure Machine Learning Environment for deployment. See https://docs.microsoft.com/en-us/azure/machine-learning/how-to-use-environments and https://docs.microsoft.com/en-us/azure/machine-learning/resource-curated-environments ."
+      }
+    },
+    "environmentVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "Version of Azure Machine Learning Environment for deployment."
+      }
+    },
+    "cpu": {
+      "type": "string",
+      "metadata": {
+        "description": "The default number of CPU cores to allocate for this Webservice. Can be a decimal."
+      }
+    },
+    "cpuLimit": {
+      "type": "string",
+      "metadata": {
+        "description": "The max number of CPU cores this Webservice is allowed to use. Can be a decimal."
+      }
+    },
+    "gpu": {
+      "type": "int",
+      "metadata": {
+        "description": "The number of gpu cores to allocate for this Webservice"
+      }
+    },
+    "memoryInGB": {
+      "type": "string",
+      "metadata": {
+        "description": "The amount of memory (in GB) to allocate for this Webservice. Can be a decimal."
+      }
+    },
+    "driverProgram": {
+      "type": "string",
+      "metadata": {
+        "description": "Relative path of a file from storage account that contains the code to run for service."
+      }
+    },
+    "models": {
+      "type": "array",
+      "metadata": {
+        "description": "Details of the models to be deployed. Each model must have the following properties: 'name'(name of the model), 'path'(relative path of a file from storage account linked to Workspace), 'mimeType'(MIME type of Model content. For more details about MIME type, please open https://www.iana.org/assignments/media-types/media-types.xhtml), 'framework'(framework of the model, use Custom if unsure) and 'frameworkVersion'(framework version of the model)."
+      }
+    },
+    "authEnabled": {
+      "type": "bool",
+      "metadata": {
+        "description": "Whether or not to enable key auth for this Webservice."
+      }
+    },
+    "tokenAuthEnabled": {
+      "type": "bool",
+      "metadata": {
+        "description": "Whether or not to enable token auth for this Webservice. "
+      }
+    },
+    "primaryKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "A primary auth key to use for this Webservice."
+      }
+    },
+    "secondaryKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "A secondary auth key to use for this Webservice."
+      }
+    },
+    "scoringTimeoutMilliSeconds": {
+      "type": "int",
+      "metadata": {
+        "description": "A timeout to enforce for scoring calls to this Webservice."
+      }
+    },
+    "appInsightsEnabled": {
+      "type": "bool",
+      "metadata": {
+        "description": "Whether or not to enable AppInsights for this Webservice."
+      }
+    },
+    "computeTarget": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of compute target."
+      }
+    },
+    "namespace": {
+      "type": "string",
+      "metadata": {
+        "description": "Kubernetes namespace in which to deploy the service: up to 63 lowercase alphanumeric ('a'-'z', '0'-'9') and hyphen ('-') characters. The first and last characters cannot be hyphens."
+      }
+    },
+    "numReplicas": {
+      "type": "int",
+      "metadata": {
+        "description": "The number of containers to allocate for this Webservice. No default, if this parameter is not set then the autoscaler is enabled by default."
+      }
+    },
+    "autoScaleEnabled": {
+      "type": "bool",
+      "metadata": {
+        "description": "Whether or not to enable autoscaling for this Webservice. Defaults to True if num_replicas is None."
+      }
+    },
+    "autoScaleMinReplicas": {
+      "type": "int",
+      "metadata": {
+        "description": "The minimum number of containers to use when autoscaling this Webservice."
+      }
+    },
+    "autoScaleMaxReplicas": {
+      "type": "int",
+      "metadata": {
+        "description": "The maximum number of containers to use when autoscaling this Webservice."
+      }
+    },
+    "autoscaleTargetUtilization": {
+      "type": "int",
+      "metadata": {
+        "description": "The target utilization (in percent out of 100) the autoscaler should attempt to maintain for this Webservice."
+      }
+    },
+    "autoscaleRefreshSeconds": {
+      "type": "int",
+      "metadata": {
+        "description": "How often the autoscaler should attempt to scale this Webservice."
+      }
+    },
+    "periodSeconds": {
+      "type": "int",
+      "metadata": {
+        "description": "How often (in seconds) to perform the liveness probe."
+      }
+    },
+    "initialDelaySeconds": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of seconds after the container has started before liveness probes are initiated."
+      }
+    },
+    "timeoutSeconds": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of seconds after which the liveness probe times out."
+      }
+    },
+    "failureThreshold": {
+      "type": "int",
+      "metadata": {
+        "description": "When a pod starts and the liveness probe fails, Kubernetes will try --failure-threshold times before giving up."
+      }
+    },
+    "successThreshold": {
+      "type": "int",
+      "metadata": {
+        "description": "Minimum consecutive successes for the liveness probe to be considered successful after having failed."
+      }
+    }
+  },
+  "variables": {
+    "driverProgram": "[trim(parameters('driverProgram'))]",
+    "driverProgramFileName": "[last(split(trim(parameters('driverProgram')), '/'))]",
+    "assets": [
+      {
+        "mimeType": "application/x-python",
+        "url": "[if(startsWith(variables('driverProgram'), '/'), concat('aml://storage', variables('driverProgram')), concat('aml://storage/', variables('driverProgram')))]"
+      }
+    ],
+    "copy": [
+      {
+        "name": "models",
+        "count": "[length(parameters('models'))]",
+        "mode": "serial",
+        "input": {
+          "name": "[parameters('models')[copyIndex('models')].name]",
+          "url": "[if(startsWith(parameters('models')[copyIndex('models')].path, '/'), concat('aml://storage', parameters('models')[copyIndex('models')].path), concat('aml://storage/', parameters('models')[copyIndex('models')].path))]",
+          "mimeType": "[parameters('models')[copyIndex('models')].mimeType]",
+          "framework": "[parameters('models')[copyIndex('models')].framework]",
+          "frameworkVersion": "[parameters('models')[copyIndex('models')].frameworkVersion]"
+        }
+      }
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces/services",
+      "apiVersion": "2020-05-01-preview",
+      "name": "[concat(parameters('workspaceName'), '/', parameters('webserviceName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "environmentImageRequest": {
+          "models": "[ variables('models')]",
+          "driverProgram": "[if(empty(variables('driverProgramFileName')), json('null'), variables('driverProgramFileName'))]",
+          "assets": "[if(empty(variables('driverProgramFileName')), json('null'), variables('assets'))]",
+          "environmentReference": "[if(not(or(empty(parameters('environmentName')), empty(parameters('environmentVersion')))), createObject('name', parameters('environmentName'), 'version', parameters('environmentVersion')), json('null'))]"
+        },
+        "scoringTimeoutMs": "[parameters('scoringTimeoutMilliSeconds')]",
+        "appInsightsEnabled": "[parameters('appInsightsEnabled')]",
+        "authEnabled": "[parameters('authEnabled')]",
+        "aadAuthEnabled": "[parameters('tokenAuthEnabled')]",
+        "keys": "[if(not(or(empty(parameters('primaryKey')), empty(parameters('secondaryKey')))), createObject('primaryKey', parameters('primaryKey'), 'secondaryKey', parameters('secondaryKey')), json('null'))]",
+        "ContainerResourceRequirements": {
+          "cpu": "[parameters('cpu')]",
+          "cpuLimit": "[parameters('cpuLimit')]",
+          "gpu": "[parameters('gpu')]",
+          "memoryInGB": "[parameters('memoryInGB')]"
+        },
+        "computeType": "AKS",
+        "computeName": "[parameters('computeTarget')]",
+        "numReplicas": "[parameters('numReplicas')]",
+        "autoScaler": "[if(parameters('autoScaleEnabled'), createObject('autoscaleEnabled', parameters('autoScaleEnabled'), 'minReplicas', int(parameters('autoScaleMinReplicas')), 'maxReplicas', int(parameters('autoScaleMaxReplicas')), 'targetUtilization', int(parameters('autoscaleTargetUtilization')), 'refreshPeriodInSeconds', int(parameters('autoscaleRefreshSeconds'))), json('null'))]",
+        "namespace": "[parameters('namespace')]",
+        "livenessProbeRequirements": "[createObject('periodSeconds', parameters('periodSeconds'), 'initialDelaySeconds', parameters('initialDelaySeconds'), 'timeoutSeconds' , parameters('timeoutSeconds'), 'failureThreshold', parameters('failureThreshold'), 'successThreshold', parameters('successThreshold'))]"
+      }
+    }
+  ]
+}

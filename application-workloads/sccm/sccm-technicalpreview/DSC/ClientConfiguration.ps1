@@ -11,7 +11,7 @@ configuration Configuration
         [Parameter(Mandatory)]
         [String]$PSName,
         [Parameter(Mandatory)]
-        [String]$ClientName,
+        [System.Array]$ClientName,
         [Parameter(Mandatory)]
         [String]$DNSIPAddress,
         [Parameter(Mandatory)]
@@ -92,7 +92,7 @@ configuration Configuration
 
         FileReadAccessShare DomainSMBShare
         {
-            Name   = $LogFolder
+            Name = $LogFolder
             Path = $LogPath
             Account = $DCComputerAccount,$PSComputerAccount
             DependsOn = "[File]ShareFolder"

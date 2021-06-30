@@ -2,6 +2,20 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/kafka-on-ubuntu/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -136,8 +150,6 @@
     "vmStorageAccountContainerName": "vhd",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
     "computerNamePrefix": "kafkanode",
-    "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/kafka-on-ubuntu/",
-    "templateUrl": "[variables('scriptUrl')]",
     "sharedTemplateName": "shared-resources",
     "jumpboxTemplateName": "jumpbox-resources-",
     "tshirtSizeS": {
@@ -167,7 +179,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('templateUrl'), variables('sharedTemplateName'), '.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('sharedTemplateName'), '.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -199,7 +211,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('templateUrl'), variables('jumpboxTemplateName'), parameters('jumpbox'), '.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('jumpboxTemplateName'), parameters('jumpbox'), '.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -303,7 +315,7 @@
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
+            "disablePasswordAuthentication": false
           }
         },
         "storageProfile": {
@@ -354,7 +366,7 @@
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
+            "disablePasswordAuthentication": false
           }
         },
         "storageProfile": {
@@ -399,7 +411,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('scriptUrl'), 'kafka-cluster-install.sh')]"
+            "[uri(parameters('_artifactsLocation'), concat('kafka-cluster-install.sh', parameters('_artifactsLocationSasToken')))]"
           ],
           "commandToExecute": "[concat('bash kafka-cluster-install.sh -z ',' 1 ',' -c ', variables('numberOfZookeeperInstances'),' -i ', parameters('kafkaZooNodeIPAddressPrefix'))]"
         }
@@ -425,7 +437,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('scriptUrl'), 'kafka-cluster-install.sh')]"
+            "[uri(parameters('_artifactsLocation'), concat('kafka-cluster-install.sh', parameters('_artifactsLocationSasToken')))]"
           ],
           "commandToExecute": "[concat('bash kafka-cluster-install.sh -b ',copyindex(),' -k ',parameters('kafkaVersion'),' -c ', variables('numberOfZookeeperInstances'),' -i ', parameters('kafkaZooNodeIPAddressPrefix'))]"
         }
