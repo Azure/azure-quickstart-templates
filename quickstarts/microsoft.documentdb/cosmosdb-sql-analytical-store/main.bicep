@@ -1,5 +1,5 @@
 @description('Cosmos DB account name')
-param accountName string = toLower('cosmos${uniqueString(resourceGroup().id)}')
+param accountName string = toLower(uniqueString(resourceGroup().id))
 
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
@@ -13,11 +13,11 @@ param containerName string = 'container1'
 @description('The partition key for the container')
 param partitionKeyPath string = '/partitionKey'
 
+@description('The throughput policy for the container')
 @allowed([
   'Manual'
   'Autoscale'
 ])
-@description('The throughput policy for the container')
 param throughputPolicy string = 'Autoscale'
 
 @description('Throughput value when using Manual Throughput Policy for the container')
@@ -42,7 +42,7 @@ var locations = [
     isZoneRedundant: false
   }
 ]
-var throughput_policy = {
+var throughput_Policy = {
   Manual: {
     Throughput: manualProvisionedThroughput
   }
@@ -68,7 +68,7 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15'
 
 resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
   parent: accountName_resource
-  name: databaseName
+  name: '${databaseName}'
   properties: {
     resource: {
       id: databaseName
@@ -90,6 +90,9 @@ resource accountName_databaseName_containerName 'Microsoft.DocumentDB/databaseAc
       }
       analyticalStorageTtl: analyticalStoreTTL
     }
-    options: throughput_policy[throughputPolicy]
+    options: throughput_Policy[throughputPolicy]
   }
+  dependsOn: [
+    accountName_resource
+  ]
 }
