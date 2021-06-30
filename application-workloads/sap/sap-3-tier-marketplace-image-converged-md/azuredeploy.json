@@ -99,7 +99,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/sap/sap-3-tier-marketplace-image-converged-md/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -124,7 +124,6 @@
         "publisher": "MicrosoftWindowsServer",
         "version": "latest",
         "OSType": "Windows",
-        "Plan": {},
         "UsePlan": false
       },
       "Windows Server 2012 R2 Datacenter": {
@@ -133,7 +132,6 @@
         "publisher": "MicrosoftWindowsServer",
         "version": "latest",
         "OSType": "Windows",
-        "Plan": {},
         "UsePlan": false
       },
       "Windows Server 2016 Datacenter": {
@@ -142,7 +140,6 @@
         "publisher": "MicrosoftWindowsServer",
         "version": "latest",
         "OSType": "Windows",
-        "Plan": {},
         "UsePlan": false
       },
       "SLES 12": {
@@ -151,7 +148,6 @@
         "publisher": "SUSE",
         "version": "latest",
         "OSType": "Linux",
-        "Plan": {},
         "UsePlan": false
       },
       "SLES 12 BYOS": {
@@ -160,7 +156,6 @@
         "publisher": "SUSE",
         "OSType": "Linux",
         "version": "latest",
-        "Plan": {},
         "UsePlan": false
       },
       "RHEL 7.2": {
@@ -169,7 +164,6 @@
         "publisher": "RedHat",
         "version": "latest",
         "OSType": "Linux",
-        "Plan": {},
         "UsePlan": false
       },
       "Oracle Linux 7.2": {
@@ -178,7 +172,6 @@
         "publisher": "Oracle",
         "version": "latest",
         "OSType": "Linux",
-        "Plan": {},
         "UsePlan": false
       }
     },
@@ -484,7 +477,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2021-04-01",
       "name": "[variables('nestedDeploymentNameNSG')]",
       "type": "Microsoft.Resources/deployments",
       "condition": "[equals(length(parameters('subnetId')), 0)]",
@@ -505,12 +498,12 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2021-04-01",
       "name": "[variables('nestedDeploymentNameVnet')]",
       "type": "Microsoft.Resources/deployments",
       "condition": "[equals(length(parameters('subnetId')), 0)]",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -540,7 +533,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameCL')]",
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
@@ -551,7 +544,7 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2021-04-01",
       "name": "[concat(variables('nestedDeploymentNamePIP'), '-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -576,11 +569,11 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2021-04-01",
       "name": "[variables('nestedDeploymentNameLBCL')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]"
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -623,7 +616,7 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2021-04-01",
       "name": "[concat(variables('nestedDeploymentNameNICCL'), '-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -658,7 +651,7 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicNameCL'), '-', copyIndex())]",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2020-07-01",
       "copy": {
         "name": "nicCLLoop",
         "count": "[variables('clvmCount')]"
@@ -666,8 +659,8 @@
       "dependsOn": [
         "pipLoop",
         "nicConfigCLLoop",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameLBCL'))]"
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameLBCL'))]"
       ],
       "location": "[parameters('location')]",
       "properties": {
@@ -676,8 +669,8 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": "[reference(concat(variables('nestedDeploymentNameNICCL'), '-', copyIndex())).outputs.selectedConfiguration.value.publicIPAddress]",
-              "subnet": "[reference(concat(variables('nestedDeploymentNameNICCL'), '-', copyIndex())).outputs.selectedConfiguration.value.subnet]",
+              "publicIPAddress": "[reference(resourceId(variables('nestedDeploymentNameNICCL'), '-', copyIndex())).outputs.selectedConfiguration.value.publicIPAddress]",
+              "subnet": "[reference(resourceId(variables('nestedDeploymentNameNICCL'), '-', copyIndex())).outputs.selectedConfiguration.value.subnet]",
               "loadBalancerBackendAddressPools": "[reference(variables('nestedDeploymentNameLBCL')).outputs.nicBackAddressPools.value]"
             }
           }
@@ -685,7 +678,7 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2021-04-01",
       "name": "[concat(variables('nestedDeploymentNameProf'), '-cl-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -727,7 +720,7 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2021-04-01",
       "name": "[concat(variables('nestedDeploymentNameCL'), '-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -736,7 +729,7 @@
       },
       "dependsOn": [
         "nicCLLoop",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameCL'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('avSetNameCL'))]",
         "osDiskPartsCLLoop"
       ],
       "properties": {
@@ -747,10 +740,10 @@
         },
         "parameters": {
           "imageReference": {
-            "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-cl-', copyIndex())).outputs.imageReference.value]"
+            "value": "[reference(resourceId(variables('nestedDeploymentNameProf'), '-cl-', copyIndex())).outputs.imageReference.value]"
           },
           "osDisk": {
-            "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-cl-', copyIndex())).outputs.osDisk.value]"
+            "value": "[reference(resourceId(variables('nestedDeploymentNameProf'), '-cl-', copyIndex())).outputs.osDisk.value]"
           },
           "osDiskType": {
             "value": "[variables('osDiskType')]"
@@ -811,7 +804,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameDI')]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
@@ -822,7 +815,7 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2021-04-01",
       "name": "[concat(variables('nestedDeploymentNameNICDI'), '-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -857,9 +850,9 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicNameDI'), '-', copyindex())]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
         "nicConfigDILoop"
       ],
       "copy": {
@@ -873,14 +866,14 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
-              "subnet": "[reference(concat(variables('nestedDeploymentNameNICDI'), '-', copyIndex())).outputs.selectedConfiguration.value.subnet]"
+              "subnet": "[reference(resourceId(variables('nestedDeploymentNameNICDI'), '-', copyIndex())).outputs.selectedConfiguration.value.subnet]"
             }
           }
         ]
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2021-04-01",
       "name": "[concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -922,7 +915,7 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2021-04-01",
       "name": "[concat(variables('nestedDeploymentNameDI'), '-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -931,7 +924,7 @@
       },
       "dependsOn": [
         "nicDILoop",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameDI'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('avSetNameDI'))]",
         "osDiskPartsDILoop"
       ],
       "properties": {
@@ -942,10 +935,10 @@
         },
         "parameters": {
           "imageReference": {
-            "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())).outputs.imageReference.value]"
+            "value": "[reference(resourceId(variables('nestedDeploymentNameProf'), '-di-', copyIndex())).outputs.imageReference.value]"
           },
           "osDisk": {
-            "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())).outputs.osDisk.value]"
+            "value": "[reference(resourceId(variables('nestedDeploymentNameProf'), '-di-', copyIndex())).outputs.osDisk.value]"
           },
           "osDiskType": {
             "value": "[variables('osDiskType')]"
