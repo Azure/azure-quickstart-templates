@@ -401,7 +401,7 @@ If your template has some pre-requisite such as existing Virtual Network or stor
 
 You can optionally provide a UI Definition file to customize the deployment experience in the Azure portal.  If one is provided, be sure to update the links in the readme file to include the createUiDefinition.json file in the url.  See the [sample-README.md](./sample-README.md) file for an example.
 
-More information can be found at the links below - the documenation is tailored for the marketplace but the shcema and behavior for createUiDefinition is a generic construct for the Azure portal.
+More information can be found at the links below - the documentation is tailored for the marketplace but the schema and behavior for createUiDefinition is a generic construct for the Azure portal.
 
 [createUiDefinition Overview](https://docs.microsoft.com/en-us/azure/azure-resource-manager/managed-applications/create-uidefinition-overview)
 
