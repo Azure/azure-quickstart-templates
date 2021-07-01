@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmSku": {
@@ -71,8 +71,11 @@
     },
     "appGwPublicIPAddressName": "[concat(variables('namingInfix'), 'appGwPip')]",
     "appGwName": "[concat(variables('namingInfix'), 'appGw')]",
+    "appGwPublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('appGwPublicIPAddressName'))]",
+    "appGwID": "[resourceId('Microsoft.Network/applicationGateways',variables('appGwName'))]",
     "appGwSubnetName": "[concat(variables('namingInfix'),'appGwSubnet')]",
     "appGwSubnetPrefix": "10.0.1.0/24",
+    "appGwSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('appGwSubnetName'))]",
     "appGwFrontendPort": 80,
     "appGwBackendPort": 80,
     "appGwBePoolName": "[concat(variables('namingInfix'), 'appGwBepool')]",
@@ -145,7 +148,7 @@
             "name": "appGwIpConfig",
             "properties": {
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('appGwSubnetName'))]"
+                "id": "[variables('appGwSubnetID')]"
               }
             }
           }
@@ -155,7 +158,7 @@
             "name": "appGwFrontendIP",
             "properties": {
               "PublicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('appGwPublicIPAddressName'))]"
+                "id": "[variables('appGwPublicIPAddressID')]"
               }
             }
           }
@@ -188,10 +191,10 @@
             "name": "appGwHttpListener",
             "properties": {
               "FrontendIPConfiguration": {
-                "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations',variables('appGwName'), 'appGwFrontendIP')]"
+                "Id": "[concat(variables('appGwID'), '/frontendIPConfigurations/appGwFrontendIP')]"
               },
               "FrontendPort": {
-                "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts',variables('appGwName'), 'appGwFrontendPort')]"
+                "Id": "[concat(variables('appGwID'), '/frontendPorts/appGwFrontendPort')]"
               },
               "Protocol": "Http"
             }
@@ -203,13 +206,13 @@
             "properties": {
               "RuleType": "Basic",
               "httpListener": {
-                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts/httpListeners',variables('appGwName'), 'appGwHttpListener')]"
+                "id": "[concat(variables('appGwID'), '/httpListeners/appGwHttpListener')]"
               },
               "backendAddressPool": {
-                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools',variables('appGwName'), variables('appGwBePoolName') )]"
+                "id": "[concat(variables('appGwID'), '/backendAddressPools/', variables('appGwBePoolName'))]"
               },
               "backendHttpSettings": {
-                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection',variables('appGwName'), 'appGwBackendHttpSettings')]"
+                "id": "[concat(variables('appGwID'), '/backendHttpSettingsCollection/appGwBackendHttpSettings')]"
               }
             }
           }
@@ -261,11 +264,11 @@
                       "name": "[variables('ipConfigName')]",
                       "properties": {
                         "subnet": {
-                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), variables('subnetName'))]"
+                          "id": "[resourceId('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
                         },
                         "ApplicationGatewayBackendAddressPools": [
                           {
-                            "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools/', variables('appGwName'), variables('appGwBePoolName'))]"
+                            "id": "[resourceId('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/applicationGateways/', variables('appGwName'), '/backendAddressPools/', variables('appGwBePoolName'))]"
                           }
                         ]
                       }
