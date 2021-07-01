@@ -399,7 +399,7 @@ If your template has some pre-requisite such as existing Virtual Network or stor
 
 ### Portal Deployments with createUiDefinition.json
 
-You can optionally provide a UI Definition file to customize the deployment experience in the Azure portal.  If one is provided, be sure to update the links in the readme file to include the createUiDefinition.json file in the url.  See the [sample-README.md](./sample-README.md) file for an example.  For a working sample see the [100-marketplace-sample](../100-marketplace-sample/README.md) QuickStart.
+You can optionally provide a UI Definition file to customize the deployment experience in the Azure portal.  If one is provided, be sure to update the links in the readme file to include the createUiDefinition.json file in the url.  See the [sample-README.md](./sample-README.md) file for an example.
 
 More information can be found at the links below - the documenation is tailored for the marketplace but the shcema and behavior for createUiDefinition is a generic construct for the Azure portal.
 
