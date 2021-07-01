@@ -106,11 +106,7 @@
     "subnetName": "Subnet-1",
     "subnetPrefix": "10.0.0.0/24",
     "publicIPAddressType": "Dynamic",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables ('subnetName'))]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('lbName'))]",
     "numberOfInstances": 2,
-    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontend')]",
     "storageAccountName": "[uniqueString(resourceGroup().id)]",
     "networkSecurityGroupName": "[concat(variables('subnetName'), '-nsg')]"
   },
@@ -120,8 +116,8 @@
       "name": "[variables('storageAccountName')]",
       "apiVersion": "2020-08-01-preview",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
+      "sku": {
+        "name": "[variables('storageAccountType')]"
       }
     },
     {
@@ -183,7 +179,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('nicNamePrefix'), copyindex())]",
       "location": "[parameters('location')]",
@@ -194,7 +190,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
         "[resourceId('Microsoft.Network/loadBalancers', parameters('lbName'))]",
-        "[concat('Microsoft.Network/loadBalancers', parameters('lbName'), '/inboundNatRules/RDP-VM', copyIndex())]"
+        "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules/RDP-VM', concat(parameters('lbName'), copyIndex()))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -203,16 +199,18 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', concat(parameters('vnetName'), variables ('subnetName')))]"
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('lbID'), '/backendAddressPools/LoadBalancerBackend')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',parameters('lbName'), 'LoadBalancerBackend')]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/RDP-VM', copyindex())]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',parameters('lbName'), '/RDP-VM', copyindex())]"
+
+
                 }
               ]
             }
@@ -221,7 +219,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "name": "[parameters('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[parameters('location')]",
@@ -234,7 +232,7 @@
             "name": "LoadBalancerFrontend",
             "properties": {
               "publicIPAddress": {
-                "id": "[variables('publicIPAddressID')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]"
               }
             }
           }
@@ -247,7 +245,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/loadBalancers/inboundNatRules",
       "name": "[concat(parameters('lbName'), '/', 'RDP-VM', copyIndex())]",
       "location": "[parameters('location')]",
@@ -260,7 +258,7 @@
       ],
       "properties": {
         "frontendIPConfiguration": {
-          "id": "[variables('frontEndIPConfigID')]"
+          "id":  "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',parameters('lbName'), 'loadBalancerFrontend')]"
         },
         "protocol": "Tcp",
         "frontendPort": "[copyIndex(5000)]",
@@ -279,7 +277,7 @@
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces', parameters('nicNamePrefix'), copyindex())]",
+        "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicNamePrefix'), copyindex())]",
         "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
       ],
       "properties": {
@@ -308,7 +306,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[concat('Microsoft.Network/networkInterfaces',concat(parameters('nicNamePrefix'),copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('nicNamePrefix'),copyindex())]"
             }
           ]
         },
