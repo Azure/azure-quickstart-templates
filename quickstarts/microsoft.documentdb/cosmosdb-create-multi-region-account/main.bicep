@@ -1,5 +1,5 @@
 @description('Cosmos DB account name')
-param accountName string = uniqueString(resourceGroup().id)
+param accountName string = toLower(uniqueString(resourceGroup().id))
 
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
@@ -46,13 +46,14 @@ param multipleWriteLocations bool = false
 @description('Enable automatic failover for regions. Ignored when Multi-Master is enabled')
 param automaticFailover bool = true
 
-var accountName_var_var_var = toLower(accountName)
 var apiType = {
   Sql: {
     kind: 'GlobalDocumentDB'
+    capabilities: []
   }
   MongoDB: {
     kind: 'MongoDB'
+    capabilities: []
   }
   Cassandra: {
     kind: 'GlobalDocumentDB'
@@ -111,8 +112,8 @@ var locations = [
   }
 ]
 
-resource accountName_var_var 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: accountName_var_var_var
+resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
+  name: accountName
   location: location
   kind: apiType[api].kind
   properties: {
@@ -120,7 +121,7 @@ resource accountName_var_var 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' 
     locations: locations
     databaseAccountOfferType: 'Standard'
     enableAutomaticFailover: automaticFailover
-    capabilities: (contains(apiType, 'capabilities') ? apiType[api].capabilities : json('null'))
+    capabilities: apiType[api].capabilities
     enableMultipleWriteLocations: multipleWriteLocations
   }
 }
