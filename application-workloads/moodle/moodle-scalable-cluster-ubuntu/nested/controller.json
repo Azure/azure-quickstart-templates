@@ -10,7 +10,6 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
       }
@@ -19,7 +18,7 @@
   "resources": [
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2020-11-01",
       "location": "[parameters('location')]",
       "name": "[parameters('moodleCommon').jboxPipName]",
       "properties": {
@@ -34,7 +33,7 @@
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2020-11-01",
       "location": "[parameters('location')]",
       "name": "[parameters('moodleCommon').jboxNsgName]",
       "properties": {
@@ -73,9 +72,9 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2020-11-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('moodleCommon').jboxPipName)]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', parameters('moodleCommon').jboxPipName)]"
       ],
       "location": "[parameters('location')]",
       "name": "[parameters('moodleCommon').jboxNicName]",
@@ -104,9 +103,9 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('moodleCommon').jboxNicName)]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', parameters('moodleCommon').jboxNicName)]"
       ],
       "location": "[parameters('location')]",
       "name": "[parameters('moodleCommon').jboxVmName]",
@@ -155,9 +154,9 @@
     {
       "condition": "[parameters('moodleCommon').applyScriptsSwitch]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('moodleCommon').jboxVmName)]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('moodleCommon').jboxVmName)]"
       ],
       "name": "[concat(parameters('moodleCommon').jboxVmName,'-ScriptProcessor')]",
       "properties": {
@@ -165,6 +164,9 @@
         "parameters": {
           "moodleCommon": {
             "value": "[parameters('moodleCommon')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         },
         "templateLink": {
@@ -175,9 +177,9 @@
     {
       "condition": "[parameters('moodleCommon').azureBackupSwitch]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',parameters('moodleCommon').jboxVmName)]"
+        "[resourceId('Microsoft.Compute/virtualMachines/',parameters('moodleCommon').jboxVmName)]"
       ],
       "name": "[concat(parameters('moodleCommon').jboxVmName,'-Backup')]",
       "properties": {
@@ -188,6 +190,9 @@
           },
           "vmName": {
             "value": "[parameters('moodleCommon').jboxVmName]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         },
         "templateLink": {
@@ -197,16 +202,6 @@
     }
   ],
   "variables": {
-    "documentation01": "This sub-template drives the controller/jump-box which is used as the access-point for other moodle VM's ",
-    "documentation02": "It expects certain values in the 'common' datastructure.",
-    "documentation03": "    vnetName     - name of virtual network",
-    "documentation04": "    subnetWeb    - name of subnet for controller (and vm scale set)",
-    "documentation06": "    jboxPipName  - name of Public IP address for the jumpbox (note that none of the other VM's get a PIP - just the jumpbox",
-    "documentation07": "    jboxNicName  - name of the network interface (all VM's must hae a nic) to crate, tied to the public IP address",
-    "documentation08": "    jboxNsgName  - name of the network security group, regulating access to/from the jumpbox",
-    "documentation09": "This sub-template calls other sub-templates",
-    "documentation10": "    controllerconfig       - conditionally applies post-deployment script on the VM",
-    "documentation18": "    recoveryservicesEnlist - conditionally enlists the VM into the backup regimen",
     "nicRef": "[resourceId('Microsoft.Network/networkInterfaces', parameters('moodleCommon').jboxNicName)]",
     "nsgRef": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('moodleCommon').jboxNsgName)]",
     "pipRef": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').jboxPipName)]",
