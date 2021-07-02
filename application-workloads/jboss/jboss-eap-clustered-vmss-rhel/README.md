@@ -36,20 +36,20 @@ Red Hat Subscription Management (RHSM) is a customer-driven, end-to-end solution
 
 ## Template Solution Architecture
 
-This Azure Resource Manager (ARM) template creates all the Azure compute resources to run JBoss EAP 7.2/EAP 7.3 cluster running Red Hat Enterprise Linux (RHEL) 7.7/8.0 VMSS instances where the user can decide the number of instances to be deployed and scale it according to their requirement. The following resources are created by this template:
+This Azure Resource Manager (ARM) template creates all the Azure compute resources to run JBoss EAP 7.2/EAP 7.3 cluster running Red Hat Enterprise Linux (RHEL) 7.7/8.0/8.4 VMSS instances where the user can decide the number of instances to be deployed and scale it according to their requirement. The following resources are created by this template:
 
-- RHEL 7.7/8.0 Virtual Machine Scale Set instances
+- RHEL 7.7/8.0/8.4 Virtual Machine Scale Set instances
 - 1 Load Balancer
 - Virtual Network with a single subnet
 - JBoss EAP 7.2/EAP 7.3 cluster setup on the VMSS instances
 - Sample Java application called **eap-session-replication** deployed on JBoss EAP
 - Storage Account
 
-Note that the users also have the option to choose between the Red Hat Enterprise Linux versions 7.7 and 8.0 and JBoss EAP versions 7.2 and 7.3. Users can select one of the following combinations for deployment
+Note that the users also have the option to choose between the Red Hat Enterprise Linux versions 7.7, 8.0 and 8.4 and JBoss EAP versions 7.2 and 7.3. Users can select one of the following combinations for deployment
 
 - JBoss EAP 7.2 on RHEL 7.7
 - JBoss EAP 7.2 on RHEL 8.0
-- JBoss EAP 7.3 on RHEL 8.0
+- JBoss EAP 7.3 on RHEL 8.4
 
 Following is the Architecture:
 
@@ -75,7 +75,7 @@ Read [Red Hat Enterprise Linux pricing](https://azure.microsoft.com/pricing/deta
 In order to use BYOS for RHEL OS Licensing, you need to have a valid Red Hat subscription with entitlements to use RHEL OS in Azure. Please complete the following prerequisites in order to use RHEL OS through BYOS model before you deploy this quickstart template.
 
 1. Ensure you have RHEL OS and JBoss EAP entitlements attached to your Red Hat Subscription.
-2. Authorize your Azure Subscription ID to use RHEL BYOS images. Please follow [Red Hat Subscription Management (RHSM) documentation](https://access.redhat.com/documentation/en-us/red_hat_subscription_management/1/html/red_hat_cloud_access_reference_guide/con-enable-subs) to complete this process. This includes multiple steps including:
+2. Authorize your Azure Subscription ID to use RHEL BYOS images. Please follow [Red Hat Cloud Access program overview]](https://access.redhat.com/documentation/en/red_hat_subscription_management/1/html/red_hat_cloud_access_reference_guide/getting-started-with-ca_cloud-access#proc_new-ca-experience-option2_cloud-access) to complete this process. This includes multiple steps including:
 
     2.1 Enable Microsoft Azure as provider in your Red Hat Cloud Access Dashboard.
 
@@ -83,7 +83,7 @@ In order to use BYOS for RHEL OS Licensing, you need to have a valid Red Hat sub
 
     2.3 Enable new products for Cloud Access on Microsoft Azure.
     
-    2.4 Activate Red Hat Gold Images for your Azure Subscription. Refer to [Red Hat Subscription Management](https://access.redhat.com/documentation/en-us/red_hat_subscription_management/1/html/red_hat_cloud_access_reference_guide/using_red_hat_gold_images#con-gold-image-azure) for more details.
+    2.4 Activate Red Hat Gold Images for your Azure Subscription. Refer to [Getting access to Gold Images](https://access.redhat.com/documentation/en/red_hat_subscription_management/1/html/red_hat_cloud_access_reference_guide/understanding-gold-images_cloud-access#getting-access-to-gold-images_cloud-access) for more details.
 
     2.5 Wait for Red Hat Gold Images to be available in your Azure subscription. These are typically available within 3 hours.
     
@@ -105,11 +105,13 @@ In order to use BYOS for RHEL OS Licensing, you need to have a valid Red Hat sub
 
     `az vm image terms accept --publisher redhat --offer rhel-byos --plan rhel-lvm8` - *For RHEL 8.0 BYOS VM*
 
-4. Your subscription is now ready to deploy RHEL 7.7/8.0 BYOS VMSS instances.
+    `az vm image terms accept --publisher redhat --offer rhel-byos --plan rhel-lvm84` - *For RHEL 8.4 BYOS VM*
+
+4. Your subscription is now ready to deploy RHEL 7.7/8.0/8.4 BYOS VMSS instances.
 
 #### Using JBoss EAP with BYOS Model
 
-JBoss EAP is available on Azure through BYOS model only; you need to supply your RHSM credentials along with RHSM Pool ID showing valid EAP entitlements when deploying this template. If you do not have EAP entitlement, you must obtain a [JBoss EAP evaluation subscription](https://access.redhat.com/products/red-hat-jboss-enterprise-application-platform/evaluation) or contact Red Hat for a production subscription before you get started.
+JBoss EAP is available on Azure through BYOS model only; you need to supply your RHSM credentials along with RHSM Pool ID showing valid EAP entitlements when deploying this template. If you do not have EAP entitlement, you must contact Red Hat for a subscription before you get started.
 
 ## Prerequisites
 
@@ -127,7 +129,7 @@ JBoss EAP is available on Azure through BYOS model only; you need to supply your
     
 ## Deployment Steps
 
-Build your environment with JBoss EAP 7.2/EAP 7.3 cluster setup on RHEL 7.7/8.0 VMSS instances where the user can decide the number of instances to be deployed and scale it according to their requirement on Azure in a few simple steps:
+Build your environment with JBoss EAP 7.2/EAP 7.3 cluster setup on RHEL 7.7/8.0/8.4 VMSS instances where the user can decide the number of instances to be deployed and scale it according to their requirement on Azure in a few simple steps:
 1. Launch the template by clicking the **Deploy to Azure** button.  
 2. Complete the following parameter values and accept the Terms and Conditions before clicking on the **Purchase** button.
 
@@ -143,7 +145,7 @@ Build your environment with JBoss EAP 7.2/EAP 7.3 cluster setup on RHEL 7.7/8.0 
 
     - **Admin Password or SSH key** - User account password or SSH key data which is an SSH RSA public key for logging into the RHEL VMSS instance.
 
-    - **EAP on RHEL Version** - Select the EAP on RHEL version combination from the dropdown options, the default option selected here is JBoss EAP 7.2 on RHEL 8.0.
+    - **EAP on RHEL Version** - Select the EAP on RHEL version combination from the dropdown options, the default option selected here is JBoss EAP 7.3 on RHEL 8.4.
 
     - **JBoss EAP Username** - Username for JBoss EAP Admin Console.
 
@@ -330,7 +332,7 @@ Please refer to [Using the Azure Custom Script Extension Version 2 with Linux VM
 
 If your deployment fails due to any reason (like the ones mentioned above), make sure you delete the whole resource group so that you are not charged for any of the resources deployed so far before failure occurred. In case of successful deployment, follow the same process of deleting the resource group created by the template and related resources (if created in other resource groups) to optimize Azure cost. Note that if you want to keep any resources in the resource group, you can delete other resources manually which does not have dependencies on the resources that you do not want to delete. Once your resources are deleted make sure you log into your RHSM account and remove the system you registered for the deployment of the template, so that you do not hit the "Maximum Enabled Entitlement Quantity" (if you have set any). You can remove the registered system under the *Systems* section in the Red Hat portal.
 
-`Tags: JBoss, Red Hat, EAP 7.2, EAP 7.3, Cluster, Load Balancer, RHEL 7.7, RHEL 8.0, Azure, Azure VMSS, Java EE`
+`Tags: JBoss, Red Hat, EAP 7.2, EAP 7.3, Cluster, Load Balancer, RHEL 7.7, RHEL 8.0, RHEL 8.4, Azure, Azure VMSS, Java EE`
 
 ## Support
 
