@@ -5,13 +5,26 @@
         "adminUsername": {
             "type": "string",
             "metadata": {
-                "description": ""
+                "description": "Username of the administrator of the VM"
             }
         },
         "adminPassword": {
             "type": "securestring",
             "metadata": {
-                "description": ""
+                "description": "Password of the administrator of the VM"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location of the resources"
+            }
+        },
+        "vmssSku": {
+            "type": "string",
+            "metadata": {
+                "description": "Size of the VM"
             }
         }
     },
@@ -28,8 +41,8 @@
     "resources": [{
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('virtualNetworkName')]",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2018-02-01",
+            "location": "[parameters('location')]",
+            "apiVersion": "2020-11-01",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -47,8 +60,8 @@
         {
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('publicIPAddressName')]",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2018-02-01",
+            "location": "[parameters('location')]",
+            "apiVersion": "2020-11-01",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
                 "dnsSettings": {
@@ -59,10 +72,10 @@
         {
             "type": "Microsoft.Network/loadBalancers",
             "name": "[variables('loadBalancerName')]",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2018-02-01",
+            "location": "[parameters('location')]",
+            "apiVersion": "2020-11-01",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+                "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
             ],
             "properties": {
                 "frontendIPConfigurations": [{
@@ -93,17 +106,17 @@
         {
             "type": "Microsoft.Compute/virtualMachineScaleSets",
             "name": "[variables('existingVmssName')]",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2017-03-30",
+            "location": "[parameters('location')]",
+            "apiVersion": "2020-12-01",
             "dependsOn": [
-                "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+                "[resourceId('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
             ],
             "identity": {
             "type": "SystemAssigned"
             },
             "sku": {
-                "name": "Standard_D2_v2",
+                "name": "[parameters('vmssSku')]",
                 "tier": "Standard",
                 "capacity": 2
             },
