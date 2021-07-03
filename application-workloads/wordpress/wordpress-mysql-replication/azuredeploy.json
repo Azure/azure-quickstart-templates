@@ -212,9 +212,16 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/wordpress/wordpress-mysql-replication/",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue":"[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
       }
     },
     "_artifactsLocationSasToken": {
@@ -222,19 +229,17 @@
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
-      "defaultValue": ""
+      "defaultValue":""
     }
   },
   "variables": {
-    "templateAPIVersion": "2015-01-01",
-    "resourceAPIVersion": "2015-06-15",
     "wpdbname": "[concat(uniquestring(resourceGroup().id),'wordpress')]"
   },
   "resources": [
     {
       "name": "mysql",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -242,6 +247,9 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "location":{
+            "value": "[parameters('location')]"
+          },
           "dnsName": {
             "value": "[parameters('dnsName')]"
           },
@@ -329,7 +337,7 @@
     {
       "name": "website",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/mysql"
       ],
@@ -340,6 +348,9 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "location":{
+            "value":"[parameters('location')]"
+          },
           "siteName": {
             "value": "[parameters('siteName')]"
           },
@@ -353,7 +364,7 @@
             "value": "[parameters('workerSize')]"
           },
           "DbServer": {
-            "value": "[concat(parameters('dnsName'), '.', resourceGroup().location, '.cloudapp.azure.com:',parameters('mysqlFrontEndPort0'))]"
+            "value": "[concat(parameters('dnsName'), '.', parameters('location'), '.cloudapp.azure.com:',parameters('mysqlFrontEndPort0'))]"
           },
           "DbName": {
             "value": "[variables('wpdbname')]"
