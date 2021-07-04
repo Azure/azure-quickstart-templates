@@ -2,6 +2,18 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the VM."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username of the administrator of the VM."
+      }
+    },
     "coscaleKey": {
       "type": "securestring",
       "metadata": {
@@ -66,11 +78,9 @@
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-    "vmName": "coscale",
     "nicName": "coscaleNic",
     "networkSecurityGroupName": "coscaleNSG",
     "publicIPAddressName": "coscalePublicIP",
-    "vmUser": "cs",
     "vmPublicKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCkbtWpHEyZYJ+Eyl+jFVUYOH+YBqGAAvyl9oJRzWieJlDp9PucYhbtlXTm7VhlSZvFi7MtcJoxzlQqk1FoNsUPtPyrCtVz8uEHS4FZiuOhb1UFLMayInfXWUWzBt0EEbELlgipRpqGgsi+pn3P07C+8VcBXhAPpMn7Y3qb3txlr7tCCowk8XbXE+MFwfLMXqHavgzIcI++6zECQoFCjb1ktpiAPcP/HkzNDJ2r3tAWyJWOMs1GH3f67corKaKh54LCmQRJS1FAUEnb9da4Xn+Tgx16f42aBF4gY5CEmg2NZ4tvbgE7hXKxJY0TEBTQ1zjUgv92gXOuGcRgu+XM8fut CoScaleAzure",
     "virtualNetworkName": "coscaleVNET",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
@@ -201,7 +211,7 @@
     {
       "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
+      "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
@@ -209,14 +219,14 @@
       ],
       "properties": {
         "osProfile": {
-          "computerName": "[variables('vmName')]",
-          "adminUsername": "[variables('vmUser')]",
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
-                  "path": "[concat('/home/', variables('vmUser'), '/.ssh/authorized_keys')]",
+                  "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
                   "keyData": "[variables('vmPublicKey')]"
                 }
               ]
@@ -234,13 +244,13 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'), '_OSDisk')]",
+            "name": "[concat(parameters('vmName'), '_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "[concat(variables('vmName'), '_DataDisk')]",
+              "name": "[concat(parameters('vmName'), '_DataDisk')]",
               "diskSizeGB": 512,
               "lun": 0,
               "caching": "ReadOnly",
@@ -259,11 +269,11 @@
       "resources": [
         {
           "type": "extensions",
-          "name": "[concat(variables('vmName'),'-install')]",
+          "name": "[concat(parameters('vmName'),'-install')]",
           "apiVersion": "2020-12-01",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
           ],
           "properties": {
             "publisher": "Microsoft.Azure.Extensions",
@@ -273,11 +283,13 @@
             "settings": {
               "fileUris": [
                 "[uri(parameters('_artifactsLocation'), concat('install.sh', parameters('_artifactsLocationSasToken')))]"
-              ],
-              "commandToExecute": "[concat('bash install.sh ', parameters('coscaleKey'), ' ', parameters('coscaleEmail'), ' ', parameters('coscalePassword'), ' ', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+              ]
+            },
+            "protectedSettings":{
+                "commandToExecute": "[concat('bash install.sh ', parameters('coscaleKey'), ' ', parameters('coscaleEmail'), ' ', parameters('coscalePassword'), ' ', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+              }
             }
-          }
-        }
+         }
       ]
     }
   ],
