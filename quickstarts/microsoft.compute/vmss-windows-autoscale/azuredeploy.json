@@ -33,6 +33,7 @@
       "metadata": {
         "description": "Number of VM instances (100 or less)."
       },
+      "minValue": 1,
       "maxValue": 100
     },
     "adminUsername": {
@@ -64,7 +65,6 @@
     "publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
     "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
     "loadBalancerName": "[concat(variables('namingInfix'), 'lb')]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
     "natPoolName": "[concat(variables('namingInfix'), 'natpool')]",
     "bePoolName": "[concat(variables('namingInfix'), 'bepool')]",
     "natStartPort": 50000,
@@ -72,7 +72,6 @@
     "natBackendPort": 3389,
     "nicName": "[concat(variables('namingInfix'), 'nic')]",
     "ipConfigName": "[concat(variables('namingInfix'), 'ipconfig')]",
-    "frontEndIPConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadBalancerName'), 'loadBalancerFrontEnd')]",
     "osType": {
       "publisher": "MicrosoftWindowsServer",
       "offer": "WindowsServer",
@@ -129,7 +128,7 @@
             "name": "LoadBalancerFrontEnd",
             "properties": {
               "publicIPAddress": {
-                "id": "[variables('publicIPAddressID')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
               }
             }
           }
@@ -144,7 +143,7 @@
             "name": "[variables('natPoolName')]",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadBalancerName'), 'loadBalancerFrontEnd')]"
               },
               "protocol": "Tcp",
               "frontendPortRangeStart": "[variables('natStartPort')]",
@@ -198,16 +197,16 @@
                       "name": "[variables('ipConfigName')]",
                       "properties": {
                         "subnet": {
-                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
                         },
                         "loadBalancerBackendAddressPools": [
                           {
-                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/', variables('bePoolName'))]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('bePoolName'))]"
                           }
                         ],
                         "loadBalancerInboundNatPools": [
                           {
-                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/inboundNatPools/', variables('natPoolName'))]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('loadBalancerName'), variables('natPoolName'))]"
                           }
                         ]
                       }
@@ -244,7 +243,6 @@
               {
                 "metricTrigger": {
                   "metricName": "Percentage CPU",
-                  "metricNamespace": "",
                   "metricResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
@@ -263,7 +261,6 @@
               {
                 "metricTrigger": {
                   "metricName": "Percentage CPU",
-                  "metricNamespace": "",
                   "metricResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
