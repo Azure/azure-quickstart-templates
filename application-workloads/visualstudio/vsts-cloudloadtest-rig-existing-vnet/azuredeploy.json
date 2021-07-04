@@ -68,6 +68,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "storageAccountKind": {
+       "type": "string",
+       "defaultValue": "StorageV2"
+    },
+    "storageAccountSkuName": {
+       "type": "string",
+       "defaultValue": "Standard_LRS",
+       "allowedValues": [
+           "Standard_LRS",
+           "Premium_LRS",
+           "Standard_ZRS",
+           "Standard_GRS"
+       ],
+       "metadata": {
+           "description": "Storage Account SKU"
+       }
     }
   },
   "variables": {
@@ -91,16 +108,17 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-02-01",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
+      "sku": {
+        "name": "[parameters('storageAccountSkuName')]"
+      },
+      "kind": "[parameters('storageAccountKind')]"
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('publicIPAddressName'),'i', copyIndex())]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "publicAddressCopy",
@@ -113,7 +131,7 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), 'i', copyIndex())]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "nicCopy",
@@ -136,13 +154,13 @@
         ]
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddressName'),'i', copyIndex()))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddressName'),'i', copyIndex()))]"
       ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), 'i',copyIndex())]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "vmCopy",
@@ -188,18 +206,18 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-04-01').primaryEndpoints['blob']]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-02-01').primaryEndpoints['blob']]"
           }
         }
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), 'i', copyIndex()))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), 'i', copyIndex()))]"
       ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'), 'i', copyIndex(), '/StartupScript')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "vmCopy",
@@ -219,7 +237,7 @@
         }
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',concat(variables('vmName'), 'i', copyIndex()))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/',concat(variables('vmName'), 'i', copyIndex()))]"
       ]
     }
   ]
