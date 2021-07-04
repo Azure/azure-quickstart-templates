@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "11387816422217086291"
+    }
+  },
   "parameters": {
     "gatewayType": {
       "type": "string",
@@ -28,7 +35,7 @@
         "description": "The name of the virtual network to create."
       }
     },
-    "addressPrefix": {
+    "virtualNetworkAddressPrefix": {
       "type": "string",
       "metadata": {
         "description": "The address space in CIDR notation for the new virtual network."
@@ -38,16 +45,6 @@
       "type": "string",
       "metadata": {
         "description": "The name of the first subnet in the new virtual network."
-      }
-    },
-    "gatewaySubnet": {
-      "type": "string",
-      "defaultValue": "GatewaySubnet",
-      "allowedValues": [
-        "GatewaySubnet"
-      ],
-      "metadata": {
-        "description": "The name of the subnet where Gateway is to be deployed. This must always be named GatewaySubnet."
       }
     },
     "subnetPrefix": {
@@ -94,41 +91,50 @@
       }
     }
   },
+  "functions": [],
   "variables": {
-    "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'),parameters('gatewaySubnet'))]",
+    "gatewaySubnetName": "GatewaySubnet",
     "routingWeight": 3
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-02-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[parameters('addressPrefix')]"
+            "[parameters('virtualNetworkAddressPrefix')]"
           ]
-        },
-        "subnets": [
-          {
-            "name": "[parameters('subnetName')]",
-            "properties": {
-              "addressPrefix": "[parameters('subnetPrefix')]"
-            }
-          },
-          {
-            "name": "[parameters('gatewaySubnet')]",
-            "properties": {
-              "addressPrefix": "[parameters('gatewaySubnetPrefix')]"
-            }
-          }
-        ]
+        }
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnetName'))]",
+      "properties": {
+        "addressPrefix": "[parameters('subnetPrefix')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('virtualNetworkName'), variables('gatewaySubnetName'))]",
+      "properties": {
+        "addressPrefix": "[parameters('gatewaySubnetPrefix')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2021-02-01",
       "name": "[parameters('gatewayPublicIPName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -136,50 +142,51 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworkGateways",
+      "apiVersion": "2021-02-01",
       "name": "[parameters('gatewayName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('gatewayPublicIPName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
+            "name": "vnetGatewayConfig",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('gatewaySubnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('gatewaySubnetName'))]"
               },
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('gatewayPublicIPName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('gatewayPublicIPName'))]"
               }
-            },
-            "name": "vnetGatewayConfig"
+            }
           }
         ],
         "gatewayType": "[parameters('gatewayType')]"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('gatewaySubnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('gatewayPublicIPName'))]"
+      ]
     },
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/connections",
+      "apiVersion": "2021-02-01",
       "name": "[parameters('connectionName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworkGateways/', parameters('gatewayName'))]"
-      ],
       "properties": {
         "virtualNetworkGateway1": {
-          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways',parameters('gatewayName'))]"
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('gatewayName'))]",
+          "properties": {}
         },
         "peer": {
-          "id": "[resourceId('Microsoft.Network/expressRouteCircuits',parameters('circuitName'))]"
+          "id": "[resourceId('Microsoft.Network/expressRouteCircuits', parameters('circuitName'))]"
         },
         "connectionType": "[parameters('connectionType')]",
         "routingWeight": "[variables('routingWeight')]"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('gatewayName'))]"
+      ]
     }
   ]
 }
