@@ -85,19 +85,22 @@
         "description": "Size of the  node."
       }
     },
-    "storageType": {
-      "type": "string",
-      "allowedValues": [
-        "Standard_LRS",
-        "Premium_LRS",
-        "Standard_GRS",
-        "Standard_RAGRS",
-        "Standard_ZRS"
-      ],
-      "defaultValue": "Standard_LRS",
-      "metadata": {
-        "description": "Storage Account Type : Standard-LRS, Standard-GRS, Standard-RAGRS, Standard-ZRS"
-      }
+    "storageAccountKind": {
+       "type": "string",
+       "defaultValue": "StorageV2"
+    },
+    "storageAccountSkuName": {
+       "type": "string",
+       "defaultValue": "Standard_LRS",
+       "allowedValues": [
+           "Standard_LRS",
+           "Premium_LRS",
+           "Standard_ZRS",
+           "Standard_GRS"
+       ],
+       "metadata": {
+           "description": "Storage Account SKU"
+       }
     },
     "dockerVer": {
       "type": "string",
@@ -178,7 +181,6 @@
     "publicIPAddressType": "Dynamic",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, variables('networkSettings').subnet.dse.name)]",
     "installationCLI": "[concat('bash azuredeploy.sh ', parameters('masterVMName'), ' ', parameters('mountFolder'), ' ', parameters('numDataDisks'), ' ', parameters('dockerVer'), ' ', parameters('dockerComposeVer'), ' ', parameters('adminUsername'), ' ', parameters('imageSku'), ' ', parameters('dockerMachineVer'))]",
-    "storageAccountType": "[parameters('storageType')]",
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
     "networkSecurityGroupName": "default-NSG"
   },
@@ -186,11 +188,12 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
-      "apiVersion": "2021-01-01",
+      "apiVersion": "2021-02-01",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
+      "sku": {
+        "name": "[parameters('storageAccountSkuName')]"
+      },
+      "kind": "[parameters('storageAccountKind')]"
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
@@ -368,7 +371,7 @@
       "name": "[concat(parameters('masterVMName'), '/Installation')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('masterVMName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('masterVMName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
