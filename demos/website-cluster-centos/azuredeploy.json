@@ -56,7 +56,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/demos/website-cluster-centos/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -88,6 +88,27 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "lbNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2",
+      "metadata": {
+        "description": "Size of the load balancer node."
+      }
+    },
+    "webNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2",
+      "metadata": {
+        "description": "Size of the web node."
+      }
+    },
+    "dbNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2",
+      "metadata": {
+        "description": "Size of the database node."
+      }
     }
   },
   "variables": {
@@ -105,12 +126,9 @@
     "mysqlMasterNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/mysqlMaster.sh', parameters('_artifactsLocationSasToken')))]",
     "mysqlSlaveNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/mysqlSlave.sh', parameters('_artifactsLocationSasToken')))]",
     "namespace": "websiteCluster-",
-    "virtualNetworkName": "websiteVNET1",
+    "virtualNetworkName": "[concat('vnet-', uniqueString(resourceGroup().id))]",
     "numDataDisks": "4",
     "sizeOfDataDiskInGB": 100,
-    "lbNodeVmSize": "Standard_D2_v2",
-    "webNodeVmSize": "Standard_D2_v2",
-    "dbNodeVmSize": "Standard_D2_v2",
     "networkSettings": {
       "virtualNetworkName": "[variables('virtualNetworkName')]",
       "addressPrefix": "10.0.0.0/24",
@@ -215,7 +233,7 @@
     {
       "name": "shared",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -228,6 +246,9 @@
           },
           "namespace": {
             "value": "[variables('namespace')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
           }
         }
       }
@@ -235,9 +256,9 @@
     {
       "name": "[concat('webNode', copyindex())]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "copy": {
         "name": "vmLoop",
@@ -271,11 +292,8 @@
           "numDataDisks": {
             "value": "[variables('numDataDisks')]"
           },
-          "dnsname": {
-            "value": "[parameters('dnsNamePrefix')]"
-          },
           "vmSize": {
-            "value": "[variables('webNodeVmSize')]"
+            "value": "[parameters('webNodeVmSize')]"
           },
           "zabbixServerIPAddress": {
             "value": "[parameters('zabbixServerIPAddress')]"
@@ -295,9 +313,9 @@
     {
       "name": "redisMasterNode",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -318,9 +336,6 @@
           "subnet": {
             "value": "[variables('networkSettings').subnet.redis]"
           },
-          "dnsname": {
-            "value": "[parameters('dnsNamePrefix')]"
-          },
           "sizeOfDataDiskInGB": {
             "value": "[variables('sizeOfDataDiskInGB')]"
           },
@@ -328,7 +343,7 @@
             "value": "[variables('numDataDisks')]"
           },
           "vmSize": {
-            "value": "[variables('dbNodeVmSize')]"
+            "value": "[parameters('dbNodeVmSize')]"
           },
           "zabbixServerIPAddress": {
             "value": "[parameters('zabbixServerIPAddress')]"
@@ -341,6 +356,9 @@
           },
           "adminPasswordOrKey": {
             "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -348,10 +366,10 @@
     {
       "name": "redisSlaveNode",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]",
-        "[concat('Microsoft.Resources/deployments/', 'redisMasterNode')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'redisMasterNode')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -372,9 +390,6 @@
           "subnet": {
             "value": "[variables('networkSettings').subnet.redis]"
           },
-          "dnsname": {
-            "value": "[parameters('dnsNamePrefix')]"
-          },
           "sizeOfDataDiskInGB": {
             "value": "[variables('sizeOfDataDiskInGB')]"
           },
@@ -382,7 +397,7 @@
             "value": "[variables('numDataDisks')]"
           },
           "vmSize": {
-            "value": "[variables('dbNodeVmSize')]"
+            "value": "[parameters('dbNodeVmSize')]"
           },
           "zabbixServerIPAddress": {
             "value": "[parameters('zabbixServerIPAddress')]"
@@ -395,6 +410,9 @@
           },
           "adminPasswordOrKey": {
             "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -402,9 +420,9 @@
     {
       "name": "mysqlMasterNode",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -428,9 +446,6 @@
           "subnet": {
             "value": "[variables('networkSettings').subnet.mysql]"
           },
-          "dnsname": {
-            "value": "[parameters('dnsNamePrefix')]"
-          },
           "sizeOfDataDiskInGB": {
             "value": "[variables('sizeOfDataDiskInGB')]"
           },
@@ -438,7 +453,7 @@
             "value": "[variables('numDataDisks')]"
           },
           "vmSize": {
-            "value": "[variables('dbNodeVmSize')]"
+            "value": "[parameters('dbNodeVmSize')]"
           },
           "zabbixServerIPAddress": {
             "value": "[parameters('zabbixServerIPAddress')]"
@@ -451,6 +466,9 @@
           },
           "adminPasswordOrKey": {
             "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -458,10 +476,10 @@
     {
       "name": "mysqlSlaveNode",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]",
-        "[concat('Microsoft.Resources/deployments/', 'mysqlMasterNode')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'mysqlMasterNode')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -485,9 +503,6 @@
           "subnet": {
             "value": "[variables('networkSettings').subnet.mysql]"
           },
-          "dnsname": {
-            "value": "[parameters('dnsNamePrefix')]"
-          },
           "sizeOfDataDiskInGB": {
             "value": "[variables('sizeOfDataDiskInGB')]"
           },
@@ -495,7 +510,7 @@
             "value": "[variables('numDataDisks')]"
           },
           "vmSize": {
-            "value": "[variables('dbNodeVmSize')]"
+            "value": "[parameters('dbNodeVmSize')]"
           },
           "zabbixServerIPAddress": {
             "value": "[parameters('zabbixServerIPAddress')]"
@@ -508,6 +523,9 @@
           },
           "adminPasswordOrKey": {
             "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -515,11 +533,10 @@
     {
       "name": "lbNode",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]",
-        "[concat('Microsoft.Resources/deployments/', 'mysqlSlaveNode')]",
-        "['vmLoop']"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'mysqlSlaveNode')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -540,9 +557,6 @@
           "subnet": {
             "value": "[variables('networkSettings').subnet.haproxy]"
           },
-          "dnsname": {
-            "value": "[parameters('dnsNamePrefix')]"
-          },
           "sizeOfDataDiskInGB": {
             "value": "[variables('sizeOfDataDiskInGB')]"
           },
@@ -553,7 +567,7 @@
             "value": "[parameters('webNodeCount')]"
           },
           "vmSize": {
-            "value": "[variables('lbNodeVmSize')]"
+            "value": "[parameters('lbNodeVmSize')]"
           },
           "zabbixServerIPAddress": {
             "value": "[parameters('zabbixServerIPAddress')]"
@@ -566,10 +580,12 @@
           },
           "adminPasswordOrKey": {
             "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
     }
-  ],
-  "outputs": {}
+  ]
 }
