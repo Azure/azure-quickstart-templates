@@ -24,10 +24,10 @@ var locations = [
     isZoneRedundant: false
   }
 ]
-var roleDefinitionId = guid('sql-role-definition-', accountName_resource.id)
-var roleAssignmentId = guid('sql-role-assignment-', accountName_resource.id)
+var roleDefinitionId = guid('sql-role-definition-', databaseAccount.id)
+var roleAssignmentId = guid('sql-role-assignment-', databaseAccount.id)
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
+resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
   name: account_name
   kind: 'GlobalDocumentDB'
   location: location
@@ -43,12 +43,12 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15'
 }
 
 resource accountName_roleDefinitionId 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2021-04-15' = {
-  name: '${accountName_resource.name}/${roleDefinitionId}'
+  name: '${databaseAccount.name}/${roleDefinitionId}'
   properties: {
     roleName: roleDefinitionName
     type: 'CustomRole'
     assignableScopes: [
-      accountName_resource.id
+      databaseAccount.id
     ]
     permissions: [
       {
@@ -59,10 +59,10 @@ resource accountName_roleDefinitionId 'Microsoft.DocumentDB/databaseAccounts/sql
 }
 
 resource accountName_roleAssignmentId 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2021-04-15' = {
-  name: '${accountName_resource.name}/${roleAssignmentId}'
+  name: '${databaseAccount.name}/${roleAssignmentId}'
   properties: {
     roleDefinitionId: accountName_roleDefinitionId.id
     principalId: principalId
-    scope: accountName_resource.id
+    scope: databaseAccount.id
   }
 }
