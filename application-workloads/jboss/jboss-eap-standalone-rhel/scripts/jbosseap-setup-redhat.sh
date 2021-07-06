@@ -99,7 +99,7 @@ echo "echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config" | adddate >> jbossea
 echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config | adddate >> jbosseap.install.log 2>&1
 fi
 
-if [ ${EAP_RHEL_VERSION} == "JBoss-EAP7.3-on-RHEL8.0" ]
+if [ ${EAP_RHEL_VERSION} == "JBoss-EAP7.3-on-RHEL8.4" ]
 then
 echo "Subscribing the system to get access to JBoss EAP 7.3 repos" | adddate >> jbosseap.install.log
 
