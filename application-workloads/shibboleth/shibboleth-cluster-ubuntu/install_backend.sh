@@ -10,6 +10,11 @@ apt-get -y install apache2 openjdk-7-jdk tomcat7
 echo mysql-server mysql-server/root_password password $mysqlpassword | sudo debconf-set-selections
 echo mysql-server mysql-server/root_password_again password $mysqlpassword | sudo debconf-set-selections
 
+
+apt-get purge mysql-server mysql-client mysql-common mysql-server-core-* mysql-client-core-*
+rm -rf /etc/mysql /var/lib/mysql
+apt-get autoremove
+apt-get autoclean
 apt-get -y install mysql-client mysql-server
 apt-get	install libmysql-java
 
