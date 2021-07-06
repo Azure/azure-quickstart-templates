@@ -13,13 +13,13 @@
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.dataprotection%2Fbackup-create-storage-account-enable-protection%2Fazuredeploy.json)
 
-### This template create storage account and enables blobs protection via Azure Backup (preview).
+### This template create storage account and enables blobs protection via Azure Backup.
 
 A disaster recovery and data protection strategy keeps your business running when unexpected events occur.
 
 The Backup service is Microsoft's born in the cloud backup solution to backup data that's located on-premises and in Azure. It replaces your existing on-premises or offsite backup solution with a reliable, secure and cost competitive cloud backup solution. It also provides the flexibility of protecting your assets running in the cloud. [Learn more](http://aka.ms/backup-learn-more/).
 
-### Operational backup for Azure Blobs (preview)
+### Operational backup for Azure Blobs
 
 Operational backup for Azure Blobs is a managed, local data protection solution that lets you protect your block blobs from various data loss scenarios like blob corruptions, blob deletions, and accidental storage account deletion. The data is stored locally within the source storage account itself and can be restored to a selected point in time whenever needed. So this provides a simple, secure, and cost-effective means to protect your blobs. [Learn more](https://docs.microsoft.com/en-us/azure/backup/blob-backup-overview)
 
