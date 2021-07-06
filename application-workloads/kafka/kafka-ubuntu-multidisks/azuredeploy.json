@@ -59,6 +59,12 @@
         "description": "Location for all resources."
       }
     },
+    "vmdiskutilsscriptUrl":{
+      "type": "string",
+      "metadata": {
+        "description": "VM Disk util script Url."
+      }
+    },
     "_artifactsLocation": {
       "type": "string",
       "defaultValue": "[deployment().properties.templatelink.uri]",
@@ -94,7 +100,7 @@
   "variables": {
     "templateBaseUrl": "[deployment().properties.templatelink.uri]",
     "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
-    "tshirtSizeSmall": {
+    "Small": {
       "vmSize": "Standard_A1",
       "diskSize": 1023,
       "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-2disk-resources.json', parameters('_artifactsLocationSasToken')))]",
@@ -112,7 +118,7 @@
         "jumpbox": 0
       }
     },
-    "tshirtSizeMedium": {
+    "Medium": {
       "vmSize": "Standard_A3",
       "diskSize": 1023,
       "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-8disk-resources.json', parameters('_artifactsLocationSasToken')))]",
@@ -132,7 +138,7 @@
         "jumpbox": 0
       }
     },
-    "tshirtSizeLarge": {
+    "Large": {
       "vmSize": "Standard_A4",
       "diskSize": 1023,
       "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-16disk-resources.json', parameters('_artifactsLocationSasToken')))]",
@@ -152,7 +158,7 @@
         "jumpbox": 0
       }
     },
-    "tshirtSizeXLarge": {
+    "XLarge": {
       "vmSize": "Standard_A7",
       "diskSize": 1023,
       "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-16disk-resources.json', parameters('_artifactsLocationSasToken')))]",
@@ -175,7 +181,7 @@
         "jumpbox": 0
       }
     },
-    "tshirtSize": "[variables(concat('tshirtSize', parameters('tshirtSize')))]",
+    "tshirtSize": "[variables(parameters('tshirtSize'))]",
     "jumpboxTemplateEnabled": "jumpbox-resources.json",
     "jumpboxTemplateDisabled": "empty-resources.json",
     "vmTemplatezookeeper": "[uri(parameters('_artifactsLocation'), concat('zookeeper-resources.json', parameters('_artifactsLocationSasToken')))]",
@@ -183,7 +189,7 @@
     "osSettings": {
       "scripts": [
         "[uri(parameters('_artifactsLocation'), concat('kafka-cluster-install.sh', parameters('_artifactsLocationSasToken')))]",
-        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
+        "[parameters('vmdiskutilsscriptUrl')]"
       ],
       "imageReference": {
         "publisher": "Canonical",
@@ -225,7 +231,7 @@
     {
       "name": "shared",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -235,6 +241,9 @@
         "parameters": {
           "storageSettings": {
             "value": "[variables('tshirtSize').storage]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
           },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
@@ -248,9 +257,9 @@
     {
       "name": "zookeeper-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -271,14 +280,14 @@
           "subnet": {
             "value": "[variables('networkSettings').subnets.zookeeper]"
           },
+          "location": {
+              "value": "[parameters('location')]"
+          },
           "commonSettings": {
             "value": {
               "adminUsername": "[parameters('adminUsername')]",
               "namespace": "zk"
             }
-          },
-          "storageSettings": {
-            "value": "[variables('tshirtSize').storage]"
           },
           "machineSettings": {
             "value": {
@@ -295,9 +304,9 @@
     {
       "name": "broker-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'zookeeper-node')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'zookeeper-node')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -306,6 +315,9 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "location": {
+              "value": "[parameters('location')]"
+          },
           "adminPasswordOrKey": {
             "value": "[parameters('adminPasswordOrKey')]"
           },
@@ -324,9 +336,6 @@
               "namespace": "bk"
             }
           },
-          "storageSettings": {
-            "value": "[variables('tshirtSize').storage]"
-          },
           "machineSettingsbroker": {
             "value": {
               "vmSize": "[variables('tshirtSize').vmSize]",
@@ -344,9 +353,9 @@
     {
       "name": "jumpbox",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -355,11 +364,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "storageSettings": {
-            "value": {
-              "name": "[concat(parameters('storageAccountNamePrefix'), variables('tshirtSize').storage.jumpbox)]"
-            }
-          },
           "dnsName": {
             "value": "[parameters('domainName')]"
           },
@@ -368,6 +372,9 @@
               "adminUsername": "[parameters('adminUsername')]",
               "namespace": "jumpbox"
             }
+          },
+          "location": {
+              "value": "[parameters('location')]"
           },
           "adminPasswordOrKey": {
             "value": "[parameters('adminPasswordOrKey')]"
