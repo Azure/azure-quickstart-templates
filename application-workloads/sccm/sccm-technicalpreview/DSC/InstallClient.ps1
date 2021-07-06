@@ -51,24 +51,24 @@ while(((Get-CMDiscoveryMethod | ?{$_.ItemName -eq "SMS_AD_SYSTEM_DISCOVERY_AGENT
 "[$(Get-Date -format HH:mm:ss)] Invoke system descovery..." | Out-File -Append $logpath
 Invoke-CMSystemDiscovery 
 
-#Get Client IP
-$ClientNameList = $ClientName.split(",")
-$clientIPList= (Test-Connection $ClientNameList -count 1 | select @{Name="Computername";Expression={$_.Address}},Ipv4Address).IpV4Address.IPAddressToString
-
-for($i = 0; $i -lt $clientIPList.Length; $i++)
-{
-    "[$(Get-Date -format HH:mm:ss)] " + $ClientNameList[$i] + "IP is " + $clientIPList[$i] + "." | Out-File -Append $logpath
-    $boundaryrange = $clientIPList[$i]+"-"+$clientIPList[$i]
-    
-    "[$(Get-Date -format HH:mm:ss)] Create boundary with " + $ClientNameList[$i] + "IP..." | Out-File -Append $logpath
-    New-CMBoundary -Type IPRange -Name Client$index -Value $boundaryrange
-}
-
+#Create Boundry Group
 "[$(Get-Date -format HH:mm:ss)] Create boundary group." | Out-File -Append $logpath
 New-CMBoundaryGroup -Name $SiteCode -DefaultSiteCode $SiteCode -AddSiteSystemServerName $DPMPMachineName
-foreach($clientname in $ClientNameList)
+
+#Get Client IP
+$ClientNameList = $ClientName.split(",")
+foreach($client in $ClientNameList)
 {
-    Add-CMBoundaryToGroup -BoundaryName $clientname -BoundaryGroupName $SiteCode
+    $clientIP= (Test-Connection $client -count 1 | select @{Name="Computername";Expression={$_.Address}},Ipv4Address).IpV4Address.IPAddressToString
+    
+    "[$(Get-Date -format HH:mm:ss)] $client IP is $clientIP." | Out-File -Append $logpath
+    $boundaryrange = $clientIP+"-"+$clientIP
+    
+    "[$(Get-Date -format HH:mm:ss)] Create boundary..." | Out-File -Append $logpath
+    New-CMBoundary -Type IPRange -Name $client -Value $boundaryrange
+    
+    "[$(Get-Date -format HH:mm:ss)] Add $client IP to Boundry Group..." | Out-File -Append $logpath
+    Add-CMBoundaryToGroup -BoundaryName $client -BoundaryGroupName $SiteCode
 }
 
 #Wait collection
