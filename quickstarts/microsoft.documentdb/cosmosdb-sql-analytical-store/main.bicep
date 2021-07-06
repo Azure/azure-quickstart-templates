@@ -53,7 +53,7 @@ var throughput_Policy = {
   }
 }
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
+resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
   name: accountName
   location: location
   properties: {
@@ -66,9 +66,9 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15'
   }
 }
 
-resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
-  parent: accountName_resource
-  name: '${databaseName}'
+resource sqlDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
+  parent: databaseAccount
+  name: databaseName
   properties: {
     resource: {
       id: databaseName
@@ -76,8 +76,8 @@ resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlData
   }
 }
 
-resource accountName_databaseName_containerName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-04-15' = {
-  parent: accountName_databaseName
+resource sqlContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-04-15' = {
+  parent: sqlDatabase
   name: containerName
   properties: {
     resource: {
@@ -93,6 +93,6 @@ resource accountName_databaseName_containerName 'Microsoft.DocumentDB/databaseAc
     options: throughput_Policy[throughputPolicy]
   }
   dependsOn: [
-    accountName_resource
+    databaseAccount
   ]
 }
