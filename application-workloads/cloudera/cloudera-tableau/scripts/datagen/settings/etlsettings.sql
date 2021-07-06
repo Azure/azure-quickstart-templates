@@ -1,0 +1,14 @@
+set hive.conf.validation=false;
+set hive.tez.container.size=2048;
+set hive.enforce.bucketing=true;
+set hive.enforce.sorting=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+set hive.exec.max.dynamic.partitions.pernode=100000;
+set hive.exec.max.dynamic.partitions=100000;
+set hive.exec.max.created.files=1000000;
+set hive.exec.parallel=true;
+set hive.exec.reducers.max=2000;
+set hive.stats.autogather=true;
+set hive.optimize.sort.dynamic.partition=true;
+set tez.grouping.min-size=20000000;
+set tez.grouping.max-size=500000000;

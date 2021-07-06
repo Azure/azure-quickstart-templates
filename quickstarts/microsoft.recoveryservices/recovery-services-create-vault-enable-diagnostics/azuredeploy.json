@@ -1,0 +1,120 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Vault"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "workspaceLocation": {
+            "type": "string",
+            "defaultValue": "",
+            "allowedValues": [
+                "centralus",
+                "eastus",
+                "eastus2",
+                "northcentralus",
+                "northeurope",
+                "southcentralus",
+                "westcentralus",
+                "westeurope",
+                "westus",
+                "westus2",
+                "uaenorth",
+                "switzerlandnorth",
+                "uksouth",
+                "francecentral",
+                "norwayeast",
+                "koreacentral",
+                "australiasoutheast",
+                "australiaeast",
+                "japaneast",
+                "centralindia",
+                "southeastasia",
+                "eastasia",
+                "chinaeast2",
+                "canadacentral",
+                "brazilsouth",
+                "usgovarizona",
+                "usgovvirginia"
+            ],
+            "metadata": {
+                "description": "Specify the workspace region"
+            }
+       }
+  },
+  "variables": {
+    "omsWorkspaceName": "[concat(uniqueString(resourceGroup().id),'ws')]",
+    "storageAccountName": "[concat(uniqueString(resourceGroup().id),'storage')]",
+    "storageAccountType": "Standard_LRS"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.RecoveryServices/vaults",
+      "apiVersion": "2021-02-01",
+      "name": "[parameters('vaultName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "RS0",
+        "tier": "Standard"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2015-11-01-preview",
+      "name": "[variables('omsWorkspaceName')]",
+      "location": "[parameters('workspaceLocation')]",
+      "properties": {
+        "sku": {
+          "name": "Free"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2017-06-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.RecoveryServices/vaults/providers/diagnosticSettings",
+      "name": "[concat(parameters('vaultName'), '/microsoft.insights/', variables('omsWorkspaceName'))]",
+      "apiVersion": "2017-05-01-preview",
+      "properties": {
+        "name": "[variables('omsWorkspaceName')]",
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "workspaceId": "[resourceId('microsoft.operationalinsights/workspaces/', variables('omsWorkspaceName'))]",
+        "logs": [
+          {
+            "category": "AzureBackupReport",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 0,
+              "enabled": false
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('microsoft.operationalinsights/workspaces/', variables('omsWorkspaceName'))]"
+      ]
+    }
+  ]
+}

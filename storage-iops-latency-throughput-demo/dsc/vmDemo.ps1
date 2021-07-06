@@ -5,7 +5,7 @@ Param(
 	[string]$NodeName = 'localhost'
 )
 
-Import-DscResource -ModuleName cChoco,xStorage,xPSDesiredStateConfiguration
+Import-DscResource -ModuleName ComputerManagementDsc, cChoco, xStorage, xPSDesiredStateConfiguration
 
 Node $NodeName 
 	{
@@ -14,12 +14,10 @@ Node $NodeName
 				DebugMode = 'ForceModuleImport'
 
 			}
-		cChocoInstaller installChoco
-			{
-				InstallDir = "c:\choco"
+		cChocoinstaller InstallChoco {
+				InstallDir  = "C:\Choco"	   
 			}
-		cChocoPackageInstaller installIometer
-			{
+		cChocoPackageInstaller installIometer {
 				Name        = "iometer"
 				DependsOn   = "[cChocoInstaller]installChoco"
 				AutoUpgrade = $True
@@ -85,7 +83,7 @@ Node $NodeName
 		xRemoteFile DownloadTests
 			{
 				DestinationPath = "C:\iometerTests\iometerTests.zip"
-				Uri = "https://github.com/Azure/azure-quickstart-templates/raw/master/storage-iops-latency-throughput-demo/files/iometerTests.zip"
+				Uri = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/storage-iops-latency-throughput-demo/dsc/vmDemo.zip"
 				DependsOn = "[File]DirectoryCreate"
 			}
 		xArchive ExpandArchive

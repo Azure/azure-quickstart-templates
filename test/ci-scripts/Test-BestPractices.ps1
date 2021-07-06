@@ -10,14 +10,15 @@ Note: This script is only needed in the Azure pipeline, not intended for local u
 param (
     [string] $SampleFolder = $ENV:SAMPLE_FOLDER,
     [string] $MainTemplateDeploymentFilename = $ENV:MAINTEMPLATE_DEPLOYMENT_FILENAME,
-    [string] $ttkFolder = $ENV:TTK_FOLDER
+    [string] $ttkFolder = $ENV:TTK_FOLDER,
+    [string[]] $Skip = $ENV:TTK_SKIP_TESTS 
 )
 
 Import-Module "$($ttkFolder)/arm-ttk/arm-ttk.psd1"
 
 $templatePath = "$($SampleFolder)/$MainTemplateDeploymentFilename"
 Write-Host "Calling Test-AzureTemplate on $templatePath"
-$testOutput = @(Test-AzTemplate -TemplatePath $templatePath)
+$testOutput = @(Test-AzTemplate -TemplatePath $templatePath -Skip "$Skip")
 $testOutput
 
 if ($testOutput | ? { $_.Errors }) {

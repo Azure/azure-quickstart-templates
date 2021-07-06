@@ -34,6 +34,12 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
       },
       "defaultValue": ""
+    },
+    "privateDnsZoneName": {
+      "type": "string",
+      "metadata": {
+        "description": "Private Dns Zone Name "
+      }
     }
 
   },
@@ -47,7 +53,6 @@
     "sqlServerName": "[concat('sqlserver', uniqueString(resourceGroup().id))]",
     "databaseName": "[concat(variables('sqlServerName'),'/sample-db')]",
     "privateEndpointName": "myPrivateEndpoint",
-    "privateDnsZoneName": "privatelink.database.windows.net",
     "pvtendpointdnsgroupname": "[concat(variables('privateEndpointName'),'/mydnsgroupname')]",
     "websitename": "[take(concat('webapppvl', uniqueString(resourceGroup().id)),15)]",
     "appServicePlanName": "[take(concat('appSrvPln', uniqueString(resourceGroup().id)),15)]"
@@ -55,7 +60,7 @@
   "resources": [
     {
       "type": "Microsoft.Sql/servers",
-      "apiVersion": "2019-06-01-preview",
+      "apiVersion": "2020-11-01-preview",
       "name": "[variables('sqlServerName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -71,7 +76,7 @@
     },
     {
       "type": "Microsoft.Sql/servers/databases",
-      "apiVersion": "2019-06-01-preview",
+      "apiVersion": "2020-11-01-preview",
       "name": "[variables('databaseName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -95,7 +100,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2020-07-01",
       "name": "[variables('vnetName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -131,7 +136,7 @@
     },
     {
       "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-07-01",
       "name": "[variables('privateEndpointName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -157,8 +162,8 @@
     },
     {
       "type": "Microsoft.Network/privateDnsZones",
-      "apiVersion": "2018-09-01",
-      "name": "[variables('privateDnsZoneName')]",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('privateDnsZoneName')]",
       "location": "global",
       "dependsOn": [
         "[variables('vnetName')]"
@@ -166,11 +171,11 @@
     },
     {
       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-      "apiVersion": "2018-09-01",
-      "name": "[concat(variables('privateDnsZoneName'), '/', variables('privateDnsZoneName'), '-link')]",
+      "apiVersion": "2020-06-01",
+      "name": "[concat(parameters('privateDnsZoneName'), '/', parameters('privateDnsZoneName'), '-link')]",
       "location": "global",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]",
         "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
       ],
       "properties": {
@@ -182,11 +187,11 @@
     },
     {
       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-      "apiVersion": "2020-03-01",
+      "apiVersion": "2020-07-01",
       "name": "[variables('pvtendpointdnsgroupname')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]",
         "[variables('privateEndpointName')]"
       ],
       "properties": {
@@ -194,7 +199,7 @@
           {
             "name": "config1",
             "properties": {
-              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]"
             }
           }
         ]
@@ -202,7 +207,7 @@
     },
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-12-01",
       "name": "[variables('appServicePlanName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -219,7 +224,7 @@
     {
       "name": "[variables('websitename')]",
       "type": "Microsoft.Web/sites",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "[variables('websitename')]"

@@ -1,0 +1,112 @@
+---
+name: ((deployment_name))
+
+releases:
+- name: concourse
+  version: 3.12.0
+  sha1: 12746f25cd484bdd9a8ed7151cfed20a142de2fa
+  url: https://bosh.io/d/github.com/concourse/concourse?v=3.12.0
+- name: garden-runc
+  version: 1.13.1
+  sha1: 54cbb89cae1be0708aa056185671665d7f4b2a4f
+  url: https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.13.1
+- name: postgres
+  version: 28
+  sha1: c1fcec62cb9d2e95e3b191e3c91d238e2b9d23fa
+  url: https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=28
+
+instance_groups:
+- name: web
+  instances: 1
+  azs: [z1]
+  networks: [{name: ((network_name)), default: [dns, gateway]}, {name: public, static_ips: [((web_ip))]}]
+  stemcell: default
+  vm_type: ((web_vm_type))
+  jobs:
+  - release: concourse
+    name: atc
+    properties:
+      log_level: debug
+      token_signing_key: ((token_signing_key))
+      external_url: ((external_url))
+      basic_auth_username: ((basic_auth_username))
+      basic_auth_password: ((basic_auth_password))
+      postgresql:
+        database: &db_name atc
+        role: &db_role
+          name: concourse
+          password: ((postgres_password))
+
+  - release: concourse
+    name: tsa
+    properties:
+      log_level: debug
+      host_key: ((tsa_host_key))
+      token_signing_key: ((token_signing_key))
+      authorized_keys: [((worker_key.public_key))]
+
+- name: db
+  instances: 1
+  azs: [z1]
+  networks: [{name: ((network_name))}]
+  stemcell: default
+  vm_type: ((db_vm_type))
+  persistent_disk_type: ((db_persistent_disk_type))
+  jobs:
+  - release: postgres
+    name: postgres
+    properties:
+      databases:
+        port: 5432
+        databases:
+        - name: *db_name
+        roles:
+        - *db_role
+
+- name: worker
+  instances: 1
+  azs: [z1]
+  networks: [{name: ((network_name))}]
+  stemcell: default
+  vm_type: ((worker_vm_type))
+  jobs:
+  - release: concourse
+    name: worker
+    consumes: {baggageclaim: {from: worker-baggageclaim}}
+    properties:
+      drain_timeout: 10m
+      tsa: {worker_key: ((worker_key))}
+
+  - release: concourse
+    name: baggageclaim
+    properties: {log_level: debug}
+    provides: {baggageclaim: {as: worker-baggageclaim}}
+
+  - release: garden-runc
+    name: garden
+    properties:
+      garden:
+        listen_network: tcp
+        listen_address: 0.0.0.0:7777
+
+variables:
+- name: postgres_password
+  type: password
+- name: token_signing_key
+  type: rsa
+- name: tsa_host_key
+  type: ssh
+- name: worker_key
+  type: ssh
+
+stemcells:
+- alias: default
+  os: ubuntu-xenial
+  version: 97.12
+
+update:
+  canaries: 1
+  max_in_flight: 3
+  serial: false
+  canary_watch_time: 1000-60000
+  update_watch_time: 1000-60000

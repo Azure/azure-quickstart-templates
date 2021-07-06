@@ -1,0 +1,533 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "eastus",
+        "westus2",
+        "southcentralus"
+      ],
+      "metadata": {
+        "description": "The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource. When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details."
+      }
+    },
+    "appName": {
+      "type": "string",
+      "defaultValue": "[format('fn-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Azure Functins application to create. This must be globally unique."
+      }
+    },
+    "functionAppServicePlanSkuName": {
+      "type": "string",
+      "defaultValue": "EP1",
+      "metadata": {
+        "description": "The SKU name to use for Azure Functions. This must be a SKU that is compatible with private endpoints, i.e. EP1 or better."
+      }
+    },
+    "frontDoorEndpointName": {
+      "type": "string",
+      "defaultValue": "[format('afd-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Front Door endpoint to create. This must be globally unique."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "frontDoorSkuName": "Premium_AzureFrontDoor"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "function",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "appName": {
+            "value": "[parameters('appName')]"
+          },
+          "functionPlanSkuName": {
+            "value": "[parameters('functionAppServicePlanSkuName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the Azure Functions resources should be deployed."
+              }
+            },
+            "appName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Functions application to create. This must be globally unique."
+              }
+            },
+            "functionRuntime": {
+              "type": "string",
+              "defaultValue": "dotnet",
+              "metadata": {
+                "description": "The application runtime that the function app uses."
+              }
+            },
+            "functionPlanSkuName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the SKU to use when creating the Azure Functions plan. Common SKUs include Y1 (consumption) and EP1, EP2, and EP3 (premium)."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "appServicePlanName": "FunctionPlan",
+            "appInsightsName": "AppInsights",
+            "storageAccountName": "[format('fnstor{0}', uniqueString(resourceGroup().id, parameters('appName')))]",
+            "functionPlanKind": "[if(equals(parameters('functionPlanSkuName'), 'Y1'), 'functionapp', 'elastic')]",
+            "functionName": "MyHttpTriggeredFunction"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2019-06-01",
+              "name": "[variables('storageAccountName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                  "services": {
+                    "file": {
+                      "keyType": "Account",
+                      "enabled": true
+                    },
+                    "blob": {
+                      "keyType": "Account",
+                      "enabled": true
+                    }
+                  },
+                  "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+              }
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2018-05-01-preview",
+              "name": "[variables('appInsightsName')]",
+              "location": "[parameters('location')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web",
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+              }
+            },
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('appServicePlanName')]",
+              "location": "[parameters('location')]",
+              "kind": "[variables('functionPlanKind')]",
+              "sku": {
+                "name": "[parameters('functionPlanSkuName')]"
+              },
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2020-06-01",
+              "name": "[parameters('appName')]",
+              "location": "[parameters('location')]",
+              "kind": "functionapp",
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+                "siteConfig": {
+                  "appSettings": [
+                    {
+                      "name": "AzureWebJobsStorage",
+                      "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+                    },
+                    {
+                      "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                      "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+                    },
+                    {
+                      "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                      "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).InstrumentationKey]"
+                    },
+                    {
+                      "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                      "value": "[format('InstrumentationKey={0}', reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).InstrumentationKey)]"
+                    },
+                    {
+                      "name": "FUNCTIONS_WORKER_RUNTIME",
+                      "value": "[parameters('functionRuntime')]"
+                    },
+                    {
+                      "name": "FUNCTIONS_EXTENSION_VERSION",
+                      "value": "~3"
+                    },
+                    {
+                      "name": "AzureWebJobsDisableHomepage",
+                      "value": "true"
+                    }
+                  ]
+                },
+                "httpsOnly": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]",
+                "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites/functions",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', parameters('appName'), variables('functionName'))]",
+              "properties": {
+                "config": {
+                  "disabled": false,
+                  "bindings": [
+                    {
+                      "name": "req",
+                      "type": "httpTrigger",
+                      "direction": "in",
+                      "authLevel": "anonymous",
+                      "methods": [
+                        "get"
+                      ]
+                    },
+                    {
+                      "name": "$return",
+                      "type": "http",
+                      "direction": "out"
+                    }
+                  ]
+                },
+                "files": {
+                  "run.csx": "        #r \"Newtonsoft.Json\"\n        using System.Net;\n        using Microsoft.AspNetCore.Mvc;\n        using Microsoft.Extensions.Primitives;\n        using Newtonsoft.Json;\n        \n        public static async Task<IActionResult> Run(HttpRequest req, ILogger log)\n        {\n            log.LogInformation(\"C# HTTP trigger function processed a request.\");\n            string name = req.Query[\"name\"];\n            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();\n            dynamic data = JsonConvert.DeserializeObject(requestBody);\n            name = name ?? data?.name;\n            \n            string responseMessage = string.IsNullOrEmpty(name)\n                ? \"This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.\"\n                : $\"Hello, {name}. This HTTP triggered function executed successfully.\";\n            \n            return new OkObjectResult(responseMessage);\n        }\n      "
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "functionAppHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', parameters('appName'))).defaultHostName]"
+            },
+            "functionName": {
+              "type": "string",
+              "value": "[variables('functionName')]"
+            },
+            "functionAppResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "front-door",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "skuName": {
+            "value": "[variables('frontDoorSkuName')]"
+          },
+          "endpointName": {
+            "value": "[parameters('frontDoorEndpointName')]"
+          },
+          "originHostName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function'), '2019-10-01').outputs.functionAppHostName.value]"
+          },
+          "privateEndpointResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function'), '2019-10-01').outputs.functionAppResourceId.value]"
+          },
+          "privateLinkResourceType": {
+            "value": "sites"
+          },
+          "privateEndpointLocation": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "originHostName": {
+              "type": "string",
+              "metadata": {
+                "description": "The host name that should be used when connecting to the origin."
+              }
+            },
+            "originPath": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "The path that should be used when connecting to the origin."
+              }
+            },
+            "endpointName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Front Door endpoint to create. This must be globally unique."
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "allowedValues": [
+                "Standard_AzureFrontDoor",
+                "Premium_AzureFrontDoor"
+              ],
+              "metadata": {
+                "description": "The name of the SKU to use when creating the Front Door profile. If you use Private Link this must be set to `Premium_AzureFrontDoor`."
+              }
+            },
+            "originForwardingProtocol": {
+              "type": "string",
+              "defaultValue": "HttpsOnly",
+              "allowedValues": [
+                "HttpOnly",
+                "HttpsOnly",
+                "MatchRequest"
+              ],
+              "metadata": {
+                "description": "The protocol that should be used when connecting from Front Door to the origin."
+              }
+            },
+            "privateEndpointResourceId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the resource ID of the Private Link resource (e.g. an App Service application, Azure Storage account, etc). If you are not using Private Link then this should be empty."
+              }
+            },
+            "privateLinkResourceType": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the resource type of the Private Link resource. The allowed value will depend on the specific Private Link resource type you are using. If you are not using Private Link then this should be empty."
+              }
+            },
+            "privateEndpointLocation": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the location of the Private Link resource. If you are not using Private Link then this should be empty."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "isPrivateLinkOrigin": "[not(equals(parameters('privateEndpointResourceId'), ''))]",
+            "privateLinkOriginDetails": {
+              "privateLink": {
+                "id": "[parameters('privateEndpointResourceId')]"
+              },
+              "groupId": "[if(not(equals(parameters('privateLinkResourceType'), '')), parameters('privateLinkResourceType'), null())]",
+              "privateLinkLocation": "[parameters('privateEndpointLocation')]",
+              "requestMessage": "Please approve this connection."
+            },
+            "profileName": "MyFrontDoor",
+            "originGroupName": "MyOriginGroup",
+            "originName": "MyOrigin",
+            "routeName": "MyRoute"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Cdn/profiles",
+              "apiVersion": "2020-09-01",
+              "name": "[variables('profileName')]",
+              "location": "global",
+              "sku": {
+                "name": "[parameters('skuName')]"
+              }
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints",
+              "apiVersion": "2020-09-01",
+              "name": "[format('{0}/{1}', variables('profileName'), parameters('endpointName'))]",
+              "location": "global",
+              "properties": {
+                "originResponseTimeoutSeconds": 240,
+                "enabledState": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups",
+              "apiVersion": "2020-09-01",
+              "name": "[format('{0}/{1}', variables('profileName'), variables('originGroupName'))]",
+              "properties": {
+                "loadBalancingSettings": {
+                  "sampleSize": 4,
+                  "successfulSamplesRequired": 3
+                },
+                "healthProbeSettings": {
+                  "probePath": "/",
+                  "probeRequestType": "HEAD",
+                  "probeProtocol": "Http",
+                  "probeIntervalInSeconds": 100
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups/origins",
+              "apiVersion": "2020-09-01",
+              "name": "[format('{0}/{1}/{2}', variables('profileName'), variables('originGroupName'), variables('originName'))]",
+              "properties": {
+                "hostName": "[parameters('originHostName')]",
+                "httpPort": 80,
+                "httpsPort": 443,
+                "originHostHeader": "[parameters('originHostName')]",
+                "priority": 1,
+                "weight": 1000,
+                "sharedPrivateLinkResource": "[if(variables('isPrivateLinkOrigin'), variables('privateLinkOriginDetails'), null())]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]",
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+              "apiVersion": "2020-09-01",
+              "name": "[format('{0}/{1}/{2}', variables('profileName'), parameters('endpointName'), variables('routeName'))]",
+              "properties": {
+                "originGroup": {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]"
+                },
+                "originPath": "[if(not(equals(parameters('originPath'), '')), parameters('originPath'), null())]",
+                "supportedProtocols": [
+                  "Http",
+                  "Https"
+                ],
+                "patternsToMatch": [
+                  "/*"
+                ],
+                "compressionSettings": {
+                  "contentTypesToCompress": [
+                    "application/eot",
+                    "application/font",
+                    "application/font-sfnt",
+                    "application/javascript",
+                    "application/json",
+                    "application/opentype",
+                    "application/otf",
+                    "application/pkcs7-mime",
+                    "application/truetype",
+                    "application/ttf",
+                    "application/vnd.ms-fontobject",
+                    "application/xhtml+xml",
+                    "application/xml",
+                    "application/xml+rss",
+                    "application/x-font-opentype",
+                    "application/x-font-truetype",
+                    "application/x-font-ttf",
+                    "application/x-httpd-cgi",
+                    "application/x-javascript",
+                    "application/x-mpegurl",
+                    "application/x-opentype",
+                    "application/x-otf",
+                    "application/x-perl",
+                    "application/x-ttf",
+                    "font/eot",
+                    "font/ttf",
+                    "font/otf",
+                    "font/opentype",
+                    "image/svg+xml",
+                    "text/css",
+                    "text/csv",
+                    "text/html",
+                    "text/javascript",
+                    "text/js",
+                    "text/plain",
+                    "text/richtext",
+                    "text/tab-separated-values",
+                    "text/xml",
+                    "text/x-script",
+                    "text/x-component",
+                    "text/x-java-source"
+                  ],
+                  "isCompressionEnabled": true
+                },
+                "queryStringCachingBehavior": "IgnoreQueryString",
+                "forwardingProtocol": "[parameters('originForwardingProtocol')]",
+                "linkToDefaultDomain": "Enabled",
+                "httpsRedirect": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', variables('profileName'), variables('originGroupName'), variables('originName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]",
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "frontDoorEndpointHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))).hostName]"
+            },
+            "frontDoorId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles', variables('profileName'))).frontdoorId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'function')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "frontDoorEndpointFunctionUrl": {
+      "type": "string",
+      "value": "[format('https://{0}/api/{1}', reference(resourceId('Microsoft.Resources/deployments', 'front-door'), '2019-10-01').outputs.frontDoorEndpointHostName.value, reference(resourceId('Microsoft.Resources/deployments', 'function'), '2019-10-01').outputs.functionName.value)]"
+    },
+    "functionAppFunctionUrl": {
+      "type": "string",
+      "value": "[format('https://{0}/api/{1}', reference(resourceId('Microsoft.Resources/deployments', 'function'), '2019-10-01').outputs.functionAppHostName.value, reference(resourceId('Microsoft.Resources/deployments', 'function'), '2019-10-01').outputs.functionName.value)]"
+    }
+  },
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.126.58533",
+      "templateHash": "4241132101507219023"
+    }
+  }
+}
