@@ -164,6 +164,7 @@ Then the  SAS software depot location is:
 |Existing Virtual Network Resource Group|Specifies the resource group if using an existing virtual network. Leave this blank if you are using a new network. Otherwise, enter the resource group for the existing network|
 |Virtual Network Name|Use the default value (recommended).|
 |Operating System Image|Specifies the operating system to use.  Currently, only SUSE is supported.|
+|Jump VM Size|Specifies the VM size of the jumpvm. Use the default size (recommended).|
 |Mid-Tier VM Count|Specifies the number of virtual machines (VMs) for the middle tier server. Select 1 for a non-clustered middle tier server.  Select 2 for a two node middle tier cluster.
 |Mid-Tier VM Size|Specifies the VM size. Use the default size (recommended).|
 |Visual Analytics Worker Count|Specifies the number of worker instances created for the SAS Visual Analytics controller.| 
@@ -171,6 +172,7 @@ Then the  SAS software depot location is:
 |Visual Analytics Worker Size|Specifies the size of the Visual Analytics Worker.|
 |Proximity Placement Group Name| Specifies the proximity group for instances. You provide the name.|
 |SSH Key for VM Access| Specifies the full SSH public key that will be added to the servers. Copy and paste a public SSH key into this field.|
+|Primary User Name| The user name that will be added to the servers to allow SSH access. If left blank, the value AzureUser will be used.|
 |SAS Administration Password|Specifies the password used for SAS authentication. Enter the password to be used for the sasadm@saspw account.|
 |Azure Administration Password|Specifies the password used for OS authentication.  Enter the password to be used for the sasinst account.|
 |Admin Ingress Location|Specifies to allow inbound SSH traffic to the Ansible Controller from this Classless Inter-Domain Routing (CIDR) block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x. If this is left blank, the environment can be accessed from any location on the internet.|
@@ -233,14 +235,14 @@ https://sas94-dpm1234567890-123e3.eastus.cloudapp.azure.com/SASVisualDataBuilder
 
 The easiest way to run SAS Management Console is to connect to the deployment using X11 port forwarding as follows:
 ```
-ssh -X -i <public key pem file> AzureUser@<jumpvm public IP address>
+ssh -X -i <public key pem file> <primary user name>@<jumpvm public IP address>
 ssh -X <vm name> 
 cd /opt/sas/SASHome/SASManagementConsole/9.4 
 ./sasmc & 
 ```
 For example, to run SAS Management Console on the *midtier-0* VM:
 ```
-ssh -X -i <public key pem file> AzureUser@<jumpvm public IP address>
+ssh -X -i <public key pem file> <primary user name>@<jumpvm public IP address>
 ssh -X midtier-0 
 cd /opt/sas/SASHome/SASManagementConsole/9.4 
 ./sasmc & 
@@ -261,11 +263,11 @@ Check the logs and services status by accessing the various VM instances from th
 2. Using the public IP address, SSH to the jumpvm: 
 
     ```
-   ssh -i <public key pem file> AzureUser@<jumpvm public IP address>
+   ssh -i <public key pem file> <primary user name>@<jumpvm public IP address>
    ```
    
    The jumpvm provides SSH access to the other VMs in the deployment: 
-   * SSH access using the AzureUser account 
+   * SSH access using the primary user name account
    ```
    ssh <vm name>
    ```
@@ -298,7 +300,7 @@ To restart the services using the start and stop scripts, perform the following 
 2. Using the public IP address, SSH to the jumpvm: 
 
     ```
-   ssh -i <public key pem file> AzureUser@<jumpvm public IP address>
+   ssh -i <public key pem file> <primary user name>@<jumpvm public IP address>
    ```
  3. Log in to the Azure CLI:
  ```
