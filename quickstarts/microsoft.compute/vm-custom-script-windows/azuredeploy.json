@@ -16,7 +16,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D1_v2",
+      "defaultValue": "Standard_DS2_v2",
       "metadata": {
         "description": "Size of the Virtual Machine."
       }
@@ -50,13 +50,12 @@
     }
   },
   "variables": {
-    "nicName": "myVMNic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "[concat('subnet', uniqueString(resourceGroup().id))]",
     "subnetPrefix": "10.0.0.0/24",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "virtualNetworkName": "[concat('vnet', uniqueString(resourceGroup().id))]",
-    "publicIPAddressName": "[concat('pip', uniqueString(resourceGroup().id))]",
+    "virtualNetworkName": "vnet",
+    "publicIPAddressName": "pip",
     "dnsNameForPublicIP": "[uniqueString(resourceGroup().id)]",
     "scriptFileName": "Copy-FileFromAzure.ps1",
     "scriptFolder": ".",
@@ -131,7 +130,7 @@
     {
       "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicName')]",
+      "name": "nic",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('publicIPAddressName')]",
@@ -155,12 +154,12 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[variables('nicName')]"
+        "[resourceId('Microsoft.Network/networkInterfaces','nic')]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -183,37 +182,48 @@
           }
         },
         "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
-            }
-          ]
-        }
-      },
-      "resources": [
-        {
-          "type": "extensions",
-          "name": "CustomScriptExtension",
-          "apiVersion": "2020-06-01",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[parameters('vmName')]"
-          ],
-          "properties": {
-            "publisher": "Microsoft.Compute",
-            "type": "CustomScriptExtension",
-            "typeHandlerVersion": "1.8",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "fileUris": [
-                "[uri(parameters('_artifactsLocation'), concat(variables('ScriptFileName'), parameters('_artifactsLocationSasToken')))]"
-              ],
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File', ' ', variables('scriptFileName'), ' ', variables('scriptParameters'))]"
-            }
+            "networkInterfaceConfigurations": [
+              {
+                "name": "nic",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "ipconfig",
+                      "properties": {
+                        "subnet": {
+                          "id": "[variables('subnetRef')]"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "customScript",
+                "properties": {
+                  "publisher": "Microsoft.Compute",
+                  "settings": {
+                    "fileUris": [
+                      "[uri(parameters('_artifactsLocation'), concat(variables('scriptFileName'),parameters('_artifactsLocationSasToken')))]"
+                    ]
+                  },
+                  "typeHandlerVersion": "1.8",
+                  "autoUpgradeMinorVersion": true,
+                  "protectedSettings": {
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File', ' ', variables('scriptFileName'), ' ', variables('scriptParameters'))]"
+                  },
+                  "type": "CustomScriptExtension"
+                }
+              }
+            ]
           }
         }
-      ]
-    }
+      }
   ],
   "outputs": {
     "vm-fqdn": {
