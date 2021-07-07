@@ -7,7 +7,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vm-linux-dynamic-data-disks/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -80,90 +80,9 @@
     },
     "nodeSize": {
       "type": "string",
-      "allowedValues": [
-        "Standard_DS1",
-        "Basic_A0",
-        "Basic_A1",
-        "Basic_A2",
-        "Basic_A3",
-        "Basic_A4",
-        "Standard_A0",
-        "Standard_A1",
-        "Standard_A10",
-        "Standard_A11",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_A5",
-        "Standard_A6",
-        "Standard_A7",
-        "Standard_A8",
-        "Standard_A9",
-        "Standard_D1",
-        "Standard_D11",
-        "Standard_D11_v2",
-        "Standard_D12",
-        "Standard_D12_v2",
-        "Standard_D13",
-        "Standard_D13_v2",
-        "Standard_D14",
-        "Standard_D14_v2",
-        "Standard_D15_v2",
-        "Standard_D1_v2",
-        "Standard_D2",
-        "Standard_D2_v2",
-        "Standard_D3",
-        "Standard_D3_v2",
-        "Standard_D4",
-        "Standard_D4_v2",
-        "Standard_D5_v2",
-        "Standard_DS1",
-        "Standard_DS11",
-        "Standard_DS11_v2",
-        "Standard_DS12",
-        "Standard_DS12_V2",
-        "Standard_DS12_v2",
-        "Standard_DS13",
-        "Standard_DS13_v2",
-        "Standard_DS14",
-        "Standard_DS14_v2",
-        "Standard_DS15_v2",
-        "Standard_DS1_v2",
-        "Standard_DS2",
-        "Standard_DS2_v2",
-        "Standard_DS3",
-        "Standard_DS3_v2",
-        "Standard_DS4",
-        "Standard_DS4_v2",
-        "Standard_DS5_v2",
-        "Standard_G1",
-        "Standard_G2",
-        "Standard_G3",
-        "Standard_G4",
-        "Standard_G5",
-        "Standard_GS1",
-        "Standard_GS2",
-        "Standard_GS3",
-        "Standard_GS4",
-        "Standard_GS5"
-      ],
       "defaultValue": "Standard_DS2_v2",
       "metadata": {
-        "description": "Size of the  node."
-      }
-    },
-    "storageType": {
-      "type": "string",
-      "allowedValues": [
-        "Standard_LRS",
-        "Premium_LRS",
-        "Standard_GRS",
-        "Standard_RAGRS",
-        "Standard_ZRS"
-      ],
-      "defaultValue": "Standard_LRS",
-      "metadata": {
-        "description": "Storage Account Type : Standard-LRS, Standard-GRS, Standard-RAGRS, Standard-ZRS"
+        "description": "Size of the node."
       }
     },
     "dockerVer": {
@@ -239,32 +158,19 @@
         "master": "10.0.0.254"
       }
     },
-    "newStorageAccountName": "[concat(uniqueString(resourceGroup().id), 'dynamicdisk')]",
     "nicName": "nic",
-    "OSDiskName": "osdisk",
     "publicIPAddressName": "publicips",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhd",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, variables('networkSettings').subnet.dse.name)]",
     "installationCLI": "[concat('bash azuredeploy.sh ', parameters('masterVMName'), ' ', parameters('mountFolder'), ' ', parameters('numDataDisks'), ' ', parameters('dockerVer'), ' ', parameters('dockerComposeVer'), ' ', parameters('adminUsername'), ' ', parameters('imageSku'), ' ', parameters('dockerMachineVer'))]",
-    "storageAccountType": "[parameters('storageType')]",
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
     "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('newStorageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetName')]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
@@ -277,7 +183,7 @@
     {
       "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-11-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -299,7 +205,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-01",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('networkSettings').virtualNetworkName]",
       "location": "[parameters('location')]",
@@ -327,7 +233,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2017-03-01",
+      "apiVersion": "2020-11-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -338,13 +244,13 @@
       }
     },
     {
-      "apiVersion": "2017-03-01",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('networkSettings').virtualNetworkName)]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('networkSettings').virtualNetworkName)]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -365,14 +271,13 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('masterVMName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('avSetName'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -432,12 +337,12 @@
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('masterVMName'), '/Installation')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('masterVMName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('masterVMName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -446,7 +351,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(uri(parameters('_artifactsLocation'), 'azuredeploy.sh'), parameters('_artifactsLocationSasToken'))]"
+            "[uri(parameters('_artifactsLocation'), concat('azuredeploy.sh', parameters('_artifactsLocationSasToken')))]"
           ],
           "commandToExecute": "[variables('installationCLI')]"
         }
