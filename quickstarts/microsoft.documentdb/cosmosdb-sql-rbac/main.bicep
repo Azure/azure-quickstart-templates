@@ -23,8 +23,8 @@ var locations = [
     isZoneRedundant: false
   }
 ]
-var roleDefinitionId = guid('sql-role-definition-', databaseAccount.id)
-var roleAssignmentId = guid('sql-role-assignment-', databaseAccount.id)
+var roleDefinitionId = guid('sql-role-definition-', principalId, databaseAccount.id)
+var roleAssignmentId = guid('sql-role-assignment-', principalId, databaseAccount.id)
 
 resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
   name: accountName
