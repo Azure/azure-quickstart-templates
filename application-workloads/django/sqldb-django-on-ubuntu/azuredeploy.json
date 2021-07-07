@@ -153,7 +153,14 @@
             "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
         },
         "defaultValue": ""
-    }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A0",
+      "metadata": {
+        "description":"Default VM Size"
+      }
+    }      
   },
   "variables": {
     "nicName": "myVMNic",
@@ -163,9 +170,7 @@
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
     "vmName": "[parameters('vmDnsName')]",
-    "vmSize": "Standard_A0",
     "virtualNetworkName": "MyVNET",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "linuxConfiguration": {
@@ -182,7 +187,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2014-04-01-preview",
+      "apiVersion": "2020-11-01-preview",
       "location": "[parameters('location')]",
       "name": "[parameters('serverName')]",
       "properties": {
@@ -194,7 +199,7 @@
         {
           "apiVersion": "2014-04-01-preview",
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', parameters('serverName'))]"
+            "[resourceId('Microsoft.Sql/servers/', parameters('serverName'))]"
           ],
           "location": "[parameters('location')]",
           "name": "[parameters('databaseName')]",
@@ -207,9 +212,9 @@
           "type": "databases"
         },
         {
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2020-11-01-preview",
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', parameters('serverName'))]"
+            "[resourceId('Microsoft.Sql/servers/', parameters('serverName'))]"
           ],
           "location": "[parameters('location')]",
           "name": "FirewallRule1",
@@ -225,14 +230,14 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2021-02-01",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      }	
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -244,7 +249,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -265,13 +270,13 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -291,17 +296,17 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -334,10 +339,10 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'), '/django')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
