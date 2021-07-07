@@ -125,13 +125,13 @@ resource server 'Microsoft.DBforMySQL/servers@2017-12-01' = {
 resource firewallRules 'Microsoft.DBforMySQL/servers/firewallrules@2017-12-01' = {
   parent: server
   name: 'AllowAzureIPs'
+  dependsOn: [
+    database
+  ]
   properties: {
     startIpAddress: '0.0.0.0'
     endIpAddress: '0.0.0.0'
   }
-  dependsOn: [
-    database
-  ]
 }
 
 resource database 'Microsoft.DBforMySQL/servers/databases@2017-12-01' = {
