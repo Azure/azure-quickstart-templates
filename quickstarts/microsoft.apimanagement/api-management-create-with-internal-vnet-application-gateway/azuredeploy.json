@@ -1,0 +1,511 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "base-name": {
+            "type": "string",
+            "metadata": {
+                "description": "This will be used to derive names for all of your resources"
+            }
+        },
+        "log-analytics-workspace-id": {
+            "type": "string",
+            "metadata": {
+                "description": "The resource ID for an existing Log Analytics workspace"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location in which resources will be created"
+            }
+        },
+        "apim-sku": {
+            "type": "string",
+            "defaultValue": "Developer",
+            "allowedValues": [
+                "Developer", "Premium"
+            ],
+            "metadata": {
+                "description": "The edition of Azure API Management to use. This must be an edition that supports VNET Integration. This selection can have a significant impact on consumption cost and 'Developer' is recommended for non-production use."
+            }
+        },
+        "apim-capacity": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "The number of Azure API Management capacity units to provision. For Developer edition, this must equal 1."
+            }
+        },
+        "app-gateway-capacity": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "The number of Azure Application Gateway capacity units to provision. This setting has a direct impact on consumption cost and is recommended to be left at the default value of 1"
+            }
+        },
+        "vnet-address-prefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "The address space (in CIDR notation) to use for the VNET to be deployed in this solution. If integrating with other networked components, there should be no overlap in address space."
+            }
+        },
+        "app-gateway-subnet-prefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "description": "The address space (in CIDR notation) to use for the subnet to be used by Azure Application Gateway. Must be contained in the VNET address space."
+            }
+        },
+        "apim-subnet-prefix": {
+            "type": "string",
+            "defaultValue": "10.0.1.0/24",
+            "metadata": {
+                "description": "The address space (in CIDR notation) to use for the subnet to be used by Azure API Management. Must be contained in the VNET address space."
+            }
+        },        
+        "apim-publisher-name": {
+            "type": "string",
+            "defaultValue": "Contoso",
+            "metadata": {
+                "description": "Descriptive name for publisher to be used in the portal"
+            }
+        },
+        "apim-publisher-email": {
+            "type": "string",
+            "defaultValue": "api@contoso.com",
+            "metadata": {
+                "description": "Email adddress associated with publisher"
+            }
+        }
+    },
+    "variables": {
+        "app-insights-name": "[concat(parameters('base-name'), '-ai')]",
+        "vnet-name": "[concat(parameters('base-name'), '-vnet')]",
+        "apim-name": "[concat(parameters('base-name'), '-apim')]",
+        "public-ip-name": "[concat(parameters('base-name'), '-pip')]",
+        "app-gateway-name": "[concat(parameters('base-name'), '-agw')]",
+        "vnet-dns-link-name": "[concat(parameters('base-name'), '-vnet-dns-link')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ApiManagement/service",
+            "apiVersion": "2020-12-01",
+            "name": "[variables('apim-name')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('apim-sku')]",
+                "capacity": "[parameters('apim-capacity')]"
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name'))]"
+            ],
+            "resources": [
+                {
+                    "type": "gateways",
+                    "apiVersion": "2020-12-01",
+                    "name": "my-gateway",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.ApiManagement/service', variables('apim-name'))]"
+                    ],
+                    "properties": {
+                        "locationData": {
+                            "name": "My internal location"
+                        },
+                        "description": "Self hosted gateway bringing API Management to the edge"
+                    }
+                },
+                {
+                    "type": "loggers",
+                    "apiVersion": "2020-12-01",                    
+                    "name": "AppInsightsLogger",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.ApiManagement/service', variables('apim-name'))]"
+                    ],
+                    "properties": {
+                        "loggerType": "applicationInsights",
+                        "resourceId": "[resourceId('Microsoft.Insights/components', variables('app-insights-name'))]",
+                        "credentials": {
+                            "instrumentationKey": "[reference(variables('app-insights-name')).InstrumentationKey]"
+                        }
+                    }
+                },
+                {
+                    "type": "diagnostics",
+                    "apiVersion": "2020-12-01",
+                    "name": "applicationinsights",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.ApiManagement/service', variables('apim-name'))]",
+                        "[resourceId('Microsoft.ApiManagement/service/loggers', variables('apim-name'), 'AppInsightsLogger')]"
+                    ],
+                    "properties": {
+                        "alwaysLog": "allErrors",
+                        "httpCorrelationProtocol": "Legacy",
+                        "verbosity": "information",
+                        "logClientIp": true,
+                        "loggerId": "[resourceId('Microsoft.ApiManagement/service/loggers/', variables('apim-name'), 'AppInsightsLogger')]",
+                        "sampling": {
+                            "samplingType": "fixed",
+                            "percentage": 100
+                        },
+                        "frontend": {
+                            "request": {
+                                "body": {
+                                    "bytes": 0
+                                }
+                            },
+                            "response": {
+                                "body": {
+                                    "bytes": 0
+                                }
+                            }
+                        },
+                        "backend": {
+                            "request": {
+                                "body": {
+                                    "bytes": 0
+                                }
+                            },
+                            "response": {
+                                "body": {
+                                    "bytes": 0
+                                }
+                            }
+                        }
+                    }
+                }
+            ],
+            "properties": {
+                "publisherName": "[parameters('apim-publisher-name')]",
+                "publisherEmail": "[parameters('apim-publisher-email')]",
+                "virtualNetworkType": "Internal",
+                "virtualNetworkConfiguration": {
+                    "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), 'apimSubnet')]"
+                }
+            }
+        },
+        {
+            "scope": "[format('Microsoft.ApiManagement/service/{0}', variables('apim-name'))]",
+            "type": "Microsoft.Insights/diagnosticSettings",
+            "apiVersion": "2017-05-01-preview",
+            "name": "logToAnalytics",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('apim-name'))]"
+            ],
+            "properties": {
+                "workspaceId": "[parameters('log-analytics-workspace-id')]",
+                "logs": [
+                    {
+                        "category": "GatewayLogs",
+                        "enabled": true
+                    }
+                ],
+                "metrics": [
+                    {
+                        "category": "AllMetrics",
+                        "enabled": true
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/applicationGateways",
+            "apiVersion": "2020-11-01",
+            "name": "[variables('app-gateway-name')]",
+            "location": "[parameters('location')]",            
+            "dependsOn": [
+                "[resourceId('Microsoft.Insights/components', variables('app-insights-name'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('public-ip-name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name'))]"
+            ],
+            "properties": {
+                "sku": {
+                    "name": "WAF_v2",
+                    "tier": "WAF_v2",
+                    "capacity": "[parameters('app-gateway-capacity')]"
+                },
+                "gatewayIPConfigurations": [
+                    {
+                        "name": "appGatewayIpConfig",
+                        "properties": {
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), 'appGatewaySubnet')]"
+                            }
+                        }
+                    }
+                ],
+                "frontendIPConfigurations": [
+                    {
+                        "name": "appGwPublicFrontendIp",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('public-ip-name'))]"
+                            }
+                        }
+                    }
+                ],
+                "frontendPorts": [
+                    {
+                        "name": "port_80",
+                        "properties": {
+                            "port": 80
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "gatewayBackEnd",
+                        "properties": {
+                            "backendAddresses": [
+                                {
+                                    "fqdn": "[concat(variables('apim-name'), '.azure-api.net')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "backendHttpSettingsCollection": [
+                    {
+                        "name": "apim-gateway-https-setting",
+                        "properties": {
+                            "port": 443,
+                            "protocol": "Https",
+                            "cookieBasedAffinity": "Disabled",
+                            "hostName": "[concat(variables('apim-name'), '.azure-api.net')]",
+                            "pickHostNameFromBackendAddress": false,
+                            "requestTimeout": 20,
+                            "probe": {
+                                "id": "[resourceId('Microsoft.Network/applicationGateways/probes', variables('app-gateway-name'), 'apim-gateway-probe')]"
+                            }
+                        }
+                    }
+                ],
+                "httpListeners": [
+                    {
+                        "name": "apim-listener",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[resourceId('Microsoft.Network/applicationGateways/frontEndIPConfigurations', variables('app-gateway-name'), 'appGwPublicFrontendIp')]"
+                            },
+                            "frontendPort": {
+                                "id": "[resourceId('Microsoft.Network/applicationGateways/frontEndPorts', variables('app-gateway-name'), 'port_80')]"
+                            },
+                            "protocol": "Http",
+                            "requireServerNameIndication": false
+                        }
+                    }
+                ],
+                "requestRoutingRules": [
+                    {
+                        "name": "apim-routing-rule",
+                        "properties": {
+                            "ruleType": "Basic",
+                            "httpListener": {
+                                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('app-gateway-name'), 'apim-listener')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('app-gateway-name'), 'gatewayBackEnd')]"
+                            },
+                            "backendHttpSettings": {
+                                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('app-gateway-name'), 'apim-gateway-https-setting')]"
+                            }
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "apim-gateway-probe",
+                        "properties": {
+                            "protocol": "Https",
+                            "host": "[concat(variables('apim-name'), '.azure-api.net')]",
+                            "port": 443,
+                            "path": "/status-0123456789abcdef",
+                            "interval": 30,
+                            "timeout": 120,
+                            "unhealthyThreshold": 8,
+                            "pickHostNameFromBackendHttpSettings": false,
+                            "minServers": 0
+                        }
+                    }
+                ],
+                "webApplicationFirewallConfiguration": {
+                    "enabled": true,
+                    "firewallMode": "Detection",
+                    "ruleSetType": "OWASP",
+                    "ruleSetVersion": "3.2",
+                    "requestBodyCheck": true,
+                    "maxRequestBodySizeInKb": 128,
+                    "fileUploadLimitInMb": 100
+                }
+            }
+        },
+        {
+            "scope": "[format('Microsoft.Network/applicationGateways/{0}', variables('app-gateway-name'))]",
+            "type": "Microsoft.Insights/diagnosticSettings",
+            "apiVersion": "2017-05-01-preview",
+            "name": "logToAnalytics",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/applicationGateways', variables('app-gateway-name'))]"
+            ],
+            "properties": {
+                "workspaceId": "[parameters('log-analytics-workspace-id')]",
+                "logs": [
+                    {
+                        "category": "ApplicationGatewayAccessLog",
+                        "enabled": true
+                    },
+                    {
+                        "category": "ApplicationGatewayPerformanceLog",
+                        "enabled": true
+                    },
+                    {
+                        "category": "ApplicationGatewayFirewallLog",
+                        "enabled": true
+                    }
+                ],
+                "metrics": [
+                    {
+                        "category": "AllMetrics",
+                        "enabled": true
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2020-02-02-preview",
+            "name": "[variables('app-insights-name')]",
+            "location": "[parameters('location')]",
+            "kind": "web",
+            "properties": {
+                "Application_Type": "web",
+                "WorkspaceResourceId": "[parameters('log-analytics-workspace-id')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-11-01",
+            "name": "[variables('public-ip-name')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('base-name')]"
+                }
+            }
+        },
+        {            
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-11-01",
+            "name": "[variables('vnet-name')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [ "[parameters('vnet-address-prefix')]" ]
+                },
+                "subnets": [
+                    {
+                        "type": "subnets",
+                        "name": "appGatewaySubnet",
+                        "properties": {
+                            "addressPrefix": "[parameters('app-gateway-subnet-prefix')]",
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.KeyVault",
+                                    "locations": [
+                                        "*"
+                                    ]
+                                }
+                            ],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "type": "subnets",
+                        "name": "apimSubnet",
+                        "properties": {
+                            "addressPrefix": "[parameters('apim-subnet-prefix')]",
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.KeyVault",
+                                    "locations": [
+                                        "*"
+                                    ]
+                                }
+                            ],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2018-09-01",
+            "name": "azure-api.net",
+            "location": "global",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('apim-name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name'))]"
+            ],
+            "resources": [
+                {
+                    "condition": true,                    
+                    "type": "A",
+                    "apiVersion": "2018-09-01",
+                    "name": "[variables('apim-name')]",
+                    "location": "global",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', 'azure-api.net')]",
+                        "[resourceId('Microsoft.ApiManagement/service', variables('apim-name'))]"
+                    ],
+                    "properties": {
+                        "ttl": 36000,
+                        "aRecords": [
+                            {
+                                "ipv4Address": "[reference(resourceId('Microsoft.ApiManagement/service', variables('apim-name'))).privateIPAddresses[0]]"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "virtualNetworkLinks",
+                    "apiVersion": "2020-06-01",
+                    "name": "[variables('vnet-dns-link-name')]",                    
+                    "location": "global",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', 'azure-api.net')]"
+                    ],
+                    "properties": {
+                        "registrationEnabled": true,
+                        "virtualNetwork": {
+                            "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name'))]"
+                        }
+                    }
+                }
+            ],
+            "properties": {
+            }
+        }
+    ],
+    "outputs": {
+        "publicEndpointFqdn": {
+            "type": "string",
+            "value": "[reference(variables('public-ip-name')).dnsSettings.fqdn]"
+        }
+    }
+}
