@@ -13,7 +13,7 @@ param eventGridSubscriptionName string
 @description('The location in which the Event Grid resources should be deployed.')
 param location string = resourceGroup().location
 
-resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2021-01-01-preview' = {
+resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2017-04-01' = {
   name: serviceBusNamespaceName
   location: location
   sku: {
