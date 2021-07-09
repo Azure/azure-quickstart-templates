@@ -86,6 +86,9 @@ resource subnet1 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' = {
 resource subnet2 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' = {
   parent: virtualNetwork
   name: subnet2Name
+  dependsOn: [
+    subnet1
+  ]
   properties: {
     addressPrefix: subnet2_CIDR
     delegations: [
@@ -98,9 +101,6 @@ resource subnet2 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' = {
     ]
     privateEndpointNetworkPolicies: 'Enabled'
   }
-  dependsOn: [
-    subnet1
-  ]
 }
 
 resource serverFarm 'Microsoft.Web/serverfarms@2020-06-01' = {
