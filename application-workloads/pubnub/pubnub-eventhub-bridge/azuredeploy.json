@@ -14,13 +14,6 @@
         "description": "A unique Web Job Name. Follow the same naming conventions as for Event Hub Namespaces to ensure you have a unique, legal string."
       }
     },
-    "Azure Datacenter Location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Must be westus unless you ensure all components are in the same region.  See README for more information."
-      }
-    },
     "PubNub Ingress Channel": {
       "type": "string",
       "defaultValue": "pnInput",
@@ -100,8 +93,8 @@
   },
   "variables": {
     "sbVersion": "2015-08-01",
-    "ehInAuthorizationRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('Event Hub Namespace'), parameters('Azure Ingress Event Hub Name'), parameters('Azure Ingress SAS Policy Name'))]",
-    "ehOutAuthorizationRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('Event Hub Namespace'), parameters('Azure Egress Event Hub Name'), parameters('Azure Egress SAS Policy Name'))]",
+    "ehInAuthorizationRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', concat(parameters('Event Hub Namespace')), concat(parameters('Azure Ingress Event Hub Name')), concat(parameters('Azure Ingress SAS Policy Name')))]",
+    "ehOutAuthorizationRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', concat(parameters('Event Hub Namespace')), concat(parameters('Azure Egress Event Hub Name')), concat(parameters('Azure Egress SAS Policy Name')))]",
     "endpoint":  "[if(contains(parameters('location'), 'gov'), '.azurewebsites.us', '.azurewebsites.net')]"
   },
   "resources": [
@@ -113,9 +106,8 @@
         "tier": "Basic"
       },
       "name": "[parameters('Event Hub Namespace')]",
-      "apiVersion": "2015-08-01",
-      "location": "[parameters('Azure Datacenter Location')]",
-      "tags": {},
+      "apiVersion": "2018-01-01-preview",
+      "location": "[parameters('location')]",
       "properties": {},
       "resources": [
         {
@@ -123,10 +115,10 @@
           "type": "eventhubs",
           "name": "[parameters('Azure Ingress Event Hub Name')]",
           "dependsOn": [
-            "[resourceId('Microsoft.EventHub/namespaces', parameters('Event Hub Namespace'))]"
+            "[resourceId('Microsoft.EventHub/namespaces', concat(parameters('Event Hub Namespace')))]"
           ],
-          "apiVersion": "2015-08-01",
-          "location": "[parameters('Azure Datacenter Location')]",
+          "apiVersion": "2017-04-01",
+          "location": "[parameters('location')]",
           "properties": {
             "messageRetentionInDays": 1,
             "partitionCount": 2
@@ -136,10 +128,10 @@
               "comments": "Generalized from resource: '/subscriptions/38ccde7a-8dbd-46b4-a0c6-71201ffab311/resourcegroups/AutoNub/providers/Microsoft.EventHub/namespaces/AutoNubEventHub/eventhubs/infrompnsubscriber/authorizationRules/infromsubscriberhub'.",
               "type": "authorizationRules",
               "dependsOn": [
-                "[concat('Microsoft.EventHub/namespaces/', parameters('Event Hub Namespace'),'/eventhubs/',parameters('Azure Ingress Event Hub Name'))]"
+                "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('Event Hub Namespace'), parameters('Azure Ingress Event Hub Name'))]"
               ],
               "name": "[parameters('Azure Ingress SAS Policy Name')]",
-              "apiVersion": "2015-08-01",
+              "apiVersion": "2017-04-01",
               "location": "[parameters('location')]",
               "properties": {
                 "rights": [
@@ -155,10 +147,10 @@
           "type": "eventhubs",
           "name": "[parameters('Azure Egress Event Hub Name')]",
           "dependsOn": [
-            "[resourceId('Microsoft.EventHub/namespaces', parameters('Event Hub Namespace'))]",
-            "[concat('Microsoft.EventHub/namespaces/', parameters('Event Hub Namespace'),'/eventhubs/',parameters('Azure Ingress Event Hub Name'))]"
+            "[resourceId('Microsoft.EventHub/namespaces', concat(parameters('Event Hub Namespace')))]",
+            "[resourceId('Microsoft.EventHub/namespaces/eventhubs', concat(parameters('Event Hub Namespace')), concat(parameters('Azure Ingress Event Hub Name')))]"
           ],
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2017-04-01",
           "location": "[parameters('location')]",
           "properties": {
             "messageRetentionInDays": 1,
@@ -169,10 +161,10 @@
               "comments": "Generalized from resource: '/subscriptions/38ccde7a-8dbd-46b4-a0c6-71201ffab311/resourcegroups/AutoNub/providers/Microsoft.EventHub/namespaces/AutoNubEventHub/eventhubs/outtopnpublisher/authorizationRules/outtopublisherhub'.",
               "type": "authorizationRules",
               "dependsOn": [
-                "[concat('Microsoft.EventHub/namespaces/', parameters('Event Hub Namespace'),'/eventhubs/',parameters('Azure Egress Event Hub Name'))]"
+                "[resourceId('Microsoft.EventHub/namespaces/eventhubs', concat(parameters('Event Hub Namespace')), concat(parameters('Azure Egress Event Hub Name')))]"
               ],
               "name": "[parameters('Azure Egress SAS Policy Name')]",
-              "apiVersion": "2015-08-01",
+              "apiVersion": "2017-04-01",
               "location": "[parameters('location')]",
               "properties": {
                 "rights": [
@@ -196,20 +188,18 @@
         "capacity": 1
       },
       "name": "[parameters('Azure Service Plan')]",
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "properties": {
         "name": "[parameters('Azure Service Plan')]",
         "numberOfWorkers": 1
-      },
-      "resources": [],
-      "dependsOn": []
+      }
     },
     {
       "comments": "Generalized from resource: '/subscriptions/38ccde7a-8dbd-46b4-a0c6-71201ffab311/resourceGroups/AutoNub/providers/Microsoft.Web/sites/pnwebjob'.",
       "type": "Microsoft.Web/sites",
       "name": "[parameters('Azure Webjob Name')]",
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2020-06-01",
       "location": "[parameters('location')]",
       "properties": {
         "name": "[parameters('Azure Webjob Name')]",
@@ -224,13 +214,11 @@
           {
             "name": "[concat(parameters('Azure Webjob Name'), variables('endpoint'))]",
             "sslState": 0,
-            "thumbprint": null,
             "ipBasedSslState": 0
           },
           {
             "name": "[concat(parameters('Azure Webjob Name'),'.scm', variables('endpoint'))]",
             "sslState": 0,
-            "thumbprint": null,
             "ipBasedSslState": 0
           }
         ],
@@ -238,18 +226,18 @@
       },
       "resources": [
         {
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2020-06-01",
           "name": "web",
           "type": "config",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites', parameters('Azure Webjob Name'))]"
+            "[resourceId('Microsoft.Web/Sites', concat(parameters('Azure Webjob Name')))]"
           ],
           "properties": {
             "alwaysOn": true
           }
         },
         {
-          "apiVersion": "2015-04-01",
+          "apiVersion": "2020-06-01",
           "name": "web",
           "type": "sourcecontrols",
           "dependsOn": [
@@ -262,12 +250,12 @@
           }
         },
         {
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2020-06-01",
           "name": "connectionstrings",
           "type": "config",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites', parameters('Azure Webjob Name'))]",
-            "[resourceId('Microsoft.Web/Sites/sourcecontrols', parameters('Azure Webjob Name'), 'web')]"
+            "[resourceId('Microsoft.Web/Sites', concat(parameters('Azure Webjob Name')))]",
+            "[resourceId('Microsoft.Web/Sites/sourcecontrols', concat(parameters('Azure Webjob Name')), 'web')]"
           ],
           "properties": {
             "PNSubChannel": {
