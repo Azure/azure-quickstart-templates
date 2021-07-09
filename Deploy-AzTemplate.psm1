@@ -50,15 +50,15 @@ function deploy {
     # if the bicep switch is set, and the templateFile arg was the default, swap .json for .bicep
     $isBicep = ($bicep -or $TemplateFile.EndsWith('.bicep'))
     if ($isBicep) {
-        $defaultTemplateFile = '\main.bicep'
+        $defaultTemplateFile = 'main.bicep'
     }
     else {
-        $defaultTemplateFile = '\azuredeploy.json'
+        $defaultTemplateFile = 'azuredeploy.json'
     }
 
     # if the template file isn't found, try another default
     if (!(Test-Path "$ArtifactStagingDirectory\$TemplateFile")) { 
-        $TemplateFile = $ArtifactStagingDirectory + $defaultTemplateFile
+        $TemplateFile = $defaultTemplateFile
     }
 
     # build the bicep file
