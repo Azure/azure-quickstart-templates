@@ -4,17 +4,14 @@
   "parameters": {
     "vmSku": {
       "type": "string",
-      "defaultValue": "Standard_A1",
+      "defaultValue": "Standard_A1_V2",
       "metadata": {
         "description": "Size of VMs in the VM Scale Set."
       }
     },
     "ubuntuOSVersion": {
       "type": "string",
-      "defaultValue": "14.04.4-LTS",
-      "allowedValues": [
-        "14.04.4-LTS"
-      ],
+      "defaultValue": "16.04-LTS",
       "metadata": {
         "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values are: 15.10, 14.04.4-LTS."
       }
@@ -86,7 +83,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vmss-ubuntu-web-ssl/configuressl.sh"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -129,10 +126,9 @@
     "lbName": "[concat(variables('namingInfix'), 'lb')]",
     "bepoolName": "[concat(variables('lbName'), 'bepool')]",
     "fepoolName": "[concat(variables('lbName'), 'fepool')]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
-    "bepoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('bepoolName'))]",
+    "bepoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools/', variables('lbName'), variables('bepoolName'))]",
     "feIpConfigName": "[concat(variables('fepoolName'), 'IpConfig')]",
-    "feIpConfigId": "[concat(variables('lbID'),'/frontendIPConfigurations/', variables('feIpConfigName'))]",
+    "feIpConfigId": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('lbName'), variables('feIpConfigName'))]",
     "pipName": "[concat(variables('namingInfix'), 'pip')]",
     "nicName": "[concat(variables('namingInfix'), 'nic')]",
     "natPoolName": "[concat(variables('lbName'), 'natpool')]",
@@ -163,7 +159,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-11-01",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -184,7 +180,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('pipName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-11-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -196,9 +192,9 @@
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('lbName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-11-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('pipName'))]"
       ],
       "tags": {
         "displayName": "Load Balancer"
@@ -250,7 +246,7 @@
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                "id": "[concat(variables('lbId'), '/probes/', variables('httpProbeName'))]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('httpProbeName'))]"
               }
             }
           },
@@ -270,7 +266,7 @@
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/probes/', variables('httpsProbeName'))]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('httpsProbeName'))]"
               }
             }
           }
@@ -301,10 +297,10 @@
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('namingInfix')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2020-12-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "sku": {
         "name": "[parameters('vmSku')]",
@@ -312,7 +308,7 @@
         "capacity": "[parameters('capacity')]"
       },
       "properties": {
-        "overprovision": "true",
+        "overprovision": true,
         "upgradePolicy": {
           "mode": "Manual"
         },
@@ -386,7 +382,7 @@
                   "autoUpgradeMinorVersion": false,
                   "settings": {
                     "fileUris": [
-                      "[concat(parameters('_artifactsLocation'), '/', parameters('scriptFileName'), parameters('_artifactsLocationSasToken'))]"
+                      "[uri(parameters('_artifactsLocation'), concat(parameters('scriptFileName'), parameters('_artifactsLocationSasToken')))]"
                     ]
                   },
                   "protectedSettings": {
