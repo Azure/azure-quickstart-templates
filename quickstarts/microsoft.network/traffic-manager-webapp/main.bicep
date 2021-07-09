@@ -20,7 +20,7 @@ resource appServicePlan 'Microsoft.Web/serverFarms@2020-12-01' = {
   }
 }
 
-resource webSite 'Microsoft.Web/sites@2021-01-01' = {
+resource webSite 'Microsoft.Web/sites@2020-12-01' = {
   name: uniqueDnsNameForWebApp
   location: location
   properties: {
