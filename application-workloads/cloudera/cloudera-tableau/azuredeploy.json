@@ -12,9 +12,9 @@
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
-        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated"
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudera-tableau/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -169,7 +169,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_DS2_v2",
+      "defaultValue": "Standard_DS13_V2",
       "metadata": {
         "description": "The size of the VMs deployed in the cluster"
       }
@@ -256,8 +256,8 @@
     }
   },
   "variables": {
-    "templateAPIVersion": "2018-10-01",
-    "resourceAPIVersion": "2018-10-01",
+    "templateAPIVersion": "2015-11-01",
+    "resourceAPIVersion": "2015-06-15",
     "installCDH": "True",
     "addressPrefix": "[parameters('addressPrefix')]",
     "subnetPrefix": "[parameters('subnetPrefix')]",
@@ -278,17 +278,19 @@
       "prefix": "[parameters('storageAccountPrefix')]",
       "type": "[parameters('workerStorageAccountType')]"
     },
-    "clusterTshirtSizeEval": {
-      "masterNodeCount": 1,
-      "dataNodeCount": "[parameters('numberOfDataNodes')]",
-      "highAvailability": "false"
+    "clusterSize": {
+       "Eval": {
+         "masterNodeCount": 1,
+         "dataNodeCount": "[parameters('numberOfDataNodes')]",
+         "highAvailability": "false"
+       },
+       "Prod": {
+         "masterNodeCount": 3,
+         "dataNodeCount": "[parameters('numberOfDataNodes')]",
+         "highAvailability": "true"
+       }    
     },
-    "clusterTshirtSizeProd": {
-      "masterNodeCount": 3,
-      "dataNodeCount": "[parameters('numberOfDataNodes')]",
-      "highAvailability": "true"
-    },
-    "clusterSpec": "[variables(concat('clusterTshirtSize', parameters('tshirtSize')))]",
+    "clusterSpec": "[variables('clusterSize')[parameters('tshirtSize')]]",
     "vmSpec": {
       "vmSize": "[parameters('vmSize')]",
       "adminUsername": "[parameters('adminUsername')]",
@@ -314,9 +316,11 @@
       "virtualNetworkSubnetName": "[parameters('subnetName')]",
       "virtualNetworkSubnet1Name": "[parameters('subnet1Name')]"
     },
-    "newVNetId": "[resourceId(concat('Microsoft.Network','/','virtualNetworks'),parameters('virtualNetworkName'))]",
-    "existingVNetId": "[resourceId(parameters('virtualNetworkRGName'),concat('Microsoft.Network','/','virtualNetworks'),parameters('virtualNetworkName'))]",
-    "VNetId": "[variables(concat(parameters('vnetNewOrExisting'),'VNetId'))]",
+    "vnet": {
+       "new": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+       "existing": "[resourceId(parameters('virtualNetworkRGName'),concat('Microsoft.Network/virtualNetworks/',parameters('virtualNetworkName')))]"
+    },
+    "VNetId": "[variables('vnet')[parameters('vnetNewOrExisting')]]",
     "clouderaTags": {
       "type": "object",
       "provider": "B33D5D26-DD73-41FC-994A-BD709E8C8488"
