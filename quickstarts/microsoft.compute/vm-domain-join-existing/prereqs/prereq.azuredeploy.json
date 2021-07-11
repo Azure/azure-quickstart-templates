@@ -20,10 +20,16 @@
                 "description": "The FQDN of the Active Directory Domain to be created"
             }
         },
-        "vmDnsPrefix": {
+        "vmNames": {
             "type": "array",
             "metadata": {
-                "description": "Unique public DNS prefix for the deployment"
+                "description": "Names of the VMs"
+            }
+        },
+         "adDnsPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "The DNS prefix for the public IP address used by the AD controller VM"
             }
         },
         "location": {
@@ -65,12 +71,6 @@
           }
         }
     },
-    "variables": {
-        "adUsername": "[parameters('adUsername')]",
-        "adPassword": "[parameters('adPassword')]",
-        "vmNames": "[parameters('vmDnsPrefix')]",
-        "domainName": "[parameters('domainName')]"
-    },
     "resources": [
      {
          "name": "createADController",
@@ -93,7 +93,7 @@
                      "value": "[parameters('domainName')]"
                  },
                  "dnsPrefix": {
-                     "value": "[parameters('vmDnsPrefix')]"
+                     "value": "[parameters('adDnsPrefix')]"
                  },
                  "virtualNetworkName": {
                      "value": "[parameters('virtualNetworkName')]"
@@ -107,11 +107,11 @@
     {
       "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(parameters('vmDnsPrefix')[copyIndex()], '-nic')]",
+      "name": "[concat(parameters('vmNames')[copyIndex()], '-nic')]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
-        "count": "[length(parameters('vmDnsPrefix'))]"
+        "count": "[length(parameters('vmNames'))]"
       },
       "dependsOn": [
         "createADController"
@@ -133,11 +133,11 @@
     {
       "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('vmDnsPrefix')[copyIndex()]]",
+      "name": "[parameters('vmNames')[copyIndex()]]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "vmLoop",
-        "count": "[length(parameters('vmDnsPrefix'))]"
+        "count": "[length(parameters('vmNames'))]"
       },
       "dependsOn": [
         "nicLoop"
@@ -147,7 +147,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('vmDnsPrefix')[copyIndex()]]",
+          "computerName": "[parameters('vmNames')[copyIndex()]]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -159,7 +159,7 @@
                "version": "latest"
            },
            "osDisk": {
-               "name": "[concat(parameters('vmDnsPrefix')[copyIndex()],'_OSDisk')]",
+               "name": "[concat(parameters('vmNames')[copyIndex()],'_OSDisk')]",
                "caching": "ReadOnly",
                "createOption": "FromImage",
                "managedDisk": {
@@ -170,7 +170,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-               "id": "[resourceId('Microsoft.Network/networkInterfaces/',concat(parameters('vmDnsPrefix')[copyIndex()], '-nic'))]"
+               "id": "[resourceId('Microsoft.Network/networkInterfaces/',concat(parameters('vmNames')[copyIndex()], '-nic'))]"
             }
           ]
         }
@@ -180,21 +180,21 @@
     "outputs": {
         "domainName": {
             "type": "string",
-            "value": "[variables('domainName')]"
+            "value": "[parameters('domainName')]"
         },
         "adUsername": {
             "type": "string",
-            "value": "[variables('adUsername')]"
+            "value": "[parameters('adUsername')]"
         },
         "adPassword": {
             "type": "string",
-            "value": "[variables('adPassword')]"
+            "value": "[parameters('adPassword')]"
         },
         "vmNames": {
             "type": "array",
             "copy": {
-              "count": "[length(variables('vmNames'))]",
-              "input": "[variables('vmNames')]"
+              "count": "[length(parameters('vmNames'))]",
+              "input": "[parameters('vmNames')]"
             }
         }
     }
