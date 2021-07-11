@@ -84,16 +84,33 @@
             "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
         },
         "defaultValue": ""
-  }
+  },
+    "vmSize" : {
+        "type": "string",
+        "defaultValue": "Standard_D2_v2",
+        "metadata": {
+          "description": "Admin password for the Octopus Deploy web application."
+        }
+    },
+    "vmName" : {
+        "type": "string",
+        "metadata": {
+          "description": "Admin password for the Octopus Deploy web application."
+        }
+    },
+    "location" : {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "Admin password for the Octopus Deploy web application."
+        }
+    }
 },
   "variables": {
     "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vmImageOffer": "WindowsServer",
     "vmWindowsOSVersion": "2012-R2-Datacenter",
-    "vmStorageAccountType": "Standard_LRS",
-    "vmName": "OctopusDeploy",
-    "vmSize": "Standard_D2_v2",
     "networkNicName": "OctopusDeployNIC",
     "networkAddressPrefix": "10.0.0.0/16",
     "networkSubnetName": "OctopusDeploySubnet",
@@ -107,29 +124,28 @@
     "sqlDbCollation": "SQL_Latin1_General_CP1_CI_AS",
     "sqlDbMaxSizeBytes": "268435456000",
     "sqldbEditionPerformanceLevel": "1B1EBD4D-D903-4BAA-97F9-4EA675F5E928",
-    "sqlDbConnectionString": "[concat('Data Source=tcp:', parameters('sqlServerName'), '.database.windows.net,1433;Database=', variables('sqlDbName'), ';User Id=', parameters('sqlAdminUsername'), '@', parameters('sqlServerName'), ';Password=', parameters('sqlAdminPassword'), ';Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
-    "installerUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/octopus/octopusdeploy3-single-vm-windows/Install-OctopusDeploy.ps1",
-    "installerCommand": "[concat('powershell.exe -File Install-OctopusDeploy.ps1 ', base64(variables('sqlDbConnectionString')), ' ', base64(parameters('licenseFullName')), ' ', base64(parameters('licenseOrganisationName')), ' ', base64(parameters('licenseEmailAddress')), ' ', base64(parameters('octopusAdminUsername')), ' ', base64(parameters('octopusAdminPassword')), ' 2>&1 > D:\\Install-OctopusDeploy.ps1.log ')]"
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2021-02-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
       "tags": {
         "env": "trial",
         "vendor": "Octopus Deploy"
       },
-      "properties": {
-        "accountType": "[variables('vmStorageAccountType')]"
-      }
+      "properties": {}
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('networkPublicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "env": "trial",
         "vendor": "Octopus Deploy"
@@ -142,7 +158,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('networkVNetName')]",
       "location": "[resourceGroup().location]",
@@ -167,7 +183,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('networkNicName')]",
       "location": "[resourceGroup().location]",
@@ -176,8 +192,8 @@
         "vendor": "Octopus Deploy"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('networkPublicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('networkVNetName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('networkPublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('networkVNetName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -197,24 +213,24 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
-      "location": "[resourceGroup().location]",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
       "tags": {
         "env": "trial",
         "vendor": "Octopus Deploy"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('networkNicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkNicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[variables('vmName')]",
+          "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('vmAdminUsername')]",
           "adminPassword": "[parameters('vmAdminPassword')]"
         },
@@ -226,7 +242,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),'_OSDisk')]", 
+            "name": "[concat(parameters('vmName'),'_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -242,12 +258,12 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/OctopusDeployInstaller')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
+      "name": "[concat(parameters('vmName'),'/OctopusDeployInstaller')]",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
-        "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'), '/databases/', variables('sqlDbName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
+        "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), variables('sqlDbName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -263,10 +279,10 @@
       }
     },
     {
-      "apiVersion": "2014-04-01-preview",
+      "apiVersion": "2020-08-01-preview",
       "type": "Microsoft.Sql/servers",
       "name": "[parameters('sqlServerName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "env": "trial",
         "vendor": "Octopus Deploy"
@@ -278,16 +294,16 @@
       },
       "resources": [
         {
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2020-08-01-preview",
           "type": "databases",
           "name": "[variables('sqlDbName')]",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "tags": {
             "env": "trial",
             "vendor": "Octopus Deploy"
           },
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'))]"
+            "[resourceId('Microsoft.Sql/servers/', parameters('sqlServerName'))]"
           ],
           "properties": {
             "edition": "[variables('sqlDbEdition')]",
@@ -298,11 +314,11 @@
         },
         {
           "type": "firewallrules",
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2020-08-01-preview",
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'))]"
+            "[resourceId('Microsoft.Sql/servers/', parameters('sqlServerName'))]"
           ],
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "name": "AllowAllWindowsAzureIps",
           "properties": {
             "endIpAddress": "0.0.0.0",
