@@ -115,7 +115,7 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/concourse/concourse-ci/",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
@@ -141,12 +141,10 @@
     "storageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName'))]",
     "virtualNetworkName": "vnet",
     "virtualNetworkAddressSpace": "10.0.0.0/16",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "subnetNameForBosh": "Bosh",
     "subnetAddressRangeForBosh": "10.0.0.0/24",
     "subnetGatewayForBosh": "10.0.0.1",
     "internalIPForBosh": "10.0.0.4",
-    "subnetRefForBosh": "[concat(variables('vnetID'), '/subnets/', variables('subnetNameForBosh'))]",
     "subnetNameForConcourse": "Concourse",
     "subnetAddressRangeForConcourse": "10.0.16.0/20",
     "subnetGatewayForConcourse": "10.0.16.1",
@@ -175,27 +173,29 @@
       "[uri(variables('baseUriAzureCloud'), concat('manifests/use-mirror-releases-for-bosh.yml', parameters('_artifactsLocationSasToken')))]",
       "[uri(variables('baseUriAzureCloud'), concat('manifests/use-mirror-releases-for-concourse.yml', parameters('_artifactsLocationSasToken')))]"
     ],
-    "environmentAzureCloud": {
-      "serviceHostBase": "core.windows.net",
-      "boshCliUrl": "https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-5.1.2-linux-amd64",
-      "boshAzureCPIReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=35.4.0",
-      "boshAzureCPIReleaseSha1": "372c0220e2e38ca9201135eccb52ff912f2d0538",
-      "stemcellUrl": "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=97.12",
-      "stemcellSha1": "a04ddc9b87dfb8431838df706a7b0d5ddaf2db4d"
+    "environment": {
+      "AzureCloud": {
+        "serviceHostBase": "[environment().suffixes.storage]",
+        "boshCliUrl": "https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-5.1.2-linux-amd64",
+        "boshAzureCPIReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=35.4.0",
+        "boshAzureCPIReleaseSha1": "372c0220e2e38ca9201135eccb52ff912f2d0538",
+        "stemcellUrl": "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=97.12",
+        "stemcellSha1": "a04ddc9b87dfb8431838df706a7b0d5ddaf2db4d"
+      },
+      "azureChinaCloud": {
+        "serviceHostBase": "core.chinacloudapi.cn",
+        "boshCliUrl": "[uri(variables('baseUriAzureChinaCloud'), 'bosh-cli/bosh-cli-5.1.2-linux-amd64')]",
+        "boshAzureCPIReleaseUrl": "https://mirror.azure.cn/bosh/bosh-azure-cpi-release/bosh-azure-cpi-release-35.4.0.tgz",
+        "boshAzureCPIReleaseSha1": "372c0220e2e38ca9201135eccb52ff912f2d0538",
+        "stemcellUrl": "[uri(variables('baseUriAzureChinaCloud'), 'bosh-azure-stemcells/bosh-stemcell-97.12-azure-hyperv-ubuntu-xenial-go_agent.tgz')]",
+        "stemcellSha1": "a04ddc9b87dfb8431838df706a7b0d5ddaf2db4d"
+      }
     },
-    "environmentAzureChinaCloud": {
-      "serviceHostBase": "core.chinacloudapi.cn",
-      "boshCliUrl": "[uri(variables('baseUriAzureChinaCloud'), 'bosh-cli/bosh-cli-5.1.2-linux-amd64')]",
-      "boshAzureCPIReleaseUrl": "https://mirror.azure.cn/bosh/bosh-azure-cpi-release/bosh-azure-cpi-release-35.4.0.tgz",
-      "boshAzureCPIReleaseSha1": "372c0220e2e38ca9201135eccb52ff912f2d0538",
-      "stemcellUrl": "[uri(variables('baseUriAzureChinaCloud'), 'bosh-azure-stemcells/bosh-stemcell-97.12-azure-hyperv-ubuntu-xenial-go_agent.tgz')]",
-      "stemcellSha1": "a04ddc9b87dfb8431838df706a7b0d5ddaf2db4d"
-    },
-    "environment": "[variables(concat('environment', parameters('environment')))]"
+    "environmentVariable": "[variables('environment')[parameters('environment')]]"
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('boshNetworkSecurityGroup')]",
       "location": "[parameters('location')]",
@@ -261,7 +261,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('devboxNetworkSecurityGroup')]",
       "location": "[parameters('location')]",
@@ -285,7 +285,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('concourseNetworkSecurityGroup')]",
       "location": "[parameters('location')]",
@@ -455,9 +455,9 @@
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', concat(parameters('jumpboxVmName'), '-devbox'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('devboxNetworkSecurityGroup'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(parameters('jumpboxVmName'), '-devbox'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('devboxNetworkSecurityGroup'))]"
       ],
       "properties": {
         "networkSecurityGroup": {
@@ -473,7 +473,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('jumpboxVmName'), '-devbox'))]"
               },
               "subnet": {
-                "id": "[variables('subnetRefForBosh')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetNameForBosh'))]"
               }
             }
           }
@@ -485,8 +485,8 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -506,7 +506,7 @@
               "SUBNET_NAME_FOR_CONCOURSE": "[variables('subnetNameForConcourse')]",
               "SUBNET_ADDRESS_RANGE_FOR_CONCOURSE": "[variables('subnetAddressRangeForConcourse')]",
               "SUBNET_GATEWAY_FOR_CONCOURSE": "[variables('subnetgatewayForConcourse')]",
-              "CONCOURSE_PUBLIC_IP": "[reference(concat(parameters('jumpboxVmName'),'-concourse')).ipAddress]",
+              "CONCOURSE_PUBLIC_IP": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('jumpboxVmName'),'-concourse'))).ipAddress]",
               "NSG_NAME_FOR_BOSH": "[variables('boshNetworkSecurityGroup')]",
               "NSG_NAME_FOR_CONCOURSE": "[variables('concourseNetworkSecurityGroup')]",
               "SUBSCRIPTION_ID": "[subscription().subscriptionId]",
@@ -515,12 +515,12 @@
               "STORAGE_ACCESS_KEY": "[listKeys(variables('storageid'), '2015-06-15').key1]",
               "ADMIN_USER_NAME": "[parameters('jumpboxUsername')]",
               "ENVIRONMENT": "[parameters('environment')]",
-              "SERVICE_HOST_BASE": "[variables('environment').serviceHostBase]",
-              "BOSH_AZURE_CPI_RELEASE_URL": "[variables('environment').boshAzureCPIReleaseUrl]",
-              "BOSH_AZURE_CPI_RELEASE_SHA1": "[variables('environment').boshAzureCPIReleaseSha1]",
-              "STEMCELL_URL": "[variables('environment').stemcellUrl]",
-              "STEMCELL_SHA1": "[variables('environment').stemcellSha1]",
-              "BOSH_CLI_URL": "[variables('environment').boshCLIUrl]",
+              "SERVICE_HOST_BASE": "[variables('environmentVariable').serviceHostBase]",
+              "BOSH_AZURE_CPI_RELEASE_URL": "[variables('environmentVariable').boshAzureCPIReleaseUrl]",
+              "BOSH_AZURE_CPI_RELEASE_SHA1": "[variables('environmentVariable').boshAzureCPIReleaseSha1]",
+              "STEMCELL_URL": "[variables('environmentVariable').stemcellUrl]",
+              "STEMCELL_SHA1": "[variables('environmentVariable').stemcellSha1]",
+              "BOSH_CLI_URL": "[variables('environmentVariable').boshCLIUrl]",
               "AUTO_DEPLOY_BOSH": "[parameters('autoDeployBosh')]",
               "AUTO_DEPLOY_CONCOURSE": "[parameters('autoDeployConcourse')]",
               "CONCOURSE_USERNAME": "[parameters('concourseUsername')]",
@@ -537,7 +537,7 @@
       "name": "[parameters('jumpboxVmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "Microsoft.Resources/deployments/generate-customdata"
+        "[resourceId('Microsoft.Resources/deployments', 'generate-customdata')]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -587,7 +587,7 @@
       "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('jumpboxVmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('jumpboxVmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -606,11 +606,11 @@
   "outputs": {
     "sshDevBox": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('jumpboxUsername'), '@', reference(concat('Microsoft.Network/publicIPAddresses/', parameters('jumpboxVmName'), '-devbox')).dnsSettings.fqdn)]"
+      "value": "[concat('ssh ', parameters('jumpboxUsername'), '@', reference(resourceId('Microsoft.Network/publicIPAddresses/', concat(parameters('jumpboxVmName'), '-devbox'))).dnsSettings.fqdn)]"
     },
     "concourseEndpoint": {
       "type": "string",
-      "value": "[concat('http://', reference(concat(parameters('jumpboxVmName'), '-concourse')).ipAddress, ':8080')]"
+      "value": "[concat('http://', reference(resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('jumpboxVmName'), '-concourse'))).ipAddress, ':8080')]"
     }
   }
 }
