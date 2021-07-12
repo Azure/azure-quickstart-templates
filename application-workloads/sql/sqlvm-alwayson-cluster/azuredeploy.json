@@ -248,6 +248,7 @@
       "staticSubnetName": "staticSubnet",
       "sqlSubnetName": "sqlSubnet"
     },
+    "RDPNAT": "RDP",
     "SQLAOProbe": "SQLAlwaysOnEndPointProbe",
     "primaryDCIPAddressName": "primaryDCIP",
     "backupDCIPAddressName": "backupDCIP",
@@ -280,8 +281,35 @@
     "adBDCNicName": "[concat(variables('vmSettings').adBDCVMName,'-nic')]",
     "sqlwNicName": "[concat(variables('vmSettings').sqlwVMName,'-nic')]",
     "staticSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkNameWithSuffix'),variables('subnetNames').staticSubnetName)]",
+    "sqlSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkNameWithSuffix'),variables('subnetNames').sqlSubnetName)]",
+    "ids": {
+      "adNicId": "[resourceId('Microsoft.Network/networkInterfaces',variables('adPDCNicName'))]",
+      "rdplbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbSettings').rdpLBName)]",
+      "sqllbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbSettings').sqlLBName)]"
+    },
+    "derivedIds": {
+      "adIPConfigID": "[concat(variables('ids').adNicId,'/ipConfigurations/ipconfig1')]",
+      "rdplbFEConfigID": "[concat(variables('ids').rdplbID,'/frontendIPConfigurations/',variables('lbSettings').rdpLBFE)]",
+      "adRDPNATRuleID": "[concat(variables('ids').rdplbID,'/inboundNatRules/',variables('RDPNAT'))]",
+      "adBEAddressPoolID": "[concat(variables('ids').rdplbID,'/backendAddressPools/',variables('lbSettings').adLBBE)]",
+      "sqlBEAddressPoolID": "[concat(variables('ids').sqllbID,'/backendAddressPools/',variables('lbSettings').sqlLBBE)]",
+      "sqllbFEConfigID": "[concat(variables('ids').sqllbID,'/frontendIPConfigurations/',variables('lbSettings').sqlLBFE)]",
+      "sqllbProbeID": "[concat(variables('ids').sqllbID,'/probes/',variables('SQLAOProbe'))]"
+    },
+    "SQL2012SP2-WS2012R2": "Enterprise",
+    "SQL2012SP3-WS2012R2": "Enterprise",
+    "SQL2014-WS2012R2": "Enterprise",
     "SQL2014SP2-WS2012R2": "Enterprise",
+    "SQL2016-WS2012R2": "Enterprise",
+    "Monday": true,
+    "Tuesday": true,
+    "Wednesday": true,
+    "Thursday": true,
+    "Friday": true,
+    "Saturday": true,
     "Sunday": true,
+    "Never": false,
+    "Everyday": true,
     "subnets": [
       {
         "name": "[variables('subnetNames').staticSubnetName]",
@@ -405,19 +433,19 @@
             "value": "[parameters('sqlLBIPAddress')]"
           },
           "staticSubnetRef": {
-            "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkNameWithSuffix'),variables('subnetNames').sqlSubnetName)]"
+            "value": "[variables('sqlSubnetRef')]"
           },
           "sqlLBBE": {
             "value": "[variables('lbSettings').sqlLBBE]"
           },
           "sqlLBBEID": {
-            "value": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbSettings').sqlLBName, variables('lbSettings').sqlLBBE)]"
+            "value": "[variables('derivedIds').sqlBEAddressPoolID]"
           },
           "sqllbFEConfigID": {
-            "value": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbSettings').sqlLBName, variables('lbSettings').sqlLBBE)]"
+            "value": "[variables('derivedIds').sqllbFEConfigID]"
           },
           "sqllbProbeID": {
-            "value": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbSettings').sqlLBName, variables('SQLAOProbe'))]"
+            "value": "[variables('derivedIds').sqllbProbeID]"
           },
           "SQLAOProbe": {
             "value": "[variables('SQLAOProbe')]"
@@ -451,6 +479,12 @@
           "staticSubnetRef": {
             "value": "[variables('staticSubnetRef')]"
           },
+          "adBEAddressPoolID": {
+            "value": "[variables('derivedIds').adBEAddressPoolID]"
+          },
+          "adRDPNATRuleID": {
+            "value": "[variables('derivedIds').adRDPNATRuleID]"
+          },
           "adBDCNicName": {
             "value": "[variables('adBDCNicName')]"
           },
@@ -461,10 +495,10 @@
             "value": "[variables('vmSettings').sqlVMName]"
           },
           "sqlSubnetRef": {
-            "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkNameWithSuffix'),variables('subnetNames').sqlSubnetName)]"
+            "value": "[variables('sqlSubnetRef')]"
           },
           "sqlBEAddressPoolID": {
-            "value": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbSettings').sqlLBName, variables('lbSettings').sqlLBBE)]"
+            "value": "[variables('derivedIds').sqlBEAddressPoolID]"
           },
           "sqlwNicName": {
             "value": "[variables('sqlwNicName')]"
@@ -719,7 +753,7 @@
                 "properties": {
                   "privateIPAllocationMethod": "Dynamic",
                   "subnet": {
-                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkNameWithSuffix'),variables('subnetNames').sqlSubnetName)]"
+                    "id": "[variables('sqlSubnetRef')]"
                   }
                 }
               }
@@ -761,14 +795,14 @@
                 "properties": {
                   "privateIPAllocationMethod": "Dynamic",
                   "subnet": {
-                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkNameWithSuffix'),variables('subnetNames').sqlSubnetName)]"
+                    "id": "[variables('sqlSubnetRef')]"
                   },
                   "publicIpAddress": {
                     "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('sql0AddressNameWithSuffix'))]"
                   },
                   "loadBalancerBackendAddressPools": [
                     {
-                      "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbSettings').sqlLBName, variables('lbSettings').sqlLBBE)]"
+                      "id": "[variables('derivedIds').sqlBEAddressPoolID]"
                     }
                   ]
                 }
@@ -811,14 +845,14 @@
                 "properties": {
                   "privateIPAllocationMethod": "Dynamic",
                   "subnet": {
-                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkNameWithSuffix'),variables('subnetNames').sqlSubnetName)]"
+                    "id": "[variables('sqlSubnetRef')]"
                   },
                   "publicIpAddress": {
                     "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('sql1AddressNameWithSuffix'))]"
                   },
                   "loadBalancerBackendAddressPools": [
                     {
-                      "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbSettings').sqlLBName, variables('lbSettings').sqlLBBE)]"
+                      "id": "[variables('derivedIds').sqlBEAddressPoolID]"
                     }
                   ]
                 }
@@ -880,6 +914,9 @@
           },
           "sharePath": {
             "value": "[variables('sharePath')]"
+          },
+          "adPDCVMName": {
+            "value": "[variables('vmSettings').adPDCVMName]"
           },
           "sqlwVMName": {
             "value": "[variables('vmSettings').sqlwVMName]"
