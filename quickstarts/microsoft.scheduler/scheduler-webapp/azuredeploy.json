@@ -1,7 +1,14 @@
 {
 	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
-  "parameters": {    
+  "parameters": {  
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the resources."
+      }
+    },  
     "appSvcPlanName": {
       "type": "string",
       "metadata": {
@@ -17,14 +24,7 @@
     },
     "svcPlanSku": {
       "type": "string",
-      "allowedValues": [
-        "Free",
-        "Shared",
-        "Basic",
-        "Standard",
-        "Premium"
-      ],
-      "defaultValue": "Standard",
+      "defaultValue": "S1",
       "metadata": {
         "description": "The pricing tier of the App Service plan."
       }
@@ -57,13 +57,12 @@
       }
     }
   },
-  "variables": { },
   "resources": [
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2020-12-01",
       "name": "[parameters('appSvcPlanName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('svcPlanSize')]",
         "tier": "[parameters('svcPlanSku')]",
@@ -72,11 +71,11 @@
     },
     {
       "type": "Microsoft.Web/sites",
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2020-12-01",
       "name": "[parameters('webAppName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Web/serverFarms/', parameters('appSvcPlanName'))]"
+        "[resourceId('Microsoft.Web/serverFarms/', parameters('appSvcPlanName'))]"
       ],
       "properties": {
         "name": "[parameters('webAppName')]",
@@ -87,7 +86,7 @@
       "apiVersion": "2016-03-01",
       "type": "Microsoft.Scheduler/jobCollections",
       "name": "[parameters('jobCollectionName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "sku": "[parameters('sku')]"
       },
@@ -97,7 +96,7 @@
           "type": "jobs",
           "name": "[parameters('jobName')]",
           "dependsOn": [
-            "[concat('Microsoft.Scheduler/jobCollections/', parameters('jobCollectionName'))]"
+            "[resourceId('Microsoft.Scheduler/jobCollections/', parameters('jobCollectionName'))]"
           ],
           "properties": {
             "state": "Enabled",
