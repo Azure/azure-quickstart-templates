@@ -121,6 +121,7 @@
     "diagStorageAccDeployment": "[concat('xssattack','stg',substring(uniqueString(resourceGroup().id),0,5), '-resource')]",
     "appServiceConnectionType": "SQLAzure",
     "sqlServerName": "[concat('xssattackserver',substring(uniqueString(resourceGroup().id),0,5))]",
+    "sqlServerAudit": "[concat('xssattackserver',substring(uniqueString(resourceGroup().id),0,5), '-auditingSettings','-resource')]",
     "omsTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.loganalytics/workspaces.json'),parameters('_artifactsLocationSasToken'))]",
     "vnetTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.network/virtualnetworks.json'),parameters('_artifactsLocationSasToken'))]",
     "pipTemplateUri": "[concat(uri(parameters('_artifactsLocation'),'nested/microsoft.network/publicipaddress.json'),parameters('_artifactsLocationSasToken'))]",
@@ -281,7 +282,7 @@
                 "properties": {
                   "BackendAddresses": [
                     {
-                      "fqdn": "[reference(concat(variables('webAppName'),'-resource')).outputs.endpoint.value]"
+                      "fqdn": "[reference(variables('webAppDeployment')).outputs.endpoint.value]"
                     }
                   ]
                 }
@@ -315,8 +316,7 @@
                   "FrontendPort": {
                     "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts',variables('applicationGateways')[copyIndex()].name, 'appGatewayFrontendPort')]"
                   },
-                  "Protocol": "Http",
-                  "SslCertificate": null
+                  "Protocol": "Http"
                 }
               }
             ]
@@ -346,7 +346,7 @@
                 "name": "[variables('httpProbeName')]",
                 "properties": {
                   "protocol": "Http",
-                  "host": "[reference(concat(variables('webAppName'),'-resource')).outputs.endpoint.value]",
+                  "host": "[reference(variables('webAppDeployment')).outputs.endpoint.value]",
                   "path": "/",
                   "interval": 30,
                   "timeout": 30,
@@ -357,7 +357,7 @@
                 "name": "[variables('httpsProbeName')]",
                 "properties": {
                   "protocol": "Https",
-                  "host": "[reference(concat(variables('webAppName'),'-resource')).outputs.endpoint.value]",
+                  "host": "[reference(variables('webAppDeployment')).outputs.endpoint.value]",
                   "path": "/",
                   "interval": 30,
                   "timeout": 30,
@@ -560,7 +560,7 @@
       "name": "[concat(variables('sqlServerName'),'-securityAlertPolicies','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "sqlServerName-auditingSettings-resource"
+        "[variables('sqlServerAudit')]"
       ],
       "properties": {
         "mode": "Incremental",
