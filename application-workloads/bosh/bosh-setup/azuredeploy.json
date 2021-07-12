@@ -203,6 +203,13 @@
         "description": "The Cloud Foundry system domain. If not specified, a xip.io domain will be used."
       }
     },
+    "coreUriAzure": {
+      "type": "string",
+      "defaultValue": "core.windows.net",
+      "metadata": {
+        "description": "Core URI used for the endpoints within Azure Cloud"
+      }
+    },
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_DS1_v2",
@@ -223,10 +230,9 @@
     "vmStorageAccountContainerName": "vhds",
     "virtualNetworkName": "boshvnet-crp",
     "virtualNetworkAddressSpace": "10.0.0.0/16",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "subnetNameForBosh": "Bosh",
     "subnetAddressRangeForBosh": "10.0.0.0/24",
-    "subnetRefForBosh": "[concat(variables('vnetID'), '/subnets/', variables('subnetNameForBosh'))]",
+    "subnetRefForBosh": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetNameForBosh'))]",
     "subnetNameForCloudFoundry": "CloudFoundry",
     "subnetAddressRangeForCloudFoundry": "10.0.16.0/20",
     "devboxNetworkSecurityGroup": "nsg-devbox",
@@ -310,7 +316,7 @@
     "baseUriAzureChinaCloudWithVersion": "[concat(variables('baseUriAzureChinaCloud'), variables('templateVersion'), '/')]",
     "filesToDownload": "[variables('filesToDownloadByCloud')[parameters('environment')]]",
     "coreUrisByCloud": {
-        "AzureCloud": "core.windows.net",
+        "AzureCloud": "[parameters('coreUriAzure')]",
         "AzureChinaCloud": "core.chinacloudapi.cn",
         "AzureUSGovernment": "core.usgovcloudapi.net",
         "AzureGermanCloud": "core.cloudapi.de",
@@ -676,7 +682,7 @@
               "SUBSCRIPTION_ID": "[subscription().subscriptionId]",
               "RESOURCE_GROUP_NAME": "[resourceGroup().name]",
               "DEFAULT_STORAGE_ACCOUNT_NAME": "[reference('Microsoft.Resources/deployments/create-storage-account').outputs.storageAccountName.value]",
-              "DEFAULT_STORAGE_ACCESS_KEY":  "[reference('Microsoft.Resources/deployments/create-storage-account').outputs.storageAccountKey.value]",
+              "DEFAULT_STORAGE_ACCESS_KEY": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', reference('Microsoft.Resources/deployments/create-storage-account').outputs.storageAccountName.value), '2021-02-01').keys[0].value]",
               "ADMIN_USER_NAME": "[parameters('adminUsername')]",
               "ENVIRONMENT": "[parameters('environment')]",
               "SERVICE_HOST_BASE": "[variables('environment').serviceHostBase]",
@@ -770,7 +776,7 @@
   "outputs": {
     "sshDevBox": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(concat('Microsoft.Network/publicIPAddresses/', parameters('vmName'), '-devbox')).dnsSettings.fqdn)]"
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(resourceId('Microsoft.Network/publicIPAddresses/', parameters('vmName'), '-devbox')).dnsSettings.fqdn)]"
     },
     "cloudFoundryIP": {
       "type": "string",
