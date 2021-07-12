@@ -47,17 +47,6 @@
         "description": "SQL Server Virtual Machine Storage Account Name"
       }
     },
-    "storageAccountType": {
-      "type": "string",
-      "metadata": {
-        "description": "SQL Server Virtual Machine Storage Account Type"
-      },
-      "allowedValues": [
-        "Premium_LRS",
-        "Standard_LRS"
-      ],
-      "defaultValue": "Premium_LRS"
-    },
     "virtualNetworkName": {
       "type": "string",
       "metadata": {
@@ -272,62 +261,6 @@
         "description": "Azure Key Vault Name"
       }
     },
-    "enabledForDeployment": {
-        "type": "bool",
-        "defaultValue": true,
-        "metadata": {
-          "description": "Specifies whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault."
-        }
-      },
-      "enabledForDiskEncryption": {
-        "type": "bool",
-        "defaultValue": true,
-        "metadata": {
-          "description": "Specifies whether Azure Disk Encryption is permitted to retrieve secrets from the vault and unwrap keys."
-        }
-      },
-      "enabledForTemplateDeployment": {
-        "type": "bool",
-        "defaultValue": true,
-        "metadata": {
-          "description": "Specifies whether Azure Resource Manager is permitted to retrieve secrets from the key vault."
-        }
-      },
-      "keysPermissions": {
-        "type": "array",
-        "defaultValue": [
-          "list",
-          "get",
-          "decrypt",
-          "encrypt",
-          "unwrapkey",
-          "wrapkey"
-        ],
-        "metadata": {
-          "description": "Specifies the permissions to keys in the vault. Valid values are: all, encrypt, decrypt, wrapKey, unwrapKey, sign, verify, get, list, create, update, import, delete, backup, restore, recover, and purge."
-        }
-      },
-      "secretsPermissions": {
-        "type": "array",
-        "defaultValue": [
-          "list",
-          "get"
-        ],
-        "metadata": {
-          "description": "Specifies the permissions to secrets in the vault. Valid values are: all, get, list, set, delete, backup, restore, recover, and purge."
-        }
-      },
-      "skuName": {
-        "type": "string",
-        "defaultValue": "Standard",
-        "allowedValues": [
-          "Standard",
-          "Premium"
-        ],
-        "metadata": {
-          "description": "Specifies whether the key vault is a standard vault or a premium vault."
-        }
-      },
     "sqlAkvPrincipalName": {
       "type": "string",
       "metadata": {
@@ -338,12 +271,6 @@
       "type": "securestring",
       "metadata": {
         "description": "Azure Key Vault principal secret"
-      }
-    },
-    "sqlAkvPrincipalObject": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Azure Key Vault principal object"
       }
     },
     "sqlAuthenticationLogin": {
@@ -357,6 +284,23 @@
       "type": "securestring",
       "metadata": {
         "description": "SQL Server Authentication Login Account Password"
+      }
+    },
+    "storageAccountKind": {
+      "type": "string",
+      "defaultValue": "StorageV2"
+    },
+    "storageAccountSkuName": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+          "Standard_LRS",
+          "Premium_LRS",
+          "Standard_ZRS",
+          "Standard_GRS"
+      ],
+      "metadata": {
+          "description": "Storage Account SKU"
       }
     },
     "location": {
@@ -375,11 +319,11 @@
     {
       "name": "[parameters('virtualMachineName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion":  "2017-03-30", 
+      "apiVersion":  "2020-12-01", 
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
       ],
       "properties": {
         "osProfile": {
@@ -387,7 +331,7 @@
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
-            "provisionVmAgent": "true"
+            "provisionVmAgent": true
           }
         },
         "hardwareProfile": {
@@ -432,42 +376,12 @@
       }
     },
     {
-        "type": "Microsoft.KeyVault/vaults",
-        "apiVersion": "2019-09-01",
-        "name": "[parameters('sqlAkvName')]",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "enabledForDeployment": "[parameters('enabledForDeployment')]",
-          "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
-          "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
-          "tenantId": "[subscription().tenantId]",
-          "accessPolicies": [
-            {
-              "objectId": "[parameters('sqlAkvPrincipalObject')]",
-              "tenantId": "[subscription().tenantId]",
-              "permissions": {
-                "keys": "[parameters('keysPermissions')]",
-                "secrets": "[parameters('secretsPermissions')]"
-              }
-            }
-          ],
-          "sku": {
-            "name": "[parameters('skuName')]",
-            "family": "A"
-          },
-          "networkAcls": {
-            "defaultAction": "Allow",
-            "bypass": "AzureServices"
-          }
-        }
-    },
-    {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('virtualMachineName'), '/SqlIaasExtension')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
       ],
       "properties": {
         "type": "SqlIaaSAgent",
@@ -496,8 +410,8 @@
           }
         },
         "protectedSettings": {
-          "StorageUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2015-06-15').primaryEndpoints['blob']]",
-          "StorageAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2015-06-15').key1]",
+          "StorageUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2021-02-01').primaryEndpoints['blob']]",
+          "StorageAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2021-02-01').key1]",
           "Password": "[parameters('sqlAutobackupEncryptionPassword')]",
           "PrivateKeyVaultCredentialSettings": {
             "AzureKeyVaultUrl": "[variables('sqlAkvUrl')]",
@@ -510,9 +424,9 @@
     {
       "type": "Microsoft.Resources/deployments",
       "name": "prepareSqlVmDeployment",
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'), '/extensions/SqlIaasExtension')]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'SqlIaasExtension')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -565,25 +479,27 @@
     {
       "name": "[parameters('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-02-01",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
+      "sku": {
+        "name": "[parameters('storageAccountSkuName')]"
+      },
+      "kind": "[parameters('storageAccountKind')]"
     },
     {
       "name": "[parameters('sqlAutobackupStorageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-02-01",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "Standard_LRS"
-      }
+      "sku": {
+        "name": "[parameters('storageAccountSkuName')]"
+      },
+      "kind": "[parameters('storageAccountKind')]"
     },
     {
       "name": "[parameters('virtualNetworkName')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
@@ -604,12 +520,12 @@
     {
       "name": "[parameters('networkInterfaceName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -634,7 +550,7 @@
     {
       "name": "[parameters('publicIpAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIpAddressType')]"
@@ -643,7 +559,7 @@
     {
       "name": "[parameters('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
