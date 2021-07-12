@@ -147,15 +147,15 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/mongo/mongodb-sharding-centos/",
       "metadata": {
-        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-      }
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
       "metadata": {
-        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
       },
       "defaultValue": ""
     },
@@ -175,29 +175,31 @@
     }
   },
   "variables": {
-    "environmentAzureCloud": {
-      "serviceEndPoint": "[environment().suffixes.storage]",
-      "artifactsLocation": "[parameters('_artifactsLocation')]",
-      "artifactsLocationSasToken": "[parameters('_artifactsLocationSasToken')]",
-      "configPrimaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/config_primary.sh', parameters('_artifactsLocationSasToken')))]",
-      "configSecondaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/config_secondary.sh', parameters('_artifactsLocationSasToken')))]",
-      "router1NodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/router1.sh', parameters('_artifactsLocationSasToken')))]",
-      "router2NodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/router2.sh', parameters('_artifactsLocationSasToken')))]",
-      "replicaPrimaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/replica_primary.sh', parameters('_artifactsLocationSasToken')))]",
-      "replicaSecondaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/replica_secondary.sh', parameters('_artifactsLocationSasToken')))]"
+    "environmentType": { 
+        "AzureCloud": {
+          "serviceEndPoint": "[environment().suffixes.storage]",
+          "artifactsLocation": "[parameters('_artifactsLocation')]",
+          "artifactsLocationSasToken": "[parameters('_artifactsLocationSasToken')]",
+          "configPrimaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/config_primary.sh', parameters('_artifactsLocationSasToken')))]",
+          "configSecondaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/config_secondary.sh', parameters('_artifactsLocationSasToken')))]",
+          "router1NodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/router1.sh', parameters('_artifactsLocationSasToken')))]",
+          "router2NodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/router2.sh', parameters('_artifactsLocationSasToken')))]",
+          "replicaPrimaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/replica_primary.sh', parameters('_artifactsLocationSasToken')))]",
+          "replicaSecondaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/replica_secondary.sh', parameters('_artifactsLocationSasToken')))]"
+        },
+        "AzureChinaCloud": {
+          "serviceEndPoint": "core.chinacloudapi.cn",
+          "artifactsLocation": "[parameters('_artifactsChinaLocation')]",
+          "artifactsLocationSasToken": "[parameters('_artifactsChinaLocationSasToken')]",
+          "configPrimaryNodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/config_primary.sh', parameters('_artifactsChinaLocationSasToken')))]",
+          "configSecondaryNodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/config_secondary.sh', parameters('_artifactsChinaLocationSasToken')))]",
+          "router1NodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/router1.sh', parameters('_artifactsChinaLocationSasToken')))]",
+          "router2NodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/router2.sh', parameters('_artifactsChinaLocationSasToken')))]",
+          "replicaPrimaryNodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/replica_primary.sh', parameters('_artifactsChinaLocationSasToken')))]",
+          "replicaSecondaryNodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/replica_secondary.sh', parameters('_artifactsChinaLocationSasToken')))]"
+        }
     },
-    "environmentAzureChinaCloud": {
-      "serviceEndPoint": "core.chinacloudapi.cn",
-      "artifactsLocation": "[parameters('_artifactsChinaLocation')]",
-      "artifactsLocationSasToken": "[parameters('_artifactsChinaLocationSasToken')]",
-      "configPrimaryNodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/config_primary.sh', parameters('_artifactsChinaLocationSasToken')))]",
-      "configSecondaryNodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/config_secondary.sh', parameters('_artifactsChinaLocationSasToken')))]",
-      "router1NodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/router1.sh', parameters('_artifactsChinaLocationSasToken')))]",
-      "router2NodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/router2.sh', parameters('_artifactsChinaLocationSasToken')))]",
-      "replicaPrimaryNodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/replica_primary.sh', parameters('_artifactsChinaLocationSasToken')))]",
-      "replicaSecondaryNodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/replica_secondary.sh', parameters('_artifactsChinaLocationSasToken')))]"
-    },
-    "environment": "[variables(concat('environment', parameters('environment')))]",
+    "environment": "[variables('environmentType')[parameters('environment')]]",
     "templateBaseUrl": "[variables('environment').artifactsLocation]",
     "sharedTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/shared-resources.json', variables('environment').artifactsLocationSasToken))]",
     "configPrimaryTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/config-primary-resources.json', variables('environment').artifactsLocationSasToken))]",
@@ -303,7 +305,7 @@
     {
       "name": "shared",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -329,7 +331,7 @@
     {
       "name": "configSecondaryNode1",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
       ],
@@ -379,7 +381,7 @@
     {
       "name": "configSecondaryNode2",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
         "[resourceId('Microsoft.Resources/deployments/', 'configSecondaryNode1')]"
@@ -430,7 +432,7 @@
     {
       "name": "configPrimaryNode",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
         "[resourceId('Microsoft.Resources/deployments/', 'configSecondaryNode2')]"
@@ -487,7 +489,7 @@
     {
       "name": "[concat('aReplicaSecondaryNode', '0')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
       ],
@@ -549,7 +551,7 @@
     {
       "name": "[concat('aReplicaSecondaryNode', '1')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
         "[resourceId('Microsoft.Resources/deployments/', 'aReplicaSecondaryNode0')]"
@@ -612,7 +614,7 @@
     {
       "name": "aReplicaPrimaryNode",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
         "[resourceId('Microsoft.Resources/deployments/', 'aReplicaSecondaryNode1')]"
@@ -684,7 +686,7 @@
     {
       "name": "[concat('bReplicaSecondaryNode', '0')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
         "[resourceId('Microsoft.Resources/deployments/', 'aReplicaPrimaryNode')]"
@@ -747,7 +749,7 @@
     {
       "name": "[concat('bReplicaSecondaryNode', '1')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
         "[resourceId('Microsoft.Resources/deployments/', 'bReplicaSecondaryNode0')]"
@@ -810,7 +812,7 @@
     {
       "name": "bReplicaPrimaryNode",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
         "[resourceId('Microsoft.Resources/deployments/', 'bReplicaSecondaryNode1')]"
@@ -882,7 +884,7 @@
     {
       "name": "routerNode1",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
         "[resourceId('Microsoft.Resources/deployments/', 'configPrimaryNode')]",
@@ -943,7 +945,7 @@
     {
       "name": "routerNode2",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
         "[resourceId('Microsoft.Resources/deployments/', 'routerNode1')]"

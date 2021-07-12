@@ -22,6 +22,7 @@
         "description": "Number of VM instances (200 or less)."
       },
       "defaultValue": 2,
+      "minValue": 1,
       "maxValue": 200
     },
     "adminUsername": {
@@ -67,6 +68,27 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "masterSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS2_v2",
+      "metadata": {
+        "description": "Size of the master node."
+      }
+    },
+    "vmSku": {
+      "type": "string",
+      "defaultValue": "Standard_DS2_v2",
+      "metadata": {
+        "description": "Size of the VM."
+      }
+    },
+    "diskSetupScriptUrl": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh",
+      "metadata": {
+        "description": "Location of the disk setup script."
+      }
     }
   },
   "variables": {
@@ -79,20 +101,17 @@
     "publicIpAddressName": "[concat(variables('namingInfix'), '-pip')]",
     "publicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
     "loadBalancerName": "[concat(variables('namingInfix'), '-lb')]",
-    "loadBalancerId": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
     "backendPoolName": "[concat(variables('namingInfix'), '-bepool')]",
     "nicName": "[concat(variables('namingInfix'), '-nic')]",
     "masterName": "[concat(variables('namingInfix'), '-master')]",
     "availabilitySetName": "[concat(variables('namingInfix'), '-master-set')]",
     "nsgName": "[concat(variables('namingInfix'), '-master-nsg')]",
     "ipConfigName": "[concat(variables('namingInfix'), '-ipconfig')]",
-    "frontendIpConfigId": "[concat(variables('loadBalancerId'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
-    "loadBalancerPoolId": "[concat(variables('loadBalancerId'),'/backendAddressPools/', variables('backendPoolName'))]",
-    "loadBalancerProbeId": "[concat(variables('loadBalancerId'),'/probes/tcpProbe')]",
-    "sshProbeId": "[concat(variables('loadBalancerId'),'/probes/sshProbe')]",
+    "frontendIpConfigId": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerName'),'loadBalancerFrontEnd')]",
+    "loadBalancerPoolId": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('backendPoolName'))]",
+    "loadBalancerProbeId": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), 'tcpProbe')]",
+    "sshProbeId": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), 'sshProbe')]",
     "subnetName": "[concat(variables('namingInfix'), '-subnet')]",
-    "masterSize": "Standard_DS2_v2",
-    "vmSku": "Standard_DS2_v2",
     "imageReference": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
@@ -100,7 +119,6 @@
       "version": "latest"
     },
     "elasticSetupScriptUrl": "[uri(parameters('_artifactsLocation'), concat('install-elasticsearch.sh', parameters('_artifactsLocationSasToken')))]",
-    "diskSetupScriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -117,7 +135,7 @@
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgName')]",
-      "apiVersion": "2018-07-01",
+      "apiVersion": "2020-11-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -156,7 +174,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-07-01",
+      "apiVersion": "2020-11-01",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -177,7 +195,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIpAddressName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-07-01",
+      "apiVersion": "2020-11-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -189,9 +207,9 @@
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-07-01",
+      "apiVersion": "2020-11-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIpAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -275,7 +293,7 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2020-12-01",
       "properties": {
         "platformUpdateDomainCount": 1,
         "platformFaultDomainCount": 1
@@ -288,7 +306,7 @@
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyindex())]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-07-01",
+      "apiVersion": "2020-11-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
@@ -307,11 +325,11 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[concat('10.0.0.1', copyindex())]",
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/', variables('backendPoolName'))]"
+                  "id": "[variables('loadBalancerPoolId')]"
                 }
               ]
             }
@@ -326,21 +344,21 @@
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('masterName'), copyindex())]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2020-12-01",
       "copy": {
         "name": "masterVmLoop",
         "count": 3
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), copyindex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
         },
         "hardwareProfile": {
-          "vmSize": "[variables('masterSize')]"
+          "vmSize": "[parameters('masterSize')]"
         },
         "osProfile": {
           "computerName": "[concat('master-vm', copyIndex())]",
@@ -370,10 +388,10 @@
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(variables('masterName'), copyindex(), '/installelasticsearch')]",
-          "apiVersion": "2017-03-30",
+          "apiVersion": "2020-12-01",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('masterName'), copyindex())]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('masterName'), copyindex()))]"
           ],
           "properties": {
             "publisher": "Microsoft.Azure.Extensions",
@@ -383,7 +401,7 @@
             "settings": {
               "fileUris": [
                 "[variables('elasticSetupScriptUrl')]",
-                "[variables('diskSetupScriptUrl')]"
+                "[parameters('diskSetupScriptUrl')]"
               ],
               "commandToExecute": "[concat('bash install-elasticsearch.sh -m -n ', parameters('clusterName'))]"
             }
@@ -395,19 +413,19 @@
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('namingInfix')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2020-12-01",
       "dependsOn": [
         "masterVmLoop",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "sku": {
-        "name": "[variables('vmSku')]",
+        "name": "[parameters('vmSku')]",
         "tier": "Standard",
         "capacity": "[parameters('instanceCount')]"
       },
       "properties": {
-        "largeScaleEnabled": "true",
-        "overprovision": "true",
+        "largeScaleEnabled": true,
+        "overprovision": true,
         "upgradePolicy": {
           "mode": "Manual"
         },
@@ -446,7 +464,7 @@
                       "name": "[variables('ipConfigName')]",
                       "properties": {
                         "subnet": {
-                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
                         }
                       }
                     }
