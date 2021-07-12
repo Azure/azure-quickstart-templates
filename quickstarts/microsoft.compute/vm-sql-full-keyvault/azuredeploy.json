@@ -135,72 +135,10 @@
         "description": "Azure Key Vault Name"
       }
     },
-    "enabledForDeployment": {
-        "type": "bool",
-        "defaultValue": true,
-        "metadata": {
-          "description": "Specifies whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault."
-        }
-      },
-      "enabledForDiskEncryption": {
-        "type": "bool",
-        "defaultValue": true,
-        "metadata": {
-          "description": "Specifies whether Azure Disk Encryption is permitted to retrieve secrets from the vault and unwrap keys."
-        }
-      },
-      "enabledForTemplateDeployment": {
-        "type": "bool",
-        "defaultValue": true,
-        "metadata": {
-          "description": "Specifies whether Azure Resource Manager is permitted to retrieve secrets from the key vault."
-        }
-      },
-      "keysPermissions": {
-        "type": "array",
-        "defaultValue": [
-          "list",
-          "get",
-          "decrypt",
-          "encrypt",
-          "unwrapkey",
-          "wrapkey"
-        ],
-        "metadata": {
-          "description": "Specifies the permissions to keys in the vault. Valid values are: all, encrypt, decrypt, wrapKey, unwrapKey, sign, verify, get, list, create, update, import, delete, backup, restore, recover, and purge."
-        }
-      },
-      "secretsPermissions": {
-        "type": "array",
-        "defaultValue": [
-          "list",
-          "get"
-        ],
-        "metadata": {
-          "description": "Specifies the permissions to secrets in the vault. Valid values are: all, get, list, set, delete, backup, restore, recover, and purge."
-        }
-      },
-      "skuName": {
-        "type": "string",
-        "defaultValue": "Standard",
-        "allowedValues": [
-          "Standard",
-          "Premium"
-        ],
-        "metadata": {
-          "description": "Specifies whether the key vault is a standard vault or a premium vault."
-        }
-      },
     "sqlAkvPrincipalName": {
       "type": "string",
       "metadata": {
         "description": "Azure Key Vault principal name or id"
-      }
-    },
-    "sqlAkvPrincipalObject": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Azure Key Vault principal object"
       }
     },
     "sqlAkvPrincipalSecret": {
@@ -249,40 +187,10 @@
     "sqlAkvUrl": "[concat('https://', parameters('sqlAkvName'), environment().suffixes.keyVaultDns)]"
   },
   "resources": [
-     {
-        "type": "Microsoft.KeyVault/vaults",
-        "apiVersion": "2019-09-01",
-        "name": "[parameters('sqlAkvName')]",
-        "location": "[parameters('location')]",
-        "properties": {
-          "enabledForDeployment": "[parameters('enabledForDeployment')]",
-          "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
-          "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
-          "tenantId": "[subscription().tenantId]",
-          "accessPolicies": [
-            {
-              "objectId": "[parameters('sqlAkvPrincipalObject')]",
-              "tenantId": "[subscription().tenantId]",
-              "permissions": {
-                "keys": "[parameters('keysPermissions')]",
-                "secrets": "[parameters('secretsPermissions')]"
-              }
-            }
-          ],
-          "sku": {
-            "name": "[parameters('skuName')]",
-            "family": "A"
-          },
-          "networkAcls": {
-            "defaultAction": "Allow",
-            "bypass": "AzureServices"
-          }
-        }
-    },
     {
       "name": "[parameters('virtualMachineName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
@@ -373,7 +281,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "name": "prepareSqlVmDeployment",
-      "apiVersion": "2019-05-10",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'SqlIaasExtension')]"
       ],
@@ -428,7 +336,7 @@
     {
       "name": "[parameters('virtualNetworkName')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2020-11-01",
       "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
@@ -449,7 +357,7 @@
     {
       "name": "[parameters('networkInterfaceName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2020-11-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
@@ -479,10 +387,10 @@
     {
       "name": "[parameters('publicIpAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2020-11-01",
       "location": "[parameters('location')]",
       "sku":{
-        "name":"Basic"
+        "name": "Basic"
       },
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIpAddressType')]"
@@ -491,7 +399,7 @@
     {
       "name": "[parameters('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2020-11-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
