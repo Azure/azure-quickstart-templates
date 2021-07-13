@@ -365,16 +365,16 @@ in the SAS Data Agent for Linux: Deployment Guide.
 ![Outputs Screen](outputs.jpg) 
 
 * To connect to VMs through Azure Bastion:
-1. Log in to the Azure Bastion server as *PrimaryUserName**:
+1. Log in to the Azure Bastion server as *PrimaryUserName*:
 ```
 ssh <PrimaryUserName>@<AnsibleControllerIP>
 ```
-2. From the Azure Bastion server, connect to the services, controller, and worker VMs as *PrimaryUserName**:
+2. From the Azure Bastion server, connect to the services, controller, and worker VMs as *PrimaryUserName*:
 ```
-ssh *PrimaryUserName*@services
-ssh *PrimaryUserName*@controller
-ssh *PrimaryUserName*@worker01
-ssh *PrimaryUserName*@worker02
+ssh <PrimaryUserName>@services
+ssh <PrimaryUserName>@controller
+ssh <PrimaryUserName>@worker01
+ssh <PrimaryUserName>@worker02
 ```
 
 <a name="Tshoot"></a>
