@@ -37,8 +37,17 @@ param enableNonSslPort bool = false
 @description('Specify a boolean value that indicates whether diagnostics should be saved to the specified storage account.')
 param diagnosticsEnabled bool = false
 
-@description('Specify an existing storage account for diagnostics.')
-param existingDiagnosticsStorageAccountId string
+@description('Specify the name of an existing storage account for diagnostics.')
+param existingDiagnosticsStorageAccountName string
+
+@description('Specify the resource group name of an existing storage account for diagnostics.')
+param existingDiagnosticsStorageAccountResourceGroup string
+
+
+resource diagnosticsStorage 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
+  scope: resourceGroup(existingDiagnosticsStorageAccountResourceGroup)
+  name: existingDiagnosticsStorageAccountName
+}
 
 resource redisCache 'Microsoft.Cache/Redis@2020-06-01' = {
   name: redisCacheName
@@ -54,9 +63,6 @@ resource redisCache 'Microsoft.Cache/Redis@2020-06-01' = {
   }
 }
 
-resource diagnosticsStorage 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
-  name: existingDiagnosticsStorageAccountId
-}
 
 resource Microsoft_Insights_diagnosticsettings_redisCacheName 'Microsoft.Insights/diagnosticsettings@2017-05-01-preview' = {
   scope: redisCache
