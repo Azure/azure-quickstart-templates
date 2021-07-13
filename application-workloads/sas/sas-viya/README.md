@@ -317,7 +317,7 @@ EnableQuotedIdentifiers=0
     
    If the output from the nc command contains "Ncat: Connected to <IP_address:443>", the connection was successful.
    
-6. Register the SAS Data Agent with the SAS Viya 3.5 environment. As the deployment *PrimaryUserName*, log on to the Ansible controller VM and run the following command from the /sas/install/ansible/sas_viya_playbook directory:
+6. Register the SAS Data Agent with the SAS Viya 3.5 environment. Using the value that you specified for the deployment parameter *PrimaryUserName*, log on to the Ansible controller VM and run the following command from the /sas/install/ansible/sas_viya_playbook directory:
 
 **Note:** The password of the admin user is the value that you specified during deployment for the SASAdminPass input parameter. 
 
@@ -356,7 +356,7 @@ in the SAS Data Agent for Linux: Deployment Guide.
 <a name="Usage"></a>
 ## Usage 
 
-* To log in to any machine via SSH to check on a deployment or to perform maintenance, log in as *PrimaryUserName*.
+* To log in to any machine via SSH to check on a deployment or to perform maintenance, log in using the value that you specified for the deployment parameter *PrimaryUserName*.
 
 * To log in to SAS Viya initially, use one of the following default user accounts: *sasadmin* (administrative user) or *sasuser*.
 
@@ -365,11 +365,11 @@ in the SAS Data Agent for Linux: Deployment Guide.
 ![Outputs Screen](outputs.jpg) 
 
 * To connect to VMs through Azure Bastion:
-1. Log in to the Azure Bastion server as *PrimaryUserName*:
+1. Log in to the Azure Bastion server using the value that you specified for the deployment parameter *PrimaryUserName*:
 ```
 ssh <PrimaryUserName>@<AnsibleControllerIP>
 ```
-2. From the Azure Bastion server, connect to the services, controller, and worker VMs as *PrimaryUserName*:
+2. From the Azure Bastion server, connect to the services, controller, and worker VMs using the value that you specified for the deployment *PrimaryUserName*:
 ```
 ssh <PrimaryUserName>@services
 ssh <PrimaryUserName>@controller
@@ -417,14 +417,14 @@ The /var/log/sas/install directory is the primary deployment log directory. Othe
 While all the services can be started on each box independently, the Viya-Ark toolkit provides an efficient way to restart all the services across all the boxes from the Ansible controller.
 
 #### Checking the status of the services through Viya-Ark
-Viya-Ark can check the status of the services by issuing the following commands as the *PrimaryUserName* on the Ansible controller:
+Viya-Ark can check the status of the services by issuing the following commands using the value that you specified for the deployment parameter *PrimaryUserName* on the Ansible controller:
 ```
 cd /sas/install/ansible/sas_viya_playbook/
 ansible-playbook viya-ark/playbooks/viya-mmsu/viya-services-status.yml
 ```
 
 #### Restarting the services through Viya-Ark
-Viya-Ark can restart all of the services by issuing the following commands as the *PrimaryUserName* on the Ansible controller:
+Viya-Ark can restart all of the services by issuing the following commands using the value that you specified for the deployment parameter *PrimaryUserName* on the Ansible controller:
 ```
 cd /sas/install/ansible/sas_viya_playbook/
 ansible-playbook viya-ark/playbooks/viya-mmsu/viya-services-restart.yml -e enable_stray_cleanup=true
