@@ -190,7 +190,7 @@ The deployment takes between 1 and 4 hours, depending on the quantity of softwar
 ## Additional Deployment Details
 ## User Accounts
 <a name="useraccounts"></a>
-The deployment parameter *PrimaryUserName* host operating system account is created during deployment. Use this account to log in via SSH to any of the machines.
+The deployment parameter *PrimaryUserName* is created during deployment as host operating system account.  Use this account to log in via SSH to any of the machines.
 
 The *sasadmin* and *sasuser* SAS Viya user accounts are also created during deployment.  These accounts exist in LDAP, and are the default user accounts for logging in to SAS Viya.  You cannot directly log on to the host operating system with these accounts.
 
