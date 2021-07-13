@@ -125,12 +125,11 @@
 			"VM4"
 		],
 		"vms": "[take(variables('allvms'),parameters('clusterNodes'))]",
-		"cltemplate": "[uri(parameters('_artifactsLocation'), concat('nested/cluster.json', parameters('_artifactsLocationSasToken')))]",
 		"frontEndIPConfigName": "[concat(parameters('VIPDnsLabel'),'LBFE')]",
 		"lbPoolName": "[concat(parameters('VIPDnsLabel'),'BEP')]",
 		"lbProbeName": "[concat(parameters('VIPDnsLabel'),'LBP')]",
 		"lbName": "[concat(parameters('VIPDnsLabel'),'LB')]",
-		"NetworkContributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/','4d97b98b-1d4f-4787-a291-c67834d212e7')]",
+		"NetworkContributor": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions/','4d97b98b-1d4f-4787-a291-c67834d212e7')]",
 		"ostype": "[if(equals(parameters('OS'), 'Linux CentOS'),'linux','windows')]",
 		"adminUsername": "[if(empty(parameters('adminUser')),concat('admin',resourceGroup().name),parameters('adminUser'))]",
 		"ips": [
@@ -173,8 +172,7 @@
 			},
 			"osDisk": {
 				"createOption": "fromImage"
-			},
-			"dataDisks": []
+			}
 		},
 		"linuxConfiguration": {
 			"disablePasswordAuthentication": "false"
@@ -187,7 +185,7 @@
 	"resources": [
 		{
 			"type": "Microsoft.Network/virtualNetworks",
-			"apiVersion": "2018-08-01",
+			"apiVersion": "2020-11-01",
 			"name": "[variables('virtualNetworkName')]",
 			"location": "[parameters('clusterLocation')]",
 			"properties": {
@@ -208,7 +206,7 @@
 		},
 		{
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2018-05-01",
+			"apiVersion": "2020-10-01",
 			"name": "optionalVip",
 			"properties": {
 				"mode": "Incremental",
@@ -228,7 +226,7 @@
 		},
 		{
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2018-05-01",
+			"apiVersion": "2020-10-01",
 			"name": "optionalLB",
 			"dependsOn": [
 				"optionalVip"
@@ -242,7 +240,7 @@
 						{
 							"condition": "[and(not(empty(parameters('VIPDnsLabel'))),not(equals(parameters('Loadbalancer'),'none')))]",
 							"type": "Microsoft.Network/loadBalancers",
-							"apiVersion": "2018-08-01",
+							"apiVersion": "2020-11-01",
 							"name": "[variables('lbName')]",
 							"location": "[parameters('clusterLocation')]",
 							"sku": {
@@ -305,18 +303,17 @@
 		},
 		{
 			"type": "Microsoft.Storage/storageAccounts",
-			"apiVersion": "2018-02-01",
+			"apiVersion": "2021-02-01",
 			"name": "[variables('storageAccountName')]",
 			"location": "[parameters('clusterLocation')]",
 			"sku": {
 				"name": "Standard_LRS"
 			},
-			"kind": "Storage",
-			"properties": {}
+			"kind": "Storage"
 		},
 		{
 			"type": "Microsoft.Network/networkSecurityGroups",
-			"apiVersion": "2018-07-01",
+			"apiVersion": "2020-11-01",
 			"name": "[variables('NSGName')]",
 			"location": "[parameters('clusterLocation')]",
 			"properties": {
@@ -368,7 +365,7 @@
 		},
 		{
 			"type": "Microsoft.Network/publicIPAddresses",
-			"apiVersion": "2018-07-01",
+			"apiVersion": "2020-11-01",
 			"name": "[concat('pip',variables('vms')[copyIndex()])]",
 			"location": "[parameters('clusterLocation')]",
 			"copy": {
@@ -388,7 +385,7 @@
 		},
 		{
 			"type": "Microsoft.Network/networkInterfaces",
-			"apiVersion": "2018-07-01",
+			"apiVersion": "2020-11-01",
 			"name": "[concat('nic',variables('vms')[copyIndex()])]",
 			"location": "[parameters('clusterLocation')]",
 			"copy": {
@@ -425,7 +422,7 @@
 		},
 		{
 			"type": "Microsoft.Compute/virtualMachines",
-			"apiVersion": "2018-06-01",
+			"apiVersion": "2020-12-01",
 			"name": "[variables('vms')[copyIndex()]]",
 			"location": "[parameters('clusterLocation')]",
 			"copy": {
@@ -469,7 +466,7 @@
 		{
 			"condition": "[equals(parameters('azurePwsh'),'yes')]",
 			"type": "Microsoft.Authorization/roleAssignments",
-			"apiVersion": "2016-07-01",
+			"apiVersion": "2020-04-01-preview",
 			"name": "[guid(resourceGroup().id,variables('vms')[copyIndex()])]",
 			"copy": {
 				"name": "roleLoop",
@@ -485,7 +482,7 @@
 		},
 		{
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2018-05-01",
+			"apiVersion": "2020-10-01",
 			"name": "[concat('safekitInstall',variables('vms')[copyIndex()])]",
 			"copy": {
 				"name": "skCopy",
@@ -530,7 +527,7 @@
 		},
 		{
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2018-05-01",
+			"apiVersion": "2020-10-01",
 			"name": "safekitClusterConfig",
 			"dependsOn": [
 				"skCopy"
@@ -580,7 +577,7 @@
 		},
 		{
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2018-05-01",
+			"apiVersion": "2020-10-01",
 			"name": "safekitModuleConfig",
 			"dependsOn": [
 				"safekitClusterConfig"
