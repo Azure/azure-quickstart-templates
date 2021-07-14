@@ -9,9 +9,8 @@
         "description": "Assign a name for the Automation account"
       }
     },
-    "omsAutomationRegion": {
+    "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Specify the region for your Automation account"
       }
@@ -54,54 +53,21 @@
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       }
+    },
+    "psModules": {
+      "type": "object",
+      "metadata": {
+        "description": "URIs of the PS modules"
+      }
     }
   },
   "variables": {
-    "psModules": {
-      "azureRmProfile": {
-        "name": "AzureRm.Profile",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.profile.2.8.0.nupkg"
-      },
-      "azureRmResources": {
-        "name": "AzureRm.Resources",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.resources.3.8.0.nupkg"
-      },
-      "azureStorage": {
-        "name": "Azure.Storage",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azure.storage.2.8.0.nupkg"
-      },
-      "azureRmStorage": {
-        "name": "AzureRm.Storage",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.storage.2.8.0.nupkg"
-      },
-      "azureRmOperationalInsights": {
-        "name": "AzureRm.OperationalInsights",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.operationalinsights.2.8.0.nupkg"
-      },
-      "azureRmSiteRecovery": {
-        "name": "AzureRm.SiteRecovery",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.siterecovery.3.7.0.nupkg"
-      },
-      "azureRmRecoveryServices": {
-        "name": "AzureRm.RecoveryServices",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.recoveryservices.2.8.0.nupkg"
-      },
-      "azureRmBackup": {
-        "name": "AzureRm.Backup",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.backup.2.8.0.nupkg"
-      },
-      "azureRmCompute": {
-        "name": "AzureRm.Compute",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.compute.2.9.0.nupkg"
-      }
-    },
     "runbooks": {
       "omsABUscript": {
         "name": "AzureIaasBackup",
         "version": "1.0.0.0",
         "description": "Runbook to automatically backup IaaS VMs within the ABU region",
-        "type": "PowerShell",
-        "Id": ""
+        "type": "PowerShell"
       }
     },
     "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/Automated-IaaS-Backup.ps1', parameters('_artifactsLocationSasToken')))]",
@@ -115,51 +81,48 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-10-31",
-      "location": "[parameters('omsAutomationRegion')]",
+      "apiVersion": "2021-04-01",
+      "location": "[parameters('location')]",
       "name": "[parameters('omsAutomationAccountName')]",
       "type": "Microsoft.Automation/automationAccounts",
       "comments": "Automation account for OMS",
       "properties": {
         "sku": {
-          "name": "OMS"
+          "name": "Basic"
         }
       },
       "resources": [
         {
           "name": "[variables('omsWorkspaceId')]",
           "type": "variables",
-          "apiVersion": "2015-10-31",
+          "apiVersion": "2021-04-01",
           "dependsOn": [
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+            "[resourceId('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
           ],
-          "tags": {},
           "properties": {
             "description": "OMS Workspace Id",
-            "value": "[concat('\"',reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')),'2015-11-01-preview').customerId,'\"')]"
+            "value": "[concat('\"',reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')),'2020-10-01').customerId,'\"')]"
           }
         },
         {
           "name": "[variables('omsWorkspaceKey')]",
           "type": "variables",
-          "apiVersion": "2015-10-31",
+          "apiVersion": "2021-04-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]"
           ],
-          "tags": {},
           "properties": {
             "description": "OMS Workspace key",
-            "value": "[concat('\"',listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2015-11-01-preview').primarySharedKey,'\"')]"
+            "value": "[concat('\"',listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2020-10-01').primarySharedKey,'\"')]"
           }
         },
         {
           "name": "[variables('azureSubscriptionId')]",
           "type": "variables",
-          "apiVersion": "2015-10-31",
+          "apiVersion": "2021-04-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]"
           ],
-          "tags": {},
           "properties": {
             "description": "Azure Subscription Id",
             "isEncrypted": false,
@@ -170,11 +133,10 @@
         {
           "name": "[variables('omsRecoveryVault')]",
           "type": "variables",
-          "apiVersion": "2015-10-31",
+          "apiVersion": "2021-04-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]"
           ],
-          "tags": {},
           "properties": {
             "description": "OMS Recovery Vault Name",
             "value": "[concat('\"',parameters('omsRecoveryVaultName'),'\"')]"
@@ -183,11 +145,10 @@
         {
           "name": "[variables('omsResourceGroupName')]",
           "type": "variables",
-          "apiVersion": "2015-10-31",
+          "apiVersion": "2021-04-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]"
           ],
-          "tags": {},
           "properties": {
             "description": "OMS Recovery Vault Name",
             "value": "[concat('\"',resourceGroup().name,'\"')]"
@@ -196,11 +157,10 @@
         {
           "name": "[variables('azureCredentials')]",
           "type": "credentials",
-          "apiVersion": "2015-10-31",
+          "apiVersion": "2019-06-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]"
           ],
-          "tags": {},
           "properties": {
             "description": "Azure Subscription Credentials",
             "password": "[parameters('azureAdminPwd')]",
@@ -210,175 +170,164 @@
         {
           "name": "[variables('omsWorkspaceNameAsset')]",
           "type": "variables",
-          "apiVersion": "2015-10-31",
+          "apiVersion": "2021-04-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]"
           ],
-          "tags": {},
           "properties": {
             "description": "OMS Recovery Vault Name",
             "value": "[concat('\"',parameters('omsWorkspaceName'),'\"')]"
           }
         },
         {
-          "name": "[variables('psModules').azureRmOperationalInsights.name]",
+          "name": "[parameters('psModules').azureRmOperationalInsights[0].name]",
           "type": "Modules",
-          "apiVersion": "2015-10-31",
-          "tags": {},
+          "apiVersion": "2019-06-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]"
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmProfile[0].name)]"
           ],
           "properties": {
             "contentLink": {
-              "uri": "[variables('psModules').azureRmOperationalInsights.url]"
+              "uri": "[parameters('psModules').azureRmOperationalInsights[0].url]"
             }
           }
         },
         {
-          "name": "[variables('psModules').azureRmResources.name]",
+          "name": "[parameters('psModules').azureRmResources[0].name]",
           "type": "Modules",
-          "apiVersion": "2015-10-31",
-          "tags": {},
+          "apiVersion": "2019-06-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]"
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmProfile[0].name)]"
           ],
           "properties": {
             "contentLink": {
-              "uri": "[variables('psModules').azureRmResources.url]"
+              "uri": "[parameters('psModules').azureRmResources[0].url]"
             }
           }
         },
         {
-          "name": "[variables('psModules').azureRmStorage.name]",
+          "name": "[parameters('psModules').azureRmStorage[0].name]",
           "type": "Modules",
-          "apiVersion": "2015-10-31",
-          "tags": {},
+          "apiVersion": "2019-06-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureStorage.name)]"
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmProfile[0].name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureStorage[0].name)]"
           ],
           "properties": {
             "contentLink": {
-              "uri": "[variables('psModules').azureRmStorage.url]"
+              "uri": "[parameters('psModules').azureRmStorage[0].url]"
             }
           }
         },
         {
-          "name": "[variables('psModules').azureStorage.name]",
+          "name": "[parameters('psModules').azureStorage[0].name]",
           "type": "Modules",
-          "apiVersion": "2015-10-31",
-          "tags": {},
+          "apiVersion": "2019-06-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]"
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmProfile[0].name)]"
           ],
           "properties": {
             "contentLink": {
-              "uri": "[variables('psModules').azureStorage.url]"
+              "uri": "[parameters('psModules').azureStorage[0].url]"
             }
           }
         },
         {
-          "name": "[variables('psModules').azureRmCompute.name]",
+          "name": "[parameters('psModules').azureRmCompute[0].name]",
           "type": "Modules",
-          "apiVersion": "2015-10-31",
-          "tags": {},
+          "apiVersion": "2019-06-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]"
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmProfile[0].name)]"
           ],
           "properties": {
             "contentLink": {
-              "uri": "[variables('psModules').azureRmCompute.url]"
+              "uri": "[parameters('psModules').azureRmCompute[0].url]"
             }
           }
         },
         {
-          "name": "[variables('psModules').azureRmSiteRecovery.name]",
+          "name": "[parameters('psModules').azureRmSiteRecovery[0].name]",
           "type": "Modules",
-          "apiVersion": "2015-10-31",
-          "tags": {},
+          "apiVersion": "2019-06-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureStorage.name)]"
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmProfile[0].name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureStorage[0].name)]"
           ],
           "properties": {
             "contentLink": {
-              "uri": "[variables('psModules').azureRmSiteRecovery.url]"
+              "uri": "[parameters('psModules').azureRmSiteRecovery[0].url]"
             }
           }
         },
         {
-          "name": "[variables('psModules').azureRmBackup.name]",
+          "name": "[parameters('psModules').azureRmBackup[0].name]",
           "type": "Modules",
-          "apiVersion": "2015-10-31",
-          "tags": {},
+          "apiVersion": "2019-06-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureStorage.name)]"
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmProfile[0].name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureStorage[0].name)]"
           ],
           "properties": {
             "contentLink": {
-              "uri": "[variables('psModules').azureRmBackup.url]"
+              "uri": "[parameters('psModules').azureRmBackup[0].url]"
             }
           }
         },
         {
-          "name": "[variables('psModules').azureRmRecoveryServices.name]",
+          "name": "[parameters('psModules').azureRmRecoveryServices[0].name]",
           "type": "Modules",
-          "apiVersion": "2015-10-31",
-          "tags": {},
+          "apiVersion": "2019-06-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsautomationAccountName'), '/Modules/', variables('psModules').azureStorage.name)]"
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmProfile[0].name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsautomationAccountName'), parameters('psModules').azureStorage[0].name)]"
           ],
           "properties": {
             "contentLink": {
-              "uri": "[variables('psModules').azureRmRecoveryServices.url]"
+              "uri": "[parameters('psModules').azureRmRecoveryServices[0].url]"
             }
           }
         },
         {
-          "name": "[variables('psModules').azureRmProfile.name]",
+          "name": "[parameters('psModules').azureRmProfile[0].name]",
           "type": "Modules",
-          "apiVersion": "2015-10-31",
-          "tags": {},
+          "apiVersion": "2019-06-01",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]"
           ],
           "properties": {
             "contentLink": {
-              "uri": "[variables('psModules').azureRmProfile.url]"
+              "uri": "[parameters('psModules').azureRmProfile[0].url]"
             }
           }
         },
         {
           "name": "[variables('runbooks').omsABUscript.name]",
           "type": "runbooks",
-          "apiVersion": "2015-10-31",
-          "location": "[parameters('omsAutomationRegion')]",
+          "apiVersion": "2019-06-01",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[resourceId('Microsoft.Automation/automationAccounts', parameters('omsAutomationAccountName'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('azureSubscriptionId'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('omsWorkspaceId'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('omsWorkspaceKey'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmResources.name)]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmCompute.name)]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureStorage.name)]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmStorage.name)]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmRecoveryServices.name)]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmSiteRecovery.name)]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmBackup.name)]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmOperationalInsights.name)]"
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('azureSubscriptionId'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('omsWorkspaceId'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/variables', parameters('omsAutomationAccountName'), variables('omsWorkspaceKey'))]",
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmProfile[0].name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmResources[0].name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmCompute[0].name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureStorage[0].name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmStorage[0].name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmRecoveryServices[0].name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmSiteRecovery[0].name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmBackup[0].name)]",
+            "[resourceId('Microsoft.Automation/automationAccounts/Modules', parameters('omsAutomationAccountName'), parameters('psModules').azureRmOperationalInsights[0].name)]"
           ],
-          "tags": {},
           "properties": {
             "runbookType": "[variables('runbooks').omsABUscript.type]",
             "logProgress": false,
@@ -392,6 +341,5 @@
         }
       ]
     }
-  ],
-  "outputs": {}
+  ]
 }
