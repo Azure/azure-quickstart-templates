@@ -279,6 +279,7 @@
     "lbName" : "solace-ha-group-loadbalancer",
     "lbPoolName": "solace-ha-group",
     "lbPoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbPoolName'))]",
+    "solaceContainerExtensionDependency": "[if(empty(parameters('workspaceName')),'DockerExtension','OmsAgentExtension')]",
     "dataDisksChoices": {
       "0": [
         {
@@ -639,10 +640,10 @@
         "type": "OmsAgentForLinux",
         "typeHandlerVersion": "1.4",
         "settings": {
-          "workspaceId": "[if(empty(parameters('workspaceName')),  '', reference(variables('solaceWorkspaceName')).outputs.workspaceId.value)]"
+          "workspaceId": "[if(empty(parameters('workspaceName')),  '', reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2020-08-01').customerId)]"
         },
         "protectedSettings": {
-          "workspaceKey": "[if(empty(parameters('workspaceName')),  '', reference(variables('solaceWorkspaceName')).outputs.workspaceKey.value)]"
+          "workspaceKey": "[if(empty(parameters('workspaceName')),  '', listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2020-08-01').primarySharedKey)]"
         }
       }
     },
@@ -656,7 +657,7 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[if(empty(parameters('workspaceName')), resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('dnsLabelForVmIp'), copyindex()), 'DockerExtension'), resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('dnsLabelForVmIp'), copyindex()), 'OmsAgentExtension'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('dnsLabelForVmIp'), copyindex()), variables('solaceContainerExtensionDependency'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
