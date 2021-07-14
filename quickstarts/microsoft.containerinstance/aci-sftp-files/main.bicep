@@ -35,6 +35,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-
 
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: roleAssignmentName
+  scope: storageAccount
   properties: {
     roleDefinitionId: roleDefinitionId
     principalId: managedIdentity.properties.principalId
@@ -49,9 +50,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
     name: storageAccountType
   }
   kind: 'StorageV2'
-  dependsOn: [
-    roleAssignment // need to create a slight delay for the roleAssignment to replicate before the deployment script can run
-  ]
 }
 
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
