@@ -27,13 +27,15 @@ var mysqlShareName = 'mysql-share'
 var scriptName = 'createFileShare'
 var identityName = 'scratch'
 
+var roleDefinitionId = resourceId('microsoft.authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
+var roleAssignmentName = guid(mi.name, roleDefinitionId, resourceGroup().id)
+
+var sqlScriptToExecute = 'Get-AzStorageAccount -StorageAccountName ${storageAccountName} -ResourceGroupName ${resourceGroup().name} | New-AzStorageShare -Name ${mysqlShareName}'
+
 resource mi 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: identityName
   location: location
 }
-
-var roleDefinitionId = resourceId('microsoft.authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
-var roleAssignmentName = guid(mi.name, roleDefinitionId, resourceGroup().id)
 
 resource miRoleAssign 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: roleAssignmentName
@@ -43,8 +45,6 @@ resource miRoleAssign 'Microsoft.Authorization/roleAssignments@2020-04-01-previe
     principalType: 'ServicePrincipal'
   }
 }
-
-var uamiId = resourceId(mi.type, mi.name)
 
 resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: storageAccountName
@@ -67,7 +67,7 @@ resource dScriptWp 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${uamiId}': {}
+      '${mi.id}': {}
     }
   }
   properties: {
@@ -84,7 +84,6 @@ resource dScriptWp 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
 }
 
 // create second file share for sql
-var sqlScriptToExecute = 'Get-AzStorageAccount -StorageAccountName ${storageAccountName} -ResourceGroupName ${resourceGroup().name} | New-AzStorageShare -Name ${mysqlShareName}'
 resource dScriptSql 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: '${scriptName}-${mysqlShareName}'
   location: location
@@ -92,7 +91,7 @@ resource dScriptSql 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${uamiId}': {}
+      '${mi.id}': {}
     }
   }
   properties: {
