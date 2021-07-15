@@ -28,7 +28,7 @@
       "metadata": {
         "description": "Prefix for each component (VMs, networks, etc)"
       },
-      "maxLength": 11
+      "maxLength": 13
     },
     "existingAtlasToken": {
       "type": "string",
@@ -79,15 +79,13 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
       },
       "defaultValue": ""
-    }    
+    }
   },
   "variables": {
     "imagePublisher": "Canonical",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetIDRef'))]",
     "subnet1Name": "Subnet-1",
     "customScriptFilePath": "[uri(parameters('_artifactsLocation'), concat('install-consul.sh', parameters('_artifactsLocationSasToken')))]",
     "addressPrefix": "10.0.0.0/16",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
     "numberOfInstances": 3,
     "customScriptCommandToExecute": "bash install-consul.sh",
     "subnet1Prefix": "10.0.0.0/24",
@@ -110,17 +108,17 @@
   },
   "resources": [
     {
-      "properties": {
-        "accountType": "Standard_LRS"
+      "sku": {
+        "name": "Standard_LRS"
       },
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-04-01",
       "name": "[variables('storageAccountName')]"
     },
     {
       "name": "[concat('publicIP', copyindex())]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "location": "[parameters('location')]",
       "copy": {
         "count": "[variables('numberOfInstances')]",
@@ -134,7 +132,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "location": "[parameters('location')]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2020-12-01",
       "name": "[concat(parameters('appPrefix'),'_AS')]",
       "sku": {
         "name": "Aligned"
@@ -165,15 +163,15 @@
       },
       "type": "Microsoft.Network/networkSecurityGroups",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "name": "[concat(parameters('appPrefix'),'_SG')]"
     },
     {
       "name": "[concat(parameters('appPrefix'),'_VNET')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('appPrefix'),'_SG')]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups/',concat(parameters('appPrefix'),'_SG'))]"
       ],
       "type": "Microsoft.Network/virtualNetworks",
       "properties": {
@@ -194,10 +192,10 @@
     },
     {
       "name": "[concat(parameters('appPrefix'),'_LB')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('appPrefix'),'_VNET')]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', concat(parameters('appPrefix'),'_VNET'))]"
       ],
       "type": "Microsoft.Network/loadBalancers",
       "properties": {
@@ -206,7 +204,7 @@
             "name": "loadBalancerFrontEnd",
             "properties": {
               "subnet": {
-                "id": "[variables('subnet1Ref')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetIDRef'),variables('subnet1Name'))]"
               }
             }
           }
@@ -216,15 +214,15 @@
             "name": "lbrule",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(parameters('appPrefix'),'_LB')), '/frontendIpConfigurations/loadBalancerFrontEnd')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', concat(parameters('appPrefix'),'_LB'), 'loadBalancerFrontEnd')]"
               },
               "backendPort": 8500,
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(parameters('appPrefix'),'_LB')), '/probes/lbprobe')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', concat(parameters('appPrefix'),'_LB'), 'lbprobe')]"
               },
               "protocol": "Tcp",
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(parameters('appPrefix'),'_LB')), '/backendAddressPools/loadBalancerBackEnd')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendaddresspools', concat(parameters('appPrefix'),'_LB'), 'loadBalancerBackEnd')]"
               },
               "frontendPort": 8500,
               "idleTimeoutInMinutes": 15
@@ -251,12 +249,12 @@
     },
     {
       "name": "[concat(parameters('appPrefix'),'_nic1', copyindex())]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP', copyindex())]",
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('appPrefix'),'_VNET')]",
-        "[concat('Microsoft.Network/loadBalancers/', parameters('appPrefix'),'_LB')]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat('publicIP', copyindex()))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', concat(parameters('appPrefix'),'_VNET'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', concat(parameters('appPrefix'),'_LB'))]"
       ],
       "copy": {
         "count": "[variables('numberOfInstances')]",
@@ -272,12 +270,12 @@
             "name": "ipconfig1",
             "properties": {
               "subnet": {
-                "id": "[variables('subnet1Ref')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetIDRef'),variables('subnet1Name'))]"
               },
               "privateIPAllocationMethod": "Dynamic",
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(parameters('appPrefix'),'_LB')),'/backendAddressPools/loadBalancerBackEnd')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', concat(parameters('appPrefix'),'_LB'),'loadBalancerBackEnd')]"
                 }
               ],
               "publicIPAddress": {
@@ -290,12 +288,12 @@
     },
     {
       "name": "[concat(parameters('appPrefix'), '_vm', copyIndex())]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('appPrefix'),'_nic1', copyIndex())]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Compute/availabilitySets/', parameters('appPrefix'),'_AS')]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('appPrefix'),'_nic1', copyIndex()))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', concat(parameters('appPrefix'),'_AS'))]"
       ],
       "copy": {
         "count": "[variables('numberOfInstances')]",
@@ -342,10 +340,10 @@
     },
     {
       "name": "[concat(parameters('appPrefix'), '_vm', copyIndex(), '/extension')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('appPrefix'), '_vm', copyIndex())]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('appPrefix'), '_vm', copyIndex()))]"
       ],
       "copy": {
         "count": "[variables('numberOfInstances')]",

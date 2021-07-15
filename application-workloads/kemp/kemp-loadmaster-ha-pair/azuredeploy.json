@@ -14,13 +14,18 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for admin user"
+      }
     }
   },
   "variables": {
     "availabilitySetName": "AvSet",
     "vmNamePrefix": "KEMPVLM",
     "loadBalancerName": "AzureLB",
-    "adminUsername": "bal",
     "virtualNetworkName": "VLM_Network",
     "subnetName": "Subnet1",
     "vmSize": "Standard_A1",
@@ -28,23 +33,13 @@
     "networksecurityname": "[concat(variables('vmNamePrefix'),'-NSG')]",
     "publicIPAddressName": "[concat(variables('vmNamePrefix'),'-PIP')]",
     "dnsNameforLBIP": "[concat('vlm',uniqueString(resourceGroup().id))]",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/Subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "numberOfInstances": 2,
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName'))]",
     "imageSKU": "basic-byol",
     "publicIPAddressType": "Dynamic",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
     "imageOffer": "vlm-azure",
     "imagePublisher": "kemptech",
     "imageVersion": "latest",
     "storageAccountName": "[concat('vhds', uniqueString(resourceGroup().id))]",
-    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
-    "imageReference": {
-      "publisher": "[variables('imagePublisher')]",
-      "offer": "[variables('imageOffer')]",
-      "sku": "[variables('imageSku')]",
-      "version": "[variables('imageVersion')]"
-    },
     "imagePlan": {
       "name": "[variables('imageSku')]",
       "product": "[variables('imageOffer')]",
@@ -56,7 +51,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
       "comments": "This storage account is used to store the VM disks.",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2021-01-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -194,10 +189,10 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/inboundNatRules/', 'VLM-MGMT', copyIndex())]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('loadBalancerName'), concat('VLM-MGMT', copyIndex()))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -206,19 +201,19 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/Subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               },
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('lbID'), '/backendAddressPools/BackendPool1')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('loadBalancerName'), 'BackendPool1')]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/VLM-MGMT', copyindex())]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('loadBalancerName'),concat('VLM-MGMT', copyindex()))]"
                 }
               ]
             }
@@ -234,7 +229,7 @@
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -242,7 +237,7 @@
             "name": "LoadBalancerFrontend",
             "properties": {
               "publicIPAddress": {
-                "id": "[variables('publicIPAddressID')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
               }
             }
           }
@@ -256,13 +251,13 @@
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadBalancerName'), 'LoadBalancerFrontend')]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/BackendPool1')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), 'BackendPool1')]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/probes/VLM-Health-Probe')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), 'VLM-Health-Probe')]"
               },
               "protocol": "Tcp",
               "frontendPort": 8444,
@@ -297,11 +292,11 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
       ],
       "properties": {
         "frontendIPConfiguration": {
-          "id": "[variables('frontEndIPConfigID')]"
+          "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('loadBalancerName'),'loadBalancerFrontEnd')]"
         },
         "protocol": "Tcp",
         "frontendPort": "[copyIndex(8441)]",
@@ -321,9 +316,9 @@
       },
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'), copyindex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('networkInterfaceName'), copyindex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -334,7 +329,7 @@
         },
         "osProfile": {
           "computerName": "[concat(variables('vmNamePrefix'), copyIndex())]",
-          "adminUsername": "[variables('adminUsername')]",
+          "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('balPassword')]"
         },
         "storageProfile": {
@@ -363,7 +358,7 @@
   "outputs": {
     "FQDN": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2015-06-15').dnsSettings.fqdn]"
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2021-01-01').dnsSettings.fqdn]"
     }
   }
 }

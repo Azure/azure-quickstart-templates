@@ -22,7 +22,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/spark/spark-2.0-on-suse/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -37,6 +37,13 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "VmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "allowedValues": [
+        "Standard_D4s_v3"
+      ]
     },
     "authenticationType": {
       "type": "string",
@@ -61,8 +68,6 @@
     "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storageac')]",
     "sparkMasterMachineName": "sparkmaster",
     "sparkSlaveMachineName": "sparkslave",
-    "sparkMasterSize": "Standard_D4s_v3",
-    "sparkSlavesSize": "Standard_D4s_v3",
     "sparkMasterPublicIpName": "sparkMasterPublicIp",
     "sparkNetWorkSecurityGroupName": "nsgroup",
     "sparkVirtualNetworkName": "sparkVirtualNetwork",
@@ -89,7 +94,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('sparkMasterMachineName')]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "location": "[variables('resourceGroupLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('sparkMasterNetworkInterfaceName'))]"
@@ -103,7 +108,7 @@
           ]
         },
         "hardwareProfile": {
-          "vmSize": "[variables('sparkMasterSize')]"
+          "vmSize": "[parameters('VmSize')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -129,11 +134,11 @@
         {
           "type": "extensions",
           "name": "[concat('configuresparkonmaster')]",
-          "apiVersion": "2015-06-15",
+          "apiVersion": "2020-12-01",
           "location": "[variables('resourceGroupLocation')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('sparkMasterMachineName') )]",
-            "[concat('Microsoft.Network/networkInterfaces/', variables('sparkMasterNetworkInterfaceName') )]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('sparkMasterMachineName') )]",
+            "[resourceId('Microsoft.Network/networkInterfaces/', variables('sparkMasterNetworkInterfaceName') )]"
           ],
           "properties": {
             "publisher": "Microsoft.Azure.Extensions",
@@ -143,8 +148,12 @@
             "settings": {
               "fileUris": [
                 "[uri(parameters('_artifactsLocation'), concat(variables('ScriptFolder'), '/', variables('sparkInstallScriptName'), parameters('_artifactsLocationSasToken')))]"
-              ],
-              "commandToExecute": "[concat('sudo sh install_spark_environment.sh ', '-m 1', ' -i ', reference(variables('sparkMasterNetworkInterfaceName')).ipConfigurations[0].properties.privateIPAddress, ' -k ',  listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, ' -a ', variables('storageAccountName'), parameters('_artifactsLocationSasToken'))]"
+              ]
+            },
+            "protectedSettings": {
+            
+                "commandToExecute": "[concat('sudo sh install_spark_environment.sh ', '-m 1', ' -i ', reference(variables('sparkMasterNetworkInterfaceName')).ipConfigurations[0].properties.privateIPAddress, ' -k ',  listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-01-01').keys[0].value, ' -a ', variables('storageAccountName'), parameters('_artifactsLocationSasToken'))]"
+              
             }
           }
         }
@@ -153,7 +162,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('sparkSlaveMachineName'), copyindex() )]",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "location": "[variables('resourceGroupLocation')]",
       "copy": {
         "name": "VMLoop",
@@ -171,7 +180,7 @@
           ]
         },
         "hardwareProfile": {
-          "vmSize": "[variables('sparkSlavesSize')]"
+          "vmSize": "[parameters('VmSize')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -197,7 +206,7 @@
         {
           "type": "extensions",
           "name": "configuresparkonslave",
-          "apiVersion": "2015-06-15",
+          "apiVersion": "2020-12-01",
           "location": "[variables('resourceGroupLocation')]",
           "dependsOn": [
             "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('sparkSlaveNetworkInterfaceName'), copyindex() ) )]",
@@ -212,8 +221,10 @@
             "settings": {
               "fileUris": [
                 "[uri(parameters('_artifactsLocation'), concat(variables('ScriptFolder'), '/', variables('sparkInstallScriptName'), parameters('_artifactsLocationSasToken')))]"
-              ],
-              "commandToExecute": "[concat('sudo sh install_spark_environment.sh ', '-m 0', ' -i ',  reference(variables('sparkMasterNetworkInterfaceName')).ipConfigurations[0].properties.privateIPAddress, ' -k ',  listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, ' -a ', variables('storageAccountName') , parameters('_artifactsLocationSasToken'))]"
+              ]
+            },
+            "protectedSettings": {
+                "commandToExecute": "[concat('sudo sh install_spark_environment.sh ', '-m 0', ' -i ',  reference(variables('sparkMasterNetworkInterfaceName')).ipConfigurations[0].properties.privateIPAddress, ' -k ',  listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-01-01').keys[0].value, ' -a ', variables('storageAccountName') , parameters('_artifactsLocationSasToken'))]"
             }
           }
         }
@@ -222,7 +233,7 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('sparkMasterNetworkInterfaceName')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-08-01",
       "location": "[variables('resourceGroupLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', 'sparkMasterPublicIp' )]",
@@ -240,12 +251,11 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('sparkMasterPublicIpName'))]"
               },
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('sparkVirtualNetworkName')), '/subnets/default')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('sparkVirtualNetworkName'),'default')]"
               }
             }
           }
         ],
-        "dnsSettings": {},
         "enableIPForwarding": false,
         "networkSecurityGroup": {
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('sparkNetWorkSecurityGroupName'))]"
@@ -255,7 +265,7 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('sparkSlaveNetworkInterfaceName'), copyIndex() )]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-08-01",
       "location": "[variables('resourceGroupLocation')]",
       "copy": {
         "name": "NicSlavesLoop",
@@ -273,12 +283,11 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('sparkVirtualNetworkName')), '/subnets/default')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('sparkVirtualNetworkName'),'default')]"
               }
             }
           }
         ],
-        "dnsSettings": {},
         "enableIPForwarding": false,
         "networkSecurityGroup": {
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('sparkNetWorkSecurityGroupName'))]"
@@ -288,7 +297,7 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('sparkMasterPublicIpName')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-08-01",
       "location": "[variables('resourceGroupLocation')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -298,7 +307,7 @@
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('sparkVirtualNetworkName')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-08-01",
       "location": "[variables('resourceGroupLocation')]",
       "properties": {
         "addressSpace": {
@@ -319,7 +328,7 @@
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('sparkNetWorkSecurityGroupName')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-08-01",
       "location": "[variables('resourceGroupLocation')]",
       "properties": {
         "securityRules": [
@@ -425,9 +434,8 @@
       },
       "kind": "Storage",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2021-01-01",
       "location": "[variables('resourceGroupLocation')]",
-      "tags": {},
       "properties": {}
     }
   ],
