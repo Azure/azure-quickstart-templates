@@ -72,6 +72,13 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
       },
       "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "description"
+      }
     }
   },
   "variables": {
@@ -91,7 +98,7 @@
     "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]",
     "lbProbeID": "[concat(variables('lbID'),'/probes/tcpProbe')]",
     "apiVersion": "2015-06-15",
-    "hostDNSNameScriptArgument": "[concat('*.',resourceGroup().location,'.cloudapp.azure.com')]",
+    "hostDNSNameScriptArgument": "[concat('*.',parameters('location'),'.cloudapp.azure.com')]",
     "primaryNicNamePrefix": "nic",
     "secondaryNicNamePrefix": "nicN",
     "imagePublisher": "MicrosoftWindowsServer",
@@ -101,8 +108,8 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2016-04-30-preview",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": 2,
         "platformUpdateDomainCount": 2,
@@ -110,10 +117,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -122,10 +129,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -143,17 +150,17 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('primaryNicNamePrefix'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -162,7 +169,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables ('subnetName'))]"
               },
               "loadBalancerBackendAddressPools": [
                 {
@@ -183,17 +190,17 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('secondaryNicNamePrefix'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -223,12 +230,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -379,17 +386,17 @@
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('primaryVmNamePrefix'), copyindex())]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfInstances')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('primaryNicNamePrefix'), copyindex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "tags": {
         "Role": "Web"
@@ -430,7 +437,7 @@
           "apiVersion": "[variables('apiVersion')]",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('primaryVmNamePrefix'), copyIndex(),'/WinRMCustomScriptExtension')]",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/',parameters('primaryVmNamePrefix'),copyIndex())]"
           ],
@@ -451,17 +458,17 @@
       ]
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('secondaryVmNamePrefix'), copyindex())]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfInstances')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('secondaryNicNamePrefix'), copyindex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "tags": {
         "Role": "Test"
@@ -502,7 +509,7 @@
           "apiVersion": "[variables('apiVersion')]",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('secondaryVmNamePrefix'), copyindex(),'/WinRMCustomScriptExtension')]",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/',parameters('secondaryVmNamePrefix'),copyindex())]"
           ],
