@@ -33,6 +33,14 @@
         "description": "Allow inbound SSH traffic to the Ansible Controller from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x."
       }
     },
+    "PrimaryUserName": {
+      "type": "string",
+      "maxLength": 31,
+      "defaultValue": "vmuser",
+      "metadata": {
+        "description": "Primary Username used for deployment on all VMs. Username may contain only lower and upper case letters, digits, underscores, or dashes. They can end with a dollar sign. Dashes are not allowed at the beginning of the username. Fully numeric usernames and usernames . or .. are also disallowed. It is not recommended to use usernames beginning with . character as their home directories will be hidden in the ls output. In regular expression terms: [a-zA-Z0-9_.][a-zA-Z0-9_.-]*[$]?  Username must be less than 32 characters long."
+      }
+    },
     "SASAdminPass": {
       "type": "securestring",
       "minLength": 6,
@@ -101,9 +109,9 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/sas/sas-viya/",
       "metadata": {
-          "description": "[deployment().properties.templateLink.uri]"
+          "description": "For a standard deployment, keep the default.  The https URL to the base of the deployment files in Microsoft Azure. If a SAS key is needed, please do not include the SAS key in the URL. Instead, add the part after and include the question mark to the _artifactsLocationSasToken variable. ex. https://(STORAGE_ACCOUNT)/(SHARE_NAME)/(SUBDIRECTORY_NAME)/"
       }
     }
   },
@@ -120,7 +128,6 @@
 
     "DiagnosticStorageGroupName": "[toLower(concat('rg4diag', variables('resourceGroupUniqueString')))]",
     "AzureFilesViyaShare": "viyashare",
-    "PrimaryUserName": "vmuser",
     "ExtensionAnsibleURI": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/run_ansible_script.json', parameters('_artifactsLocationSasToken')))]",
     "NetworkCreateTemplateURI": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/createNetworkSubtemplate.json', parameters('_artifactsLocationSasToken')))]",
     "AlternateDomain": "[concat('viya-', subscription().subscriptionId, '-', variables('resourceGroupUniqueString'))]",
@@ -663,13 +670,13 @@
         },
         "osProfile": {
           "computerName": "Ansible",
-          "adminUsername": "[variables('PrimaryUserName')]",
+          "adminUsername": "[parameters('PrimaryUserName')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
-                  "path": "[concat('/home/', variables('PrimaryUserName'), '/.ssh/authorized_keys')]",
+                  "path": "[concat('/home/', parameters('PrimaryUserName'), '/.ssh/authorized_keys')]",
                   "keyData": "[parameters('SSHPublicKey')]"
                 }
               ]
@@ -714,7 +721,7 @@
             "value": "Ansible"
           },
           "commandToExecute": {
-            "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; scripts/ansiblecontroller_startup.sh \"1\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', 'PrimaryViyaLoadbalancer_PublicIP')).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value, '\" \"', parameters('CAS Node Count'), '\" \"\" 2>&1 | tee /var/log/sas/install/runAnsiblePhase1_SetupPrerequisites.log')]"
+            "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./ansiblecontroller_startup.sh \"1\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', parameters('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', 'PrimaryViyaLoadbalancer_PublicIP')).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2021-04-01').keys[0].value, '\" \"', parameters('CAS Node Count'), '\" \"\" 2>&1 | tee /var/log/sas/install/runAnsiblePhase1_SetupPrerequisites.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -1133,13 +1140,13 @@
         },
         "osProfile": {
           "computerName": "controller",
-          "adminUsername": "[variables('PrimaryUserName')]",
+          "adminUsername": "[parameters('PrimaryUserName')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
-                  "path": "[concat('/home/', variables('PrimaryUserName'), '/.ssh/authorized_keys')]",
+                  "path": "[concat('/home/', parameters('PrimaryUserName'), '/.ssh/authorized_keys')]",
                   "keyData": "[parameters('SSHPublicKey')]"
                 }
               ]
@@ -1183,7 +1190,7 @@
           "skipDos2Unix": false
         },
         "protectedSettings": {
-          "commandToExecute": "[ concat('set -o pipefail; ./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value,'\" \"CasControllerServers\" 2>&1 | tee /tmp/prerequisites.log')]",
+          "commandToExecute": "[ concat('set -o pipefail; ./nonansiblecontroller_prereqs.sh \"', parameters('PrimaryUserName'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2021-04-01').keys[0].value,'\" \"CasControllerServers\" 2>&1 | tee /tmp/prerequisites.log')]",
           "fileUris": [
             "[concat(parameters('_artifactsLocation'), 'scripts/nonansiblecontroller_prereqs.sh', parameters('_artifactsLocationSasToken'))]"
           ]
@@ -1285,13 +1292,13 @@
         },
         "osProfile": {
           "computerName": "[concat('worker', padLeft(copyIndex(1), 2, '0'))]",
-          "adminUsername": "[variables('PrimaryUserName')]",
+          "adminUsername": "[parameters('PrimaryUserName')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
-                  "path": "[concat('/home/', variables('PrimaryUserName'), '/.ssh/authorized_keys')]",
+                  "path": "[concat('/home/', parameters('PrimaryUserName'), '/.ssh/authorized_keys')]",
                   "keyData": "[parameters('SSHPublicKey')]"
                 }
               ]
@@ -1339,7 +1346,7 @@
           "skipDos2Unix": false
         },
         "protectedSettings": {
-          "commandToExecute": "[ concat('set -o pipefail; ./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value,'\" \"CasControllerServers\" 2>&1 | tee /tmp/prerequisites.log')]",
+          "commandToExecute": "[ concat('set -o pipefail; ./nonansiblecontroller_prereqs.sh \"', parameters('PrimaryUserName'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2021-04-01').keys[0].value,'\" \"CasControllerServers\" 2>&1 | tee /tmp/prerequisites.log')]",
           "fileUris": [
             "[concat(parameters('_artifactsLocation'), 'scripts/nonansiblecontroller_prereqs.sh', parameters('_artifactsLocationSasToken'))]"
           ]
@@ -1540,13 +1547,13 @@
         },
         "osProfile": {
           "computerName": "services",
-          "adminUsername": "[variables('PrimaryUserName')]",
+          "adminUsername": "[parameters('PrimaryUserName')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
-                  "path": "[concat('/home/', variables('PrimaryUserName'), '/.ssh/authorized_keys')]",
+                  "path": "[concat('/home/', parameters('PrimaryUserName'), '/.ssh/authorized_keys')]",
                   "keyData": "[parameters('SSHPublicKey')]"
                 }
               ]
@@ -1589,7 +1596,7 @@
           "skipDos2Unix": false
         },
         "protectedSettings": {
-          "commandToExecute": "[ concat('set -o pipefail; ./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value, '\" \"VisualServicesServers,ProgrammingServicesServers,StatefulServicesServers\" 2>&1 | tee /tmp/prerequisites.log')]",
+          "commandToExecute": "[ concat('set -o pipefail; ./nonansiblecontroller_prereqs.sh \"', parameters('PrimaryUserName'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2021-04-01').keys[0].value, '\" \"VisualServicesServers,ProgrammingServicesServers,StatefulServicesServers\" 2>&1 | tee /tmp/prerequisites.log')]",
           "fileUris": [
             "[concat(parameters('_artifactsLocation'), 'scripts/nonansiblecontroller_prereqs.sh', parameters('_artifactsLocationSasToken'))]"
           ]
