@@ -109,7 +109,6 @@ else
     $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 }
 
-
 if($Config -eq "Standalone")
 {
     #Install CM and Config
@@ -139,7 +138,6 @@ else {
         $ScriptFile = Join-Path -Path $ProvisionToolPath -ChildPath "InstallCSForHierarchy.ps1"
     
         . $ScriptFile $DomainFullName $CM $CMUser $Role $ProvisionToolPath $LogFolder $PSName $PSRole
-
 
     }
     elseif($CurrentRole -eq "PS")

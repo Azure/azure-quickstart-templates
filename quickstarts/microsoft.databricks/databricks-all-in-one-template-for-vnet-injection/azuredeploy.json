@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "3247823006110740501"
+    }
+  },
   "parameters": {
     "disablePublicIp": {
       "type": "bool",
@@ -17,62 +24,62 @@
       }
     },
     "nsgName": {
-      "defaultValue": "databricks-nsg",
       "type": "string",
+      "defaultValue": "databricks-nsg",
       "metadata": {
         "description": "The name of the network security group to create."
       }
     },
     "pricingTier": {
+      "type": "string",
       "defaultValue": "premium",
       "allowedValues": [
         "trial",
         "standard",
         "premium"
       ],
-      "type": "string",
       "metadata": {
         "description": "The pricing tier of workspace."
       }
     },
     "privateSubnetCidr": {
-      "defaultValue": "10.179.0.0/18",
       "type": "string",
+      "defaultValue": "10.179.0.0/18",
       "metadata": {
-        "description": "Cidr range for the private subnet."
+        "description": "CIDR range for the private subnet."
       }
     },
     "privateSubnetName": {
-      "defaultValue": "private-subnet",
       "type": "string",
+      "defaultValue": "private-subnet",
       "metadata": {
         "description": "The name of the private subnet to create."
       }
     },
     "publicSubnetCidr": {
-      "defaultValue": "10.179.64.0/18",
       "type": "string",
+      "defaultValue": "10.179.64.0/18",
       "metadata": {
-        "description": "Cidr range for the public subnet.."
+        "description": "CIDR range for the public subnet.."
       }
     },
     "publicSubnetName": {
-      "defaultValue": "public-subnet",
       "type": "string",
+      "defaultValue": "public-subnet",
       "metadata": {
         "description": "The name of the public subnet to create."
       }
     },
     "vnetCidr": {
-      "defaultValue": "10.179.0.0/16",
       "type": "string",
+      "defaultValue": "10.179.0.0/16",
       "metadata": {
-        "description": "Cidr range for the vnet."
+        "description": "CIDR range for the vnet."
       }
     },
     "vnetName": {
-      "defaultValue": "databricks-vnet",
       "type": "string",
+      "defaultValue": "databricks-vnet",
       "metadata": {
         "description": "The name of the virtual network to create."
       }
@@ -84,18 +91,16 @@
       }
     }
   },
+  "functions": [],
   "variables": {
-    "managedResourceGroupName": "[concat('databricks-rg-', parameters('workspaceName'), '-', uniqueString(parameters('workspaceName'), resourceGroup().id))]",
-    "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('managedResourceGroupName'))]",
-    "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
-    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+    "managedResourceGroupName": "[format('databricks-rg-{0}-{1}', parameters('workspaceName'), uniqueString(parameters('workspaceName'), resourceGroup().id))]"
   },
   "resources": [
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "location": "[parameters('location')]",
+      "apiVersion": "2020-05-01",
       "name": "[parameters('nsgName')]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -116,7 +121,7 @@
             "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-webapp",
             "properties": {
               "description": "Required for workers communication with Databricks Webapp.",
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "443",
               "sourceAddressPrefix": "VirtualNetwork",
@@ -130,7 +135,7 @@
             "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-sql",
             "properties": {
               "description": "Required for workers communication with Azure SQL services.",
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "3306",
               "sourceAddressPrefix": "VirtualNetwork",
@@ -144,7 +149,7 @@
             "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-storage",
             "properties": {
               "description": "Required for workers communication with Azure Storage services.",
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "443",
               "sourceAddressPrefix": "VirtualNetwork",
@@ -172,7 +177,7 @@
             "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-eventhub",
             "properties": {
               "description": "Required for worker communication with Azure Eventhub services.",
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "9093",
               "sourceAddressPrefix": "VirtualNetwork",
@@ -186,13 +191,10 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[parameters('location')]",
+      "apiVersion": "2020-05-01",
       "name": "[parameters('vnetName')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('nsgName'))]"
-      ],
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -205,7 +207,7 @@
             "properties": {
               "addressPrefix": "[parameters('publicSubnetCidr')]",
               "networkSecurityGroup": {
-                "id": "[variables('nsgId')]"
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
               },
               "delegations": [
                 {
@@ -222,7 +224,7 @@
             "properties": {
               "addressPrefix": "[parameters('privateSubnetCidr')]",
               "networkSecurityGroup": {
-                "id": "[variables('nsgId')]"
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
               },
               "delegations": [
                 {
@@ -235,26 +237,24 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+      ]
     },
     {
-      "apiVersion": "2018-04-01",
       "type": "Microsoft.Databricks/workspaces",
-      "location": "[parameters('location')]",
+      "apiVersion": "2018-04-01",
       "name": "[parameters('workspaceName')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('nsgName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
-      ],
+      "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('pricingTier')]"
       },
-      "comments": "The managed resource group specified will be locked after deployment.",
       "properties": {
-        "ManagedResourceGroupId": "[variables('managedResourceGroupId')]",
+        "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('managedResourceGroupName'))]",
         "parameters": {
           "customVirtualNetworkId": {
-            "value": "[variables('vnetId')]"
+            "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
           },
           "customPublicSubnetName": {
             "value": "[parameters('publicSubnetName')]"
@@ -266,7 +266,10 @@
             "value": "[parameters('disablePublicIp')]"
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
     }
   ]
 }

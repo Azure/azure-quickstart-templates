@@ -1,4 +1,4 @@
-configuration Configuration
+﻿configuration Configuration
 {
    param
    (
@@ -13,7 +13,7 @@ configuration Configuration
         [Parameter(Mandatory)]
         [String]$PSName,
         [Parameter(Mandatory)]
-        [String]$ClientName,
+        [System.Array]$ClientName,
         [Parameter(Mandatory)]
         [String]$Configuration,
         [Parameter(Mandatory)]
@@ -34,6 +34,7 @@ configuration Configuration
         $CSComputerAccount = "$DName\$CSName$"
     }
     $DPMPComputerAccount = "$DName\$DPMPName$"
+    $Clients = [system.String]::Join(",", $ClientName)
     
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
 
@@ -89,16 +90,16 @@ configuration Configuration
 
             FileReadAccessShare DomainSMBShare
             {
-                Name   = $LogFolder
-                Path =  $LogPath
+                Name = $LogFolder
+                Path = $LogPath
                 Account = $DCComputerAccount
                 DependsOn = "[File]ShareFolder"
             }
 
             FileReadAccessShare CMSourceSMBShare
             {
-                Name   = $CM
-                Path =  "c:\$CM"
+                Name = $CM
+                Path = "c:\$CM"
                 Account = $DCComputerAccount
                 DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
             }
@@ -108,7 +109,7 @@ configuration Configuration
                 TaskName = "ScriptWorkFlow"
                 ScriptName = "ScriptWorkFlow.ps1"
                 ScriptPath = $PSScriptRoot
-                ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $ClientName $Configuration $CurrentRole $LogFolder $CSName $PSName"
+                ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $Clients $Configuration $CurrentRole $LogFolder $CSName $PSName"
                 Ensure = "Present"
                 DependsOn = "[FileReadAccessShare]CMSourceSMBShare"
             }
@@ -134,8 +135,8 @@ configuration Configuration
 
             FileReadAccessShare DomainSMBShare
             {
-                Name   = $LogFolder
-                Path =  $LogPath
+                Name = $LogFolder
+                Path = $LogPath
                 Account = $DCComputerAccount,$CSComputerAccount
                 DependsOn = "[WaitForConfigurationFile]WaitCSJoinDomain"
             }
@@ -145,7 +146,7 @@ configuration Configuration
                 TaskName = "ScriptWorkFlow"
                 ScriptName = "ScriptWorkFlow.ps1"
                 ScriptPath = $PSScriptRoot
-                ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $ClientName $Configuration $CurrentRole $LogFolder $CSName $PSName"
+                ScriptArgument = "$DomainName $CM $DName\$($Admincreds.UserName) $DPMPName $Clients $Configuration $CurrentRole $LogFolder $CSName $PSName"
                 Ensure = "Present"
                 DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
             }
