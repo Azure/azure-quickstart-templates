@@ -37,6 +37,14 @@
         "description": "OS image SKU"
       }
     },	
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Default location"
+      }
+
+    },
     "osVersion": {
       "type": "string",
       "defaultValue": "latest",
@@ -50,6 +58,7 @@
       "metadata": {
         "description": "Number of VM instances (100 or less)."
       },
+      "minValue": 2,
       "maxValue": 100
     },
     "adminUsername": {
@@ -153,14 +162,14 @@
     "imageReference": "[variables('osType')]",
     "keyVaultURL": "[concat('https://', parameters('keyVaultName'), environment().suffixes.keyVaultDns)]",
     "encryptionOperation": "EnableEncryption",
-    "keyVaultResourceId": "[resourceId(resourceGroup().name, 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+    "keyVaultResourceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-08-01",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -180,7 +189,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('jumpBoxSAName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2019-06-01",
       "sku": {
         "name": "[variables('storageAccountType')]"
@@ -191,7 +200,7 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2017-09-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -203,11 +212,11 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('jumpBoxNicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2017-09-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -229,7 +238,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('jumpBoxName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2017-03-30",
       "dependsOn": [
         "[variables('jumpBoxNicName')]" 
@@ -270,7 +279,7 @@
         "type": "Microsoft.KeyVault/vaults",
         "apiVersion": "2019-09-01",
         "name": "[parameters('keyVaultName')]",
-        "location": "[resourceGroup().location]",
+        "location": "[parameters('location')]",
         "dependsOn": [
           "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('vmssName'))]"
         ],
@@ -302,7 +311,7 @@
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[parameters('vmssName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2017-03-30",
       "dependsOn": [
         "[variables('virtualNetworkName')]" 
@@ -362,7 +371,7 @@
         "dependsOn": [
           "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
         ],
-        "location": "[resourceGroup().location]",
+        "location": "[parameters('location')]",
         "properties": {
             "publisher": "Microsoft.Azure.Security",
             "type": "AzureDiskEncryption",

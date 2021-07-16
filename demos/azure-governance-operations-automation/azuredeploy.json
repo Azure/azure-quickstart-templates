@@ -59,43 +59,46 @@
     },
     "automationRegion": {
       "type": "string",
-      "defaultValue": "East US 2",
-      "allowedValues": [
-        "Japan East",
-        "East US 2",
-        "Southeast Asia",
-        "South Central US",
-        "West Europe"
-      ],
       "metadata": {
         "description": "Location of the existing Automation Account."
       }
     },
     "omsRegion": {
       "type": "string",
-      "defaultValue": "East US",
-      "allowedValues": [
-        "Australia Southeast",
-        "East US",
-        "Southeast Asia",
-        "West Europe"
-      ],
       "metadata": {
         "description": "Location of the OMS regions."
       }
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-governance-operations-automation",
       "metadata": {
-        "description": "Publicly accessible location of all deployment artifacts."
-      }
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
-      "type": "string",
-      "defaultValue": "",
+      "type": "securestring",
       "metadata": {
-        "description": "Reserved for deploying using Visual Studio. Please keep it as an empty string"
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    },
+    "actionGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the action group."
+      }
+    },
+    "actionGroupShortName": {
+      "type": "string",
+      "metadata": {
+        "description": "The short name of the action group."
+      }
+    },
+    "emails": {
+      "type": "array",
+      "metadata": {
+        "description": "A list of strings representing the email addresses to send alerts to."
       }
     },
     "location": {
@@ -108,7 +111,6 @@
   },
   "variables": {
     "packageURI": "https://msignite2016stg.blob.core.windows.net/cloudwise/package.zip",
-
     "hostingPlanName": "[concat('CloudWiseHostingplan-', uniqueString(resourceGroup().id))]",
     "webSiteName": "[concat('CloudWise', uniqueString(resourceGroup().id))]",
     "sqlserverName": "[concat('sqlcloudwise', uniqueString(resourceGroup().id))]",
@@ -137,7 +139,7 @@
         "displayName": "SqlServer",
         "quickstartName": "[variables('quickstartTags').name]"
       },
-      "apiVersion": "2014-04-01-preview",
+      "apiVersion": "2019-06-01-preview",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]"
@@ -147,7 +149,7 @@
           "name": "[variables('sqlDatabaseName')]",
           "type": "databases",
           "location": "[parameters('location')]",
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2019-06-01-preview",
           "dependsOn": [
             "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
           ],
@@ -161,7 +163,7 @@
       ]
     },
     {
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2018-02-01",
       "name": "[variables('hostingPlanName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[parameters('location')]",
@@ -178,7 +180,7 @@
       }
     },
     {
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2018-02-01",
       "name": "[variables('webSiteName')]",
       "type": "Microsoft.Web/sites",
       "location": "[parameters('location')]",
@@ -196,7 +198,7 @@
       },
       "resources": [
         {
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2018-02-01",
           "name": "web",
           "type": "config",
           "dependsOn": [
@@ -212,7 +214,7 @@
           }
         },
         {
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2018-02-01",
           "type": "config",
           "name": "connectionstrings",
           "dependsOn": [
@@ -234,7 +236,7 @@
           "name": "MSDeploy",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2018-02-01",
           "dependsOn": [
             "[concat('Microsoft.Web/sites/', variables('Websitename'))]"
           ],
@@ -316,148 +318,167 @@
       }
     },
     {
-      "name": "[concat('CPUHigh ', variables('hostingPlanName'))]",
-      "type": "Microsoft.Insights/alertrules",
-      "location": "[parameters('location')]",
-      "apiVersion": "2014-04-01",
+      "name": "[parameters('actionGroupName')]",
+      "type": "microsoft.insights/actionGroups",
+      "apiVersion": "2019-06-01",
+      "location": "global",
+      "properties": {
+        "groupShortName": "[parameters('actionGroupShortName')]",
+        "enabled": true,
+        "emailReceivers": [
+          {
+            "name": "test",
+            "emailAddress": "[parameters('emails')[0]]",
+            "useCommonAlertSchema": true
+          }
+        ]
+      }
+    },
+    { 
+      "name": "[concat('The average CPU is high across all the instances of ', variables('hostingPlanName'))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "tags": {
+        "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource"
+      },
       "dependsOn": [
         "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
       ],
-      "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource",
-        "displayName": "[concat('CPUHigh', variables('insightsName'))]",
-        "quickstartName": "[variables('quickstartTags').name]"
-      },
       "properties": {
-        "name": "[concat('CPUHigh ', variables('hostingPlanName'))]",
-        "description": "[concat('The average CPU is high across all the instances of ', variables('hostingPlanName'))]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
-            "metricName": "CpuPercentage"
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+        ],
+        "targetResourceType" : "Microsoft.Web/serverfarms",
+        "targetResourceRegion": "[parameters('location')]",
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT15M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'), '-cpupercentage')]",
+              "metricName": "CpuPercentage",
+              "dimensions": [],
+              "operator": "GreaterThan",
+              "threshold": 90,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "componentId": "[variables('insightsName')]",
+          "metricName": "[concat('The average CPU is high across all the instances of ', variables('hostingPlanName'))]"
           },
-          "operator": "GreaterThan",
-          "threshold": 90,
-          "windowSize": "PT15M"
-        },
-        "action": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
-        }
+            "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups',parameters('actionGroupName'))]"
+          }
+        ]
       }
     },
     {
       "name": "[concat('LongHttpQueue ', variables('hostingPlanName'))]",
-      "type": "Microsoft.Insights/alertrules",
-      "location": "[parameters('location')]",
-      "apiVersion": "2014-04-01",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "tags": {
+        "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource"
+      },
       "dependsOn": [
         "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
       ],
-      "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource",
-        "displayName": "[concat('LongHttpQueue', variables('insightsName'))]",
-        "quickstartName": "[variables('quickstartTags').name]"
-      },
       "properties": {
-        "name": "[concat('LongHttpQueue ', variables('hostingPlanName'))]",
-        "description": "[concat('The HTTP queue for the instances of ', variables('hostingPlanName'), ' has a large number of pending requests.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
-            "metricName": "HttpQueueLength"
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+        ],
+        "targetResourceType" : "Microsoft.Web/serverfarms",
+        "targetResourceRegion": "[parameters('location')]",
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'), '-httpqueuelegth')]",
+              "metricName": "HttpQueueLength",
+              "dimensions": [],
+              "operator": "GreaterThan",
+              "threshold": 100,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "componentId": "[variables('insightsName')]",
+          "metricName": "[concat('The HTTP queue for the instances of ', variables('hostingPlanName'), ' has a large number of pending requests.')]"
           },
-          "operator": "GreaterThan",
-          "threshold": 100,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
-        }
+            "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups',parameters('actionGroupName'))]"
+          }
+        ]
       }
     },
     {
-      "name": "[concat('ServerErrors ', variables('insightsName'))]",
-      "type": "Microsoft.Insights/alertrules",
-      "location": "[parameters('location')]",
-      "apiVersion": "2014-04-01",
+      "name": "[concat('ServerErrors ', variables('webSiteName'))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
       "dependsOn": [
         "[concat('Microsoft.Web/sites/', variables('webSiteName'))]"
       ],
       "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('webSiteName'))]": "Resource",
-        "displayName": "[concat('ServerErrors ', variables('insightsName'))]",
-        "quickstartName": "[variables('quickstartTags').name]"
+        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('webSiteName'))]": "Resource"
       },
       "properties": {
-        "name": "[concat('ServerErrors ', variables('webSiteName'))]",
-        "description": "[concat(variables('webSiteName'), ' has some server errors, status code 5xx.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('webSiteName'))]",
-            "metricName": "Http5xx"
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Web/sites/', variables('webSiteName'))]"
+        ],
+        "targetResourceType" : "Microsoft.Web/sites",
+        "targetResourceRegion": "[parameters('location')]",
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "[concat('Microsoft.Web/sites', variables('webSiteName'), '-5XX-errors')]",
+              "metricName": "Http5xx",
+              "dimensions": [],
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            },
+            {
+              "name": "[concat('Microsoft.Web/sites', variables('webSiteName'), '-403-errors')]",
+              "metricName": "Http403",
+              "dimensions": [],
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ],
+          "componentId": "[variables('insightsName')]",
+          "metricName": "[concat(variables('webSiteName'), 'server errors')]"
           },
-          "operator": "GreaterThan",
-          "threshold": 0,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
-        }
-      }
-    },
-    {
-      "name": "[concat('ForbiddenRequests ', variables('insightsName'))]",
-      "type": "Microsoft.Insights/alertrules",
-      "location": "[parameters('location')]",
-      "apiVersion": "2014-04-01",
-      "dependsOn": [
-        "[concat('Microsoft.Web/sites/', variables('webSiteName'))]"
-      ],
-      "tags": {
-        "displayName": "[concat('ForbiddenRequests', variables('insightsName'))]",
-        "quickstartName": "[variables('quickstartTags').name]"
-      },
-      "properties": {
-        "name": "[concat('ForbiddenRequests ', variables('webSiteName'))]",
-        "description": "[concat(variables('webSiteName'), ' has some requests that are forbidden, status code 403.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('webSiteName'))]",
-            "metricName": "Http403"
-          },
-          "operator": "GreaterThan",
-          "threshold": 0,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
-        }
+            "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups',parameters('actionGroupName'))]"
+          }
+        ]
       }
     },
     {
       "name": "[variables('insightsName')]",
       "type": "Microsoft.Insights/components",
-      "location": "East US",
+      "location": "[parameters('location')]",
       "apiVersion": "2014-04-01",
       "dependsOn": [
         "[concat('Microsoft.Web/sites/', variables('webSiteName'))]"
@@ -479,7 +500,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('OMSCommonTemplateFolder'), '/', variables('OMSCommonTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('OMSCommonTemplateFolder'), '/', variables('OMSCommonTemplateFileName'), parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -503,12 +524,12 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
-        "['Microsoft.Resources/deployments/omsWorkspace']"
+        "Microsoft.Resources/deployments/omsWorkspace"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('OMSWebAppsRunBookAndDashboardTemplateFolder'), '/', variables('OMSWebAppsRunBookAndDashboardTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('OMSWebAppsRunBookAndDashboardTemplateFolder'), '/', variables('OMSWebAppsRunBookAndDashboardTemplateFileName'), parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -531,7 +552,7 @@
             "value": "[parameters('omsRegion')]"
           },
           "_artifactsLocation": {
-            "value": "[concat(parameters('_artifactsLocation'), '/', variables('OMSWebAppsRunBookAndDashboardTemplateFolder'))]"
+            "value": "[parameters('_artifactsLocation')]"
           },
           "_artifactsLocationSasToken": {
             "value": "[parameters('_artifactsLocationSasToken')]"

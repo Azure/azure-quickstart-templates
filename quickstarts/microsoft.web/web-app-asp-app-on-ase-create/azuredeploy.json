@@ -1,0 +1,86 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "siteName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the web app that you wish to create."
+            }
+        },
+        "appServicePlanName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the App Service plan to use for hosting the web app."
+            }
+        },
+        "appServiceEnvironmentName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the App Service Environment where the app service plan will be created."
+            }
+        },
+        "existingAseLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "Set this to the same location as the App Service Environment"
+            }
+        },
+        "workerPool": {
+            "type": "string",
+            "allowedValues": [
+                "1",
+                "2",
+                "3"
+            ],
+            "defaultValue": 0,
+            "metadata": {
+                "description": "Defines which worker pool's (WP1, WP2 or WP3) resources will be used for the app service plan."
+            }
+        },
+        "numberOfWorkersFromWorkerPool": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Defines the number of workers from the worker pool that will be used by the app service plan."
+            }
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-12-01",
+            "name": "[parameters('appServicePlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[parameters('existingAseLocation')]",
+            "properties": {
+                "name": "[parameters('appServicePlanName')]",
+                "hostingEnvironmentProfile": {
+                     "id": "[resourceId('Microsoft.Web/hostingEnvironments',parameters('appServiceEnvironmentName'))]"
+                }
+            },
+            "sku": {
+                "name" : "[concat('P',parameters('workerPool'))]",
+                "tier": "Premium",
+                "size": "[concat('P',parameters('workerPool'))]",
+                "family": "P",
+                "capacity": "[parameters('numberOfWorkersFromWorkerPool')]"
+            }
+        },
+        {
+            "apiVersion": "2020-12-01",
+            "name": "[parameters('siteName')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[parameters('existingAseLocation')]",
+            "properties": {
+                "name": "[parameters('siteName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverFarms',parameters('appServicePlanName'))]",
+                "hostingEnvironmentProfile": {
+                     "id": "[resourceId('Microsoft.Web/hostingEnvironments', parameters('appServiceEnvironmentName'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverFarms/',parameters('appServicePlanName'))]"
+            ]
+        }
+    ]
+}

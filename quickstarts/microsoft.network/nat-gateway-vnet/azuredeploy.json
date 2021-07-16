@@ -1,69 +1,77 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "6383707689748214284"
+    }
+  },
   "parameters": {
-    "vnetname": {
+    "vnetName": {
+      "type": "string",
       "defaultValue": "myVnet",
-      "type": "String",
       "metadata": {
         "description": "Name of the virtual network"
       }
     },
-    "subnetname": {
+    "subnetName": {
+      "type": "string",
       "defaultValue": "mySubnet",
-      "type": "String",
       "metadata": {
         "description": "Name of the subnet for virtual network"
       }
     },
-    "vnetaddressspace": {
+    "vnetAddressSpace": {
+      "type": "string",
       "defaultValue": "192.168.0.0/16",
-      "type": "String",
       "metadata": {
         "description": "Address space for virtual network"
       }
     },
-    "vnetsubnetprefix": {
+    "vnetSubnetPrefix": {
+      "type": "string",
       "defaultValue": "192.168.0.0/24",
-      "type": "String",
       "metadata": {
         "description": "Subnet prefix for virtual network"
       }
     },
-    "natgatewayname": {
+    "natGatewayName": {
+      "type": "string",
       "defaultValue": "myNATgateway",
-      "type": "String",
       "metadata": {
         "description": "Name of the NAT gateway resource"
       }
     },
-    "publicipdns": {
-      "defaultValue": "[concat('gw-', uniqueString(resourceGroup().id))]",
-      "type": "String",
+    "publicIpDns": {
+      "type": "string",
+      "defaultValue": "[format('gw-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "dns of the public ip address, leave blank for no dns"
       }
     },
     "location": {
+      "type": "string",
       "defaultValue": "[resourceGroup().location]",
-      "type": "String",
       "metadata": {
         "description": "Location of resources"
       }
     }
   },
+  "functions": [],
   "variables": {
-    "publicIpName": "[concat(parameters('natgatewayname'), 'ip')]",
+    "publicIpName": "[format('{0}-ip', parameters('natGatewayName'))]",
     "publicIpAddresses": [
       {
-        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicipname'))]"
+        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
       }
     ]
   },
   "resources": [
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-11-01",
+      "apiVersion": "2020-06-01",
       "name": "[variables('publicIpName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -74,47 +82,44 @@
         "publicIPAllocationMethod": "Static",
         "idleTimeoutInMinutes": 4,
         "dnsSettings": {
-          "domainNameLabel": "[parameters('publicipdns')]"
+          "domainNameLabel": "[parameters('publicIpDns')]"
         }
       }
     },
     {
       "type": "Microsoft.Network/natGateways",
-      "apiVersion": "2019-11-01",
-      "name": "[parameters('natgatewayname')]",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('natGatewayName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicipname'))]"
-      ],
       "sku": {
         "name": "Standard"
       },
       "properties": {
         "idleTimeoutInMinutes": 4,
-        "publicIpAddresses": "[if(not(empty(parameters('publicipdns'))), variables('publicIpAddresses'), json('null'))]"
-      }
+        "publicIpAddresses": "[if(not(empty(parameters('publicIpDns'))), variables('publicIpAddresses'), null())]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2019-11-01",
-      "name": "[parameters('vnetname')]",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('vnetName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/natGateways', parameters('natgatewayname'))]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[parameters('vnetaddressspace')]"
+            "[parameters('vnetAddressSpace')]"
           ]
         },
         "subnets": [
           {
-            "name": "[parameters('subnetname')]",
+            "name": "[parameters('subnetName')]",
             "properties": {
-              "addressPrefix": "[parameters('vnetsubnetprefix')]",
+              "addressPrefix": "[parameters('vnetSubnetPrefix')]",
               "natGateway": {
-                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natgatewayname'))]"
+                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
               },
               "privateEndpointNetworkPolicies": "Enabled",
               "privateLinkServiceNetworkPolicies": "Enabled"
@@ -123,24 +128,27 @@
         ],
         "enableDdosProtection": false,
         "enableVmProtection": false
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2019-11-01",
-      "name": "[concat(parameters('vnetname'), '/mySubnet')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetname'))]",
-        "[resourceId('Microsoft.Network/natGateways', parameters('natgatewayname'))]"
-      ],
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('vnetName'), 'mySubnet')]",
       "properties": {
-        "addressPrefix": "[parameters('vnetsubnetprefix')]",
+        "addressPrefix": "[parameters('vnetSubnetPrefix')]",
         "natGateway": {
-          "id": "[resourceId('Microsoft.Network/natGateways', parameters('natgatewayname'))]"
+          "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
         },
         "privateEndpointNetworkPolicies": "Enabled",
         "privateLinkServiceNetworkPolicies": "Enabled"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
     }
   ]
 }
