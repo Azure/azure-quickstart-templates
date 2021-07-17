@@ -18,7 +18,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, cChoco, ReverseDSC
+    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, cChoco
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -43,6 +43,10 @@ configuration ConfigureSPVM
     [String] $AddinsSiteDNSAlias = "addins"
     [String] $AddinsSiteName = "Provider-hosted addins"
     [String] $TrustedIdChar = "e"
+    [String] $SPTeamSiteTemplate = "STS#3"
+    if ([String]::Equals($SharePointVersion, "2013") -or [String]::Equals($SharePointVersion, "2016")) {
+        $SPTeamSiteTemplate = "STS#0"
+    }
 
     Node localhost
     {
@@ -75,86 +79,25 @@ configuration ConfigureSPVM
         xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; }
         xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
 
-        # Allow sign-in on HTTPS sites when site host name is different than the machine name: https://support.microsoft.com/en-us/help/926642
-        Registry DisableLoopBackCheck
-        {
-            Key       = "HKLM:\System\CurrentControlSet\Control\Lsa"
-            ValueName = "DisableLoopbackCheck"
-            ValueData = "1"
-            ValueType = "Dword"
-            Ensure    = "Present"
-        }
+        # Allow NTLM on HTTPS sites when site host name is different than the machine name - https://docs.microsoft.com/en-US/troubleshoot/windows-server/networking/accessing-server-locally-with-fqdn-cname-alias-denied
+        Registry DisableLoopBackCheck { Key = "HKLM:\System\CurrentControlSet\Control\Lsa"; ValueName = "DisableLoopbackCheck"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
 
-        # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
+        # Enable TLS 1.2 - https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application#tls-requirements
         # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
-        Registry EnableTLS12RegKey1
-        {
-            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
-            ValueName = 'DisabledByDefault'
-            ValueType = 'Dword'
-            ValueData =  '0'
-            Ensure    = 'Present'
-        }
+        Registry EnableTLS12RegKey1 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' }
+        Registry EnableTLS12RegKey2 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'Enabled';           ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        Registry EnableTLS12RegKey3 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' }
+        Registry EnableTLS12RegKey4 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'Enabled';           ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
 
-        Registry EnableTLS12RegKey2
-        {
-            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
-            ValueName = 'Enabled'
-            ValueType = 'Dword'
-            ValueData =  '1'
-            Ensure    = 'Present'
-        }
+        # Enable strong crypto by default for .NET Framework 4 applications - https://docs.microsoft.com/en-us/dotnet/framework/network-programming/tls#configuring-security-via-the-windows-registry
+        Registry SchUseStrongCrypto         { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SchUseStrongCrypto';       ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        Registry SchUseStrongCrypto32       { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto';       ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        Registry SystemDefaultTlsVersions   { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        Registry SystemDefaultTlsVersions32 { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
 
-        Registry EnableTLS12RegKey3
-        {
-            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
-            ValueName = 'DisabledByDefault'
-            ValueType = 'Dword'
-            ValueData =  '0'
-            Ensure    = 'Present'
-        }
+        xRemoteFile DownloadLdapcp { Uri = $LdapcpLink; DestinationPath = "$SetupPath\LDAPCP.wsp" }
 
-        Registry EnableTLS12RegKey4
-        {
-            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
-            ValueName = 'Enabled'
-            ValueType = 'Dword'
-            ValueData =  '1'
-            Ensure    = 'Present'
-        }
-
-        Registry SchUseStrongCrypto
-        {
-            Key       = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'
-            ValueName = 'SchUseStrongCrypto'
-            ValueType = 'Dword'
-            ValueData =  '1'
-            Ensure    = 'Present'
-        }
-
-        <#Registry SchUseStrongCrypto64
-        {
-            Key                         = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'
-            ValueName                   = 'SchUseStrongCrypto'
-            ValueType                   = 'Dword'
-            ValueData                   =  '1'
-            Ensure                      = 'Present'
-        }#>
-
-        xRemoteFile DownloadLdapcp
-        {
-            Uri             = $LdapcpLink
-            DestinationPath = "$SetupPath\LDAPCP.wsp"
-        }
-
-        SqlAlias AddSqlAlias
-        {
-            Ensure               = "Present"
-            Name                 = $SQLAlias
-            ServerName           = $SQLName
-            Protocol             = "TCP"
-            TcpPort              = 1433
-        }
+        SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLName; Protocol = "TCP"; TcpPort= 1433 }
 
         xScript DisableIESecurity
         {
@@ -206,6 +149,49 @@ configuration ConfigureSPVM
             GetScript = { }
         }
 
+        # Create the rules in the firewall required for the distributed cache
+        xScript CreateFirewallRulesForDistributedCache
+        {
+            TestScript = {
+                # Test if firewall rules already exist
+                $icmpRuleName = "File and Printer Sharing (Echo Request - ICMPv4-In)"
+                $icmpFirewallRule = Get-NetFirewallRule -DisplayName $icmpRuleName -ErrorAction SilentlyContinue
+                $spRuleName = "SharePoint Distributed Cache"
+                $firewallRule = Get-NetFirewallRule -DisplayName $spRuleName -ErrorAction SilentlyContinue
+                if ($null -eq $icmpFirewallRule -or $null -eq $firewallRule) {
+                    return $false   # Run SetScript
+                } else {
+                    return $true    # Rules already set
+                }
+            }
+            SetScript = {
+                $icmpRuleName = "File and Printer Sharing (Echo Request - ICMPv4-In)"
+                $icmpFirewallRule = Get-NetFirewallRule -DisplayName $icmpRuleName -ErrorAction SilentlyContinue
+                if ($null -eq $icmpFirewallRule) {
+                    New-NetFirewallRule -Name Allow_Ping -DisplayName $icmpRuleName `
+                        -Description "Allow ICMPv4 ping" `
+                        -Protocol ICMPv4 `
+                        -IcmpType 8 `
+                        -Enabled True `
+                        -Profile Any `
+                        -Action Allow
+                }
+                Enable-NetFirewallRule -DisplayName $icmpRuleName
+
+                $spRuleName = "SharePoint Distributed Cache"
+                $firewallRule = Get-NetFirewallRule -DisplayName $spRuleName -ErrorAction SilentlyContinue
+                if ($null -eq $firewallRule) {
+                    New-NetFirewallRule -Name "SPDistCache" `
+                        -DisplayName $spRuleName `
+                        -Protocol TCP `
+                        -LocalPort 22233-22236 `
+                        -Group "SharePoint"
+                }                
+                Enable-NetFirewallRule -DisplayName $spRuleName
+            }
+            GetScript = { }
+        }
+
         #**********************************************************
         # Install applications using Chocolatey
         #**********************************************************
@@ -234,6 +220,21 @@ configuration ConfigureSPVM
             Ensure               = "Present"
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
+
+        cChocoPackageInstaller InstallVscode
+        {
+            Name                 = "vscode.portable"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        # # THIS RESOURCE IS FOR ANALYSIS OF DSC LOGS ONLY AND TOTALLY OPTIONNAL
+        # cChocoPackageInstaller InstallPython
+        # {
+        #     Name                 = "python"
+        #     Ensure               = "Present"
+        #     DependsOn            = "[cChocoInstaller]InstallChoco"
+        # }
 
         #**********************************************************
         # Join AD forest
@@ -543,6 +544,7 @@ configuration ConfigureSPVM
             # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
             RunCentralAdmin           = $true
             IsSingleInstance          = "Yes"
+            SkipRegisterAsDistributedCacheHost = $false
             Ensure                    = "Present"
             DependsOn                 = "[xScript]WaitForSQL"
         }
@@ -615,16 +617,17 @@ configuration ConfigureSPVM
             DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
         }
 
-        SPDistributedCacheService EnableDistributedCache
-        {
-            Name                 = "AppFabricCachingService"
-            CacheSizeInMB        = 2000
-            CreateFirewallRules  = $true
-            ServiceAccount       = $SPFarmCredsQualified.UserName
-            InstallAccount       = $SPSetupCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
-        }
+        # Distributed Cache is now enabled directly by the SPFarm resource
+        # SPDistributedCacheService EnableDistributedCache
+        # {
+        #     Name                 = "AppFabricCachingService"
+        #     CacheSizeInMB        = 1000 # Default size is 819MB on a server with 16GB of RAM (5%)
+        #     CreateFirewallRules  = $true
+        #     ServiceAccount       = $SPFarmCredsQualified.UserName
+        #     InstallAccount       = $SPSetupCredsQualified
+        #     Ensure               = "Present"
+        #     DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+        # }
 
         #**********************************************************
         # Service instances are started at the beginning of the deployment to give some time between this and creation of service applications
@@ -684,7 +687,19 @@ configuration ConfigureSPVM
                 gpupdate.exe /force
             }
             GetScript            = { }
-            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            TestScript           = 
+            {
+                $domainNetbiosName = $using:DomainNetbiosName
+                $dcName = $using:DCName
+                $rootCAName = "$domainNetbiosName-$dcName-CA"
+                $cert = Get-ChildItem -Path "cert:\LocalMachine\Root\" -DnsName "$rootCAName"
+                
+                if ($null -eq $cert) {
+                    return $false   # Run SetScript
+                } else {
+                    return $true    # Root CA already present
+                }
+            }
             DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
@@ -869,7 +884,7 @@ configuration ConfigureSPVM
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
-            Template             = "STS#0"
+            Template             = $SPTeamSiteTemplate
             CreateDefaultGroups  = $true
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
@@ -933,16 +948,17 @@ configuration ConfigureSPVM
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]UPAServiceInstance", "[SPSite]CreateMySiteHost"
         }
 
-        SPSite CreateDevSite
-        {
-            Url                  = "http://$SPTrustedSitesName/sites/dev"
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                 = "Developer site"
-            Template             = "DEV#0"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
-        }
+        # Creating this site takes about 1 min but it is not so useful, skip it
+        # SPSite CreateDevSite
+        # {
+        #     Url                  = "http://$SPTrustedSitesName/sites/dev"
+        #     OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+        #     SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+        #     Name                 = "Developer site"
+        #     Template             = "DEV#0"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
+        # }
 
         SPSite CreateHNSC1
         {
@@ -951,7 +967,7 @@ configuration ConfigureSPVM
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "$HNSC1Alias site"
-            Template                 = "STS#0"
+            Template                 = $SPTeamSiteTemplate
             CreateDefaultGroups      = $true
             PsDscRunAsCredential     = $SPSetupCredsQualified
             DependsOn                = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
@@ -1055,7 +1071,7 @@ configuration ConfigureSPVM
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
-            Template             = "STS#0"
+            Template             = $SPTeamSiteTemplate
             CreateDefaultGroups  = $true
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication", "[SPWebApplicationAppDomain]ConfigureAppDomainDefaultZone", "[SPWebApplicationAppDomain]ConfigureAppDomainIntranetZone", "[SPAppCatalog]SetAppCatalogUrl"
@@ -1218,7 +1234,7 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                $SetupPath = $using:DCSetupPath
+                $SetupPath = $using:SetupPath
                 $ComputerName = $using:ComputerName
                 $DestinationPath = "$SetupPath\SPDSCFinished.txt"
                 $Contents = "DSC Configuration on $ComputerName finished successfully."
@@ -1230,6 +1246,30 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPTrustedSecurityTokenIssuer]CreateHighTrustAddinsTrustedIssuer"
         }
+
+        # # THIS RESOURCE IS FOR ANALYSIS OF DSC LOGS ONLY AND TOTALLY OPTIONNAL
+        # xScript parseDscLogs
+        # {
+        #     TestScript = { return $false }
+        #     SetScript = {
+        #         $setupPath = $using:SetupPath
+        #         $localScriptPath = "$setupPath\parse-dsc-logs.py"
+        #         New-Item -ItemType Directory -Force -Path $setupPath
+
+        #         $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
+        #         $downloader = New-Object -TypeName System.Net.WebClient
+        #         $downloader.DownloadFile($url, $localScriptPath)
+
+        #         $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
+        #         $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
+        #         $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
+                
+        #         python $localScriptPath "$fullPathToDscLogs"
+        #     }
+        #     GetScript = { }
+        #     DependsOn            = "[cChocoPackageInstaller]InstallPython"
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        # }
     }
 }
 

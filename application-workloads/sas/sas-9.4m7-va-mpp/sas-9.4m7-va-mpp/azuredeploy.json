@@ -1,0 +1,1902 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "Australia East",
+        "Brazil South",
+        "Canada Central",
+        "Central US",
+        "East US",
+        "East US 2",
+        "France Central",
+        "Germany West Central",
+        "Japan East",
+        "North Europe",
+        "South Central US",
+        "Southeast Asia",
+        "UK South",
+        "West Europe",
+        "West US 2"
+      ],
+    "metadata": {
+        "description": "The location in Microsoft Azure where these resources should be created."
+      }
+    },
+    "SAS Depot Location": {
+      "type": "String",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The uri to download the depot from as currently stored in Azure Blob Store"
+      }
+    },
+    "SAS Plan File Location": {
+      "type": "String",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The uri to download the plan file from as currently stored in Azure Blob Store. Leave blank if plan file is stored in the depot blob"
+      }
+    },
+    "Use a New or Existing Virtual Network": {
+      "type": "string",
+      "defaultValue": "New",
+      "allowedValues": [
+        "New",
+        "Existing"
+      ],
+      "metadata": {
+        "description": "Specify whether to create a new or existing virtual network for the VMs.  If using an existing virtual network it must have subnets: appgateway_subnet, bastion_subnet, va_subnet, midtier_subnet, metadata_subnet, and jump_subnet."
+      }
+    },
+    "Existing Virtual Network Resource Group": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name of the resource group if using an existing Virtual Network, leave blank if creating a new Virtual Network."
+      }
+    },
+    "Virtual Network Name": {
+      "defaultValue": "multitiervnet",
+      "type": "String"
+    },
+    "Operating System Image": {
+      "type":"string",
+      "defaultValue": "SUSE Enterprise Linux 12 SP5 +Patching",
+      "allowedValues": [
+        "Red Hat Enterprise Linux 7 (latest, LVM)",
+        "SUSE Enterprise Linux 12 SP5 +Patching"
+      ]
+    },
+    "Mid-Tier VM Count": {
+      "defaultValue": 1,
+      "type": "Int",
+      "allowedValues": [
+        1,
+        2
+      ]
+    },
+    "Mid-tier VM Size": {
+      "defaultValue": "Standard_D8s_v3",
+      "type": "String",
+      "allowedValues": [
+        "Standard_D8s_v3",
+        "Standard_D16s_v3",
+        "Standard_D32s_v3",
+        "Standard_E32ds_v4",
+        "Standard_B2ms"
+      ]
+    },
+    "Metadata VM Size": {
+      "defaultValue": "Standard_D8s_v3",
+      "type": "String",
+      "allowedValues": [
+        "Standard_D8s_v3",
+        "Standard_D16s_v3",
+        "Standard_D32s_v3",
+        "Standard_E32ds_v4",
+        "Standard_B2ms"
+      ]
+    },
+    "Visual Analytics Worker Count": {
+      "defaultValue": 2,
+      "type": "Int",
+      "allowedValues": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "Visual Analytics Controller Size": {
+      "defaultValue": "Standard_D8s_v3",
+      "type": "String",
+      "allowedValues": [
+        "Standard_D8s_v3",
+        "Standard_D16s_v3",
+        "Standard_D32s_v3",
+        "Standard_E32ds_v4",
+        "Standard_B2ms"
+      ]
+    },
+    "Visual Analytics Worker Size": {
+      "defaultValue": "Standard_D8s_v3",
+      "type": "String",
+      "allowedValues": [
+        "Standard_D8s_v3",
+        "Standard_D16s_v3",
+        "Standard_D32s_v3",
+        "Standard_E32ds_v4",
+        "Standard_B2ms"
+      ]
+    },
+    "Proximity PlacementGroup Name": {
+      "defaultValue": "prox1",
+      "type": "String"
+    },
+    "ssh Key for VM Access": {
+      "defaultValue": "",
+      "type": "String"
+    },
+    "SAS Administration Password": {
+      "type": "securestring"
+    },
+    "Azure Administration Password": {
+      "type": "securestring"
+    },
+    "Admin Ingress Location": {
+      "defaultValue": "0.0.0.0/0",
+      "type": "string",
+      "metadata": {
+        "description": "Allow administrative access from this IP or CIDR block. Default value of 0.0.0.0/0 allows management from the entire Internet"
+      }
+    },
+    "Web Ingress Location": {
+      "defaultValue": "0.0.0.0/0",
+      "type": "string",
+      "metadata": {
+        "description": "Allow http/https access from this IP or CIDR block. Default value of 0.0.0.0/0 allows access from the entire Internet"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "For a standard deployment, leave empty. If you are running from a blob template, then provide the Shared Access Signature token (starting with a ?) that grants authorization to the private template. "
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sas-9.4m7-VA-MPP/",
+      "metadata": {
+        "description": "For a standard deployment, keep the default.  The https URL to the base of the deployment files in Microsoft Azure. If a SAS key is needed, please do not include the SAS key in the URL. Instead, add the part after and include the question mark to the _artifactsLocationSasToken variable. ex. https://(STORAGE_ACCOUNT)/(SHARE_NAME)/(SUBDIRECTORY_NAME)/"
+      }
+    }
+  },
+  "variables": {
+    "vnetResourceGroup": "[if(equals(parameters('Use a New or Existing Virtual Network'),'New'),resourceGroup().name,parameters('Existing Virtual Network Resource Group'))]",
+    "storageProfile": {
+        "Standard_B1ms": 2,
+        "Standard_B2ms": 2,
+        "Standard_D2s_v3": 2,
+        "Standard_D8s_v3": 2,
+        "Standard_D16s_v3": 4,
+        "Standard_D32s_v3": 8,
+        "Standard_E32ds_v4": 8
+    },
+    "ostag":"[if(equals(parameters('Operating System Image'),'Red Hat Enterprise Linux 7 (latest, LVM)'),'RH7x','SL12')]",
+    "osProfile": {
+      "RH7x": {
+        "image": {
+          "publisher": "RedHat",
+          "offer": "RHEL",
+          "sku": "7-LVM",
+          "version": "latest"
+        }
+      },
+      "SL12": {
+        "image": {
+          "publisher": "suse",
+          "offer": "sles-12-sp5-basic",
+          "sku": "gen1",
+          "version": "latest"
+        }
+      }
+    },
+    "resourceGroupUniqueString": "[uniqueString(resourceGroup().id)]",
+    "storageName": "[toLower(concat('storage', substring(variables('resourceGroupUniqueString'),0,10)))]",
+    "jumpEndpoint": "[concat(variables('storageName'), '-jumpEndPoint')]",
+    "metadataEndpoint": "[concat(variables('storageName'), 'metadataEndpoint')]",
+    "midtierEndpoint": "[concat(variables('storageName'), '-midtierEndpoint')]",
+    "vaEndpoint": "[concat(variables('storageName'), '-vaEndpoint')]",
+    "azureFileShare": "sasshare",
+    "primaryUserName": "AzureUser",
+    "location": "[parameters('location')]",
+    "proximity": "[parameters('Proximity PlacementGroup Name')]",
+    "useNewNetwork": "[equals(parameters('Use a New or Existing Virtual Network'), 'New')]",
+    "adminIngressLocation": "[parameters('Admin Ingress Location')]",
+    "webIngressLocation": "[parameters('Web Ingress Location')]",
+    "vnetName": "[parameters('Virtual Network Name')]",
+    "artifactsLocation": "[parameters('_artifactsLocation')]",
+    "sasToken": "[parameters('_artifactsLocationSasToken')]",
+    "metadataSize": "[parameters('Metadata VM Size')]",
+    "metadataCount": 1,
+    "sshKey": "[parameters('ssh Key for VM Access')]",
+    "jumpvmSize": "Standard_B2ms",
+    "vaControllerSize": "[parameters('Visual Analytics Controller Size')]",
+    "vaWorkerSize": "[parameters('Visual Analytics Worker Size')]",
+    "vaWorkerCount": "[parameters('Visual Analytics Worker Count')]",
+    "midtierSize": "[parameters('Mid-tier VM Size')]",
+    "midtierCount": "[parameters('Mid-Tier VM Count')]",
+    "sasFolder": "/opt/sas",
+    "sasDepot": "[parameters('SAS Depot Location')]",
+    "sasPlanFile": "[parameters('SAS Plan File Location')]",
+    "hadoopVersion": "3.1.4",
+    "hadoopHome": "[concat(variables('sasFolder'), '/hadoop')]",
+    "hdatHome": "[concat(variables('sasFolder'), '/hdatplugin')]",
+    "sasPassword": "[base64(parameters('SAS Administration Password'))]",
+    "azurePassword": "[base64(parameters('Azure Administration Password'))]",
+    "alternateDomain": "[concat('sas94-', variables('resourceGroupUniqueString'), '-', subscription().subscriptionId)]",
+    "domainActual": "[substring(variables('alternateDomain'),0,if(lessOrEquals(length(variables('alternateDomain')),25), length(variables('alternateDomain')), 25))]",
+    "extensionScriptURI": "[concat(variables('artifactsLocation'), 'subtemplates/run_script.json', variables('sasToken'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-07-01",
+      "type": "Microsoft.Compute/proximityPlacementGroups",
+      "name": "[variables('proximity')]",
+      "properties": {
+      },
+      "location": "[variables('location')]"
+    },
+    {
+      "comments": "Diagnostic storage group for the SAS Viya stack",
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "Premium_LRS",
+        "tier": "Premium"
+      },
+      "kind": "FileStorage",
+      "name": "[variables('storageName')]",
+      "apiVersion": "2020-08-01-preview",
+      "location": "[variables('location')]",
+      "properties": {
+        "allowBlobPublicAccess": false,
+        "largeFileSharesState": "Enabled",
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Allow"
+        },
+        "supportsHttpsTrafficOnly": false,
+        "encryption": {
+          "services": {
+            "file": {
+              "keyType": "Account",
+              "enabled": true
+            },
+            "blob": {
+              "keyType": "Account",
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices",
+      "apiVersion": "2020-08-01-preview",
+      "name": "[concat(variables('storageName'), '/default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
+      ],
+      "sku": {
+        "name": "Premium_LRS",
+        "tier": "Premium"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+      "apiVersion": "2020-08-01-preview",
+      "name": "[concat(variables('storageName'), '/default/sasshare')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
+      ],
+      "properties": {
+        "accessTier": "Premium",
+        "shareQuota": 100,
+        "enabledProtocols": "NFS",
+        "rootSquash": "RootSquash"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+      "apiVersion": "2020-08-01-preview",
+      "name": "[concat(variables('storageName'), '/default/backups')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
+      ],
+      "properties": {
+        "accessTier": "Premium",
+        "shareQuota": 100,
+        "enabledProtocols": "NFS",
+        "rootSquash": "RootSquash"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2019-12-01",
+      "name": "jumpvm_publicIP",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+      ],
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2019-12-01",
+      "name": "nat_publicIP",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+      ],
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2019-12-01",
+      "name": "loadbalancer_publicIP",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+      ],
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4,
+        "dnsSettings": {
+          "domainNameLabel": "[variables('domainActual')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/natGateways",
+      "apiVersion": "2019-11-01",
+      "name": "application_nat",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'nat_publicIP')]"
+      ],
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "idleTimeoutInMinutes": 4,
+        "publicIpAddresses": [
+          {
+            "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'nat_publicIP')]"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-12-01",
+      "name": "metadata_sg",
+      "condition": "[variables('useNewNetwork')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-12-01",
+      "name": "midtier_sg",
+      "condition": "[variables('useNewNetwork')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-12-01",
+      "name": "va_sg",
+      "condition": "[variables('useNewNetwork')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-12-01",
+      "name": "jump_sg",
+      "condition": "[variables('useNewNetwork')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow_ssh_ingress",
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "[variables('adminIngressLocation')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 500,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-12-01",
+      "name": "appgateway_sg",
+      "condition": "[variables('useNewNetwork')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'nat_publicIP')]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow_https_port_443",
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "[variables('webIngressLocation')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 500,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow_https_port_8441",
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8441",
+              "sourceAddressPrefix": "[variables('webIngressLocation')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 501,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow_nat_ingress",
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[concat(reference(resourceId('Microsoft.Network/publicIPAddresses', 'nat_publicIP')).ipAddress, '/32')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 503,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow_management_from_gateway_manager",
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "65200-65535",
+              "sourceAddressPrefix": "GatewayManager",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 505,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2019-12-01",
+      "condition": "[variables('useNewNetwork')]",
+      "name": "[variables('vnetName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'midtier_sg')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'metadata_sg')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'va_sg')]",
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+        "[resourceId('Microsoft.Network/natGateways', 'application_nat')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.2.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "gateway_subnet",
+            "properties": {
+              "addressPrefix": "10.2.0.224/27"
+            }
+          },
+          {
+            "name": "jump_subnet",
+            "properties": {
+              "addressPrefix": "10.2.0.160/27",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'jump_sg')]"
+              },
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+          },
+          {
+            "name": "appgateway_subnet",
+            "properties": {
+              "addressPrefix": "10.2.0.128/27",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'appgateway_sg')]"
+              }
+            }
+          },
+          {
+            "name": "metadata_subnet",
+            "properties": {
+              "addressPrefix": "10.2.0.16/28",
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', 'application_nat')]"
+              },
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'metadata_sg')]"
+              },
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+          },
+          {
+            "name": "midtier_subnet",
+            "properties": {
+              "addressPrefix": "10.2.0.0/28",
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', 'application_nat')]"
+              },
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'midtier_sg')]"
+              },
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+          },
+          {
+            "name": "va_subnet",
+            "properties": {
+              "addressPrefix": "10.2.2.0/24",
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', 'application_nat')]"
+              },
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'va_sg')]"
+              },
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('jumpEndpoint')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[concat(variables('storageName'), '-Connection')]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+              "groupIds": [
+                "file"
+              ],
+              "privateLinkServiceConnectionState": {
+                "status": "Approved",
+                "description": "Auto-Approved",
+                "actionsRequired": "None"
+              }
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'jump_subnet')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('midtierEndpoint')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('jumpEndpoint'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[concat(variables('storageName'), '-Connection')]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+              "groupIds": [
+                "file"
+              ],
+              "privateLinkServiceConnectionState": {
+                "status": "Approved",
+                "description": "Auto-Approved",
+                "actionsRequired": "None"
+              }
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'midtier_subnet')]"
+        }
+      }
+    },
+     {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('metadataEndpoint')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('midtierEndpoint'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[concat(variables('storageName'), '-Connection')]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+              "groupIds": [
+                "file"
+              ],
+              "privateLinkServiceConnectionState": {
+                "status": "Approved",
+                "description": "Auto-Approved",
+                "actionsRequired": "None"
+              }
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'metadata_subnet')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('vaEndpoint')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('metadataEndpoint'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[concat(variables('storageName'), '-Connection')]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+              "groupIds": [
+                "file"
+              ],
+              "privateLinkServiceConnectionState": {
+                "status": "Approved",
+                "description": "Auto-Approved",
+                "actionsRequired": "None"
+              }
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'va_subnet')]"
+        }
+      }
+    },
+     {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-12-01",
+      "name": "jumpvm_nic",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'jumpvm_publicIP')]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'jump_subnet')]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'jumpvm_publicIP')]"
+              }
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": false,
+        "enableIPForwarding": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-12-01",
+      "name": "[concat('metadata-', copyIndex(), '_nic')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+                "subnet": {
+                  "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'),  'metadata_subnet')]"
+                },
+                "primary": true,
+                "privateIPAddressVersion": "IPv4"
+              }
+            }
+          ],
+        "enableAcceleratedNetworking": "[if(or(startsWith(variables('metadataSize'),'Standard_B'), equals(variables('metadataSize'), 'Standard_D2s_v3')), 'false', 'true')]",
+        "enableIPForwarding": false
+      },
+      "copy": {
+        "name": "metadata-nic-copy",
+        "count": "[variables('metadataCount')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-12-01",
+      "name": "vacontroller_nic",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipConfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'va_subnet')]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4"
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": "[if(or(startsWith(variables('vaControllerSize'),'Standard_B'), equals(variables('vaControllerSize'), 'Standard_D2s_v3')), 'false', 'true')]",
+        "enableIPForwarding": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-12-01",
+      "name": "[concat('vaworker-', copyIndex(), '_nic')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'va_subnet')]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4"
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": "[if(or(startsWith(variables('vaWorkerSize'),'Standard_B'), equals(variables('vaWorkerSize'), 'Standard_D2s_v3')), 'false', 'true')]",
+        "enableIPForwarding": false
+      },
+      "copy": {
+        "name": "vaworker-nic-copy",
+        "count": "[variables('vaWorkerCount')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-12-01",
+      "name": "midtier-0_nic",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/applicationGateways', 'loadbalancer')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipConfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'midtier_subnet')]"
+              },
+              "applicationGatewayBackendAddressPools": [
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', 'loadbalancer', 'midtierAddressPool')]"
+                }
+              ],
+              "primary": true,
+              "privateIPAddressVersion": "IPv4"
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": "[if(or(startsWith(variables('midtierSize'), 'Standard_B'), equals(variables('midtierSize'), 'Standard_D2s_v3')), 'false', 'true')]",
+        "enableIPForwarding": false
+      }
+    },
+    {
+      "condition": "[not(equals(variables('midtierCount'), '0'))]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-12-01",
+      "name": "[concat('midtier-', copyIndex(1), '_nic')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/applicationGateways', 'loadbalancer')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipConfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'midtier_subnet')]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4"
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": "[if(or(startsWith(variables('midtierSize'), 'Standard_B'), equals(variables('midtierSize'), 'Standard_D2s_v3')), 'false', 'true')]",
+        "enableIPForwarding": false
+      },
+      "copy": {
+        "name": "midtier-nic-copy",
+        "count": "[sub(int(variables('midtierCount')), 1)]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-07-01",
+      "name": "jumpvm",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('jumpEndpoint'))]",
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', 'jumpvm_nic')]"
+      ],
+      "zones": [
+        "1"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('jumpvmSize')]"
+        },
+        "proximityPlacementGroup": {
+          "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('osProfile')['RH7x']['image']]",
+          "osDisk": {
+            "osType": "Linux",
+            "name": "jumpvm_os_disk",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB": 64
+          },
+          "copy": [
+            {
+              "name": "datadisks",
+              "count": 1,
+              "input": {
+                "lun": "[copyIndex('datadisks')]",
+                "name": "[concat('jumpvm_data_', copyIndex('datadisks'))]",
+                "managedDisk": {
+                  "storageAccountType": "Premium_LRS"
+                },
+                "diskSizeGB": 128,
+                "caching": "None",
+                "createOption": "Empty"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'jumpvm_nic')]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "jumpvm",
+          "adminUserName": "[variables('primaryUserName')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('primaryUserName'), '/.ssh/authorized_keys')]",
+                  "keyData": "[variables('sshKey')]"
+                }
+              ]
+            },
+            "provisionVMAgent": true
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/applicationGateways",
+      "apiVersion": "2019-12-01",
+      "name": "loadbalancer",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'Phase3GetLBCertPart2')]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "sku": {
+          "name": "Standard_v2",
+          "tier": "Standard_v2"
+        },
+        "sslPolicy": {
+          "policyType": "Custom",
+          "cipherSuites": [
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          ],
+          "minProtocolVersion": "TLSv1_2"
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId(variables('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'appgateway_subnet')]"
+              }
+            }
+          }
+        ],
+        "sslCertificates": [
+          {
+            "name": "appGatewayFrontendCertificate",
+            "properties": {
+              "data": "[json(concat(split(reference('Phase2GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1], split(reference('Phase3GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).data]",
+              "password": "[json(concat(split(reference('Phase2GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1], split(reference('Phase3GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).password]"
+            }
+          }
+        ],
+        "frontEndIPConfigurations": [
+          {
+            "name": "appGwPublicFrontendIp",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "port_443",
+            "properties": {
+              "port": 443
+            }
+          },
+          {
+            "name": "port_8441",
+            "properties": {
+              "port": 8441
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "midtierAddressPool",
+            "properties": {
+            }
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "http-setting",
+            "properties": {
+              "port": 7980,
+              "protocol": "Http",
+              "cookieBasedAffinity": "Disabled",
+              "pickHostNameFromBackendAddress": false,
+              "requestTimeout": 60
+            }
+          },
+          {
+            "name": "http-setting-2",
+            "properties": {
+              "port": 7080,
+              "protocol": "Http",
+              "cookieBasedAffinity": "Disabled",
+              "pickHostNameFromBackendAddress": false,
+              "requestTimeout": 60
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "http-listener-443",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', 'loadbalancer', 'appGwPublicFrontendIp')]"
+              },
+              "frontendPort": {
+                "id": "[resourceid('Microsoft.Network/applicationGateways/frontendPorts', 'loadbalancer', 'port_443')]"
+              },
+              "protocol": "Https",
+              "sslCertificate": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/sslCertificates', 'loadbalancer', 'appGatewayFrontendCertificate')]"
+              },
+              "requireServerNameIndication": false
+            }
+          },
+          {
+            "name": "http-listener-8441",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', 'loadbalancer', 'appGwPublicFrontendIp')]"
+              },
+              "frontendPort": {
+                "id": "[resourceid('Microsoft.Network/applicationGateways/frontendPorts', 'loadbalancer', 'port_8441')]"
+              },
+              "protocol": "Https",
+              "sslCertificate": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/sslCertificates', 'loadbalancer', 'appGatewayFrontendCertificate')]"
+              },
+              "requireServerNameIndication": false
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "name": "rule1",
+            "properties": {
+              "ruleType": "Basic",
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', 'loadbalancer', 'http-listener-443')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', 'loadbalancer', 'midtierAddressPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', 'loadbalancer', 'http-setting')]"
+              }
+            }
+          },
+          {
+            "name": "rule2",
+            "properties": {
+              "ruleType": "Basic",
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', 'loadbalancer', 'http-listener-8441')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', 'loadbalancer', 'midtierAddressPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', 'loadbalancer', 'http-setting-2')]"
+              }
+            }
+          }
+        ],
+        "redirectConfigurations": [
+          {
+            "name": "rule3",
+            "properties": {
+              "redirectType": "Permanent",
+              "targetListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', 'loadbalancer', 'http-listener-8441')]"
+              },
+              "includePath": true,
+              "includeQueryString": true,
+              "requestRoutingRules": [
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationGateways/requestRoutingRules', 'loadbalancer', 'rule3')]"
+                }
+              ]
+            }
+          }
+        ],
+        "enableHttp2": true,
+        "autoscaleConfiguration": {
+          "minCapacity": 0,
+          "maxCapacity": 5
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-07-01",
+      "name": "[concat('metadata-', copyIndex())]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('metadataEndpoint'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces',concat('metadata-', copyIndex(), '_nic'))]"
+      ],
+      "zones": [
+        "1"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('metadataSize')]"
+        },
+        "proximityPlacementGroup": {
+          "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('osProfile')[variables('ostag')]['image']]",
+          "osDisk": {
+            "osType": "Linux",
+            "name": "[concat('metadata-', copyIndex(), '_os_disk')]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB": 64
+          },
+          "copy": [
+            {
+              "name": "datadisks",
+              "count": "[variables('storageProfile')[variables('metadataSize')]]",
+              "input": {
+                "lun": "[copyIndex('datadisks')]",
+                "name": "[concat('metadata-', copyIndex(), '_data_', copyIndex('datadisks'))]",
+                "managedDisk": {
+                  "storageAccountType": "Premium_LRS"
+                },
+                "diskSizeGB": 128,
+                "caching": "None",
+                "createOption": "Empty"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('metadata-', copyIndex(), '_nic'))]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[concat('metadata-', copyIndex())]",
+          "adminUsername": "[variables('primaryUserName')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('primaryUserName'), '/.ssh/authorized_keys')]",
+                  "keyData": "[variables('sshKey')]"
+                }
+              ]
+            },
+            "provisionVMAgent": true
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "apiVersion": "2019-07-01",
+          "name": "[concat('metadata-', copyIndex(), '/post_install_actions')]",
+          "location": "[variables('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines',concat('metadata-', copyIndex()))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.1",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "skipDos2Unix": false
+            },
+            "protectedSettings": {
+              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"metadata\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('metadataEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
+              "fileUris": [
+                "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
+              ]
+            }
+          }
+        }
+      ],
+      "copy": {
+        "name": "metadata-vm-copy",
+        "count": "[variables('metadataCount')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-07-01",
+      "name": "vacontroller",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('vaEndpoint'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', 'vacontroller_nic')]"
+      ],
+      "zones": [
+        "1"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vaControllerSize')]"
+        },
+        "proximityPlacementGroup": {
+          "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('osProfile')[variables('ostag')]['image']]",
+          "osDisk": {
+            "osType": "Linux",
+            "name": "vacontroller-os_disk",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB": 64
+          },
+          "copy": [
+            {
+              "name": "datadisks",
+              "count": "[variables('storageProfile')[variables('vaControllerSize')]]",
+              "input": {
+                "lun": "[copyIndex('datadisks')]",
+                "name": "[concat('vacontroller_data_', copyIndex('datadisks'))]",
+                "managedDisk": {
+                  "storageAccountType": "Premium_LRS"
+                },
+                "diskSizeGB": 128,
+                "caching": "None",
+                "createOption": "Empty"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'vacontroller_nic')]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "vacontroller",
+          "adminUsername": "[variables('primaryUserName')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('primaryUserName'), '/.ssh/authorized_keys')]",
+                  "keyData": "[variables('sshKey')]"
+                }
+              ]
+            },
+            "provisionVMAgent": true
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "apiVersion": "2019-07-01",
+          "name": "vacontroller/post_install_actions",
+          "location": "[variables('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', 'vacontroller')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.1",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "skipDos2Unix": false
+            },
+            "protectedSettings": {
+              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"vacontroller\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('vaEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
+              "fileUris": [
+                "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-07-01",
+      "name": "[concat('vaworker-', copyIndex())]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat('vaworker-', copyIndex(), '_nic'))]"
+      ],
+      "location": "[variables('location')]",
+      "zones": [
+        "1"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vaWorkerSize')]"
+        },
+        "proximityPlacementGroup": {
+          "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('osProfile')[variables('ostag')]['image']]",
+          "osDisk": {
+            "osType": "Linux",
+            "name": "[concat('vaworker-', copyIndex(), '_os_disk')]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB": 64
+          },
+          "copy": [
+            {
+              "name": "datadisks",
+              "count": "[variables('storageProfile')[variables('vaWorkerSize')]]",
+              "input": {
+                "lun": "[copyIndex('datadisks')]",
+                "name": "[concat('vaworker-', copyIndex(), '_data_', copyIndex('datadisks'))]",
+                "managedDisk": {
+                  "storageAccountType": "Premium_LRS"
+                },
+                "diskSizeGB": 128,
+                "caching": "None",
+                "createOption": "Empty"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('vaworker-', copyIndex(), '_nic'))]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[concat('vaworker-', copyIndex())]",
+          "adminUsername": "[variables('primaryUserName')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('primaryUserName'), '/.ssh/authorized_keys')]",
+                  "keyData": "[variables('sshKey')]"
+                }
+              ]
+            },
+            "provisionVMAgent": true
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "apiVersion": "2019-07-01",
+          "name": "[concat('vaworker-', copyIndex(), '/post_install_actions')]",
+          "location": "[variables('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat('vaworker-', copyIndex()))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.1",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "skipDos2Unix": false
+            },
+            "protectedSettings": {
+              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"vaworker\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('vaEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
+              "fileUris": [
+                "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
+              ]
+            }
+          }
+        }
+      ],
+      "copy": {
+        "name": "vaworker-copy",
+        "count": "[variables('vaWorkerCount')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-07-01",
+      "name": "[concat('midtier-', copyIndex())]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('midtierEndpoint'))]",
+        "[resourceId('Microsoft.Network/applicationGateways', 'loadbalancer')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat('midtier-', copyIndex(), '_nic'))]"
+      ],
+      "zones": [
+        "1"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('midtierSize')]"
+        },
+        "proximityPlacementGroup": {
+          "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('osProfile')[variables('ostag')]['image']]",
+          "osDisk": {
+            "osType": "Linux",
+            "name": "[concat('midtier-', copyIndex(), '_os_disk')]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB": 64
+          },
+          "copy": [
+            {
+              "name": "datadisks",
+              "count": "[variables('storageProfile')[variables('midtierSize')]]",
+              "input": {
+                "lun": "[copyIndex('datadisks')]",
+                "name": "[concat('midtier-', copyIndex(), '_data_', copyIndex('datadisks'))]",
+                "managedDisk": {
+                  "storageAccountType": "Premium_LRS"
+                },
+                "diskSizeGB": 128,
+                "caching": "None",
+                "createOption": "Empty"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('midtier-', copyIndex(), '_nic'))]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[concat('midtier-', copyIndex())]",
+          "adminUserName": "[variables('primaryUserName')]",
+          "LinuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('primaryUserName'), '/.ssh/authorized_keys')]",
+                  "keyData": "[variables('sshKey')]"
+                }
+              ]
+            },
+            "provisionVMAgent": true
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "apiVersion": "2019-07-01",
+          "name": "[concat('midtier-', copyIndex(), '/post_install_actions')]",
+          "location": "[variables('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat('midtier-', copyIndex()))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.1",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "skipDos2Unix":false
+            },
+            "protectedSettings": {
+              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"midtier\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('midtierEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
+              "fileUris": [
+                "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
+              ]
+            }
+          }
+        }
+      ],
+      "copy": {
+        "name": "midtier-vm-copy",
+        "count": "[variables('midtierCount')]"
+      }
+    },
+    {
+      "name": "Phase1PreInstallActions",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', 'jumpvm')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('extensionScriptURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "jumpvm"
+          },
+          "command": {
+            "value": "[concat('set -o pipefail; ./SetupJump.sh \"1\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'), '2019-06-01').keys[0].value, '\" \"', variables('artifactsLocation'), '\" \"', variables('sasToken'), '\" \"', variables('sasDepot'), '\" \"', variables('midtierCount'), '\" \"', variables('metadataCount'), '\" \"', variables('vaWorkerCount'), '\" \"', variables('sasPassword'), '\" \"', variables('azurePassword'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')).dnsSettings.fqdn, '\" \"', subscription().displayName, '\" \"', resourceGroup().name, '\" \"', variables('sasPlanFile'), '\" \"', variables('hadoopVersion'), '\" \"', variables('hadoopHome'), '\" \"', variables('hdatHome'), '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('jumpEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\" 2>&1 | tee /tmp/prerequisites.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[variables('artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('sasToken')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "Phase2GetLBCertPart1",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'Phase1PreInstallActions')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('extensionScriptURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "jumpvm"
+          },
+          "command": {
+            "value": "[concat('set -o pipefail; ./SetupJump.sh \"2\" 2>&1 | tee /tmp/runPhase2_CertificateExport_1.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[variables('artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('sasToken')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "Phase3GetLBCertPart2",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'Phase2GetLBCertPart1')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('extensionScriptURI')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "vmName": {
+            "value": "jumpvm"
+          },
+          "command": {
+            "value": "[concat('set -o pipefail; ./SetupJump.sh \"3\" 2>&1 | tee /tmp/runPhase3_CertificateExport_2.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[variables('artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('sasToken')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "Phase4SASInstallPart1",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'Phase3GetLBCertPart2')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('extensionScriptURI')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "vmName": {
+            "value": "jumpvm"
+          },
+          "command": {
+            "value": "[concat('set -o pipefail; ./SetupJump.sh \"4\" 2>&1 | tee /tmp/runPhase4_SASInstallPart1.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[variables('artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('sasToken')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "Phase4SASInstallPart2",
+      "apiVersion": "2019-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'Phase4SASInstallPart1')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('extensionScriptURI')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "vmName": {
+            "value": "jumpvm"
+          },
+          "command": {
+            "value": "[concat('set -o pipefail; /sas/install/scripts/SetupJumpInstallSAS.sh 2>&1 | tee /tmp/runPhase4_SASInstallPart2.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[variables('artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('sasToken')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "Phase4SASInstallPart3",
+      "apiVersion": "2019-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'Phase4SASInstallPart2')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('extensionScriptURI')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "vmName": {
+            "value": "jumpvm"
+          },
+          "command": {
+            "value": "[concat('set -o pipefail; /sas/install/scripts/SetupJumpInstallSAS.sh 2>&1 | tee /tmp/runPhase4_SASInstallPart3.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[variables('artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('sasToken')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "Phase4SASInstallPart4",
+      "apiVersion": "2019-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'Phase4SASInstallPart3')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('extensionScriptURI')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "vmName": {
+            "value": "jumpvm"
+          },
+          "command": {
+            "value": "[concat('set -o pipefail; /sas/install/scripts/SetupJumpInstallSAS.sh 2>&1 | tee /tmp/runPhase4_SASInstallPart4.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[variables('artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('sasToken')]"
+          }
+        }
+      }
+    },
+     {
+      "type": "Microsoft.Resources/deployments",
+      "name": "Phase4SASInstallPart5",
+      "apiVersion": "2019-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'Phase4SASInstallPart4')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('extensionScriptURI')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "vmName": {
+            "value": "jumpvm"
+          },
+          "command": {
+            "value": "[concat('set -o pipefail; /sas/install/scripts/SetupJumpInstallSAS.sh 2>&1 | tee /tmp/runPhase4_SASInstallPart5.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[variables('artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('sasToken')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2019-10-01",
+      "name": "pid-a04b9960-695b-556c-9e3d-2c5752ffbdd7",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": []
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "Jump_IP": {
+      "type": "string",
+      "value": "[reference('jumpvm_publicIP').ipAddress]"
+    },
+    "SASVisualAnalyticsHub": {
+      "type": "string",
+      "value": "[concat('https://', reference(resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')).dnsSettings.fqdn, '/SASVisualAnalyticsHub')]"
+    },
+    "SASStudio": {
+      "type": "string",
+      "value": "[concat('https://', reference(resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')).dnsSettings.fqdn, '/SASStudio')]"
+    },
+    "SASEnvironmentManager": {
+      "type": "string",
+      "value": "[concat('https://', reference(resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')).dnsSettings.fqdn, ':8441/')]"
+    }
+  }
+}

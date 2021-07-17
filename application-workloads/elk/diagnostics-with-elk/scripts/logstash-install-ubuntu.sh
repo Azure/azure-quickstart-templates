@@ -76,21 +76,22 @@ done
 
 # Install Logstash
 
+export DEBIAN_FRONTEND=noninteractive
 
 if [ -z $SKIP_COMMON_INSTALL ]
 then
 
     # Install Utilities
     log "Installing utilities."
-    sudo apt-get update
-    sudo apt-get -y --force-yes install python-software-properties debconf-utils
+    apt-get update
+    apt-get -y --force-yes install python-software-properties debconf-utils
 
     # Install Java
     log "Installing Java."
-    sudo add-apt-repository -y ppa:webupd8team/java
-    sudo apt-get update
-    echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | sudo debconf-set-selections
-    sudo apt-get install -y --force-yes oracle-java8-installer
+    add-apt-repository -y ppa:webupd8team/java
+    apt-get update
+    echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | debconf-set-selections
+    apt-get install -y --force-yes oracle-java8-installer
 
 else
   log "Skipping common install"
@@ -99,17 +100,17 @@ fi
 # Install Logstash
 # Download and install the Public Signing Key:
 log "Installing Logstash."
-wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | apt-key add -
 # Add the repository definition to your /etc/apt/sources.list file:
-echo "deb http://packages.elastic.co/logstash/2.3/debian stable main" | sudo tee -a /etc/apt/sources.list
+echo "deb http://packages.elastic.co/logstash/2.3/debian stable main" | tee -a /etc/apt/sources.list
 # Get latest package information:
-sudo apt-get update
+apt-get update
 # Install logstash package:
-sudo apt-get -y --force-yes install logstash
+apt-get -y --force-yes install logstash
 
 # Install Azure WAD Table Plugin
 log "Installing Azure WAD Table Plugin"
-sudo /opt/logstash/bin/logstash-plugin install logstash-input-azurewadtable
+/opt/logstash/bin/logstash-plugin install logstash-input-azurewadtable
 
 
 # Install User Configuration from encoded string
@@ -136,9 +137,9 @@ else
 fi
 
 log "Installing user configuration file"
-sudo \cp -f ~/logstash.conf /etc/logstash/conf.d/
+\cp -f ~/logstash.conf /etc/logstash/conf.d/
 
 # Configure Start
 log "Configure start up service"
-sudo update-rc.d logstash defaults 95 10
-sudo service logstash start
+update-rc.d logstash defaults 95 10
+service logstash start
