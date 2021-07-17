@@ -2,6 +2,12 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "psModules": {
+      "type": "object",
+      "metadata": {
+        "description": "Location of the Azure PowerShell modules"
+      }
+    },
     "skuName": {
       "type": "string",
       "defaultValue": "F1",
@@ -57,12 +63,6 @@
         "description": "Provide the name of an existing Automation Account with SPN."
       }
     },
-    "automationRegion": {
-      "type": "string",
-      "metadata": {
-        "description": "Location of the existing Automation Account."
-      }
-    },
     "omsRegion": {
       "type": "string",
       "metadata": {
@@ -103,7 +103,6 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
       }
@@ -139,7 +138,7 @@
         "displayName": "SqlServer",
         "quickstartName": "[variables('quickstartTags').name]"
       },
-      "apiVersion": "2019-06-01-preview",
+      "apiVersion": "2021-02-01-preview",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]"
@@ -149,9 +148,9 @@
           "name": "[variables('sqlDatabaseName')]",
           "type": "databases",
           "location": "[parameters('location')]",
-          "apiVersion": "2019-06-01-preview",
+          "apiVersion": "2021-02-01-preview",
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
           ],
           "properties": {
             "edition": "[variables('sqlEdition')]",
@@ -163,7 +162,7 @@
       ]
     },
     {
-      "apiVersion": "2018-02-01",
+      "apiVersion": "2020-12-01",
       "name": "[variables('hostingPlanName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[parameters('location')]",
@@ -180,7 +179,7 @@
       }
     },
     {
-      "apiVersion": "2018-02-01",
+      "apiVersion": "2020-12-01",
       "name": "[variables('webSiteName')]",
       "type": "Microsoft.Web/sites",
       "location": "[parameters('location')]",
@@ -198,12 +197,12 @@
       },
       "resources": [
         {
-          "apiVersion": "2018-02-01",
+          "apiVersion": "2020-12-01",
           "name": "web",
           "type": "config",
           "dependsOn": [
-            "[concat('Microsoft.Web/sites/', variables('webSiteName'))]",
-            "[concat('Microsoft.Web/Sites/', variables('webSiteName'), '/Extensions/MSDeploy')]"
+            "[resourceId('Microsoft.Web/sites/', variables('webSiteName'))]",
+            "[resourceId('Microsoft.Web/Sites/extensions', variables('webSiteName'), 'MSDeploy')]"
           ],
           "tags": {
             "displayName": "WebAppConfig",
@@ -214,12 +213,12 @@
           }
         },
         {
-          "apiVersion": "2018-02-01",
+          "apiVersion": "2020-12-01",
           "type": "config",
           "name": "connectionstrings",
           "dependsOn": [
             "[variables('webSiteName')]",
-            "[concat('Microsoft.Web/Sites/', variables('webSiteName'), '/Extensions/MSDeploy')]"
+            "[resourceId('Microsoft.Web/Sites/extensions', variables('webSiteName'), 'MSDeploy')]"
           ],
           "properties": {
             "DefaultConnection": {
@@ -236,9 +235,9 @@
           "name": "MSDeploy",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2018-02-01",
+          "apiVersion": "2020-12-01",
           "dependsOn": [
-            "[concat('Microsoft.Web/sites/', variables('Websitename'))]"
+            "[resourceId('Microsoft.Web/sites/', variables('Websitename'))]"
           ],
           "tags": {
             "displayName": "WebAppMSDeploy",
@@ -254,9 +253,9 @@
       "name": "[concat(variables('hostingPlanName'), '-', resourceGroup().name)]",
       "type": "Microsoft.Insights/autoscalesettings",
       "location": "[parameters('location')]",
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2015-04-01",
       "dependsOn": [
-        "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+        "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
       ],
       "tags": {
         "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource",
@@ -269,9 +268,9 @@
           {
             "name": "Default",
             "capacity": {
-              "minimum": 1,
-              "maximum": 2,
-              "default": 1
+              "minimum": "1",
+              "maximum": "2",
+              "default": "1"
             },
             "rules": [
               {
@@ -288,7 +287,7 @@
                 "scaleAction": {
                   "direction": "Increase",
                   "type": "ChangeCount",
-                  "value": 1,
+                  "value": "1",
                   "cooldown": "PT10M"
                 }
               },
@@ -306,7 +305,7 @@
                 "scaleAction": {
                   "direction": "Decrease",
                   "type": "ChangeCount",
-                  "value": 1,
+                  "value": "1",
                   "cooldown": "PT1H"
                 }
               }
@@ -343,7 +342,7 @@
         "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource"
       },
       "dependsOn": [
-        "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+        "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
       ],
       "properties": {
         "severity": 1,
@@ -361,7 +360,6 @@
             {
               "name": "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'), '-cpupercentage')]",
               "metricName": "CpuPercentage",
-              "dimensions": [],
               "operator": "GreaterThan",
               "threshold": 90,
               "timeAggregation": "Average",
@@ -387,7 +385,7 @@
         "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource"
       },
       "dependsOn": [
-        "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+        "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
       ],
       "properties": {
         "severity": 1,
@@ -405,7 +403,6 @@
             {
               "name": "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'), '-httpqueuelegth')]",
               "metricName": "HttpQueueLength",
-              "dimensions": [],
               "operator": "GreaterThan",
               "threshold": 100,
               "timeAggregation": "Average",
@@ -449,7 +446,6 @@
             {
               "name": "[concat('Microsoft.Web/sites', variables('webSiteName'), '-5XX-errors')]",
               "metricName": "Http5xx",
-              "dimensions": [],
               "operator": "GreaterThan",
               "threshold": 0,
               "timeAggregation": "Average",
@@ -458,7 +454,6 @@
             {
               "name": "[concat('Microsoft.Web/sites', variables('webSiteName'), '-403-errors')]",
               "metricName": "Http403",
-              "dimensions": [],
               "operator": "GreaterThan",
               "threshold": 0,
               "timeAggregation": "Average",
@@ -479,9 +474,9 @@
       "name": "[variables('insightsName')]",
       "type": "Microsoft.Insights/components",
       "location": "[parameters('location')]",
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2020-02-02",
       "dependsOn": [
-        "[concat('Microsoft.Web/sites/', variables('webSiteName'))]"
+        "[resourceId('Microsoft.Web/sites/', variables('webSiteName'))]"
       ],
       "tags": {
         "displayName": "[concat('Component', variables('insightsName'))]",
@@ -489,14 +484,13 @@
         "quickstartName": "[variables('quickstartTags').name]"
       },
       "properties": {
-        "applicationId": "[variables('webSiteName')]"
+        "Application_Type": "web"
       }
     },
     {
       "name": "omsWorkspace",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [],
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -508,7 +502,7 @@
             "value": "[variables('omsWorkspaceName')]"
           },
           "location": {
-            "value": "[parameters('omsRegion')]"
+            "value": "[parameters('location')]"
           },
           "serviceTier": {
             "value": "Free"
