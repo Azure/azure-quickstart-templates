@@ -2,12 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "psModules": {
-      "type": "object",
-      "metadata": {
-        "description": "Location of the Azure PowerShell modules"
-      }
-    },
     "skuName": {
       "type": "string",
       "defaultValue": "F1",
@@ -63,6 +57,12 @@
         "description": "Provide the name of an existing Automation Account with SPN."
       }
     },
+    "automationRegion": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the existing Automation Account."
+      }
+    },
     "omsRegion": {
       "type": "string",
       "metadata": {
@@ -103,6 +103,7 @@
     },
     "location": {
       "type": "string",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
       }
@@ -276,7 +277,7 @@
               {
                 "metricTrigger": {
                   "metricName": "CpuPercentage",
-                  "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT10M",
@@ -294,7 +295,7 @@
               {
                 "metricTrigger": {
                   "metricName": "CpuPercentage",
-                  "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT1H",
@@ -313,7 +314,7 @@
           }
         ],
         "enabled": false,
-        "targetResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+        "targetResourceUri": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
       }
     },
     {
@@ -403,6 +404,7 @@
             {
               "name": "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'), '-httpqueuelegth')]",
               "metricName": "HttpQueueLength",
+              "dimensions": [],
               "operator": "GreaterThan",
               "threshold": 100,
               "timeAggregation": "Average",
@@ -446,6 +448,7 @@
             {
               "name": "[concat('Microsoft.Web/sites', variables('webSiteName'), '-5XX-errors')]",
               "metricName": "Http5xx",
+              "dimensions": [],
               "operator": "GreaterThan",
               "threshold": 0,
               "timeAggregation": "Average",
@@ -454,6 +457,7 @@
             {
               "name": "[concat('Microsoft.Web/sites', variables('webSiteName'), '-403-errors')]",
               "metricName": "Http403",
+              "dimensions": [],
               "operator": "GreaterThan",
               "threshold": 0,
               "timeAggregation": "Average",
@@ -474,9 +478,9 @@
       "name": "[variables('insightsName')]",
       "type": "Microsoft.Insights/components",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-02-02",
+      "apiVersion": "2014-04-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites/', variables('webSiteName'))]"
+        "[concat('Microsoft.Web/sites/', variables('webSiteName'))]"
       ],
       "tags": {
         "displayName": "[concat('Component', variables('insightsName'))]",
@@ -484,13 +488,14 @@
         "quickstartName": "[variables('quickstartTags').name]"
       },
       "properties": {
-        "Application_Type": "web"
+        "applicationId": "[variables('webSiteName')]"
       }
     },
     {
       "name": "omsWorkspace",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -502,7 +507,7 @@
             "value": "[variables('omsWorkspaceName')]"
           },
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[parameters('omsRegion')]"
           },
           "serviceTier": {
             "value": "Free"
