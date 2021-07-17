@@ -1,6 +1,9 @@
 @description('Storage account name')
 param storageAccountName string
 
+@description('Storage account location')
+param location string = resourceGroup().location
+
 @description('Storage account sku')
 @allowed([
   'Standard_LRS'
@@ -41,7 +44,7 @@ param blobEncryptionEnabled bool = true
 
 resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: storageAccountName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: storageSku
   }
