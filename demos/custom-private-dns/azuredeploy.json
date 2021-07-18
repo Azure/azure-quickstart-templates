@@ -2,6 +2,13 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "virtualMachineName": {
+      "type": "string",
+      "defaultValue": "ad-vm",
+      "metadata": {
+          "description": "Virtual machine name."
+      }
+     },
     "dnsZoneName": {
       "type": "string",
       "defaultValue": "private.local",
@@ -28,13 +35,6 @@
         "description": "The DNS name for the public IP address used by the Load Balancer infront of the DNS servers"
       }
     },
-    "adTemplateLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "The location of template to create HA Domain Controllers"
-      },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/modules/active-directory-new-domain/0.9/"
-    },
     "_artifactsLocation": {
         "type": "string",
         "metadata": {
@@ -57,23 +57,16 @@
       }
     }
   },
-  "variables": {
-    "virtualNetworkName": "adVNet",
-    "subnetName": "adSubnet",
-    "adPDCVMName": "adPDC",
-    "adBDCVMName": "adBDC",
-    "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'),variables('subnetName'))]"
-  },
   "resources": [
     {
       "comments": "This uses one of the other templates to deploy a pair of AD controllers",
       "name": "adDeployment",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('adTemplateLocation'), 'azuredeploy.json')]",
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/modules/active-directory-new-domain/0.9/azuredeploy.json",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {    
@@ -86,17 +79,8 @@
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
           },
-          "dnsPrefix": {
-            "value": "[parameters('serverPublicDnsName')]"
-          },
-          "_artifactsLocation": {
-            "value": "[parameters('adTemplateLocation')]"
-          },
-          "_artifactsLocationSasToken": {
-            "value":"[parameters('_artifactsLocationSasToken')]"
-          },
-          "location": {
-            "value":"[parameters('location')]"
+          "virtualMachineName": {
+            "value": "[parameters('virtualMachineName')]"
           }
         }
       }
@@ -108,7 +92,7 @@
       "dependsOn": [
         "Microsoft.Resources/deployments/adDeployment"
       ],
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -117,13 +101,13 @@
         },
         "parameters": {
           "vmList": {
-            "value": "[concat(variables('adPDCVMName'), ',', variables('adBDCVMName'))]"
+            "value": "[parameters('virtualMachineName')]"
           },
           "dnsZone": {
             "value": "[parameters('dnsZoneName')]"
           },
           "vnetName": {
-            "value": "[variables('virtualNetworkName')]"
+            "value": "[reference('adDeployment').outputs.virtualNetworkName.value]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -162,7 +146,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "subnetId": {
-            "value": "[variables('subnetId')]"
+            "value": 
           },
           "imagePublisher": {
             "value": "MicrosoftWindowsServer"
