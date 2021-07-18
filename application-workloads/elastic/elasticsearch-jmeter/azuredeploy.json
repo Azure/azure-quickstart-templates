@@ -80,13 +80,6 @@
         "description": "The location of the test jmx and run properties. This is extracted to the JMeter master node only, in /opt/jmeter"
       }
     },
-    "esClusterName": {
-      "type": "string",
-      "defaultValue": "elasticsearch",
-      "metadata": {
-        "description": "The name of the Elasticsearch cluster to target"
-      }
-    },
     "templateBase": {
       "type": "string",
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master",
@@ -189,14 +182,14 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-04-01",
       "location": "[parameters('location')]",
       "properties": {
         "accountType": "Standard_LRS"
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-02-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "jmeter-pip",
       "location": "[parameters('location')]",
@@ -205,7 +198,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-02-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "jmeter-nsg",
       "location": "[parameters('location')]",
@@ -238,7 +231,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-02-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), '-sub', copyindex())]",
       "location": "[parameters('location')]",
@@ -247,7 +240,7 @@
         "count": "[parameters('subNodeCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('networkSettings').virtualNetworkName, '/subnets/jmeter')]"
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, 'jmeter')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -265,13 +258,13 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-02-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), '-boss')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', 'jmeter-pip')]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', 'jmeter-nsg')]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', 'jmeter-pip')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', 'jmeter-nsg')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -295,13 +288,13 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2021-07-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), '-boss')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), '-boss')]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), '-boss'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -336,7 +329,7 @@
           "apiVersion": "[variables('apiVersion')]",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '-boss')]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vmName'), '-boss'))]"
           ],
           "properties": {
             "publisher": "[variables('settings').extensionSettings.boss.publisher]",
@@ -351,7 +344,7 @@
       ]
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2021-07-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), '-sub', copyindex())]",
       "location": "[parameters('location')]",
@@ -360,8 +353,8 @@
         "count": "[parameters('subNodeCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), '-sub', copyindex())]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), '-sub', copyindex()))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -396,7 +389,7 @@
           "apiVersion": "[variables('apiVersion')]",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '-sub', copyindex())]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vmName'), '-sub', copyindex()))]"
           ],
           "properties": {
             "publisher": "[variables('settings').extensionSettings.sub.publisher]",
@@ -414,7 +407,7 @@
   "outputs": {
     "boss-pip": {
       "type": "string",
-      "value": "[reference(concat('Microsoft.Network/publicIPAddresses/', 'jmeter-pip')).ipAddress]"
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses/', 'jmeter-pip')).ipAddress]"
     }
   }
 }
