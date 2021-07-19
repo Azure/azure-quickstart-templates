@@ -12,7 +12,7 @@
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsas%2Fsas-viya%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsas%2Fsas-viya%2Fazuredeploy.json)
 
-**Note:** For the current operational status of this Quickstart, click [here](https://github.com/sassoftware/azure-quickstart-templates/tree/master/sas-viya) to redirect to the SAS repository.
+**Note:** For the current operational status of this Quickstart, click [here](https://github.com/sassoftware/azure-quickstart-templates/tree/master/application-workloads/sas/sas-viya) to redirect to the SAS repository.
 
 This README for SAS Viya 3.5 Quickstart Template for Azure is used to deploy the following SAS Viya 3.5 products in the Azure cloud:
 
