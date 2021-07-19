@@ -2,28 +2,12 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "_artifactsLocation": {
-            "type": "string",
-            "metadata": {
-                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-            },
-            "defaultValue": ""
-        },
-        "_artifactsLocationSasToken": {
-            "type": "securestring",
-            "metadata": {
-                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-            },
-            "defaultValue": ""
-        },
         "envPrefixName": {
             "type": "string",
             "metadata": {
                 "description": "Prefix for the environment (2-5 characters)"
             },
             "defaultValue": "cust1"
-            
-            
         },
         "username": {
             "type": "string",
@@ -85,7 +69,21 @@
             "metadata": {
                 "description": "Location for all resources."
             }
-        }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            },
+            "defaultValue": ""
+        }        
     },
     "variables": {
         "virtualNetworkName": "[concat(parameters('envPrefixName'), 'Vnet')]",
@@ -97,33 +95,24 @@
         "sqlSrvDBName": "[concat(parameters('envPrefixName'), 'sqlSrv14')]",
         "sqlVmSize": "[parameters('sqlVMSize')]",
         "sqlSrvDBNicName": "[concat(variables('sqlSrvDBName'), 'Nic')]",
-        "sqlSvrDBSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'DBSubnetName')]",
         "sqlPublicIP": "[concat(parameters('envPrefixName'), 'SqlPip')]",
-        "sqlPublicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses', variables('sqlPublicIP'))]",
         "sqlImagePublisher": "MicrosoftSQLServer",
         "sqlImageOffer": "SQL2014SP2-WS2012R2",
         "sqlImageSku": "Standard",
         "webSrvName": "[concat(parameters('envPrefixName'), 'webSrv')]",
         "webSrvVMSize": "[parameters('webSrvVMSize')]",
         "webSrvNicName": "[concat(variables('webSrvName'), 'Nic')]",
-        "webSrvSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'FESubnetName')]",
         "webSrvPublicIP": "[concat(parameters('envPrefixName'), 'websrvpip')]",
         "webSrvAvailabilitySetName": "[concat(parameters('envPrefixName'), 'webSrvAS')]",
         "webSrvNumbOfInstances": "[parameters('numberOfWebSrvs')]",
         "webSrvDnsNameforLBIP": "[concat(toLower(variables('webSrvName')), 'lb')]",
         "webLbName": "[concat(variables('webSrvName'), 'lb')]",
-        "webLblb_PIP_Id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('webSrvPublicIP'))]",
-        "webLbId": "[resourceId('Microsoft.Network/loadBalancers',variables('webLbName'))]",
-        "frontEndIPConfigID": "[concat(variables('webLbId'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
-        "lbPoolID": "[concat(variables('webLbId'),'/backendAddressPools/BackendPool1')]",
-        "lbProbeID": "[concat(variables('webLbId'),'/probes/tcpProbe')]",
         "vmExtensionName": "dscExtension",
-        "modulesUrl": "[concat(parameters('_artifactsLocation'), 'scripts/WebServerConfig.ps1.zip', parameters('_artifactsLocationSasToken'))]",
         "configurationFunction": "WebServerConfig.ps1\\WebServerConfig"
     },
     "resources": [
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2020-07-01",
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "[variables('feNSGName')]",
             "location": "[parameters('location')]",
@@ -165,7 +154,7 @@
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2020-07-01",
             "name": "[variables('dbNSGName')]",
             "location": "[parameters('location')]",
             "tags": {
@@ -233,13 +222,13 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2020-07-01",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('virtualNetworkName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkSecurityGroups/', variables('feNSGName'))]",
-                "[concat('Microsoft.Network/networkSecurityGroups/', variables('dbNSGName'))]"
+                "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('feNSGName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('dbNSGName'))]"
             ],
             "tags": {
                 "displayName": "VirtualNetwork"
@@ -276,7 +265,7 @@
             "name": "[variables('sqlPublicIP')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "location": "[parameters('location')]",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2020-07-01",
             "tags": {
                 "displayName": "SqlPIP"
             },
@@ -289,9 +278,9 @@
             "name": "[variables('sqlSrvDBNicName')]",
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[parameters('location')]",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2020-07-01",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
             ],
             "tags": {
                 "displayName": "SQLSrvDBNic"
@@ -303,10 +292,10 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
-                                "id": "[variables('sqlSvrDBSubnetRef')]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('virtualNetworkName'),'DBSubnetName')]"
                             },
                             "publicIPAddress": {
-                                "id": "[variables('sqlPublicIPRef')]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('envPrefixName'),'SqlPip'))]"
                             }
                         }
                     }
@@ -317,10 +306,10 @@
             "name": "[concat(parameters('envPrefixName'), 'sqlSrv14')]",
             "type": "Microsoft.Compute/virtualMachines",
             "location": "[parameters('location')]",
-            "apiVersion": "2017-03-30",
+            "apiVersion": "2020-12-01",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', variables('sqlSrvDBNicName'))]",
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('sqlPublicIP'))]"
+                "[resourceId('Microsoft.Network/networkInterfaces/', variables('sqlSrvDBNicName'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses/', variables('sqlPublicIP'))]"
             ],
             "tags": {
                 "displayName": "SQL-Svr-DB"
@@ -360,7 +349,7 @@
             }
         },
         {
-            "apiVersion": "2017-03-30",
+            "apiVersion": "2020-12-01",
             "type": "Microsoft.Compute/availabilitySets",
             "location": "[parameters('location')]",
             "name": "[variables('webSrvAvailabilitySetName')]",
@@ -379,7 +368,7 @@
             "name": "[variables('webSrvPublicIP')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "location": "[parameters('location')]",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2020-07-01",
             "tags": {
                 "displayName": "WebSrvPIP for LB"
             },
@@ -392,7 +381,7 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2020-07-01",
             "name": "[variables('webLbName')]",
             "type": "Microsoft.Network/loadBalancers",
             "location": "[parameters('location')]",
@@ -400,7 +389,7 @@
                 "displayName": "Web LB"
             },
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('webSrvPublicIP'))]"
+                "[resourceId('Microsoft.Network/publicIPAddresses/', variables('webSrvPublicIP'))]"
             ],
             "properties": {
                 "frontendIPConfigurations": [
@@ -408,7 +397,7 @@
                         "name": "LoadBalancerFrontEnd",
                         "properties": {
                             "publicIPAddress": {
-                                "id": "[variables('webLblb_PIP_Id')]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('envPrefixName'),'websrvpip'))]"
                             }
                         }
                     }
@@ -423,7 +412,7 @@
                         "name": "RDP-VM0",
                         "properties": {
                             "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigID')]"
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('webLbName'),'LoadBalancerFrontEnd')]"
                             },
                             "protocol": "Tcp",
                             "frontendPort": 50001,
@@ -435,7 +424,7 @@
                         "name": "RDP-VM1",
                         "properties": {
                             "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigID')]"
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('webLbName'),'LoadBalancerFrontEnd')]"
                             },
                             "protocol": "Tcp",
                             "frontendPort": 50002,
@@ -449,10 +438,10 @@
                         "name": "LBRule",
                         "properties": {
                             "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigID')]"
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('webLbName'),'LoadBalancerFrontEnd')]"
                             },
                             "backendAddressPool": {
-                                "id": "[variables('lbPoolID')]"
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('webLbName'),'BackendPool1')]"
                             },
                             "protocol": "Tcp",
                             "frontendPort": 80,
@@ -460,7 +449,7 @@
                             "enableFloatingIP": false,
                             "idleTimeoutInMinutes": 5,
                             "probe": {
-                                "id": "[variables('lbProbeID')]"
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('webLbName'),'tcpProbe')]"
                             }
                         }
                     }
@@ -482,14 +471,14 @@
             "name": "[concat(variables('webSrvNicName'), copyindex())]",
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[parameters('location')]",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2020-07-01",
             "copy": {
                 "name": "nicLoop",
                 "count": "[variables('webSrvNumbOfInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-                "[concat('Microsoft.Network/loadBalancers/', variables('webLbName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/loadBalancers/', variables('webLbName'))]"
             ],
             "tags": {
                 "displayName": "WebSrvNic"
@@ -501,16 +490,16 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
-                                "id": "[variables('webSrvSubnetRef')]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'FESubnetName')]"
                             },
                             "loadBalancerBackendAddressPools": [
                                 {
-                                    "id": "[concat(variables('webLbId'), '/backendAddressPools/BackendPool1')]"
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('webLbName'),'BackendPool1')]"
                                 }
                             ],
                             "loadBalancerInboundNatRules": [
                                 {
-                                    "id": "[concat(variables('webLbId'),'/inboundNatRules/RDP-VM', copyindex())]"
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('webLbName'),concat('RDP-VM',copyindex()))]"
                                 }
                             ]
                         }
@@ -522,14 +511,14 @@
             "name": "[concat(variables('webSrvName'), copyindex())]",
             "type": "Microsoft.Compute/virtualMachines",
             "location": "[parameters('location')]",
-            "apiVersion": "2017-03-30",
+            "apiVersion": "2020-12-01",
             "copy": {
                 "name": "webSrvMachineLoop",
                 "count": "[variables('webSrvNumbOfInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', variables('webSrvNicName'), copyindex())]",
-                "[concat('Microsoft.Compute/availabilitySets/', variables('webSrvAvailabilitySetName'))]"
+                "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('webSrvNicName'), copyindex()))]",
+                "[resourceId('Microsoft.Compute/availabilitySets/', variables('webSrvAvailabilitySetName'))]"
             ],
             "tags": {
                 "displayName": "WebSrv"
@@ -574,14 +563,14 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('webSrvName'), copyindex(),'/', variables('vmExtensionName'))]",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2020-12-01",
             "location": "[parameters('location')]",
             "copy": {
                 "name": "webSrvMachineLoop",
                 "count": "[variables('webSrvNumbOfInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('webSrvName'), copyindex())]"
+                "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('webSrvName'), copyindex()))]"
             ],
             "tags": {
                 "displayName": "VM Extensions"
@@ -592,16 +581,10 @@
                 "typeHandlerVersion": "2.19",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                    "ModulesUrl": "[variables('modulesUrl')]",
-                    "SasToken": "",
+                    "ModulesUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/WebServerConfig.ps1.zip', parameters('_artifactsLocationSasToken')))]",
                     "ConfigurationFunction": "[variables('configurationFunction')]",
-                    "wmfVersion": "4.0",
-            
-                    "fileUris": [
-                    "[uri(parameters('_artifactsLocation'), concat('scripts/WebServerConfig.ps1', parameters('_artifactsLocationSasToken')))]"
-                    ]
-                },
-                "protectedSettings": {}
+                    "wmfVersion": "4.0"
+                }
             }
         }
     ]
