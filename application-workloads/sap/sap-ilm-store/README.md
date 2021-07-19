@@ -51,7 +51,7 @@ Run the following command to get the Principal ID of an Azure Active Directory A
 
 ## Deployment steps
 
-Click the [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://github.com/SumitDeySAP/azure-quickstart-templates/tree/patch-1/sap-ilm-store#deploy-a-storage-account-for-sap-ilm-store) button at the beginning of this document.
+Click the [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://github.com/Azure/azure-quickstart-templates/tree/master/application-workloads/sap/sap-ilm-store/README.md#deploy-a-storage-account-for-sap-ilm-store) button at the beginning of this document.
 
 ## Error Handling
 
@@ -69,7 +69,7 @@ Some of the errors are listed below:
 - **Error Description:** `A valid principal ID must be provided for role assignment`
 - **Deployment phase:** Deployment
 - **Details:** The Principal Id provided for the parameter **"Principal ID of the Azure AD App"** may be incorrect.
-- **Solution:** Refer to the [Prerequisites section](https://github.com/SumitDeySAP/azure-quickstart-templates/tree/patch-1/sap-ilm-store#prerequisites) above to determine the correct value for this parameter.
+- **Solution:** Refer to the [Prerequisites section](https://github.com/Azure/azure-quickstart-templates/tree/master/application-workloads/sap/sap-ilm-store/README.md#prerequisites) above to determine the correct value for this parameter.
 
 ## Notes
 
