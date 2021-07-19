@@ -1,0 +1,109 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "eventHubNamespaceNamePrimary": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Event Hub namespace"
+      }
+    },
+    "eventHubNamespaceNameSecondary": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Event Hub namespace"
+      }
+    },
+    "aliasName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Geo-Recovery Configuration Alias"
+      }
+    },
+    "eventhubSku": {
+      "type": "string",
+      "allowedValues": [
+        "Basic",
+        "Standard"
+      ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "The messaging tier for Event Hub namespace"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "allowedValues": [
+        1,
+        2,
+        4
+      ],
+      "defaultValue": 1,
+      "metadata": {
+        "description": "MessagingUnits for namespace"
+      }
+    },
+	"locationPrimaryNamepsace": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of Primary namespace"
+      }
+    },
+	"locationSecondaryNamepsace": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of Secondary namespace"
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2018-01-01-preview",
+      "name": "[parameters('eventHubNamespaceNameSecondary')]",
+      "type": "Microsoft.EventHub/namespaces",
+      "location": "[parameters('locationSecondaryNamepsace')]",
+      "sku": {
+        "name": "[parameters('eventhubSku')]",
+        "tier": "[parameters('eventhubSku')]",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "tags": {
+        "tag1": "value1",
+        "tag2": "value2"
+      }
+    },
+    {
+      "apiVersion": "2018-01-01-preview",
+      "name": "[parameters('eventHubNamespaceNamePrimary')]",
+      "type": "Microsoft.EventHub/namespaces",
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceNameSecondary'))]"
+      ],
+      "location": "[parameters('locationPrimaryNamepsace')]",
+      "sku": {
+        "name": "[parameters('eventhubSku')]",
+        "tier": "[parameters('eventhubSku')]",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "tags": {
+        "tag1": "value1",
+        "tag2": "value2"
+      },
+      "resources": [
+        {
+          "apiVersion": "2017-04-01",
+          "name": "[parameters('aliasName')]",
+          "type": "disasterRecoveryConfigs",
+          "dependsOn": [
+            "[resourceId('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceNamePrimary'))]"
+          ],
+          "properties": {
+            "partnerNamespace": "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNamespaceNameSecondary'))]"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+  }
+}

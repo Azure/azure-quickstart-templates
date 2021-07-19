@@ -1,0 +1,124 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "siteName": {
+      "type": "string"
+    },
+    "hostingPlanName": {
+      "type": "string"
+    },
+    "sku": {
+      "type": "string",
+      "allowedValues": [
+        "Free",
+        "Shared",
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "defaultValue": "Free"
+    },
+    "workerSize": {
+      "type": "string",
+      "defaultValue": "0"
+    },
+    "dbServer": {
+      "type": "string"
+    },
+    "dbName": {
+      "type": "string"
+    },
+    "dbAdminPassword": {
+      "type": "securestring"
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "repoUrl": "https://github.com/azureappserviceoss/wordpress-azure",
+    "branch": "master",
+    "workerSize": "[parameters('workerSize')]",
+    "sku": "[parameters('sku')]",
+    "hostingPlanName": "[parameters('hostingPlanName')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-08-01",
+      "name": "[variables('hostingPlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[parameters('location')]",
+      "properties": {
+        "name": "[variables('hostingPlanName')]",
+        "workerSize": "[variables('workerSize')]",
+        "numberOfWorkers": 0
+      },
+      "sku": {
+        "tier": "[variables('sku')]",
+        "name": "F1"
+      }
+    },
+    {
+      "apiVersion": "2019-08-01",
+      "name": "[parameters('siteName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[parameters('location')]",
+      "tags": {
+        "[concat('hidden-related:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "empty"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+      ],
+      "properties": {
+        "name": "[parameters('siteName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2019-08-01",
+          "name": "connectionstrings",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites/', parameters('siteName'))]"
+          ],
+          "properties": {
+            "defaultConnection": {
+              "value": "[concat('Database=', parameters('dbName'), ';Data Source=', parameters('dbServer'), ';User Id=admin;Password=', parameters('dbAdminPassword'))]",
+              "type": "MySql"
+            }
+          }
+        },
+        {
+          "apiVersion": "2019-08-01",
+          "name": "web",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites/', parameters('siteName'))]"
+          ],
+          "properties": {
+            "phpVersion": "5.6"
+          }
+        },
+        {
+          "apiVersion": "2020-12-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]",
+            "[resourceId('Microsoft.Web/Sites/config/', parameters('siteName'), 'connectionstrings')]",
+            "[resourceId('Microsoft.Web/Sites/config/', parameters('siteName'), 'web')]"
+          ],
+          "properties": {
+            "RepoUrl": "[variables('repoUrl')]",
+            "branch": "[variables('branch')]",
+            "IsManualIntegration": true
+          }
+        }
+      ]
+    }
+  ]
+}

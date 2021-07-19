@@ -1,0 +1,106 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"vmname": {
+			"type": "string",
+			"metadata": {
+				"description": "vm name"
+			}
+		},
+		"ostype": {
+			"type": "string",
+			"metadata": {
+				"description": "os type"
+			},
+			"defaultValue": "windows"
+		},
+		"capassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "password for CA server access"
+			}
+		},
+		"azurePwsh": {
+			"type": "string",
+			"metadata": {
+				"description": "install azure powershell module (optional)"
+			},
+			"defaultValue": "no",
+			"allowedValues": [
+				"yes",
+				"no"
+			]
+		},
+		"safekitFileUri": {
+			"type": "string",
+			"metadata": {
+				"description": "url of safekit package"
+			},
+			"defaultValue": ""
+		},
+		"location": {
+			"type": "string",
+			"metadata": {
+				"description": "resources location"
+			}
+		},
+		"_artifactsLocation": {
+			"type": "string",
+			"metadata": {
+				"description": "base URL of deployment resources (template,subtemplates,scripts)"
+			}
+		},
+		"_artifactsLocationSasToken": {
+			"type": "securestring",
+			"metadata": {
+				"description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+			}
+		}
+	},
+	"variables": {
+		"pwazrmuri": "[uri(parameters('_artifactsLocation'), concat('scripts/installAzureRM.ps1' ,parameters('_artifactsLocationSasToken')))]",
+		"pwscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/InstallSafeKit.ps1' ,parameters('_artifactsLocationSasToken')))]",
+		"skpkg": "[last(split(parameters('safekitFileUri'),'/'))]",
+		"shellscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/InstallSafeKit.sh' ,parameters('_artifactsLocationSasToken')))]",
+		"skuri": "[parameters('safekitFileUri')]",
+		"fileUrisW": "[if(equals(parameters('azurePwsh'),'yes'),createArray(variables('skuri'),variables('pwscripturi'),variables('pwazrmuri')),createArray(variables('skuri'),variables('pwscripturi')))]",
+		"fileUrisL": "[if(equals(parameters('azurePwsh'),'yes'),createArray(variables('skuri'),variables('shellscripturi'),variables('pwazrmuri')),createArray(variables('skuri'),variables('shellscripturi')))]",
+		"properties": {
+			"windows": {
+				"publisher": "Microsoft.Compute",
+				"type": "CustomScriptExtension",
+				"typeHandlerVersion": "1.9",
+				"autoUpgradeMinorVersion": true,
+				"settings": {
+					"fileUris": "[variables('fileUrisW')]"
+				},
+				"protectedSettings":{
+					"commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File  .\\Scripts\\InstallSafekit.ps1 -SkFile ',variables('skpkg'),' -Passwd \"',parameters('capassword'),'\"')]"
+				}
+			},
+			"linux": {
+				"publisher": "Microsoft.Azure.Extensions",
+				"type": "CustomScript",
+				"typeHandlerVersion": "2.0",
+				"autoUpgradeMinorVersion": true,
+				"settings": {
+					"skipDos2Unix": false,
+					"fileUris": "[variables('fileUrisL')]"
+				},
+				"protectedSettings": {
+					"commandToExecute": "[concat('sh InstallSafeKit.sh ./', variables('skpkg'), ' \"',parameters('capassword'),'\"')]"
+				}
+			}
+		}
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('vmname'),'/safekit')]",
+			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"apiVersion": "2020-12-01",
+			"location": "[parameters('location')]",
+			"properties": "[variables('properties')[parameters('ostype')]]"
+		}
+	]
+}

@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "6347895830126627671"
+    }
+  },
   "parameters": {
     "targetMGs": {
       "type": "array",
@@ -20,19 +27,19 @@
       }
     }
   },
+  "functions": [],
   "variables": {
     "policyDefinitionName": "LocationRestriction"
   },
   "resources": [
     {
       "type": "Microsoft.Authorization/policyDefinitions",
-      "name": "[variables('policyDefinitionName')]",
       "apiVersion": "2020-09-01",
+      "name": "[variables('policyDefinitionName')]",
       "properties": {
         "policyType": "Custom",
         "mode": "All",
-        "parameters": {
-        },
+        "parameters": {},
         "policyRule": {
           "if": {
             "not": {
@@ -47,53 +54,84 @@
       }
     },
     {
-      // this is a no-op to get the name of the managementGroup for the policyDefintion, i.e. the name of the mg for this deployment
-      "name": "getManagementGroupName",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-10-01",
+      "name": "getManagementGroupName",
       "location": "[deployment().location]",
       "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
         "mode": "Incremental",
         "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1.14562",
+              "templateHash": "10298276120160485756"
+            }
+          },
+          "functions": [],
           "resources": []
         }
       }
     },
     {
-      "scope": "[concat('Microsoft.Management/managementGroups/', parameters('targetMGs')[copyIndex()])]",
-      "name": "[concat('deploy-assignment-to-', parameters('targetMGs')[copyIndex()])]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
-      "location": "[deployment().location]",
-      "dependsOn": [
-        "[variables('policyDefinitionName')]"
-      ],
-      "copy":{
-        "count": "[length(parameters('targetMGs'))]",
-        "name": "assignment-loop"
+      "copy": {
+        "name": "assignmentLoop",
+        "count": "[length(parameters('targetMGs'))]"
       },
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "[format('deploy-assignment-to-{0}', parameters('targetMGs')[copyIndex()])]",
+      "scope": "[format('Microsoft.Management/managementGroups/{0}', parameters('targetMGs')[copyIndex()])]",
+      "location": "[deployment().location]",
       "properties": {
         "expressionEvaluationOptions": {
-          "scope": "outer"
+          "scope": "inner"
         },
         "mode": "Incremental",
+        "parameters": {
+          "policyDefinitionId": {
+            "value": "[extensionResourceId(tenantResourceId('Microsoft.Management/managementGroups', split(reference('getManagementGroupName', '2020-10-01', 'Full').scope, '/')[2]), 'Microsoft.Authorization/policyDefinitions', variables('policyDefinitionName'))]"
+          }
+        },
         "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1.14562",
+              "templateHash": "1317475483625831382"
+            }
+          },
+          "parameters": {
+            "policyDefinitionId": {
+              "type": "string",
+              "metadata": {
+                "description": "Policy definition unique identifier"
+              }
+            }
+          },
+          "functions": [],
           "resources": [
             {
               "type": "Microsoft.Authorization/policyAssignments",
-              "name": "location-lock",
               "apiVersion": "2020-09-01",
+              "name": "location-lock",
               "properties": {
-                "policyDefinitionId": "[extensionResourceId(tenantResourceId('Microsoft.Management/managementGroups', split(reference('getManagementGroupName', '2020-10-01', 'Full').scope, '/')[2]), 'Microsoft.Authorization/policyDefinitions', variables('policyDefinitionName'))]"
+                "policyDefinitionId": "[parameters('policyDefinitionId')]"
               }
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[format('Microsoft.Resources/deployments/{0}', 'getManagementGroupName')]"
+      ]
     }
   ]
 }
