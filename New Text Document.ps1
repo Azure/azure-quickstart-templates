@@ -1,5 +1,5 @@
 
-
+#test
 #$invocation = $MyInvocation.MyCommand.Path
 #$directorypath = Split-Path $invocation
 #$templateFilePath=$directorypath+"\..\.m2/deploy.Json"
