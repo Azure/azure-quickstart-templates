@@ -1,3 +1,4 @@
+  
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
@@ -15,21 +16,20 @@
         "description": "Name of the dnsZone to use as the suffix on the clients and to register records in"
       }
     },
-    "relativeDownloadFolder": {
+    "_artifactsLocation": {
       "type": "string",
       "metadata": {
-        "description": "This is the relative location of the folder the script will be downloaded to by the plugin.  This is dictated by the plugin here: https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-windows-extensions-customscript"
+        "description": "The location of resources, such as templates and scripts, that this script depends on"
       }
     },
-    "assetLocation": {
-      "type": "string",
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
       "metadata": {
-        "description": "The location of resources such as templates and scripts that the script is dependent"
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       }
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
       }
@@ -41,7 +41,7 @@
   "resources": [
     {
       "comments": "DNS client setup - set suffix and enable PTR record registration",
-      "apiVersion": "2016-08-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmListArray')[copyIndex()],'/SetupDnsClient')]",
       "location": "[parameters('location')]",
@@ -56,9 +56,9 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('assetLocation'), '/setupwinclient.ps1')]"
+            "[uri(parameters('_artifactsLocation'), concat('nested/windows-client/setupwinclient.ps1', parameters('_artifactsLocationSasToken')))]"
           ],
-          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', parameters('relativeDownloadFolder'), '/setupwinclient.ps1', ' ', parameters('dnsZone'))]"
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File nested/windows-client/setupwinclient.ps1', ' ', parameters('dnsZone'))]"
         }
       }
     }
