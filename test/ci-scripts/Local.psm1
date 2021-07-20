@@ -14,7 +14,7 @@ function Find-VarsFromWriteHostOutput {
             # Convert variable name from xxx.yyy.zzz to XXX_YYY_ZZZ
             $var = $var.ToUpperInvariant().Replace(".", "_")
             $vars[$var] = $value
-            Write-Host "$var = '$value'"
+            # Write-Host "$var = '$value'"
         }
     }
 

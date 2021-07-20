@@ -22,6 +22,8 @@ param (
 $isPR = $BuildReason -eq "PullRequest"
 
 if ($bicepSupported) {
+    Write-Host "##vso[task.setvariable variable=result.bicep.build]FAIL"
+
     $MainTemplatePathBicep = "$($SampleFolder)/$($MainTemplateFilenameBicep)"
     $MainTemplatePathJson = "$($SampleFolder)/$($MainTemplateFilenameJson)"
     
@@ -39,23 +41,23 @@ if ($bicepSupported) {
 
     Remove-Item $errorFile
     
-    if (!(Test-Path $CompiledJsonPath)) {
-        Write-Error "Bicep build produced no output file. Check above for build errors."
-        return
-    }
-
     $errors = @()
+    $buildPassed = $true
     foreach ($item in $errorOutput) {
+        $buildPassed = $false
         if ($item -imatch " Warning BCP") {
             Write-Warning $item
         }
         else {
-            $errors += $item
+            Write-Warning $item
         }
     }
-    if ($errors) {
-        Write-Error ($errors -join "`n")
-    }
+
+    if (!(Test-Path $CompiledJsonPath)) {
+        # Can't continue, fail pipeline
+        Write-Error "Bicep build failed."
+        return
+    }    
 
     # If this is a PR, compare it against the JSON file included in the sample
     if ($isPR) {
@@ -68,6 +70,7 @@ if ($bicepSupported) {
         if (!$templatesMatch) {
             Write-Error ("The JSON in the sample does not match the JSON built from bicep.`n" `
                     + "Either copy the expected output from the log into $MainTemplateFilenameJson or run the command ``bicep build $mainTemplateFilenameBicep --outfile $MainTemplateFilenameJson`` in your sample folder using bicep version $BicepVersion")
+            $buildPassed = $false
         }
     }
     
@@ -76,11 +79,17 @@ if ($bicepSupported) {
 
     # Delete the temporary built JSON file
     Remove-Item $CompiledJsonPath
+
+    # result.bicep.build
+    Write-Host "##vso[task.setvariable variable=result.bicep.build]$($buildPassed ? 'PASS': 'FAIL')"
 }
 else {
     # Just deploy the JSON file included in the sample
     Write-Host "Bicep not supported in this sample, deploying to $MainTemplateFilenameJson"
     $fileToDeploy = $MainTemplateFilenameJson
+
+    # result.bicep.build not applicable
+    Write-Host "##vso[task.setvariable variable=result.bicep.build]"
 }
 
 Write-Host "File to deploy: $fileToDeploy"
