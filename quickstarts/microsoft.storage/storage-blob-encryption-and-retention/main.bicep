@@ -1,5 +1,5 @@
 @description('Storage account name')
-param storageAccountName string
+param storageAccountName string = 'GEN-UNIQUE'
 
 @description('Storage account location')
 param location string = resourceGroup().location
@@ -15,7 +15,7 @@ param location string = resourceGroup().location
   'Standard_GZRS'
   'Standard_RAGZRS'
 ])
-param storageSku string
+param storageSku string = 'Standard_LRS'
 
 @description('Storage account kind')
 @allowed([
@@ -25,19 +25,19 @@ param storageSku string
   'FileStorage'
   'BlockBlobStorage'
 ])
-param storageKind string
+param storageKind string = 'StorageV2'
 
 @description('Storage account access tier, Hot for frequently accessed data or Cool for infreqently accessed data')
 @allowed([
   'Hot'
   'Cool'
 ])
-param storageTier string
+param storageTier string = 'Hot'
 
 @description('Amount of days the soft deleted data is stored and available for recovery')
 @minValue(1)
 @maxValue(365)
-param deleteRetentionPolicy int
+param deleteRetentionPolicy int = 7
 
 @description('Enable blob encryption at rest')
 param blobEncryptionEnabled bool = true
