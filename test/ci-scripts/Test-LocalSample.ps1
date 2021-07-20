@@ -28,6 +28,7 @@ param(
     [switch] $Fix # If true, fixes will be made if possible
 )
 
+$PreviousErrorPreference = $ErrorActionPreference
 $ErrorActionPreference = "Continue"
 $Error.Clear()
 
@@ -37,7 +38,7 @@ $SampleFolder = Resolve-Path $SampleFolder
 $SampleName = SampleNameFromFolderPath $SampleFolder
 
 if (!(Test-Path (Join-Path $SampleFolder "metadata.json"))) {
-    $ErrorActionPreference = "Stop"
+    $ErrorActionPreference = $PreviousErrorPreference
     Write-Error "Test-LocalSample must be run from within a sample folder. This folder contains no metadata.json file."
     return
 }
@@ -113,7 +114,7 @@ if (!$TtkFolder) {
         $TtkFolder = Resolve-Path $TtkFolder
     }
     else {
-        $ErrorActionPreference = "Stop"
+        $ErrorActionPreference = $PreviousErrorPreference
         Write-Error "Could not find the ARM TTK. Please install from https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/test-toolkit and set environment variable TTK_FOLDER to the installation folder location."
         Return
     }
@@ -141,7 +142,7 @@ if ($fixedReadme) {
 }
 
 if ($error) {
-    $ErrorActionPreference = "Stop"
+    $ErrorActionPreference = $PreviousErrorPreference
     Write-Error "*** ERRORS HAVE BEEN FOUND. SEE DETAILS ABOVE ***"
 }
 else {
