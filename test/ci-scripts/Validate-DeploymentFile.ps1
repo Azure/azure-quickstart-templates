@@ -78,5 +78,5 @@ else {
     $fileToDeploy = $MainTemplateFilenameJson
 }
 
-Write-Host "Deploying the file $fileToDeploy"
+Write-Host "File to deploy: $fileToDeploy"
 Write-Host "##vso[task.setvariable variable=mainTemplate.deployment.filename]$fileToDeploy"
