@@ -140,7 +140,7 @@ install_jmeter()
     apt-get -y install unzip
 
     mkdir -p /opt/jmeter
-    wget -O jmeter.zip http://apache.mirror.anlx.net/jmeter/binaries/apache-jmeter-2.13.zip
+    wget -O jmeter.zip https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-2.13.zip
     wget -O plugins.zip http://jmeter-plugins.org/downloads/file/JMeterPlugins-Standard-1.3.0.zip
 
     log "unzipping jmeter"
