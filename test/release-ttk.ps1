@@ -19,7 +19,7 @@ Copy-Item "..\..\arm-ttk\arm-ttk" -Destination ".\template-tests" -Recurse
 $releaseFiles += ".\template-tests"
 $releaseFiles = $releaseFiles -ne "..\..\arm-ttk/arm-ttk"
 Compress-Archive -DestinationPath "AzTemplateToolkit.zip" -Path $releaseFiles -Force
-Remove-Item ".\template-tests" -Recurse
+Remove-Item ".\template-tests" -Recurse -Force
 ### End Temp step
 
 $Target = "Target: storage account $StorageAccountName, container $containerName, folder $folderName"
