@@ -5,8 +5,14 @@ param(
     [string]$containerName = "ttk",
     [string]$folderName = "latest",
     [string]$ttkFileName = "arm-template-toolkit.zip",
+    [switch]$Staging,
     [switch]$Publish
 )
+
+if ($Staging) {
+    # Publish to staging folder instead of default ("latest") folder
+    $folderName = 'staging'
+}
 
 # this must be run from the "test" folder
 
