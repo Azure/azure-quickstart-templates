@@ -28,7 +28,7 @@
             $vars = Find-VarsFromWriteHostOutput $buildHostOutput
             $resultBicepBuild = $vars["RESULT_BICEP_BUILD"]
 
-            $resultBicepBuild | Should -Be "PASS"
+            $resultBicepBuild
         }
     }
 
@@ -67,7 +67,7 @@
         $folder = "$dataFolder/bicep-success"
         $resultBicepBuild = Validate-DeploymentFile `
             -SampleFolder $folder `
-            -TemplateFileName "azuredeploy.json"
+            -TemplateFileName "main.bicep"
         $resultBicepBuild | Should -Be "PASS"
     }
 }
