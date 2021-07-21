@@ -17,7 +17,7 @@
                 -BuildReason ($isPR ? 'PullRequest' : 'SomethingOtherThanPullRequest') `
                 -BicepPath ($ENV:BICEP_PATH ? $ENV:BICEP_PATH : 'bicep') `
                 -BicepVersion '1.2.3' `
-                -bicepSupported $bicepSupported        
+                -bicepSupported $bicepSupported
         }
     }
     
