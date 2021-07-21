@@ -75,7 +75,7 @@ $vars = Find-VarsFromWriteHostOutput $buildHostOutput
 $mainTemplateDeploymentFilename = $vars["MAINTEMPLATE_DEPLOYMENT_FILENAME"]
 Assert-NotEmptyOrNull $mainTemplateDeploymentFilename "mainTemplateDeploymentFilename"
 $CompiledJsonFilename = $vars["COMPILED_JSON_FILENAME"] # $null if not bicep sample
-$vars = Find-VarsFromWriteHostOutput $buildHostOutput # asdf test
+$vars = Find-VarsFromWriteHostOutput $buildHostOutput
 $resultBicepBuild = $vars["RESULT_BICEP_BUILD"]
 
 # Validate-MetaData
