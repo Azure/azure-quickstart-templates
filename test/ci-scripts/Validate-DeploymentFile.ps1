@@ -32,6 +32,11 @@ if ($bicepSupported) {
     Write-host "BUILDING: $BicepPath build $MainTemplatePathBicep --outfile $CompiledJsonPath"
     Start-Process $BicepPath -ArgumentList @('build', $MainTemplatePathBicep, '--outfile', $CompiledJsonPath) -RedirectStandardError $errorFile -Wait
     $errorOutput = [string[]](Get-Content $errorFile)
+
+    # Remove this line if it exists:
+    # Build succeeded: 0 Warning(s), 0 Error(s) [possibly localized]
+    $errorOutput = $errorOutput | where-object { $_ -notmatch " 0 .* 0 " }
+
     Remove-Item $errorFile
     
     if (!(Test-Path $CompiledJsonPath)) {
@@ -78,5 +83,5 @@ else {
     $fileToDeploy = $MainTemplateFilenameJson
 }
 
-Write-Host "Deploying the file $fileToDeploy"
+Write-Host "File to deploy: $fileToDeploy"
 Write-Host "##vso[task.setvariable variable=mainTemplate.deployment.filename]$fileToDeploy"

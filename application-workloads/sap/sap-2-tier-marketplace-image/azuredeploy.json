@@ -83,7 +83,7 @@
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for all resources."
+        "description": "location of resources"
       }
     },
     "_artifactsLocation": {
@@ -91,7 +91,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located including a trailing '/'"
       },
-      "defaultValue": ""
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -220,17 +220,20 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-01-01",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('internalStorageType')]"
+      "sku": {
+        "name": "[variables('internalStorageType')]"
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2021-04-01",
       "name": "[variables('nestedDeploymentNameVnet')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+    },
         "mode": "Incremental",
         "templateLink": {
           "uri": "[uri(parameters('_artifactsLocation'), concat('shared/', parameters('newOrExistingSubnet'), 'vnet.json', parameters('_artifactsLocationSasToken')))]",
@@ -248,12 +251,15 @@
           },
           "subnetPrefix": {
             "value": "[variables('subnetPrefix')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2021-04-01",
       "name": "[variables('nestedDeploymentNameNIC')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -285,7 +291,7 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2021-04-01",
       "name": "[variables('nestedDeploymentNameProf')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -326,13 +332,13 @@
             "value": "[variables('vmName')]"
           },
           "storageAccountUri": {
-            "value": "[reference(variables('storageAccountName'), '2017-10-01').primaryEndpoints['blob']]"
+            "value": "[reference(variables('storageAccountName'), '2021-01-01').primaryEndpoints['blob']]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2021-04-01",
       "name": "[variables('nestedDeploymentNamePIP')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -347,12 +353,15 @@
           },
           "publicIPAddressType": {
             "value": "[variables('publicIPAddressType')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2021-04-01",
       "name": "[variables('nestedDeploymentNameNSG')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -365,6 +374,9 @@
           "nsgName": {
             "value": "[variables('nsgName')]"
           },
+          "location": {
+              "value": "[parameters('location')]"
+          },
           "osType": {
             "value": "[variables('internalOSType')]"
           }
@@ -374,13 +386,13 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNIC'))]",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNamePIP'))]",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNIC'))]",
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNamePIP'))]",
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
       ],
       "properties": {
         "networkSecurityGroup": "[reference(variables('nestedDeploymentNameNIC')).outputs.selectedConfiguration.value.networkSecurityGroup]",
@@ -397,13 +409,13 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2021-04-01",
       "name": "[variables('nestedDeploymentName')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameProf'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentNameProf'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -437,10 +449,13 @@
             "value": "[parameters('adminPassword')]"
           },
           "storageAccountUri": {
-            "value": "[reference(variables('storageAccountName'), '2017-10-01').primaryEndpoints['blob']]"
+            "value": "[reference(variables('storageAccountName'), '2021-01-01').primaryEndpoints['blob']]"
           },
           "nicName": {
             "value": "[variables('nicName')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
           }
         }
       }
@@ -451,7 +466,7 @@
       "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentName'))]"
+        "[resourceId('Microsoft.Resources/deployments/', variables('nestedDeploymentName'))]"
       ],
       "properties": {
         "publisher": "[variables('cseExtPublisher')]",
