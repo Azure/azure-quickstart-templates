@@ -1,4 +1,5 @@
-@description('Application Name, max length 30 characters')
+@description('Application Name')
+@maxLength(30)
 param applicationName string = 'to-do-app${uniqueString(resourceGroup().id)}'
 
 @description('Location for all resources.')
@@ -27,7 +28,7 @@ param appServicePlanTier string = 'F1'
 param appServicePlanInstances int = 1
 
 @description('The URL for the GitHub repository that contains the project to deploy.')
-param repositoryURL string = 'https://github.com/Azure-Samples/cosmos-dotnet-core-todo-app.git'
+param repositoryUrl string = 'https://github.com/Azure-Samples/cosmos-dotnet-core-todo-app.git'
 
 @description('The branch of the GitHub repository to use.')
 param branch string = 'main'
@@ -38,12 +39,12 @@ param databaseName string = 'Tasks'
 @description('The Cosmos DB container name.')
 param containerName string = 'Items'
 
-var cosmosAccountName_var = toLower(applicationName)
-var webSiteName_var = applicationName
-var hostingPlanName_var = applicationName
+var cosmosAccountName = toLower(applicationName)
+var websiteName = applicationName
+var hostingPlanName = applicationName
 
-resource cosmosAccountName 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
-  name: cosmosAccountName_var
+resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
+  name: cosmosAccountName
   kind: 'GlobalDocumentDB'
   location: location
   properties: {
@@ -61,35 +62,29 @@ resource cosmosAccountName 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = 
   }
 }
 
-resource hostingPlanName 'Microsoft.Web/serverfarms@2019-08-01' = {
-  name: hostingPlanName_var
+resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
+  name: hostingPlanName
   location: location
   sku: {
     name: appServicePlanTier
     capacity: appServicePlanInstances
   }
-  properties: {
-    name: hostingPlanName_var
-  }
-  dependsOn: [
-    cosmosAccountName
-  ]
 }
 
-resource webSiteName 'Microsoft.Web/sites@2019-08-01' = {
-  name: webSiteName_var
+resource website 'Microsoft.Web/sites@2020-06-01' = {
+  name: websiteName
   location: location
   properties: {
-    serverFarmId: hostingPlanName.id
+    serverFarmId: hostingPlan.id
     siteConfig: {
       appSettings: [
         {
           name: 'CosmosDb:Account'
-          value: cosmosAccountName.properties.documentEndpoint
+          value: cosmosAccount.properties.documentEndpoint
         }
         {
           name: 'CosmosDb:Key'
-          value: listKeys(cosmosAccountName.id, '2021-01-15').primaryMasterKey
+          value: listKeys(cosmosAccount.id, cosmosAccount.apiVersion).primaryMasterKey
         }
         {
           name: 'CosmosDb:DatabaseName'
@@ -104,10 +99,10 @@ resource webSiteName 'Microsoft.Web/sites@2019-08-01' = {
   }
 }
 
-resource webSiteName_web 'Microsoft.Web/sites/sourcecontrols@2019-08-01' = {
-  name: '${webSiteName.name}/web'
+resource srcControls 'Microsoft.Web/sites/sourcecontrols@2020-06-01' = {
+  name: '${website.name}/web'
   properties: {
-    repoUrl: repositoryURL
+    repoUrl: repositoryUrl
     branch: branch
     isManualIntegration: true
   }

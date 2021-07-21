@@ -15,7 +15,7 @@
 
 This template allows you to deploy a secure 5 node, Single Node Type Service Fabric Cluster running Ubuntu Server on a Standard_D2_v2 Size Virtual Machine Scale set with Azure Diagnostics turned on. 
 
-This template assumes that you already have certificates uploaded to your keyvault.  If you want to create a new certificate run the **New-ServiceFabricClusterCertificate.ps1** file in this sample.  
+This template assumes that you already have certificates uploaded to your keyvault.  If you want to create a new certificate run the **New-ServiceFabricClusterCertificate.ps1** file in the scripts folder of this sample.  
 
 You can download the cert from the keyvault from the portal 
 - Got to the keyvalut resource
@@ -38,7 +38,7 @@ If you are wanting to create a custom ARM template for your cluster, then you ha
 Unzip the downloaded .zip on your local machine, make any changes to template or the parameter file as you need.
 
 <!--Image references-->
-[DownloadTemplate]: ./DownloadTemplate.png
-[DownloadCert]: ./DownloadCert.PNG
+[DownloadTemplate]: ./images/DownloadTemplate.png
+[DownloadCert]: ./images/DownloadCert.PNG
 
 

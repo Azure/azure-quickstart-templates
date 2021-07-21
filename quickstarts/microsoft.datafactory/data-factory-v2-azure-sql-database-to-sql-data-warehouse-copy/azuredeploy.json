@@ -1,0 +1,313 @@
+{
+  "contentVersion": "1.0.0.0",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "parameters": {
+    "dataFactoryName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the data factory. Must be globally unique."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of the data factory."
+      }
+    },
+    "azureStorageAccountResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Storage account resource id."
+      }
+    },
+    "azureStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Storage account name."
+      }
+    },
+    "existingServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure SQL Server name."
+      }
+    },
+    "existingDatabaseName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure SQL Server DB name."
+      }
+    },
+    "existingDataWarehouseName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Data Warehouse name."
+      }
+    },
+    "existingDatabaseAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure SQL Server DB Admin Username"
+      }
+    },
+    "databaseAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "DB Password"
+      }
+    }
+  },
+  "variables": {
+    "azureStorageLinkedServiceName": "Tutorial4_AzureStorageLinkedService",
+    "azureSqlDatabaseLinkedServiceName": "Tutorial4_AzureSqlDatabaseLinkedService",
+    "azureSqlDataWareHouseLinkedServiceName": "Tutorial4_AzureSqlDataWarehouseLinkedService",
+    "inputDatasetName": "Tutorial4_InputSqlDataset",
+    "outputDatasetName": "Tutorial4_OutputSqlDataWarehouseDataset",
+    "pipelineName": "Tutorial2-CopyFromSqlToSqlDwPipeline",
+    "pipelineName2": "Tutorial2-TriggerCopyPipeline",
+    "leftBracket": "[",
+    "azureSqllDataWarehouseConnectionString":"[concat('Server=tcp:', parameters('existingServerName'), environment().suffixes.sqlServerHostname, ',1433;Initial Catalog=',parameters('existingDataWarehouseName'), ';Persist Security Info=False;User ID=', parameters('existingDatabaseAdminUsername'),parameters('databaseAdminPassword'),';Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
+    "azureSqlDatabaseConnectionString":"[concat('Server=tcp:', parameters('existingServerName'), environment().suffixes.sqlServerHostname, ',1433;Initial Catalog=',parameters('existingDatabaseName'), ';Persist Security Info=False;User ID=', parameters('existingDatabaseAdminUsername'),parameters('databaseAdminPassword'),';Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+  },
+  "resources": [
+    {
+      "name": "[parameters('dataFactoryName')]",
+      "apiVersion": "2018-06-01",
+      "type": "Microsoft.DataFactory/factories",
+      "location": "[parameters('location')]",
+      "properties": {},
+      "resources": [
+        {
+          "type": "linkedservices",
+          "name": "[variables('azureStorageLinkedServiceName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "type": "AzureStorage",
+            "description": "Azure Storage linked service",
+            "typeProperties": {
+              "connectionString": {
+                "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('azureStorageAccountName'),';AccountKey=',listKeys(parameters('azureStorageAccountResourceId'), '2021-01-01').keys[0].value)]",
+                "type": "SecureString"
+              }
+            }
+          }
+        },
+        {
+          "type": "linkedservices",
+          "name": "[variables('azureSqlDatabaseLinkedServiceName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "type": "AzureSqlDatabase",
+            "description": "Azure SQL Database linked service",
+            "typeProperties": {
+              "connectionString": {
+                "value": "[variables('azureSqlDatabaseConnectionString')]",
+                "type": "SecureString"
+              }
+            }
+          }
+        },
+        {
+          "type": "linkedservices",
+          "name": "[variables('azureSqlDataWarehouseLinkedServiceName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "type": "AzureSqlDW",
+            "description": "Azure SQL Data Warehouse linked service",
+            "typeProperties": {
+              "connectionString": {
+                "value": "[variables('azureSqllDataWarehouseConnectionString')]",
+                "type": "SecureString"
+              }
+            }
+          }
+        },
+        {
+          "name": "[variables('inputDatasetName')]",
+          "type": "datasets",
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "linkedServiceName": {
+              "referenceName": "[variables('azureSqlDatabaseLinkedServiceName')]",
+              "type": "LinkedServiceReference"
+            },
+            "type": "AzureSqlTable",
+            "typeProperties": {
+              "tableName": "'dummy'"
+            }
+          },
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('azureSqlDatabaseLinkedServiceName')]"
+          ]
+        },
+        {
+          "name": "[variables('outputDatasetName')]",
+          "type": "datasets",
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "linkedServiceName": {
+              "referenceName": "[variables('azureSqlDataWareHouseLinkedServiceName')]",
+              "type": "LinkedServiceReference"
+            },
+            "parameters": {
+              "DWTableName": {
+                "type": "string"
+              }
+            },
+            "type": "AzureSqlDWTable",
+            "typeProperties": {
+              "tableName": {
+                "value": "@{dataset().DWTableName}",
+                "type": "Expression"
+              }
+            }
+          },
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('azureSqlDataWarehouseLinkedServiceName')]"
+          ]
+        },
+        {
+          "type": "pipelines",
+          "name": "[variables('pipelineName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('inputDatasetName')]",
+            "[variables('outputDatasetName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "activities": [
+              {
+                "name": "IterateSQLTables",
+                "type": "ForEach",
+                "typeProperties": {
+                  "items": {
+                    "value": "@pipeline().parameters.tableList",
+                    "type": "Expression"
+                  },
+                  "activities": [
+                    {
+                      "name": "CopyData",
+                      "type": "Copy",
+                      "typeProperties": {
+                        "source": {
+                          "type": "SqlSource",
+                          "sqlReaderQuery": "SELECT * FROM [@{item().TABLE_SCHEMA}].[@{item().TABLE_NAME}]"
+                        },
+                        "sink": {
+                          "type": "SqlDWSink",
+                          "allowPolyBase": true,
+                          "writeBatchSize": 10000,
+                          "preCopyScript": "TRUNCATE TABLE [@{item().TABLE_SCHEMA}].[@{item().TABLE_NAME}]",
+                          "polyBaseSettings": {
+                            "rejectValue": 0,
+                            "rejectType": "value",
+                            "useTypeDefault": false
+                          }
+                        },
+                        "enableStaging": true,
+                        "stagingSettings": {
+                          "linkedServiceName": {
+                            "referenceName": "[variables('azureStorageLinkedServiceName')]",
+                            "type": "LinkedServiceReference"
+                          }
+                        },
+                        "cloudDataMovementUnits": 0
+                      },
+                      "inputs": [
+                        {
+                          "referenceName": "[variables('inputDatasetName')]",
+                          "type": "DatasetReference",
+                          "parameters": {}
+                        }
+                      ],
+                      "outputs": [
+                        {
+                          "referenceName": "[variables('outputDatasetName')]",
+                          "type": "DatasetReference",
+                          "parameters": {
+                            "DWTableName": "[concat(variables('leftBracket'), '@{item().TABLE_SCHEMA}].[@{item().TABLE_NAME}]')]"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "parameters": {
+              "tableList": {
+                "type": "Array"
+              }
+            }
+          }
+        },
+        {
+          "name": "[variables('pipelineName2')]",
+          "type": "pipelines",
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "activities": [
+              {
+                "name": "LookupTableList",
+                "description": " Retrieve the table list from Azure SQL database",
+                "type": "Lookup",
+                "typeProperties": {
+                  "source": {
+                    "type": "SqlSource",
+                    "sqlReaderQuery": "SELECT TABLE_SCHEMA, TABLE_NAME FROM information_schema.TABLES WHERE TABLE_TYPE = 'BASE TABLE' and TABLE_SCHEMA = 'SalesLT' and TABLE_NAME <> 'ProductModel'"
+                  },
+                  "dataset": {
+                    "referenceName": "[variables('inputDatasetName')]",
+                    "type": "DatasetReference",
+                    "parameters": {}
+                  },
+                  "firstRowOnly": false
+                }
+              },
+              {
+                "name": "TriggerCopy",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                  {
+                    "activity": "LookupTableList",
+                    "dependencyConditions": [
+                      "Succeeded"
+                    ]
+                  }
+                ],
+                "typeProperties": {
+                  "pipeline": {
+                    "referenceName": "[variables('pipelineName')]",
+                    "type": "PipelineReference"
+                  },
+                  "parameters": {
+                    "tableList": "@activity('LookupTableList').output.value"
+                  }
+                }
+              }
+            ]
+          },
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('inputDatasetName')]",
+            "[variables('outputDatasetName')]",
+            "[variables('pipelineName')]"
+          ]
+        }
+      ]
+    }
+  ]
+}
