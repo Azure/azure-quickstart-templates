@@ -2,6 +2,13 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "virtualMachineName": {
+      "type": "string",
+      "defaultValue": "ad-vm",
+      "metadata": {
+          "description": "Virtual machine name."
+      }
+     },
     "dnsZoneName": {
       "type": "string",
       "defaultValue": "private.local",
@@ -22,24 +29,26 @@
         "description": "The password for the Administrator account of the new VM and Domain"
       }
     },
-    "serverPublicDnsName": {
-      "type": "string",
-      "metadata": {
-        "description": "The DNS name for the public IP address used by the Load Balancer infront of the DNS servers"
-      }
+
+    "_artifactsLocation": {
+        "type": "string",
+        "metadata": {
+            "description": "The location of resources, such as templates and DSC modules, that the template depends on"
+        },
+        "defaultValue": "[deployment().properties.templateLink.uri]"
     },
-    "assetLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "The location of resources, such as templates and scripts, that this script depends on"
-      },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/custom-private-dns"
+    "_artifactsLocationSasToken": {
+        "type": "securestring",
+        "metadata": {
+            "description": "Auto-generated token to access _artifactsLocation"
+        },
+        "defaultValue": ""
     },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for all resources."
+        "description": "Location for all resources"
       }
     }
   },
@@ -66,11 +75,11 @@
       "comments": "This uses one of the other templates to deploy a pair of AD controllers",
       "name": "adDeployment",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('adTemplate')]",
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/modules/active-directory-new-domain/0.9/azuredeploy.json",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {    
@@ -83,23 +92,8 @@
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
           },
-          "dnsPrefix": {
-            "value": "[parameters('serverPublicDnsName')]"
-          },
-          "pdcRDPPort": {
-            "value":"[variables('pdcRDPPort')]"
-          },
-          "bdcRDPPort": {
-            "value":"[variables('bdcRDPPort')]"
-          },
-          "_artifactsLocation": {
-            "value": "parameters('assetLocation')"
-          },
-          "_artifactsLocationSasToken": {
-            "value":"[variables('_artifactsLocationSasToken')]"
-          },
-          "location": {
-            "value":"[parameters('location')]"
+          "virtualMachineName": {
+            "value": "[parameters('virtualMachineName')]"
           }
         }
       }
@@ -111,28 +105,31 @@
       "dependsOn": [
         "Microsoft.Resources/deployments/adDeployment"
       ],
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('assetLocation'),'/',variables('serverTemplateFolder'), '/', variables('serverTemplateFile'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/server/setupserver.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "vmList": {
-            "value": "[concat(variables('adPDCVMName'), ',', variables('adBDCVMName'))]"
+            "value": "[parameters('virtualMachineName')]"
           },
           "dnsZone": {
             "value": "[parameters('dnsZoneName')]"
           },
           "vnetName": {
-            "value": "[variables('virtualNetworkName')]"
+            "value": "[reference('adDeployment').outputs.virtualNetworkName.value]"
           },
-          "relativeDownloadFolder": {
-            "value": "./"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
           },
-          "assetLocation": {
-            "value": "[concat(parameters('assetLocation'),'/',variables('serverTemplateFolder'))]"
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value":"[parameters('location')]"
           }
         }
       }
@@ -141,14 +138,14 @@
       "comments": "Create an example Windows client VM",
       "name": "setupWindowsClient",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/setupServer"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('vmTemplate')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/genericvm.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -162,7 +159,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "subnetId": {
-            "value": "[variables('subnetId')]"
+            "value": "[resourceId(reference('adDeployment').outputs.virtualNetworkResourceGroupName.value, 'Microsoft.Network/virtualNetworks/subnets', reference('adDeployment').outputs.virtualNetworkName.value, reference('adDeployment').outputs.virtualNetworkSubnetName.value)]"
           },
           "imagePublisher": {
             "value": "MicrosoftWindowsServer"
@@ -172,6 +169,9 @@
           },
           "imageSKU": {
             "value": "2012-R2-Datacenter"
+          },
+          "location": {
+            "value":"[parameters('location')]"
           }
         }
       }
@@ -183,11 +183,11 @@
       "dependsOn": [
         "Microsoft.Resources/deployments/setupWindowsClient"
       ],
-      "apiVersion":"2016-09-01",
+      "apiVersion":"2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('assetLocation'),'/',variables('winClientTemplateFolder'), '/', variables('winClientTemplateFile'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/windows-client/setupwinclient.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -197,11 +197,14 @@
           "dnsZone": {
             "value": "[parameters('dnsZoneName')]"
           },
-          "relativeDownloadFolder": {
-            "value": "./"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
           },
-          "assetLocation": {
-            "value": "[concat(parameters('assetLocation'), '/', variables('winClientTemplateFolder'))]"
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value":"[parameters('location')]"
           }
         }
       }
@@ -210,14 +213,14 @@
       "comments": "Create an example Ubuntu client VM",
       "name": "setupLinuxClient",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/setupServer"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('vmTemplate')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/genericvm.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -231,7 +234,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "subnetId": {
-            "value": "[variables('subnetId')]"
+            "value": "[resourceId(reference('adDeployment').outputs.virtualNetworkResourceGroupName.value, 'Microsoft.Network/virtualNetworks/subnets', reference('adDeployment').outputs.virtualNetworkName.value, reference('adDeployment').outputs.virtualNetworkSubnetName.value)]"
           },
           "imagePublisher": {
             "value": "Canonical"
@@ -241,6 +244,9 @@
           },
           "imageSKU": {
             "value": "14.04.5-LTS"
+          },
+          "location": {
+            "value":"[parameters('location')]"
           }
         }
       }
@@ -252,11 +258,11 @@
       "dependsOn": [
         "Microsoft.Resources/deployments/setupLinuxClient"
       ],
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('assetLocation'),'/',variables('linClientTemplateFolder'), '/', variables('linClientTemplateFile'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/linux-client/setuplinuxclient.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -266,8 +272,14 @@
           "dnsZone": {
             "value": "[parameters('dnsZoneName')]"
           },
-          "assetLocation": {
-            "value": "[concat(parameters('assetLocation'), '/', variables('linClientTemplateFolder'))]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value":"[parameters('location')]"
           }
         }
       }
