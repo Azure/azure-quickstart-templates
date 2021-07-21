@@ -25,8 +25,8 @@ Deployment steps
 
 ```bash
 bicep build *.bicep
-az deployment sub create --template-file sub.json --location uksouth --confirm-with-what-if 
-az deployment group create --resource-group rg-bicep --template-file main.json --confirm-with-what-if 
+az deployment sub create --template-file sub.bicep --location uksouth --confirm-with-what-if 
+az deployment group create --resource-group rg-bicep --template-file main.bicep --confirm-with-what-if 
 ```
 
 With Bicep 0.2 the VSCode Bicep extension brings inbuilt intellisence which greatly simplifies adding resources and setting the required properties. Bicep will also determining the dependencies and perform error/consistency checking so a template such as this can be rapidly rapidly created.
@@ -46,4 +46,3 @@ This example uses the following resource types:
 Note: Once the VM has been provisioned there will be a 3-5min delay while CycleCloud is installed and configured.
 
 TODO: Clean up README
-
