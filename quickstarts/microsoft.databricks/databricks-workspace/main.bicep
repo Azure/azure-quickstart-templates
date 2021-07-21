@@ -1,6 +1,6 @@
 @description('Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not')
 param disablePublicIp bool = false
-param a int
+var a = 123
 
 @description('The name of the Azure Databricks workspace to create.')
 param workspaceName string
