@@ -5,7 +5,8 @@ param csadminSshKey string
 @secure()
 param ccadminRawPassword string
 
-param myIp string = '20.49.199.4'
+@description('Specifies where network traffic originates from for ingress NSG rules.')
+param myIp string
 
 var roleDefinitions = {
   owner: '8e3af657-a8ff-443c-a75c-2fe8c4bcb635'
