@@ -20,13 +20,15 @@ Usage:
 #>
 
 param(
-    [string][Parameter(Mandatory = $true)] $SampleFolder, # this is the path to the sample
+    [string][Parameter(Mandatory = $true)][AllowEmptyString()] $SampleFolder, # this is the path to the sample
     [string] $StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME ? $ENV:STORAGE_ACCOUNT_NAME : "azurequickstartsservice",
     [string] $CloudEnvironment = "AzureCloud", # AzureCloud/AzureUSGovernment
     [string] $TtkFolder = $ENV:TTK_FOLDER,
     [string] $BicepPath = $ENV:BICEP_PATH ? $ENV:BICEP_PATH : "bicep",
     [switch] $Fix # If true, fixes will be made if possible
 )
+
+$SampleFolder = $SampleFolder -eq "" ? "." : $SampleFolder
 
 $PreviousErrorPreference = $ErrorActionPreference
 $ErrorActionPreference = "Continue"
@@ -135,6 +137,18 @@ $validateBPOutput =
 Write-Output $validateBPOutput
 $vars = Find-VarsFromWriteHostOutput $validateBPOutput
 
+# Check misc labels
+Write-Host "Checking for miscellaneous labels"
+$miscLabelsHostOutput =
+& $PSScriptRoot/Check-MiscLabels.ps1 `
+    -SampleName $SampleName `
+    6>&1
+Write-Output $miscLabelsHostOutput
+$vars = Find-VarsFromWriteHostOutput $miscLabelsHostOutput
+$isRootSample = $vars["ISROOTSAMPLE"] -eq "true"
+$sampleHasUpperCase = $vars["SampleHasUpperCase"] -eq "true"
+$isPortalSample = $vars["IsPortalSample"] -eq "true"
+
 # Clean up
 if ($null -ne $CompiledJsonFilename -and (Test-Path $CompiledJsonFilename)) {
     Remove-Item $CompiledJsonFilename
@@ -158,5 +172,14 @@ else {
 }
 
 if ($labelBicepWarnings) {
-    Write-Warning "Label: bicep warnings"
+    Write-Warning "LABEL: bicep warnings"
+}
+if ($isRootSample) {
+    Write-Warning "LABEL: ROOT"
+}
+if ($sampleHasUpperCase) {
+    Write-Warning "LABEL: UPPERCASE"
+}
+if ($isPortalSample) {
+    Write-Warning "LABEL: PORTAL SAMPLE"
 }
