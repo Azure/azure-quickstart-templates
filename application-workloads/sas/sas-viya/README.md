@@ -37,7 +37,7 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
     - [(Optional) Create a Mirror Repository](#optional-create-a-mirror-repository)
     - [Upload the Entire Mirror to Azure Blob Storage](#upload-the-entire-mirror-to-azure-blob-storage)
   - [Best Practices When Deploying SAS Viya 3.5 on Azure](#best-practices-when-deploying-sas-viya-35-on-azure)
-  - [Deployment Steps](#deployment-steps)
+  - [Deployment Steps](#Deployment)
   - [Additional Deployment Details](#additional-deployment-details)
   - [User Accounts](#user-accounts)
     - [Important File and Folder Locations](#important-file-and-folder-locations)
@@ -181,9 +181,34 @@ We recommend the following as best practices:
 
 <a name="Deployment"></a>
 ## Deployment Steps
-You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for a command-line (CLI) deployment using the scripts in the root of this repository.
+1. Click the Deploy to Azure button at the beginning of this document or follow the instructions for a command-line (CLI) deployment using the scripts in the root of this repository. 
+2. Specify the following parameters for your deployment:
 
-The deployment takes between 1 and 4 hours, depending on the quantity of software licensed.
+|Parameter Name|Value|
+|--------------|-----------|
+|Subscription|Specifies what subscription to use for the deployment.|
+|Resource group|Specifies what resource group to use. Choose an existing group or click *Create new* and provide a name for the new group.|
+|Region|Defines the Azure region in which the deployment should run. The available Azure regions are the ones listed at both [Azure Services that support Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-region), and [How to create an NFS share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal). 
+|Deployment Data Location|Specifies the Blob Shared Access Signature(SAS) URL to the SAS license.
+|SSH Public Key| Specifies the full SSH public key that will be added to the servers. Copy and paste a public SSH key into this field.|
+|Location|Defines the location in Azure where these resources should be created. This is derived from the resource group.|
+|Web Ingress Location| Specifies to allow inbound HTTP traffic to the SAS Viya environment from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x. If this is left blank, the environment can be accessed from any location on the internet.|
+|Admin Ingress Location|Specifies to allow inbound SSH traffic to the Ansible Controller from this Classless Inter-Domain Routing (CIDR) block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x. If this is left blank, the environment can be accessed from any location on the internet.|
+|Primary User Name| The user name that will be added to the servers to allow SSH access. If left blank, the value vmuser will be used.|
+|SAS Admin Pass|Specifies the password used for the SAS administrator users (sasboot, optionally sasadmin). Must have at least 6 and no more than 255 characters. Single quotes (') are not allowed.|
+|SAS User Pass|Specifies the password used for the default SAS user(sasuser). If no value is entered, no default users are created. **WARNING:** If not set, the deployment will require additional setup steps before it can be used. Single quotes (') are not allowed.|
+|Deployment Mirror|(optional) Specifies the HTTPS location of a SAS mirror. The mirror should be a path to a mirror directory tree in blob storage.|
+|Ansible VM SKU| Specifies the Stock Keeping Unit (SKU) for the Ansible/Bastion virtual machine (VM).|
+|Services VM SKU| Specifies the SKU for the Services VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks.|
+|Controller VM SKU|Specifies the SKU for the Controller VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks.|
+|CAS Node Count|Specifies the number of CAS nodes in the deployment. If this is set to 1, an SMP environment is built with one CAS controller. If this is set to a value of 2 or more, an MPP environment is built (n workers + 1 controller). In the MPP environment case, you should shrink the size of the CAS controller as it will only be performing orchestration.|
+|CAS Worker VM SKU|Specifies the SKU for the CAS worker VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks.|
+|\_artifacts Location SAS Token|For a standard deployment, leave this empty. If you are running from a blob template, then provide the Shared Access Signature token (starting with a ?) that grants authorization to the private template. **Note:** SAS Token refers to the Shared Access Signature Token.|
+|\_artifacts Location|Use the default value when deploying from the Azure quickstart template repository.  If running a custom deployment or editing the template, use the full URI, (for example, https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/sas/sas-viya/). If a SAS key (SAS Token) is needed, please do not include the SAS key in the URI. Instead, add the SAS key (including the beginning ?) to the _artifactsLocationSasToken parameter.|
+
+3. Click *Next: Review and Create*. 
+4. If the validation is successful,  click *Create*. When the *Deployment is in progress* window appears, the deployment begins.
+Deployments typically take two to three hours to complete. 
 
 <a name="deployment-details"></a>
 
