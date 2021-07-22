@@ -7,7 +7,7 @@ param functionAppName string = 'func-${uniqueString(resourceGroup().id)}'
 @description('The name of the Azure Function hosting plan.')
 param functionAppPlanName string = 'plan-${uniqueString(resourceGroup().id)}'
 
-@description('Determines if a Windows or Linux-based hosting plan is created.  Set to true for Linux, and false for Windows.')
+@description('If Linux app service plan, set to true, false otherwise (for Windows).')
 param isReserved bool = false
 
 @description('Specifies the Azure Function hosting plan SKU.')
@@ -97,33 +97,21 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
 resource storageFileDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateStorageFileDnsZoneName
   location: 'global'
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
 resource storageBlobDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateStorageBlobDnsZoneName
   location: 'global'
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
 resource storageQueueDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateStorageQueueDnsZoneName
   location: 'global'
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
 resource storageTableDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateStorageTableDnsZoneName
   location: 'global'
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
 // -- Private DNS Zone Links --
@@ -334,16 +322,10 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
       defaultAction: 'Deny'
     }
   }
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
 resource functionContentShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-04-01' = {
   name: '${storageAccount.name}/default/${functionContentShareName}'
-  dependsOn: [
-    storageAccount
-  ]
 }
 
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
@@ -371,10 +353,23 @@ resource plan 'Microsoft.Web/serverfarms@2021-01-01' = {
   }
 }
 
-resource function 'Microsoft.Web/sites@2021-01-01' = {
+resource functionApp 'Microsoft.Web/sites@2021-01-01' = {
   location: location
   name: functionAppName
   kind: isReserved ? 'functionapp,linux' : 'functionapp'
+  dependsOn: [
+    storageFilePrivateDnsZoneGroup
+    storageBlobPrivateDnsZoneGroup
+    storageQueuePrivateDnsZoneGroup
+    storageTablePrivateDnsZoneGroup
+
+    storageBlobDnsZoneLink
+    storageQueueDnsZoneLink
+    storageTableDnsZoneLink
+    storageQueueDnsZoneLink
+
+    functionContentShare
+  ]
   properties: {
     serverFarmId: plan.id
     reserved: isReserved
@@ -417,23 +412,10 @@ resource function 'Microsoft.Web/sites@2021-01-01' = {
       ]
     }
   }
-  dependsOn: [
-    storageFilePrivateDnsZoneGroup
-    storageBlobPrivateDnsZoneGroup
-    storageQueuePrivateDnsZoneGroup
-    storageTablePrivateDnsZoneGroup
-
-    storageBlobDnsZoneLink
-    storageQueueDnsZoneLink
-    storageTableDnsZoneLink
-    storageQueueDnsZoneLink
-
-    functionContentShare
-  ]
 }
 
 resource planNetworkConfig 'Microsoft.Web/sites/networkConfig@2021-01-01' = {
-  parent: function
+  parent: functionApp
   name: 'virtualNetwork'
   properties: {
     subnetResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, functionSubnetName)
