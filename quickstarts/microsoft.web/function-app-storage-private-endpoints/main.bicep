@@ -346,7 +346,7 @@ resource functionContentShare 'Microsoft.Storage/storageAccounts/fileServices/sh
   ]
 }
 
-resource appInsights 'Microsoft.Insights/components@2020-02-02-preview' = {
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: applicationInsightsName
   location: location
   kind: 'web'
