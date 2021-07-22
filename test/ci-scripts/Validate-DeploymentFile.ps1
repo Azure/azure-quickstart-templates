@@ -57,7 +57,9 @@ if ($bicepSupported) {
             }
             else {
                 # This should only occur on the last line (the error/warnings summary line)
-                $item | Should -Be $errorOutput[-1] -Because "Only the last error output line should not be a warning or error"
+                if ($item -ne $errorOutput[-1]) {
+                    throw "Only the last error output line should not be a warning or error"
+                }
             }
         }
     }
