@@ -33,7 +33,7 @@ param privateEndpointSubnetName string = 'snet-pe'
 @description('The IP adddress space used for the virtual network.')
 param vnetAddressPrefix string = '10.100.0.0/16'
 
-@description('The IP address spaced used for the Azure Function integration subnet.')
+@description('The IP address space used for the Azure Function integration subnet.')
 param functionSubnetAddressPrefix string = '10.100.0.0/24'
 
 @description('The IP address space used for the private endpoints.')
@@ -384,7 +384,7 @@ resource function 'Microsoft.Web/sites@2021-01-01' = {
       appSettings: [
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: reference(appInsights.id, '2020-02-02-preview').instrumentationKey
+          value: '${appInsights.properties.InstrumentationKey}'
         }
         {
           name: 'AzureWebJobsStorage'
@@ -413,12 +413,6 @@ resource function 'Microsoft.Web/sites@2021-01-01' = {
         {
           name: 'WEBSITE_CONTENTSHARE'
           value: functionContentShareName
-        }
-
-        // TODO: CHECK IF STILL NEED THIS
-        {
-          name: 'WEBSITE_DNS_SERVER'
-          value: '168.63.129.16'
         }
       ]
     }
