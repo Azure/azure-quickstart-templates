@@ -9,6 +9,7 @@ For bicep samples:
 
 #>
 
+[CmdletBinding()]
 param (
     [string] $SampleFolder = $ENV:SAMPLE_FOLDER,
     [string] $MainTemplateFilenameBicep = $ENV:MAINTEMPLATE_FILENAME,
@@ -19,11 +20,12 @@ param (
     [switch] $bicepSupported = ($ENV:BICEP_SUPPORTED -eq "true")
 )
 
+$Error.Clear()
 $isPR = $BuildReason -eq "PullRequest"
 
-if ($bicepSupported) {
-    Write-Host "##vso[task.setvariable variable=result.bicep.build]FAIL"
+Write-Host "##vso[task.setvariable variable=label.bicep.warnings]false"
 
+if ($bicepSupported) {
     $MainTemplatePathBicep = "$($SampleFolder)/$($MainTemplateFilenameBicep)"
     $MainTemplatePathJson = "$($SampleFolder)/$($MainTemplateFilenameJson)"
     
@@ -35,28 +37,41 @@ if ($bicepSupported) {
     Start-Process $BicepPath -ArgumentList @('build', $MainTemplatePathBicep, '--outfile', $CompiledJsonPath) -RedirectStandardError $errorFile -Wait
     $errorOutput = [string[]](Get-Content $errorFile)
 
-    # Remove this line if it exists:
-    # Build succeeded: 0 Warning(s), 0 Error(s) [possibly localized]
-    $errorOutput = $errorOutput | where-object { $_ -notmatch " 0 .* 0 " }
-
     Remove-Item $errorFile
     
-    $errors = @()
-    $buildPassed = $true
+    $warnings = 0
+    $errors = 0
     foreach ($item in $errorOutput) {
-        $buildPassed = $false
-        if ($item -imatch " Warning BCP") {
+        if ($item -imatch ": Warning ") {
+            $warnings += 1
             Write-Warning $item
         }
+        elseif ($item -imatch ": Error BCP") {
+            $errors += 1
+            Write-Error $item
+        }
         else {
-            Write-Warning $item
+            # Build succeeded: 0 Warning(s), 0 Error(s) [possibly localized]
+            if ($item -match " 0 .* 0 ") {
+                # Succeeded
+            }
+            else {
+                # This should only occur on the last line (the error/warnings summary line)
+                $item | Should -Be $errorOutput[-1] -Because "Only the last error output line should not be a warning or error"
+            }
         }
     }
 
-    if (!(Test-Path $CompiledJsonPath)) {
+    if (($errors -gt 0) -or !(Test-Path $CompiledJsonPath)) {
         # Can't continue, fail pipeline
         Write-Error "Bicep build failed."
         return
+    }    
+
+    if ($warnings -gt 0) {
+        # Can't continue, fail pipeline
+        Write-Warning "Bicep build had warnings."
+        Write-Host "##vso[task.setvariable variable=label.bicep.warnings]true"
     }    
 
     # If this is a PR, compare it against the JSON file included in the sample
@@ -70,7 +85,6 @@ if ($bicepSupported) {
         if (!$templatesMatch) {
             Write-Error ("The JSON in the sample does not match the JSON built from bicep.`n" `
                     + "Either copy the expected output from the log into $MainTemplateFilenameJson or run the command ``bicep build $mainTemplateFilenameBicep --outfile $MainTemplateFilenameJson`` in your sample folder using bicep version $BicepVersion")
-            $buildPassed = $false
         }
     }
     
@@ -79,17 +93,11 @@ if ($bicepSupported) {
 
     # Delete the temporary built JSON file
     Remove-Item $CompiledJsonPath
-
-    # result.bicep.build
-    Write-Host "##vso[task.setvariable variable=result.bicep.build]$($buildPassed ? 'PASS': 'FAIL')"
 }
 else {
     # Just deploy the JSON file included in the sample
     Write-Host "Bicep not supported in this sample, deploying to $MainTemplateFilenameJson"
     $fileToDeploy = $MainTemplateFilenameJson
-
-    # result.bicep.build not applicable
-    Write-Host "##vso[task.setvariable variable=result.bicep.build]"
 }
 
 Write-Host "File to deploy: $fileToDeploy"

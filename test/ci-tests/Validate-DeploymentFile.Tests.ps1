@@ -13,6 +13,9 @@
             $bicepSupported = $templateFileName.EndsWith('.bicep')
             $cmdlet = "$(Split-Path $PSCommandPath -Parent)/../ci-scripts/Validate-DeploymentFile.ps1"
             $ErrorActionPreference = 'ContinueSilently'
+            $err = $null
+            $warn = $null
+            $Error.Clear()
             $buildHostOutput = . $cmdlet `
                 -SampleFolder $SampleFolder `
                 -MainTemplateFilenameBicep ($bicepSupported ? $templateFileName : 'main.bicep') `
@@ -21,53 +24,67 @@
                 -BicepPath ($ENV:BICEP_PATH ? $ENV:BICEP_PATH : 'bicep') `
                 -BicepVersion '1.2.3' `
                 -bicepSupported:$bicepSupported `
-                -ErrorAction 'ContinueSilently' `
-                6>&1 2>&1 
+                -ErrorVariable err `
+                -WarningVariable warn `
+                6>&1
             # Write-Host $buildHostOutput
             $ErrorActionPreference = 'Stop'
             $vars = Find-VarsFromWriteHostOutput $buildHostOutput
-            $resultBicepBuild = $vars["RESULT_BICEP_BUILD"]
+            $labelBicepWarnings = $vars["LABEL_BICEP_WARNINGS"] -eq "True"
+            $hasErrors = $err.Count -gt 0
+            $hasWarnings = $warn.Count -gt 0
 
-            $resultBicepBuild
+            $hasErrors, $hasWarnings, $labelBicepWarnings
         }
     }
 
-    It 'gives FAIL status if bicep has errors' {
+    It 'bicep has no errors' {
+        $folder = "$dataFolder/bicep-success"
+        $hasErrors, $hasWarnings, $labelBicepWarnings = Validate-DeploymentFile `
+            -SampleFolder $folder `
+            -TemplateFileName "main.bicep"
+        $hasErrors | Should -Be $false
+        $hasWarnings | Should -Be $false
+        $labelBicepWarnings | Should -Be $false    
+    }
+
+    It 'bicep has errors and warnings' {
         $folder = "$dataFolder/bicep-error"
-        $resultBicepBuild = Validate-DeploymentFile `
+        $hasErrors, $hasWarnings, $labelBicepWarnings = Validate-DeploymentFile `
             -SampleFolder $folder `
             -TemplateFileName "main.bicep"
-        $resultBicepBuild | Should -Be "FAIL"
+        $hasErrors | Should -Be $true
+        $hasWarnings | Should -Be $true
+        $labelBicepWarnings | Should -Be $false # We only show the label if the build succeeds (no errors)
     }
 
-    It 'gives FAIL status if bicep has linter warnings' {
+    It 'bicep has linter warnings' {
         $folder = "$dataFolder/bicep-linter-warnings"
-        $resultBicepBuild = Validate-DeploymentFile `
+        $hasErrors, $hasWarnings, $labelBicepWarnings = Validate-DeploymentFile `
             -SampleFolder $folder `
             -TemplateFileName "main.bicep"
-        $resultBicepBuild | Should -Be "FAIL"
+        $hasErrors | Should -Be $false
+        $hasWarnings | Should -Be $true
+        $labelBicepWarnings | Should -Be $true
     }
 
-    It 'gives FAIL status if bicep has compiler warnings' {
+    It 'bicep has compiler warnings' {
         $folder = "$dataFolder/bicep-compiler-warnings"
-        $resultBicepBuild = Validate-DeploymentFile `
+        $hasErrors, $hasWarnings, $labelBicepWarnings = Validate-DeploymentFile `
             -SampleFolder $folder `
             -TemplateFileName "main.bicep"
-        $resultBicepBuild | Should -Be "FAIL"
+        $hasErrors | Should -Be $false
+        $hasWarnings | Should -Be $true
+        $labelBicepWarnings | Should -Be $true
     }
 
-    It 'gives empty status if not bicep' {
+    It 'not bicep' {
         $folder = "$dataFolder/json-success"
-        $resultBicepBuild = Validate-DeploymentFile `
+        $hasErrors, $hasWarnings, $labelBicepWarnings = Validate-DeploymentFile `
             -SampleFolder $folder `
             -TemplateFileName "azuredeploy.json"
-        $resultBicepBuild | Should -Be $null
-    }
-    It 'gives success status if no errors' {
-        $folder = "$dataFolder/bicep-success"
-        $resultBicepBuild = Validate-DeploymentFile `
-            -SampleFolder $folder `
-            -TemplateFileName "main.bicep"
-        $resultBicepBuild | Should -Be "PASS"
+        $hasErrors | Should -Be $false
+        $hasWarnings | Should -Be $false
+        $labelBicepWarnings | Should -Be $false
     }
 }
