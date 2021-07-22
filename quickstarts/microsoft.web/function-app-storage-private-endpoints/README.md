@@ -15,7 +15,7 @@
 
 This sample Azure Resource Manager template deploys an Azure Function App that communicates with the Azure Storage account referenced by the [AzureWebJobsStorage](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#azurewebjobsstorage) and [WEBSITE_CONTENTAZUREFILECONNECTIONSTRING](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#website_contentazurefileconnectionstring) app settings, [via private endpoints](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#private-endpoints). 
 
-![Function App with Storage Private Endpoints](/quickstarts/microsoft.web/function-app-storage-private-endpoints/images/function-app-storage-privateendponts.png) 
+![Function App with Storage Private Endpoints](/quickstarts/microsoft.web/function-app-storage-private-endpoints/images/function-app-storage-private-endpoints.jpg) 
 
 ### Azure Function App
 
