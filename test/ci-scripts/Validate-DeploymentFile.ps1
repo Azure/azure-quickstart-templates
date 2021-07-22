@@ -9,7 +9,7 @@ For bicep samples:
 
 #>
 
-[CmdletBinding()]
+[CmdletBinding()] # Cmdlet binding needed to enable using -ErrorAction, -ErrorVariable etc from testing
 param (
     [string] $SampleFolder = $ENV:SAMPLE_FOLDER,
     [string] $MainTemplateFilenameBicep = $ENV:MAINTEMPLATE_FILENAME,

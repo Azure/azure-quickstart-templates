@@ -25,8 +25,9 @@
                 -BicepVersion '1.2.3' `
                 -bicepSupported:$bicepSupported `
                 -ErrorVariable err `
+                -ErrorAction SilentlyContinue `
                 -WarningVariable warn `
-                6>&1
+                6>&1 2>$null 3>$null
             # Write-Host $buildHostOutput
             $ErrorActionPreference = 'Stop'
             $vars = Find-VarsFromWriteHostOutput $buildHostOutput
