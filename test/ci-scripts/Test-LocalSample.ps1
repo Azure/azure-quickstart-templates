@@ -20,7 +20,7 @@ Usage:
 #>
 
 param(
-    [string] $SampleFolder = ".", # this is the path to the sample
+    [string][Parameter(Mandatory = $true)] $SampleFolder, # this is the path to the sample
     [string] $StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME ? $ENV:STORAGE_ACCOUNT_NAME : "azurequickstartsservice",
     [string] $CloudEnvironment = "AzureCloud", # AzureCloud/AzureUSGovernment
     [string] $TtkFolder = $ENV:TTK_FOLDER,
@@ -34,7 +34,12 @@ $Error.Clear()
 
 Import-Module "$PSScriptRoot/Local.psm1" -force
 
-$SampleFolder = Resolve-Path $SampleFolder
+$ResolvedSampleFolder = Resolve-Path $SampleFolder
+if (!$ResolvedSampleFolder) {
+    throw "Could not resolve folder $SampleFolder"
+}
+$SampleFolder = $ResolvedSampleFolder
+
 $SampleName = SampleNameFromFolderPath $SampleFolder
 
 if (!(Test-Path (Join-Path $SampleFolder "metadata.json"))) {
@@ -75,8 +80,7 @@ $vars = Find-VarsFromWriteHostOutput $buildHostOutput
 $mainTemplateDeploymentFilename = $vars["MAINTEMPLATE_DEPLOYMENT_FILENAME"]
 Assert-NotEmptyOrNull $mainTemplateDeploymentFilename "mainTemplateDeploymentFilename"
 $CompiledJsonFilename = $vars["COMPILED_JSON_FILENAME"] # $null if not bicep sample
-$vars = Find-VarsFromWriteHostOutput $buildHostOutput
-$resultBicepBuild = $vars["RESULT_BICEP_BUILD"]
+$labelBicepWarnings = $vars["LABEL_BICEP_WARNINGS"]
 
 # Validate-MetaData
 Write-Host "Validating metadata.json"
@@ -151,4 +155,8 @@ else {
     if (!$fixesMade) {
         Write-Host "No errors found."
     }
+}
+
+if ($labelBicepWarnings) {
+    Write-Warning "Label: bicep warnings"
 }
