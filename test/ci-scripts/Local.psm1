@@ -14,7 +14,7 @@ function Find-VarsFromWriteHostOutput {
             # Convert variable name from xxx.yyy.zzz to XXX_YYY_ZZZ
             $var = $var.ToUpperInvariant().Replace(".", "_")
             $vars[$var] = $value
-            Write-Host "$var = '$value'"
+            #  "$var = '$value'"
         }
     }
 
@@ -94,4 +94,21 @@ function Convert-LinesToString(
     #>
     
     return $lines -join [System.Environment]::NewLine
+}
+
+function Get-GithubLabel(
+    [string][Parameter(Mandatory = $true)] $LabelName,
+    [string]$RepositoryID = $ENV:BUILD_REPOSITORY_ID,
+    [string]$IssueOrPullRequestId = $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
+) {
+    Write-Host "Looking for label $LabelName in $RepositoryID for issue or PR #$IssueOrPullRequestId"
+    $curlResult = curl -s "https://api.github.com/repos/$RepositoryID/issues/$IssueOrPullRequestId/labels"
+    if ($curlResult -like '*"name": "$LabelName"*') {
+        Write-Host "... Found"
+        return $true
+    }
+    else {
+        Write-Host "... Not Found"
+        return $false
+    }
 }
