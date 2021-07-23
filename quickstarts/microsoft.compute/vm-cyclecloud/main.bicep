@@ -150,7 +150,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-06-01' = {
   properties: {
     osProfile: {
       computerName: 'CycleServer'
-      adminUsername: adminUsername
+      adminUsername: adminUserName
       customData: base64(customData)
       linuxConfiguration: {
         disablePasswordAuthentication: true
