@@ -282,19 +282,14 @@
     "sqlwNicName": "[concat(variables('vmSettings').sqlwVMName,'-nic')]",
     "staticSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkNameWithSuffix'),variables('subnetNames').staticSubnetName)]",
     "sqlSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkNameWithSuffix'),variables('subnetNames').sqlSubnetName)]",
-    "ids": {
-      "adNicId": "[resourceId('Microsoft.Network/networkInterfaces',variables('adPDCNicName'))]",
-      "rdplbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbSettings').rdpLBName)]",
-      "sqllbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbSettings').sqlLBName)]"
-    },
     "derivedIds": {
-      "adIPConfigID": "[concat(variables('ids').adNicId,'/ipConfigurations/ipconfig1')]",
-      "rdplbFEConfigID": "[concat(variables('ids').rdplbID,'/frontendIPConfigurations/',variables('lbSettings').rdpLBFE)]",
-      "adRDPNATRuleID": "[concat(variables('ids').rdplbID,'/inboundNatRules/',variables('RDPNAT'))]",
-      "adBEAddressPoolID": "[concat(variables('ids').rdplbID,'/backendAddressPools/',variables('lbSettings').adLBBE)]",
-      "sqlBEAddressPoolID": "[concat(variables('ids').sqllbID,'/backendAddressPools/',variables('lbSettings').sqlLBBE)]",
-      "sqllbFEConfigID": "[concat(variables('ids').sqllbID,'/frontendIPConfigurations/',variables('lbSettings').sqlLBFE)]",
-      "sqllbProbeID": "[concat(variables('ids').sqllbID,'/probes/',variables('SQLAOProbe'))]"
+      "adIPConfigID": "[resourceId('Microsoft.Network/networkInterfaces/ipConfigurations',variables('adPDCNicName'),'ipconfig1')]",
+      "rdplbFEConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbSettings').rdpLBName,variables('lbSettings').rdpLBFE)]",
+      "adRDPNATRuleID": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbSettings').rdpLBName,variables('RDPNAT'))]",
+      "adBEAddressPoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbSettings').rdpLBName,variables('lbSettings').adLBBE)]",
+      "sqlBEAddressPoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbSettings').sqlLBName,variables('lbSettings').sqlLBBE)]",
+      "sqllbFEConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbSettings').sqlLBName,variables('lbSettings').sqlLBFE)]",
+      "sqllbProbeID": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbSettings').sqlLBName,variables('SQLAOProbe'))]"
     },
     "SQL2012SP2-WS2012R2": "Enterprise",
     "SQL2012SP3-WS2012R2": "Enterprise",
@@ -357,7 +352,7 @@
     {
       "name": "StorageAccountVirtualNetworkPublicIP",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "comments": "This resource will create storage accounts for Active Directory, SQL Server, File Share Witness and Diagnostics. It will also create the Virtual Network and public IP addresses",
       "properties": {
         "mode": "Incremental",
@@ -408,7 +403,7 @@
     {
       "name": "LoadBalancers",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "comments": "Create Load Balancers for SQL and DC",
       "dependsOn": [
         "Microsoft.Resources/deployments/StorageAccountVirtualNetworkPublicIP"
@@ -456,7 +451,7 @@
     {
       "name": "CreatingNetworkInterfaces",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/LoadBalancers"
       ],
@@ -521,7 +516,7 @@
     {
       "name": "ProvisioningVMs",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/CreatingNetworkInterfaces"
       ],
@@ -532,12 +527,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "_artifactsLocation": {
-            "value": "[parameters('_artifactsLocation')]"
-          },
-          "_artifactsLocationSasToken": {
-            "value": "[parameters('_artifactsLocationSasToken')]"
-          },
           "adPDCVMName": {
             "value": "[variables('vmSettings').adPDCVMName]"
           },
@@ -634,7 +623,7 @@
     {
       "name": "UpdatingDNStoPrimaryADVM",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/ProvisioningVMs"
       ],
@@ -668,7 +657,7 @@
     {
       "name": "ConfiguringBackupADVM",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/ProvisioningVMs"
       ],
@@ -699,12 +688,6 @@
           },
           "adBDCModulesURL": {
             "value": "[variables('configuration').adBDCModulesURL]"
-          },
-          "_artifactsLocation": {
-            "value": "[parameters('_artifactsLocation')]"
-          },
-          "_artifactsLocationSasToken": {
-            "value": "[parameters('_artifactsLocationSasToken')]"
           }
         }
       }
@@ -712,7 +695,7 @@
     {
       "name": "UpdatingDNSwithBackupADVM",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/ConfiguringBackupADVM"
       ],
@@ -747,7 +730,7 @@
     {
       "name": "UpdatingSQLWNic",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/UpdatingDNStoPrimaryADVM"
       ],
@@ -789,7 +772,7 @@
     {
       "name": "UpdatingSQL0Nic",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/UpdatingSQLWNic"
       ],
@@ -816,7 +799,7 @@
                     "id": "[variables('sqlSubnetRef')]"
                   },
                   "publicIpAddress": {
-                    "id": "[resourceId(resourceGroup().Name,'Microsoft.Network/publicIpAddresses', variables('sql0AddressNameWithSuffix'))]"
+                    "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('sql0AddressNameWithSuffix'))]"
                   },
                   "loadBalancerBackendAddressPools": [
                     {
@@ -839,7 +822,7 @@
     {
       "name": "UpdatingSQL1Nic",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/UpdatingSQL0Nic"
       ],
@@ -866,7 +849,7 @@
                     "id": "[variables('sqlSubnetRef')]"
                   },
                   "publicIpAddress": {
-                    "id": "[resourceId(resourceGroup().Name,'Microsoft.Network/publicIpAddresses', variables('sql1AddressNameWithSuffix'))]"
+                    "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('sql1AddressNameWithSuffix'))]"
                   },
                   "loadBalancerBackendAddressPools": [
                     {
@@ -889,7 +872,7 @@
     {
       "name": "PreparingAlwaysOnSqlServer",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/UpdatingSQL0Nic"
       ],
@@ -900,12 +883,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "_artifactsLocation": {
-            "value": "[parameters('_artifactsLocation')]"
-          },
-          "_artifactsLocationSasToken": {
-            "value": "[parameters('_artifactsLocationSasToken')]"
-          },
           "sqlVMName": {
             "value": "[variables('vmSettings').sqlVMName]"
           },
@@ -972,7 +949,7 @@
     {
       "name": "ConfiguringAlwaysOn",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/PreparingAlwaysOnSqlServer"
       ],
@@ -983,12 +960,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "_artifactsLocation": {
-            "value": "[parameters('_artifactsLocation')]"
-          },
-          "_artifactsLocationSasToken": {
-            "value": "[parameters('_artifactsLocationSasToken')]"
-          },
           "sqlVMName": {
             "value": "[variables('vmSettings').sqlVMName]"
           },
