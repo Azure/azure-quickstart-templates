@@ -3,10 +3,16 @@ param location string = resourceGroup().location
 param csadminSshKey string
 
 @secure()
+param adminUserName string
+
+@secure()
 param ccadminRawPassword string
 
 @description('Specifies where network traffic originates from for ingress NSG rules.')
 param myIp string
+
+@description('Specifies size of cyclecloud VM')
+param vmSize string
 
 var roleDefinitions = {
   owner: '8e3af657-a8ff-443c-a75c-2fe8c4bcb635'
@@ -118,7 +124,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-05-01' = {
   }
 }
 
-resource storage 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: saName
   location: location
   kind: 'Storage'
@@ -144,14 +150,14 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-06-01' = {
   properties: {
     osProfile: {
       computerName: 'CycleServer'
-      adminUsername: 'csadmin'
+      adminUsername: adminUsername
       customData: base64(customData)
       linuxConfiguration: {
         disablePasswordAuthentication: true
         ssh: {
           publicKeys: [
             {
-              path: '/home/csadmin/.ssh/authorized_keys'
+              path: '/home/${adminUserName}/.ssh/authorized_keys'
               keyData: csadminSshKey
             }
           ]
@@ -159,7 +165,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-06-01' = {
       }
     }
     hardwareProfile: {
-      vmSize: 'Standard_D8s_v3'
+      vmSize: vmSize
     }
     storageProfile: {
       imageReference: {
