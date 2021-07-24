@@ -1,5 +1,5 @@
 @description('Storage account name')
-param storageAccountName string = 'GEN-UNIQUE'
+param storageAccountName string
 
 @description('Storage account location')
 param location string = resourceGroup().location
