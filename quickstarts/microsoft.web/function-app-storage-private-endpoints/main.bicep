@@ -7,7 +7,7 @@ param functionAppName string = 'func-${uniqueString(resourceGroup().id)}'
 @description('The name of the Azure Function hosting plan.')
 param functionAppPlanName string = 'plan-${uniqueString(resourceGroup().id)}'
 
-@description('If Linux app service plan, set to true, false otherwise (for Windows).')
+@description('Specifies the OS used for the Azure Function hosting plan.')
 @allowed([
   'Windows'
   'Linux'
