@@ -86,6 +86,7 @@ runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clie
 runuser -l $SUDOUSER -c "tar -xvf openshift-install-linux-4.6.31.tar.gz -C $INSTALLERHOME"
 runuser -l $SUDOUSER -c "sudo tar -xvf openshift-client-linux-4.6.31.tar.gz -C /usr/bin"
 
+
 chmod +x /usr/bin/kubectl
 chmod +x /usr/bin/oc
 chmod +x $INSTALLERHOME/openshift-install
