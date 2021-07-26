@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.451.19169",
-      "templateHash": "18333051611424244647"
+      "templateHash": "10978368900156236749"
     }
   },
   "parameters": {
@@ -30,9 +30,13 @@
         "description": "The name of the Azure Function hosting plan."
       }
     },
-    "isReserved": {
-      "type": "bool",
-      "defaultValue": false,
+    "functionPlanOS": {
+      "type": "string",
+      "defaultValue": "Windows",
+      "allowedValues": [
+        "Windows",
+        "Linux"
+      ],
       "metadata": {
         "description": "If Linux app service plan, set to true, false otherwise (for Windows)."
       }
@@ -110,7 +114,8 @@
     "privateEndpointStorageBlobName": "[format('{0}-blob-private-endpoint', parameters('functionStorageAccountName'))]",
     "privateStorageQueueDnsZoneName": "[format('privatelink.queue.{0}', environment().suffixes.storage)]",
     "privateEndpointStorageQueueName": "[format('{0}-queue-private-endpoint', parameters('functionStorageAccountName'))]",
-    "functionContentShareName": "function-content-share"
+    "functionContentShareName": "function-content-share",
+    "isReserved": "[if(equals(parameters('functionPlanOS'), 'Linux'), true(), false())]"
   },
   "resources": [
     {
@@ -468,7 +473,7 @@
       "kind": "elastic",
       "properties": {
         "maximumElasticWorkerCount": 20,
-        "reserved": "[parameters('isReserved')]"
+        "reserved": "[variables('isReserved')]"
       }
     },
     {
@@ -476,13 +481,13 @@
       "apiVersion": "2021-01-01",
       "name": "[parameters('functionAppName')]",
       "location": "[parameters('location')]",
-      "kind": "[if(parameters('isReserved'), 'functionapp,linux', 'functionapp')]",
+      "kind": "[if(variables('isReserved'), 'functionapp,linux', 'functionapp')]",
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('functionAppPlanName'))]",
-        "reserved": "[parameters('isReserved')]",
+        "reserved": "[variables('isReserved')]",
         "siteConfig": {
           "functionsRuntimeScaleMonitoringEnabled": true,
-          "linuxFxVersion": "[if(parameters('isReserved'), 'dotnet|3.1', json('null'))]",
+          "linuxFxVersion": "[if(variables('isReserved'), 'dotnet|3.1', json('null'))]",
           "appSettings": [
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",

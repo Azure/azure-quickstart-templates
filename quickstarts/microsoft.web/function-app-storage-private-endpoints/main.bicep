@@ -8,7 +8,11 @@ param functionAppName string = 'func-${uniqueString(resourceGroup().id)}'
 param functionAppPlanName string = 'plan-${uniqueString(resourceGroup().id)}'
 
 @description('If Linux app service plan, set to true, false otherwise (for Windows).')
-param isReserved bool = false
+@allowed([
+  'Windows'
+  'Linux'
+])
+param functionPlanOS string = 'Windows'
 
 @description('Specifies the Azure Function hosting plan SKU.')
 @allowed([
@@ -54,6 +58,11 @@ var privateStorageQueueDnsZoneName = 'privatelink.queue.${environment().suffixes
 var privateEndpointStorageQueueName = '${storageAccount.name}-queue-private-endpoint'
 
 var functionContentShareName = 'function-content-share'
+
+// The term "reserved" is used by ARM to indicate if the hosting plan is a Linux or Windows-based plan.
+// A value of true indicated Linux, while a value of false indicates Windows.
+// See https://docs.microsoft.com/en-us/azure/templates/microsoft.web/serverfarms?tabs=json#appserviceplanproperties-object.
+var isReserved = (functionPlanOS == 'Linux') ? true : false
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
   name: vnetName
