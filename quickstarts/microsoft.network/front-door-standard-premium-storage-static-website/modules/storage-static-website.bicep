@@ -25,7 +25,7 @@ var storageAccountStorageBlobDataContributorRoleDefinitionId = subscriptionResou
 var managedIdentityName = 'StorageStaticWebsiteEnabler'
 var deploymentScriptName = 'EnableStorageStaticWebsite'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: accountName
   location: location
   kind: 'StorageV2'
