@@ -20,7 +20,7 @@ Usage:
 #>
 
 param(
-    [string] $SampleFolder = ".", # this is the path to the sample
+    [string][Parameter(Mandatory = $true)][AllowEmptyString()] $SampleFolder, # this is the path to the sample
     [string] $StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME ? $ENV:STORAGE_ACCOUNT_NAME : "azurequickstartsservice",
     [string] $CloudEnvironment = "AzureCloud", # AzureCloud/AzureUSGovernment
     [string] $TtkFolder = $ENV:TTK_FOLDER,
@@ -28,16 +28,24 @@ param(
     [switch] $Fix # If true, fixes will be made if possible
 )
 
+$SampleFolder = $SampleFolder -eq "" ? "." : $SampleFolder
+
+$PreviousErrorPreference = $ErrorActionPreference
 $ErrorActionPreference = "Continue"
 $Error.Clear()
 
 Import-Module "$PSScriptRoot/Local.psm1" -force
 
-$SampleFolder = Resolve-Path $SampleFolder
+$ResolvedSampleFolder = Resolve-Path $SampleFolder
+if (!$ResolvedSampleFolder) {
+    throw "Could not resolve folder $SampleFolder"
+}
+$SampleFolder = $ResolvedSampleFolder
+
 $SampleName = SampleNameFromFolderPath $SampleFolder
 
 if (!(Test-Path (Join-Path $SampleFolder "metadata.json"))) {
-    $ErrorActionPreference = "Stop"
+    $ErrorActionPreference = $PreviousErrorPreference
     Write-Error "Test-LocalSample must be run from within a sample folder. This folder contains no metadata.json file."
     return
 }
@@ -74,6 +82,7 @@ $vars = Find-VarsFromWriteHostOutput $buildHostOutput
 $mainTemplateDeploymentFilename = $vars["MAINTEMPLATE_DEPLOYMENT_FILENAME"]
 Assert-NotEmptyOrNull $mainTemplateDeploymentFilename "mainTemplateDeploymentFilename"
 $CompiledJsonFilename = $vars["COMPILED_JSON_FILENAME"] # $null if not bicep sample
+$labelBicepWarnings = $vars["LABEL_BICEP_WARNINGS"]
 
 # Validate-MetaData
 Write-Host "Validating metadata.json"
@@ -113,7 +122,7 @@ if (!$TtkFolder) {
         $TtkFolder = Resolve-Path $TtkFolder
     }
     else {
-        $ErrorActionPreference = "Stop"
+        $ErrorActionPreference = $PreviousErrorPreference
         Write-Error "Could not find the ARM TTK. Please install from https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/test-toolkit and set environment variable TTK_FOLDER to the installation folder location."
         Return
     }
@@ -128,6 +137,18 @@ $validateBPOutput =
 Write-Output $validateBPOutput
 $vars = Find-VarsFromWriteHostOutput $validateBPOutput
 
+# Check misc labels
+Write-Host "Checking for miscellaneous labels"
+$miscLabelsHostOutput =
+& $PSScriptRoot/Check-MiscLabels.ps1 `
+    -SampleName $SampleName `
+    6>&1
+Write-Output $miscLabelsHostOutput
+$vars = Find-VarsFromWriteHostOutput $miscLabelsHostOutput
+$isRootSample = $vars["ISROOTSAMPLE"] -eq "true"
+$sampleHasUpperCase = $vars["SampleHasUpperCase"] -eq "true"
+$isPortalSample = $vars["IsPortalSample"] -eq "true"
+
 # Clean up
 if ($null -ne $CompiledJsonFilename -and (Test-Path $CompiledJsonFilename)) {
     Remove-Item $CompiledJsonFilename
@@ -141,11 +162,24 @@ if ($fixedReadme) {
 }
 
 if ($error) {
-    $ErrorActionPreference = "Stop"
+    $ErrorActionPreference = $PreviousErrorPreference
     Write-Error "*** ERRORS HAVE BEEN FOUND. SEE DETAILS ABOVE ***"
 }
 else {
     if (!$fixesMade) {
         Write-Host "No errors found."
     }
+}
+
+if ($labelBicepWarnings) {
+    Write-Warning "LABEL: bicep warnings"
+}
+if ($isRootSample) {
+    Write-Warning "LABEL: ROOT"
+}
+if ($sampleHasUpperCase) {
+    Write-Warning "LABEL: UPPERCASE"
+}
+if ($isPortalSample) {
+    Write-Warning "LABEL: PORTAL SAMPLE"
 }
