@@ -485,10 +485,10 @@
 		"protectedItem": "[concat('vm;iaasvmcontainerv2;', resourceGroup().name, ';', variables('nfsHostname'))]",
 		"deployOpenshiftExt": "[concat('Microsoft.Compute/virtualMachines/', variables('bastionHostname'), '/extensions/deployOpenshift')]",
 		"publicIpId": {
-			"id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIpDnsLabel'))]"
+			"id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIPAddresses', variables('bastionPublicIpDnsLabel'))]"
 		},
 		"networkReadAction": ["Microsoft.Network/virtualNetworks/read"],
-		"networkReadNonAction": [],
+		"networkReadNonAction": "",
 		"roleDefName": "[guid(subscription().id, string(variables('networkReadAction')), string(variables('networkReadNonAction')))]"
 	},
 	"resources": [
@@ -522,12 +522,12 @@
 				"principalType": "ServicePrincipal"
             },
 			"dependsOn": [
-				"[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+				"[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
 			]
         },
 		{
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "pid-06f07fff-296b-5beb-9092-deab0c6bb8ea",
 			"properties": {
 				"mode": "Incremental",
@@ -561,7 +561,7 @@
 						"properties": {
 							"addressPrefix": "[parameters('bastionSubnetPrefix')]",
 							"networkSecurityGroup": {
-								"id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('bastionSecurityGroupName'))]"
+								"id": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups/', variables('bastionSecurityGroupName'))]"
 							}
 						}
 					},
@@ -570,7 +570,7 @@
 						"properties": {
 							"addressPrefix": "[parameters('masterSubnetPrefix')]",
 							"networkSecurityGroup": {
-								"id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('masterSecurityGroupName'))]"
+								"id": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups/', variables('masterSecurityGroupName'))]"
 							}
 						}
 					},
@@ -579,7 +579,7 @@
 						"properties": {
 							"addressPrefix": "[parameters('workerSubnetPrefix')]",
 							"networkSecurityGroup": {
-								"id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('workerSecurityGroupName'))]"
+								"id": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups/', variables('workerSecurityGroupName'))]"
 							}
 						}
 					}
@@ -619,9 +619,9 @@
 			"name": "[concat(variables('bastionHostname'), '-nic')]",
 			"location": "[parameters('location')]",
 			"dependsOn": [
-				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('bastionSecurityGroupName'))]",
-				"[resourceId('Microsoft.Network/publicIPAddresses/', variables('bastionPublicIpDnsLabel'))]"
+				"[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+				"[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups/', variables('bastionSecurityGroupName'))]",
+				"[resourceId(resourceGroup().name, 'Microsoft.Network/publicIPAddresses/', variables('bastionPublicIpDnsLabel'))]"
 			],
 			"tags": {
 				"displayName": "BastionNetworkInterface",
@@ -654,8 +654,8 @@
 			"name": "[concat(variables('nfsHostname'), '-nic')]",
 			"location": "[parameters('location')]",
 			"dependsOn": [
-				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('workerSecurityGroupName'))]"
+				"[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+				"[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups/', variables('workerSecurityGroupName'))]"
 			],
 			"tags": {
 				"displayName": "NFSNetworkInterface",
@@ -713,7 +713,7 @@
 		},
 		{
 			"type": "Microsoft.Storage/storageAccounts",
-			"apiVersion": "2019-06-01",
+			"apiVersion": "2021-06-01",
 			"name": "[variables('diagStorageAccountName')]",
 			"location": "[parameters('location')]",
 			"kind": "Storage",
@@ -730,11 +730,11 @@
 		},
 		{
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "BastionVmDeployment",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]",
-				"[resourceId('Microsoft.Network/networkInterfaces', concat(variables('bastionHostname'), '-nic'))]"
+				"[resourceId(resourceGroup().name, 'Microsoft.Network/networkInterfaces', concat(variables('bastionHostname'), '-nic'))]"
 			],
 			"properties": {
 				"mode": "Incremental",
@@ -859,7 +859,7 @@
 		},
 		{
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "OpenShiftDeployment",
 			"dependsOn": [
 				"BastionVmDeployment"
@@ -932,7 +932,7 @@
 						"value": "[variables('bastionHostname')]"
 					},
 					"nfsIpAddress": {
-						"value": "[if(equals(parameters('storageOption'), 'nfs'),reference(resourceId('Microsoft.Network/networkInterfaces', concat(variables('nfsHostname'), '-nic'))).ipConfigurations[0].properties.privateIPAddress, '')]"
+						"value": "[if(equals(parameters('storageOption'), 'nfs'),reference(resourceId(resourceGroup().name, 'Microsoft.Network/networkInterfaces', concat(variables('nfsHostname'), '-nic'))).ipConfigurations[0].properties.privateIPAddress, '')]"
 					},
 					"singleZoneOrMultiZone": {
 						"value": "[parameters('singleZoneOrMultiZone')]"
@@ -982,7 +982,7 @@
 		{
 			"condition": "[equals(parameters('storageOption'), 'ocs')]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "OCSDeployment",
 			"dependsOn": [
 				"OpenShiftDeployment",
@@ -1037,11 +1037,11 @@
 		{
 			"condition": "[equals(parameters('storageOption'), 'nfs')]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "nfsVmDeployment",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]",
-				"[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nfsHostname'), '-nic'))]"
+				"[resourceId(resourceGroup().name, 'Microsoft.Network/networkInterfaces', concat(variables('nfsHostname'), '-nic'))]"
 			],
 			"properties": {
 				"mode": "Incremental",
@@ -1092,7 +1092,7 @@
 		{
 			"condition": "[equals(parameters('storageOption'), 'nfs')]",
 			"type": "Microsoft.Compute/virtualMachines/extensions",
-			"apiVersion": "2019-07-01",
+			"apiVersion": "2021-07-01",
 			"name": "[concat(variables('nfsHostname'), '/installNfsServer')]",
 			"location": "[parameters('location')]",
 			"dependsOn": [
@@ -1122,7 +1122,7 @@
 		{
 			"condition": "[equals(parameters('enableNfsBackup'), 'true')]",
 			"type": "Microsoft.RecoveryServices/vaults",
-			"apiVersion": "2019-05-13",
+			"apiVersion": "2021-04-01",
 			"name": "[variables('vaultName')]",
 			"location": "[parameters('location')]",
 			"sku": {
@@ -1135,21 +1135,21 @@
 		{
 			"condition": "[equals(parameters('enableNfsBackup'), 'true')]",
 			"type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
-			"apiVersion": "2016-12-01",
+			"apiVersion": "2021-07-01",
 			"name": "[concat(variables('vaultName'), '/', variables('backupFabric'), '/', variables('protectionContainer'), '/', variables('protectedItem'))]",
 			"dependsOn": [
 				"nfsVmDeployment",
-				"[resourceId('Microsoft.RecoveryServices/vaults', variables('vaultName'))]"
+				"[resourceId(resourceGroup().name, 'Microsoft.RecoveryServices/vaults', variables('vaultName'))]"
 			],
 			"properties": {
 				"protectedItemType": "Microsoft.Compute/virtualMachines",
-				"policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', variables('vaultName'), variables('backupPolicyName'))]",
-				"sourceResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('nfsHostname'))]"
+				"policyId": "[resourceId(resourceGroup().name, 'Microsoft.RecoveryServices/vaults/backupPolicies', variables('vaultName'), variables('backupPolicyName'))]",
+				"sourceResourceId": "[resourceId(resourceGroup().name, 'Microsoft.Compute/virtualMachines', variables('nfsHostname'))]"
 			}
 		},
 		{
 			"type": "Microsoft.Compute/virtualMachines/extensions",
-			"apiVersion": "2019-07-01",
+			"apiVersion": "2021-07-01",
 			"name": "[concat(variables('bastionHostname'), '/deployOpenshift')]",
 			"location": "[parameters('location')]",
 			"dependsOn": [
@@ -1180,7 +1180,7 @@
 		{
 			"condition": "[equals(parameters('cloudPakLicenseAgreement'), 'accept')]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakLiteDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
@@ -1243,7 +1243,7 @@
 		{
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), or(equals(parameters('installWatsonStudioLocal'), 'yes'),equals(parameters('installWatsonKnowledgeCatalog'), 'yes'),equals(parameters('installWatsonMachineLearning'), 'yes'),equals(parameters('installDataVirtualization'), 'yes'),equals(parameters('installCognosDashboard'), 'yes')))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakCCSDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
@@ -1307,7 +1307,7 @@
 		{
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'),or(equals(parameters('installDataVirtualization'), 'yes'),equals(parameters('installWatsonKnowledgeCatalog'), 'yes')))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakDB2UDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
@@ -1371,7 +1371,7 @@
 		{
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'),equals(parameters('installWatsonKnowledgeCatalog'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakDB2aaServiceDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
@@ -1435,7 +1435,7 @@
 		{
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installDataVirtualization'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakDMCDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
@@ -1499,7 +1499,7 @@
 		{
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installDataVirtualization'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakDVDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
@@ -1563,7 +1563,7 @@
 		{
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installCognosDashboard'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakCDEDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
@@ -1627,7 +1627,7 @@
 		{
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonStudioLocal'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakWSLDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
@@ -1691,7 +1691,7 @@
 		{
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonMachineLearning'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakWMLDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
@@ -1755,7 +1755,7 @@
 		{
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonKnowledgeCatalog'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakWKCCoreDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
@@ -1819,7 +1819,7 @@
 		{
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonKnowledgeCatalog'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakWKCIISDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
@@ -1883,7 +1883,7 @@
 		{
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonKnowledgeCatalog'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakWKCUGDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
@@ -1947,7 +1947,7 @@
 		{
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installWatsonOpenscale'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakWOSDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
@@ -2011,7 +2011,7 @@
 		{
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installApacheSpark'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-05-01",
+			"apiVersion": "2021-01-01",
 			"name": "CloudPakSparkDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",

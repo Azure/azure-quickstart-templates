@@ -67,9 +67,10 @@ runuser -l $SUDOUSER -c "oc create serviceaccount cpdtoken"
 runuser -l $SUDOUSER -c "oc policy add-role-to-user admin system:serviceaccount:$OPERATORNAMESPACE:cpdtoken"
 
 ## Installing jq
-runuser -l $SUDOUSER -c "wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -O  $CPDTEMPLATES/jq"
-runuser -l $SUDOUSER -c "sudo mv $CPDTEMPLATES/jq /usr/local/bin"
-runuser -l $SUDOUSER -c "sudo chmod +x /usr/local/bin/jq"
+echo $(date) "Install jq starting..."
+yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+yum install -y jq
+echo $(date) "Install jq completed..."
 
 
 # Update global pull secret and sysctl changes: 
