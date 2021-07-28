@@ -14,18 +14,6 @@
         "description": "Password for the Virtual Machine."
       }
     },
-    "vmSize": {
-      "type": "string",
-      "metadata": {
-        "description": "Size of the Virtual Machine."
-      }
-    },
-    "vmName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Virtual Machine."
-      }
-    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -46,7 +34,14 @@
       "metadata": {
         "description": "Location for all resources."
       }
-    }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1_v2",
+      "metadata": {
+        "description":"Default VM Size"
+      }
+    }     
   },
   "variables": {
     "nicName": "myVMNic",
@@ -54,18 +49,19 @@
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+    "vmName": "MyVM",
     "virtualNetworkName": "MyVNET",
     "publicIPAddressName": "myPublicIP",
     "dnsNameForPublicIP": "[uniqueString(resourceGroup().id)]",
-    "scriptFolder": ".",
+    "scriptFolder": "Scripts",
     "scriptFileName": "Copy-FileFromAzure.ps1",
     "fileToBeCopied": "FileToBeCopied.txt",
-    "scriptParameters": "[concat('-artifactsLocation ', parameters('_artifactsLocation'), ' -artifactsLocationSasToken \"', parameters('_artifactsLocationSasToken'), '\" -folderName ', variables('scriptFolder'), ' -fileToInstall ', variables('fileToBeCopied'))]",
+    "scriptParameters": "[concat('-artifactsLocation ', replace(parameters('_artifactsLocation'),parameters('_artifactsLocationSasToken'),''), ' -artifactsLocationSasToken \"', parameters('_artifactsLocationSasToken'), '\" -folderName ', variables('scriptFolder'), ' -fileToInstall ', variables('fileToBeCopied'))]",
     "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
     {
-      "apiVersion": "2020-11-01",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -79,7 +75,7 @@
     {
       "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-11-01",
+      "apiVersion": "2020-08-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -101,7 +97,7 @@
       }
     },
     {
-      "apiVersion": "2020-11-01",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -128,7 +124,7 @@
       }
     },
     {
-      "apiVersion": "2020-11-01",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
@@ -156,7 +152,7 @@
     {
       "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('vmName')]",
+      "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('nicName')]"
@@ -166,7 +162,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('vmName')]",
+          "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -196,7 +192,7 @@
           "apiVersion": "2020-12-01",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[parameters('vmName')]"
+            "[variables('vmName')]"
           ],
           "properties": {
             "publisher": "Microsoft.Compute",
@@ -205,7 +201,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[uri(parameters('_artifactsLocation'), concat(variables('ScriptFileName'), parameters('_artifactsLocationSasToken')))]"
+                "[uri(parameters('_artifactsLocation'), concat(variables('scriptFolder'),'/',variables('scriptFileName'), parameters('_artifactsLocationSasToken')))]"
               ],
               "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('scriptFolder'), '/', variables('scriptFileName'), ' ', variables('scriptParameters'))]"
             }
@@ -217,7 +213,7 @@
   "outputs": {
     "vm-fqdn": {
       "type": "string",
-      "value": "[reference(variables('publicIPAddressName'), '2020-11-01').dnsSettings.fqdn]"
+      "value": "[reference(variables('publicIPAddressName'), '2020-07-01').dnsSettings.fqdn]"
     }
   }
 }
