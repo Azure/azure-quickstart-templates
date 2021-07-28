@@ -2,13 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "vmSize": {
-      "type": "string",
-      "defaultValue": "Standard_D1_V2",
-      "metadata": {
-        "description": "Size of the Virtual Machine."
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -47,7 +40,14 @@
       "metadata": {
         "description": "Location for all resources."
       }
-    }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1_v2",
+      "metadata": {
+        "description":"Default VM Size"
+      }
+    }     
   },
   "variables": {
     "nicName": "myVMNic",
@@ -59,15 +59,15 @@
     "virtualNetworkName": "MyVNET",
     "publicIPAddressName": "myPublicIP",
     "fileToBeCopied": "FileToBeCopied.txt",
-    "scriptFolder": ".",
+    "scriptFolder": "scripts",
     "scriptFileName": "Copy-FileFromAzure.ps1",
     "accountid": "[resourceId('Microsoft.Storage/storageAccounts/', parameters('customScriptStorageAccountName'))]",
-    "scriptParameters": "[concat('-artifactsLocation ', parameters('_artifactsLocation'), ' -artifactsLocationSasToken \"', parameters('_artifactsLocationSasToken'), '\" -folderName ', variables('scriptFolder'), ' -fileToInstall ', variables('fileToBeCopied'))]",
+    "scriptParameters": "[concat('-artifactsLocation ', replace(parameters('_artifactsLocation'),parameters('_artifactsLocationSasToken'),''), ' -artifactsLocationSasToken \"', parameters('_artifactsLocationSasToken'), '\" -folderName ', variables('scriptFolder'), ' -fileToInstall ', variables('fileToBeCopied'))]",
     "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
     {
-      "apiVersion": "2020-11-01",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -78,7 +78,7 @@
     {
       "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-11-01",
+      "apiVersion": "2020-08-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -100,7 +100,7 @@
       }
     },
     {
-      "apiVersion": "2020-11-01",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -127,7 +127,7 @@
       }
     },
     {
-      "apiVersion": "2020-11-01",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
@@ -204,14 +204,14 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[uri(parameters('_artifactsLocation'), concat(variables('scriptFileName'), parameters('_artifactsLocationSasToken')))]"
+                "[uri(parameters('_artifactsLocation'), concat(variables('scriptFolder'),'/',variables('scriptFileName'), parameters('_artifactsLocationSasToken')))]"
               ],
               "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('scriptFolder'), '/', variables('scriptFileName'), ' ', variables('scriptParameters'))]"
             },
-            "protectedSettings": {
-          "storageAccountName": "[parameters('customScriptStorageAccountName')]",
-          "storageAccountKey": "[listKeys(variables('accountid'),'2021-02-01').keys[0].value]"
-        }
+              "protectedSettings": {
+                "storageAccountName": "[parameters('customScriptStorageAccountName')]",
+                "storageAccountKey": "[listKeys(variables('accountid'),'2021-01-01').keys[0].value]"
+            }
           }
         }
       ]
