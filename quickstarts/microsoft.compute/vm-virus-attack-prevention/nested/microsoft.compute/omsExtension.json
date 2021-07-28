@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmNames": {
+            "type": "array",
+            "metadata": {
+                "description": "Names of the virtual machines"
+            }
+        },
+        "omsWorkspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the OMS workspace"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location of the resources"
+            }
+        }
+    },
+    "resources": [
+      {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(concat(parameters('vmNames')[copyIndex()]),'/OMSExtension')]",
+            "apiVersion": "2020-12-01",
+            "location": "[parameters('location')]",
+            "copy": {
+              "name": "copy-monitoring-agent",
+              "count": 2
+            },
+            "properties": {
+              "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+              "type": "MicrosoftMonitoringAgent",
+              "typeHandlerVersion": "1.0",
+              "autoUpgradeMinorVersion": true,
+              "settings": {
+                "workspaceId": "[reference(resourceId('Microsoft.Resources/deployments','deploy-virus-attack-oms-resource').outputs.workspaceId.value)]"
+              },
+              "protectedSettings": {
+                "workspaceKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2021-06-01').primarySharedKey]"
+              }
+            }
+        }
+    ]
+}
