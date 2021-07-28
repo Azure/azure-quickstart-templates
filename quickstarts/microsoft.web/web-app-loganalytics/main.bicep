@@ -15,7 +15,7 @@ var webSiteName = toLower('wapp-${appName}')
 var appInsightName = toLower('appi-${appName}')
 var logAnalyticsName = toLower('la-${appName}')
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2020-06-01' = {
+resource appServicePlan 'Microsoft.Web/serverFarms@2020-12-01' = {
   name: appServicePlanName // Globally unique storage account name
   location: location
   sku: {
@@ -28,7 +28,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2020-06-01' = {
   }
 }
 
-resource appService 'Microsoft.Web/sites@2020-06-01' = {
+resource appService 'Microsoft.Web/sites@2020-12-01' = {
   name: webSiteName
   location: location
   identity: {
