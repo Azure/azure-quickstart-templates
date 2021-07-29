@@ -1,0 +1,66 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dnsLabelForVmIp": {
+            "type": "string",
+            "metadata": {
+                "description": "Names of the virtual machines"
+            }
+        },
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the OMS workspace"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location of the resources"
+            }
+        },
+        "resourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the resource group for the resources"
+            }
+        },
+        "numberOfInstances": {
+            "type": "int",
+            "metadata": {
+                "description": "Number of instances"
+            }
+        },
+        "solaceWorkspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Solace workspace"
+            }
+        }
+    },
+    "resources": [
+    {
+      "condition": "[not(empty(parameters('workspaceName')))]",
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('dnsLabelForVmIp'), copyindex(), '/OmsAgentExtension')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "OmsAgentLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+        "type": "OmsAgentForLinux",
+        "typeHandlerVersion": "1.12",
+        "settings": {
+          "workspaceId": "[if(empty(parameters('workspaceName')),  '', reference(resourceId(parameters('resourceGroupName'),'Microsoft.OperationalInsights/workspaces/', parameters('solaceWorkspaceName')), '2021-06-01').customerId)]"
+        },
+        "protectedSettings": {
+          "workspaceKey": "[if(empty(parameters('workspaceName')),  '', listKeys(resourceId(parameters('resourceGroupName'),'Microsoft.OperationalInsights/workspaces/', parameters('solaceWorkspaceName')), '2021-06-01').primarySharedKey)]"
+        }
+      }
+    }
+  ]
+}

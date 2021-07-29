@@ -2,6 +2,13 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "resourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Name of the resource group for the resources."
+      }
+    },
     "vmAdminUsername": {
       "type": "string",
       "metadata": {
@@ -78,15 +85,10 @@
     },
     "centosVersion": {
       "type": "string",
-      "defaultValue": "7.4",
+      "defaultValue": "7.7",
       "metadata": {
         "description": "The CentOS version for deploying the Docker containers. This will pick a fully patched image of this given CentOS version. Allowed values: 7.2, 7.3, 7.4"
-      },
-      "allowedValues": [
-        "7.2",
-        "7.3",
-        "7.4"
-      ]
+      }
     },
     "maxNumberOfClientConnections": {
       "type": "string",
@@ -239,12 +241,6 @@
         "description": "Optional: The Shared Access Signatures (SAS) token if required for the artifacts location, otherwise leave it at default blank."
       },
       "defaultValue": ""
-    },
-    "workspaceSharedKey": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Primary shared key of the workspace"
-      }
     }
   },
   "variables": {
@@ -262,6 +258,8 @@
     "loadBalancerSharedTemplateUri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesLocation'), variables('loadBalancerSharedTemplateName'), parameters('_artifactsLocationSasToken')))]",
     "solaceUpdateSubnetName": "SolaceUpdateSubnet.Template",
     "updateSubnetSharedTemplateName": "update-subnet-shared-resources.json",
+    "omsExtensionTemplateName": "omsExtension.json",
+    "omsExtensionTemplateUri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesLocation'), variables('omsExtensionTemplateName'), parameters('_artifactsLocationSasToken')))]",
     "updateSubnetSharedTemplateUri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesLocation'), variables('updateSubnetSharedTemplateName'), parameters('_artifactsLocationSasToken')))]",
     "solaceWorkspaceName": "SolaceWorkspace.Template",
     "workspaceEnabledSharedTemplateName": "workspace-enabled-shared-resources.json",
@@ -626,28 +624,38 @@
       }
     },
     {
-      "condition": "[not(empty(parameters('workspaceName')))]",
-      "apiVersion": "2020-12-01",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('dnsLabelForVmIp'), copyindex(), '/OmsAgentExtension')]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "OmsAgentLoop",
-        "count": "[variables('numberOfInstances')]"
-      },
+      "apiVersion": "2020-10-01",
+      "name": "omsExtension",
+      "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('dnsLabelForVmIp'), copyindex()), 'DockerExtension')]",
+        "DockerLoop",
         "[resourceId('Microsoft.Resources/deployments/', variables('solaceWorkspaceName'))]"
       ],
       "properties": {
-        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
-        "type": "OmsAgentForLinux",
-        "typeHandlerVersion": "1.12",
-        "settings": {
-          "workspaceId": "[if(empty(parameters('workspaceName')),  '', reference(resourceId('Microsoft.Resources/deployments',variables('solaceWorkspaceName'))).outputs.customerId)]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('omsExtensionTemplateUri')]",
+          "contentVersion": "1.0.0.0"
         },
-        "protectedSettings": {
-          "workspaceKey": "[if(empty(parameters('workspaceName')),  '', parameters('workspaceSharedKey'))]"
+        "parameters": {
+          "dnsLabelForVmIp": {
+            "value": "[parameters('dnsLabelForVmIp')]"
+          },
+          "workspaceName": {
+            "value": "[parameters('workspaceName')]"
+          },
+          "solaceWorkspaceName": {
+            "value": "[variables('solaceWorkspaceName')]"
+          },
+          "resourceGroupName": {
+            "value": "[parameters('resourceGroupName')]"
+          },
+          "numberOfInstances": {
+            "value": "[variables('numberOfInstances')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
         }
       }
     },
