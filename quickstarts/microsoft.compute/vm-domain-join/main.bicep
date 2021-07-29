@@ -98,7 +98,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   }
 }
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2019-07-01' = {
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   name: dnsLabelPrefix
   location: location
   properties: {
