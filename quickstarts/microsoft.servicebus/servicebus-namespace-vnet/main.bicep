@@ -21,7 +21,7 @@ resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2018-01-01-preview
 }
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
-  name: '{vnetRuleName}-vn'
+  name: '${vnetRuleName}-vn'
   location: location
   properties: {
     addressSpace: {
