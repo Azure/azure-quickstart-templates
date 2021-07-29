@@ -201,7 +201,6 @@ resource autoScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
           {
             metricTrigger: {
               metricName: 'Percentage CPU'
-              metricNamespace: ''
               metricResourceUri: vmss.id
               timeGrain: 'PT1M'
               timeWindow: 'PT5M'
@@ -220,7 +219,6 @@ resource autoScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
           {
             metricTrigger: {
               metricName: 'Percentage CPU'
-              metricNamespace: ''
               metricResourceUri: vmss.id
               timeGrain: 'PT1M'
               timeWindow: 'PT5M'
