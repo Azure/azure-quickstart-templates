@@ -20,7 +20,7 @@ param location string = resourceGroup().location
 param internalLoadBalancingMode string = 'Web,Publishing'
 
 @description('Used when deploying an ILB enabled ASE.  Set this to the root domain associated with the ASE.  For example: contoso.com')
-param dnsSuffix string
+param dnsSuffix string = ''
 
 @description('The name of the web app that will be created.')
 param siteName string
@@ -62,8 +62,6 @@ resource hostingEnvironment 'Microsoft.Web/hostingEnvironments@2021-01-01' = {
     owner: owner
   }
   properties: {
-    name: aseName
-    location: location
     ipsslAddressCount: 0
     internalLoadBalancingMode: internalLoadBalancingMode
     dnsSuffix: dnsSuffix
