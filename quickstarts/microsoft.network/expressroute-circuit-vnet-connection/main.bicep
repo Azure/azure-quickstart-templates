@@ -19,6 +19,12 @@ param virtualNetworkAddressPrefix string
 @description('The name of the first subnet in the new virtual network.')
 param subnetName string
 
+@description('The name of the subnet where Gateway is to be deployed. This must always be named GatewaySubnet.')
+@allowed([
+  'GatewaySubnet'
+])
+param gatewaySubnetName string = 'GatewaySubnet'
+
 @description('The address range in CIDR notation for the first subnet.')
 param subnetPrefix string
 
@@ -40,9 +46,7 @@ param circuitName string
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-// The name of the subnet where Gateway is to be deployed. This must always be named GatewaySubnet.
-var gatewaySubnetName = 'GatewaySubnet'
-
+var gatewaySubnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets/', virtualNetwork.name, gatewaySubnetName)
 var routingWeight = 3
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
@@ -54,20 +58,20 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         virtualNetworkAddressPrefix
       ]
     }
-  }
-}
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' = {
-  parent: virtualNetwork
-  name: subnetName
-  properties: {
-    addressPrefix: subnetPrefix
-  }
-}
-resource gatewaySubnet 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' = {
-  parent: virtualNetwork
-  name: gatewaySubnetName
-  properties: {
-    addressPrefix: gatewaySubnetPrefix
+    subnets: [
+      {
+        name: subnetName
+        properties: {
+          addressPrefix: subnetPrefix
+        }
+      }
+      {
+        name: gatewaySubnetName
+        properties: {
+          addressPrefix: gatewaySubnetPrefix
+        }
+      }
+    ]
   }
 }
 
@@ -89,7 +93,7 @@ resource virtualNetworkGateway 'Microsoft.Network/virtualNetworkGateways@2021-02
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: gatewaySubnet.id
+            id: gatewaySubnetRef
           }
           publicIPAddress: {
             id: publicIP.id
