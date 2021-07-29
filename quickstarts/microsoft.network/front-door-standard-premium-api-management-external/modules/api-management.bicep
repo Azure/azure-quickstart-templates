@@ -30,7 +30,7 @@ param virtualNetworkType string
 @description('The resource ID of the virtual network subnet that the API Management service instance should be deployed into.')
 param subnetResourceId string
 
-resource apiManagementService 'Microsoft.ApiManagement/service@2020-06-01-preview' = {
+resource apiManagementService 'Microsoft.ApiManagement/service@2020-12-01' = {
   name: serviceName
   location: location
   sku: {
