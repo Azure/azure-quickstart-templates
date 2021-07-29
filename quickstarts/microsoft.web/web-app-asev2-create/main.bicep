@@ -7,7 +7,7 @@ param location string = resourceGroup().location
 @description('Subnet name that will contain the App Service Environment')
 param existingSubnetName string
 
-resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' = {
+resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' existing = {
   name: existingSubnetName
 }
 
