@@ -1,0 +1,41 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "maharaCommon": {
+            "metadata": {
+                "description": "Common Mahara values"
+            },
+            "type": "object"
+        },
+        "vmName": {
+            "metadata": {
+                "description": "Name of VM to enlist in AzureBackup"
+            },
+            "type": "string"
+        },
+        "resourceGroupName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
+            "apiVersion": "2021-03-01",
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[concat(parameters('maharaCommon').vaultName, '/', variables('backupFabric'), '/', variables('v2VmContainer'), concat(resourceGroup().name,';',parameters('vmName')), '/', variables('v2Vm'), concat(resourceGroup().name,';',parameters('vmName')))]",
+            "properties": {
+                "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies',parameters('maharaCommon').vaultName,parameters('maharaCommon').policyName )]",
+                "protectedItemType": "[variables('v2VmType')]",
+                "sourceResourceId": "[resourceId(parameters('resourceGroupName'),'Microsoft.Compute/virtualMachines',parameters('vmName'))]"
+            }
+        }
+    ],
+    "variables": {
+        "backupFabric": "Azure",
+        "v2Vm": "vm;iaasvmcontainerv2;",
+        "v2VmContainer": "iaasvmcontainer;iaasvmcontainerv2;",
+        "v2VmType": "Microsoft.Compute/virtualMachines"
+    }
+}

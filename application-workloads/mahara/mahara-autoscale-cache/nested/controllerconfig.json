@@ -1,0 +1,66 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "maharaCommon": {
+            "metadata": {
+                "description": "Common Mahara values"
+            },
+            "type": "object"
+        },
+    	"siteFQDN": {
+                "metadata": {
+                    "description": "FQDN of public IP address"
+                },
+                "type": "string"
+           },
+        "dbLoginPassword": {
+            "metadata": {
+                "description": "Database admin password"
+            },
+            "type": "securestring"
+        },
+        "maharaDbPass": {
+            "metadata": {
+                "description": "Mahara database password"
+            },
+            "type": "securestring"
+        },
+        "maharaAdminPass": {
+            "metadata": {
+                "description": "Mahara admin password"
+            },
+            "type": "securestring"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2020-12-01",
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[concat(parameters('maharaCommon').ctlrVmName,'/','install_mahara')]",
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Azure.Extensions",
+                "settings": {
+                    "fileUris": [
+                        "[variables('scriptUri')]",
+                        "[parameters('maharaCommon').commonFunctionsScriptUri]"
+                    ]
+                },
+                "protectedSettings":{
+                    "commandToExecute": "[concat('bash ', parameters('maharaCommon').maharaInstallScriptFilename, ' ', parameters('maharaCommon').maharaVersion, ' ', concat(parameters('maharaCommon').gfsNameRoot, '0'), ' ', 'data', ' ', parameters('maharaCommon').siteURL, ' ', parameters('maharaCommon').httpsTermination, ' ', parameters('maharaCommon').dbDNS, ' ', parameters('maharaCommon').maharaDbName, ' ', parameters('maharaCommon').maharaDbUser, ' ', parameters('maharaDbPass'), ' ', parameters('maharaAdminPass'), ' ', concat(parameters('maharaCommon').dbLogin, '@', parameters('maharaCommon').dbServerType, '-', parameters('maharaCommon').resourcesPrefix), ' ', parameters('dbLoginPassword'), ' ', parameters('maharaCommon').storageAccountName, ' ', listKeys(variables('storageAccountId'), '2021-02-01').keys[0].value, ' ', parameters('maharaCommon').maharaDbUserAzure, ' ', parameters('maharaCommon').elasticVm1IP, ' ', parameters('maharaCommon').dbServerType, ' ', parameters('maharaCommon').fileServerType , ' ', parameters('maharaCommon').thumbprintSslCert, ' ', parameters('maharaCommon').thumbprintCaCert, ' ', parameters('maharaCommon').searchType, ' ' , parameters('siteFQDN'))]"
+                },
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0"
+            },
+            "tags": {
+                "displayName": "install_mahara"
+            }
+        }
+    ],
+    "variables": {
+        "scriptUri": "[concat(parameters('maharaCommon').scriptLocation,parameters('maharaCommon').maharaInstallScriptFilename,parameters('maharaCommon').artifactsSasToken)]",
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('maharaCommon').storageAccountName)]"
+    }
+}

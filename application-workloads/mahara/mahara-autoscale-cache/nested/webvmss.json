@@ -1,0 +1,207 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "maharaCommon": {
+            "metadata": {
+                "description": "Common Mahara values"
+            },
+            "type": "object"
+        },
+	"siteFQDN": {
+           "metadata": {
+           "description": "FQDN of public IP address"
+          },
+          "type": "string"
+       },
+    "resourceGroupName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]"
+           }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-02-01",
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[parameters('maharaCommon').vmssdStorageAccounttName]",
+            "kind": "Storage",
+            "sku": {
+                "name": "Standard_LRS"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachineScaleSets",
+            "apiVersion": "2020-12-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/', parameters('maharaCommon').vmssdStorageAccounttName)]"
+            ],
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[parameters('maharaCommon').vmssName]",
+            "properties": {
+                "overprovision": true,
+                "upgradePolicy": {
+                    "mode": "Manual"
+                },
+                "virtualMachineProfile": {
+                    "extensionProfile": {
+                        "extensions": [
+                            {
+                                "name": "setup_mahara",
+                                "properties": {
+                                    "autoUpgradeMinorVersion": true,
+                                    "publisher": "Microsoft.Azure.Extensions",
+                                    "settings": {
+                                        "fileUris": [
+                                            "[variables('scriptUri')]",
+                                            "[parameters('maharaCommon').commonFunctionsScriptUri]"
+                                        ]
+                                    },
+                                    "protectedSettings":{
+                                        "commandToExecute": "[concat('bash ', parameters('maharaCommon').webServerSetupScriptFilename, ' ', concat(parameters('maharaCommon').gfsNameRoot, '0'), ' data ', parameters('maharaCommon').siteURL, ' ', parameters('maharaCommon').httpsTermination, ' ', concat('controller-vm-',parameters('maharaCommon').resourcesPrefix), ' ', parameters('maharaCommon').webServerType, ' ', parameters('maharaCommon').fileServerType, ' ', parameters('maharaCommon').storageAccountName, ' ', listKeys(variables('storageAccountId'), '2021-02-01').keys[0].value, ' ', parameters('maharaCommon').ctlrVmName, ' ', parameters('maharaCommon').htmlLocalCopySwitch, ' ' , parameters('siteFQDN'))]"
+                                    },
+                                    "type": "CustomScript",
+                                    "typeHandlerVersion": "2.0"
+                                }
+                            }
+                        ]
+                    },
+                    "networkProfile": {
+                        "networkInterfaceConfigurations": [
+                            {
+                                "name": "vmssnic",
+                                "properties": {
+                                    "ipConfigurations": [
+                                        {
+                                            "name": "ipcfg_lb",
+                                            "properties": {
+                                                "loadBalancerBackendAddressPools": [
+                                                    {
+                                                        "id": "[variables('extBeID')]"
+                                                    }
+                                                ],
+                                                "subnet": {
+                                                    "id": "[variables('subnetWebRef')]"
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "primary": true
+                                }
+                            }
+                        ]
+                    },
+                    "osProfile": {
+                        "adminUsername": "[parameters('maharaCommon').sshUsername]",
+                        "computerNamePrefix": "[parameters('maharaCommon').vmssName]",
+                        "linuxConfiguration": {
+                            "disablePasswordAuthentication": true,
+                            "ssh": {
+                                "publicKeys": [
+                                    {
+                                        "path": "[concat('/home/', parameters('maharaCommon').sshUsername, '/.ssh/authorized_keys')]",
+                                        "keyData": "[parameters('maharaCommon').sshPublicKey]"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "storageProfile": {
+                        "imageReference": "[parameters('maharaCommon').osType]",
+                        "osDisk": {
+                            "caching": "ReadOnly",
+                            "createOption": "FromImage",
+                            "managedDisk": {
+                                "storageAccountType": "Standard_LRS"
+                            }
+                        }
+                    }
+                }
+            },
+            "sku": {
+                "capacity": 1,
+                "name": "[parameters('maharaCommon').autoscaleVmSku]",
+                "tier": "Standard"
+            },
+            "tags": {
+                "displayName": "webfarm"
+            }
+        },
+        {
+            "type": "Microsoft.Insights/autoscaleSettings",
+            "apiVersion": "2015-04-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachineScaleSets/', parameters('maharaCommon').vmssName)]"
+            ],
+            "location": "[parameters('maharaCommon').location]",
+            "name": "autoscalewad",
+            "properties": {
+                "enabled": true,
+                "name": "autoscalewad",
+                "profiles": [
+                    {
+                        "capacity": {
+                            "default": "1",
+                            "maximum": "[parameters('maharaCommon').autoscaleVmCount]",
+                            "minimum": "1"
+                        },
+                        "name": "Profile1",
+                        "rules": [
+                            {
+                                "metricTrigger": {
+                                    "metricName": "Percentage CPU",
+                                    "metricResourceUri": "[variables('vmssID')]",
+                                    "operator": "GreaterThan",
+                                    "statistic": "Average",
+                                    "threshold": 60,
+                                    "timeAggregation": "Average",
+                                    "timeGrain": "PT1M",
+                                    "timeWindow": "PT5M"
+                                },
+                                "scaleAction": {
+                                    "cooldown": "PT10M",
+                                    "direction": "Increase",
+                                    "type": "ChangeCount",
+                                    "value": "1"
+                                }
+                            },
+                            {
+                                "metricTrigger": {
+                                    "metricName": "Percentage CPU",
+                                    "metricResourceUri": "[variables('vmssID')]",
+                                    "operator": "LessThan",
+                                    "statistic": "Average",
+                                    "threshold": 30,
+                                    "timeAggregation": "Average",
+                                    "timeGrain": "PT1M",
+                                    "timeWindow": "PT5M"
+                                },
+                                "scaleAction": {
+                                    "cooldown": "PT10M",
+                                    "direction": "Decrease",
+                                    "type": "ChangeCount",
+                                    "value": "1"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "targetResourceUri": "[variables('vmssID')]"
+            }
+        }
+    ],
+    "variables": {
+        "extBeID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools/',parameters('maharaCommon').lbName,parameters('maharaCommon').extBeName)]",
+        "scriptUri": "[concat(parameters('maharaCommon').scriptLocation,parameters('maharaCommon').webServerSetupScriptFilename,parameters('maharaCommon').artifactsSasToken)]",
+        "subnetWebRef": "[resourceId(parameters('resourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('maharaCommon').vnetName,parameters('maharaCommon').subnetWeb)]",
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('maharaCommon').storageAccountName)]",
+        "vmssID": "[resourceId('Microsoft.Compute/virtualMachineScaleSets',parameters('maharaCommon').vmssName)]",
+        "webvmss1NIC": "[resourceId('Microsoft.Compute/virtualMachineScaleSets/virtualMachines/networkInterfaces', parameters('maharaCommon').vmssName, '0', 'vmssnic')]"
+    },
+    "outputs": {
+        "webvm1IP": {
+            "value": "[reference(variables('webvmss1NIC'), '2020-12-01').ipConfigurations[0].properties.privateIPAddress]",
+            "type": "string"
+        }
+    }
+}

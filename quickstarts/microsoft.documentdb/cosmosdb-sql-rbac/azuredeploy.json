@@ -1,0 +1,114 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.539.46024",
+      "templateHash": "8081463042550811798"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "accountName": {
+      "type": "string",
+      "defaultValue": "[toLower(format('sql-rbac-{0}', uniqueString(resourceGroup().id)))]",
+      "metadata": {
+        "description": "Cosmos DB account name, max length 44 characters"
+      }
+    },
+    "roleDefinitionName": {
+      "type": "string",
+      "defaultValue": "My Read Write Role",
+      "metadata": {
+        "description": "Friendly name for the SQL Role Definition"
+      }
+    },
+    "dataActions": {
+      "type": "array",
+      "defaultValue": [
+        "Microsoft.DocumentDB/databaseAccounts/readMetadata",
+        "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*"
+      ],
+      "metadata": {
+        "description": "Data actions permitted by the Role Definition"
+      }
+    },
+    "principalId": {
+      "type": "string",
+      "metadata": {
+        "description": "Object ID of the AAD identity. Must be a GUID."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "locations": [
+      {
+        "locationName": "[parameters('location')]",
+        "failoverPriority": 0,
+        "isZoneRedundant": false
+      }
+    ],
+    "roleDefinitionId": "[guid('sql-role-definition-', parameters('principalId'), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName')))]",
+    "roleAssignmentId": "[guid('sql-role-assignment-', parameters('principalId'), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2021-04-15",
+      "name": "[parameters('accountName')]",
+      "kind": "GlobalDocumentDB",
+      "location": "[parameters('location')]",
+      "properties": {
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Session"
+        },
+        "locations": "[variables('locations')]",
+        "databaseAccountOfferType": "Standard",
+        "enableAutomaticFailover": false,
+        "enableMultipleWriteLocations": false
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions",
+      "apiVersion": "2021-04-15",
+      "name": "[format('{0}/{1}', parameters('accountName'), variables('roleDefinitionId'))]",
+      "properties": {
+        "roleName": "[parameters('roleDefinitionName')]",
+        "type": "CustomRole",
+        "assignableScopes": [
+          "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]"
+        ],
+        "permissions": [
+          {
+            "dataActions": "[parameters('dataActions')]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
+      "apiVersion": "2021-04-15",
+      "name": "[format('{0}/{1}', parameters('accountName'), variables('roleAssignmentId'))]",
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', split(format('{0}/{1}', parameters('accountName'), variables('roleDefinitionId')), '/')[0], split(format('{0}/{1}', parameters('accountName'), variables('roleDefinitionId')), '/')[1])]",
+        "principalId": "[parameters('principalId')]",
+        "scope": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', split(format('{0}/{1}', parameters('accountName'), variables('roleDefinitionId')), '/')[0], split(format('{0}/{1}', parameters('accountName'), variables('roleDefinitionId')), '/')[1])]"
+      ]
+    }
+  ]
+}

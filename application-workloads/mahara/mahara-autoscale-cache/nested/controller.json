@@ -1,0 +1,247 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "maharaCommon": {
+            "metadata": {
+                "description": "Common Mahara values"
+            },
+            "type": "object"
+        },
+        "ctlrPubIpId": {
+            "metadata": {
+                "description": "Resource ID of the controller VM public IP address"
+            },
+            "type": "string"
+        },
+        "siteFQDN": {
+            "metadata": {
+                "description": "FQDN of public IP address"
+            },
+            "type": "string"
+       },
+       "dbLoginPassword": {
+            "metadata": {
+                "description": "Database admin password"
+            },
+            "type": "securestring"
+        },
+        "maharaAdminPass": {
+            "metadata": {
+                "description": "Mahara admin password"
+            },
+            "type": "securestring"
+        },
+        "maharaDbPass": {
+            "metadata": {
+                "description": "Mahara database password"
+            },
+            "type": "securestring"
+        }
+    },
+
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-11-01",
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[parameters('maharaCommon').ctlrNsgName]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Allow_SSH",
+                        "properties": {
+                            "access": "Allow",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "22",
+                            "direction": "Inbound",
+                            "priority": 1000,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*"
+                        }
+                    },
+                    {
+                        "name": "Allow_http",
+                        "properties": {
+                            "access": "Allow",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "80",
+                            "direction": "Inbound",
+                            "priority": 1005,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*"
+                        }
+                    }
+                ]
+            },
+            "tags": {
+                "displayName": "Controller NSG"
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-11-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('maharaCommon').ctlrNsgName)]"
+            ],
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[parameters('maharaCommon').ctlrNicName]",
+            "properties": {
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgRef')]"
+                },
+                "ipConfigurations": [
+                    {
+                        "name": "ipcfgctlr",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[parameters('ctlrPubIpId')]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetWebRef')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "tags": {
+                "displayName": "ctlrNic"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2020-12-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces/', parameters('maharaCommon').ctlrNicName)]"
+            ],
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[parameters('maharaCommon').ctlrVmName]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('maharaCommon').controllerVmSku]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('nicRef')]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "adminUsername": "[parameters('maharaCommon').sshUsername]",
+                    "computerName": "[parameters('maharaCommon').ctlrVmName]",
+                    "secrets": "[parameters('maharaCommon').ctlrVmSecrets]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('maharaCommon').sshUsername, '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('maharaCommon').sshPublicKey]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": "[parameters('maharaCommon').osType]",
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS"
+                        },
+                        "name": "[parameters('maharaCommon').ctlrVmName]"
+                    },
+                    "dataDisks": "[take(variables('nfsDiskArray'),if(equals(parameters('maharaCommon').fileServerType,'nfs'), parameters('maharaCommon').fileServerDiskCount, 0))]"
+                }
+            },
+            "tags": {
+                "displayName": "Controller Virtual Machine"
+            }
+        },
+        {
+            "condition": "[parameters('maharaCommon').applyScriptsSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', parameters('maharaCommon').ctlrVmName)]"
+            ],
+            "name": "[concat(parameters('maharaCommon').ctlrVmName,'-ScriptProcessor')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[parameters('maharaCommon')]"
+                    },
+                   "siteFQDN": {
+                        "value": "[parameters('siteFQDN')]"
+                   },
+                   "dbLoginPassword": {
+                       "value": "[parameters('dbLoginPassword')]"
+                   },
+                   "maharaDbPass": {
+                       "value": "[parameters('maharaDbPass')]"
+                   },
+                   "maharaAdminPass": {
+                       "value": "[parameters('maharaAdminPass')]"
+                   }
+                },
+		   
+                "templateLink": {
+                    "uri": "[concat(parameters('maharaCommon').baseTemplateUrl, 'controllerconfig.json', parameters('maharaCommon').artifactsSasToken)]"
+                }
+            }
+        },
+        {
+            "condition": "[parameters('maharaCommon').azureBackupSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/',parameters('maharaCommon').ctlrVmName)]"
+            ],
+            "name": "[concat(parameters('maharaCommon').ctlrVmName,'-Backup')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[parameters('maharaCommon')]"
+                    },
+                    "vmName": {
+                        "value": "[parameters('maharaCommon').ctlrVmName]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('maharaCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('maharaCommon').artifactsSasToken)]"
+                }
+            }
+        }
+    ],
+    "variables": {
+        "nicRef": "[resourceId('Microsoft.Network/networkInterfaces', parameters('maharaCommon').ctlrNicName)]",
+        "nsgRef": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('maharaCommon').ctlrNsgName)]",
+        "subnetWebRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('maharaCommon').vnetName, parameters('maharaCommon').subnetWeb)]",
+        "copy": [
+            {
+                "name": "nfsDiskArray",
+                "count": 8,
+                "input": {
+                    "managedDisk": {
+                        "storageAccountType": "Premium_LRS"
+                    },
+                    "diskSizeGB": "[parameters('maharaCommon').fileServerDiskSize]",
+                    "lun": "[copyIndex('nfsDiskArray')]",
+                    "createOption": "Empty"
+                }
+            }
+        ]
+    },
+    "outputs": {
+        "controllerIP": {
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('maharaCommon').ctlrPipName), '2020-11-01').ipAddress]",
+            "type": "string"
+        }
+    }
+}

@@ -345,6 +345,8 @@ if (!$isPullRequest) {
     $regressionsRow | Add-Member "FairfaxRegressed" $FairfaxRegressed
     $regressionsRow | Add-Member "PublicRegressed" $PublicRegressed
     $regressionsRow | Add-Member "BuildNumber" $ENV:BUILD_BUILDNUMBER
+    $regressionsRow | Add-Member "BuildId" $ENV:BUILD_BUILDID
+    $regressionsRow | Add-Member "Build" "https://dev.azure.com/azurequickstarts/azure-quickstart-templates/_build/results?buildId=$($ENV:BUILD_BUILDID)"
     Add-AzTableRow -table $regressionsTable `
         -partitionKey $PartitionKey `
         -rowKey $regressionsKey `

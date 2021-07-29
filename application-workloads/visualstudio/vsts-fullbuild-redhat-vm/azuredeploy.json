@@ -74,6 +74,13 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
       },
       "defaultValue": ""
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_F1",
+      "metadata": {
+        "description": "Default VM Size"
+      }      
     }    
   },
   "variables": {
@@ -95,7 +102,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[concat(variables('StorageAccountName'), copyIndex())]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2021-02-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "storageLoop",
@@ -108,7 +115,7 @@
       "properties": {}
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -124,7 +131,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -145,7 +152,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -154,7 +161,7 @@
         "count": "[parameters('agentVMCount')]"
       },
       "dependsOn": [
-        "[concat(variables('publicIPAddressName'), copyIndex())]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), copyIndex()))]",
         "[variables('virtualNetworkName')]"
       ],
       "properties": {
@@ -175,7 +182,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -184,12 +191,12 @@
         "count": "[parameters('agentVMCount')]"
       },
       "dependsOn": [
-        "[concat(variables('StorageAccountName'), copyIndex())]",
-        "[concat(variables('nicName'), copyIndex())]"
+        "[resourceId('Microsoft.Storage/storageAccounts',concat(variables('StorageAccountName'), copyIndex()))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_F1"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[concat(variables('vmName'), copyIndex())]",
@@ -207,7 +214,7 @@
           "osDisk": {
             "name": "osdisk1",
             "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', concat(variables('storageAccountName'), copyIndex())), '2015-06-15').primaryEndpoints.blob, 'vhds/', parameters('dnsLabelPrefix'), copyIndex(), '.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', concat(variables('storageAccountName'), copyIndex())), '2020-08-01-preview').primaryEndpoints.blob, 'vhds/', parameters('dnsLabelPrefix'), copyIndex(), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -225,10 +232,10 @@
         {
           "type": "extensions",
           "name": "configScript",
-          "apiVersion": "2015-06-15",
+          "apiVersion": "2020-12-01",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat(variables('vmName'), copyIndex())]"
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'), copyIndex()))]"
           ],
           "properties": {
             "publisher": "Microsoft.Azure.Extensions",
