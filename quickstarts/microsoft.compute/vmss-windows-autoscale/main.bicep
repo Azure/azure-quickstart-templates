@@ -159,11 +159,11 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-03-01' = {
                   name: ipConfigName
                   properties: {
                     subnet: {
-                      id: '${virtualNetwork.id}/subnets/${subnetName}'
+                      id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, subnetName)
                     }
                     loadBalancerBackendAddressPools: [
                       {
-                        id: '${loadBalancer.id}/backendAddressPools/${bePoolName}'
+                        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancer.name, bePoolName)
                       }
                     ]
                     loadBalancerInboundNatPools: [
