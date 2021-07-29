@@ -33,6 +33,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
 }
 
 resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = {
+  parent: virtualNetwork
   name: subnetName
   properties: {
     addressPrefix: '10.0.0.0/23'
