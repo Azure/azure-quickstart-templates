@@ -15,9 +15,9 @@ param location string = resourceGroup().location
   'None'
   'Publishing'
   'Web'
-  'Web,Publishing'
+  'Web, Publishing'
 ])
-param internalLoadBalancingMode string = 'Web,Publishing'
+param internalLoadBalancingMode string = 'Web, Publishing'
 
 @description('Used when deploying an ILB enabled ASE.  Set this to the root domain associated with the ASE.  For example: contoso.com')
 param dnsSuffix string = ''
@@ -69,7 +69,6 @@ resource hostingEnvironment 'Microsoft.Web/hostingEnvironments@2021-01-01' = {
       id: virtualNetwork.id
       subnet: subnet.name
     }
-    workerPools: []
   }
 }
 
