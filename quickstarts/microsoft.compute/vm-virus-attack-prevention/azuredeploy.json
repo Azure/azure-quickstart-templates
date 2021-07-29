@@ -99,6 +99,13 @@
       "metadata": {
         "description": "this will be the password of the user created on the user"
       }
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "this will be the name of the resource group where resources are deployed"
+      }
     }
   },
   "variables": {
@@ -145,6 +152,7 @@
     "pipTemplateUri": "[uri(parameters('_artifactsLocation'),concat('nested/microsoft.network/publicipaddress.json',parameters('_artifactsLocationSasToken')))]",
     "nicTemplateUri": "[uri(parameters('_artifactsLocation'),concat('nested/microsoft.network/nic-with-pip.json',parameters('_artifactsLocationSasToken')))]",
     "vmTemplateUri": "[uri(parameters('_artifactsLocation'),concat('nested/microsoft.compute/vm.windows.json',parameters('_artifactsLocationSasToken')))]",
+    "omsExtensionTemplateUri": "[uri(parameters('_artifactsLocation'),concat('nested/microsoft.compute/omsExtension.json',parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
     {
@@ -339,28 +347,31 @@
       }
     },
     {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(concat(variables('vmNames')[copyIndex()]),'/OMSExtension')]",
-      "apiVersion": "2020-12-01",
-      "location": "[parameters('location')]",
+      "apiVersion": "2020-06-01",
+      "name": "omsExtension",
+      "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[variables('vmNames')[copyIndex()]]",
+        "copy-vm",
         "deploy-virus-attack-oms-resource"
       ],
-      "copy": {
-        "name": "copy-monitoring-agent",
-        "count": 2
-      },
       "properties": {
-        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
-        "type": "MicrosoftMonitoringAgent",
-        "typeHandlerVersion": "1.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "workspaceId": "[reference('deploy-virus-attack-oms-resource').outputs.workspaceId.value]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('omsExtensionTemplateUri')]"
         },
-        "protectedSettings": {
-          "workspaceKey": "[reference('deploy-virus-attack-oms-resource').outputs.workspaceKey.value]"
+        "parameters": {
+          "vmNames": {
+            "value": "[variables('vmNames')]"
+          },
+          "omsWorkspaceName": {
+            "value": "[variables('omsWorkspaceName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "resourceGroupName": {
+            "value": "[parameters('resourceGroupName')]"
+          }
         }
       }
     },
@@ -370,7 +381,7 @@
       "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "copy-monitoring-agent"
+        "omsExtension"
       ],
       "copy": {
         "name": "copy-extension-malware",
@@ -382,7 +393,7 @@
         "typeHandlerVersion": "1.1",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "AntimalwareEnabled": "true",
+          "AntimalwareEnabled": true,
           "Exclusions": {
             "Processes": "taskmgr.exe"
           },
