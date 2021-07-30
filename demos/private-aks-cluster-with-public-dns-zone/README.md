@@ -109,6 +109,13 @@ The following picture shows the resources deployed by the ARM template in the no
 
 ![MC Resource Group](images/mc_resourcegroup.png)
 
+Make sure to enable the following public preview features before deploying the ARM template:
+
+- [PodSecurityPolicyPreview](https://docs.microsoft.com/en-us/azure/aks/use-pod-security-policies) 
+- [RunCommandPreview](https://docs.microsoft.com/en-us/azure/aks/private-clusters#options-for-connecting-to-the-private-cluster) - - [EnablePodIdentityPreview](https://docs.microsoft.com/en-us/azure/aks/use-azure-ad-pod-identity) 
+- [EnablePrivateClusterPublicFQDN](https://docs.microsoft.com/en-us/azure/aks/private-clusters#create-a-private-aks-cluster-with-a-public-dns-address) 
+- [PodSubnetPreview"](https://docs.microsoft.com/en-us/azure/aks/configure-azure-cni#dynamic-allocation-of-ips-and-enhanced-subnet-support-preview)
+
 ## Testing ##
 
 If you open an ssh session to the Linux virtual machine and manually run the nslookup command using the FQND of the API server as a parameter, you should see an output like the the following:
