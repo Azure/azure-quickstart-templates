@@ -33,29 +33,46 @@ jobs:
 
           # Create the install folder
           INSTALL_PATH="$RUNNER_TEMP/bicep"
-          BICEP_PATH="$RUNNER_TEMP/bicep/bicep.bin"
+          BICEP_PATH="$RUNNER_TEMP/bicep/bicep"
           mkdir -p $INSTALL_PATH
  
           # Fetch the latest Bicep CLI binary
-          curl -sLo bicep.bin https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64
-          chmod +x ./bicep.bin
-          sudo mv ./bicep.bin $INSTALL_PATH
+          curl -sLo bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64
+          chmod +x ./bicep
+          sudo mv ./bicep $INSTALL_PATH
           echo Using bicep at $BICEP_PATH:
           $BICEP_PATH --version
 
       - name: Build main.bicep
         run: |
-          BICEP_PATH="$RUNNER_TEMP/bicep/bicep.bin"
-          $BICE_PATH build main.bicep --outfile azdeploy.json
+          BICEP_PATH="$RUNNER_TEMP/bicep/bicep"
           
-          # - name: Commit baselines
-          #   run: |
-          #     git config --global user.email "bicep@noreply.github.com"
-          #     git config --global user.name "Bicep Automation"
+          # Get path of last file checked in
+          LAST_PATH=$( git log --pretty="" --name-only -n 1 )
+          echo Last file modified: $LAST_PATH
 
-          #     git add .
+          # Look for the main.bicep file in this file's path or parents
+          LASTFOLDER_PATH=$( dirname "$LAST_PATH" )
+          MAINBICEP_PATH=$LASTFOLDER_PATH/main.bicep
+          AZDEPLOYJSON_PATH=$LASTFOLDER_PATH/azuredeploy.json
+          echo $MAINBICEP_PATH
+          echo $AZDEPLOYJSON_PATH
+          if [ ! -f "$MAINBICEP_PATH" ]; then
+            echo Could not find main.bicep at $MAINBICEP_PATH
+            exit
+          fi
 
-          #     if ! git diff-index --quiet HEAD --; then
-          #       git commit -m "Update test baselines"
-          #       git push
-          #     fi
+          echo Running: bicep build $MAINBICEP_PATH --outfile $AZDEPLOYJSON_PATH
+          $BICEP_PATH build $MAINBICEP_PATH --outfile $AZDEPLOYJSON_PATH
+
+      - name: Commit compiled JSON file
+        run: |
+          git config --global user.email "azure-quickstart-templates@noreply.github.com"
+          git config --global user.name "azure-quickstart-templates Automation"
+
+          git add .
+
+          if ! git diff-index --quiet HEAD --; then
+            git commit -m "Compile main.bicep into azuredeploy.json"
+            git push
+          fi
