@@ -7,7 +7,7 @@ param serviceBusQueueName string
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2021-01-01-preview' = {
+resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2017-04-01' = {
   name: serviceBusNamespaceName
   location: location
   sku: {
