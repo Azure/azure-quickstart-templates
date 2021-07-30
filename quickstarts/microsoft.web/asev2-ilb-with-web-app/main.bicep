@@ -66,8 +66,7 @@ resource hostingEnvironment 'Microsoft.Web/hostingEnvironments@2021-01-01' = {
     internalLoadBalancingMode: internalLoadBalancingMode
     dnsSuffix: dnsSuffix
     virtualNetwork: {
-      id: virtualNetwork.id
-      subnet: subnet.name
+      id: subnet.id
     }
   }
 }
