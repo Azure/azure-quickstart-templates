@@ -82,7 +82,7 @@ $vars = Find-VarsFromWriteHostOutput $buildHostOutput
 $mainTemplateDeploymentFilename = $vars["MAINTEMPLATE_DEPLOYMENT_FILENAME"]
 Assert-NotEmptyOrNull $mainTemplateDeploymentFilename "mainTemplateDeploymentFilename"
 $CompiledJsonFilename = $vars["COMPILED_JSON_FILENAME"] # $null if not bicep sample
-$labelBicepWarnings = $vars["LABEL_BICEP_WARNINGS"]
+$labelBicepWarnings = $vars["LABEL_BICEP_WARNINGS"] -eq "TRUE"
 
 # Validate-MetaData
 Write-Host "Validating metadata.json"
