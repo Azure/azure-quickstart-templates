@@ -1,0 +1,76 @@
+name: Build Bicep
+# This action can be run on-demand against a branch.
+# It attempts to build the main.bicep file from the most recent changes, and commits and pushes changes if there are any
+
+# To run/debug locally, try https://github.com/nektos/act
+# Actions documentation: https://docs.github.com/en/actions/reference
+
+on:
+  workflow_dispatch:
+
+jobs:
+  main:
+    name: Build Bicep
+    runs-on: ubuntu-latest
+
+    env:
+      # don't print dotnet logo
+      DOTNET_NOLOGO: true
+
+      # disable telemetry (reduces dotnet tool output in logs)
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+    steps:
+      - uses: actions/checkout@v2.3.4
+        with:
+          fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1.8.0
+      
+      - name: Install Bicep
+        run: |
+          # See https://github.com/Azure/bicep/blob/main/docs/installing.md#windows-installer
+
+          # Create the install folder
+          INSTALL_PATH="$RUNNER_TEMP/bicep"
+          BICEP_PATH="$RUNNER_TEMP/bicep/bicep"
+          mkdir -p $INSTALL_PATH
+ 
+          # Fetch the latest Bicep CLI binary
+          curl -sLo bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64
+          chmod +x ./bicep
+          sudo mv ./bicep $INSTALL_PATH
+          echo Using bicep at $BICEP_PATH:
+          $BICEP_PATH --version
+
+      - name: Build main.bicep
+        run: |
+          BICEP_PATH="$RUNNER_TEMP/bicep/bicep"
+          
+          # Get path of last file checked in
+          LAST_PATH=$( git log --pretty="" --name-only -n 1 )
+          echo Last file modified: $LAST_PATH
+
+          # Look for the main.bicep file in this file's path or parents
+          LASTFOLDER_PATH=$( dirname "$LAST_PATH" )
+          MAINBICEP_PATH=$LASTFOLDER_PATH/main.bicep
+          AZDEPLOYJSON_PATH=$LASTFOLDER_PATH/azuredeploy.json
+          if [ ! -f "$MAINBICEP_PATH" ]; then
+            echo Could not find main.bicep at $MAINBICEP_PATH
+          fi
+
+          echo Running: bicep build $MAINBICEP_PATH --outfile $AZDEPLOYJSON_PATH
+          $BICEP_PATH build $MAINBICEP_PATH --outfile $AZDEPLOYJSON_PATH
+
+      - name: Commit compiled JSON file
+        run: |
+          git config --global user.email "azure-quickstart-templates@noreply.github.com"
+          git config --global user.name "azure-quickstart-templates Automation"
+
+          git add .
+
+          if ! git diff-index --quiet HEAD --; then
+            git commit -m "Compile main.bicep into azuredeploy.json"
+            git push
+          fi
