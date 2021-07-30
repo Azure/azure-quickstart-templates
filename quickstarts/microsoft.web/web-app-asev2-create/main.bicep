@@ -7,10 +7,14 @@ param location string = resourceGroup().location
 @description('Name of the existing VNET')
 param existingVirtualNetworkName string
 
+@description('Name of the existing VNET resource group')
+param existingVirtualNetworkResourceGroup string
+
 @description('Subnet name that will contain the App Service Environment')
 param existingSubnetName string
 
 resource existingVnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
+  scope: resourceGroup(existingVirtualNetworkResourceGroup)
   name: existingVirtualNetworkName
 }
 
