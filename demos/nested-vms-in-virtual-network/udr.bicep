@@ -1,5 +1,5 @@
 param udrName string
-param location string = resourceGroup().location
+param location string
 param addressPrefix string = ''
 param nextHopAddress string = ''
 

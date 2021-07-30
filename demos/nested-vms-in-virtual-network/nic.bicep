@@ -1,5 +1,5 @@
 param nicName string
-param location string = resourceGroup().location
+param location string
 param subnetId string
 param pipId string = ''
 

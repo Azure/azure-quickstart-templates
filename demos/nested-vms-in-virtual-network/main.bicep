@@ -95,7 +95,7 @@ var azureVMsSubnetUDRName = '${azureVMsSubnetName}UDR'
 var DSCInstallWindowsFeaturesUri = uri(_artifactsLocation, 'dsc/dscinstallwindowsfeatures.zip${_artifactsLocationSasToken}')
 var HVHostSetupScriptUri = uri(_artifactsLocation, 'hvhostsetup.ps1${_artifactsLocationSasToken}')
 
-resource publicIp 'Microsoft.Network/publicIpAddresses@2019-04-01' = {
+resource publicIp 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: HostPublicIPAddressName
   location: location
   sku: {
@@ -109,31 +109,31 @@ resource publicIp 'Microsoft.Network/publicIpAddresses@2019-04-01' = {
   }
 }
 
-resource natNsg 'Microsoft.Network/networkSecurityGroups@2019-04-01' = {
+resource natNsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
   name: NATSubnetNSGName
   location: location
   properties: {}
 }
 
-resource hyperVNsg 'Microsoft.Network/networkSecurityGroups@2019-04-01' = {
+resource hyperVNsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
   name: hyperVSubnetNSGName
   location: location
   properties: {}
 }
 
-resource ghostedNsg 'Microsoft.Network/networkSecurityGroups@2019-04-01' = {
+resource ghostedNsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
   name: ghostedSubnetNSGName
   location: location
   properties: {}
 }
 
-resource azureVmsSubnet 'Microsoft.Network/networkSecurityGroups@2019-04-01' = {
+resource azureVmsSubnet 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
   name: azureVMsSubnetNSGName
   location: location
   properties: {}
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2019-04-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -189,6 +189,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2019-04-01' = {
 module createNic1 './nic.bicep' = {
   name: 'createNic1'
   params: {
+    location: location
     nicName: HostNetworkInterface1Name
     subnetId: '${vnet.id}/subnets/${NATSubnetName}'
     pipId: publicIp.id
@@ -198,6 +199,7 @@ module createNic1 './nic.bicep' = {
 module createNic2 './nic.bicep' = {
   name: 'createNic2'
   params: {
+    location: location
     nicName: HostNetworkInterface2Name
     enableIPForwarding: true
     subnetId: '${vnet.id}/subnets/${hyperVSubnetName}'
@@ -208,6 +210,7 @@ module createNic2 './nic.bicep' = {
 module updateNic1 './nic.bicep' = {
   name: 'updateNic1'
   params: {
+    location: location
     ipAllocationMethod: 'Static'
     staticIpAddress: createNic1.outputs.assignedIp
     nicName: HostNetworkInterface1Name
@@ -220,6 +223,7 @@ module updateNic1 './nic.bicep' = {
 module updateNic2 './nic.bicep' = {
   name: 'updateNic2'
   params: {
+    location: location
     ipAllocationMethod: 'Static'
     staticIpAddress: createNic2.outputs.assignedIp
     nicName: HostNetworkInterface2Name
@@ -231,6 +235,7 @@ module updateNic2 './nic.bicep' = {
 module createAzureVmUdr './udr.bicep' = {
   name: 'udrDeploy'
   params: {
+    location: location
     udrName: azureVMsSubnetUDRName
   }
 }
@@ -238,13 +243,14 @@ module createAzureVmUdr './udr.bicep' = {
 module updateAzureVmUdr './udr.bicep' = {
   name: 'udrUpdate'
   params: {
+    location: location
     udrName: azureVMsSubnetUDRName
     addressPrefix: ghostedSubnetPrefix
     nextHopAddress: createNic2.outputs.assignedIp
   }
 }
 
-resource hostVm 'Microsoft.Compute/virtualMachines@2019-03-01' = {
+resource hostVm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   name: HostVirtualMachineName
   location: location
   properties: {
@@ -303,7 +309,7 @@ resource hostVm 'Microsoft.Compute/virtualMachines@2019-03-01' = {
   }
 }
 
-resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2019-03-01' = {
+resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2021-03-01' = {
   parent: hostVm
   name: 'InstallWindowsFeatures'
   location: location
@@ -323,7 +329,7 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2019-03-01' =
   }
 }
 
-resource hostVmSetupExtension 'Microsoft.Compute/virtualMachines/extensions@2019-03-01' = {
+resource hostVmSetupExtension 'Microsoft.Compute/virtualMachines/extensions@2021-03-01' = {
   parent: hostVm
   name: 'HVHOSTSetup'
   location: location
