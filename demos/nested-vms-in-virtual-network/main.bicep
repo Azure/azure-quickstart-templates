@@ -78,7 +78,7 @@ param HostVirtualMachineName string = 'HVHOST'
   'Standard_E32s_v3'
   'Standard_E64s_v3'
 ])
-param HostVirtualMachineSize string //asdf = 'Standard_D4s_v3'
+param HostVirtualMachineSize string = 'Standard_D4s_v3'
 
 @description('Admin Username for the Host Virtual Machine')
 param HostAdminUsername string
