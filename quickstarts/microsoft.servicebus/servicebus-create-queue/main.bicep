@@ -16,7 +16,7 @@ resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2017-04-01' = {
   properties: {}
 }
 
-resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2021-01-01-preview' = {
+resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2017-04-01' = {
   parent: serviceBusNamespace
   name: serviceBusQueueName
   properties: {
