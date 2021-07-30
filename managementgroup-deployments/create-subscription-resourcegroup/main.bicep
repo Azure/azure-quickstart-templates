@@ -26,7 +26,7 @@ param resourceGroupName string = 'demo'
 param location string = deployment().location
 
 // Create the subscription and output the GUID
-module subAlias './modules/.microsoft.subscrioption.alias.bicep' = {
+module subAlias './modules/.microsoft.subscription.alias.bicep' = {
     name: 'create-${subscriptionAlias}'
     params: {
         billingAccount: billingAccount
