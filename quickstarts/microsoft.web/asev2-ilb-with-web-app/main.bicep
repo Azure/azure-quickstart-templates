@@ -4,6 +4,9 @@ param aseName string
 @description('The name of the vnet')
 param virtualNetworkName string
 
+@description('The resource group name that contains the vnet')
+param vnetResourceGroupName string
+
 @description('Subnet name that will contain the App Service Environment')
 param subnetName string
 
@@ -43,6 +46,7 @@ param numberOfWorkers int = 1
 param workerPool string = '1'
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
+  scope: resourceGroup(vnetResourceGroupName)
   name: virtualNetworkName
 }
 
