@@ -55,7 +55,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing 
   name: subnetName
 }
 
-resource hostingEnvironment 'Microsoft.Web/hostingEnvironments@2021-01-01' = {
+resource hostingEnvironment 'Microsoft.Web/hostingEnvironments@2020-12-01' = {
   name: aseName
   kind: 'ASEV2'
   location: location
@@ -75,7 +75,7 @@ resource hostingEnvironment 'Microsoft.Web/hostingEnvironments@2021-01-01' = {
   }
 }
 
-resource serverFarm 'Microsoft.Web/serverfarms@2021-01-01' = {
+resource serverFarm 'Microsoft.Web/serverFarms@2020-12-01' = {
   name: appServicePlanName
   location: location
   tags: {
@@ -98,7 +98,7 @@ resource serverFarm 'Microsoft.Web/serverfarms@2021-01-01' = {
   }
 }
 
-resource website 'Microsoft.Web/sites@2020-06-01' = {
+resource website 'Microsoft.Web/sites@2020-12-01' = {
   name: siteName
   location: location
   tags: {
