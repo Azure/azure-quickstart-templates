@@ -281,7 +281,6 @@
     "lbName" : "solace-ha-group-loadbalancer",
     "lbPoolName": "solace-ha-group",
     "lbPoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbPoolName'))]",
-    "solaceContainerExtensionDependency": "[if(empty(parameters('workspaceName')),'DockerExtension','OmsAgentExtension')]",
     "dataDisksChoices": {
       "0": [
         {
@@ -314,7 +313,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2019-10-01",
+      "apiVersion": "2020-10-01",
       "type": "Microsoft.Resources/deployments",
       "name": "[variables('solaceSecurityTemplateName')]",
       "properties": {
@@ -337,7 +336,7 @@
       }
     },
     {
-      "apiVersion": "2019-10-01",
+      "apiVersion": "2020-10-01",
       "type": "Microsoft.Resources/deployments",
       "name": "[variables('solaceLoadBalancerName')]",
       "properties": {
@@ -376,7 +375,7 @@
     },
     {
       "condition": "[not(empty(parameters('workspaceName')))]",
-      "apiVersion": "2019-10-01",
+      "apiVersion": "2020-10-01",
       "type": "Microsoft.Resources/deployments",
       "name": "[variables('solaceWorkspaceName')]",
       "properties": {
@@ -397,7 +396,7 @@
     },
     {
       "condition": "[equals(parameters('vmAndLoadbalancerExposure'),'Public')]",
-      "apiVersion": "2020-04-01",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('publicIPAddressNameVM'), copyindex())]",
       "location": "[parameters('location')]",
@@ -414,7 +413,7 @@
     },
     {
       "condition": "[empty(parameters('existingSubnetName'))]",
-      "apiVersion": "2020-04-01",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -435,11 +434,11 @@
       }
     },
     {
-      "apiVersion": "2019-10-01",
+      "apiVersion": "2020-10-01",
       "name": "[variables('solaceUpdateSubnetName')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('solaceSecurityTemplateName'))]"
+        "[resourceId('Microsoft.Resources/deployments/', variables('solaceSecurityTemplateName'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -455,7 +454,7 @@
             "value": "[variables('subnetName')]"
           },
           "subnetAddressPrefix": {
-            "value": "[reference(resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName')), '2018-03-01').addressPrefix]"
+            "value": "[reference(resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName')), '2020-11-01').addressPrefix]"
           },
           "nsgId": {
             "value": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('securityGroupName'))]"
@@ -469,7 +468,7 @@
     {
       "condition": "[equals(parameters('vmAndLoadbalancerExposure'),'Public')]",
       "comments": "Only created if network interfaces are to be publicly exposed. Otherwise the next resource is created.",
-      "apiVersion": "2020-04-01",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('Public',variables('nicName'), copyindex())]",
       "location": "[parameters('location')]",
@@ -478,9 +477,9 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressNameVM'), copyindex())]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Resources/deployments/', variables('solaceLoadBalancerName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', copyIndex(variables('publicIPAddressNameVM'), copyindex()))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Resources/deployments/', variables('solaceLoadBalancerName'))]"
       ],
       "properties": {
         "networkSecurityGroup": {
@@ -509,7 +508,7 @@
     },
     {
       "condition": "[not(equals(parameters('vmAndLoadbalancerExposure'),'Public'))]",
-      "apiVersion": "2020-04-01",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('Internal',variables('nicName'), copyindex())]",
       "location": "[parameters('location')]",
@@ -518,8 +517,8 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Resources/deployments/', variables('solaceLoadBalancerName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Resources/deployments/', variables('solaceLoadBalancerName'))]"
       ],
       "properties": {
         "networkSecurityGroup": {
@@ -544,7 +543,7 @@
       }
     },
     {
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
       "location": "[parameters('location')]",
@@ -557,7 +556,7 @@
       }
     },
     {
-      "apiVersion":"2019-12-01",
+      "apiVersion":"2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('dnsLabelForVmIp'), copyindex())]",
       "location": "[parameters('location')]",
@@ -566,8 +565,8 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', concat(parameters('vmAndLoadbalancerExposure'),variables('nicName'), copyindex()))]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('vmAndLoadbalancerExposure'),variables('nicName'), copyindex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -605,7 +604,7 @@
       }
     },
     {
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('dnsLabelForVmIp'), copyindex(), '/DockerExtension')]",
       "location": "[parameters('location')]",
@@ -614,14 +613,13 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('dnsLabelForVmIp'), copyindex())]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('dnsLabelForVmIp'), copyindex()))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "DockerExtension",
         "typeHandlerVersion": "1.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {}
+        "autoUpgradeMinorVersion": true
       }
     },
     {
@@ -671,7 +669,7 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[if(empty(parameters('workspaceName')), concat('Microsoft.Compute/virtualMachines/', parameters('dnsLabelForVmIp'), copyindex(), '/extensions/DockerExtension'), concat('Microsoft.Compute/virtualMachines/', parameters('dnsLabelForVmIp'), copyindex(), '/extensions/OmsAgentExtension'))]"
+        "DockerLoop"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
