@@ -144,7 +144,7 @@ resource account 'Microsoft.DeviceUpdate/accounts@2020-03-01-preview' = {
 
 resource instance 'Microsoft.DeviceUpdate/accounts/instances@2020-03-01-preview' = {
   parent: account
-  name: '${instanceName}'
+  name: instanceName
   location: location
   properties: {
     iotHubs: [
