@@ -149,8 +149,7 @@ downloadAllFiles() {
 
 downloadHadoop() {
     echo "Downloading Hadoop"
-    #curl "https://downloads.apache.org/hadoop/core/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz" --output "/tmp/hadoop-${HADOOP_VERSION}.tar.gz"
-    curl "https://archive.apache.org/dist/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz" --output "/tmp/hadoop-${HADOOP_VERSION}.tar.gz"
+    curl "https://downloads.apache.org/hadoop/core/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz" --output "/tmp/hadoop-${HADOOP_VERSION}.tar.gz"
     su - ${INSTALL_USER}<<END
     cp "/tmp/hadoop-${HADOOP_VERSION}.tar.gz" /sasshare
 END
