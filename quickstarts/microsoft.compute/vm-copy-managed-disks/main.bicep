@@ -173,7 +173,7 @@ resource virtualMachines 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i
     networkProfile: {
       networkInterfaces: [
         {
-          id: networkInterfaces[i + 1].id
+          id: networkInterfaces[i].id
         }
       ]
     }
@@ -199,7 +199,7 @@ resource networkInterfaces 'Microsoft.Network/networkInterfaces@2020-06-01' = [f
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: publicIPAddresses[i - 1].id
+            id: publicIPAddresses[i].id
           }
           subnet: {
             id: subnet.id
