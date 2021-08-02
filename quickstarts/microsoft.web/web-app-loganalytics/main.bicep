@@ -50,7 +50,7 @@ resource appService 'Microsoft.Web/sites@2020-12-01' = {
   ]
 }
 
-resource appServiceLogging 'Microsoft.Web/sites/config@2020-06-01' = {
+resource appServiceLogging 'Microsoft.Web/sites/config@2021-01-15' = {
   parent: appService
   name: 'logs'
   properties: {
@@ -74,7 +74,7 @@ resource appServiceLogging 'Microsoft.Web/sites/config@2020-06-01' = {
   }
 }
 
-resource appServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
+resource appServiceAppSettings 'Microsoft.Web/sites/config@2021-01-15' = {
   parent: appService
   name: 'appsettings'
   properties: {
@@ -85,14 +85,14 @@ resource appServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
   ]
 }
 
-resource appServiceSiteExtension 'Microsoft.Web/sites/siteextensions@2020-06-01' = {
+resource appServiceSiteExtension 'Microsoft.Web/sites/siteextensions@2021-01-15' = {
   parent: appService
   name: 'Microsoft.ApplicationInsights.AzureWebsites'
   dependsOn: [
     appInsights
   ]
 }
-resource appInsights 'microsoft.insights/components@2020-02-02-preview' = {
+resource appInsights 'microsoft.insights/components@2020-02-02' = {
   name: appInsightName
   location: location
   kind: 'string'
