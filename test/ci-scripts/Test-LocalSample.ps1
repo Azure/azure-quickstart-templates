@@ -84,10 +84,10 @@ Assert-NotEmptyOrNull $mainTemplateDeploymentFilename "mainTemplateDeploymentFil
 $CompiledJsonFilename = $vars["COMPILED_JSON_FILENAME"] # $null if not bicep sample
 $labelBicepWarnings = $vars["LABEL_BICEP_WARNINGS"] -eq "TRUE"
 
-# Validate-MetaData
+# Validate-Metadata
 Write-Host "Validating metadata.json"
 $metadataHostOutput =
-& $PSScriptRoot/Validate-MetaData.ps1 `
+& $PSScriptRoot/Validate-Metadata.ps1 `
     -SampleFolder $SampleFolder `
     -CloudEnvironment $CloudEnvironment `
     -BuildReason "PullRequest" `
@@ -115,6 +115,8 @@ $resultReadMe = $vars["RESULT_README"] # will be null if fails
 $fixedReadme = $vars["FIXED_README"] -eq "TRUE"
 
 # Test-BestPractices
+write-warning "TTK: '$TtkFolder'"
+Write-Warning "done"
 if (!$TtkFolder) {
     # Check if the TTK is in a local repo as a sibling to this repo
     $TtkFolder = "$PSScriptRoot/../../../arm-ttk"
