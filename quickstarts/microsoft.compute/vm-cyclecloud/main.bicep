@@ -16,7 +16,7 @@ param ccadminRawPassword string
 param myIp string
 
 @description('Specifies size of cyclecloud VM')
-param vmSize string
+param vmSize string = 'Standard_D1_v2'
 
 var roleDefinitions = {
   owner: '8e3af657-a8ff-443c-a75c-2fe8c4bcb635'
