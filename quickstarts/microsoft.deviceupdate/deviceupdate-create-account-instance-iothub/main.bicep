@@ -26,7 +26,7 @@ var iotHubKeyName = 'deviceupdateservice'
 var iotHubKeyIndex = 5
 var consumerGroupName = 'adum'
 
-resource iotHub 'Microsoft.Devices/iotHubs@2021-07-01' = {
+resource iotHub 'Microsoft.Devices/iotHubs@2021-03-31' = {
   name: iotHubName
   location: location
   sku: {
@@ -127,7 +127,7 @@ resource iotHub 'Microsoft.Devices/iotHubs@2021-07-01' = {
   }
 }
 
-resource iotHub_consumerGroup 'Microsoft.Devices/iotHubs/eventhubEndpoints/consumerGroups@2021-07-01' = {
+resource iotHub_consumerGroup 'Microsoft.Devices/iotHubs/eventhubEndpoints/consumerGroups@2021-03-31' = {
   name: '${iotHubName}/events/${consumerGroupName}'
   properties: {
     name: consumerGroupName
@@ -150,8 +150,8 @@ resource instance 'Microsoft.DeviceUpdate/accounts/instances@2020-03-01-preview'
     iotHubs: [
       {
         resourceId: iotHubResourceId
-        ioTHubConnectionString: 'HostName=${reference(iotHubResourceId, '2021-07-01').hostName};SharedAccessKeyName=${iotHubKeyName};SharedAccessKey=${listkeys(iotHubResourceId, '2021-07-01').value[iotHubKeyIndex].primaryKey}'
-        eventHubConnectionString: 'Endpoint=${reference(iotHubResourceId, '2021-07-01').eventHubEndpoints.events.endpoint};SharedAccessKeyName=${iotHubKeyName};SharedAccessKey=${listKeys(iotHubResourceId, '2021-07-01').value[iotHubKeyIndex].primaryKey};EntityPath=${reference(iotHubResourceId, '2021-07-01').eventHubEndpoints.events.path}'
+        ioTHubConnectionString: 'HostName=${reference(iotHubResourceId, '2021-03-31').hostName};SharedAccessKeyName=${iotHubKeyName};SharedAccessKey=${listkeys(iotHubResourceId, '2021-03-31').value[iotHubKeyIndex].primaryKey}'
+        eventHubConnectionString: 'Endpoint=${reference(iotHubResourceId, '2021-03-31').eventHubEndpoints.events.endpoint};SharedAccessKeyName=${iotHubKeyName};SharedAccessKey=${listKeys(iotHubResourceId, '2021-03-31').value[iotHubKeyIndex].primaryKey};EntityPath=${reference(iotHubResourceId, '2021-03-31').eventHubEndpoints.events.path}'
       }
     ]
   }
