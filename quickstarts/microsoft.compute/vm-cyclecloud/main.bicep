@@ -1,10 +1,14 @@
+@description('Specifies location of all resources.')
 param location string = resourceGroup().location
 
+@description('Specifies SSH public key that is used to authenticate with linux VM')
 param csadminSshKey string
 
+@description('Specifies name of the administrator account for linux VM')
 @secure()
 param adminUserName string
 
+@description('Specifies password for the administrator account for linux VM')
 @secure()
 param ccadminRawPassword string
 
