@@ -17,6 +17,7 @@ $testBranches = @( `
 $yesAll = $false
 foreach ($shortBranch in $TestBranches) {
   $fullBranch = "keep/testdeployment/$shortBranch"
+  
   $yes = $false
   if (!$yesAll) {
     $answer = Read-Host "Create a PR for $fullBranch (Y/N/A)"
@@ -27,13 +28,24 @@ foreach ($shortBranch in $TestBranches) {
       $yes = $true
       $yesAll = $true
     }
+  } else {
+    $yes = $true
   }
 
   if ($yes) {
+    git stash
+
+    git checkout $fullBranch
+    git rebase master
+    git push -f
+
     $body = @"
-This is a test deployment for branch $longBranch
+DO NOT CHECK IN!
+This is a test deployment for branch $fullBranch
 "@
 
-    gh pr create --title "Test: $shortBranch" --body $body --label "test deployment" --repo "Azure/azure-quickstart-templates" --draft
+    gh pr create --head $fullBranch --title "Test: $shortBranch" --body $body --label "test deployment" --repo "Azure/azure-quickstart-templates" --draft
+
+    git stash apply
   }
 }
