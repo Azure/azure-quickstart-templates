@@ -6,8 +6,8 @@ pass the build in order to trigger a manual review
 #>
 
 param(
-    [string]$RepoRoot = $ENV:BUILD_REPOSITORY_LOCALPATH,
-    [string]$BuildSourcesDirectory = $ENV:BUILD_SOURCESDIRECTORY
+    $RepoRoot = $ENV:BUILD_REPOSITORY_LOCALPATH,
+    $BuildSourcesDirectory = $ENV:BUILD_SOURCESDIRECTORY
 )
 
 # Get all of the files changed in the PR
@@ -21,8 +21,10 @@ $FolderArray = @()
 
 foreach($f in $ChangedFiles) {
 
-    $status = $f.split("`t")[0]
+    $status = $f.split("`t")[0] # we're filtering out deleted files in the git diff, so may not need this, check below is also commented out
     $fileName = $f.split("`t")[1]
+
+    Write-Host "fileName: $fileName"
 
     #if ($status -ne "D") {
         # ignore deleted files, for example when a sample folder is renamed
