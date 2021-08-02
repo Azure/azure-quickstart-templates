@@ -1,6 +1,8 @@
-name: Build Bicep
+name: Auto Fix Sample
 # This action can be run on-demand against a branch.
-# It attempts to build the main.bicep file from the most recent changes, and commits and pushes changes if there are any
+# It attempts to auto-fix some errors in the most recently updated sample in the branch:
+#    Builds main.bicep -> azuredeploy.json
+#    Attempts some fixes with the metadata
 
 # To run/debug locally, try https://github.com/nektos/act
 # Actions documentation: https://docs.github.com/en/actions/reference
@@ -10,7 +12,7 @@ on:
 
 jobs:
   main:
-    name: Build Bicep
+    name: Auto Fix Sample
     runs-on: ubuntu-latest
 
     env:
@@ -28,6 +30,17 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1.8.0
       
+      - name: Install TTK
+        run: |
+          TTK_FOLDER="$RUNNER_TEMP/arm-ttk"
+          TTK_URI="https://aka.ms/arm-ttk-latest"
+
+          curl -sLo arm-ttk $TTK_URI
+          unzip -q arm-ttk -d $TTK_FOLDER
+          ls -al $TTK_FOLDER
+
+          echo "TTK_FOLDER=$TTK_FOLDER" >> $GITHUB_ENV
+
       - name: Install Bicep
         run: |
           # See https://github.com/Azure/bicep/blob/main/docs/installing.md#windows-installer
@@ -44,13 +57,29 @@ jobs:
           echo Using bicep at $BICEP_PATH:
           $BICEP_PATH --version
 
-      - name: Build main.bicep
+          echo "BICEP_PATH=$BICEP_PATH" >> $GITHUB_ENV
+
+      - name: Install PowerShell
         run: |
-          BICEP_PATH="$RUNNER_TEMP/bicep/bicep"
-          
+          # Update the list of packages
+          sudo apt-get update
+          # Install pre-requisite packages.
+          sudo apt-get install -y wget apt-transport-https software-properties-common
+          # Download the Microsoft repository GPG keys
+          wget -q https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb
+          # Register the Microsoft repository GPG keys
+          sudo dpkg -i packages-microsoft-prod.deb
+          # Update the list of packages after we added packages.microsoft.com
+          sudo apt-get update
+          # Install PowerShell
+          sudo apt-get install -y powershell
+
+      - name: Find sample folder
+        run: |
           # Get path of last file checked in
-          LAST_PATH=$( git log --pretty="" --name-only -n 1 )
+          LAST_PATH=$( git log --pretty="" --name-only -n 1 | tail -1 )
           echo Last file modified: $LAST_PATH
+          echo Last folder modified: $LASTFOLDER_PATH
 
           # Look for the main.bicep file in this file's path or parents
           LASTFOLDER_PATH=$( dirname "$LAST_PATH" )
@@ -60,8 +89,20 @@ jobs:
             echo Could not find main.bicep at $MAINBICEP_PATH
           fi
 
+          echo "LASTFOLDER_PATH=$LASTFOLDER_PATH" >> $GITHUB_ENV
+          echo "MAINBICEP_PATH=$MAINBICEP_PATH" >> $GITHUB_ENV
+          echo "AZDEPLOYJSON_PATH=$AZDEPLOYJSON_PATH" >> $GITHUB_ENV
+
+      - name: Build main.bicep -> azuredeploy.json
+        run: |          
           echo Running: bicep build $MAINBICEP_PATH --outfile $AZDEPLOYJSON_PATH
           $BICEP_PATH build $MAINBICEP_PATH --outfile $AZDEPLOYJSON_PATH
+
+      - name: Attempt Metadata Fixes
+        run: |
+          echo Running Test-LocalSample -fix
+          echo $TTK_FOLDER
+          pwsh -noprofile -nologo -command "$GITHUB_WORKSPACE/test/ci-scripts/Test-LocalSample.ps1 $LASTFOLDER_PATH -TtkFolder $TTK_FOLDER -fix; if (\$error.Count) { exit 1 }"
 
       - name: Commit compiled JSON file
         run: |
