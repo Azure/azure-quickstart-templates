@@ -172,7 +172,7 @@ Then the  SAS software depot location is:
 |Visual Analytics Worker Size|Specifies the size of the Visual Analytics Worker.|
 |Proximity Placement Group Name| Specifies the proximity group for instances. You provide the name.|
 |SSH Key for VM Access| Specifies the full SSH public key that will be added to the servers. Copy and paste a public SSH key into this field.|
-|Primary User Name| The user name that will be added to the servers to allow SSH access. If left blank, the value AzureUser will be used.|
+|Primary User Name| The user name that will be added to the servers to allow SSH access. Username may contain only lower and upper case letters, digits, underscores, or dashes. They can end with a dollar sign. Dashes are not allowed at the beginning of the username. Fully numeric usernames and usernames . or .. are also disallowed. It is not recommended to use usernames beginning with . character as their home directories will be hidden in the ls output. In regular expression terms: [a-zA-Z0-9_.][a-zA-Z0-9_.-]*[$]? Username must be at least 1 charater and less than 32 characters long.|
 |SAS Administration Password|Specifies the password used for SAS authentication. Enter the password to be used for the sasadm@saspw account.|
 |Azure Administration Password|Specifies the password used for OS authentication.  Enter the password to be used for the sasinst account.|
 |Admin Ingress Location|Specifies to allow inbound SSH traffic to the Ansible Controller from this Classless Inter-Domain Routing (CIDR) block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x. If this is left blank, the environment can be accessed from any location on the internet.|
