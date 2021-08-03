@@ -1,0 +1,112 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "dev",
+      "templateHash": "14109254028688856531"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "accountName": {
+      "type": "string"
+    },
+    "skuName": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS",
+        "Premium_LRS"
+      ]
+    },
+    "deploymentScriptTimestamp": {
+      "type": "string",
+      "defaultValue": "[utcNow()]"
+    },
+    "indexDocument": {
+      "type": "string",
+      "defaultValue": "index.html"
+    },
+    "errorDocument404Path": {
+      "type": "string",
+      "defaultValue": "error.html"
+    }
+  },
+  "functions": [],
+  "variables": {
+    "storageAccountContributorRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[parameters('accountName')]",
+      "location": "[parameters('location')]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "[parameters('skuName')]"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2018-11-30",
+      "name": "DeploymentScript",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('accountName'))]",
+      "name": "[guid(resourceGroup().id, variables('storageAccountContributorRoleDefinitionId'))]",
+      "properties": {
+        "roleDefinitionId": "[variables('storageAccountContributorRoleDefinitionId')]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DeploymentScript')).principalId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DeploymentScript')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('accountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2020-10-01",
+      "name": "deploymentScript",
+      "location": "[parameters('location')]",
+      "kind": "AzurePowerShell",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DeploymentScript')]": {}
+        }
+      },
+      "properties": {
+        "azPowerShellVersion": "3.0",
+        "scriptContent": "param(\n    [string] $ResourceGroupName,\n    [string] $StorageAccountName,\n    [string] $IndexDocument,\n    [string] $ErrorDocument404Path)\n\n$ErrorActionPreference = 'Stop'\n$storageAccount = Get-AzStorageAccount -ResourceGroupName $ResourceGroupName -AccountName $StorageAccountName\n\n$ctx = $storageAccount.Context\nEnable-AzStorageStaticWebsite -Context $ctx -IndexDocument $IndexDocument -ErrorDocument404Path $ErrorDocument404Path\n",
+        "forceUpdateTag": "[parameters('deploymentScriptTimestamp')]",
+        "retentionInterval": "PT4H",
+        "arguments": "[format('-ResourceGroupName {0} -StorageAccountName {1} -IndexDocument {2} -ErrorDocument404Path {3}', resourceGroup().name, parameters('accountName'), parameters('indexDocument'), parameters('errorDocument404Path'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DeploymentScript')]",
+        "[extensionResourceId(resourceId('Microsoft.Storage/storageAccounts', parameters('accountName')), 'Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, variables('storageAccountContributorRoleDefinitionId')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('accountName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "scriptLogs": {
+      "type": "string",
+      "value": "[reference(format('{0}/logs/default', resourceId('Microsoft.Resources/deploymentScripts', 'deploymentScript')), '2020-10-01', 'Full').properties.log]"
+    },
+    "staticWebsiteHostName": {
+      "type": "string",
+      "value": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('accountName'))).primaryEndpoints.web, 'https://', ''), '/', '')]"
+    }
+  }
+}
