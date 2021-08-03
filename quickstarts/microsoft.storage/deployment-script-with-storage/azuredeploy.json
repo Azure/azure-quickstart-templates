@@ -1,0 +1,86 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "dev",
+      "templateHash": "2936624157539141144"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "scriptToExecute": {
+      "type": "string",
+      "defaultValue": "date"
+    },
+    "subId": {
+      "type": "string",
+      "defaultValue": "[subscription().id]"
+    },
+    "rgName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]"
+    },
+    "uamiName": {
+      "type": "string",
+      "defaultValue": "alex-test-deny"
+    },
+    "currentTime": {
+      "type": "string",
+      "defaultValue": "[utcNow()]"
+    }
+  },
+  "functions": [],
+  "variables": {
+    "uamiId": "[resourceId(parameters('subId'), parameters('rgName'), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uamiName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[format('dscript{0}', uniqueString(resourceGroup().id))]",
+      "location": "[parameters('location')]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "Standard_LRS"
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2019-10-01-preview",
+      "name": "scriptWithStorage",
+      "location": "[parameters('location')]",
+      "kind": "AzureCLI",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[variables('uamiId')]": {}
+        }
+      },
+      "properties": {
+        "azCliVersion": "2.0.80",
+        "storageAccountSettings": {
+          "storageAccountName": "[format('dscript{0}', uniqueString(resourceGroup().id))]",
+          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', format('dscript{0}', uniqueString(resourceGroup().id))), '2019-06-01').keys[0].value]"
+        },
+        "scriptContent": "[parameters('scriptToExecute')]",
+        "cleanupPreference": "OnSuccess",
+        "retentionInterval": "P1D",
+        "forceUpdateTag": "[parameters('currentTime')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', format('dscript{0}', uniqueString(resourceGroup().id)))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "scriptLogs": {
+      "type": "string",
+      "value": "[reference(format('{0}/logs/default', resourceId('Microsoft.Resources/deploymentScripts', 'scriptWithStorage')), '2019-10-01-preview', 'Full').properties.log]"
+    }
+  }
+}
