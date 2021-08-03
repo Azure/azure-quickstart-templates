@@ -12,7 +12,7 @@
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsas%2Fsas-viya%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsas%2Fsas-viya%2Fazuredeploy.json)
 
-**Note:** For the current operational status of this Quickstart, click [here](https://github.com/sassoftware/azure-quickstart-templates/tree/master/sas-viya) to redirect to the SAS repository.
+**Note:** For the current operational status of this Quickstart, click [here](https://github.com/sassoftware/azure-quickstart-templates/tree/master/application-workloads/sas/sas-viya) to redirect to the SAS repository.
 
 This README for SAS Viya 3.5 Quickstart Template for Azure is used to deploy the following SAS Viya 3.5 products in the Azure cloud:
 
@@ -37,7 +37,7 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
     - [(Optional) Create a Mirror Repository](#optional-create-a-mirror-repository)
     - [Upload the Entire Mirror to Azure Blob Storage](#upload-the-entire-mirror-to-azure-blob-storage)
   - [Best Practices When Deploying SAS Viya 3.5 on Azure](#best-practices-when-deploying-sas-viya-35-on-azure)
-  - [Deployment Steps](#deployment-steps)
+  - [Deployment Steps](#Deployment)
   - [Additional Deployment Details](#additional-deployment-details)
   - [User Accounts](#user-accounts)
     - [Important File and Folder Locations](#important-file-and-folder-locations)
@@ -181,16 +181,41 @@ We recommend the following as best practices:
 
 <a name="Deployment"></a>
 ## Deployment Steps
-You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for a command-line (CLI) deployment using the scripts in the root of this repository.
+1. Click the Deploy to Azure button at the beginning of this document or follow the instructions for a command-line (CLI) deployment using the scripts in the root of this repository. 
+2. Specify the following parameters for your deployment:
 
-The deployment takes between 1 and 4 hours, depending on the quantity of software licensed.
+|Parameter Name|Value|
+|--------------|-----------|
+|Subscription|Specifies what subscription to use for the deployment.|
+|Resource group|Specifies what resource group to use. Choose an existing group or click *Create new* and provide a name for the new group.|
+|Region|Defines the Azure region in which the deployment should run. The available Azure regions are the ones listed at both [Azure Services that support Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-region), and [How to create an NFS share](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-how-to-create-nfs-shares?tabs=azure-portal). 
+|Deployment Data Location|Specifies the Blob Shared Access Signature(SAS) URL to the SAS license.
+|SSH Public Key| Specifies the full SSH public key that will be added to the servers. Copy and paste a public SSH key into this field.|
+|Location|Defines the location in Azure where these resources should be created. This is derived from the resource group.|
+|Web Ingress Location| Specifies to allow inbound HTTP traffic to the SAS Viya environment from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x. If this is left blank, the environment can be accessed from any location on the internet.|
+|Admin Ingress Location|Specifies to allow inbound SSH traffic to the Ansible Controller from this Classless Inter-Domain Routing (CIDR) block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x. If this is left blank, the environment can be accessed from any location on the internet.|
+|Primary User Name| The user name that will be added to the servers to allow SSH access. Username may contain only lower and upper case letters, digits, underscores, or dashes. They can end with a dollar sign. Dashes are not allowed at the beginning of the username. Fully numeric usernames and usernames . or .. are also disallowed. It is not recommended to use usernames beginning with . character as their home directories will be hidden in the ls output. In regular expression terms: [a-zA-Z0-9_.][a-zA-Z0-9_.-]*[$]?  Username must be at least 1 charater and less than 32 characters long.|
+|SAS Admin Pass|Specifies the password used for the SAS administrator users (sasboot, optionally sasadmin). Must have at least 6 and no more than 255 characters. Single quotes (') are not allowed.|
+|SAS User Pass|Specifies the password used for the default SAS user(sasuser). If no value is entered, no default users are created. **WARNING:** If not set, the deployment will require additional setup steps before it can be used. Single quotes (') are not allowed.|
+|Deployment Mirror|(optional) Specifies the HTTPS location of a SAS mirror. The mirror should be a path to a mirror directory tree in blob storage.|
+|Ansible VM SKU| Specifies the Stock Keeping Unit (SKU) for the Ansible/Bastion virtual machine (VM).|
+|Services VM SKU| Specifies the SKU for the Services VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks.|
+|Controller VM SKU|Specifies the SKU for the Controller VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks.|
+|CAS Node Count|Specifies the number of CAS nodes in the deployment. If this is set to 1, an SMP environment is built with one CAS controller. If this is set to a value of 2 or more, an MPP environment is built (n workers + 1 controller). In the MPP environment case, you should shrink the size of the CAS controller as it will only be performing orchestration.|
+|CAS Worker VM SKU|Specifies the SKU for the CAS worker VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks.|
+|\_artifacts Location SAS Token|For a standard deployment, leave this empty. If you are running from a blob template, then provide the Shared Access Signature token (starting with a ?) that grants authorization to the private template. **Note:** SAS Token refers to the Shared Access Signature Token.|
+|\_artifacts Location|Use the default value when deploying from the Azure quickstart template repository.  If running a custom deployment or editing the template, use the full URI, (for example, https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/sas/sas-viya/). If a SAS key (SAS Token) is needed, please do not include the SAS key in the URI. Instead, add the SAS key (including the beginning ?) to the _artifactsLocationSasToken parameter.|
+
+3. Click *Next: Review and Create*. 
+4. If the validation is successful,  click *Create*. When the *Deployment is in progress* window appears, the deployment begins.
+Deployments typically take two to three hours to complete. 
 
 <a name="deployment-details"></a>
 
 ## Additional Deployment Details
 ## User Accounts
 <a name="useraccounts"></a>
-The *vmuser* host operating system account is created during deployment. Use this account to log in via SSH to any of the machines.
+The deployment parameter *PrimaryUserName* creates a host operating system account during deployment.  Use this account to log in via SSH to any of the machines.
 
 The *sasadmin* and *sasuser* SAS Viya user accounts are also created during deployment.  These accounts exist in LDAP, and are the default user accounts for logging in to SAS Viya.  You cannot directly log on to the host operating system with these accounts.
 
@@ -317,7 +342,7 @@ EnableQuotedIdentifiers=0
     
    If the output from the nc command contains "Ncat: Connected to <IP_address:443>", the connection was successful.
    
-6. Register the SAS Data Agent with the SAS Viya 3.5 environment. As the deployment vmuser, log on to the Ansible controller VM and run the following command from the /sas/install/ansible/sas_viya_playbook directory:
+6. Register the SAS Data Agent with the SAS Viya 3.5 environment. Using the value that you specified for the deployment parameter *PrimaryUserName*, log on to the Ansible controller VM and run the following command from the /sas/install/ansible/sas_viya_playbook directory:
 
 **Note:** The password of the admin user is the value that you specified during deployment for the SASAdminPass input parameter. 
 
@@ -356,7 +381,7 @@ in the SAS Data Agent for Linux: Deployment Guide.
 <a name="Usage"></a>
 ## Usage 
 
-* To log in to any machine via SSH to check on a deployment or to perform maintenance, log in as *vmuser*.
+* To log in to any machine via SSH to check on a deployment or to perform maintenance, log in using the value that you specified for the deployment parameter *PrimaryUserName*.
 
 * To log in to SAS Viya initially, use one of the following default user accounts: *sasadmin* (administrative user) or *sasuser*.
 
@@ -365,16 +390,16 @@ in the SAS Data Agent for Linux: Deployment Guide.
 ![Outputs Screen](outputs.jpg) 
 
 * To connect to VMs through Azure Bastion:
-1. Log in to the Azure Bastion server as *vmuser*:
+1. Log in to the Azure Bastion server using the value that you specified for the deployment parameter *PrimaryUserName*:
 ```
-ssh vmuser@<AnsibleControllerIP>
+ssh <PrimaryUserName>@<AnsibleControllerIP>
 ```
-2. From the Azure Bastion server, connect to the services, controller, and worker VMs as *vmuser*:
+2. From the Azure Bastion server, connect to the services, controller, and worker VMs using the value that you specified for the deployment *PrimaryUserName*:
 ```
-ssh vmuser@services
-ssh vmuser@controller
-ssh vmuser@worker01
-ssh vmuser@worker02
+ssh <PrimaryUserName>@services
+ssh <PrimaryUserName>@controller
+ssh <PrimaryUserName>@worker01
+ssh <PrimaryUserName>@worker02
 ```
 
 <a name="Tshoot"></a>
@@ -417,14 +442,14 @@ The /var/log/sas/install directory is the primary deployment log directory. Othe
 While all the services can be started on each box independently, the Viya-Ark toolkit provides an efficient way to restart all the services across all the boxes from the Ansible controller.
 
 #### Checking the status of the services through Viya-Ark
-Viya-Ark can check the status of the services by issuing the following commands as the vmuser on the Ansible controller:
+Viya-Ark can check the status of the services by issuing the following commands using the value that you specified for the deployment parameter *PrimaryUserName* on the Ansible controller:
 ```
 cd /sas/install/ansible/sas_viya_playbook/
 ansible-playbook viya-ark/playbooks/viya-mmsu/viya-services-status.yml
 ```
 
 #### Restarting the services through Viya-Ark
-Viya-Ark can restart all of the services by issuing the following commands as the vmuser on the Ansible controller:
+Viya-Ark can restart all of the services by issuing the following commands using the value that you specified for the deployment parameter *PrimaryUserName* on the Ansible controller:
 ```
 cd /sas/install/ansible/sas_viya_playbook/
 ansible-playbook viya-ark/playbooks/viya-mmsu/viya-services-restart.yml -e enable_stray_cleanup=true
