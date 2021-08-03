@@ -4,9 +4,7 @@ param location string = resourceGroup().location
 @description('Virtual network name')
 param virtualNetworkName string
 
-@description('Cosmos DB account name (must contain only lowercase letters, digits, and hyphens)')
-@maxLength(44)
-@minLength(3)
+@description('Cosmos DB account name, max length 44 characters')
 param accountName string
 
 @description('Enable public network traffic to access the account; if set to Disabled, public network traffic will be blocked even before the private endpoint is created')
@@ -19,8 +17,7 @@ param publicNetworkAccess string = 'Enabled'
 @description('Private endpoint name')
 param privateEndpointName string
 
-var subnetName = 'default'
-
+var accountName_var = toLower(accountName)
 var locations = [
   {
     locationName: location
@@ -29,7 +26,7 @@ var locations = [
   }
 ]
 
-resource virtualNetwork 'Microsoft.Network/VirtualNetworks@2020-06-01' = {
+resource virtualNetworkName_resource 'Microsoft.Network/VirtualNetworks@2020-07-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -40,21 +37,20 @@ resource virtualNetwork 'Microsoft.Network/VirtualNetworks@2020-06-01' = {
     }
     subnets: [
       {
-        name: subnetName
+        name: 'default'
         properties: {
           addressPrefix: '172.20.0.0/24'
           privateEndpointNetworkPolicies: 'Disabled'
         }
-    }
+      }
     ]
   }
 }
 
-
-resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2021-01-15' = {
-  name: accountName
-  location: location
+resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
+  name: accountName_var
   kind: 'GlobalDocumentDB'
+  location: location
   properties: {
     consistencyPolicy: {
       defaultConsistencyLevel: 'Session'
@@ -62,23 +58,22 @@ resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2021-01-15' = {
     locations: locations
     databaseAccountOfferType: 'Standard'
     enableAutomaticFailover: false
-    enableMultipleWriteLocations: false
     publicNetworkAccess: publicNetworkAccess
   }
 }
 
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2020-06-01' = {
+resource privateEndpointName_resource 'Microsoft.Network/privateEndpoints@2020-07-01' = {
   name: privateEndpointName
   location: location
   properties: {
     subnet: {
-      id: resourceId('Microsoft.Network/VirtualNetworks/subnets', virtualNetwork.name, subnetName)
+      id: resourceId('Microsoft.Network/VirtualNetworks/subnets', virtualNetworkName, 'Default')
     }
     privateLinkServiceConnections: [
       {
         name: 'MyConnection'
         properties: {
-          privateLinkServiceId: databaseAccount.id
+          privateLinkServiceId: accountName_resource.id
           groupIds: [
             'Sql'
           ]
@@ -86,4 +81,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2020-06-01' = {
       }
     ]
   }
+  dependsOn: [
+    virtualNetworkName_resource
+  ]
 }
