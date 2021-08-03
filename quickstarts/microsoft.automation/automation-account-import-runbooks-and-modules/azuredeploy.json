@@ -1,0 +1,221 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "dev",
+      "templateHash": "17984519031339270084"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of the automation account"
+      }
+    },
+    "name": {
+      "type": "string",
+      "metadata": {
+        "description": "Automation account name"
+      }
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Free",
+        "Basic"
+      ],
+      "metadata": {
+        "description": "Automation account sku"
+      }
+    },
+    "modules": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "name": "Module name",
+        "version": "Module version or specify latest to get the latest version",
+        "uri": "Module package uri, e.g. https://www.powershellgallery.com/api/v2/package",
+        "description": "Modules to import into automation account"
+      }
+    },
+    "runbooks": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "runbookName": "Runbook name",
+        "runbookUri": "Runbook URI",
+        "runbookType": "Runbook type: Graph, Graph PowerShell, Graph PowerShellWorkflow, PowerShell, PowerShell Workflow, Script",
+        "logProgress": "Enable progress logs",
+        "logVerbose": "Enable verbose logs",
+        "description": "Runbooks to import into automation account"
+      }
+    },
+    "enableDeleteLock": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable delete lock"
+      }
+    },
+    "enableDiagnostics": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable diagnostic logs"
+      }
+    },
+    "diagnosticStorageAccountName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Storage account name. Only required if enableDiagnostics is set to true."
+      }
+    },
+    "diagnosticStorageAccountResourceGroup": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Storage account resource group. Only required if enableDiagnostics is set to true."
+      }
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Log analytics workspace name. Only required if enableDiagnostics is set to true."
+      }
+    },
+    "logAnalyticsResourceGroup": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Log analytics workspace resource group. Only required if enableDiagnostics is set to true."
+      }
+    },
+    "logAnalyticsSubscriptionId": {
+      "type": "string",
+      "defaultValue": "[subscription().subscriptionId]",
+      "metadata": {
+        "description": "Log analytics workspace subscription id (if differs from current subscription). Only required if enableDiagnostics is set to true."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "lockName": "[format('{0}-lck', parameters('name'))]",
+    "diagnosticsName": "[format('{0}-dgs', parameters('name'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Automation/automationAccounts",
+      "apiVersion": "2020-01-13-preview",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "sku": {
+          "name": "[parameters('sku')]"
+        }
+      }
+    },
+    {
+      "copy": {
+        "name": "automationAccountModules",
+        "count": "[length(parameters('modules'))]"
+      },
+      "type": "Microsoft.Automation/automationAccounts/modules",
+      "apiVersion": "2020-01-13-preview",
+      "name": "[format('{0}/{1}', parameters('name'), parameters('modules')[copyIndex()].name)]",
+      "properties": {
+        "contentLink": {
+          "uri": "[if(equals(parameters('modules')[copyIndex()].version, 'latest'), format('{0}/{1}', parameters('modules')[copyIndex()].uri, parameters('modules')[copyIndex()].name), format('{0}/{1}/{2}', parameters('modules')[copyIndex()].uri, parameters('modules')[copyIndex()].name, parameters('modules')[copyIndex()].version))]",
+          "version": "[if(equals(parameters('modules')[copyIndex()].version, 'latest'), null(), parameters('modules')[copyIndex()].version)]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('name'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "runbook",
+        "count": "[length(parameters('runbooks'))]"
+      },
+      "type": "Microsoft.Automation/automationAccounts/runbooks",
+      "apiVersion": "2019-06-01",
+      "name": "[format('{0}/{1}', parameters('name'), parameters('runbooks')[copyIndex()].runbookName)]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "runbookType": "[parameters('runbooks')[copyIndex()].runbookType]",
+        "logProgress": "[parameters('runbooks')[copyIndex()].logProgress]",
+        "logVerbose": "[parameters('runbooks')[copyIndex()].logVerbose]",
+        "publishContentLink": {
+          "uri": "[parameters('runbooks')[copyIndex()].runbookUri]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('name'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableDeleteLock')]",
+      "type": "Microsoft.Authorization/locks",
+      "apiVersion": "2016-09-01",
+      "scope": "[format('Microsoft.Automation/automationAccounts/{0}', parameters('name'))]",
+      "name": "[variables('lockName')]",
+      "properties": {
+        "level": "CanNotDelete"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('name'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableDiagnostics')]",
+      "type": "microsoft.insights/diagnosticSettings",
+      "apiVersion": "2017-05-01-preview",
+      "scope": "[format('Microsoft.Automation/automationAccounts/{0}', parameters('name'))]",
+      "name": "[variables('diagnosticsName')]",
+      "properties": {
+        "workspaceId": "[resourceId(parameters('logAnalyticsSubscriptionId'), parameters('logAnalyticsResourceGroup'), 'Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]",
+        "storageAccountId": "[resourceId(parameters('diagnosticStorageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('diagnosticStorageAccountName'))]",
+        "logs": [
+          {
+            "category": "JobLogs",
+            "enabled": true
+          },
+          {
+            "category": "JobStreams",
+            "enabled": true
+          },
+          {
+            "category": "DscNodeStatus",
+            "enabled": true
+          }
+        ],
+        "metrics": [
+          {
+            "category": "AllMetrics",
+            "enabled": true
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('name'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "systemIdentityPrincipalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Automation/automationAccounts', parameters('name')), '2020-01-13-preview', 'full').identity.principalId]"
+    }
+  }
+}
