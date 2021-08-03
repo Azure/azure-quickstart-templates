@@ -1,0 +1,350 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "dev",
+      "templateHash": "15268728586202654897"
+    }
+  },
+  "parameters": {
+    "appName": {
+      "type": "string",
+      "defaultValue": "[uniqueString(resourceGroup().id)]"
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "appServicePlanDeploy",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "appName": {
+            "value": "[parameters('appName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "dev",
+              "templateHash": "10741606016888264590"
+            }
+          },
+          "parameters": {
+            "skuName": {
+              "type": "string",
+              "defaultValue": "S1"
+            },
+            "skuCapacity": {
+              "type": "int",
+              "defaultValue": 1
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "appName": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "appServicePlanName": "[toLower(format('asp-{0}', parameters('appName')))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('appServicePlanName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "[parameters('skuName')]",
+                "capacity": "[parameters('skuCapacity')]"
+              },
+              "tags": {
+                "displayName": "HostingPlan",
+                "ProjectName": "[parameters('appName')]"
+              }
+            }
+          ],
+          "outputs": {
+            "appServicePlanID": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "appServiceDeploy",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "appName": {
+            "value": "[parameters('appName')]"
+          },
+          "appServicePlanID": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appServicePlanDeploy'), '2019-10-01').outputs.appServicePlanID.value]"
+          },
+          "APPINSIGHTS_INSTRUMENTATIONKEY": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appInsightsDeploy'), '2019-10-01').outputs.APPINSIGHTS_INSTRUMENTATIONKEY.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "dev",
+              "templateHash": "11917327337287752626"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "appName": {
+              "type": "string"
+            },
+            "appServicePlanID": {
+              "type": "string"
+            },
+            "APPINSIGHTS_INSTRUMENTATIONKEY": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "webSiteName": "[toLower(format('wapp-{0}', parameters('appName')))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('webSiteName')]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "tags": {
+                "displayName": "Website",
+                "ProjectName": "[parameters('appName')]"
+              },
+              "properties": {
+                "serverFarmId": "[parameters('appServicePlanID')]",
+                "httpsOnly": true,
+                "siteConfig": {
+                  "minTlsVersion": "1.2"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites/config",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/logs', variables('webSiteName'))]",
+              "properties": {
+                "applicationLogs": {
+                  "fileSystem": {
+                    "level": "Warning"
+                  }
+                },
+                "httpLogs": {
+                  "fileSystem": {
+                    "retentionInMb": 40,
+                    "enabled": true
+                  }
+                },
+                "failedRequestsTracing": {
+                  "enabled": true
+                },
+                "detailedErrorMessages": {
+                  "enabled": true
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites/config",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/appsettings', variables('webSiteName'))]",
+              "properties": {
+                "APPINSIGHTS_INSTRUMENTATIONKEY": "[parameters('APPINSIGHTS_INSTRUMENTATIONKEY')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites/siteextensions",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/Microsoft.ApplicationInsights.AzureWebsites', variables('webSiteName'))]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'appInsightsDeploy')]",
+        "[resourceId('Microsoft.Resources/deployments', 'appServicePlanDeploy')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "appInsightsDeploy",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "appName": {
+            "value": "[parameters('appName')]"
+          },
+          "logAnalaticsWorkspaceResourceID": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsWorkspaceDeploy'), '2019-10-01').outputs.logAnalaticsWorkspaceResourceID.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "dev",
+              "templateHash": "15097235235814757526"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "appName": {
+              "type": "string"
+            },
+            "logAnalaticsWorkspaceResourceID": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "appInsightName": "[toLower(format('appi-{0}', parameters('appName')))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02-preview",
+              "name": "[variables('appInsightName')]",
+              "location": "[parameters('location')]",
+              "kind": "string",
+              "tags": {
+                "displayName": "AppInsight",
+                "ProjectName": "[parameters('appName')]"
+              },
+              "properties": {
+                "Application_Type": "web",
+                "WorkspaceResourceId": "[parameters('logAnalaticsWorkspaceResourceID')]"
+              }
+            }
+          ],
+          "outputs": {
+            "APPINSIGHTS_INSTRUMENTATIONKEY": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightName'))).InstrumentationKey]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsWorkspaceDeploy')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "logAnalyticsWorkspaceDeploy",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "appName": {
+            "value": "[parameters('appName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "dev",
+              "templateHash": "10127040548662503532"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "appName": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "logAnalyticsName": "[toLower(format('la-{0}', parameters('appName')))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2020-03-01-preview",
+              "name": "[variables('logAnalyticsName')]",
+              "location": "[parameters('location')]",
+              "tags": {
+                "displayName": "Log Analytics",
+                "ProjectName": "[parameters('appName')]"
+              },
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                },
+                "retentionInDays": 120
+              }
+            }
+          ],
+          "outputs": {
+            "logAnalaticsWorkspaceResourceID": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
