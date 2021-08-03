@@ -1,0 +1,615 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "dev",
+      "templateHash": "3374599411648253621"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "adminSshKey": {
+      "type": "string",
+      "defaultValue": "ssh-rsa APublicSshKey2EAAAADAQABAAACAQCpXKIzGlb9fnLJmwrVPFQyntzOngz8QE4SOMHyXueVb4bO2IgSdHk8cD2LDToX3lDOUQzzWz+AiUO3iIRNJPOzZj/6aN+BJZXpi8+cdGOyaQmDyzk0T2w0mwTxXBk3DkXAw+lw13Q9SlFY+YLKsqHyKF7aXiy7RiJl4O3QUMGLKuGtmsqRFcrarp20pyH1UXQbvXUUoPU92AU4cSmx4AS8coWaDoQxWr7EA6toF0hgXsKFf/8MlkzJty0P7IhZ8KPzJg9lFNfBCUZHFEQWSb7FQBV6mFXxVcus1eCtoLEXkIDSkkYGd+edMO6t/Hc73c66M1vL9Ae6RUx2m39kZGF9bpVmcs8pZ2Hy2QukcGR8r61Jx913a32hRmk5fWpCnEo0NfE9XQJ7ibMNU97XL/QSeNZp3yzAyZqIYBkaYp8bFNjjMnVNyVdaANw2rjmxTY2XJlc0jVgucMWim8zT4YDQgKR8UuzXZBtC5uxlqhgZ8Zj+tRqgq/ZGo1MBacj89gQJjiiyFgf9hewVtdxlAEnDUHo0KI/Ro2geI+f2ylf1m0bUuPpwjO8sybJg/ZkA48LyOMbwj9wLHbiNJnPmoJROGGO/pAdvrzMlDuD/2BLf5Xmn3RkvnseS6/qCXZAfsrwlhb/LtCkWF2j+7e5EWXArhT14fGdWHi+5f09UY7ybAQ== user@Somewhere"
+    },
+    "myIp": {
+      "type": "string",
+      "defaultValue": "20.49.199.4"
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Compute/proximityPlacementGroups",
+      "apiVersion": "2020-06-01",
+      "name": "Zone1",
+      "location": "[parameters('location')]",
+      "properties": {
+        "proximityPlacementGroupType": "Standard"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2020-06-01",
+      "name": "as1",
+      "location": "[parameters('location')]",
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5,
+        "proximityPlacementGroup": {
+          "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', 'Zone1')]"
+        }
+      },
+      "sku": {
+        "name": "Aligned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', 'Zone1')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "network",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "myIp": {
+            "value": "[parameters('myIp')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "dev",
+              "templateHash": "6221020817843547137"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "myIp": {
+              "type": "string",
+              "defaultValue": "1.1.1.1"
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2020-06-01",
+              "name": "demo-nsg",
+              "location": "[parameters('location')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "SSH",
+                    "properties": {
+                      "priority": 1000,
+                      "protocol": "Tcp",
+                      "access": "Allow",
+                      "direction": "Inbound",
+                      "sourceAddressPrefix": "[parameters('myIp')]",
+                      "sourcePortRange": "*",
+                      "destinationAddressPrefix": "*",
+                      "destinationPortRange": "22"
+                    }
+                  },
+                  {
+                    "name": "HTTP",
+                    "properties": {
+                      "priority": 1010,
+                      "protocol": "Tcp",
+                      "access": "Allow",
+                      "direction": "Inbound",
+                      "sourceAddressPrefix": "[parameters('myIp')]",
+                      "sourcePortRange": "*",
+                      "destinationAddressPrefix": "*",
+                      "destinationPortRange": "80"
+                    }
+                  },
+                  {
+                    "name": "HTTPS",
+                    "properties": {
+                      "priority": 1020,
+                      "protocol": "Tcp",
+                      "access": "Allow",
+                      "direction": "Inbound",
+                      "sourceAddressPrefix": "[parameters('myIp')]",
+                      "sourcePortRange": "*",
+                      "destinationAddressPrefix": "*",
+                      "destinationPortRange": "443"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2020-05-01",
+              "name": "demo-vnet",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "10.0.0.0/22"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "Default",
+                    "properties": {
+                      "addressPrefix": "10.0.0.0/24",
+                      "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'demo-nsg')]"
+                      }
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'demo-nsg')]"
+              ]
+            }
+          ],
+          "outputs": {
+            "vnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', 'demo-vnet')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "anchor",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "adminSshKey": {
+            "value": "[parameters('adminSshKey')]"
+          },
+          "proximityPlacementGroupId": {
+            "value": "[resourceId('Microsoft.Compute/proximityPlacementGroups', 'Zone1')]"
+          },
+          "subnetId": {
+            "value": "[format('{0}/subnets/Default', reference(resourceId('Microsoft.Resources/deployments', 'network'), '2019-10-01').outputs.vnetId.value)]"
+          },
+          "vmName": {
+            "value": "anchor"
+          },
+          "zone": {
+            "value": 1
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "dev",
+              "templateHash": "8156466852542605529"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "adminSshKey": {
+              "type": "string"
+            },
+            "proximityPlacementGroupId": {
+              "type": "string"
+            },
+            "subnetId": {
+              "type": "string"
+            },
+            "vmName": {
+              "type": "string"
+            },
+            "zone": {
+              "type": "int",
+              "allowedValues": [
+                1,
+                2,
+                3
+              ]
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2020-05-01",
+              "name": "[format('{0}-pip', parameters('vmName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "publicIPAllocationMethod": "Static"
+              },
+              "sku": {
+                "name": "Standard"
+              },
+              "zones": [
+                "[parameters('zone')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2020-05-01",
+              "name": "[format('{0}-nic', parameters('vmName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                        "id": "[parameters('subnetId')]"
+                      },
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', parameters('vmName')))]"
+                      }
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', parameters('vmName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2020-06-01",
+              "name": "[parameters('vmName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "Standard_B4ms"
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('vmName')))]"
+                    }
+                  ]
+                },
+                "osProfile": {
+                  "computerName": "[parameters('vmName')]",
+                  "adminUsername": "vmadmin",
+                  "linuxConfiguration": {
+                    "disablePasswordAuthentication": true,
+                    "ssh": {
+                      "publicKeys": [
+                        {
+                          "path": "/home/vmadmin/.ssh/authorized_keys",
+                          "keyData": "[parameters('adminSshKey')]"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "proximityPlacementGroup": {
+                  "id": "[parameters('proximityPlacementGroupId')]"
+                },
+                "storageProfile": {
+                  "imageReference": {
+                    "publisher": "OpenLogic",
+                    "offer": "CentOS",
+                    "sku": "7.7",
+                    "version": "latest"
+                  },
+                  "osDisk": {
+                    "name": "[format('{0}-os', parameters('vmName'))]",
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "StandardSSD_LRS"
+                    }
+                  }
+                }
+              },
+              "zones": [
+                "[parameters('zone')]"
+              ],
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('vmName')))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'network')]",
+        "[resourceId('Microsoft.Compute/proximityPlacementGroups', 'Zone1')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "vm01",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "adminSshKey": {
+            "value": "[parameters('adminSshKey')]"
+          },
+          "availabilitySetId": {
+            "value": "[resourceId('Microsoft.Compute/availabilitySets', 'as1')]"
+          },
+          "subnetId": {
+            "value": "[format('{0}/subnets/Default', reference(resourceId('Microsoft.Resources/deployments', 'network'), '2019-10-01').outputs.vnetId.value)]"
+          },
+          "vmName": {
+            "value": "vm01"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "dev",
+              "templateHash": "7325281056093512278"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "adminSshKey": {
+              "type": "string"
+            },
+            "availabilitySetId": {
+              "type": "string"
+            },
+            "subnetId": {
+              "type": "string"
+            },
+            "vmName": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2020-05-01",
+              "name": "[format('{0}-nic', parameters('vmName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                        "id": "[parameters('subnetId')]"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2020-06-01",
+              "name": "[parameters('vmName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "availabilitySet": {
+                  "id": "[parameters('availabilitySetId')]"
+                },
+                "hardwareProfile": {
+                  "vmSize": "Standard_B4ms"
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('vmName')))]"
+                    }
+                  ]
+                },
+                "osProfile": {
+                  "computerName": "[parameters('vmName')]",
+                  "adminUsername": "vmadmin",
+                  "linuxConfiguration": {
+                    "disablePasswordAuthentication": true,
+                    "ssh": {
+                      "publicKeys": [
+                        {
+                          "path": "/home/vmadmin/.ssh/authorized_keys",
+                          "keyData": "[parameters('adminSshKey')]"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "storageProfile": {
+                  "imageReference": {
+                    "publisher": "OpenLogic",
+                    "offer": "CentOS",
+                    "sku": "7.7",
+                    "version": "latest"
+                  },
+                  "osDisk": {
+                    "name": "[format('{0}-os', parameters('vmName'))]",
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "StandardSSD_LRS"
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('vmName')))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets', 'as1')]",
+        "[resourceId('Microsoft.Resources/deployments', 'network')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "vm02",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "adminSshKey": {
+            "value": "[parameters('adminSshKey')]"
+          },
+          "availabilitySetId": {
+            "value": "[resourceId('Microsoft.Compute/availabilitySets', 'as1')]"
+          },
+          "subnetId": {
+            "value": "[format('{0}/subnets/Default', reference(resourceId('Microsoft.Resources/deployments', 'network'), '2019-10-01').outputs.vnetId.value)]"
+          },
+          "vmName": {
+            "value": "vm02"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "dev",
+              "templateHash": "7325281056093512278"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "adminSshKey": {
+              "type": "string"
+            },
+            "availabilitySetId": {
+              "type": "string"
+            },
+            "subnetId": {
+              "type": "string"
+            },
+            "vmName": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2020-05-01",
+              "name": "[format('{0}-nic', parameters('vmName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                        "id": "[parameters('subnetId')]"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2020-06-01",
+              "name": "[parameters('vmName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "availabilitySet": {
+                  "id": "[parameters('availabilitySetId')]"
+                },
+                "hardwareProfile": {
+                  "vmSize": "Standard_B4ms"
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('vmName')))]"
+                    }
+                  ]
+                },
+                "osProfile": {
+                  "computerName": "[parameters('vmName')]",
+                  "adminUsername": "vmadmin",
+                  "linuxConfiguration": {
+                    "disablePasswordAuthentication": true,
+                    "ssh": {
+                      "publicKeys": [
+                        {
+                          "path": "/home/vmadmin/.ssh/authorized_keys",
+                          "keyData": "[parameters('adminSshKey')]"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "storageProfile": {
+                  "imageReference": {
+                    "publisher": "OpenLogic",
+                    "offer": "CentOS",
+                    "sku": "7.7",
+                    "version": "latest"
+                  },
+                  "osDisk": {
+                    "name": "[format('{0}-os', parameters('vmName'))]",
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "StandardSSD_LRS"
+                    }
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('vmName')))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets', 'as1')]",
+        "[resourceId('Microsoft.Resources/deployments', 'network')]"
+      ]
+    }
+  ]
+}
