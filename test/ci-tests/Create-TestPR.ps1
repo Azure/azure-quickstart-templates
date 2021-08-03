@@ -4,7 +4,6 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Resolve-Path "$PSScriptRoot/../.."
-Write-Warning $repoRoot
 
 $testBranches = @( `
     "bicep-json-doesnt-match", `
@@ -35,6 +34,8 @@ foreach ($shortBranch in $TestBranches) {
   if ($yes) {
     git stash
 
+    git checkout master
+    git pull
     git checkout $fullBranch
     git rebase master
     git push -f
