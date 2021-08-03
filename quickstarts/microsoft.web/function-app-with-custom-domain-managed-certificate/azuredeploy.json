@@ -1,0 +1,244 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "dev",
+      "templateHash": "2360471420895317911"
+    }
+  },
+  "parameters": {
+    "applicationName": {
+      "type": "string"
+    },
+    "dnsZone": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing Azure DNS zone in target resource group"
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "componentBase": "[format('{0}-{1}', substring(uniqueString(resourceGroup().id), 4), parameters('applicationName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}-asp', variables('componentBase'))]",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic",
+        "size": "Y1",
+        "family": "Y",
+        "capacity": 0
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[format('{0}st', replace(variables('componentBase'), '-', ''))]",
+      "location": "[variables('location')]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "Standard_LRS"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2015-05-01",
+      "name": "[format('{0}-ai', variables('componentBase'))]",
+      "location": "[variables('location')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}-functionapp', variables('componentBase'))]",
+      "location": "[variables('location')]",
+      "kind": "functionapp",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "httpsOnly": true,
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('{0}-asp', variables('componentBase')))]",
+        "clientAffinityEnabled": false,
+        "siteConfig": {
+          "http20Enabled": true,
+          "use32BitWorkerProcess": false,
+          "ftpsState": "FtpsOnly",
+          "alwaysOn": false,
+          "appSettings": [
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet"
+            },
+            {
+              "name": "ASPNETCORE_ENVIRONMENT",
+              "value": "Production"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', format('{0}-ai', variables('componentBase')))).InstrumentationKey]"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[format('InstrumentationKey={0}', reference(resourceId('Microsoft.Insights/components', format('{0}-ai', variables('componentBase')))).InstrumentationKey)]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', format('{0}st', replace(variables('componentBase'), '-', '')), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', format('{0}st', replace(variables('componentBase'), '-', ''))), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', format('{0}st', replace(variables('componentBase'), '-', '')), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', format('{0}st', replace(variables('componentBase'), '-', ''))), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[variables('componentBase')]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', format('{0}-ai', variables('componentBase')))]",
+        "[resourceId('Microsoft.Web/serverfarms', format('{0}-asp', variables('componentBase')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', format('{0}st', replace(variables('componentBase'), '-', '')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/dnsZones/TXT",
+      "apiVersion": "2018-05-01",
+      "name": "[format('{0}/asuid.{1}', parameters('dnsZone'), parameters('applicationName'))]",
+      "properties": {
+        "TTL": 3600,
+        "TXTRecords": [
+          {
+            "value": [
+              "[reference(resourceId('Microsoft.Web/sites', format('{0}-functionapp', variables('componentBase')))).customDomainVerificationId]"
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('{0}-functionapp', variables('componentBase')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/dnsZones/CNAME",
+      "apiVersion": "2018-05-01",
+      "name": "[format('{0}/{1}', parameters('dnsZone'), parameters('applicationName'))]",
+      "properties": {
+        "TTL": 3600,
+        "CNAMERecord": {
+          "cname": "[format('{0}.azurewebsites.net', format('{0}-functionapp', variables('componentBase')))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('{0}-functionapp', variables('componentBase')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/hostNameBindings",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}.{2}', format('{0}-functionapp', variables('componentBase')), parameters('applicationName'), parameters('dnsZone'))]",
+      "properties": {
+        "hostNameType": "Verified",
+        "sslState": "Disabled",
+        "customHostNameDnsRecordType": "CName",
+        "siteName": "[format('{0}-functionapp', variables('componentBase'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/dnsZones/CNAME', split(format('{0}/{1}', parameters('dnsZone'), parameters('applicationName')), '/')[0], split(format('{0}/{1}', parameters('dnsZone'), parameters('applicationName')), '/')[1])]",
+        "[resourceId('Microsoft.Network/dnsZones/TXT', split(format('{0}/asuid.{1}', parameters('dnsZone'), parameters('applicationName')), '/')[0], split(format('{0}/asuid.{1}', parameters('dnsZone'), parameters('applicationName')), '/')[1])]",
+        "[resourceId('Microsoft.Web/sites', format('{0}-functionapp', variables('componentBase')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/certificates",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}.{1}', parameters('applicationName'), parameters('dnsZone'))]",
+      "location": "[variables('location')]",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('{0}-asp', variables('componentBase')))]",
+        "canonicalName": "[format('{0}.{1}', parameters('applicationName'), parameters('dnsZone'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/hostNameBindings', split(format('{0}/{1}.{2}', format('{0}-functionapp', variables('componentBase')), parameters('applicationName'), parameters('dnsZone')), '/')[0], split(format('{0}/{1}.{2}', format('{0}-functionapp', variables('componentBase')), parameters('applicationName'), parameters('dnsZone')), '/')[1])]",
+        "[resourceId('Microsoft.Web/serverfarms', format('{0}-asp', variables('componentBase')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "[format('{0}-{1}-sni-enable', deployment().name, parameters('applicationName'))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "functionAppName": {
+            "value": "[format('{0}-functionapp', variables('componentBase'))]"
+          },
+          "functionAppHostname": {
+            "value": "[format('{0}.{1}', parameters('applicationName'), parameters('dnsZone'))]"
+          },
+          "certificateThumbprint": {
+            "value": "[reference(resourceId('Microsoft.Web/certificates', format('{0}.{1}', parameters('applicationName'), parameters('dnsZone')))).thumbprint]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "dev",
+              "templateHash": "11275464343508829008"
+            }
+          },
+          "parameters": {
+            "functionAppName": {
+              "type": "string"
+            },
+            "functionAppHostname": {
+              "type": "string"
+            },
+            "certificateThumbprint": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Web/sites/hostNameBindings",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', parameters('functionAppName'), parameters('functionAppHostname'))]",
+              "properties": {
+                "sslState": "SniEnabled",
+                "thumbprint": "[parameters('certificateThumbprint')]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('{0}-functionapp', variables('componentBase')))]",
+        "[resourceId('Microsoft.Web/certificates', format('{0}.{1}', parameters('applicationName'), parameters('dnsZone')))]"
+      ]
+    }
+  ]
+}
