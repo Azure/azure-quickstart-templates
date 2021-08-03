@@ -108,6 +108,49 @@ You can use the `deploy.sh` Bash script to deploy the topology. Make sure to cha
 - [EnablePrivateClusterPublicFQDN](https://docs.microsoft.com/en-us/azure/aks/private-clusters#create-a-private-aks-cluster-with-a-public-dns-address) 
 - [PodSubnetPreview"](https://docs.microsoft.com/en-us/azure/aks/configure-azure-cni#dynamic-allocation-of-ips-and-enhanced-subnet-support-preview)
 
+You can run the following script to register the above preview features and wait for the registration process to complete:
+
+```bash
+#!/bin/bash
+
+# Registering AKS feature extensions
+aksExtensions=("PodSecurityPolicyPreview" "RunCommandPreview" "EnablePodIdentityPreview " "EnablePrivateClusterPublicFQDN" "PodSubnetPreview")
+registeringExtensions=()
+for aksExtension in ${aksExtensions[@]}; do
+  echo "Checking if [$aksExtension] extension is already registered..."
+  extension=$(az feature list -o table --query "[?contains(name, 'Microsoft.ContainerService/$aksExtension') && @.properties.state == 'Registered'].{Name:name}" --output tsv)
+  if [[ -z $extension ]]; then
+    echo "[$aksExtension] extension is not registered."
+    echo "Registering [$aksExtension] extension..."
+    az feature register --name $aksExtension --namespace Microsoft.ContainerService
+    registeringExtensions+=("$aksExtension")
+  else
+    echo "[$aksExtension] extension is already registered."
+  fi
+done
+echo $registeringExtensions
+delay=1
+for aksExtension in ${registeringExtensions[@]}; do
+  echo -n "Checking if [$aksExtension] extension is already registered..."
+  while true; do
+    extension=$(az feature list -o table --query "[?contains(name, 'Microsoft.ContainerService/$aksExtension') && @.properties.state == 'Registered'].{Name:name}" --output tsv)
+    if [[ -z $extension ]]; then
+      echo -n "."
+      sleep $delay
+    else
+      echo "."
+      break
+    fi
+  done
+done
+
+echo "Refreshing the registration of the Microsoft.ContainerService resource provider..."
+az provider register --namespace Microsoft.ContainerService
+echo "Microsoft.ContainerService resource provider registration successfully refreshed"
+```
+
+The following picture shows the resources deployed by the ARM template to your resource group:
+
 ![Resource Group](images/resourcegroup.png)
 
 The following picture shows the resources deployed by the ARM template in the node resource group associated to the AKS cluster:
