@@ -16,8 +16,6 @@ minecraft_user=minecraft
 minecraft_group=minecraft
 UUID_URL=https://api.mojang.com/users/profiles/minecraft/$1
 
-# screen scrape the server jar location from the Minecraft server download page
-SERVER_JAR_URL="curl -L https://minecraft.net/en-us/download/server/ | grep -Eo \"(http|https)://[a-zA-Z0-9./?=_-]*\" | sort | uniq | grep launcher"
 server_jar=server.jar
 
 # add and update repos
@@ -33,10 +31,7 @@ mkdir $minecraft_server_path
 cd $minecraft_server_path
 
 # download the server jar
-while ! echo y | wget `eval $SERVER_JAR_URL`; do
-    sleep 10
-    wget `eval $SERVER_JAR_URL`
-done
+wget -O https://launcher.mojang.com/v1/objects/a16d67e5807f57fc4e550299cf20226194497dc2/server.jar
 
 # set permissions on install folder
 chown -R $minecraft_user $minecraft_server_path
