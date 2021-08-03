@@ -9,6 +9,7 @@
 # $7 = spawn-monsters
 # $8 = generate-structures
 # $9 = level-seed
+# $10 = location of the Minecraft server launcher
 
 # basic service and API settings
 minecraft_server_path=/srv/minecraft_server
