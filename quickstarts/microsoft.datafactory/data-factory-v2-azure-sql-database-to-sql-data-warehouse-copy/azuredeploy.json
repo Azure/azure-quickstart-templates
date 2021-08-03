@@ -8,29 +8,53 @@
         "description": "Name of the data factory. Must be globally unique."
       }
     },
-    "dataFactoryLocation": {
+    "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location of the data factory."
       }
     },
-    "azureStorageConnectionString": {
+    "azureStorageAccountResourceId": {
       "type": "string",
       "metadata": {
-        "description": "Connection string for the Azure Storage account."
+        "description": "Azure Storage account resource id."
       }
     },
-    "azureSqlDatabaseConnectionString": {
+    "azureStorageAccountName": {
       "type": "string",
       "metadata": {
-        "description": "Connnection string for the Azure SQL database."
+        "description": "Azure Storage account name."
       }
     },
-    "azureSqllDataWarehouseConnectionString": {
+    "existingServerName": {
       "type": "string",
       "metadata": {
-        "description": "Connection string for the Azure SQL Data Warehouse"
+        "description": "Azure SQL Server name."
+      }
+    },
+    "existingDatabaseName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure SQL Server DB name."
+      }
+    },
+    "existingDataWarehouseName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Data Warehouse name."
+      }
+    },
+    "existingDatabaseAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure SQL Server DB Admin Username"
+      }
+    },
+    "databaseAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "DB Password"
       }
     }
   },
@@ -42,14 +66,16 @@
     "outputDatasetName": "Tutorial4_OutputSqlDataWarehouseDataset",
     "pipelineName": "Tutorial2-CopyFromSqlToSqlDwPipeline",
     "pipelineName2": "Tutorial2-TriggerCopyPipeline",
-    "leftBracket": "["
+    "leftBracket": "[",
+    "azureSqllDataWarehouseConnectionString":"[concat('Server=tcp:', parameters('existingServerName'), environment().suffixes.sqlServerHostname, ',1433;Initial Catalog=',parameters('existingDataWarehouseName'), ';Persist Security Info=False;User ID=', parameters('existingDatabaseAdminUsername'),parameters('databaseAdminPassword'),';Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
+    "azureSqlDatabaseConnectionString":"[concat('Server=tcp:', parameters('existingServerName'), environment().suffixes.sqlServerHostname, ',1433;Initial Catalog=',parameters('existingDatabaseName'), ';Persist Security Info=False;User ID=', parameters('existingDatabaseAdminUsername'),parameters('databaseAdminPassword'),';Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
   },
   "resources": [
     {
       "name": "[parameters('dataFactoryName')]",
-      "apiVersion": "2017-09-01-preview",
+      "apiVersion": "2018-06-01",
       "type": "Microsoft.DataFactory/factories",
-      "location": "[parameters('dataFactoryLocation')]",
+      "location": "[parameters('location')]",
       "properties": {},
       "resources": [
         {
@@ -58,13 +84,13 @@
           "dependsOn": [
             "[parameters('dataFactoryName')]"
           ],
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "type": "AzureStorage",
             "description": "Azure Storage linked service",
             "typeProperties": {
               "connectionString": {
-                "value": "[parameters('azureStorageConnectionString')]",
+                "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('azureStorageAccountName'),';AccountKey=',listKeys(parameters('azureStorageAccountResourceId'), '2021-01-01').keys[0].value)]",
                 "type": "SecureString"
               }
             }
@@ -76,13 +102,13 @@
           "dependsOn": [
             "[parameters('dataFactoryName')]"
           ],
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "type": "AzureSqlDatabase",
             "description": "Azure SQL Database linked service",
             "typeProperties": {
               "connectionString": {
-                "value": "[parameters('azureSqlDatabaseConnectionString')]",
+                "value": "[variables('azureSqlDatabaseConnectionString')]",
                 "type": "SecureString"
               }
             }
@@ -94,13 +120,13 @@
           "dependsOn": [
             "[parameters('dataFactoryName')]"
           ],
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "type": "AzureSqlDW",
             "description": "Azure SQL Data Warehouse linked service",
             "typeProperties": {
               "connectionString": {
-                "value": "[parameters('azureSqllDataWarehouseConnectionString')]",
+                "value": "[variables('azureSqllDataWarehouseConnectionString')]",
                 "type": "SecureString"
               }
             }
@@ -109,7 +135,7 @@
         {
           "name": "[variables('inputDatasetName')]",
           "type": "datasets",
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "linkedServiceName": {
               "referenceName": "[variables('azureSqlDatabaseLinkedServiceName')]",
@@ -128,7 +154,7 @@
         {
           "name": "[variables('outputDatasetName')]",
           "type": "datasets",
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "linkedServiceName": {
               "referenceName": "[variables('azureSqlDataWareHouseLinkedServiceName')]",
@@ -160,14 +186,12 @@
             "[variables('inputDatasetName')]",
             "[variables('outputDatasetName')]"
           ],
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "activities": [
               {
                 "name": "IterateSQLTables",
-                "description": "",
                 "type": "ForEach",
-                "dependsOn": [],
                 "typeProperties": {
                   "items": {
                     "value": "@pipeline().parameters.tableList",
@@ -177,8 +201,6 @@
                     {
                       "name": "CopyData",
                       "type": "Copy",
-                      "dependsOn": [],
-                      "policy": {},
                       "typeProperties": {
                         "source": {
                           "type": "SqlSource",
@@ -235,15 +257,13 @@
         {
           "name": "[variables('pipelineName2')]",
           "type": "pipelines",
-          "apiVersion": "2017-09-01-preview",
+          "apiVersion": "2018-06-01",
           "properties": {
             "activities": [
               {
                 "name": "LookupTableList",
                 "description": " Retrieve the table list from Azure SQL database",
                 "type": "Lookup",
-                "dependsOn": [],
-                "policy": {},
                 "typeProperties": {
                   "source": {
                     "type": "SqlSource",
