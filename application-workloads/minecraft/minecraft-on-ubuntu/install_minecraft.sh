@@ -31,7 +31,7 @@ mkdir $minecraft_server_path
 cd $minecraft_server_path
 
 # download the server jar
-wget -O https://launcher.mojang.com/v1/objects/a16d67e5807f57fc4e550299cf20226194497dc2/server.jar
+wget -O $10
 
 # set permissions on install folder
 chown -R $minecraft_user $minecraft_server_path
