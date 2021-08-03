@@ -114,7 +114,7 @@ You can run the following script to register the above preview features and wait
 #!/bin/bash
 
 # Registering AKS feature extensions
-aksExtensions=("PodSecurityPolicyPreview" "RunCommandPreview" "EnablePodIdentityPreview " "EnablePrivateClusterPublicFQDN" "PodSubnetPreview")
+aksExtensions=("AutoUpgradePreview" "PodSecurityPolicyPreview" "RunCommandPreview" "EnablePodIdentityPreview " "EnablePrivateClusterPublicFQDN" "PodSubnetPreview")
 registeringExtensions=()
 for aksExtension in ${aksExtensions[@]}; do
   echo "Checking if [$aksExtension] extension is already registered..."
