@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.412.5873",
-      "templateHash": "11861002567617054617"
+      "version": "0.3.539.46024",
+      "templateHash": "9532764811440232360"
     }
   },
   "parameters": {
@@ -24,10 +24,8 @@
     },
     "accountName": {
       "type": "string",
-      "minLength": 3,
-      "maxLength": 44,
       "metadata": {
-        "description": "Cosmos DB account name (must contain only lowercase letters, digits, and hyphens)"
+        "description": "Cosmos DB account name, max length 44 characters"
       }
     },
     "publicNetworkAccess": {
@@ -50,7 +48,7 @@
   },
   "functions": [],
   "variables": {
-    "subnetName": "default",
+    "accountName_var": "[toLower(parameters('accountName'))]",
     "locations": [
       {
         "locationName": "[parameters('location')]",
@@ -62,7 +60,7 @@
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-07-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -73,7 +71,7 @@
         },
         "subnets": [
           {
-            "name": "[variables('subnetName')]",
+            "name": "default",
             "properties": {
               "addressPrefix": "172.20.0.0/24",
               "privateEndpointNetworkPolicies": "Disabled"
@@ -84,10 +82,10 @@
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2021-01-15",
-      "name": "[parameters('accountName')]",
-      "location": "[parameters('location')]",
+      "apiVersion": "2021-04-15",
+      "name": "[variables('accountName_var')]",
       "kind": "GlobalDocumentDB",
+      "location": "[parameters('location')]",
       "properties": {
         "consistencyPolicy": {
           "defaultConsistencyLevel": "Session"
@@ -95,24 +93,23 @@
         "locations": "[variables('locations')]",
         "databaseAccountOfferType": "Standard",
         "enableAutomaticFailover": false,
-        "enableMultipleWriteLocations": false,
         "publicNetworkAccess": "[parameters('publicNetworkAccess')]"
       }
     },
     {
       "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-07-01",
       "name": "[parameters('privateEndpointName')]",
       "location": "[parameters('location')]",
       "properties": {
         "subnet": {
-          "id": "[resourceId('Microsoft.Network/VirtualNetworks/subnets', parameters('virtualNetworkName'), variables('subnetName'))]"
+          "id": "[resourceId('Microsoft.Network/VirtualNetworks/subnets', parameters('virtualNetworkName'), 'Default')]"
         },
         "privateLinkServiceConnections": [
           {
             "name": "MyConnection",
             "properties": {
-              "privateLinkServiceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]",
+              "privateLinkServiceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]",
               "groupIds": [
                 "Sql"
               ]
@@ -121,7 +118,7 @@
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]",
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
       ]
     }
