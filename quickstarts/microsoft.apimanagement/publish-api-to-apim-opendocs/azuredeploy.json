@@ -1,0 +1,127 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "dev",
+      "templateHash": "9254032152856996155"
+    }
+  },
+  "parameters": {
+    "apimInstanceName": {
+      "type": "string"
+    },
+    "apimRG": {
+      "type": "string"
+    },
+    "apiName": {
+      "type": "string"
+    },
+    "apiEndPointURL": {
+      "type": "string",
+      "defaultValue": "http://petstore.swagger.io/v2/swagger.json"
+    },
+    "apiPath": {
+      "type": "string",
+      "defaultValue": "AzureFunctionsApi"
+    },
+    "apiFormat": {
+      "type": "string",
+      "defaultValue": "swagger-link-json",
+      "metadata": {
+        "description": "Type of OpenAPI we are importing"
+      },
+      "allowedValues": [
+        "openapi",
+        "openapi+json",
+        "openapi+json-link",
+        "swagger-json",
+        "swagger-link-json",
+        "wadl-link-json",
+        "wadl-xml",
+        "wsdl",
+        "wsdl-link"
+      ]
+    }
+  },
+  "functions": [],
+  "variables": {
+    "productsSet": [
+      {
+        "productName": "product1",
+        "displayName": "Product 1",
+        "productDescription": "Some description of this product",
+        "productTerms": "Tems and conditions here for this product",
+        "isSubscriptionRequired": true,
+        "isApprovalRequired": true,
+        "subscriptionLimit": 1,
+        "publishState": "published"
+      },
+      {
+        "productName": "product2",
+        "displayName": "Product 2",
+        "productDescription": "Some description of this product",
+        "productTerms": "Tems and conditions here for this product",
+        "isSubscriptionRequired": true,
+        "isApprovalRequired": true,
+        "subscriptionLimit": 1,
+        "publishState": "published"
+      }
+    ]
+  },
+  "resources": [
+    {
+      "copy": {
+        "name": "ProductRecords",
+        "count": "[length(variables('productsSet'))]"
+      },
+      "type": "Microsoft.ApiManagement/service/products",
+      "apiVersion": "2020-12-01",
+      "name": "[format('{0}/{1}', parameters('apimInstanceName'), variables('productsSet')[copyIndex()].productName)]",
+      "properties": {
+        "displayName": "[variables('productsSet')[copyIndex()].displayName]",
+        "description": "[variables('productsSet')[copyIndex()].productDescription]",
+        "terms": "[variables('productsSet')[copyIndex()].productTerms]",
+        "subscriptionRequired": "[variables('productsSet')[copyIndex()].isSubscriptionRequired]",
+        "approvalRequired": "[variables('productsSet')[copyIndex()].isApprovalRequired]",
+        "subscriptionsLimit": "[variables('productsSet')[copyIndex()].subscriptionLimit]",
+        "state": "[variables('productsSet')[copyIndex()].publishState]"
+      }
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis",
+      "apiVersion": "2020-12-01",
+      "name": "[format('{0}/{1}', parameters('apimInstanceName'), parameters('apiName'))]",
+      "properties": {
+        "format": "[parameters('apiFormat')]",
+        "value": "[parameters('apiEndPointURL')]",
+        "path": "[parameters('apiPath')]"
+      }
+    },
+    {
+      "copy": {
+        "name": "attachAPIToProducts",
+        "count": "[length(variables('productsSet'))]"
+      },
+      "type": "Microsoft.ApiManagement/service/products/apis",
+      "apiVersion": "2020-12-01",
+      "name": "[format('{0}/{1}/{2}', parameters('apimInstanceName'), variables('productsSet')[copyIndex()].productName, parameters('apiName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service/products', parameters('apimInstanceName'), variables('productsSet')[copyIndex()].productName)]"
+      ]
+    }
+  ],
+  "outputs": {
+    "apimProducts": {
+      "type": "array",
+      "copy": {
+        "count": "[length(variables('productsSet'))]",
+        "input": {
+          "productId": "[resourceId('Microsoft.ApiManagement/service/products', parameters('apimInstanceName'), variables('productsSet')[copyIndex()].productName)]",
+          "productName": "[variables('productsSet')[copyIndex()].productName]"
+        }
+      }
+    }
+  }
+}
