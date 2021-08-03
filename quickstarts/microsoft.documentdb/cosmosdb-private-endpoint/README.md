@@ -26,5 +26,3 @@ Below are the parameters which can be user configured in the parameters file inc
 - **Private Endpoint Name:** Enter a name for the private endpoint.
 
 `Tags : CosmosDB`
-
-
