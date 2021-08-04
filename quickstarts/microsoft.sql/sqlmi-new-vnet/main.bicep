@@ -164,7 +164,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource managedInstanceName_resource 'Microsoft.Sql/managedInstances@2020-02-02-preview' = {
+resource managedInstance 'Microsoft.Sql/managedInstances@2020-02-02-preview' = {
   name: managedInstanceName
   location: location
   sku: {
