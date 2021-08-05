@@ -2,11 +2,11 @@ param location string = resourceGroup().location
 param scriptToExecute string = 'date' // will print current date & time on container
 param subId string = subscription().id // defaults to current sub
 param rgName string = resourceGroup().name // defaults to current rg
-param uamiName string = 'alex-test-deny'
+param uamiName string = 'test-deny'
 
 param currentTime string = utcNow()
 
-var uamiId = resourceId(subId, rgName, 'Microsoft.ManagedIdentity/userAssignedIdentities', uamiName)
+var uamiId = subscriptionResourceId(subId, rgName, 'Microsoft.ManagedIdentity/userAssignedIdentities', uamiName)
 
 resource stg 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   name: 'dscript${uniqueString(resourceGroup().id)}'
