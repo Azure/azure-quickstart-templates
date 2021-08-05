@@ -26,7 +26,7 @@ param linuxAdminUsername string
 @description('Configure all linux machines with the SSH RSA public key string. Your key should include three parts, for example \'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm\'')
 param sshRSAPublicKey string
 
-resource aks 'Microsoft.ContainerService/managedClusters@2020-03-01' = {
+resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
   name: clusterName
   location: location
   properties: {
@@ -38,6 +38,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2020-03-01' = {
         count: agentCount
         vmSize: agentVMSize
         osType: 'Linux'
+        mode: 'System'
       }
     ]
     linuxProfile: {
