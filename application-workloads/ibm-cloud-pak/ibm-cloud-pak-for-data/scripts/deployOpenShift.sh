@@ -40,6 +40,7 @@ export PUBLISH=${33}
 export OPENSHIFTUSER=${34}
 export ENABLEAUTOSCALER=${35}
 export OUTBOUNDTYPE=${36}
+export EXISTING_RESOURCE_GROUP_NAME=${37}
 
 #Var
 export INSTALLERHOME=/home/$SUDOUSER/.openshift
@@ -80,10 +81,11 @@ echo $(date) " - Install httpd-tools Complete"
 echo $(date) " - Download Binaries"
 runuser -l $SUDOUSER -c "mkdir -p /home/$SUDOUSER/.openshift"
 
-runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.27/openshift-install-linux-4.6.27.tar.gz"
-runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.27/openshift-client-linux-4.6.27.tar.gz"
-runuser -l $SUDOUSER -c "tar -xvf openshift-install-linux-4.6.27.tar.gz -C $INSTALLERHOME"
-runuser -l $SUDOUSER -c "sudo tar -xvf openshift-client-linux-4.6.27.tar.gz -C /usr/bin"
+runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.31/openshift-install-linux-4.6.31.tar.gz"
+runuser -l $SUDOUSER -c "wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.31/openshift-client-linux-4.6.31.tar.gz"
+runuser -l $SUDOUSER -c "tar -xvf openshift-install-linux-4.6.31.tar.gz -C $INSTALLERHOME"
+runuser -l $SUDOUSER -c "sudo tar -xvf openshift-client-linux-4.6.31.tar.gz -C /usr/bin"
+
 
 chmod +x /usr/bin/kubectl
 chmod +x /usr/bin/oc
@@ -151,6 +153,7 @@ platform:
     controlPlaneSubnet: $MASTERSUBNETNAME
     computeSubnet: $WORKERSUBNETNAME
     outboundType: $OUTBOUNDTYPE
+    resourceGroupName: $EXISTING_RESOURCE_GROUP_NAME
 pullSecret: '$PULLSECRET'
 fips: $FIPS
 publish: $PUBLISH
@@ -159,7 +162,10 @@ sshKey: |
 EOF
 echo $(date) " - Setup Install config - Complete"
 
+runuser -l $SUDOUSER -c "cp $INSTALLERHOME/openshiftfourx/install-config.yaml $INSTALLERHOME/openshiftfourx/install-config-backup.yaml"
+
 echo $(date) " - Install OCP"
+runuser -l $SUDOUSER -c "export ARM_SKIP_PROVIDER_REGISTRATION=true"
 runuser -l $SUDOUSER -c "$INSTALLERHOME/openshift-install create cluster --dir=$INSTALLERHOME/openshiftfourx --log-level=debug"
 runuser -l $SUDOUSER -c "sleep 120"
 echo $(date) " - OCP Install Complete"
