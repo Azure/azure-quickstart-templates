@@ -53,13 +53,13 @@ def home(request):
     conn.commit()
     cursor.execute('SELECT * FROM votes')
 
-    result = '<table style=\"width:100%\">\\n'
+    result = '<table style=\"width:100%\">'
     row = cursor.fetchone()
     while row:
-        result += f'<tr>\\n<th>{row[0]}: {row[1]} votes</th>\\n</tr>\\n'
+        result += f'<tr><th>{row[0]}: {row[1]} votes</th></tr>'
         row = cursor.fetchone()
     result += '</table>'
-    html = f'<html>\\n<body>\\n{result}\\n</body>\\n<html>'
+    html = f'<html><body>{result}</body><html>'
     return HttpResponse(html)" | tee /var/www/helloworld/helloworld/views.py
 
 # Update urls.py
