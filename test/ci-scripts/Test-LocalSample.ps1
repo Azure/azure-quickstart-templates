@@ -115,8 +115,6 @@ $resultReadMe = $vars["RESULT_README"] # will be null if fails
 $fixedReadme = $vars["FIXED_README"] -eq "TRUE"
 
 # Test-BestPractices
-write-warning "TTK: '$TtkFolder'"
-Write-Warning "done"
 if (!$TtkFolder) {
     # Check if the TTK is in a local repo as a sibling to this repo
     $TtkFolder = "$PSScriptRoot/../../../arm-ttk"
