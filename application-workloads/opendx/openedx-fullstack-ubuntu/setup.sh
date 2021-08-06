@@ -2,7 +2,7 @@
 echo "start"
 read -p "what's your username of VM: " USER
 read -p "what's your password: " PSW
-echo $PSW | sudo apt update
+echo $PSW | sudo -S apt update
 echo "install Docker"
 
 #Install Docker
@@ -31,7 +31,7 @@ echo "install tutor"
 #install tutor
 
 sudo curl -L "https://github.com/overhangio/tutor/releases/download/v12.0.2/tutor-$(uname -s)_$(uname -m)" -o /usr/local/bin/tutor
-sudo chmod 0755 /usr/local/bin/tutor
+sudo chmod -R 0777 /usr/local/bin/tutor
 
 echo "deploy tutor"
 #configure tutor
