@@ -1,5 +1,5 @@
 @description('The location into which the Azure Storage resources should be deployed.')
-param location string = resourceGroup().location
+param location string
 
 @description('The name of the Azure Storage account to create. This must be globally unique.')
 param accountName string = 'stor${uniqueString(resourceGroup().id)}'
