@@ -45,6 +45,7 @@ resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2020
   properties: {
     roleDefinitionId: storageAccountContributorRoleDefinitionId
     principalId: managedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
@@ -54,6 +55,7 @@ resource roleAssignmentStorageBlobDataContributor 'Microsoft.Authorization/roleA
   properties: {
     roleDefinitionId: storageAccountStorageBlobDataContributorRoleDefinitionId
     principalId: managedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
@@ -72,28 +74,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   ]
   properties: {
     azPowerShellVersion: '5.4'
-    scriptContent: '''
-    param (
-      [string] $ResourceGroupName,
-      [string] $StorageAccountName,
-      [string] $IndexDocument,
-      [string] $ErrorDocument404Path
-    )
-
-    $ErrorActionPreference = 'Stop'
-    
-    $storageAccount = Get-AzStorageAccount -ResourceGroupName $ResourceGroupName -AccountName $StorageAccountName
-    $ctx = $storageAccount.Context
-    Enable-AzStorageStaticWebsite -Context $ctx -IndexDocument $IndexDocument -ErrorDocument404Path $ErrorDocument404Path
-
-    New-Item $IndexDocument -Force
-    Set-Content $IndexDocument '<h1>Welcome</h1>'
-    Set-AzStorageBlobContent -Context $ctx -Container '$web' -File $IndexDocument -Blob $IndexDocument -Properties @{'ContentType' = 'text/html'}
-
-    New-Item $ErrorDocument404Path -Force
-    Set-Content $ErrorDocument404Path '<h1>Error: 404 Not Found</h1>'
-    Set-AzStorageBlobContent -Context $ctx -Container '$web' -File $ErrorDocument404Path -Blob $ErrorDocument404Path -Properties @{'ContentType' = 'text/html'}
-    '''
+    scriptContent: loadTextContent('scripts/enable-storage-static-website.ps1')
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'PT4H'
     arguments: '-ResourceGroupName ${resourceGroup().name} -StorageAccountName ${accountName} -IndexDocument ${indexDocument} -ErrorDocument404Path ${errorDocument404Path}'
