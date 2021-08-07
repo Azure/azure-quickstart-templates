@@ -29,7 +29,7 @@ The following resources are deployed as part of the solution:
 - A Front Door profile with an endpoint, which is configured with an origin group, origin, and route to direct traffic to the container group.
   - Note that you can use either the standard or premium Front Door SKU for this sample. By default, the standard SKU is used.
 
-In this sample, traffic can flow directly to the container group. There is no mechanism to ensure the traffic has passed through Front Door. To restrict access, [consider deploying the container group with virtual network integration and deploy an Application Gateway instance to restrict traffic](https://docs.microsoft.com/azure/container-instances/container-instances-application-gateway). The [Front Door Standard/Premium (Preview) with Application Gateway origin](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.network/front-door-standard-premium-application-gateway-public) sample can be adapted to fit this architecture.
+In this sample, traffic can flow directly to the container group. There is no mechanism to ensure the traffic has passed through Front Door. To restrict access, [consider deploying the container group with virtual network integration and deploy an Application Gateway instance to restrict traffic](https://docs.microsoft.com/azure/container-instances/container-instances-application-gateway). The [Front Door Standard/Premium (Preview) with Container Instances and Application Gateway origin](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.network/front-door-standard-premium-container-instances-application-gateway-public) sample illustrates this scenario.
 
 The following diagram illustrates the components of this sample.
 
