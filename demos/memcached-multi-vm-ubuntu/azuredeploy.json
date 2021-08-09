@@ -87,7 +87,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/demos/memcached-multi-vm-ubuntu/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -112,16 +112,16 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2021-01-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "Standard_LRS"
+      "sku": {
+        "name": "Standard_LRS"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -148,7 +148,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "publicip",
       "location": "[parameters('location')]",
@@ -160,7 +160,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "nicapache",
       "location": "[parameters('location')]",
@@ -185,7 +185,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('nicmemcached', copyindex())]",
       "location": "[parameters('location')]",
@@ -211,7 +211,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('domainName')]",
       "location": "[parameters('location')]",
@@ -246,7 +246,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('memcachedMachineNamePrefix'), copyindex())]",
       "location": "[parameters('location')]",
@@ -255,8 +255,8 @@
         "count": "[parameters('numberOfMemcachedInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', 'nicmemcached', copyindex())]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat('nicmemcached', copyindex()))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -288,7 +288,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('memcachedMachineNamePrefix'), copyindex(), '/install_memcached')]",
       "location": "[parameters('location')]",
@@ -297,8 +297,8 @@
         "count": "[parameters('numberOfMemcachedInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', concat(variables('memcachedMachineNamePrefix'), copyindex()))]",
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('domainName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('memcachedMachineNamePrefix'), copyindex()))]",
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('domainName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -309,17 +309,17 @@
           "fileUris": [
             "[uri(parameters('_artifactsLocation'), concat('install_memcached.sh', parameters('_artifactsLocationSasToken')))]"
           ],
-          "commandToExecute": "[concat('sh install_memcached.sh ', ' ', reference(concat('nicmemcached', copyindex())).ipConfigurations[0].properties.privateIPAddress, ' ', reference('nicapache').ipConfigurations[0].properties.privateIPAddress)]"
+          "commandToExecute": "[concat('sh install_memcached.sh ', ' ', concat(reference(resourceId('Microsoft.Network/networkInterfaces/', concat('nicmemcached', copyindex()))).ipConfigurations[0].properties.privateIPAddress, ' ', reference('nicapache').ipConfigurations[0].properties.privateIPAddress))]"
         }
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('domainName'), '/install_apache')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('domainName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('domainName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",

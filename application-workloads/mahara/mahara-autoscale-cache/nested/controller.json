@@ -19,13 +19,31 @@
                 "description": "FQDN of public IP address"
             },
             "type": "string"
-       }
+       },
+       "dbLoginPassword": {
+            "metadata": {
+                "description": "Database admin password"
+            },
+            "type": "securestring"
+        },
+        "maharaAdminPass": {
+            "metadata": {
+                "description": "Mahara admin password"
+            },
+            "type": "securestring"
+        },
+        "maharaDbPass": {
+            "metadata": {
+                "description": "Mahara database password"
+            },
+            "type": "securestring"
+        }
     },
 
     "resources": [
         {
             "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2017-10-01",
+            "apiVersion": "2020-11-01",
             "location": "[parameters('maharaCommon').location]",
             "name": "[parameters('maharaCommon').ctlrNsgName]",
             "properties": {
@@ -64,9 +82,9 @@
         },
         {
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2017-10-01",
+            "apiVersion": "2020-11-01",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('maharaCommon').ctlrNsgName)]"
+                "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('maharaCommon').ctlrNsgName)]"
             ],
             "location": "[parameters('maharaCommon').location]",
             "name": "[parameters('maharaCommon').ctlrNicName]",
@@ -95,9 +113,9 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2017-03-30",
+            "apiVersion": "2020-12-01",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('maharaCommon').ctlrNicName)]"
+                "[resourceId('Microsoft.Network/networkInterfaces/', parameters('maharaCommon').ctlrNicName)]"
             ],
             "location": "[parameters('maharaCommon').location]",
             "name": "[parameters('maharaCommon').ctlrVmName]",
@@ -147,9 +165,9 @@
         {
             "condition": "[parameters('maharaCommon').applyScriptsSwitch]",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2020-10-01",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', parameters('maharaCommon').ctlrVmName)]"
+                "[resourceId('Microsoft.Compute/virtualMachines/', parameters('maharaCommon').ctlrVmName)]"
             ],
             "name": "[concat(parameters('maharaCommon').ctlrVmName,'-ScriptProcessor')]",
             "properties": {
@@ -160,7 +178,16 @@
                     },
                    "siteFQDN": {
                         "value": "[parameters('siteFQDN')]"
-                   } 
+                   },
+                   "dbLoginPassword": {
+                       "value": "[parameters('dbLoginPassword')]"
+                   },
+                   "maharaDbPass": {
+                       "value": "[parameters('maharaDbPass')]"
+                   },
+                   "maharaAdminPass": {
+                       "value": "[parameters('maharaAdminPass')]"
+                   }
                 },
 		   
                 "templateLink": {
@@ -171,9 +198,9 @@
         {
             "condition": "[parameters('maharaCommon').azureBackupSwitch]",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2020-10-01",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/',parameters('maharaCommon').ctlrVmName)]"
+                "[resourceId('Microsoft.Compute/virtualMachines/',parameters('maharaCommon').ctlrVmName)]"
             ],
             "name": "[concat(parameters('maharaCommon').ctlrVmName,'-Backup')]",
             "properties": {
@@ -193,16 +220,6 @@
         }
     ],
     "variables": {
-        "documentation01": "This sub-template drives the controller/jump-box which is used as the access-point for other mahara VM's ",
-        "documentation02": "It expects certain values in the 'common' datastructure.",
-        "documentation03": "    vnetName     - name of virtual network",
-        "documentation04": "    subnetWeb    - name of subnet for controller (and vm scale set)",
-        "documentation06": "    ctlrPipName  - name of Public IP address for the controller (note that none of the other VM's get a PIP - just the controller",
-        "documentation07": "    ctlrNicName  - name of the network interface (all VM's must hae a nic) to crate, tied to the public IP address",
-        "documentation08": "    ctlrNsgName  - name of the network security group, regulating access to/from the controller",
-        "documentation09": "This sub-template calls other sub-templates",
-        "documentation10": "    controllerconfig       - conditionally applies post-deployment script on the VM",
-        "documentation18": "    recoveryservicesEnlist - conditionally enlists the VM into the backup regimen",
         "nicRef": "[resourceId('Microsoft.Network/networkInterfaces', parameters('maharaCommon').ctlrNicName)]",
         "nsgRef": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('maharaCommon').ctlrNsgName)]",
         "subnetWebRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('maharaCommon').vnetName, parameters('maharaCommon').subnetWeb)]",
@@ -223,7 +240,7 @@
     },
     "outputs": {
         "controllerIP": {
-            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('maharaCommon').ctlrPipName), '2017-10-01').ipAddress]",
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('maharaCommon').ctlrPipName), '2020-11-01').ipAddress]",
             "type": "string"
         }
     }
