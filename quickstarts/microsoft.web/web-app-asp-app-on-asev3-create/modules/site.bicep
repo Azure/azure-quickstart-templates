@@ -3,7 +3,7 @@ param subscriptionId string = subscription().id
 @description('Required. App service prefix.')
 param appNamePrefix string = 'app'
 @description('Required. App service location.')
-param location string = resourceGroup().location
+param location string = 'westus2'
 @description('Required. App service plan prefix.')
 param hostingPlanNamePrefix string = 'asev3-asp'
 @description('Required. App service plan resource group name.')

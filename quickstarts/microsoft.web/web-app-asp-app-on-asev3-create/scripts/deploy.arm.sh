@@ -1,1 +1,1 @@
-az deployment group create --template-file azuredeploy_asev3_ilb.json --parameters azuredeploy_asev3_ilb.parameters.json -g samlin-asev3-templates-rg --name asev3-ilb-deployment-2021080401
+az deployment group create --template-file azuredeploy.json --parameters azuredeploy.parameters.json -g rg-asev3-templates-demo --name arm-asev3-deployment-2021081201

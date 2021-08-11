@@ -2,7 +2,7 @@
 param virtualNetworkName string = 'vnet-asev3'
 
 @description('Required. Location for all resources.')
-param location string = 'eastasia'
+param location string = 'westus2'
 
 @description('Required. An Array of 1 or more IP Address Prefixes for the Virtual Network.')
 param vNetAddressPrefixes array = [
@@ -12,19 +12,17 @@ param vNetAddressPrefixes array = [
 @description('Required. The subnet Name of ASEv3.')
 param subnetName string = 'snet-asev3-ilb'
 
-@description('Required. The IP address of subnet')
-param subnetAddressPrefix string = '172.16.0.0/24'
+//@description('Required. The IP address of subnet')
+//param subnetAddressPrefix string = '172.16.0.0/24'
 
 @description('Required. Name of the Network Security Group.')
 @minLength(1)
 param networkSecurityGroupName string = 'nsg-asev3-ilb'
 
-
-
-var subnets = [
+param subnets array = [
   {
-    name: subnetName
-    addressPrefix: subnetAddressPrefix
+    name: 'snet-asev3-ilb'
+    addressPrefix: '172.16.0.0/24'
     // @description('Required. Delegation name of the ASEv3 subnet.')
     delegations: [
       {
@@ -36,9 +34,7 @@ var subnets = [
     ]
     privateEndpointNetworkPolicies: 'Enabled'
     privateLinkServiceNetworkPolicies: 'Enabled'
-    networkSecurityGroupName: networkSecurityGroupName
-    routeTable: emptyStr
-    serviceEndpoints: emptyArray    
+    networkSecurityGroupName: 'nsg-asev3-ilb'
   }
 ]
 
@@ -65,14 +61,14 @@ param internalLoadBalancingMode int = 3
 param timeStamp string = utcNow()
 
 // Variable definitions
-var emptyStr = ''
-var emptyArray = []
+// var emptyStr = ''
+// var emptyArray = []
 var uniStr = substring('${uniqueString(resourceGroup().id, timeStamp)}', 0, 4)
 var aseName = '${aseNamePrefix}-${uniStr}'
 var privateZoneName = '${aseName}.appserviceenvironment.net'
 var virtualNetworkId = resourceId('Microsoft.Network/virtualNetworks', virtualNetworkName)
 var subnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
-var ipv4Address = reference('${asev3.id}/configurations/networking', '2018-09-01').internalInboundIpAddresses[0]
+var aseNetworkConfiguration = '${asev3.id}/configurations/networking'
 
 module virtualnetwork 'modules/virtualnetwork.bicep' = {
   name: '${virtualNetworkName}-${uniStr}'
@@ -102,7 +98,7 @@ resource asev3 'Microsoft.Web/hostingEnvironments@2020-12-01' = {
   ]
 }
 
-resource privatezone 'Microsoft.Network/privateDnsZones@2018-09-01' = if (createPrivateDNS && internalLoadBalancingMode == 3) {
+resource privatezone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (createPrivateDNS && internalLoadBalancingMode == 3) {
   name: privateZoneName
   location: 'global'
   properties: {}
@@ -111,7 +107,7 @@ resource privatezone 'Microsoft.Network/privateDnsZones@2018-09-01' = if (create
   ]
 }
 
-resource vnetlink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = if (createPrivateDNS && internalLoadBalancingMode == 3) {
+resource vnetlink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (createPrivateDNS && internalLoadBalancingMode == 3) {
   parent: privatezone
   name: 'vnetLink'
   location: 'global'
@@ -123,40 +119,40 @@ resource vnetlink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09
   }
 }
 
-resource webrecord 'Microsoft.Network/privateDnsZones/A@2018-09-01' = if (createPrivateDNS && internalLoadBalancingMode == 3) {
+resource webrecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = if (createPrivateDNS && internalLoadBalancingMode == 3) {
   parent: privatezone
   name: '*'
   properties: {
     ttl: 3600
     aRecords: [
       {
-        ipv4Address: ipv4Address
+        ipv4Address: reference(aseNetworkConfiguration, '2018-09-01').internalInboundIpAddresses[0]
       }
     ]
   }
 }
 
-resource scmrecord 'Microsoft.Network/privateDnsZones/A@2018-09-01' = if (createPrivateDNS && internalLoadBalancingMode == 3) {
+resource scmrecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = if (createPrivateDNS && internalLoadBalancingMode == 3) {
   parent: privatezone
   name: '*.scm'
   properties: {
     ttl: 3600
     aRecords: [
       {
-        ipv4Address: ipv4Address
+        ipv4Address: reference(aseNetworkConfiguration, '2018-09-01').internalInboundIpAddresses[0]
       }
     ]
   }
 }
 
-resource atrecord 'Microsoft.Network/privateDnsZones/A@2018-09-01' = if (createPrivateDNS && internalLoadBalancingMode == 3) {
+resource atrecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = if (createPrivateDNS && internalLoadBalancingMode == 3) {
   parent: privatezone
   name: '@'
   properties: {
     ttl: 3600
     aRecords: [
       {
-        ipv4Address: ipv4Address
+        ipv4Address: reference(aseNetworkConfiguration, '2018-09-01').internalInboundIpAddresses[0]
       }
     ]
   }

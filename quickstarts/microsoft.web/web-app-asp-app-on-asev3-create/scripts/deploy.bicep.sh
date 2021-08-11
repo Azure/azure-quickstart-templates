@@ -1,1 +1,1 @@
-az deployment group create -f main.bicep --parameters azuredeploy_asev3_ilb.parameters.json -g samlin-asev3-templates-rg --name asev3-ilb-deployment-2021080402
+az deployment group create --template-file main.bicep --parameters azuredeploy.parameters.json -g rg-asev3-templates-demo --name bicep-asev3-deployment-2021081201

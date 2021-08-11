@@ -3,7 +3,7 @@
 param networkSecurityGroupName string
 
 @description('Optional. Location for all resources.')
-param location string = resourceGroup().location
+param location string = 'westus2'
 
 @description('Required. Array of Security Rules to deploy to the Network Security Group.')
 param networkSecurityGroupSecurityRules array
