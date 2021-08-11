@@ -32,14 +32,6 @@
         "description": "Required. The subnet Name of ASEv3."
       }
     },
-    "networkSecurityGroupName": {
-      "type": "string",
-      "defaultValue": "nsg-asev3-ilb",
-      "minLength": 1,
-      "metadata": {
-        "description": "Required. Name of the Network Security Group."
-      }
-    },
     "subnets": {
       "type": "array",
       "defaultValue": [
@@ -106,6 +98,20 @@
         "description": "Required. Load balancer mode: 0-external load balancer, 3-internal load balancer for ASEv3."
       }
     },
+    "networkSecurityGroupName": {
+      "type": "string",
+      "defaultValue": "nsg-asev3-ilb",
+      "minLength": 1,
+      "metadata": {
+        "description": "Required. Name of the Network Security Group."
+      }
+    },
+    "networkSecurityGroupSecurityRules": {
+      "type": "array",
+      "metadata": {
+        "description": "Required. Array of Security Rules to deploy to the Network Security Group."
+      }
+    },
     "timeStamp": {
       "type": "string",
       "defaultValue": "[utcNow()]",
@@ -125,6 +131,65 @@
   },
   "resources": [
     {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-11-01",
+      "name": "[parameters('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "copy": [
+          {
+            "name": "securityRules",
+            "count": "[length(parameters('networkSecurityGroupSecurityRules'))]",
+            "input": {
+              "name": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].name]",
+              "properties": {
+                "description": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.description]",
+                "access": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.access]",
+                "destinationAddressPrefix": "[if(equals(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationAddressPrefix, ''), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationAddressPrefix)]",
+                "destinationAddressPrefixes": "[if(equals(length(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationAddressPrefixes), 0), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationAddressPrefixes)]",
+                "destinationPortRanges": "[if(equals(length(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationPortRanges), 0), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationPortRanges)]",
+                "destinationPortRange": "[if(equals(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationPortRange, ''), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationPortRange)]",
+                "direction": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.direction]",
+                "priority": "[int(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.priority)]",
+                "protocol": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.protocol]",
+                "sourceAddressPrefix": "[if(equals(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourceAddressPrefix, ''), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourceAddressPrefix)]",
+                "sourcePortRanges": "[if(equals(length(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourcePortRanges), 0), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourcePortRanges)]",
+                "sourcePortRange": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourcePortRange]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-11-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "copy": [
+          {
+            "name": "subnets",
+            "count": "[length(parameters('subnets'))]",
+            "input": {
+              "name": "[parameters('subnets')[copyIndex('subnets')].name]",
+              "properties": {
+                "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]",
+                "networkSecurityGroup": "[if(empty(parameters('subnets')[copyIndex('subnets')].networkSecurityGroupName), json('null'), json(format('{{\"id\": \"{0}\"}}', resourceId('Microsoft.Network/networkSecurityGroups', parameters('subnets')[copyIndex('subnets')].networkSecurityGroupName))))]",
+                "delegations": "[parameters('subnets')[copyIndex('subnets')].delegations]"
+              }
+            }
+          }
+        ],
+        "addressSpace": {
+          "addressPrefixes": "[parameters('vNetAddressPrefixes')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.Web/hostingEnvironments",
       "apiVersion": "2020-12-01",
       "name": "[variables('aseName')]",
@@ -139,7 +204,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', format('{0}-{1}', parameters('virtualNetworkName'), variables('uniStr')))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
       ]
     },
     {
@@ -222,187 +287,6 @@
         "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]",
         "[resourceId('Microsoft.Network/privateDnsZones', variables('privateZoneName'))]"
       ]
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-10-01",
-      "name": "[format('{0}-{1}', parameters('virtualNetworkName'), variables('uniStr'))]",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "virtualNetworkName": {
-            "value": "[parameters('virtualNetworkName')]"
-          },
-          "networkSecurityGroupName": {
-            "value": "[parameters('networkSecurityGroupName')]"
-          },
-          "vNetAddressPrefixes": {
-            "value": "[parameters('vNetAddressPrefixes')]"
-          },
-          "subnets": {
-            "value": "[parameters('subnets')]"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "parameters": {
-            "virtualNetworkName": {
-              "type": "string",
-              "metadata": {
-                "description": "Required. The Virtual Network (vNet) Name."
-              }
-            },
-            "location": {
-              "type": "string",
-              "defaultValue": "[resourceGroup().location]",
-              "metadata": {
-                "description": "Optional. Location for all resources."
-              }
-            },
-            "vNetAddressPrefixes": {
-              "type": "array",
-              "metadata": {
-                "description": "Required. An Array of 1 or more IP Address Prefixes for the Virtual Network."
-              }
-            },
-            "networkSecurityGroupName": {
-              "type": "string",
-              "minLength": 1,
-              "metadata": {
-                "description": "Required. Name of the Network Security Group."
-              }
-            },
-            "networkSecurityGroupSecurityRules": {
-              "type": "array",
-              "defaultValue": [],
-              "metadata": {
-                "description": "Required. Array of Security Rules to deploy to the Network Security Group."
-              }
-            },
-            "subnets": {
-              "type": "array",
-              "minLength": 1,
-              "metadata": {
-                "description": "Required. An Array of subnets to deploy to the Virual Network."
-              }
-            }
-          },
-          "functions": [],
-          "resources": [
-            {
-              "type": "Microsoft.Network/virtualNetworks",
-              "apiVersion": "2020-11-01",
-              "name": "[parameters('virtualNetworkName')]",
-              "location": "[parameters('location')]",
-              "properties": {
-                "copy": [
-                  {
-                    "name": "subnets",
-                    "count": "[length(parameters('subnets'))]",
-                    "input": {
-                      "name": "[parameters('subnets')[copyIndex('subnets')].name]",
-                      "properties": {
-                        "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]",
-                        "networkSecurityGroup": "[if(empty(parameters('subnets')[copyIndex('subnets')].networkSecurityGroupName), json('null'), json(format('{{\"id\": \"{0}\"}}', resourceId('Microsoft.Network/networkSecurityGroups', parameters('subnets')[copyIndex('subnets')].networkSecurityGroupName))))]",
-                        "delegations": "[parameters('subnets')[copyIndex('subnets')].delegations]"
-                      }
-                    }
-                  }
-                ],
-                "addressSpace": {
-                  "addressPrefixes": "[parameters('vNetAddressPrefixes')]"
-                }
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', parameters('networkSecurityGroupName'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2019-10-01",
-              "name": "[parameters('networkSecurityGroupName')]",
-              "properties": {
-                "expressionEvaluationOptions": {
-                  "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                  "networkSecurityGroupName": {
-                    "value": "[parameters('networkSecurityGroupName')]"
-                  },
-                  "networkSecurityGroupSecurityRules": {
-                    "value": "[parameters('networkSecurityGroupSecurityRules')]"
-                  }
-                },
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "parameters": {
-                    "networkSecurityGroupName": {
-                      "type": "string",
-                      "minLength": 1,
-                      "metadata": {
-                        "description": "Required. Name of the Network Security Group."
-                      }
-                    },
-                    "location": {
-                      "type": "string",
-                      "defaultValue": "[resourceGroup().location]",
-                      "metadata": {
-                        "description": "Optional. Location for all resources."
-                      }
-                    },
-                    "networkSecurityGroupSecurityRules": {
-                      "type": "array",
-                      "metadata": {
-                        "description": "Required. Array of Security Rules to deploy to the Network Security Group."
-                      }
-                    }
-                  },
-                  "functions": [],
-                  "resources": [
-                    {
-                      "type": "Microsoft.Network/networkSecurityGroups",
-                      "apiVersion": "2020-11-01",
-                      "name": "[parameters('networkSecurityGroupName')]",
-                      "location": "[parameters('location')]",
-                      "properties": {
-                        "copy": [
-                          {
-                            "name": "securityRules",
-                            "count": "[length(parameters('networkSecurityGroupSecurityRules'))]",
-                            "input": {
-                              "name": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].name]",
-                              "properties": {
-                                "description": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.description]",
-                                "access": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.access]",
-                                "destinationAddressPrefix": "[if(equals(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationAddressPrefix, ''), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationAddressPrefix)]",
-                                "destinationAddressPrefixes": "[if(equals(length(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationAddressPrefixes), 0), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationAddressPrefixes)]",
-                                "destinationPortRanges": "[if(equals(length(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationPortRanges), 0), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationPortRanges)]",
-                                "destinationPortRange": "[if(equals(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationPortRange, ''), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationPortRange)]",
-                                "direction": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.direction]",
-                                "priority": "[int(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.priority)]",
-                                "protocol": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.protocol]",
-                                "sourceAddressPrefix": "[if(equals(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourceAddressPrefix, ''), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourceAddressPrefix)]",
-                                "sourcePortRanges": "[if(equals(length(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourcePortRanges), 0), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourcePortRanges)]",
-                                "sourcePortRange": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourcePortRange]"
-                              }
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          ]
-        }
-      }
     }
   ]
 }

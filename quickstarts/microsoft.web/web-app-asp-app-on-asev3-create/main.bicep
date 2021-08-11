@@ -12,10 +12,6 @@ param vNetAddressPrefixes array = [
 @description('Required. The subnet Name of ASEv3.')
 param subnetName string = 'snet-asev3-ilb'
 
-@description('Required. Name of the Network Security Group.')
-@minLength(1)
-param networkSecurityGroupName string = 'nsg-asev3-ilb'
-
 @description('Required. The subnet properties.')
 param subnets array = [
   {
@@ -55,6 +51,13 @@ param createPrivateDNS bool = true
 ])
 param internalLoadBalancingMode int = 3
 
+@description('Required. Name of the Network Security Group.')
+@minLength(1)
+param networkSecurityGroupName string = 'nsg-asev3-ilb'
+
+@description('Required. Array of Security Rules to deploy to the Network Security Group.')
+param networkSecurityGroupSecurityRules array
+
 @description('Optional. It is only for unique string generation base on timestamp.')
 param timeStamp string = utcNow()
 
@@ -66,14 +69,56 @@ var virtualNetworkId = resourceId('Microsoft.Network/virtualNetworks', virtualNe
 var subnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var aseNetworkConfiguration = '${asev3.id}/configurations/networking'
 
-module virtualnetwork 'modules/virtualnetwork.bicep' = {
-  name: '${virtualNetworkName}-${uniStr}'
-  params: {
-    virtualNetworkName: virtualNetworkName
-    networkSecurityGroupName: networkSecurityGroupName
-    vNetAddressPrefixes: vNetAddressPrefixes
-    subnets: subnets
+resource networksecuritygroup 'Microsoft.Network/networkSecurityGroups@2020-11-01' = {
+  name: networkSecurityGroupName
+  location: location
+  properties: {
+    securityRules: [for item in networkSecurityGroupSecurityRules: {
+      name: item.name
+      properties: {
+        description: item.properties.description
+        access: item.properties.access
+        destinationAddressPrefix: ((item.properties.destinationAddressPrefix == '') ? json('null') : item.properties.destinationAddressPrefix)
+        destinationAddressPrefixes: ((length(item.properties.destinationAddressPrefixes) == 0) ? json('null') : item.properties.destinationAddressPrefixes)
+        //destinationApplicationSecurityGroups: ((length(item.properties.destinationApplicationSecurityGroups) == 0) ? json('null') : concat(emptyArray, array(json('{{"id": "${resourceId('Microsoft.Network/applicationSecurityGroups', item.properties.destinationApplicationSecurityGroups[0].name)}","location": "${location}"}}'))))
+        destinationPortRanges: ((length(item.properties.destinationPortRanges) == 0) ? json('null') : item.properties.destinationPortRanges)
+        destinationPortRange: ((item.properties.destinationPortRange == '') ? json('null') : item.properties.destinationPortRange)
+        direction: item.properties.direction
+        priority: int(item.properties.priority)
+        protocol: item.properties.protocol
+        sourceAddressPrefix: ((item.properties.sourceAddressPrefix == '') ? json('null') : item.properties.sourceAddressPrefix)
+        //sourceApplicationSecurityGroups: ((length(item.properties.sourceApplicationSecurityGroups) == 0) ? json('null') : concat(emptyArray, array(json('{{"id": "${resourceId('Microsoft.Network/applicationSecurityGroups', item.properties.sourceApplicationSecurityGroups[0].name)}","location": "${location}"}}'))))
+        sourcePortRanges: ((length(item.properties.sourcePortRanges) == 0) ? json('null') : item.properties.sourcePortRanges)
+        sourcePortRange: item.properties.sourcePortRange
+      }
+    }]
   }
+}
+
+resource virtualnetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = {
+  name: virtualNetworkName
+  location: location
+  properties: {
+    addressSpace: {
+      addressPrefixes: vNetAddressPrefixes
+    }
+    //ddosProtectionPlan: ((!empty(ddosProtectionPlanId)) ? ddosProtectionPlan : json('null'))
+    //dhcpOptions: (empty(dnsServers) ? json('null') : varDnsServers)
+    //enableDdosProtection: (!empty(ddosProtectionPlanId))
+    subnets: [for item in subnets: {
+      name: item.name
+      properties: {
+        addressPrefix: item.addressPrefix
+        networkSecurityGroup: (empty(item.networkSecurityGroupName) ? json('null') : json('{"id": "${resourceId('Microsoft.Network/networkSecurityGroups', item.networkSecurityGroupName)}"}'))
+        //routeTable: (empty(item.routeTableName) ? json('null') : json('{"id": "${resourceId('Microsoft.Network/routeTables', item.routeTableName)}"}'))
+        //serviceEndpoints: (empty(item.serviceEndpoints) ? json('null') : item.serviceEndpoints)
+        delegations: item.delegations
+      }
+    }]
+  }
+  dependsOn: [
+    networksecuritygroup
+  ]
 }
 
 resource asev3 'Microsoft.Web/hostingEnvironments@2020-12-01' = {
