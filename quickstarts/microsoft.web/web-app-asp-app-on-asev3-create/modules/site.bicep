@@ -42,7 +42,7 @@ var hostingEnvironmentProfile = {
   id: resourceId('Microsoft.Web/hostingEnvironments', hostingEnvironmentProfileName)
 }
 
-resource site 'Microsoft.Web/sites@2018-11-01' = {
+resource site 'Microsoft.Web/sites@2021-01-15' = {
   name: appName
   location: location
   properties: {
@@ -70,7 +70,6 @@ resource site 'Microsoft.Web/sites@2018-11-01' = {
 resource hostingPlanName_resource 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: hostingPlanName
   location: location
-  kind: ''
   properties: {
     name: hostingPlanName
     workerSize: workerSize
