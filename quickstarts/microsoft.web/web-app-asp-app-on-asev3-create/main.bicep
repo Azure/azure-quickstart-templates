@@ -43,12 +43,6 @@ param subnets array = [
   }
 ]
 
-@description('Optional. Tags of resources.')
-param tags object = {
-  owner: 'shunlin'
-  bicep: true
-}
-
 @description('Required. Name of ASEv3.')
 param aseNamePrefix string = 'asev3-ilb'
 @description('Required. Dedicated host count of ASEv3.')
@@ -91,7 +85,6 @@ module virtualnetwork 'modules/virtualnetwork.bicep' = {
 resource asev3 'Microsoft.Web/hostingEnvironments@2019-08-01' = {
   name: aseName
   location: location
-  tags: tags
   kind: 'ASEV3'
   // @description('Required. Three key properties for ASEv3.')
   properties: {
@@ -110,7 +103,6 @@ resource asev3 'Microsoft.Web/hostingEnvironments@2019-08-01' = {
 resource privatezone 'Microsoft.Network/privateDnsZones@2018-09-01' = if (createPrivateDNS && internalLoadBalancingMode == 3) {
   name: privateZoneName
   location: 'global'
-  tags: tags
   properties: {}
   dependsOn: [
     asev3
