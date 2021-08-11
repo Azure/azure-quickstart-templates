@@ -76,7 +76,7 @@ module virtualnetwork 'modules/virtualnetwork.bicep' = {
   }
 }
 
-resource asev3 'Microsoft.Web/hostingEnvironments@2021-01-15' = {
+resource asev3 'Microsoft.Web/hostingEnvironments@2020-12-01' = {
   name: aseName
   location: location
   kind: 'ASEV3'

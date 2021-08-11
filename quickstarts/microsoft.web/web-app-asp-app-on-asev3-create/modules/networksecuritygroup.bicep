@@ -9,7 +9,7 @@ param location string = resourceGroup().location
 param networkSecurityGroupSecurityRules array
 var emptyArray = []
 
-resource networkSecurityGroupName_resource 'Microsoft.Network/networkSecurityGroups@2021-01-01' = {
+resource networkSecurityGroupName_resource 'Microsoft.Network/networkSecurityGroups@2020-11-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {

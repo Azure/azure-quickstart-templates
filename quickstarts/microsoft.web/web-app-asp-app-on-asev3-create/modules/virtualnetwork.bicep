@@ -31,7 +31,7 @@ var ddosProtectionPlan = {
   id: ddosProtectionPlanId
 }
 
-resource virtualnetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
+resource virtualnetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = {
   name: virtualNetworkName
   location: location
   properties: {
