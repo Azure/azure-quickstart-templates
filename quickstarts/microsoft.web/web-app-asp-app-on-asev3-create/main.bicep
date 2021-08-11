@@ -2,7 +2,7 @@
 param virtualNetworkName string = 'vnet-asev3'
 
 @description('Required. Location for all resources.')
-param location string = 'westus2'
+param location string = resourceGroup().location
 
 @description('Required. An Array of 1 or more IP Address Prefixes for the Virtual Network.')
 param vNetAddressPrefixes array = [
@@ -12,13 +12,11 @@ param vNetAddressPrefixes array = [
 @description('Required. The subnet Name of ASEv3.')
 param subnetName string = 'snet-asev3-ilb'
 
-//@description('Required. The IP address of subnet')
-//param subnetAddressPrefix string = '172.16.0.0/24'
-
 @description('Required. Name of the Network Security Group.')
 @minLength(1)
 param networkSecurityGroupName string = 'nsg-asev3-ilb'
 
+@description('Required. The subnet properties.')
 param subnets array = [
   {
     name: 'snet-asev3-ilb'
@@ -61,8 +59,6 @@ param internalLoadBalancingMode int = 3
 param timeStamp string = utcNow()
 
 // Variable definitions
-// var emptyStr = ''
-// var emptyArray = []
 var uniStr = substring('${uniqueString(resourceGroup().id, timeStamp)}', 0, 4)
 var aseName = '${aseNamePrefix}-${uniStr}'
 var privateZoneName = '${aseName}.appserviceenvironment.net'

@@ -3,7 +3,7 @@ param subscriptionId string = subscription().id
 @description('Required. App service prefix.')
 param appNamePrefix string = 'app'
 @description('Required. App service location.')
-param location string = 'westus2'
+param location string = resourceGroup().location
 @description('Required. App service plan prefix.')
 param hostingPlanNamePrefix string = 'asev3-asp'
 @description('Required. App service plan resource group name.')
@@ -43,7 +43,7 @@ var hostingEnvironmentProfile = {
 }
 var serverFarmId = '/subscriptions/${subscriptionId}/resourcegroups/${serverFarmResourceGroup}/providers/Microsoft.Web/serverfarms/${hostingPlanName}'
 
-resource site 'Microsoft.Web/sites@2018-11-01' = {
+resource site 'Microsoft.Web/sites@2021-01-15' = {
   name: appName
   location: location
   properties: {

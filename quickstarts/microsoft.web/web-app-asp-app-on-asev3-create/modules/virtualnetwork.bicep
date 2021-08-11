@@ -2,7 +2,7 @@
 param virtualNetworkName string
 
 @description('Optional. Location for all resources.')
-param location string = 'westus2'
+param location string = resourceGroup().location
 
 @description('Required. An Array of 1 or more IP Address Prefixes for the Virtual Network.')
 param vNetAddressPrefixes array
