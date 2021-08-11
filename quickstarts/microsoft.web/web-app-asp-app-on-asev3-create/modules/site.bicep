@@ -48,7 +48,6 @@ resource site 'Microsoft.Web/sites@2018-11-01' = {
   properties: {
     name: appName
     siteConfig: {
-      appSettings: []
       metadata: [
         {
           name: 'CURRENT_STACK'
@@ -68,7 +67,7 @@ resource site 'Microsoft.Web/sites@2018-11-01' = {
   ]
 }
 
-resource hostingPlanName_resource 'Microsoft.Web/serverfarms@2018-11-01' = {
+resource hostingPlanName_resource 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: hostingPlanName
   location: location
   kind: ''
@@ -83,5 +82,4 @@ resource hostingPlanName_resource 'Microsoft.Web/serverfarms@2018-11-01' = {
     Tier: sku
     Name: skuCode
   }
-  dependsOn: []
 }
