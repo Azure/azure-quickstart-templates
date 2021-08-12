@@ -1,7 +1,8 @@
 #!/bin/bash
+echo "install tutor deployment script"
+curl -s https://autoshellscript.blob.core.windows.net/setup/deploy_tutor.sh > deploy_tutor.sh
+
 echo "start"
-
-
 sudo apt update
 echo "install Docker"
 
@@ -29,3 +30,4 @@ echo "install tutor"
 
 sudo curl -L "https://github.com/overhangio/tutor/releases/download/v12.0.2/tutor-$(uname -s)_$(uname -m)" -o /usr/local/bin/tutor
 sudo chmod 0755 /usr/local/bin/tutor
+
