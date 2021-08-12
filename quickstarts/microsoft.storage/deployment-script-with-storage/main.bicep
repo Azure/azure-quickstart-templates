@@ -5,7 +5,7 @@ param location string = resourceGroup().location
 param identityName string = 'managedIdentity'
 
 @description('The subscription id of the managed identity resource.')
-param identitySubscriptionId string = subscription().id
+param identitySubscriptionId string = subscription().subscriptionId
 
 @description('The resource group name of the managed identity resource.')
 param identityResourceGroup string = resourceGroup().name
