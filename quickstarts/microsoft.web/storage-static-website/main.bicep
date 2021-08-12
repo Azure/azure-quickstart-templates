@@ -6,7 +6,7 @@
 param location string = resourceGroup().location
 
 @description('The name of the storage account to use for site hosting.')
-param storageAccountName string
+param storageAccountName string = 'stor${uniqueString(resourceGroup().id)}'
 
 @allowed([
   'Standard_LRS'
@@ -15,7 +15,7 @@ param storageAccountName string
   'Premium_LRS'
 ])
 @description('The storage account sku name.')
-param storageSku string
+param storageSku string = 'Standard_LRS'
 
 @description('Controls whether the script is re-run or not on a subsequent deployment.')
 param forceUpdateTag string = utcNow()
