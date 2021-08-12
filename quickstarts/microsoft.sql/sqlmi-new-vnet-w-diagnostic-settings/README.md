@@ -1,4 +1,4 @@
-# Azure SQL Managed Instance (SQL MI) with diagnostic logs enabled deployed inside New Virtual Network
+# Azure SQL Managed Instance (SQL MI) with diagnostic logs enabled deployed inside new virtual network
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sqlmi-new-vnet-w-diagnostic-settings/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sqlmi-new-vnet-w-diagnostic-settings/PublicDeployment.svg)
