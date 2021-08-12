@@ -3,6 +3,8 @@ param location string = resourceGroup().location
 
 @description('Name of the workspace')
 param name string
+
+@description('Sku of the workspace')
 @allowed([
   'PerGB2018'
   'Free'
@@ -11,8 +13,6 @@ param name string
   'Standard'
   'Premium'
 ])
-
-@description('Sku of the workspace')
 param sku string
 
 @description('The workspace data retention in days, between 30 and 730')
