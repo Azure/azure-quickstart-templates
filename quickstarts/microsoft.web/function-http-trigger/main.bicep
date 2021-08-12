@@ -1,9 +1,14 @@
-// This example deploys an Azure Function app and an HTTP-triggered function inline in the template.
-// It also deploys a Key Vault and populates a secret with the function app's host key.
-
+@description('Specifies region of all resources.')
 param location string = resourceGroup().location
+
+@description('Suffix for function app, storage account, and key vault names.')
 param appNameSuffix string = uniqueString(resourceGroup().id)
+
+@description('Key Vault SKU name.')
 param keyVaultSku string = 'Standard'
+
+@description('Storage account SKU name.')
+param storageSku string = 'Standard_LRS'
 
 var functionAppName = 'fn-${appNameSuffix}'
 var appServicePlanName = 'FunctionPlan'
@@ -14,12 +19,11 @@ var functionRuntime = 'dotnet'
 var keyVaultName = 'kv${replace(appNameSuffix, '-', '')}'
 var functionAppKeySecretName = 'FunctionAppHostKey'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: storageAccountName
   location: location
   sku: {
-    name: 'Standard_LRS'
-    tier: 'Standard'
+    name: storageSku
   }
   kind: 'StorageV2'
   properties: {
@@ -41,7 +45,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   }
 }
 
-resource appInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: appInsightsName
   location: location
   kind: 'web'
@@ -52,7 +56,7 @@ resource appInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
   }
 }
 
-resource plan 'Microsoft.Web/serverFarms@2020-06-01' = {
+resource plan 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: appServicePlanName
   location: location
   kind: 'functionapp'
@@ -62,7 +66,7 @@ resource plan 'Microsoft.Web/serverFarms@2020-06-01' = {
   properties: {}
 }
 
-resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
+resource functionApp 'Microsoft.Web/sites@2021-01-15' = {
   name: functionAppName
   location: location
   kind: 'functionapp'
@@ -100,7 +104,7 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
+resource function 'Microsoft.Web/sites/functions@2021-01-15' = {
   name: '${functionApp.name}/${functionNameComputed}'
   properties: {
     config: {
@@ -123,31 +127,7 @@ resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
       ]
     }
     files: {
-      'run.csx': '''
-#r "Newtonsoft.Json"
-
-using System.Net;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Primitives;
-using Newtonsoft.Json;
-
-public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
-{
-      log.LogInformation("C# HTTP trigger function processed a request.");
-
-    string name = req.Query["name"];
-
-    string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-    dynamic data = JsonConvert.DeserializeObject(requestBody);
-    name = name ?? data?.name;
-
-    string responseMessage = string.IsNullOrEmpty(name)
-        ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
-
-            return new OkObjectResult(responseMessage);
-}
-'''
+      'run.csx': loadTextContent('run.csx')
     }
   }
 }
@@ -165,7 +145,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
   }
 }
 
-resource keyVaultSecret 'Microsoft.KeyVault/vaults/secrets@2018-02-14' = {
+resource keyVaultSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
   name: '${keyVault.name}/${functionAppKeySecretName}'
   properties: {
     value: listKeys('${functionApp.id}/host/default', functionApp.apiVersion).functionKeys.default
