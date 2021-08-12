@@ -30,6 +30,6 @@ sudo curl -L "https://github.com/overhangio/tutor/releases/download/v12.0.2/tuto
 sudo chmod 0755 /usr/local/bin/tutor
 
 echo "install tutor deployment script"
-sudo curl -L "https://raw.githubusercontent.com/CeciFan/azure-quickstart-templates/master/application-workloads/opendx/openedx-fullstack-ubuntu/deploy_tutor.sh" -o ./deploy_tutor.sh
+sudo curl -L "https://raw.githubusercontent.com/CeciFan/azure-quickstart-templates/master/application-workloads/opendx/openedx-tutor-lilac-ubuntu/deploy_tutor.sh" -o ./deploy_tutor.sh
 sudo chmod 777 deploy_tutor.sh
 mv deploy_tutor.sh /home/openadmin
