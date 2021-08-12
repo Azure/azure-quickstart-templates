@@ -167,7 +167,7 @@ resource webrecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = if (create
     ttl: 3600
     aRecords: [
       {
-        ipv4Address: reference(aseNetworkConfiguration, '2018-09-01').internalInboundIpAddresses[0]
+        ipv4Address: reference(aseNetworkConfiguration, '2021-02-01').internalInboundIpAddresses[0]
       }
     ]
   }
@@ -180,7 +180,7 @@ resource scmrecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = if (create
     ttl: 3600
     aRecords: [
       {
-        ipv4Address: reference(aseNetworkConfiguration, '2018-09-01').internalInboundIpAddresses[0]
+        ipv4Address: reference(aseNetworkConfiguration, '2021-02-01').internalInboundIpAddresses[0]
       }
     ]
   }
@@ -193,7 +193,7 @@ resource atrecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = if (createP
     ttl: 3600
     aRecords: [
       {
-        ipv4Address: reference(aseNetworkConfiguration, '2018-09-01').internalInboundIpAddresses[0]
+        ipv4Address: reference(aseNetworkConfiguration, '2021-02-01').internalInboundIpAddresses[0]
       }
     ]
   }

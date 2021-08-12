@@ -41,7 +41,6 @@ var hostingPlanName = '${hostingPlanNamePrefix}-${uniStr}'
 var hostingEnvironmentProfile = {
   id: resourceId('Microsoft.Web/hostingEnvironments', hostingEnvironmentProfileName)
 }
-var serverFarmId = resourceId('Microsoft.Web/hostingEnvironments', subscriptionId, serverFarmResourceGroup, 'Microsoft.Web/serverfarms', hostingPlanName)
 
 resource site 'Microsoft.Web/sites@2021-01-15' = {
   name: appName
@@ -59,16 +58,16 @@ resource site 'Microsoft.Web/sites@2021-01-15' = {
       netFrameworkVersion: netFrameworkVersion
       alwaysOn: alwaysOn
     }
-    serverFarmId: serverFarmId
+    serverFarmId: hostingPlan.id
     clientAffinityEnabled: true
     hostingEnvironmentProfile: hostingEnvironmentProfile
   }
   dependsOn: [
-    hostingPlanName_resource
+    hostingPlan
   ]
 }
 
-resource hostingPlanName_resource 'Microsoft.Web/serverfarms@2021-01-15' = {
+resource hostingPlan 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: hostingPlanName
   location: location
   properties: {
