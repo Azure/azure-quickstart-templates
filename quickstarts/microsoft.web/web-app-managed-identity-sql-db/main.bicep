@@ -20,7 +20,7 @@ param managedIdentityName string
 var databaseName = 'sampledb'
 
 // Data resources
-resource sqlserver 'Microsoft.Sql/servers@2019-06-01-preview' = {
+resource sqlserver 'Microsoft.Sql/servers@2020-11-01-preview' = {
   name: 'sqlserver${uniqueString(resourceGroup().id)}'
   location: location
   properties: {
@@ -28,30 +28,30 @@ resource sqlserver 'Microsoft.Sql/servers@2019-06-01-preview' = {
     administratorLoginPassword: sqlAdministratorLoginPassword
     version: '12.0'
   }
-}
 
-resource database 'Microsoft.Sql/servers/databases@2020-08-01-preview' = {
-  name: '${sqlserver.name}/${databaseName}'
-  location: location
-  sku: {
-    name: 'Basic'
+  resource database 'databases@2020-08-01-preview' = {
+    name: databaseName
+    location: location
+    sku: {
+      name: 'Basic'
+    }
+    properties: {
+      collation: 'SQL_Latin1_General_CP1_CI_AS'
+      maxSizeBytes: 1073741824
+    }
   }
-  properties: {
-    collation: 'SQL_Latin1_General_CP1_CI_AS'
-    maxSizeBytes: 1073741824
-  }
-}
 
-resource firewallRule 'Microsoft.Sql/servers/firewallRules@2014-04-01' = {
-  name: '${sqlserver.name}/AllowAllWindowsAzureIps'
-  properties: {
-    endIpAddress: '0.0.0.0'
-    startIpAddress: '0.0.0.0'
+  resource firewallRule 'firewallRules@2020-11-01-preview' = {
+    name: 'AllowAllWindowsAzureIps'
+    properties: {
+      endIpAddress: '0.0.0.0'
+      startIpAddress: '0.0.0.0'
+    }
   }
 }
 
 // Web App resources
-resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
+resource hostingPlan 'Microsoft.Web/serverfarms@2020-12-01' = {
   name: 'hostingplan${uniqueString(resourceGroup().id)}'
   location: location
   sku: {
@@ -60,7 +60,7 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
   }
 }
 
-resource webSite 'Microsoft.Web/sites@2020-06-01' = {
+resource webSite 'Microsoft.Web/sites@2020-12-01' = {
   name: 'webSite${uniqueString(resourceGroup().id)}'
   location: location
   tags: {
@@ -77,11 +77,11 @@ resource webSite 'Microsoft.Web/sites@2020-06-01' = {
     }
   }
 
-  resource connectionString 'config@2020-06-01' = {
+  resource connectionString 'config@2020-12-01' = {
     name: 'connectionstrings'
     properties: {
       DefaultConnection: {
-        value: 'Data Source=tcp:${sqlserver.properties.fullyQualifiedDomainName},1433;Initial Catalog=${database.name};User Id=${sqlserver.properties.administratorLogin}@${sqlserver.properties.fullyQualifiedDomainName};Password=${sqlserver.properties.administratorLoginPassword};'
+        value: 'Data Source=tcp:${sqlserver.properties.fullyQualifiedDomainName},1433;Initial Catalog=${sqlserver::database.name};User Id=${sqlserver.properties.administratorLogin}@${sqlserver.properties.fullyQualifiedDomainName};Password=${sqlserver.properties.administratorLoginPassword};'
         type: 'SQLAzure'
       }
     }
@@ -104,7 +104,7 @@ resource roleassignment 'Microsoft.Authorization/roleAssignments@2020-04-01-prev
 }
 
 // Monitor
-resource appInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: 'AppInsights${webSite.name}'
   location: location
   tags: {
