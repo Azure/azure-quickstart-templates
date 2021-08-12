@@ -3,13 +3,13 @@ param subscriptionId string = subscription().id
 @description('Required. App service prefix.')
 param appNamePrefix string = 'app'
 @description('Required. App service location.')
-param location string = resourceGroup().location
+param location string
 @description('Required. App service plan prefix.')
 param hostingPlanNamePrefix string = 'asev3-asp'
 @description('Required. App service plan resource group name.')
 param serverFarmResourceGroup string = resourceGroup().name
 @description('Required. App service plan hosting environment profile name (ASEv3 name).')
-param hostingEnvironmentProfileName string
+param hostingEnvironmentProfileName string = 'asev3'
 
 // App Service Parameters
 @description('Required. Enable Always-on of App service.')
@@ -41,7 +41,7 @@ var hostingPlanName = '${hostingPlanNamePrefix}-${uniStr}'
 var hostingEnvironmentProfile = {
   id: resourceId('Microsoft.Web/hostingEnvironments', hostingEnvironmentProfileName)
 }
-var serverFarmId = '/subscriptions/${subscriptionId}/resourcegroups/${serverFarmResourceGroup}/providers/Microsoft.Web/serverfarms/${hostingPlanName}'
+var serverFarmId = resourceId('Microsoft.Web/hostingEnvironments', subscriptionId, serverFarmResourceGroup, 'Microsoft.Web/serverfarms', hostingPlanName)
 
 resource site 'Microsoft.Web/sites@2021-01-15' = {
   name: appName
