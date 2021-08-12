@@ -18,7 +18,7 @@ resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' 
   name: identityName
 }
 
-resource stg 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: 'dscript${uniqueString(resourceGroup().id)}'
   location: location
   kind: 'StorageV2'
