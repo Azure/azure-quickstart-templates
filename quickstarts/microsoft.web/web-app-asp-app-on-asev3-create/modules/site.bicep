@@ -71,7 +71,6 @@ resource site 'Microsoft.Web/sites@2021-01-15' = {
 resource hostingPlanName_resource 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: hostingPlanName
   location: location
-  kind: ''
   properties: {
     name: hostingPlanName
     workerSize: workerSize
