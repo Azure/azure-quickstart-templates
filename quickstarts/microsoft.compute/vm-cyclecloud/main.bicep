@@ -24,8 +24,6 @@ var roleDefinitions = {
 
 var saName = take('cclocker${replace(guid(resourceGroup().id), '-', '')}', 24)
 
-var customData = '#cloud-config\n#\n# installs CycleCloud on the VM\n#\n\nyum_repos:\n  azure-cli:\n    baseurl: https://packages.microsoft.com/yumrepos/azure-cli\n    enabled: true\n    gpgcheck: true\n    gpgkey: https://packages.microsoft.com/keys/microsoft.asc\n    name: Azure CLI\n  cyclecloud:\n    baseurl: https://packages.microsoft.com/yumrepos/cyclecloud\n    enabled: true\n    gpgcheck: true\n    gpgkey: https://packages.microsoft.com/keys/microsoft.asc\n    name: Cycle Cloud\n\npackages:\n- java-1.8.0-openjdk-headless\n- azure-cli\n- cyclecloud8\n\nwrite_files:\n- content: |\n    [{\n        "AdType": "Application.Setting",\n        "Name": "cycleserver.installation.initial_user",\n        "Value": "ccadmin"\n    },\n    {\n        "AdType": "Application.Setting",\n        "Name": "cycleserver.installation.complete",\n        "Value": true\n    },\n    {\n        "AdType": "AuthenticatedUser",\n        "Name": "ccadmin",\n        "RawPassword": "${ccadminRawPassword}",\n        "Superuser": true\n    }] \n  owner: root:root\n  path: ./account_data.json\n  permissions: \'0644\'\n- content: |\n    {\n      "Name": "Azure",\n      "Environment": "public",\n      "AzureRMSubscriptionId": "${subscription().subscriptionId}",\n      "AzureRMUseManagedIdentity": true,\n      "Location": "westeurope",\n      "RMStorageAccount": "${saName}",\n      "RMStorageContainer": "cyclecloud"\n    }\n  owner: root:root\n  path: ./azure_data.json\n  permissions: \'0644\'\n\nruncmd:\n- sed -i --follow-symlinks "s/webServerPort=.*/webServerPort=80/g" /opt/cycle_server/config/cycle_server.properties\n- sed -i --follow-symlinks "s/webServerSslPort=.*/webServerSslPort=443/g" /opt/cycle_server/config/cycle_server.properties\n- sed -i --follow-symlinks "s/webServerEnableHttps=.*/webServerEnableHttps=true/g" /opt/cycle_server/config/cycle_server.properties\n- systemctl restart cycle_server\n- mv ./account_data.json /opt/cycle_server/config/data/\n- sleep 5\n- /opt/cycle_server/cycle_server execute "update Application.Setting set Value = false where name == \\"authorization.check_datastore_permissions\\""\n- unzip /opt/cycle_server/tools/cyclecloud-cli\n- ./cyclecloud-cli-installer/install.sh --system\n- sleep 60\n- /usr/local/bin/cyclecloud initialize --batch --url=https://localhost --verify-ssl=false --username="ccadmin" --password="${ccadminRawPassword}"\n- /usr/local/bin/cyclecloud account create -f ./azure_data.json'
-
 resource nsg 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
   name: 'cc-nsg'
   location: location
@@ -153,7 +151,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-06-01' = {
     osProfile: {
       computerName: 'CycleServer'
       adminUsername: adminUserName
-      customData: base64(customData)
+      customData: loadTextContent('customData.txt')
       linuxConfiguration: {
         disablePasswordAuthentication: true
         ssh: {
