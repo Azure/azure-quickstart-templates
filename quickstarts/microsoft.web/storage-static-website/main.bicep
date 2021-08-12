@@ -32,7 +32,7 @@ resource contributorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018
   name: '17d1049b-9a84-46fb-8f53-869881c3d3ab'
 }
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: storageAccountName
   location: location
   kind: 'StorageV2'
@@ -46,7 +46,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-
   location: location
 }
 
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
   scope: storageAccount
   name: guid(resourceGroup().id, contributorRoleDefinition.id)
   properties: {
