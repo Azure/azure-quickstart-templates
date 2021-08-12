@@ -1,9 +1,7 @@
 #!/bin/bash
-echo "install tutor deployment script"
-curl -s https://autoshellscript.blob.core.windows.net/setup/deploy_tutor.sh > deploy_tutor.sh
-
 echo "start"
 sudo apt update
+
 echo "install Docker"
 
 #Install Docker
@@ -31,3 +29,7 @@ echo "install tutor"
 sudo curl -L "https://github.com/overhangio/tutor/releases/download/v12.0.2/tutor-$(uname -s)_$(uname -m)" -o /usr/local/bin/tutor
 sudo chmod 0755 /usr/local/bin/tutor
 
+echo "install tutor deployment script"
+sudo curl -L "https://raw.githubusercontent.com/CeciFan/azure-quickstart-templates/master/application-workloads/opendx/openedx-fullstack-ubuntu/deploy_tutor.sh" -o ./deploy_tutor.sh
+sudo chmod 777 deploy_tutor.sh
+mv deploy_tutor.sh /home/openadmin
