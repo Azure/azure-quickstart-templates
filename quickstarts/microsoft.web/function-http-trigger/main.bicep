@@ -66,7 +66,7 @@ resource plan 'Microsoft.Web/serverfarms@2020-12-01' = {
   properties: {}
 }
 
-resource functionApp 'Microsoft.Web/sites@2021-01-15' = {
+resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
   name: functionAppName
   location: location
   kind: 'functionapp'
@@ -104,7 +104,7 @@ resource functionApp 'Microsoft.Web/sites@2021-01-15' = {
   }
 }
 
-resource function 'Microsoft.Web/sites/functions@2021-01-15' = {
+resource function 'Microsoft.Web/sites/functions@2020-12-01' = {
   name: '${functionApp.name}/${functionNameComputed}'
   properties: {
     config: {
