@@ -2,7 +2,7 @@
 param location string = resourceGroup().location
 
 @description('Automation account name')
-param name string
+param name string = 'acc${uniqueString(resourceGroup().id)}'
 
 @description('Automation account sku')
 @allowed([
@@ -39,13 +39,13 @@ param enableDiagnostics bool = false
 param diagnosticStorageAccountName string = ''
 
 @description('Storage account resource group. Only required if enableDiagnostics is set to true.')
-param diagnosticStorageAccountResourceGroup string = ''
+param diagnosticStorageAccountResourceGroup string = resourceGroup().name
 
 @description('Log analytics workspace name. Only required if enableDiagnostics is set to true.')
 param logAnalyticsWorkspaceName string = ''
 
 @description('Log analytics workspace resource group. Only required if enableDiagnostics is set to true.')
-param logAnalyticsResourceGroup string = ''
+param logAnalyticsResourceGroup string = resourceGroup().name
 
 @description('Log analytics workspace subscription id (if differs from current subscription). Only required if enableDiagnostics is set to true.')
 param logAnalyticsSubscriptionId string = subscription().subscriptionId
@@ -93,11 +93,20 @@ resource runbook 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' =
 
 resource lock 'Microsoft.Authorization/locks@2016-09-01' = if (enableDeleteLock) {
   scope: automationAccount
-
   name: lockName
   properties: {
     level: 'CanNotDelete'
   }
+}
+
+resource diagsStorageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' existing = if (enableDiagnostics) {
+  scope: resourceGroup(diagnosticStorageAccountResourceGroup)
+  name: diagnosticStorageAccountName
+}
+
+resource insightsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' existing = if (enableDiagnostics) {
+  scope: resourceGroup(logAnalyticsSubscriptionId, logAnalyticsResourceGroup)
+  name: logAnalyticsWorkspaceName
 }
 
 resource diagnostics 'microsoft.insights/diagnosticSettings@2017-05-01-preview' = if (enableDiagnostics) {
@@ -105,8 +114,8 @@ resource diagnostics 'microsoft.insights/diagnosticSettings@2017-05-01-preview' 
 
   name: diagnosticsName
   properties: {
-    workspaceId: resourceId(logAnalyticsSubscriptionId, logAnalyticsResourceGroup, 'Microsoft.OperationalInsights/workspaces', logAnalyticsWorkspaceName)
-    storageAccountId: resourceId(diagnosticStorageAccountResourceGroup, 'Microsoft.Storage/storageAccounts', diagnosticStorageAccountName)
+    workspaceId: enableDiagnostics ? insightsWorkspace.id : ''
+    storageAccountId: enableDiagnostics ? diagsStorageAccount.id : ''
     logs: [
       {
         category: 'JobLogs'
