@@ -1,7 +1,7 @@
 @description('Specifies region for all resources')
 param location string = resourceGroup().location
 
-@description('Speicifes app plan SKU')
+@description('Specifies app plan SKU')
 param skuName string = 'F1'
 
 @description('Specifies app plan capacity')
@@ -17,15 +17,11 @@ param sqlAdministratorLoginPassword string
 @description('Specifies managed identity name')
 param managedIdentityName string
 
-
-var hostingPlanName = 'hostingplan${uniqueString(resourceGroup().id)}'
-var webSiteName = 'webSite${uniqueString(resourceGroup().id)}'
-var sqlserverName = 'sqlserver${uniqueString(resourceGroup().id)}'
 var databaseName = 'sampledb'
 
 // Data resources
 resource sqlserver 'Microsoft.Sql/servers@2019-06-01-preview' = {
-  name: sqlserverName
+  name: 'sqlserver${uniqueString(resourceGroup().id)}'
   location: location
   properties: {
     administratorLogin: sqlAdministratorLogin
@@ -56,7 +52,7 @@ resource firewallRule 'Microsoft.Sql/servers/firewallRules@2014-04-01' = {
 
 // Web App resources
 resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
-  name: hostingPlanName
+  name: 'hostingplan${uniqueString(resourceGroup().id)}'
   location: location
   sku: {
     name: skuName
@@ -65,7 +61,7 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
 }
 
 resource webSite 'Microsoft.Web/sites@2020-06-01' = {
-  name: webSiteName
+  name: 'webSite${uniqueString(resourceGroup().id)}'
   location: location
   tags: {
     'hidden-related:${hostingPlan.id}': 'empty'
