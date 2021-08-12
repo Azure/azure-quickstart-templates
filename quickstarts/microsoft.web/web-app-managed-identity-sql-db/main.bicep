@@ -1,39 +1,23 @@
-// Simple example to deploy Azure infrastructure for app + data + managed identity + monitoring
-
-// Region for all resources
+@description('Specifies region for all resources')
 param location string = resourceGroup().location
 
-// Web App params
-@allowed([
-  'F1'
-  'D1'
-  'B1'
-  'B2'
-  'B3'
-  'S1'
-  'S2'
-  'S3'
-  'P1'
-  'P2'
-  'P3'
-  'P4'
-])
+@description('Speicifes app plan SKU')
 param skuName string = 'F1'
 
-@minValue(1)
+@description('Specifies app plan capacity')
 param skuCapacity int = 1
 
-// Data params
+@description('Specifies sql admin login')
 param sqlAdministratorLogin string
 
+@description('Specifies sql admin password')
 @secure()
 param sqlAdministratorLoginPassword string
 
-// Managed Identity params
+@description('Specifies managed identity name')
 param managedIdentityName string
-param roleDefinitionId string = 'b24988ac-6180-42a0-ab88-20f7382dd24c' //Default as contributor role
 
-// Variables
+
 var hostingPlanName = 'hostingplan${uniqueString(resourceGroup().id)}'
 var webSiteName = 'webSite${uniqueString(resourceGroup().id)}'
 var sqlserverName = 'sqlserver${uniqueString(resourceGroup().id)}'
@@ -50,7 +34,7 @@ resource sqlserver 'Microsoft.Sql/servers@2019-06-01-preview' = {
   }
 }
 
-resource sqlserverName_databaseName 'Microsoft.Sql/servers/databases@2020-08-01-preview' = {
+resource database 'Microsoft.Sql/servers/databases@2020-08-01-preview' = {
   name: '${sqlserver.name}/${databaseName}'
   location: location
   sku: {
@@ -62,7 +46,7 @@ resource sqlserverName_databaseName 'Microsoft.Sql/servers/databases@2020-08-01-
   }
 }
 
-resource sqlserverName_AllowAllWindowsAzureIps 'Microsoft.Sql/servers/firewallRules@2014-04-01' = {
+resource firewallRule 'Microsoft.Sql/servers/firewallRules@2014-04-01' = {
   name: '${sqlserver.name}/AllowAllWindowsAzureIps'
   properties: {
     endIpAddress: '0.0.0.0'
@@ -96,14 +80,14 @@ resource webSite 'Microsoft.Web/sites@2020-06-01' = {
       '${msi.id}': {}
     }
   }
-}
 
-resource webSiteConnectionStrings 'Microsoft.Web/sites/config@2020-06-01' = {
-  name: '${webSite.name}/connectionstrings'
-  properties: {
-    DefaultConnection: {
-      value: 'Data Source=tcp:${sqlserver.properties.fullyQualifiedDomainName},1433;Initial Catalog=${databaseName};User Id=${sqlAdministratorLogin}@${sqlserver.properties.fullyQualifiedDomainName};Password=${sqlAdministratorLoginPassword};'
-      type: 'SQLAzure'
+  resource connectionString 'config@2020-06-01' = {
+    name: 'connectionstrings'
+    properties: {
+      DefaultConnection: {
+        value: 'Data Source=tcp:${sqlserver.properties.fullyQualifiedDomainName},1433;Initial Catalog=${database.name};User Id=${sqlserver.properties.administratorLogin}@${sqlserver.properties.fullyQualifiedDomainName};Password=${sqlserver.properties.administratorLoginPassword};'
+        type: 'SQLAzure'
+      }
     }
   }
 }
@@ -115,17 +99,16 @@ resource msi 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
 }
 
 resource roleassignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(roleDefinitionId, resourceGroup().id)
-
+  name: guid('b24988ac-6180-42a0-ab88-20f7382dd24c', resourceGroup().id)
   properties: {
     principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitionId)
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
     principalId: msi.properties.principalId
   }
 }
 
 // Monitor
-resource AppInsights_webSiteName 'Microsoft.Insights/components@2018-05-01-preview' = {
+resource appInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
   name: 'AppInsights${webSite.name}'
   location: location
   tags: {

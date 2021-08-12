@@ -4,50 +4,49 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.412.5873",
-      "templateHash": "2017193577973043838"
+      "version": "0.4.572.12217",
+      "templateHash": "2177834399724376868"
     }
   },
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]"
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies region for all resources"
+      }
     },
     "skuName": {
       "type": "string",
       "defaultValue": "F1",
-      "allowedValues": [
-        "F1",
-        "D1",
-        "B1",
-        "B2",
-        "B3",
-        "S1",
-        "S2",
-        "S3",
-        "P1",
-        "P2",
-        "P3",
-        "P4"
-      ]
+      "metadata": {
+        "description": "Speicifes app plan SKU"
+      }
     },
     "skuCapacity": {
       "type": "int",
       "defaultValue": 1,
-      "minValue": 1
+      "metadata": {
+        "description": "Specifies app plan capacity"
+      }
     },
     "sqlAdministratorLogin": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "Specifies sql admin login"
+      }
     },
     "sqlAdministratorLoginPassword": {
-      "type": "secureString"
+      "type": "secureString",
+      "metadata": {
+        "description": "Specifies sql admin password"
+      }
     },
     "managedIdentityName": {
-      "type": "string"
-    },
-    "roleDefinitionId": {
       "type": "string",
-      "defaultValue": "b24988ac-6180-42a0-ab88-20f7382dd24c"
+      "metadata": {
+        "description": "Specifies managed identity name"
+      }
     }
   },
   "functions": [],
@@ -58,6 +57,22 @@
     "databaseName": "sampledb"
   },
   "resources": [
+    {
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', variables('webSiteName'), 'connectionstrings')]",
+      "properties": {
+        "DefaultConnection": {
+          "value": "[format('Data Source=tcp:{0},1433;Initial Catalog={1};User Id={2}@{3};Password={4};', reference(resourceId('Microsoft.Sql/servers', variables('sqlserverName'))).fullyQualifiedDomainName, format('{0}/{1}', variables('sqlserverName'), variables('databaseName')), reference(resourceId('Microsoft.Sql/servers', variables('sqlserverName'))).administratorLogin, reference(resourceId('Microsoft.Sql/servers', variables('sqlserverName'))).fullyQualifiedDomainName, reference(resourceId('Microsoft.Sql/servers', variables('sqlserverName'))).administratorLoginPassword)]",
+          "type": "SQLAzure"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers/databases', split(format('{0}/{1}', variables('sqlserverName'), variables('databaseName')), '/')[0], split(format('{0}/{1}', variables('sqlserverName'), variables('databaseName')), '/')[1])]",
+        "[resourceId('Microsoft.Sql/servers', variables('sqlserverName'))]",
+        "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
+      ]
+    },
     {
       "type": "Microsoft.Sql/servers",
       "apiVersion": "2019-06-01-preview",
@@ -131,21 +146,6 @@
       ]
     },
     {
-      "type": "Microsoft.Web/sites/config",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/connectionstrings', variables('webSiteName'))]",
-      "properties": {
-        "DefaultConnection": {
-          "value": "[format('Data Source=tcp:{0},1433;Initial Catalog={1};User Id={2}@{3};Password={4};', reference(resourceId('Microsoft.Sql/servers', variables('sqlserverName'))).fullyQualifiedDomainName, variables('databaseName'), parameters('sqlAdministratorLogin'), reference(resourceId('Microsoft.Sql/servers', variables('sqlserverName'))).fullyQualifiedDomainName, parameters('sqlAdministratorLoginPassword'))]",
-          "type": "SQLAzure"
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Sql/servers', variables('sqlserverName'))]",
-        "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
-      ]
-    },
-    {
       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
       "apiVersion": "2018-11-30",
       "name": "[parameters('managedIdentityName')]",
@@ -154,10 +154,10 @@
     {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2020-04-01-preview",
-      "name": "[guid(parameters('roleDefinitionId'), resourceGroup().id)]",
+      "name": "[guid('b24988ac-6180-42a0-ab88-20f7382dd24c', resourceGroup().id)]",
       "properties": {
         "principalType": "ServicePrincipal",
-        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleDefinitionId'))]",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
         "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))).principalId]"
       },
       "dependsOn": [
