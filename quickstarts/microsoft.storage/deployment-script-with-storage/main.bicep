@@ -1,12 +1,22 @@
+@description('The location into which the resources should be deployed.')
 param location string = resourceGroup().location
-param scriptToExecute string = 'date' // will print current date & time on container
-param subId string = subscription().id // defaults to current sub
-param rgName string = resourceGroup().name // defaults to current rg
-param uamiName string = 'test-deny'
 
-param currentTime string = utcNow()
+@description('The name of the managed identity resource.')
+param identityName string = 'managedIdentity'
 
-var uamiId = subscriptionResourceId(subId, rgName, 'Microsoft.ManagedIdentity/userAssignedIdentities', uamiName)
+@description('The subscription id of the managed identity resource.')
+param identitySubscriptionId string = subscription().id
+
+@description('The resource group name of the managed identity resource.')
+param identityResourceGroup string = resourceGroup().name
+
+@description('Controls whether the script is re-run or not on a subsequent deployment.')
+param forceUpdateTag string = utcNow()
+
+resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
+  scope: resourceGroup(identitySubscriptionId, identityResourceGroup)
+  name: identityName
+}
 
 resource stg 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   name: 'dscript${uniqueString(resourceGroup().id)}'
@@ -17,28 +27,33 @@ resource stg 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   }
 }
 
-resource dScript 'Microsoft.Resources/deploymentScripts@2019-10-01-preview' = {
+resource dScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'scriptWithStorage'
   location: location
   kind: 'AzureCLI'
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${uamiId}': {}
+      '${identity.id}': {}
     }
   }
   properties: {
     azCliVersion: '2.0.80'
     storageAccountSettings: {
       storageAccountName: stg.name
-      storageAccountKey: listKeys(stg.id, stg.apiVersion).keys[0].value
+      storageAccountKey: stg.listKeys().keys[0].value
     }
-    scriptContent: scriptToExecute
+    scriptContent: loadTextContent('./script.sh')
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
-    forceUpdateTag: currentTime // ensures script will run every time
+    forceUpdateTag: forceUpdateTag
   }
 }
 
+resource logs 'Microsoft.Resources/deploymentScripts/logs@2020-10-01' existing = {
+  parent: dScript
+  name: 'default'
+}
+
 // print logs from script after template is finished deploying
-output scriptLogs string = reference('${dScript.id}/logs/default', dScript.apiVersion, 'Full').properties.log
+output scriptLogs string = logs.properties.log
