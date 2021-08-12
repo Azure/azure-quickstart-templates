@@ -56,7 +56,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource plan 'Microsoft.Web/serverfarms@2021-01-15' = {
+resource plan 'Microsoft.Web/serverfarms@2020-12-01' = {
   name: appServicePlanName
   location: location
   kind: 'functionapp'
