@@ -21,10 +21,22 @@ Open edx can be scaled, upgraded, customerized and deployed easily through it.
 Tutor is reliable, fast and extensible, which has been used by hundreds of Open edX platforms around the world.
 After 'tutor local quickstart', A full, production-ready Open edX platform (Lilac release) will run with docker-compose.
 ```
+# Template Parameters
 
-This template deploys the Open edX (Lilac release) through tutor on Ubuntu. A default deploy_tutor.sh is saved to /home/openadmin, which can deploy the open edx (Lilac reease) and create an admin user by command "./deploy_tutor.sh". 
+When you launch the installation, you need to specify the following parameters:
+
+* `dnsLabelPrefix`: this is the public DNS name for the VM. You just need to specify an unique name.
+* `adminPasswordOrKey`: self-explanatory. Be aware that Azure requires passwords to have One upper case, one lower case, a special character, and a number.
+* `vmSize`: The type of VM that you want to use for the node. The default size is Standard_D3_v2, but you can change that if you expect to run workloads that require more RAM or CPU resources. The allowed values have been listed.
+
+# Script to deploy Tutor
+
+This template deploys the Open edX (Lilac release) through tutor on Ubuntu. After deploying the template, the prerequisite software needed to run tutor (docker, docker-compose) and tutor will be installed in the VM.
+A default deploy_tutor.sh is saved to /home/openadmin, which can be used to deploy the open edx (Lilac reease) and create an admin user by command "./deploy_tutor.sh". The whole procedure should require less than 10 minutes and a few questions about the Configuration of your Open edX platform will be asked. 
 
 Connect to the virtual machine with SSH: `ssh openadmin@{PublicIPAddress}`. Installation log can be found under */var/log/azure*.
+
+# More About Open edX and Tutor
 
 You can learn more about Open edX and tutor here:
 - [Open edX](https://open.edx.org)
