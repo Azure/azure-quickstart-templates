@@ -32,7 +32,7 @@ When you launch the installation, you need to specify the following parameters:
 # Script to deploy Tutor
 
 This template deploys the Open edX (Lilac release) through tutor on Ubuntu. After deploying the template, the prerequisite software needed to run tutor (docker, docker-compose) and tutor will be installed in the VM.
-A default deploy_tutor.sh is saved to /home/openadmin, which can be used to deploy the open edx (Lilac reease) and create an admin user by command "./deploy_tutor.sh". The whole procedure should require less than 10 minutes and a few questions about the Configuration of your Open edX platform will be asked. 
+A default deploy_tutor.sh is saved to /home/openadmin, which can be used to deploy the open edx (Lilac release) and create an admin user by command "./deploy_tutor.sh". The whole procedure should require less than 10 minutes and a few questions about the Configuration of your Open edX platform will be asked. 
 
 Connect to the virtual machine with SSH: `ssh openadmin@{PublicIPAddress}`. Installation log can be found under */var/log/azure*.
 
