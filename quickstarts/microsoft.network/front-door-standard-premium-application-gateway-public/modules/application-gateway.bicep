@@ -148,6 +148,16 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2019-09-01' =
         }
       }
     ]
+    webApplicationFirewallConfiguration: {
+      enabled: true
+      firewallMode: 'Prevention'
+      ruleSetVersion: wafPolicyManagedRuleSetVersion
+      ruleSetType: wafPolicyManagedRuleSetType
+      requestBodyCheck: false
+    }
+    firewallPolicy: {
+      id: wafPolicy.id
+    }
   }
 }
 
@@ -158,6 +168,7 @@ resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPo
     policySettings: {
       mode: 'Prevention'
       state: 'Enabled'
+      requestBodyCheck: false
     }
     customRules: [
       {

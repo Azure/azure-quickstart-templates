@@ -1,0 +1,756 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.451.19169",
+      "templateHash": "11434721622982992997"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource."
+      }
+    },
+    "vnetIPPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "The IP address prefix (CIDR range) to use when deploying the virtual network."
+      }
+    },
+    "containerInstancesSubnetIPPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "The IP address prefix (CIDR range) to use when deploying the container group subnet within the virtual network."
+      }
+    },
+    "applicationGatewaySubnetIPPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24",
+      "metadata": {
+        "description": "The IP address prefix (CIDR range) to use when deploying the Application Gateway subnet within the virtual network."
+      }
+    },
+    "frontDoorEndpointName": {
+      "type": "string",
+      "defaultValue": "[format('afd-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Front Door endpoint to create. This must be globally unique."
+      }
+    },
+    "frontDoorSkuName": {
+      "type": "string",
+      "defaultValue": "Standard_AzureFrontDoor",
+      "allowedValues": [
+        "Standard_AzureFrontDoor",
+        "Premium_AzureFrontDoor"
+      ],
+      "metadata": {
+        "description": "The name of the SKU to use when creating the Front Door profile."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "frontDoorProfileName": "MyFrontDoor",
+    "frontDoorOriginGroupName": "MyOriginGroup",
+    "frontDoorOriginName": "MyAppServiceOrigin",
+    "frontDoorRouteName": "MyRoute",
+    "containerGroupName": "HelloWorld",
+    "containerName": "helloworld",
+    "containerImageUri": "mcr.microsoft.com/azuredocs/aci-helloworld:latest",
+    "containerGroupNetworkProfileName": "aci-networkprofile",
+    "containerGroupNetworkProfileInterfaceName": "eth0",
+    "containerGroupNetworkProfileInterfaceIPConfigurationName": "ipconfigprofile1"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2021-03-01",
+      "name": "[variables('containerGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[variables('containerName')]",
+            "properties": {
+              "image": "[variables('containerImageUri')]",
+              "ports": [
+                {
+                  "port": 80
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": 1,
+                  "memoryInGB": 4
+                }
+              }
+            }
+          }
+        ],
+        "restartPolicy": "OnFailure",
+        "osType": "Linux",
+        "networkProfile": {
+          "id": "[resourceId('Microsoft.Network/networkProfiles', variables('containerGroupNetworkProfileName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkProfiles', variables('containerGroupNetworkProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkProfiles",
+      "apiVersion": "2021-02-01",
+      "name": "[variables('containerGroupNetworkProfileName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containerNetworkInterfaceConfigurations": [
+          {
+            "name": "[variables('containerGroupNetworkProfileInterfaceName')]",
+            "properties": {
+              "ipConfigurations": [
+                {
+                  "name": "[variables('containerGroupNetworkProfileInterfaceIPConfigurationName')]",
+                  "properties": {
+                    "subnet": {
+                      "id": "[reference(resourceId('Microsoft.Resources/deployments', 'network'), '2019-10-01').outputs.containerGroupSubnetResourceId.value]"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'network')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles",
+      "apiVersion": "2020-09-01",
+      "name": "[variables('frontDoorProfileName')]",
+      "location": "global",
+      "sku": {
+        "name": "[parameters('frontDoorSkuName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'))]",
+      "location": "global",
+      "properties": {
+        "originResponseTimeoutSeconds": 240,
+        "enabledState": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]",
+      "properties": {
+        "loadBalancingSettings": {
+          "sampleSize": 4,
+          "successfulSamplesRequired": 3
+        },
+        "healthProbeSettings": {
+          "probePath": "/",
+          "probeRequestType": "HEAD",
+          "probeProtocol": "Http",
+          "probeIntervalInSeconds": 100
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups/origins",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}/{2}', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'), variables('frontDoorOriginName'))]",
+      "properties": {
+        "hostName": "[reference(resourceId('Microsoft.Resources/deployments', 'application-gateway'), '2019-10-01').outputs.publicIPAddressHostName.value]",
+        "httpPort": 80,
+        "httpsPort": 443,
+        "originHostHeader": "[reference(resourceId('Microsoft.Resources/deployments', 'application-gateway'), '2019-10-01').outputs.publicIPAddressHostName.value]",
+        "priority": 1,
+        "weight": 1000
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'application-gateway')]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]",
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}/{2}', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'), variables('frontDoorRouteName'))]",
+      "properties": {
+        "originGroup": {
+          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]"
+        },
+        "supportedProtocols": [
+          "Http",
+          "Https"
+        ],
+        "patternsToMatch": [
+          "/*"
+        ],
+        "compressionSettings": {
+          "contentTypesToCompress": [
+            "application/eot",
+            "application/font",
+            "application/font-sfnt",
+            "application/javascript",
+            "application/json",
+            "application/opentype",
+            "application/otf",
+            "application/pkcs7-mime",
+            "application/truetype",
+            "application/ttf",
+            "application/vnd.ms-fontobject",
+            "application/xhtml+xml",
+            "application/xml",
+            "application/xml+rss",
+            "application/x-font-opentype",
+            "application/x-font-truetype",
+            "application/x-font-ttf",
+            "application/x-httpd-cgi",
+            "application/x-javascript",
+            "application/x-mpegurl",
+            "application/x-opentype",
+            "application/x-otf",
+            "application/x-perl",
+            "application/x-ttf",
+            "font/eot",
+            "font/ttf",
+            "font/otf",
+            "font/opentype",
+            "image/svg+xml",
+            "text/css",
+            "text/csv",
+            "text/html",
+            "text/javascript",
+            "text/js",
+            "text/plain",
+            "text/richtext",
+            "text/tab-separated-values",
+            "text/xml",
+            "text/x-script",
+            "text/x-component",
+            "text/x-java-source"
+          ],
+          "isCompressionEnabled": true
+        },
+        "queryStringCachingBehavior": "IgnoreQueryString",
+        "forwardingProtocol": "HttpOnly",
+        "linkToDefaultDomain": "Enabled",
+        "httpsRedirect": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'), variables('frontDoorOriginName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]",
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "network",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vnetIPPrefix": {
+            "value": "[parameters('vnetIPPrefix')]"
+          },
+          "containerInstancesSubnetIPPrefix": {
+            "value": "[parameters('containerInstancesSubnetIPPrefix')]"
+          },
+          "applicationGatewaySubnetIPPrefix": {
+            "value": "[parameters('applicationGatewaySubnetIPPrefix')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.451.19169",
+              "templateHash": "13692041791996661220"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the virtual network resources should be deployed."
+              }
+            },
+            "vnetIPPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "The IP address prefix (CIDR range) to use when deploying the virtual network."
+              }
+            },
+            "containerInstancesSubnetIPPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "The IP address prefix (CIDR range) to use when deploying the container group subnet within the virtual network."
+              }
+            },
+            "applicationGatewaySubnetIPPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "The IP address prefix (CIDR range) to use when deploying the Application Gateway subnet within the virtual network."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "vnetName": "VNet",
+            "containerGroupSubnetName": "Containers",
+            "applicationGatewaySubnetName": "ApplicationGateway",
+            "nsgName": "MyNSG"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('vnetName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vnetIPPrefix')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "[variables('containerGroupSubnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('containerInstancesSubnetIPPrefix')]",
+                      "delegations": [
+                        {
+                          "name": "DelegationService",
+                          "properties": {
+                            "serviceName": "Microsoft.ContainerInstance/containerGroups"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "[variables('applicationGatewaySubnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('applicationGatewaySubnetIPPrefix')]",
+                      "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+                      }
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2020-05-01",
+              "name": "[variables('nsgName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "Allow_Front_Door_to_send_HTTP_traffic",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": [
+                        "80",
+                        "443"
+                      ],
+                      "sourceAddressPrefix": "AzureFrontDoor.Backend",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "access": "Allow",
+                      "priority": 120,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "Allow_GWM",
+                    "properties": {
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "65200-65535",
+                      "sourceAddressPrefix": "GatewayManager",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "Allow_AzureLoadBalancer",
+                    "properties": {
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "AzureLoadBalancer",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Inbound"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "vnetName": {
+              "type": "string",
+              "value": "[variables('vnetName')]"
+            },
+            "vnetResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+            },
+            "applicationGatewaySubnetResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('applicationGatewaySubnetName'))]"
+            },
+            "containerGroupSubnetResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('containerGroupSubnetName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "application-gateway",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "backendIPAddress": {
+            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', variables('containerGroupName'))).ipAddress.ip]"
+          },
+          "subnetResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'network'), '2019-10-01').outputs.applicationGatewaySubnetResourceId.value]"
+          },
+          "frontDoorId": {
+            "value": "[reference(resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))).frontdoorId]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.451.19169",
+              "templateHash": "13637022608544864344"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the Application Gateway resources should be deployed."
+              }
+            },
+            "publicIPAddressDomainNameLabel": {
+              "type": "string",
+              "defaultValue": "[format('appgw{0}', uniqueString(resourceGroup().id))]",
+              "metadata": {
+                "description": "The domain name label to attach to the Application Gateway's public IP address. This must be unique within the specified location."
+              }
+            },
+            "minimumCapacity": {
+              "type": "int",
+              "defaultValue": 2,
+              "metadata": {
+                "description": "The minimum number of capacity units for the Application Gateway to use when autoscaling."
+              }
+            },
+            "maximumCapacity": {
+              "type": "int",
+              "defaultValue": 10,
+              "metadata": {
+                "description": "The maximum number of capacity units for the Application Gateway to use when autoscaling."
+              }
+            },
+            "backendIPAddress": {
+              "type": "string",
+              "metadata": {
+                "description": "The IP address of the backend to configure in Application Gateway."
+              }
+            },
+            "pickHostNameFromBackendAddress": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Indicates that Application Gateway should override the host header in the request with the host name of the back-end when the request is routed from the Application Gateway to the backend."
+              }
+            },
+            "subnetResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the virtual network subnet that the Application Gateway should be deployed into."
+              }
+            },
+            "frontDoorId": {
+              "type": "string",
+              "metadata": {
+                "description": "The unique ID associated with the Front Door profile that will send traffic to this application. The Application Gateway WAF will be configured to disallow traffic that hasn't had this ID attached to it."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "publicIPAddressName": "MyApplicationGateway-PIP",
+            "applicationGatewayName": "MyApplicationGateway",
+            "gatewayIPConfigurationName": "MyGatewayIPConfiguration",
+            "frontendIPConfigurationName": "MyFrontendIPConfiguration",
+            "frontendPort": 80,
+            "frontendPortName": "MyFrontendPort",
+            "backendPort": 80,
+            "backendAddressPoolName": "MyBackendAddressPool",
+            "backendHttpSettingName": "MyBackendHttpSetting",
+            "httpListenerName": "MyHttpListener",
+            "requestRoutingRuleName": "MyRequestRoutingRule",
+            "wafPolicyName": "MyWAFPolicy",
+            "wafPolicyManagedRuleSetType": "OWASP",
+            "wafPolicyManagedRuleSetVersion": "3.1"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('publicIPAddressName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard"
+              },
+              "properties": {
+                "publicIPAllocationMethod": "Static",
+                "dnsSettings": {
+                  "domainNameLabel": "[parameters('publicIPAddressDomainNameLabel')]"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/applicationGateways",
+              "apiVersion": "2019-09-01",
+              "name": "[variables('applicationGatewayName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "sku": {
+                  "name": "WAF_v2",
+                  "tier": "WAF_v2"
+                },
+                "autoscaleConfiguration": {
+                  "minCapacity": "[parameters('minimumCapacity')]",
+                  "maxCapacity": "[parameters('maximumCapacity')]"
+                },
+                "gatewayIPConfigurations": [
+                  {
+                    "name": "[variables('gatewayIPConfigurationName')]",
+                    "properties": {
+                      "subnet": {
+                        "id": "[parameters('subnetResourceId')]"
+                      }
+                    }
+                  }
+                ],
+                "frontendIPConfigurations": [
+                  {
+                    "name": "[variables('frontendIPConfigurationName')]",
+                    "properties": {
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+                      }
+                    }
+                  }
+                ],
+                "frontendPorts": [
+                  {
+                    "name": "[variables('frontendPortName')]",
+                    "properties": {
+                      "port": "[variables('frontendPort')]"
+                    }
+                  }
+                ],
+                "backendAddressPools": [
+                  {
+                    "name": "[variables('backendAddressPoolName')]",
+                    "properties": {
+                      "backendAddresses": [
+                        {
+                          "ipAddress": "[parameters('backendIPAddress')]"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "backendHttpSettingsCollection": [
+                  {
+                    "name": "[variables('backendHttpSettingName')]",
+                    "properties": {
+                      "port": "[variables('backendPort')]",
+                      "protocol": "Http",
+                      "cookieBasedAffinity": "Disabled",
+                      "pickHostNameFromBackendAddress": "[parameters('pickHostNameFromBackendAddress')]"
+                    }
+                  }
+                ],
+                "httpListeners": [
+                  {
+                    "name": "[variables('httpListenerName')]",
+                    "properties": {
+                      "frontendIPConfiguration": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('applicationGatewayName'), variables('frontendIPConfigurationName'))]"
+                      },
+                      "frontendPort": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('applicationGatewayName'), variables('frontendPortName'))]"
+                      },
+                      "firewallPolicy": {
+                        "id": "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', variables('wafPolicyName'))]"
+                      },
+                      "protocol": "Http"
+                    }
+                  }
+                ],
+                "requestRoutingRules": [
+                  {
+                    "name": "[variables('requestRoutingRuleName')]",
+                    "properties": {
+                      "ruleType": "Basic",
+                      "httpListener": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('applicationGatewayName'), variables('httpListenerName'))]"
+                      },
+                      "backendAddressPool": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('applicationGatewayName'), variables('backendAddressPoolName'))]"
+                      },
+                      "backendHttpSettings": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('applicationGatewayName'), variables('backendHttpSettingName'))]"
+                      }
+                    }
+                  }
+                ],
+                "webApplicationFirewallConfiguration": {
+                  "enabled": true,
+                  "firewallMode": "Prevention",
+                  "ruleSetVersion": "[variables('wafPolicyManagedRuleSetVersion')]",
+                  "ruleSetType": "[variables('wafPolicyManagedRuleSetType')]",
+                  "requestBodyCheck": false
+                },
+                "firewallPolicy": {
+                  "id": "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', variables('wafPolicyName'))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+                "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', variables('wafPolicyName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('wafPolicyName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "policySettings": {
+                  "mode": "Prevention",
+                  "state": "Enabled",
+                  "requestBodyCheck": false
+                },
+                "customRules": [
+                  {
+                    "name": "RequireCorrectFrontDoorIdHeader",
+                    "ruleType": "MatchRule",
+                    "priority": 1,
+                    "action": "Block",
+                    "matchConditions": [
+                      {
+                        "matchVariables": [
+                          {
+                            "variableName": "RequestHeaders",
+                            "selector": "X-Azure-FDID"
+                          }
+                        ],
+                        "negationConditon": true,
+                        "operator": "Equal",
+                        "matchValues": [
+                          "[parameters('frontDoorId')]"
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "managedRules": {
+                  "managedRuleSets": [
+                    {
+                      "ruleSetType": "[variables('wafPolicyManagedRuleSetType')]",
+                      "ruleSetVersion": "[variables('wafPolicyManagedRuleSetVersion')]"
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "applicationGatewayResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/applicationGateways', variables('applicationGatewayName'))]"
+            },
+            "publicIPAddressHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))).dnsSettings.fqdn]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerInstance/containerGroups', variables('containerGroupName'))]",
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'network')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "frontDoorEndpointHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'))).hostName]"
+    }
+  }
+}

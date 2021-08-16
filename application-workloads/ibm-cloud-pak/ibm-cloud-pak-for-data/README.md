@@ -1,4 +1,4 @@
-# Cloud Pak for Data 3.5 on Azure
+# Cloud Pak for Data 4.0 on Azure
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/ibm-cloud-pak/ibm-cloud-pak-for-data/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/ibm-cloud-pak/ibm-cloud-pak-for-data/PublicDeployment.svg)
 
@@ -11,7 +11,8 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fibm-cloud-pak%2Fibm-cloud-pak-for-data%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fibm-cloud-pak%2Fibm-cloud-pak-for-data%2Fazuredeploy.json)
 
-Cloud Pak for Data is an analytics platform that helps you prepare your data for AI. It enables data engineers, data stewards, data scientists, and business analysts to collaborate using an integrated multiple-cloud platform. Cloud Pak for Data uses IBM’s deep analytics portfolio to help organizations meet data and analytics challenges. The required building blocks (collect, organize, analyze, infuse) for information architecture are available using Cloud Pak for Data on Azure.
+Cloud Pak for Data is an end to end platform that helps organizations in their journey to AI. It enables data engineers, data stewards, data scientists, and business analysts to collaborate using an integrated multiple-cloud platform.
+Cloud Pak for Data uses IBM’s deep analytics portfolio to help organizations meet data and analytics challenges. The required building blocks (collect, organize, analyze, infuse) for information architecture are available using Cloud Pak for Data on Azure.
 
 Cloud Pak for Data uses Azure services and features, including VNets, Availability Zones, Availability Sets, security groups, Managed Disks, and Azure Load Balancers to build a reliable and scalable cloud platform.
 
@@ -53,14 +54,18 @@ The template sets up the following:
 ### Prerequisites
 
 1. You would need to create the following resources on your Azure account to use this deployment template:
-  - Service Principal, with Contributor and User Access Administrator.
-  - App Service Domain for a public facing cluster, OR Private DNS Zone for a private cluster
+  - An empty Resource Group. This resource group will be entered for the variable `clusterResourceGroupName`. If no values is passed for this variable, Openshift installer will create a resource group for the cluster. 
+  - Service Principal, with Contributor and User Access Administrator on the scope of the new resource group just created.
+  - App Service Domain OR a Private DNS Zone for Private clusters.
 
 These can be done by running the azure CLI commands from any host where azure CLI is installed.
-
-  * Create [App Service Domain](https://portal.azure.com/#create/Microsoft.Domain) or [Private DNS Zone](https://portal.azure.com/#create/Microsoft.PrivateDNSZone)
+  * Create resource group
+  ```bash
+  az group create --name ClusterRG --location westus2
+  ```
+  * Create [App Service Domain](https://portal.azure.com/#create/Microsoft.Domain)
     * This will also create a DNS Zone needed for this deployment.
-    * Note the DNS Zone name and Resource Group it's in.
+    * Note the DNS Zone name.
   * Create Azure Service Principal with `Contributor` and `User Access Administrator` roles.
     * **Option 1:** using the script provided in the `scripts` folder:
       ```bash
@@ -71,7 +76,7 @@ These can be done by running the azure CLI commands from any host where azure CL
       * Create Service Principal, using your Azure Subscription ID, and save the returned json:
         ```bash
         az login
-        az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<subscription_id>"
+        az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<subscription_id>/resourceGroups/<cluster_rg>"
         ```
       * Get `Object ID`, using the AppId from the Service Principal just created:
         ```bash
@@ -79,7 +84,7 @@ These can be done by running the azure CLI commands from any host where azure CL
         ```
       * Assign `User Access Administrator` roles, using the `Object Id`.
         ```bash
-        az role assignment create --role "User Access Administrator" --assignee-object-id "<object_id>"
+        az role assignment create --role "User Access Administrator" --assignee-object-id "<object_id>" --scopes="/subscriptions/<subscription_id>/resourceGroups/<cluster_rg>"
         ```
     * Save the `ClientID` and `ClientSecret` from either option.
 
@@ -199,10 +204,7 @@ As part of the deployment, the following services can be enabled:
 •	Data Virtualization
 •	Watson Openscale
 •	Cognos Dashboard
-•	Streams
-•	Streams Flows
-•	Datastage
-•	DB Warehouse
+•	Spark
 
 
 To get information on various other services that are available, you can visit [Cloud Pak for Data Service Catalog](https://www.ibm.com/support/producthub/icpdata/docs/content/SSQNUZ_current/cpd/svc/services.html)

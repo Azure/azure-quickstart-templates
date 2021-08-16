@@ -1,22 +1,23 @@
 #!/bin/bash
 export DEBIAN_FRONTEND=noninteractive
-sudo apt-get -y update
+apt-get update && sudo apt-get upgrade -y
 
-# install Python
-sudo apt-get -y install python-setuptools
+# Install pip
+apt-get -y install python3-pip
 
-# install DJango
-sudo easy_install django
+# Install Django
+pip3 install Django
 
-sudo apt-get -y install freetds-dev freetds-bin
-sudo apt-get -y install python-dev python-pip
-sudo pip install pymssql
-# install Apache
-sudo apt-get -y install apache2 libapache2-mod-wsgi
+# Install database packages
+apt-get install -y freetds-dev freetds-bin
+pip3 install pymssql
+
+# Install Apache
+apt-get install -y apache2 libapache2-mod-wsgi-py3
 
 # create a django app
 cd /var/www
-sudo django-admin startproject helloworld
+django-admin startproject helloworld
 
 # Create a new file named views.py in the /var/www/helloworld/helloworld directory. This will contain the view
 # that renders the "hello world" page
@@ -26,12 +27,18 @@ from django.http import HttpRequest
 from django.template import RequestContext
 from datetime import datetime
 import pymssql
+
+
 def contact(request):
-    html = '<html><body>Hsello World!</body><html>'
+    html = '<html><body>Contact</body><html>'
     return HttpResponse(html)
+
+
 def about(request):
-    html = '<html><body>Hsello World!</body><html>'
+    html = '<html><body>About</body><html>'
     return HttpResponse(html)
+
+
 def home(request):
     conn = pymssql.connect(server='$2.database.windows.net',user='$3@$2', password='$4', database='$5')
     cursor = conn.cursor()
@@ -44,37 +51,37 @@ def home(request):
          ('C#', '2')])
     # you must call commit() to persist your data if you don't set autocommit to True
     conn.commit()
-    html = '<html><body>New World!</body><html>'
     cursor.execute('SELECT * FROM votes')
-    result = ''
+
+    result = '<table style=\"width:100%\">'
     row = cursor.fetchone()
-
     while row:
-        result += str(row[0]) + str(' : ') + str(row[1]) + str('votes')
-
+        result += f'<tr><th>{row[0]}: {row[1]} votes</th></tr>'
         row = cursor.fetchone()
-    html ='<html><body><h2><pre>'
-    html+= str(result)
-    return HttpResponse(html)" | sudo tee /var/www/helloworld/helloworld/views.py
-
+    result += '</table>'
+    html = f'<html><body>{result}</body><html>'
+    return HttpResponse(html)" | tee /var/www/helloworld/helloworld/views.py
 
 # Update urls.py
-echo "from django.conf.urls import patterns, url
-urlpatterns = patterns('',
-    url(r'^$', 'helloworld.views.home', name='home'),
-    url(r'^contact$', 'helloworld.views.contact', name='contact'),
-    url(r'^about$', 'helloworld.views.about', name='about'),
-)" | sudo tee /var/www/helloworld/helloworld/urls.py
+echo "from django.urls import path
+from helloworld import views
+urlpatterns = [
+    path('contact/', views.contact, name='contact'),
+    path('about/', views.about, name='about'),
+    path('', views.home, name='home'),
+]" | tee /var/www/helloworld/helloworld/urls.py
 
-# Setup Apache
+sed -i "s|ALLOWED_HOSTS = \[\]|ALLOWED_HOSTS = \['*'\]|" /var/www/helloworld/helloworld/settings.py
+
+# Apache Config
 echo "<VirtualHost *:80>
 ServerName $1
 </VirtualHost>
 WSGIScriptAlias / /var/www/helloworld/helloworld/wsgi.py
-WSGIPythonPath /var/www/helloworld" | sudo tee /etc/apache2/sites-available/helloworld.conf
+WSGIPythonPath /var/www/helloworld" | tee /etc/apache2/sites-available/helloworld.conf
 
-#enable site
-sudo a2ensite helloworld
+# Enable Site
+a2ensite helloworld
 
-#restart apache
-sudo service apache2 reload
+# Restart Apache
+service apache2 reload

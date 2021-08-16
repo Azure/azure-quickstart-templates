@@ -84,10 +84,10 @@ Assert-NotEmptyOrNull $mainTemplateDeploymentFilename "mainTemplateDeploymentFil
 $CompiledJsonFilename = $vars["COMPILED_JSON_FILENAME"] # $null if not bicep sample
 $labelBicepWarnings = $vars["LABEL_BICEP_WARNINGS"] -eq "TRUE"
 
-# Validate-MetaData
+# Validate-Metadata
 Write-Host "Validating metadata.json"
 $metadataHostOutput =
-& $PSScriptRoot/Validate-MetaData.ps1 `
+& $PSScriptRoot/Validate-Metadata.ps1 `
     -SampleFolder $SampleFolder `
     -CloudEnvironment $CloudEnvironment `
     -BuildReason "PullRequest" `
