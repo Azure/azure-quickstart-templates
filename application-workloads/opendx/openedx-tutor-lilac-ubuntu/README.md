@@ -39,7 +39,7 @@ Connect to the virtual machine with SSH: `ssh openadmin@{PublicIPAddress}`. Inst
 # How to check that all resources were set up successfully
 * Check if `docker`, `docker-compose` and `tutor`:
 docker --version, docker-compose --version and tutor --version
-(images/version_check.png)
+![VM-Check] (images/version_check.png)
 
 # More About Open edX and Tutor
 
