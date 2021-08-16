@@ -49,10 +49,11 @@ Then you can see the consistent versions listed
 `ls`
 Then you can see file "deploy_tutor.sh" and can deploy it with command:
 `./deploy_tutor.sh`
-
+![version_check](images/version_check.png)
 
 * Check if `openedx` deployed successfully. (domain name of LMS and CMS listed in red box):
 During deploying, answer the questions. After deploying the openedx, domain name of LMS and CMS will be listed.  
+![openedx_check](images/openedx_check.png)
 
 * Check if admin user created in the database successfully.
 (1) Log into database:
@@ -70,9 +71,6 @@ Then you can run SQL (e.g “use openedx;” && “show database;”)
 select * from auth_user;
 ```
 (3) Find email and username of admin user
-![image](https://github.com/CeciFan/azure-quickstart-templates/blob/master/application-workloads/opendx/openedx-tutor-lilac-ubuntu/images/version_check.png)
-![version_check](images/version_check.png)
-![openedx_check](images/openedx_check.png)
 ![adminuser_check](images/adminuser_check.png)
 
  
