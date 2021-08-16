@@ -12,7 +12,7 @@ param sqlAdministratorLogin string
 
 @description('Specifies sql admin password')
 @secure()
-param sqlAdministratorLoginPassword string
+param sqlAdministratorPassword string
 
 @description('Specifies managed identity name')
 param managedIdentityName string
@@ -25,7 +25,7 @@ resource sqlserver 'Microsoft.Sql/servers@2020-11-01-preview' = {
   location: location
   properties: {
     administratorLogin: sqlAdministratorLogin
-    administratorLoginPassword: sqlAdministratorLoginPassword
+    administratorLoginPassword: sqlAdministratorPassword
     version: '12.0'
   }
 
@@ -81,7 +81,7 @@ resource webSite 'Microsoft.Web/sites@2020-12-01' = {
     name: 'connectionstrings'
     properties: {
       DefaultConnection: {
-        value: 'Data Source=tcp:${sqlserver.properties.fullyQualifiedDomainName},1433;Initial Catalog=${sqlserver::database.name};User Id=${sqlserver.properties.administratorLogin}@${sqlserver.properties.fullyQualifiedDomainName};Password=${sqlserver.properties.administratorLoginPassword};'
+        value: 'Data Source=tcp:${sqlserver.properties.fullyQualifiedDomainName},1433;Initial Catalog=${sqlserver::database.name};User Id=${sqlserver.properties.administratorLogin}@${sqlserver.properties.fullyQualifiedDomainName};Password=${sqlAdministratorPassword};'
         type: 'SQLAzure'
       }
     }
