@@ -52,10 +52,12 @@ Then you can see the consistent versions listed
 `ls`
 Then you can see file "deploy_tutor.sh" and can deploy it with command:
 `./deploy_tutor.sh`
+
 ![version_check](images/version_check.png)
 
 * Check if `openedx` deployed successfully. (domain name of LMS and CMS listed in red box):
 During deploying, answer the questions. After deploying the openedx, domain name of LMS and CMS will be listed.  
+
 ![openedx_check](images/openedx_check.png)
 
 * Check if admin user created in the database successfully.
@@ -74,6 +76,7 @@ Then you can run SQL (e.g “use openedx;” && “show database;”)
 select * from auth_user;
 ```
 (3) Find email and username of admin user
+
 ![adminuser_check](images/adminuser_check.png)
 
  
