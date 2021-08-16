@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.451.19169",
-      "templateHash": "6081217149411616982"
+      "templateHash": "11434721622982992997"
     }
   },
   "parameters": {
@@ -23,9 +23,16 @@
         "description": "The IP address prefix (CIDR range) to use when deploying the virtual network."
       }
     },
-    "applicationGatewaySubnetIPPrefix": {
+    "containerInstancesSubnetIPPrefix": {
       "type": "string",
       "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "The IP address prefix (CIDR range) to use when deploying the container group subnet within the virtual network."
+      }
+    },
+    "applicationGatewaySubnetIPPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24",
       "metadata": {
         "description": "The IP address prefix (CIDR range) to use when deploying the Application Gateway subnet within the virtual network."
       }
@@ -35,12 +42,6 @@
       "defaultValue": "[format('afd-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the Front Door endpoint to create. This must be globally unique."
-      }
-    },
-    "originHostName": {
-      "type": "string",
-      "metadata": {
-        "description": "The host name that should be used when connecting from Application Gateway to the origin."
       }
     },
     "frontDoorSkuName": {
@@ -59,11 +60,79 @@
   "variables": {
     "frontDoorProfileName": "MyFrontDoor",
     "frontDoorOriginGroupName": "MyOriginGroup",
-    "frontDoorOriginName": "MyOrigin",
+    "frontDoorOriginName": "MyAppServiceOrigin",
     "frontDoorRouteName": "MyRoute",
-    "frontDoorToApplicationGatewayProtocol": "HttpOnly"
+    "containerGroupName": "HelloWorld",
+    "containerName": "helloworld",
+    "containerImageUri": "mcr.microsoft.com/azuredocs/aci-helloworld:latest",
+    "containerGroupNetworkProfileName": "aci-networkprofile",
+    "containerGroupNetworkProfileInterfaceName": "eth0",
+    "containerGroupNetworkProfileInterfaceIPConfigurationName": "ipconfigprofile1"
   },
   "resources": [
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2021-03-01",
+      "name": "[variables('containerGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[variables('containerName')]",
+            "properties": {
+              "image": "[variables('containerImageUri')]",
+              "ports": [
+                {
+                  "port": 80
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": 1,
+                  "memoryInGB": 4
+                }
+              }
+            }
+          }
+        ],
+        "restartPolicy": "OnFailure",
+        "osType": "Linux",
+        "networkProfile": {
+          "id": "[resourceId('Microsoft.Network/networkProfiles', variables('containerGroupNetworkProfileName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkProfiles', variables('containerGroupNetworkProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkProfiles",
+      "apiVersion": "2021-02-01",
+      "name": "[variables('containerGroupNetworkProfileName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containerNetworkInterfaceConfigurations": [
+          {
+            "name": "[variables('containerGroupNetworkProfileInterfaceName')]",
+            "properties": {
+              "ipConfigurations": [
+                {
+                  "name": "[variables('containerGroupNetworkProfileInterfaceIPConfigurationName')]",
+                  "properties": {
+                    "subnet": {
+                      "id": "[reference(resourceId('Microsoft.Resources/deployments', 'network'), '2019-10-01').outputs.containerGroupSubnetResourceId.value]"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'network')]"
+      ]
+    },
     {
       "type": "Microsoft.Cdn/profiles",
       "apiVersion": "2020-09-01",
@@ -186,7 +255,7 @@
           "isCompressionEnabled": true
         },
         "queryStringCachingBehavior": "IgnoreQueryString",
-        "forwardingProtocol": "[variables('frontDoorToApplicationGatewayProtocol')]",
+        "forwardingProtocol": "HttpOnly",
         "linkToDefaultDomain": "Enabled",
         "httpsRedirect": "Enabled"
       },
@@ -213,6 +282,9 @@
           "vnetIPPrefix": {
             "value": "[parameters('vnetIPPrefix')]"
           },
+          "containerInstancesSubnetIPPrefix": {
+            "value": "[parameters('containerInstancesSubnetIPPrefix')]"
+          },
           "applicationGatewaySubnetIPPrefix": {
             "value": "[parameters('applicationGatewaySubnetIPPrefix')]"
           }
@@ -224,7 +296,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.451.19169",
-              "templateHash": "6548544479718265254"
+              "templateHash": "13692041791996661220"
             }
           },
           "parameters": {
@@ -240,6 +312,12 @@
                 "description": "The IP address prefix (CIDR range) to use when deploying the virtual network."
               }
             },
+            "containerInstancesSubnetIPPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "The IP address prefix (CIDR range) to use when deploying the container group subnet within the virtual network."
+              }
+            },
             "applicationGatewaySubnetIPPrefix": {
               "type": "string",
               "metadata": {
@@ -250,6 +328,7 @@
           "functions": [],
           "variables": {
             "vnetName": "VNet",
+            "containerGroupSubnetName": "Containers",
             "applicationGatewaySubnetName": "ApplicationGateway",
             "nsgName": "MyNSG"
           },
@@ -266,6 +345,20 @@
                   ]
                 },
                 "subnets": [
+                  {
+                    "name": "[variables('containerGroupSubnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('containerInstancesSubnetIPPrefix')]",
+                      "delegations": [
+                        {
+                          "name": "DelegationService",
+                          "properties": {
+                            "serviceName": "Microsoft.ContainerInstance/containerGroups"
+                          }
+                        }
+                      ]
+                    }
+                  },
                   {
                     "name": "[variables('applicationGatewaySubnetName')]",
                     "properties": {
@@ -339,9 +432,17 @@
               "type": "string",
               "value": "[variables('vnetName')]"
             },
+            "vnetResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+            },
             "applicationGatewaySubnetResourceId": {
               "type": "string",
               "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('applicationGatewaySubnetName'))]"
+            },
+            "containerGroupSubnetResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('containerGroupSubnetName'))]"
             }
           }
         }
@@ -360,11 +461,8 @@
           "location": {
             "value": "[parameters('location')]"
           },
-          "backendFqdn": {
-            "value": "[parameters('originHostName')]"
-          },
-          "pickHostNameFromBackendAddress": {
-            "value": true
+          "backendIPAddress": {
+            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', variables('containerGroupName'))).ipAddress.ip]"
           },
           "subnetResourceId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'network'), '2019-10-01').outputs.applicationGatewaySubnetResourceId.value]"
@@ -380,7 +478,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.451.19169",
-              "templateHash": "16141725042626730495"
+              "templateHash": "13637022608544864344"
             }
           },
           "parameters": {
@@ -411,10 +509,10 @@
                 "description": "The maximum number of capacity units for the Application Gateway to use when autoscaling."
               }
             },
-            "backendFqdn": {
+            "backendIPAddress": {
               "type": "string",
               "metadata": {
-                "description": "The hostname (FQDN) of the backend to configure in Application Gateway."
+                "description": "The IP address of the backend to configure in Application Gateway."
               }
             },
             "pickHostNameFromBackendAddress": {
@@ -518,7 +616,7 @@
                     "properties": {
                       "backendAddresses": [
                         {
-                          "fqdn": "[parameters('backendFqdn')]"
+                          "ipAddress": "[parameters('backendIPAddress')]"
                         }
                       ]
                     }
@@ -643,16 +741,13 @@
         }
       },
       "dependsOn": [
+        "[resourceId('Microsoft.ContainerInstance/containerGroups', variables('containerGroupName'))]",
         "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]",
         "[resourceId('Microsoft.Resources/deployments', 'network')]"
       ]
     }
   ],
   "outputs": {
-    "applicationGatewayHostName": {
-      "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'application-gateway'), '2019-10-01').outputs.publicIPAddressHostName.value]"
-    },
     "frontDoorEndpointHostName": {
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'))).hostName]"
