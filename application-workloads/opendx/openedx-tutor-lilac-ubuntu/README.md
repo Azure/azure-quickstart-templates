@@ -37,9 +37,44 @@ A default deploy_tutor.sh is saved to /home/openadmin, which can be used to depl
 Connect to the virtual machine with SSH: `ssh openadmin@{PublicIPAddress}`. Installation log can be found under */var/log/azure*.
 
 # How to check that all resources were set up successfully
-* Check if `docker`, `docker-compose` and `tutor`:
-docker --version, docker-compose --version and tutor --version
-![VM-Check] (images/version_check.png)
+* Check if `docker`, `docker-compose` and `tutor` deployed successfully:
+```
+docker --version 
+docker-compose --version 
+tutor --version
+```
+
+* Check if `deploy_tutor.sh` installed successfully:
+`ls`
+Then you can see file "deploy_tutor.sh" and deploy with command:
+`./deploy_tutor.sh`
+
+![image] (images/version_check.png)
+![image] (https://github.com/CeciFan/azure-quickstart-templates/blob/master/application-workloads/opendx/openedx-tutor-lilac-ubuntu/images/version_check.png)
+
+* Check if `openedx` deployed successfully. (domain name of LMS and CMS listed in red box):
+![image] (images/openedx_check.png)
+
+* Check if admin user created in the database successfully.
+(1) Log into database:
+```
+docker exec -uroot -it tutor_local_mysql_1 bash
+Mysql -u root -p
+
+```
+Password: from you config.yml (MYSQL_ROOT_PASSWORD) 
+(file path: ~/.local/share/tutor/config.yml)
+Then you can run SQL (e.g “use openedx;” && “show database;”)
+
+(2) Select table “auth_user”
+
+```
+select * from auth_user;
+```
+(3) Find email and username of admin user
+
+![image] (images/adminuser_check.png)
+
 
 # More About Open edX and Tutor
 
