@@ -36,6 +36,11 @@ A default deploy_tutor.sh is saved to /home/openadmin, which can be used to depl
 
 Connect to the virtual machine with SSH: `ssh openadmin@{PublicIPAddress}`. Installation log can be found under */var/log/azure*.
 
+# How to check that all resources were set up successfully
+* Check if `docker`, `docker-compose` and `tutor`:
+docker --version, docker-compose --version and tutor --version
+(images/version_check.png)
+
 # More About Open edX and Tutor
 
 You can learn more about Open edX and tutor here:
