@@ -10,8 +10,8 @@ param minimumCapacity int = 2
 @description('The maximum number of capacity units for the Application Gateway to use when autoscaling.')
 param maximumCapacity int = 10
 
-@description('The hostname (FQDN) of the backend to configure in Application Gateway.')
-param backendFqdn string
+@description('The IP address of the backend to configure in Application Gateway.')
+param backendIPAddress string
 
 @description('Indicates that Application Gateway should override the host header in the request with the host name of the back-end when the request is routed from the Application Gateway to the backend.')
 param pickHostNameFromBackendAddress bool = false
@@ -97,7 +97,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2019-09-01' =
         properties: {
           backendAddresses: [
             {
-              fqdn: backendFqdn
+              ipAddress: backendIPAddress
             }
           ]
         }
