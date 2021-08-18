@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.412.5873",
-      "templateHash": "5371469350137664202"
+      "templateHash": "10395195174503678700"
     }
   },
   "parameters": {
@@ -80,13 +80,36 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
       ]
     },
     {
       "type": "Microsoft.Web/sites/config",
       "apiVersion": "2020-06-01",
-      "name": "[format('{0}/logs', variables('webSiteName'))]",
+      "name": "[format('{0}/{1}', variables('webSiteName'), 'appsettings')]",
+      "properties": {
+        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightName'))).InstrumentationKey]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', variables('appInsightName'))]",
+        "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]",
+        "[resourceId('Microsoft.Web/sites/siteextensions', variables('webSiteName'), 'Microsoft.ApplicationInsights.AzureWebSites')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/siteextensions",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', variables('webSiteName'), 'Microsoft.ApplicationInsights.AzureWebSites')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', variables('appInsightName'))]",
+        "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', variables('webSiteName'), 'logs')]",
       "properties": {
         "applicationLogs": {
           "fileSystem": {
@@ -111,28 +134,6 @@
       ]
     },
     {
-      "type": "Microsoft.Web/sites/config",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/appsettings', variables('webSiteName'))]",
-      "properties": {
-        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightName'))).InstrumentationKey]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Insights/components', variables('appInsightName'))]",
-        "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]",
-        "[resourceId('Microsoft.Web/sites/siteextensions', split(format('{0}/Microsoft.ApplicationInsights.AzureWebsites', variables('webSiteName')), '/')[0], split(format('{0}/Microsoft.ApplicationInsights.AzureWebsites', variables('webSiteName')), '/')[1])]"
-      ]
-    },
-    {
-      "type": "Microsoft.Web/sites/siteextensions",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/Microsoft.ApplicationInsights.AzureWebsites', variables('webSiteName'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Insights/components', variables('appInsightName'))]",
-        "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
-      ]
-    },
-    {
       "type": "Microsoft.Insights/components",
       "apiVersion": "2020-02-02-preview",
       "name": "[variables('appInsightName')]",
@@ -144,15 +145,17 @@
       },
       "properties": {
         "Application_Type": "web",
+        "ApplicationId": "[variables('appInsightName')]",
         "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
       },
       "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]",
         "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
       ]
     },
     {
       "type": "Microsoft.OperationalInsights/workspaces",
-      "apiVersion": "2020-03-01-preview",
+      "apiVersion": "2020-08-01",
       "name": "[variables('logAnalyticsName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -163,7 +166,12 @@
         "sku": {
           "name": "PerGB2018"
         },
-        "retentionInDays": 120
+        "retentionInDays": 120,
+        "features": {
+          "searchVersion": 1,
+          "legacy": 0,
+          "enableLogAccessUsingOnlyResourcePermissions": true
+        }
       }
     }
   ]

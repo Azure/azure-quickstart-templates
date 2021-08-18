@@ -16,8 +16,8 @@ var appInsightName = toLower('appi-${appName}')
 var logAnalyticsName = toLower('la-${appName}')
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2020-06-01' = {
-  name: appServicePlanName // Globally unique storage account name
-  location: location // Azure Region
+  name: appServicePlanName
+  location: location
   sku: {
     name: skuName
     capacity: skuCapacity
@@ -38,6 +38,9 @@ resource appService 'Microsoft.Web/sites@2020-06-01' = {
     displayName: 'Website'
     ProjectName: appName
   }
+  dependsOn: [
+    logAnalyticsWorkspace
+  ]
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
@@ -46,8 +49,29 @@ resource appService 'Microsoft.Web/sites@2020-06-01' = {
     }
   }
 }
+
 resource appServiceLogging 'Microsoft.Web/sites/config@2020-06-01' = {
-  name: '${appService.name}/logs'
+  parent: appService
+  name: 'appsettings'
+  properties: {
+    APPINSIGHTS_INSTRUMENTATIONKEY: appInsights.properties.InstrumentationKey
+  }
+  dependsOn: [
+    appServiceAppSettings
+  ]
+}
+
+resource appServiceAppSettings 'Microsoft.Web/sites/siteextensions@2020-06-01' = {
+  parent: appService
+  name: 'Microsoft.ApplicationInsights.AzureWebSites'
+  dependsOn: [
+    appInsights
+  ]
+}
+
+resource appServiceSiteExtension 'Microsoft.Web/sites/config@2020-06-01' = {
+  parent: appService
+  name: 'logs'
   properties: {
     applicationLogs: {
       fileSystem: {
@@ -69,22 +93,6 @@ resource appServiceLogging 'Microsoft.Web/sites/config@2020-06-01' = {
   }
 }
 
-resource appServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
-  name: '${appService.name}/appsettings'
-  properties: {
-    APPINSIGHTS_INSTRUMENTATIONKEY: appInsights.properties.InstrumentationKey
-  }
-  dependsOn: [
-    appInsights
-    appServiceSiteExtension
-  ]
-}
-resource appServiceSiteExtension 'Microsoft.Web/sites/siteextensions@2020-06-01' = {
-  name: '${appService.name}/Microsoft.ApplicationInsights.AzureWebsites'
-  dependsOn: [
-    appInsights
-  ]
-}
 resource appInsights 'microsoft.insights/components@2020-02-02-preview' = {
   name: appInsightName
   location: location
@@ -95,11 +103,15 @@ resource appInsights 'microsoft.insights/components@2020-02-02-preview' = {
   }
   properties: {
     Application_Type: 'web'
+    ApplicationId: appInsightName
     WorkspaceResourceId: logAnalyticsWorkspace.id
   }
+  dependsOn: [
+    appService
+  ]
 }
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-03-01-preview' = {
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' = {
   name: logAnalyticsName
   location: location
   tags: {
@@ -111,5 +123,10 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-03
       name: 'PerGB2018'
     }
     retentionInDays: 120
+    features: {
+      searchVersion: 1
+      legacy: 0
+      enableLogAccessUsingOnlyResourcePermissions: true
+    }
   }
 }
