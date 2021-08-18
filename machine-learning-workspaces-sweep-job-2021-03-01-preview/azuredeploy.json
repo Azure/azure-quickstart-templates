@@ -1,0 +1,140 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "type": "String",
+      "metadata": {
+        "description": "Specifies the name of the Azure Machine Learning Workspace which will contain this sweep job."
+      }
+    },
+    "jobName": {
+      "defaultValue": "testSweepJob",
+      "type": "String",
+      "metadata": {
+        "description": "Specifies the name of the Azure Machine Learning sweep job."
+      }
+    },
+    "sweepJobDescription": {
+      "defaultValue": "A sweep job created by an ARM template",
+      "type": "String"
+    },
+    "command": {
+      "defaultValue": "python train.py",
+      "type": "String",
+      "metadata": {
+        "description": "Specifies the name of the Azure Machine Learning sweep job."
+      }
+    },
+    "codeAssetName": {
+      "type": "String"
+    },
+    "codeAssetVersion": {
+      "defaultValue": "1",
+      "type": "String"
+    },
+    "computeName": {
+      "type": "String"
+    },
+    "computeInstanceCount": {
+      "defaultValue": 1,
+      "type": "Int"
+    },
+    "environmentName": {
+      "type": "String"
+    },
+    "environmentVersion": {
+      "defaultValue": "1",
+      "type": "String"
+    },
+    "experimentName": {
+      "defaultValue": "testExperimentName",
+      "type": "String"
+    },
+    "priority": {
+      "defaultValue": 1,
+      "type": "Int"
+    },
+    "timeout": {
+      "defaultValue": "PT45M",
+      "type": "String"
+    },
+    "algorithm": {
+      "allowedValues": [
+        "Grid",
+        "Random",
+        "Bayesian"
+      ],
+      "type": "String"
+    },
+    "maxConcurrentTrials": {
+      "defaultValue": 4,
+      "type": "Int"
+    },
+    "maxTotalTrials": {
+      "defaultValue": 12,
+      "type": "Int"
+    },
+    "goal": {
+      "defaultValue": "Maximize",
+      "allowedValues": [
+        "Maximize",
+        "Minimize"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "Defines supported metric goals for hyperparameter tuning"
+      }
+    },
+    "primaryMetric": {
+      "defaultValue": "Accuracy",
+      "type": "String"
+    },
+    "searchSpace": {
+      "type": "Object",
+      "metadata": {
+        "description": "A dictionary containing each parameter and its distribution. The dictionary key is the name of the parameter"
+      }
+    }
+  },
+  "variables": {
+    "codeVersionResourceId": "[resourceId('Microsoft.MachineLearningServices/workspaces/codes/versions', parameters('workspaceName'), parameters('codeAssetName'), parameters('codeAssetVersion'))]",
+    "environmentResourceId": "[resourceId('Microsoft.MachineLearningServices/workspaces/environments/versions', parameters('workspaceName'), parameters('environmentName'), parameters('environmentVersion'))]",
+    "computeResourceId": "[resourceId('Microsoft.MachineLearningServices/workspaces/computes', parameters('workspaceName'), parameters('computeName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces/jobs",
+      "apiVersion": "2021-03-01-preview",
+      "name": "[concat(parameters('workspaceName'), '/', parameters('jobName'))]",
+      "properties": {
+        "description": "[parameters('sweepJobDescription')]",
+        "properties": {},
+        "tags": {},
+        "jobType": "Sweep",
+        "compute": {
+          "instanceCount": "[parameters('computeInstanceCount')]",
+          "target": "[variables('computeResourceId')]"
+        },
+        "priority": "[parameters('priority')]",
+        "timeout": "[parameters('timeout')]",
+        "algorithm": "[parameters('algorithm')]",
+        "experimentName": "[parameters('experimentName')]",
+        "maxConcurrentTrials": "[parameters('maxConcurrentTrials')]",
+        "maxTotalTrials": "[parameters('maxTotalTrials')]",
+        "objective": {
+          "goal": "[parameters('goal')]",
+          "primaryMetric": "[parameters('primaryMetric')]"
+        },
+        "searchSpace": "[parameters('searchSpace')]",
+        "trial": {
+          "codeId": "[variables('codeVersionResourceId')]",
+          "command": "[parameters('command')]",
+          "environmentId": "[variables('environmentResourceId')]",
+          "environmentVariables": {},
+          "timeout": "[parameters('timeout')]"
+        }
+      }
+    }
+  ]
+}

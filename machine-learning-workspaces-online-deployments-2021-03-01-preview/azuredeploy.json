@@ -1,0 +1,132 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "type": "String"
+    },
+    "location": {
+      "defaultValue": "centraluseuap",
+      "type": "String"
+    },
+    "modelName": {
+      "type": "String"
+    },
+    "modelVersion": {
+      "defaultValue": "1",
+      "type": "String"
+    },
+    "modelReferenceType": {
+      "allowedValues": [
+        "DataPath",
+        "Id",
+        "OutputPath"
+      ],
+      "type": "String"
+    },
+    "deploymentTags": {
+      "defaultValue": {},
+      "type": "Object"
+    },
+    "environmentName": {
+      "type": "String"
+    },
+    "environmentVersion": {
+      "defaultValue": "1",
+      "type": "String"
+    },
+    "scoringScriptName": {
+      "defaultValue": "score.py",
+      "type": "String"
+    },
+    "codeAssetName": {
+      "type": "String"
+    },
+    "codeAssetVersion": {
+      "defaultValue": "1",
+      "type": "String"
+    },
+    "onlineEndpointName": {
+      "defaultValue": "mirendpoint",
+      "type": "String"
+    },
+    "onlineDeploymentName": {
+      "defaultValue": "mirdeployment",
+      "type": "String"
+    },
+    "scaleType": {
+      "defaultValue": "Manual",
+      "type": "String"
+    },
+    "instanceCount": {
+      "defaultValue": "3",
+      "type": "String"
+    },
+    "minimumInstanceCount": {
+      "defaultValue": 1,
+      "type": "Int"
+    },
+    "maximumInstanceCount": {
+      "defaultValue": 4,
+      "type": "Int"
+    },
+    "computeType": {
+      "defaultValue": "Managed",
+      "type": "String"
+    },
+    "appInsightsEnabled": {
+      "defaultValue": true,
+      "type": "Bool"
+    },
+    "instanceType": {
+      "defaultValue": "Standard_F4s_v2",
+      "type": "String"
+    },
+    "scoringTimeoutSeconds": {
+      "defaultValue": "PT60S",
+      "type": "String"
+    }
+  },
+  "variables": {
+    "workspaceResourceId": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]",
+    "environmentResourceId": "[resourceId('Microsoft.MachineLearningServices/workspaces/environments/versions', parameters('workspaceName'), parameters('environmentName'), parameters('environmentVersion'))]",
+    "codeVersionResourceId": "[resourceId('Microsoft.MachineLearningServices/workspaces/codes/versions', parameters('workspaceName'), parameters('codeAssetName'), parameters('codeAssetVersion'))]",
+    "modelVersionResourceId": "[resourceId('Microsoft.MachineLearningServices/workspaces/models/versions', parameters('workspaceName'), parameters('modelName'), parameters('modelVersion'))]",
+    "endpointResourceId": "[resourceId('Microsoft.MachineLearningServices/workspaces/onlineEndpoints', parameters('workspaceName'), parameters('onlineEndpointName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces/onlineEndpoints/deployments",
+      "apiVersion": "2021-03-01-preview",
+      "name": "[concat(parameters('workspaceName'), '/', parameters('onlineEndpointName'), '/', parameters('onlineDeploymentName'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('deploymentTags')]",
+      "identity": {
+        "type": "None"
+      },
+      "properties": {
+        "endpointComputeType": "Managed",
+        "model": {
+          "referenceType": "[parameters('modelReferenceType')]",
+          "assetId": "[variables('modelVersionResourceId')]"
+        },
+        "scaleSettings": {
+          "scaleType": "[parameters('scaleType')]",
+          "instanceCount": "[parameters('instanceCount')]",
+          "minInstances": "[parameters('minimumInstanceCount')]",
+          "maxInstances": "[parameters('maximumInstanceCount')]"
+        },
+        "appInsightsEnabled": "[parameters('appInsightsEnabled')]",
+        "requestSettings": {
+          "requestTimeout": "[parameters('scoringTimeoutSeconds')]"
+        },
+        "instanceType": "[parameters('instanceType')]",
+        "codeConfiguration": {
+          "codeId": "[variables('codeVersionResourceId')]",
+          "scoringScript": "[parameters('scoringScriptName')]"
+        },
+        "environmentId": "[variables('environmentResourceId')]"
+      }
+    }
+  ]
+}
