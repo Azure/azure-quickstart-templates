@@ -29,6 +29,9 @@ param sshRSAPublicKey string
 resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
   name: clusterName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     dnsPrefix: dnsPrefix
     agentPoolProfiles: [
@@ -51,9 +54,6 @@ resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
         ]
       }
     }
-  }
-  identity: {
-    type: 'SystemAssigned'
   }
 }
 
