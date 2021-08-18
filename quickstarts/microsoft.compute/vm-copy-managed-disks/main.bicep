@@ -1,5 +1,5 @@
 @description('Administrator Username for the local admin account')
-param virtualMachineAdminUserName string = 'azadmin'
+param virtualMachineAdminUserName string
 
 @description('Administrator password for the local admin account')
 @secure()
@@ -13,13 +13,6 @@ param virtualMachineNamePrefix string = 'MyVM0'
 param virtualMachineCount int = 3
 
 @description('Virtual Machine Size')
-@allowed([
-  'Standard_DS1_v2'
-  'Standard_DS2_v2'
-  'Standard_DS3_v2'
-  'Standard_DS4_v2'
-  'Standard_DS5_v2'
-])
 param virtualMachineSize string = 'Standard_DS2_v2'
 
 @description('Operating System of the Server')
@@ -34,7 +27,7 @@ param operatingSystem string = 'Server2019'
 param availabilitySetName string = 'MyAvailabilitySet'
 
 @description('Globally unique DNS prefix for the Public IPs used to access the Virtual Machines')
-@minLength(1)
+@minLength(2)
 @maxLength(14)
 param dnsPrefixForPublicIP string = uniqueString(resourceGroup().id)
 
@@ -157,7 +150,7 @@ resource virtualMachines 'Microsoft.Compute/virtualMachines@2020-06-01' = [for i
         name: '${virtualMachineNamePrefix}${i + 1}'
         createOption: 'FromImage'
         managedDisk: {
-          storageAccountType: 'Premium_LRS'
+          storageAccountType: 'StandardSSD_LRS'
         }
         caching: 'ReadWrite'
       }
