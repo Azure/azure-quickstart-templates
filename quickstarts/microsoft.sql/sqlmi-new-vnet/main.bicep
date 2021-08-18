@@ -173,6 +173,9 @@ resource managedInstance 'Microsoft.Sql/managedInstances@2020-02-02-preview' = {
   identity: {
     type: 'SystemAssigned'
   }
+  dependsOn: [
+    virtualNetwork
+  ]
   properties: {
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
@@ -181,7 +184,4 @@ resource managedInstance 'Microsoft.Sql/managedInstances@2020-02-02-preview' = {
     vCores: vCores
     licenseType: licenseType
   }
-  dependsOn: [
-    virtualNetwork
-  ]
 }
