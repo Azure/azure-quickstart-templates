@@ -39,12 +39,12 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
 
   resource subnet2 'subnets' = {
     name: subnet2Name
-    properties: {
-      addressPrefix: subnet2Prefix
-    }
     dependsOn: [
       // This ensures only one subnets is created at a time (so they're not both trying to modify the vnet at the same)
       subnet1
     ]
+    properties: {
+      addressPrefix: subnet2Prefix
+    }
   }
 }
