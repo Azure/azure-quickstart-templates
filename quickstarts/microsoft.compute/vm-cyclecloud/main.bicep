@@ -24,6 +24,8 @@ var roleDefinitions = {
 
 var saName = take('cclocker${replace(guid(resourceGroup().id), '-', '')}', 24)
 
+var subnetName = 'Default'
+
 resource nsg 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
   name: 'cc-nsg'
   location: location
@@ -83,7 +85,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-05-01' = {
     }
     subnets: [
       {
-        name: 'Default'
+        name: subnetName
         properties: {
           addressPrefix: '10.0.0.0/24'
           networkSecurityGroup: {
@@ -113,7 +115,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-05-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: '${vnet.id}/subnets/Default'
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets/', vnet.name, subnetName)
           }
           publicIPAddress: {
             id: pip.id
