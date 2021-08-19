@@ -15,10 +15,16 @@ param accountName string = 'stor${uniqueString(resourceGroup().id)}'
 param skuName string = 'Standard_LRS'
 
 @description('The name of the page to display when a user navigates to the root of your static website.')
-param indexDocument string = 'index.htm'
+param indexDocumentPath string = 'index.htm'
+
+@description('The contents of the page to display when a user navigates to the root of your static website.')
+param indexDocumentContents string = '<h1>Welcome</h1>'
 
 @description('The name of the page to display when a user attempts to navigate to a page that does not exist in your static website.')
 param errorDocument404Path string = '404.htm'
+
+@description('The contents of the page to display when a user attempts to navigate to a page that does not exist in your static website.')
+param errorDocument404Contents string = '<h1>Error: 404 Not Found</h1>'
 
 @description('Indicates whether the storage account should require HTTPS traffic.')
 param supportsHttpsTrafficOnly bool = true
@@ -47,7 +53,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-
 
 resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   scope: storageAccount
-  name: guid(resourceGroup().id, managedIdentity.id, storageAccountContributorRoleDefinitionId)
+  name: guid(storageAccount.id, managedIdentity.id, storageAccountContributorRoleDefinitionId)
   properties: {
     roleDefinitionId: storageAccountContributorRoleDefinitionId
     principalId: managedIdentity.properties.principalId
@@ -57,7 +63,7 @@ resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2020
 
 resource roleAssignmentStorageBlobDataContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   scope: storageAccount
-  name: guid(resourceGroup().id, managedIdentity.id, storageAccountStorageBlobDataContributorRoleDefinitionId)
+  name: guid(storageAccount.id, managedIdentity.id, storageAccountStorageBlobDataContributorRoleDefinitionId)
   properties: {
     roleDefinitionId: storageAccountStorageBlobDataContributorRoleDefinitionId
     principalId: managedIdentity.properties.principalId
@@ -75,17 +81,44 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       '${managedIdentity.id}': {}
     }
   }
-  dependsOn: [
+  dependsOn: [ // We need to ensure the managed identity's role assignments are deployed before we try to run the script that uses them.
     roleAssignmentContributor
+    roleAssignmentStorageBlobDataContributor
   ]
   properties: {
     azPowerShellVersion: '5.4'
     scriptContent: loadTextContent('scripts/enable-storage-static-website.ps1')
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'PT4H'
-    arguments: '-ResourceGroupName ${resourceGroup().name} -StorageAccountName ${accountName} -IndexDocument ${indexDocument} -ErrorDocument404Path ${errorDocument404Path}'
+    environmentVariables: [
+      {
+        name: 'ResourceGroupName'
+        value: resourceGroup().name
+      }
+      {
+        name: 'StorageAccountName'
+        value: accountName
+      }
+      {
+        name: 'IndexDocumentPath'
+        value: indexDocumentPath
+      }
+      {
+        name: 'IndexDocumentContents'
+        value: indexDocumentContents
+      }
+      {
+        name: 'ErrorDocument404Path'
+        value: errorDocument404Path
+      }
+      {
+        name: 'ErrorDocument404Contents'
+        value: errorDocument404Contents
+      }
+    ]
   }
 }
 
 output accountResourceId string = storageAccount.id
 output staticWebsiteHostName string = replace(replace(storageAccount.properties.primaryEndpoints.web, 'https://', ''), '/', '')
+output staticWebsiteUrl string = storageAccount.properties.primaryEndpoints.web

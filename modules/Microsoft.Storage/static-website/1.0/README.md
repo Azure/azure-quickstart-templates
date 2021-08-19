@@ -19,20 +19,23 @@ This module creates a storage account and enables the static website feature.
 
 ## Parameters
 
-| Name | Type | Required | Description |
-| :------------- | :----------: | :----------: | :------------- |
-| location | string | No | Specifies the Azure location where the storageAccount should be created. |
-| accountName | string | No | Specifies the name of the storage account. This value must be globally unique. |
-| skuName | string | No | Specifies the SKU name for the storage account. |
-| indexDocument | string | No | Specifies the name of the index page for the static website. |
-| errorDocument404Path | string | No | Specifies the name of the error (404 error) page for the static website. |
-| supportsHttpsTrafficOnly |  bool | No | Allows https traffic only to storage service if set to true. |
+| Name                     | Type   | Required | Description                                                                                                                                                                   |
+|--------------------------|--------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| location                 | string | No       | The location into which the Azure Storage resources should be deployed. If not specified, defaults to the resource group's location.                                          |
+| accountName              | string | No       | The name of the Azure Storage account to create. This must be globally unique. If not specified, a unique name is generated.                                                  |
+| skuName                  | string | No       | The name of the SKU to use when creating the Azure Storage account. If not specified, defaults to `Standard_LRS`.                                                             |
+| indexDocumentPath        | string | No       | The name of the page to display when a user navigates to the root of your static website. If not specified, defaults to `index.htm`.                                          |
+| indexDocumentContents    | string | No       | The contents of the page to display when a user navigates to the root of your static website. If not specified, defaults to a simple welcome page.                            |
+| errorDocument404Path     | string | No       | The name of the page to display when a user attempts to navigate to a page that does not exist in your static website. If not specified, defaults to `404.htm`.               |
+| errorDocument404Contents | string | No       | The contents of the page to display when a user attempts to navigate to a page that does not exist in your static website. If not specified, defaults to a simple error page. |
+| supportsHttpsTrafficOnly | bool   | No       | Indicates whether the storage account should require HTTPS traffic. If not specified, defaults to `true`.                                                                     |
 
 ## Outputs
 
-| Name | Type | Description |
-| :------------- | :----------: | :------------- |
-| accountResourceId | string | The resource ID of the storage account. |
-| staticWebsiteHostName | string | The hostname of the static website. |
+| Name                  | Type   | Description                                                                                                                                                                                      |
+|-----------------------|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| accountResourceId     | string | The resource ID of the storage account. For example, `/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/MyResourceGroup/providers/Microsoft.Storage/storageAccounts/stor12345`. |
+| staticWebsiteHostName | string | The host name of the static website. For example, `storaabbccdd12345.z8web.core.windows.net`.                                                                                                    |
+| staticWebsiteUrl      | string | The URL to the static website. For example, `https://storaabbccdd12345.z8web.core.windows.net`.                                                                                                  |
 
 ```apiVersion: 2021-04-01```
