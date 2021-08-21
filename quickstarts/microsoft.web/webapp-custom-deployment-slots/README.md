@@ -14,6 +14,9 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebapp-custom-deployment-slots%2Fazuredeploy.json)    
 
 This template provides an easy way to deploy web app with custom deployment slots/environments on Azure Web Apps.<br>
+
+The template includes a sample for how to deploy sticky slot settings (i.e. deployment slot settings) via the `Microsoft.Web/sites/config` resource. Sticky connection strings can be added the same way using the `connectionStringNames` property.<br>
+
 The `environments` parameter (array) can be used to specify different slot/environment names, and a slot will be created for every item listed in the array.
 
 To specify multiple environments, say N, follow this simple rule:<br>
