@@ -84,7 +84,7 @@ param aadProfileEnableAzureRBAC bool = false
 param nodePoolName string = 'nodepool1'
 
 @description('Specifies the vm size of nodes in the node pool.')
-param nodePoolVmSize string = 'Standard_DS3_v2'
+param nodePoolVmSize string = 'Standard_D4s_v3'
 
 @description('Specifies the OS Disk Size in GB to be used to specify the disk size for every machine in this master/agent pool. If you specify 0, it will apply the default osDisk size according to the vmSize specified..')
 param nodePoolOsDiskSizeGB int = 100
@@ -178,7 +178,7 @@ param vmSubnetAddressPrefix string = '10.1.0.0/24'
 param vmName string = 'TestVm'
 
 @description('Specifies the size of the virtual machine.')
-param vmSize string = 'Standard_DS3_v2'
+param vmSize string = 'Standard_D4s_v3'
 
 @description('Specifies the image publisher of the disk image used to create the virtual machine.')
 param imagePublisher string = 'Canonical'
