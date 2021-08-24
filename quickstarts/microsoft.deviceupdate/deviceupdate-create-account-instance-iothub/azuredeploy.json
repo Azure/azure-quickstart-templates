@@ -1,0 +1,198 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.451.19169",
+      "templateHash": "18166828821030614764"
+    }
+  },
+  "parameters": {
+    "accountName": {
+      "type": "string",
+      "defaultValue": "[take(format('adu-quickstart-{0}', uniqueString(resourceGroup().id)), 24)]",
+      "maxLength": 24,
+      "minLength": 3,
+      "metadata": {
+        "description": "The name of the account. Read more about limits at https://aka.ms/iot-hub-device-update-limits"
+      }
+    },
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "westus2",
+        "northeurope",
+        "southeastasia"
+      ],
+      "metadata": {
+        "description": "The location of the account."
+      }
+    },
+    "instanceName": {
+      "type": "string",
+      "defaultValue": "[guid(resourceGroup().id)]",
+      "maxLength": 36,
+      "minLength": 3,
+      "metadata": {
+        "description": "The name of the instance."
+      }
+    },
+    "iotHubName": {
+      "type": "string",
+      "defaultValue": "[take(format('iot-hub-{0}', uniqueString(resourceGroup().id)), 50)]",
+      "maxLength": 50,
+      "minLength": 3,
+      "metadata": {
+        "description": "The name of the hub."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "iotHubResourceId": "[resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName'))]",
+    "iotHubKeyName": "deviceupdateservice",
+    "iotHubKeyIndex": 5,
+    "consumerGroupName": "adum"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Devices/IotHubs",
+      "apiVersion": "2021-03-31",
+      "name": "[parameters('iotHubName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "S1",
+        "capacity": 1
+      },
+      "properties": {
+        "authorizationPolicies": [
+          {
+            "keyName": "iothubowner",
+            "rights": "RegistryWrite, ServiceConnect, DeviceConnect"
+          },
+          {
+            "keyName": "service",
+            "rights": "ServiceConnect"
+          },
+          {
+            "keyName": "device",
+            "rights": "DeviceConnect"
+          },
+          {
+            "keyName": "registryRead",
+            "rights": "RegistryRead"
+          },
+          {
+            "keyName": "registryReadWrite",
+            "rights": "RegistryWrite"
+          },
+          {
+            "keyName": "deviceupdateservice",
+            "rights": "RegistryRead, ServiceConnect, DeviceConnect"
+          }
+        ],
+        "cloudToDevice": {
+          "maxDeliveryCount": 10,
+          "defaultTtlAsIso8601": "PT1H",
+          "feedback": {
+            "lockDurationAsIso8601": "PT1M",
+            "ttlAsIso8601": "PT1H",
+            "maxDeliveryCount": 10
+          }
+        },
+        "enableFileUploadNotifications": false,
+        "eventHubEndpoints": {
+          "events": {
+            "retentionTimeInDays": 1,
+            "partitionCount": 4
+          }
+        },
+        "features": "None",
+        "messagingEndpoints": {
+          "fileNotifications": {
+            "lockDurationAsIso8601": "PT1M",
+            "ttlAsIso8601": "PT1H",
+            "maxDeliveryCount": 10
+          }
+        },
+        "routing": {
+          "routes": [
+            {
+              "name": "DeviceUpdate.DeviceTwinChanges",
+              "source": "TwinChangeEvents",
+              "condition": "(opType = 'updateTwin' OR opType = 'replaceTwin') AND IS_DEFINED($body.tags.ADUGroup)",
+              "endpointNames": [
+                "events"
+              ],
+              "isEnabled": true
+            },
+            {
+              "name": "DeviceUpdate.DigitalTwinChanges",
+              "source": "DigitalTwinChangeEvents",
+              "condition": "true",
+              "endpointNames": [
+                "events"
+              ],
+              "isEnabled": true
+            },
+            {
+              "name": "DeviceUpdate.DeviceLifeCycle",
+              "source": "DeviceLifecycleEvents",
+              "condition": "opType = 'deleteDeviceIdentity' OR opType = 'deleteModuleIdentity'",
+              "endpointNames": [
+                "events"
+              ],
+              "isEnabled": true
+            }
+          ],
+          "fallbackRoute": {
+            "name": "$fallback",
+            "source": "DeviceMessages",
+            "condition": "true",
+            "endpointNames": [
+              "events"
+            ],
+            "isEnabled": true
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Devices/IotHubs/eventHubEndpoints/ConsumerGroups",
+      "apiVersion": "2021-03-31",
+      "name": "[format('{0}/events/{1}', parameters('iotHubName'), variables('consumerGroupName'))]",
+      "properties": {
+        "name": "[variables('consumerGroupName')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DeviceUpdate/accounts",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[parameters('accountName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.DeviceUpdate/accounts/instances",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[format('{0}/{1}', parameters('accountName'), parameters('instanceName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "iotHubs": [
+          {
+            "resourceId": "[variables('iotHubResourceId')]",
+            "ioTHubConnectionString": "[format('HostName={0};SharedAccessKeyName={1};SharedAccessKey={2}', reference(variables('iotHubResourceId'), '2021-03-31').hostName, variables('iotHubKeyName'), listkeys(variables('iotHubResourceId'), '2021-03-31').value[variables('iotHubKeyIndex')].primaryKey)]",
+            "eventHubConnectionString": "[format('Endpoint={0};SharedAccessKeyName={1};SharedAccessKey={2};EntityPath={3}', reference(variables('iotHubResourceId'), '2021-03-31').eventHubEndpoints.events.endpoint, variables('iotHubKeyName'), listKeys(variables('iotHubResourceId'), '2021-03-31').value[variables('iotHubKeyIndex')].primaryKey, reference(variables('iotHubResourceId'), '2021-03-31').eventHubEndpoints.events.path)]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DeviceUpdate/accounts', parameters('accountName'))]",
+        "[resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName'))]"
+      ]
+    }
+  ]
+}

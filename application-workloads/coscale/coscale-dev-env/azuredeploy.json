@@ -2,6 +2,25 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the VM."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D8s_v3",
+      "metadata": {
+        "description": "Size of the VM."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username of the administrator of the VM."
+      }
+    },
     "coscaleKey": {
       "type": "securestring",
       "metadata": {
@@ -25,7 +44,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/coscale/coscale-dev-env/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -43,34 +62,20 @@
     }
   },
   "variables": {
-    "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'stg')]",
-    "vmStorageAccountContainerName": "vdh",
     "publicDnsName": "[concat('coscale-', uniquestring(resourceGroup().id))]",
-    "vmSize": "Standard_DS4_v2",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-    "vmName": "coscale",
     "nicName": "coscaleNic",
     "networkSecurityGroupName": "coscaleNSG",
     "publicIPAddressName": "coscalePublicIP",
-    "vmUser": "cs",
     "vmPublicKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCkbtWpHEyZYJ+Eyl+jFVUYOH+YBqGAAvyl9oJRzWieJlDp9PucYhbtlXTm7VhlSZvFi7MtcJoxzlQqk1FoNsUPtPyrCtVz8uEHS4FZiuOhb1UFLMayInfXWUWzBt0EEbELlgipRpqGgsi+pn3P07C+8VcBXhAPpMn7Y3qb3txlr7tCCowk8XbXE+MFwfLMXqHavgzIcI++6zECQoFCjb1ktpiAPcP/HkzNDJ2r3tAWyJWOMs1GH3f67corKaKh54LCmQRJS1FAUEnb9da4Xn+Tgx16f42aBF4gY5CEmg2NZ4tvbgE7hXKxJY0TEBTQ1zjUgv92gXOuGcRgu+XM8fut CoScaleAzure",
     "virtualNetworkName": "coscaleVNET",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('newStorageAccountName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "Premium_LRS"
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -82,7 +87,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -103,7 +108,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
@@ -152,14 +157,14 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -182,24 +187,23 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
+      "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "osProfile": {
-          "computerName": "[variables('vmName')]",
-          "adminUsername": "[variables('vmUser')]",
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
-                  "path": "[concat('/home/', variables('vmUser'), '/.ssh/authorized_keys')]",
+                  "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
                   "keyData": "[variables('vmPublicKey')]"
                 }
               ]
@@ -207,7 +211,7 @@
           }
         },
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -217,13 +221,13 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'), '_OSDisk')]",
+            "name": "[concat(parameters('vmName'), '_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "[concat(variables('vmName'), '_DataDisk')]",
+              "name": "[concat(parameters('vmName'), '_DataDisk')]",
               "diskSizeGB": 512,
               "lun": 0,
               "caching": "ReadOnly",
@@ -242,11 +246,11 @@
       "resources": [
         {
           "type": "extensions",
-          "name": "[concat(variables('vmName'),'-install')]",
-          "apiVersion": "2015-06-15",
+          "name": "[concat(parameters('vmName'),'-install')]",
+          "apiVersion": "2020-12-01",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
           ],
           "properties": {
             "publisher": "Microsoft.Azure.Extensions",
@@ -255,12 +259,14 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(parameters('_artifactsLocation'), 'install.sh', parameters('_artifactsLocationSasToken'))]"
-              ],
-              "commandToExecute": "[concat('bash install.sh ', parameters('coscaleKey'), ' ', parameters('coscaleEmail'), ' ', parameters('coscalePassword'), ' ', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+                "[uri(parameters('_artifactsLocation'), concat('install.sh', parameters('_artifactsLocationSasToken')))]"
+              ]
+            },
+            "protectedSettings":{
+                "commandToExecute": "[concat('bash install.sh ', parameters('coscaleKey'), ' ', parameters('coscaleEmail'), ' ', parameters('coscalePassword'), ' ', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+              }
             }
-          }
-        }
+         }
       ]
     }
   ],
@@ -271,3 +277,4 @@
     }
   }
 }
+

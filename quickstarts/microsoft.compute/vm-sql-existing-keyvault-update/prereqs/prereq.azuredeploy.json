@@ -1,0 +1,333 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "virtualMachineName": {
+        "type": "string",
+        "metadata": {
+          "description": "SQL Server Virtual Machine Name"
+        }
+      },
+      "virtualMachineSize": {
+        "type": "string",
+        "metadata": {
+          "description": "SQL Server Virtual Machine Size"
+        },
+        "defaultValue": "Standard_D2s_v3"
+      },
+      "adminUsername": {
+        "type": "string",
+        "metadata": {
+          "description": "SQL Server Virtual Machine Administrator User Name"
+        }
+      },
+      "adminPassword": {
+        "type": "securestring",
+        "metadata": {
+          "description": "SQL Server Virtual Machine Administrator Password"
+        }
+      },
+      "virtualNetworkName": {
+        "type": "string",
+        "metadata": {
+          "description": "SQL Server Virtual Machine Virtual Network Name"
+        }
+      },
+      "networkInterfaceName": {
+        "type": "string",
+        "metadata": {
+          "description": "SQL Server Virtual Machine Network Interface Name"
+        }
+      },
+      "networkSecurityGroupName": {
+        "type": "string",
+        "metadata": {
+          "description": "SQL Server Virtual Machine Network Security Group Name"
+        }
+      },
+      "addressPrefix": {
+        "type": "string",
+        "metadata": {
+          "description": "SQL Server Virtual Machine Subnet Name"
+        },
+        "defaultValue": "10.0.0.0/16"
+      },
+      "subnetName": {
+        "type": "string",
+        "metadata": {
+          "description": "SQL Server Virtual Machine Subnet Name"
+        },
+        "defaultValue": "default"
+      },
+      "subnetPrefix": {
+        "type": "string",
+        "metadata": {
+          "description": "SQL Server Virtual Machine Subnet Name"
+        },
+        "defaultValue": "10.0.0.0/24"
+      },
+      "publicIpAddressName": {
+        "type": "string",
+        "metadata": {
+          "description": "SQL Server Virtual Machine Public IP Address Name"
+        }
+      },
+      "publicIpAddressType": {
+        "type": "string",
+        "metadata": {
+          "description": "SQL Server Virtual Machine Public IP Address Type"
+        },
+        "defaultValue": "Dynamic"
+      },
+      "vaultName": {
+        "type": "string",
+        "defaultValue": "[concat('keyvault-', uniqueString(resourceGroup().id))]",
+        "metadata": {
+          "description": "Specifies the name of the KeyVault, this value must be globally unique."
+        }
+      },
+      "accessPolicies": {
+        "type": "array",
+        "metadata": {
+          "description": "Access policies of the Key Vault."
+        }
+      },
+      "tenantId": {
+        "type": "string",
+        "metadata": {
+          "description": "Tenant ID for the Key Vault."
+        }
+      },
+      "storageAccountType": {
+        "type": "string",
+        "metadata": {
+          "description": "SQL Server Virtual Machine Storage Account Type"
+        },
+        "allowedValues": [
+          "Premium_LRS",
+          "Standard_LRS"
+        ],
+        "defaultValue": "Premium_LRS"
+      },
+      "location": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "Location for all resources."
+        }
+      }
+    },
+    "variables": {
+      "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'),  parameters('subnetName'))]"
+    },
+    "resources": [
+{
+        "name": "vault-prereq",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2020-10-01",
+        "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/modules/Microsoft.KeyVault/vaults/1.0/azuredeploy.json",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "accessPolicies": {
+              "value": "[parameters('accessPolicies')]"
+            },
+            "vaultName": {
+              "value": "[parameters('vaultName')]"
+            },
+            "location": {
+              "value": "[parameters('location')]"
+            },
+            "enabledForDeployment": {
+              "value": true
+            },
+            "enabledForDiskEncryption": {
+              "value": true
+            },
+            "enabledForTemplateDeployment": {
+              "value": true
+            },
+            "tenantId": {
+              "value": "[parameters('tenantId')]"
+            }
+          }
+        }
+      },
+      {
+        "name": "[parameters('virtualMachineName')]",
+        "type": "Microsoft.Compute/virtualMachines",
+        "apiVersion": "2020-12-01",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+        ],
+        "properties": {
+          "osProfile": {
+            "computerName": "[parameters('virtualMachineName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]",
+            "windowsConfiguration": {
+              "provisionVmAgent": true
+            }
+          },
+          "hardwareProfile": {
+            "vmSize": "[parameters('virtualMachineSize')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "MicrosoftSQLServer",
+              "offer": "sql2014sp3-ws2012r2",
+              "sku": "Enterprise",
+              "version": "latest"
+            },
+            "osDisk": {
+              "name": "[concat(parameters('virtualMachineName'), '_OSDisk')]",
+              "createOption": "FromImage",
+              "managedDisk": {
+                "storageAccountType": "[parameters('storageAccountType')]"
+              }
+            },
+            "dataDisks": [
+              {
+                "name": "[concat(parameters('virtualMachineName'), '_DataDisk-1')]",
+                "createOption": "Empty",
+                "lun": 0,
+                "diskSizeGB": 1023,
+                "caching": "ReadOnly"
+              },
+              {
+                "name": "[concat(parameters('virtualMachineName'), '_DataDisk-2')]",
+                "createOption": "Empty",
+                "lun": 1,
+                "diskSizeGB": 1023,
+                "caching": "ReadOnly"
+              }
+            ]
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "[parameters('virtualNetworkName')]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2020-11-01",
+        "location": "[parameters('location')]",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "[parameters('addressPrefix')]"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "[parameters('subnetName')]",
+              "properties": {
+                "addressPrefix": "[parameters('subnetPrefix')]"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "[parameters('networkInterfaceName')]",
+        "type": "Microsoft.Network/networkInterfaces",
+        "apiVersion": "2020-11-01",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+          "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]",
+          "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+        ],
+        "properties": {
+          "ipConfigurations": [
+            {
+              "name": "ipconfig1",
+              "properties": {
+                "subnet": {
+                  "id": "[variables('subnetRef')]"
+                },
+                "privateIPAllocationMethod": "Dynamic",
+                "publicIpAddress": {
+                  "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+                }
+              }
+            }
+          ],
+          "networkSecurityGroup": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+          }
+        }
+      },
+      {
+        "name": "[parameters('publicIpAddressName')]",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "apiVersion": "2020-11-01",
+        "location": "[parameters('location')]",
+        "sku":{
+          "name":"Basic"
+        },
+        "properties": {
+          "publicIPAllocationMethod": "[parameters('publicIpAddressType')]"
+        }
+      },
+      {
+        "name": "[parameters('networkSecurityGroupName')]",
+        "type": "Microsoft.Network/networkSecurityGroups",
+        "apiVersion": "2020-11-01",
+        "location": "[parameters('location')]",
+        "properties": {
+          "securityRules": [
+            {
+              "name": "default-allow-rdp",
+              "properties": {
+                "priority": 1000,
+                "sourceAddressPrefix": "*",
+                "protocol": "Tcp",
+                "destinationPortRange": "3389",
+                "access": "Allow",
+                "direction": "inbound",
+                "sourcePortRange": "*",
+                "destinationAddressPrefix": "*"
+              }
+            },
+            {
+              "name": "default-allow-sql",
+              "properties": {
+                "priority": 1500,
+                "sourceAddressPrefix": "*",
+                "protocol": "Tcp",
+                "destinationPortRange": "1433",
+                "access": "Allow",
+                "direction": "inbound",
+                "sourcePortRange": "*",
+                "destinationAddressPrefix": "*"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "outputs": {
+      "vmName": {
+        "type": "string",
+        "value": "[parameters('virtualMachineName')]"
+      },
+      "outKeyVaultName": {
+        "type": "string",
+        "value": "[parameters('vaultName')]"
+      },
+      "outKeyVaultResourceGroupName": {
+        "type": "string",
+        "value": "[resourceGroup().name]"
+      }
+    }
+  }

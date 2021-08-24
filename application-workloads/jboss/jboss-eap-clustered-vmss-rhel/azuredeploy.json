@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -35,11 +35,11 @@
     },
     "eapOnRHELVersion": {
       "type": "string",
-      "defaultValue": "JBoss-EAP7.2-on-RHEL8.0",
+      "defaultValue": "JBoss-EAP7.3-on-RHEL8.4",
       "allowedValues": [
         "JBoss-EAP7.2-on-RHEL7.7",
         "JBoss-EAP7.2-on-RHEL8.0",
-        "JBoss-EAP7.3-on-RHEL8.0"
+        "JBoss-EAP7.3-on-RHEL8.4"
       ],
       "metadata": {
         "description": "Version of EAP on RHEL"
@@ -99,7 +99,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated"
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/jboss/jboss-eap-clustered-vmss-rhel/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -115,8 +115,7 @@
         "Standard_LRS",
         "Standard_ZRS",
         "Standard_GRS",
-        "Standard_RAGRS",
-        "Premium_LRS"
+        "Standard_RAGRS"
       ],
       "metadata": {
         "description": "Select the Replication Strategy for the Storage account"
@@ -140,11 +139,11 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_DS2_v2",
+      "defaultValue": "Standard_D2s_v3",
       "allowedValues": [
-        "Standard_DS2_v2",
-        "Standard_DS3_v2",
-        "Standard_DS4_v2",
+        "Standard_D2s_v3",
+        "Standard_D4s_v3",
+        "Standard_D8s_v3",
         "Standard_E2S_v3",
         "Standard_E4S_v3",
         "Standard_E8S_v3",
@@ -190,12 +189,12 @@
       "BYOS": {
         "JBoss-EAP7.2-on-RHEL7.7": "rhel-lvm77",
         "JBoss-EAP7.2-on-RHEL8.0": "rhel-lvm8",
-        "JBoss-EAP7.3-on-RHEL8.0": "rhel-lvm8"
+        "JBoss-EAP7.3-on-RHEL8.4": "rhel-lvm84"
       },
       "PAYG": {
         "JBoss-EAP7.2-on-RHEL7.7": "7.7",
         "JBoss-EAP7.2-on-RHEL8.0": "8",
-        "JBoss-EAP7.3-on-RHEL8.0": "8"
+        "JBoss-EAP7.3-on-RHEL8.4": "8_4"
       }
     },
     "imageSku": "[variables('skuMap')[parameters('rhelOSLicenseType')][parameters('eapOnRHELVersion')]]",
@@ -218,7 +217,7 @@
     "guidMap": {
       "JBoss-EAP7.2-on-RHEL7.7": "pid-92abde63-f331-4e50-96ca-e0e5c2339caa",
       "JBoss-EAP7.2-on-RHEL8.0": "pid-4d9c78a6-451b-467d-a6da-d86c71c4a6c7",
-      "JBoss-EAP7.3-on-RHEL8.0": "pid-8c47eaba-ad48-4d3b-b2f8-9f69a44b57f5"
+      "JBoss-EAP7.3-on-RHEL8.4": "pid-8c47eaba-ad48-4d3b-b2f8-9f69a44b57f5"
     },
     "guid": "[variables('guidMap')[parameters('eapOnRHELVersion')]]",
     "storageAccountName": "[concat('jbosstrg', uniqueString(resourceGroup().id))]",
@@ -229,7 +228,7 @@
   "resources": [
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2021-04-01",
       "name": "[variables('guid')]",
       "properties": {
         "mode": "Incremental",
@@ -242,7 +241,7 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2021-02-01",
       "name": "[variables('bootStorageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -255,7 +254,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2019-11-01",
+      "apiVersion": "2020-07-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -279,7 +278,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "apiVersion": "2019-07-01",
+      "apiVersion": "2020-12-01",
       "name": "[variables('vmssInstanceName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -349,7 +348,7 @@
           "diagnosticsProfile": {
             "bootDiagnostics": {
               "enabled": true,
-              "storageUri": "[reference(variables('bootStorageAccountName'), '2019-06-01').primaryEndpoints['blob']]"
+              "storageUri": "[reference(variables('bootStorageAccountName'), '2021-02-01').primaryEndpoints['blob']]"
             }
           },
           "extensionProfile": {
@@ -367,7 +366,7 @@
                     ]
                   },
                   "protectedSettings": {
-                    "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} {1} ''{2}'' {3} ''{4}'' {5} {6} {7} {8} {9} {10} {11}', variables('scriptArgs'), parameters('jbossEAPUserName'), parameters('jbossEAPPassword'), parameters('rhsmUserName'), parameters('rhsmPassword'), parameters('rhelOSLicenseType'), parameters('rhsmPoolEAP'), variables('storageAccountName'), variables('containerName'), base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-04-01').keys[0].value), parameters('eapOnRHELVersion'), parameters('rhsmPoolRHEL'))]"
+                    "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} {1} ''{2}'' {3} ''{4}'' {5} {6} {7} {8} {9} {10} {11}', variables('scriptArgs'), parameters('jbossEAPUserName'), parameters('jbossEAPPassword'), parameters('rhsmUserName'), parameters('rhsmPassword'), parameters('rhelOSLicenseType'), parameters('rhsmPoolEAP'), variables('storageAccountName'), variables('containerName'), base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-02-01').keys[0].value), parameters('eapOnRHELVersion'), parameters('rhsmPoolRHEL'))]"
                   }
                 }
               }
@@ -378,7 +377,7 @@
     },
     {
       "type": "Microsoft.Network/loadBalancers",
-      "apiVersion": "2019-11-01",
+      "apiVersion": "2020-07-01",
       "name": "[variables('loadBalancersName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -460,7 +459,7 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2021-02-01",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -473,7 +472,7 @@
       "resources": [
         {
           "type": "blobServices/containers",
-          "apiVersion": "2019-06-01",
+          "apiVersion": "2021-02-01",
           "name": "[concat('default/', variables('containerName'))]",
           "dependsOn": [
             "[variables('storageAccountName')]"

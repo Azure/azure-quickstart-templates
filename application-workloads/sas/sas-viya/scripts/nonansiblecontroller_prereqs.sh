@@ -24,6 +24,7 @@ CIFS_ANSIBLE_KEYS="${CIFS_MOUNT_POINT}/setup/ansible_key"
 #CIFS_ANSIBLE_GROUPS_DIR="${CIFS_MOUNT_POINT}/setup/ansible/groups"
 cifs_server_fqdn="${azure_storage_account}.file.core.windows.net"
 
+yum update -y --disablerepo='*' --enablerepo='*microsoft*'
 yum install -y yum-utils
 # on 4/17, we started having intermittent issues with this repository being present for updates, so configuring to skip
 yum-config-manager --save --setopt=rhui-microsoft-azure-rhel7-eus.skip_if_unavailable=true
