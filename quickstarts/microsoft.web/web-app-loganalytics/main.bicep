@@ -103,12 +103,8 @@ resource appInsights 'microsoft.insights/components@2020-02-02-preview' = {
   }
   properties: {
     Application_Type: 'web'
-    ApplicationId: appInsightName
     WorkspaceResourceId: logAnalyticsWorkspace.id
   }
-  dependsOn: [
-    appService
-  ]
 }
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' = {
