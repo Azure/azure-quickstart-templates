@@ -1,4 +1,4 @@
-# TODO: Create ReadMe
+# Azure Function App with an HTTP-triggered function 
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-http-trigger/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-http-trigger/PublicDeployment.svg)
