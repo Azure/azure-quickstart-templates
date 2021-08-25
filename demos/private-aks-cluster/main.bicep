@@ -54,7 +54,7 @@ param aksClusterLoadBalancerSku string = 'standard'
 param aksClusterSkuTier string = 'Paid'
 
 @description('Specifies the version of Kubernetes specified when creating the managed cluster.')
-param aksClusterKubernetesVersion string = '1.18.14'
+param aksClusterKubernetesVersion string = '1.21.*'
 
 @description('Specifies the administrator username of Linux virtual machines.')
 param aksClusterAdminUsername string
