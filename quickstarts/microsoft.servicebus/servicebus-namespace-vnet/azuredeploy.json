@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.412.5873",
+      "templateHash": "16916914025867978966"
+    }
+  },
   "parameters": {
     "serviceBusNamespaceName": {
       "type": "string",
@@ -28,58 +35,59 @@
       }
     }
   },
-  "variables": {
-    "namespaceVirtualNetworkRuleName": "[concat(parameters('serviceBusNamespaceName'), concat('/', parameters('vnetRuleName')))]"
-  },
+  "functions": [],
   "resources": [
     {
-      "apiVersion": "2018-01-01-preview",
-      "name": "[parameters('serviceBusNamespaceName')]",
       "type": "Microsoft.ServiceBus/namespaces",
+      "apiVersion": "2017-04-01",
+      "name": "[parameters('serviceBusNamespaceName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Premium",
         "tier": "Premium"
       },
-      "properties": { }
+      "properties": {}
     },
     {
-      "apiVersion": "2020-07-01",
-      "name": "[parameters('vnetRuleName')]",
-      "location": "[parameters('location')]",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-02-01",
+      "name": "[format('{0}-vn', parameters('vnetRuleName'))]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
             "10.0.0.0/23"
           ]
-        },
-        "subnets": [
-          {
-            "name": "[parameters('subnetName')]",
-            "properties": {
-              "addressPrefix": "10.0.0.0/23",
-              "serviceEndpoints": [
-                {
-                  "service": "Microsoft.ServiceBus"
-                }
-              ]
-            }
-          }
-        ]
+        }
       }
     },
     {
-      "apiVersion": "2018-01-01-preview",
-      "name": "[variables('namespaceVirtualNetworkRuleName')]",
-      "type": "Microsoft.ServiceBus/namespaces/VirtualNetworkRules",
-      "dependsOn": [
-        "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespaceName'))]"
-      ],
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2021-02-01",
+      "name": "[format('{0}/{1}', format('{0}-vn', parameters('vnetRuleName')), parameters('subnetName'))]",
       "properties": {
-        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('vnetRuleName'),  parameters('subnetName'))]"
-      }
+        "addressPrefix": "10.0.0.0/23",
+        "serviceEndpoints": [
+          {
+            "service": "Microsoft.ServiceBus"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vn', parameters('vnetRuleName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ServiceBus/namespaces/virtualnetworkrules",
+      "apiVersion": "2018-01-01-preview",
+      "name": "[format('{0}/{1}', parameters('serviceBusNamespaceName'), parameters('vnetRuleName'))]",
+      "properties": {
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('{0}-vn', parameters('vnetRuleName')), parameters('subnetName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespaceName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('{0}-vn', parameters('vnetRuleName')), parameters('subnetName'))]"
+      ]
     }
-  ],
-  "outputs": { }
+  ]
 }
