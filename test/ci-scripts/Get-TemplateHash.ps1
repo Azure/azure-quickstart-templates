@@ -49,7 +49,8 @@ try {
     $templateHash = $response.templateHash
 }
 catch {
-    Write-Host $response
+    Write-Warning $Error[0]
+    Write-Warning ($response ? $response : "(no response)")
     Write-Error "Failed to get hash for: $templateFilePath"
 }
 
