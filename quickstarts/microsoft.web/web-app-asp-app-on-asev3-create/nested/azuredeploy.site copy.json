@@ -1,0 +1,157 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appNamePrefix": {
+      "type": "string",
+      "defaultValue": "app",
+      "metadata": {
+        "description": "Required. App service prefix."
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Required. App service location."
+      }
+    },
+    "hostingPlanNamePrefix": {
+      "type": "string",
+      "defaultValue": "asev3-asp",
+      "metadata": {
+        "description": "Required. App service plan prefix."
+      }
+    },
+    "hostingEnvironmentProfileName": {
+      "type": "string",
+      "defaultValue": "asev3",
+      "metadata": {
+        "description": "Required. App service plan hosting environment profile name (ASEv3 name)."
+      }
+    },
+    "alwaysOn": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Required. Enable Always-on of App service."
+      }
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "IsolatedV2",
+      "metadata": {
+        "description": "Required. App service plan sku."
+      }
+    },
+    "skuCode": {
+      "type": "string",
+      "defaultValue": "I1V2",
+      "metadata": {
+        "description": "Required. App service plan sku code."
+      }
+    },
+    "workerSize": {
+      "type": "string",
+      "defaultValue": "6",
+      "metadata": {
+        "description": "Required. App service plan worker size."
+      }
+    },
+    "workerSizeId": {
+      "type": "string",
+      "defaultValue": "6",
+      "metadata": {
+        "description": "Required. App service plan worker size id."
+      }
+    },
+    "numberOfWorkers": {
+      "type": "string",
+      "defaultValue": "1",
+      "metadata": {
+        "description": "Required. Number of App service plan workers."
+      }
+    },
+    "currentStack": {
+      "type": "string",
+      "defaultValue": "dotnet",
+      "metadata": {
+        "description": "Required. Current stack of App service."
+      }
+    },
+    "phpVersion": {
+      "type": "string",
+      "defaultValue": "OFF",
+      "metadata": {
+        "description": "Required. Enable php of App service."
+      }
+    },
+    "netFrameworkVersion": {
+      "type": "string",
+      "defaultValue": "v5.0",
+      "metadata": {
+        "description": "Required. .NET Framework version of App service."
+      }
+    },
+    "timeStamp": {
+      "type": "string",
+      "defaultValue": "[utcNow()]",
+      "metadata": {
+        "description": "Optional. It is only for unique string generation base on timestamp."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "uniStr": "[substring(uniqueString(resourceGroup().id, parameters('timeStamp')), 0, 4)]",
+    "appName": "[format('{0}-{1}', parameters('appNamePrefix'), variables('uniStr'))]",
+    "hostingPlanName": "[format('{0}-{1}', parameters('hostingPlanNamePrefix'), variables('uniStr'))]",
+    "hostingEnvironmentProfile": {
+      "id": "[resourceId('Microsoft.Web/hostingEnvironments', parameters('hostingEnvironmentProfileName'))]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2021-01-15",
+      "name": "[variables('appName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "name": "[variables('appName')]",
+        "siteConfig": {
+          "metadata": [
+            {
+              "name": "CURRENT_STACK",
+              "value": "[parameters('currentStack')]"
+            }
+          ],
+          "phpVersion": "[parameters('phpVersion')]",
+          "netFrameworkVersion": "[parameters('netFrameworkVersion')]",
+          "alwaysOn": "[parameters('alwaysOn')]"
+        },
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "clientAffinityEnabled": true,
+        "hostingEnvironmentProfile": "[variables('hostingEnvironmentProfile')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2021-01-15",
+      "name": "[variables('hostingPlanName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "name": "[variables('hostingPlanName')]",
+        "workerSize": "[parameters('workerSize')]",
+        "workerSizeId": "[parameters('workerSizeId')]",
+        "numberOfWorkers": "[parameters('numberOfWorkers')]",
+        "hostingEnvironmentProfile": "[variables('hostingEnvironmentProfile')]"
+      },
+      "sku": {
+        "Tier": "[parameters('sku')]",
+        "Name": "[parameters('skuCode')]"
+      }
+    }
+  ]
+}

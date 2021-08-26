@@ -18,19 +18,22 @@
 
 [![](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fweb-app-asp-app-on-asev3-create%2Fazuredeploy.json)
 
-
-
 This template deploys an **App Service Environment v3 (ASEv3).** 
 
 ## Overview and deployed resources
 
-This solution provides ARM templates or Bicep to create the following Azure resource templates:
+This solution provides 2 scenarios to create ASEv3 with ARM or Bicep templates:
 
-- A Network Security Group
-- A Virtual Network include a Subnet
-- An App Service Environment v3
-- An App Service Plan(*)
-- An App Service (*)
+- **Scenario 1**: Create a new vNET, subnet, NSG and ASEv3, this solution will create the following Azure resources:
+  - A Network Security Group
+  - A Virtual Network include a Subnet
+  - An App Service Environment v3
+  - An App Service Plan(*)
+  - An App Service (*)
+- **Scenario 2**: To use existing vNET and subnet to create an ASEv3, this solution will create the following Azure resources:
+  - An App Service Environment v3
+  - An App Service Plan(*)
+  - An App Service (*)
 
 (*) Currently, the App Service Plan and App Service need to be deployed separately.
 
@@ -46,12 +49,13 @@ This template will create a Virtual Network, and a /24 Subnet will be created fo
 
 In the HostingEnvironments section of this template, an App Service Environments will be created with following properties**:**
 
-- **aseNamePrefix (String)**: Required. In this sample template, you will need to provide an ASEv3 name prefix, will plus a 4-digit unique string as ASEv3 name.
-
-- **dedicatedHostCount (String)**: Required. Configure dedicated host count (Value : **"0"** means no dedicated host will be deployed).
+- **aseNamePrefix (string)**: Required. In this sample template, you will need to provide an ASEv3 name prefix, will plus a 4-digit unique string as ASEv3 name.
+- **dedicatedHostCount (string)**: Required. Configure dedicated host count (Value : **"0"** means no dedicated host will be deployed).
 - **zoneRedundant (bool)**: Required. Configure zone redundant (Value: **false** means no zone redundant will be deployed).
 - **internalLoadBalancingMode (int)**: Required. Load balancer mode: **0** - external load balancer, **3** - internal load balancer for ASEv3.
-- **createPrivateDNS (bool)**: Optional. Only when this properties set to **true** and **internalLoadBalancingMode** set to **3** will create Private DNS zone.
+- **createPrivateDNS (bool)**: Optional, a custom defined parameter. Only when this properties set to **true** and **internalLoadBalancingMode** set to **3**. It will create a Private DNS zone.
+- **useExistingVnetandSubnet (bool)**: Required, a custom defined parameter. When set to **true**, will deploy to existing vnet and subnet.
+- **vNetResourceGroupName (string)**: Optional, a custom defined parameter. Only when the virtual network resides in different resource group.
 
 ### Microsoft.Web/serverfarms
 
