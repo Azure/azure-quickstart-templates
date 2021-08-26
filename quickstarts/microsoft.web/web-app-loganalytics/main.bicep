@@ -93,7 +93,7 @@ resource appServiceSiteExtension 'Microsoft.Web/sites/config@2020-06-01' = {
   }
 }
 
-resource appInsights 'microsoft.insights/components@2020-02-02-preview' = {
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: appInsightName
   location: location
   kind: 'string'
