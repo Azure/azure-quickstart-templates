@@ -18,10 +18,10 @@ $repoRoot = Resolve-Path "$PSScriptRoot/../.."
 # CONSIDER: Automatically populate by running git branch -r
 $testBranches = @( `
     "bicep-json-doesnt-match", `
-    "bicep-needs-fixing", `
     "bicep-success", `
     "bicep-warnings", `
-    "bicep-with-prereqs-success" `
+    "bicep-with-prereqs-success", `
+    # "keep/testdeployment/bicep-needs-auto-fix" - this is for testing the auto-fix Action in github
 )
 
 $yesAll = $false
