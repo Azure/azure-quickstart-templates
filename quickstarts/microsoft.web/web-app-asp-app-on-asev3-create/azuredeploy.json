@@ -1,7 +1,35 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "15396221692163919420"
+    }
+  },
   "parameters": {
+    "addUniqueSuffix": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Optional. Add unique suffix string to ASE name."
+      }
+    },
+    "useExistingVnetandSubnet": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Required. Use existing virtual network and subnet."
+      }
+    },
+    "vNetResourceGroupName": {
+      "type": "string",
+      "defaultValue": "rg-asev3-vnet",
+      "metadata": {
+        "description": "Required. Resource Group name of virtual network if using existing vnet and subnet."
+      }
+    },
     "virtualNetworkName": {
       "type": "string",
       "defaultValue": "vnet-asev3",
@@ -23,6 +51,13 @@
       ],
       "metadata": {
         "description": "Required. An Array of 1 or more IP Address Prefixes for the Virtual Network."
+      }
+    },
+    "subnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "172.19.0.0/24",
+      "metadata": {
+        "description": "Required. The subnet Name of ASEv3."
       }
     },
     "subnetName": {
@@ -123,14 +158,15 @@
   "functions": [],
   "variables": {
     "uniStr": "[substring(uniqueString(resourceGroup().id, parameters('timeStamp')), 0, 4)]",
-    "aseName": "[format('{0}-{1}', parameters('aseNamePrefix'), variables('uniStr'))]",
+    "aseName": "[if(parameters('addUniqueSuffix'), format('{0}-{1}', parameters('aseNamePrefix'), variables('uniStr')), parameters('aseNamePrefix'))]",
     "privateZoneName": "[format('{0}.appserviceenvironment.net', variables('aseName'))]",
-    "virtualNetworkId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-    "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+    "virtualNetworkId": "[if(parameters('useExistingVnetandSubnet'), resourceId(parameters('vNetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')), resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')))]",
+    "subnetId": "[if(parameters('useExistingVnetandSubnet'), resourceId(parameters('vNetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')), resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')))]",
     "aseNetworkConfiguration": "[format('{0}/configurations/networking', resourceId('Microsoft.Web/hostingEnvironments', variables('aseName')))]"
   },
   "resources": [
     {
+      "condition": "[not(parameters('useExistingVnetandSubnet'))]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2020-11-01",
       "name": "[parameters('networkSecurityGroupName')]",
@@ -162,6 +198,7 @@
       }
     },
     {
+      "condition": "[not(parameters('useExistingVnetandSubnet'))]",
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2020-11-01",
       "name": "[parameters('virtualNetworkName')]",
@@ -204,6 +241,7 @@
         }
       },
       "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vNetResourceGroupName')), 'Microsoft.Resources/deployments', format('{0}-subnet-delegation-{1}', parameters('subnetName'), variables('uniStr')))]",
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
       ]
     },
@@ -287,6 +325,83 @@
         "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]",
         "[resourceId('Microsoft.Network/privateDnsZones', variables('privateZoneName'))]"
       ]
+    },
+    {
+      "condition": "[parameters('useExistingVnetandSubnet')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "[format('{0}-subnet-delegation-{1}', parameters('subnetName'), variables('uniStr'))]",
+      "resourceGroup": "[parameters('vNetResourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "subnetAddressPrefix": {
+            "value": "[parameters('subnetAddressPrefix')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.613.9944",
+              "templateHash": "9427634945799662719"
+            }
+          },
+          "parameters": {
+            "virtualNetworkName": {
+              "type": "string",
+              "defaultValue": "vnet-asev3",
+              "metadata": {
+                "description": "Required. The Virtual Network (vNet) Name."
+              }
+            },
+            "subnetName": {
+              "type": "string",
+              "defaultValue": "snet-asev3",
+              "metadata": {
+                "description": "Required. The subnet Name of ASEv3."
+              }
+            },
+            "subnetAddressPrefix": {
+              "type": "string",
+              "defaultValue": "172.19.0.0/24",
+              "metadata": {
+                "description": "Required. The subnet Name of ASEv3."
+              }
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2020-11-01",
+              "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnetName'))]",
+              "properties": {
+                "addressPrefix": "[parameters('subnetAddressPrefix')]",
+                "delegations": [
+                  {
+                    "name": "Microsoft.Web.hostingEnvironments",
+                    "properties": {
+                      "serviceName": "Microsoft.Web/hostingEnvironments"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
     }
   ]
 }

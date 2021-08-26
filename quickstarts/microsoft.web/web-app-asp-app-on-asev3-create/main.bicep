@@ -1,3 +1,12 @@
+@description('Optional. Add unique suffix string to ASE name.')
+param addUniqueSuffix bool = true
+
+@description('Required. Use existing virtual network and subnet.')
+param useExistingVnetandSubnet bool = true
+
+@description('Required. Resource Group name of virtual network if using existing vnet and subnet.')
+param vNetResourceGroupName string = 'rg-asev3-vnet'
+
 @description('Required. The Virtual Network (vNet) Name.')
 param virtualNetworkName string = 'vnet-asev3'
 
@@ -10,6 +19,9 @@ param vNetAddressPrefixes array = [
 ]
 
 @description('Required. The subnet Name of ASEv3.')
+param subnetAddressPrefix string = '172.19.0.0/24'
+
+@description('Required. The subnet Name of ASEv3.')
 param subnetName string = 'snet-asev3-ilb'
 
 @description('Required. The subnet properties.')
@@ -20,7 +32,7 @@ param subnets array = [
     // @description('Required. Delegation name of the ASEv3 subnet.')
     delegations: [
       {
-        name: 'asev3'
+        name: 'Microsoft.Web.hostingEnvironments'
         properties: {
           serviceName: 'Microsoft.Web/hostingEnvironments'
         }
@@ -63,13 +75,13 @@ param timeStamp string = utcNow()
 
 // Variable definitions
 var uniStr = substring('${uniqueString(resourceGroup().id, timeStamp)}', 0, 4)
-var aseName = '${aseNamePrefix}-${uniStr}'
+var aseName = addUniqueSuffix ? '${aseNamePrefix}-${uniStr}' : aseNamePrefix
 var privateZoneName = '${aseName}.appserviceenvironment.net'
-var virtualNetworkId = resourceId('Microsoft.Network/virtualNetworks', virtualNetworkName)
-var subnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
+var virtualNetworkId = useExistingVnetandSubnet ? resourceId(vNetResourceGroupName, 'Microsoft.Network/virtualNetworks', virtualNetworkName) : resourceId('Microsoft.Network/virtualNetworks', virtualNetworkName)
+var subnetId =  useExistingVnetandSubnet ? resourceId(vNetResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName) : resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var aseNetworkConfiguration = '${asev3.id}/configurations/networking'
 
-resource networksecuritygroup 'Microsoft.Network/networkSecurityGroups@2020-11-01' = {
+resource networksecuritygroup 'Microsoft.Network/networkSecurityGroups@2020-11-01' = if (!useExistingVnetandSubnet) {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -80,14 +92,12 @@ resource networksecuritygroup 'Microsoft.Network/networkSecurityGroups@2020-11-0
         access: item.properties.access
         destinationAddressPrefix: ((item.properties.destinationAddressPrefix == '') ? json('null') : item.properties.destinationAddressPrefix)
         destinationAddressPrefixes: ((length(item.properties.destinationAddressPrefixes) == 0) ? json('null') : item.properties.destinationAddressPrefixes)
-        //destinationApplicationSecurityGroups: ((length(item.properties.destinationApplicationSecurityGroups) == 0) ? json('null') : concat(emptyArray, array(json('{{"id": "${resourceId('Microsoft.Network/applicationSecurityGroups', item.properties.destinationApplicationSecurityGroups[0].name)}","location": "${location}"}}'))))
         destinationPortRanges: ((length(item.properties.destinationPortRanges) == 0) ? json('null') : item.properties.destinationPortRanges)
         destinationPortRange: ((item.properties.destinationPortRange == '') ? json('null') : item.properties.destinationPortRange)
         direction: item.properties.direction
         priority: int(item.properties.priority)
         protocol: item.properties.protocol
         sourceAddressPrefix: ((item.properties.sourceAddressPrefix == '') ? json('null') : item.properties.sourceAddressPrefix)
-        //sourceApplicationSecurityGroups: ((length(item.properties.sourceApplicationSecurityGroups) == 0) ? json('null') : concat(emptyArray, array(json('{{"id": "${resourceId('Microsoft.Network/applicationSecurityGroups', item.properties.sourceApplicationSecurityGroups[0].name)}","location": "${location}"}}'))))
         sourcePortRanges: ((length(item.properties.sourcePortRanges) == 0) ? json('null') : item.properties.sourcePortRanges)
         sourcePortRange: item.properties.sourcePortRange
       }
@@ -95,23 +105,18 @@ resource networksecuritygroup 'Microsoft.Network/networkSecurityGroups@2020-11-0
   }
 }
 
-resource virtualnetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = {
+resource virtualnetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = if (!useExistingVnetandSubnet) {
   name: virtualNetworkName
   location: location
   properties: {
     addressSpace: {
       addressPrefixes: vNetAddressPrefixes
     }
-    //ddosProtectionPlan: ((!empty(ddosProtectionPlanId)) ? ddosProtectionPlan : json('null'))
-    //dhcpOptions: (empty(dnsServers) ? json('null') : varDnsServers)
-    //enableDdosProtection: (!empty(ddosProtectionPlanId))
     subnets: [for item in subnets: {
       name: item.name
       properties: {
         addressPrefix: item.addressPrefix
         networkSecurityGroup: (empty(item.networkSecurityGroupName) ? json('null') : json('{"id": "${resourceId('Microsoft.Network/networkSecurityGroups', item.networkSecurityGroupName)}"}'))
-        //routeTable: (empty(item.routeTableName) ? json('null') : json('{"id": "${resourceId('Microsoft.Network/routeTables', item.routeTableName)}"}'))
-        //serviceEndpoints: (empty(item.serviceEndpoints) ? json('null') : item.serviceEndpoints)
         delegations: item.delegations
       }
     }]
@@ -119,6 +124,16 @@ resource virtualnetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = {
   dependsOn: [
     networksecuritygroup
   ]
+}
+
+module subnet 'modules/subnet.bicep' = if (useExistingVnetandSubnet) {
+  name: '${subnetName}-subnet-delegation-${uniStr}'
+  scope: resourceGroup(vNetResourceGroupName)
+  params: {    
+    virtualNetworkName: virtualNetworkName
+    subnetName: subnetName
+    subnetAddressPrefix: subnetAddressPrefix
+  }
 }
 
 resource asev3 'Microsoft.Web/hostingEnvironments@2020-12-01' = {
@@ -136,6 +151,7 @@ resource asev3 'Microsoft.Web/hostingEnvironments@2020-12-01' = {
   }
   dependsOn: [
     virtualnetwork
+    subnet
   ]
 }
 
