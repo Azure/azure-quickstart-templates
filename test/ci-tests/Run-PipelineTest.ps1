@@ -21,17 +21,18 @@ $testBranches = @( `
     "bicep-success", `
     "bicep-warnings", `
     "bicep-errors", `
-    "bicep-with-prereqs-success", `
-    # "keep/testdeployment/bicep-needs-auto-fix" - this is for testing the auto-fix Action in github
+    "bicep-with-prereqs-success" `
 )
 
 $yesAll = $false
 foreach ($shortBranch in $TestBranches) {
+  write-warning $shortBranch
   $fullBranch = "keep/testdeployment/$shortBranch"
+  write-warning $fullBranch
   
   $yes = $false
   if (!$yesAll) {
-    $answer = Read-Host "Create a PR for $fullBranch? (Y/N/A)"
+    $answer = Read-Host "Create a PR for $($fullBranch)? (Y/N/A)"
     if ($answer -eq 'Y') {
       $yes = $true
     }
