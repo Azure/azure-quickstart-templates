@@ -78,7 +78,7 @@ var uniStr = substring('${uniqueString(resourceGroup().id, timeStamp)}', 0, 4)
 var aseName = addUniqueSuffix ? '${aseNamePrefix}-${uniStr}' : aseNamePrefix
 var virtualNetworkId = useExistingVnetandSubnet ? resourceId(vNetResourceGroupName, 'Microsoft.Network/virtualNetworks', virtualNetworkName) : resourceId('Microsoft.Network/virtualNetworks', virtualNetworkName)
 var subnetId =  useExistingVnetandSubnet ? resourceId(vNetResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName) : resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
-var privateDNSZoneName = '${aseName}.${asev3.properties.dnsSuffix}'
+var privateDNSZoneName = asev3.properties.dnsSuffix
 var aseNetworkConfiguration = '${asev3.id}/configurations/networking'
 
 resource networksecuritygroup 'Microsoft.Network/networkSecurityGroups@2020-11-01' = if (!useExistingVnetandSubnet) {
