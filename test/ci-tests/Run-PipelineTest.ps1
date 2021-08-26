@@ -20,6 +20,7 @@ $testBranches = @( `
     "bicep-json-doesnt-match", `
     "bicep-success", `
     "bicep-warnings", `
+    "bicep-errors", `
     "bicep-with-prereqs-success", `
     # "keep/testdeployment/bicep-needs-auto-fix" - this is for testing the auto-fix Action in github
 )
