@@ -76,7 +76,7 @@ module frontDoor 'modules/front-door.bicep' = {
   }
 }
 
-resource apiManagementService 'Microsoft.ApiManagement/service@2020-06-01-preview' existing = {
+resource apiManagementService 'Microsoft.ApiManagement/service@2020-12-01' existing = {
   name: apiManagementServiceName
 
   resource frontDoorIdNamedValue 'namedValues' = {
@@ -97,7 +97,7 @@ resource apiManagementService 'Microsoft.ApiManagement/service@2020-06-01-previe
       frontDoorIdNamedValue
     ]
     properties: {
-      value: '<policies><inbound><check-header name="X-Azure-FDID" failed-check-httpcode="403" failed-check-error-message="Invalid request." ignore-case="false"><value>{{${apiManagementFrontDoorIdNamedValueName}}}</value></check-header></inbound><backend><forward-request /></backend></policies>'
+      value: loadTextContent('api-management-policies/global.xml')
       format: 'xml'
     }
   }

@@ -25,6 +25,7 @@ if ! type -p ansible;  then
     sudo python get-pip.py
     pip install 'ansible==2.9.14'
 fi
+yum update -y --disablerepo='*' --enablerepo='*microsoft*'
 yum install -y yum-utils
 yum install -y java-1.8.0-openjdk
 
