@@ -169,10 +169,17 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sas-9.4m7-VA-MPP/",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "For a standard deployment, keep the default.  The https URL to the base of the deployment files in Microsoft Azure. If a SAS key is needed, please do not include the SAS key in the URL. Instead, add the part after and include the question mark to the _artifactsLocationSasToken variable. ex. https://(STORAGE_ACCOUNT)/(SHARE_NAME)/(SUBDIRECTORY_NAME)/"
       }
+    },
+    "jumpvmSize": {
+      "type": "string",
+      "defaultValue": "Standard_B2ms"
+    },
+    "primaryUserName": {
+      "type": "string"
     }
   },
   "variables": {
@@ -212,23 +219,17 @@
     "midtierEndpoint": "[concat(variables('storageName'), '-midtierEndpoint')]",
     "vaEndpoint": "[concat(variables('storageName'), '-vaEndpoint')]",
     "azureFileShare": "sasshare",
-    "primaryUserName": "AzureUser",
     "location": "[parameters('location')]",
     "proximity": "[parameters('Proximity PlacementGroup Name')]",
     "useNewNetwork": "[equals(parameters('Use a New or Existing Virtual Network'), 'New')]",
     "adminIngressLocation": "[parameters('Admin Ingress Location')]",
     "webIngressLocation": "[parameters('Web Ingress Location')]",
     "vnetName": "[parameters('Virtual Network Name')]",
-    "artifactsLocation": "[parameters('_artifactsLocation')]",
+    "artifactsLocation": "[replace(parameters('_artifactsLocation'),concat('azuredeploy.json',parameters('_artifactsLocationSasToken')),'')]",
     "sasToken": "[parameters('_artifactsLocationSasToken')]",
-    "metadataSize": "[parameters('Metadata VM Size')]",
     "metadataCount": 1,
     "sshKey": "[parameters('ssh Key for VM Access')]",
-    "jumpvmSize": "Standard_B2ms",
-    "vaControllerSize": "[parameters('Visual Analytics Controller Size')]",
-    "vaWorkerSize": "[parameters('Visual Analytics Worker Size')]",
     "vaWorkerCount": "[parameters('Visual Analytics Worker Count')]",
-    "midtierSize": "[parameters('Mid-tier VM Size')]",
     "midtierCount": "[parameters('Mid-Tier VM Count')]",
     "sasFolder": "/opt/sas",
     "sasDepot": "[parameters('SAS Depot Location')]",
@@ -240,11 +241,11 @@
     "azurePassword": "[base64(parameters('Azure Administration Password'))]",
     "alternateDomain": "[concat('sas94-', variables('resourceGroupUniqueString'), '-', subscription().subscriptionId)]",
     "domainActual": "[substring(variables('alternateDomain'),0,if(lessOrEquals(length(variables('alternateDomain')),25), length(variables('alternateDomain')), 25))]",
-    "extensionScriptURI": "[concat(variables('artifactsLocation'), 'subtemplates/run_script.json', variables('sasToken'))]"
+    "extensionScriptURI": "[uri(variables('artifactsLocation'), concat('subtemplates/run_script.json', variables('sasToken')))]"
   },
   "resources": [
     {
-      "apiVersion": "2019-07-01",
+      "apiVersion": "2020-06-01",
       "type": "Microsoft.Compute/proximityPlacementGroups",
       "name": "[variables('proximity')]",
       "properties": {
@@ -260,7 +261,7 @@
       },
       "kind": "FileStorage",
       "name": "[variables('storageName')]",
-      "apiVersion": "2020-08-01-preview",
+      "apiVersion": "2021-01-01",
       "location": "[variables('location')]",
       "properties": {
         "allowBlobPublicAccess": false,
@@ -287,7 +288,7 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts/fileServices",
-      "apiVersion": "2020-08-01-preview",
+      "apiVersion": "2021-01-01",
       "name": "[concat(variables('storageName'), '/default')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
@@ -806,7 +807,7 @@
               }
             }
           ],
-        "enableAcceleratedNetworking": "[if(or(startsWith(variables('metadataSize'),'Standard_B'), equals(variables('metadataSize'), 'Standard_D2s_v3')), 'false', 'true')]",
+        "enableAcceleratedNetworking": "[if(or(startsWith(parameters('Metadata VM Size'),'Standard_B'), equals(parameters('Metadata VM Size'), 'Standard_D2s_v3')), 'false', 'true')]",
         "enableIPForwarding": false
       },
       "copy": {
@@ -836,7 +837,7 @@
             }
           }
         ],
-        "enableAcceleratedNetworking": "[if(or(startsWith(variables('vaControllerSize'),'Standard_B'), equals(variables('vaControllerSize'), 'Standard_D2s_v3')), 'false', 'true')]",
+        "enableAcceleratedNetworking": "[if(or(startsWith(parameters('Visual Analytics Controller Size'),'Standard_B'), equals(parameters('Visual Analytics Controller Size'), 'Standard_D2s_v3')), 'false', 'true')]",
         "enableIPForwarding": false
       }
     },
@@ -862,7 +863,7 @@
             }
           }
         ],
-        "enableAcceleratedNetworking": "[if(or(startsWith(variables('vaWorkerSize'),'Standard_B'), equals(variables('vaWorkerSize'), 'Standard_D2s_v3')), 'false', 'true')]",
+        "enableAcceleratedNetworking": "[if(or(startsWith(parameters('Visual Analytics Worker Size'),'Standard_B'), equals(parameters('Visual Analytics Worker Size'), 'Standard_D2s_v3')), 'false', 'true')]",
         "enableIPForwarding": false
       },
       "copy": {
@@ -898,7 +899,7 @@
             }
           }
         ],
-        "enableAcceleratedNetworking": "[if(or(startsWith(variables('midtierSize'), 'Standard_B'), equals(variables('midtierSize'), 'Standard_D2s_v3')), 'false', 'true')]",
+        "enableAcceleratedNetworking": "[if(or(startsWith(parameters('Mid-tier VM Size'), 'Standard_B'), equals(parameters('Mid-tier VM Size'), 'Standard_D2s_v3')), 'false', 'true')]",
         "enableIPForwarding": false
       }
     },
@@ -926,7 +927,7 @@
             }
           }
         ],
-        "enableAcceleratedNetworking": "[if(or(startsWith(variables('midtierSize'), 'Standard_B'), equals(variables('midtierSize'), 'Standard_D2s_v3')), 'false', 'true')]",
+        "enableAcceleratedNetworking": "[if(or(startsWith(parameters('Mid-tier VM Size'), 'Standard_B'), equals(parameters('Mid-tier VM Size'), 'Standard_D2s_v3')), 'false', 'true')]",
         "enableIPForwarding": false
       },
       "copy": {
@@ -936,7 +937,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-07-01",
+      "apiVersion": "2020-12-01",
       "name": "jumpvm",
       "location": "[variables('location')]",
       "dependsOn": [
@@ -949,7 +950,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('jumpvmSize')]"
+          "vmSize": "[parameters('jumpvmSize')]"
         },
         "proximityPlacementGroup": {
           "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
@@ -992,13 +993,13 @@
         },
         "osProfile": {
           "computerName": "jumpvm",
-          "adminUserName": "[variables('primaryUserName')]",
+          "adminUserName": "[parameters('primaryUserName')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
-                  "path": "[concat('/home/', variables('primaryUserName'), '/.ssh/authorized_keys')]",
+                  "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
                   "keyData": "[variables('sshKey')]"
                 }
               ]
@@ -1200,7 +1201,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-07-01",
+      "apiVersion": "2020-12-01",
       "name": "[concat('metadata-', copyIndex())]",
       "location": "[variables('location')]",
       "dependsOn": [
@@ -1214,7 +1215,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('metadataSize')]"
+          "vmSize": "[parameters('Metadata VM Size')]"
         },
         "proximityPlacementGroup": {
           "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
@@ -1234,7 +1235,7 @@
           "copy": [
             {
               "name": "datadisks",
-              "count": "[variables('storageProfile')[variables('metadataSize')]]",
+              "count": "[variables('storageProfile')[parameters('Metadata VM Size')]]",
               "input": {
                 "lun": "[copyIndex('datadisks')]",
                 "name": "[concat('metadata-', copyIndex(), '_data_', copyIndex('datadisks'))]",
@@ -1257,13 +1258,13 @@
         },
         "osProfile": {
           "computerName": "[concat('metadata-', copyIndex())]",
-          "adminUsername": "[variables('primaryUserName')]",
+          "adminUsername": "[parameters('primaryUserName')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
-                  "path": "[concat('/home/', variables('primaryUserName'), '/.ssh/authorized_keys')]",
+                  "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
                   "keyData": "[variables('sshKey')]"
                 }
               ]
@@ -1275,7 +1276,7 @@
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "apiVersion": "2019-07-01",
+          "apiVersion": "2020-12-01",
           "name": "[concat('metadata-', copyIndex(), '/post_install_actions')]",
           "location": "[variables('location')]",
           "dependsOn": [
@@ -1290,9 +1291,9 @@
               "skipDos2Unix": false
             },
             "protectedSettings": {
-              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"metadata\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('metadataEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
+              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"metadata\" \"', parameters('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2021-01-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('metadataEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
               "fileUris": [
-                "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
+                "[uri(variables('artifactsLocation'), concat('scripts/SetupNonJump.sh', variables('sasToken')))]"
               ]
             }
           }
@@ -1305,7 +1306,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-07-01",
+      "apiVersion": "2020-12-01",
       "name": "vacontroller",
       "location": "[variables('location')]",
       "dependsOn": [
@@ -1320,7 +1321,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vaControllerSize')]"
+          "vmSize": "[parameters('Visual Analytics Controller Size')]"
         },
         "proximityPlacementGroup": {
           "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
@@ -1340,7 +1341,7 @@
           "copy": [
             {
               "name": "datadisks",
-              "count": "[variables('storageProfile')[variables('vaControllerSize')]]",
+              "count": "[variables('storageProfile')[parameters('Visual Analytics Controller Size')]]",
               "input": {
                 "lun": "[copyIndex('datadisks')]",
                 "name": "[concat('vacontroller_data_', copyIndex('datadisks'))]",
@@ -1363,13 +1364,13 @@
         },
         "osProfile": {
           "computerName": "vacontroller",
-          "adminUsername": "[variables('primaryUserName')]",
+          "adminUsername": "[parameters('primaryUserName')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
-                  "path": "[concat('/home/', variables('primaryUserName'), '/.ssh/authorized_keys')]",
+                  "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
                   "keyData": "[variables('sshKey')]"
                 }
               ]
@@ -1381,7 +1382,7 @@
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "apiVersion": "2019-07-01",
+          "apiVersion": "2020-12-01",
           "name": "vacontroller/post_install_actions",
           "location": "[variables('location')]",
           "dependsOn": [
@@ -1396,9 +1397,9 @@
               "skipDos2Unix": false
             },
             "protectedSettings": {
-              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"vacontroller\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('vaEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
+              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"vacontroller\" \"', parameters('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2021-01-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('vaEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
               "fileUris": [
-                "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
+                "[uri(variables('artifactsLocation'), concat('scripts/SetupNonJump.sh', variables('sasToken')))]"
               ]
             }
           }
@@ -1407,7 +1408,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-07-01",
+      "apiVersion": "2020-12-01",
       "name": "[concat('vaworker-', copyIndex())]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
@@ -1421,7 +1422,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vaWorkerSize')]"
+          "vmSize": "[parameters('Visual Analytics Worker Size')]"
         },
         "proximityPlacementGroup": {
           "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
@@ -1441,7 +1442,7 @@
           "copy": [
             {
               "name": "datadisks",
-              "count": "[variables('storageProfile')[variables('vaWorkerSize')]]",
+              "count": "[variables('storageProfile')[parameters('Visual Analytics Worker Size')]]",
               "input": {
                 "lun": "[copyIndex('datadisks')]",
                 "name": "[concat('vaworker-', copyIndex(), '_data_', copyIndex('datadisks'))]",
@@ -1464,13 +1465,13 @@
         },
         "osProfile": {
           "computerName": "[concat('vaworker-', copyIndex())]",
-          "adminUsername": "[variables('primaryUserName')]",
+          "adminUsername": "[parameters('primaryUserName')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
-                  "path": "[concat('/home/', variables('primaryUserName'), '/.ssh/authorized_keys')]",
+                  "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
                   "keyData": "[variables('sshKey')]"
                 }
               ]
@@ -1482,7 +1483,7 @@
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "apiVersion": "2019-07-01",
+          "apiVersion": "2020-12-01",
           "name": "[concat('vaworker-', copyIndex(), '/post_install_actions')]",
           "location": "[variables('location')]",
           "dependsOn": [
@@ -1497,9 +1498,9 @@
               "skipDos2Unix": false
             },
             "protectedSettings": {
-              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"vaworker\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('vaEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
+              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"vaworker\" \"', parameters('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2021-01-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('vaEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
               "fileUris": [
-                "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
+                "[uri(variables('artifactsLocation'), concat('scripts/SetupNonJump.sh', variables('sasToken')))]"
               ]
             }
           }
@@ -1512,7 +1513,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-07-01",
+      "apiVersion": "2020-12-01",
       "name": "[concat('midtier-', copyIndex())]",
       "location": "[variables('location')]",
       "dependsOn": [
@@ -1528,7 +1529,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('midtierSize')]"
+          "vmSize": "[parameters('Mid-tier VM Size')]"
         },
         "proximityPlacementGroup": {
           "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups', variables('proximity'))]"
@@ -1548,7 +1549,7 @@
           "copy": [
             {
               "name": "datadisks",
-              "count": "[variables('storageProfile')[variables('midtierSize')]]",
+              "count": "[variables('storageProfile')[parameters('Mid-tier VM Size')]]",
               "input": {
                 "lun": "[copyIndex('datadisks')]",
                 "name": "[concat('midtier-', copyIndex(), '_data_', copyIndex('datadisks'))]",
@@ -1571,13 +1572,13 @@
         },
         "osProfile": {
           "computerName": "[concat('midtier-', copyIndex())]",
-          "adminUserName": "[variables('primaryUserName')]",
+          "adminUserName": "[parameters('primaryUserName')]",
           "LinuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
-                  "path": "[concat('/home/', variables('primaryUserName'), '/.ssh/authorized_keys')]",
+                  "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
                   "keyData": "[variables('sshKey')]"
                 }
               ]
@@ -1589,7 +1590,7 @@
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "apiVersion": "2019-07-01",
+          "apiVersion": "2020-12-01",
           "name": "[concat('midtier-', copyIndex(), '/post_install_actions')]",
           "location": "[variables('location')]",
           "dependsOn": [
@@ -1604,9 +1605,9 @@
               "skipDos2Unix":false
             },
             "protectedSettings": {
-              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"midtier\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2019-06-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('midtierEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
+              "commandToExecute": "[ concat('set -o pipefail; ./SetupNonJump.sh \"midtier\" \"', parameters('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'),'2021-01-01').keys[0].value, '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('midtierEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\"  2>&1 | tee /tmp/prerequisites.log')]",
               "fileUris": [
-                "[concat(uri(variables('artifactsLocation'), 'scripts/SetupNonJump.sh'), variables('sasToken'))]"
+                "[uri(variables('artifactsLocation'), concat('scripts/SetupNonJump.sh', variables('sasToken')))]"
               ]
             }
           }
@@ -1638,7 +1639,7 @@
             "value": "jumpvm"
           },
           "command": {
-            "value": "[concat('set -o pipefail; ./SetupJump.sh \"1\" \"', variables('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'), '2019-06-01').keys[0].value, '\" \"', variables('artifactsLocation'), '\" \"', variables('sasToken'), '\" \"', variables('sasDepot'), '\" \"', variables('midtierCount'), '\" \"', variables('metadataCount'), '\" \"', variables('vaWorkerCount'), '\" \"', variables('sasPassword'), '\" \"', variables('azurePassword'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')).dnsSettings.fqdn, '\" \"', subscription().displayName, '\" \"', resourceGroup().name, '\" \"', variables('sasPlanFile'), '\" \"', variables('hadoopVersion'), '\" \"', variables('hadoopHome'), '\" \"', variables('hdatHome'), '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('jumpEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\" 2>&1 | tee /tmp/prerequisites.log')]"
+            "value": "[concat('set -o pipefail; ./SetupJump.sh \"1\" \"', parameters('primaryUserName'), '\" \"', variables('storageName'), '\" \"', variables('azureFileShare'), '\" \"', listKeys(variables('storageName'), '2021-01-01').keys[0].value, '\" \"', variables('artifactsLocation'), '\" \"', variables('sasToken'), '\" \"', variables('sasDepot'), '\" \"', variables('midtierCount'), '\" \"', variables('metadataCount'), '\" \"', variables('vaWorkerCount'), '\" \"', variables('sasPassword'), '\" \"', variables('azurePassword'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', 'loadbalancer_publicIP')).dnsSettings.fqdn, '\" \"', subscription().displayName, '\" \"', resourceGroup().name, '\" \"', variables('sasPlanFile'), '\" \"', variables('hadoopVersion'), '\" \"', variables('hadoopHome'), '\" \"', variables('hdatHome'), '\" \"', reference(resourceId('Microsoft.Network/privateEndpoints', variables('jumpEndpoint'))).customDnsConfigs[0].ipAddresses[0], '\" \"', variables('sasFolder'), '\" 2>&1 | tee /tmp/prerequisites.log')]"
           },
           "_artifactsLocation": {
             "value": "[variables('artifactsLocation')]"
