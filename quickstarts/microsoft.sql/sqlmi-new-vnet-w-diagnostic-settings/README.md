@@ -31,7 +31,7 @@ You can select the **Deploy to Azure** button at the beginning of this document.
 - Sku name that combines service tier and hardware generation, number of virtual cores and storage size in GB. The table below shows supported combinations.
 - License type of _BasePrice_ if you're eligible for [Azure Hybrid Use Benefit for SQL Server](https://azure.microsoft.com/pricing/hybrid-benefit/) or _LicenseIncluded_.
 
-||GP_Gen5|BC_Gen5|
+|GP_Gen5|BC_Gen5|
 |----|------|------|
 |Tier|General Purpose|Busines Critical|
 |Hardware|Gen 5|Gen 5|
@@ -47,4 +47,6 @@ You can select the **Deploy to Azure** button at the beginning of this document.
 
 ## Important
 
-After the last Managed Instance is deprovisioned, the cluster stays alive for up to 24 hours. This avoids waiting for a new cluster to be provisioned in case that customer just wants to recreate the instance. During that time period the resource group and virtual network can't be deleted. This is a known issue and the Managed Instance team is working on a resolution.
+Deployment of first instance in the subnet might take up to six hours, while subsequent deployments take up to 1.5 hours. This is because a virtual cluster that hosts the instances needs time to deploy or resize the virtual cluster. For more details visit [Overview of Azure SQL Managed Instance management operations](https://docs.microsoft.com/azure/azure-sql/managed-instance/management-operations-overview)
+
+Each virtual cluster is associated with a subnet and deployed together with first instance creation. In the same way, a virtual cluster is [automatically removed together with last instance deletion](https://docs.microsoft.com/azure/azure-sql/managed-instance/virtual-cluster-delete) leaving the subnet empty and ready for removal.
