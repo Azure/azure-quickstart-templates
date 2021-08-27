@@ -31,7 +31,7 @@ You can select the **Deploy to Azure** button at the beginning of this document.
 - Sku name that combines service tier and hardware generation, number of virtual cores and storage size in GB. The table below shows supported combinations.
 - License type of _BasePrice_ if you're eligible for [Azure Hybrid Use Benefit for SQL Server](https://azure.microsoft.com/pricing/hybrid-benefit/) or _LicenseIncluded_.
 
-|GP_Gen5|BC_Gen5|
+||GP_Gen5|BC_Gen5|
 |----|------|------|
 |Tier|General Purpose|Busines Critical|
 |Hardware|Gen 5|Gen 5|
