@@ -182,7 +182,7 @@ apiVersion: operator.ibm.com/v1alpha1
 kind: OperandRequest
 metadata:
   name: empty-request
-  namespace: zen        # Replace with the project where you will install Cloud Pak for Data
+  namespace: $CPDNAMESPACE
 spec:
   requests: []
 EOF"
