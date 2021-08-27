@@ -30,14 +30,14 @@ You can click the "Deploy to Azure" button at the beginning of this document or 
  - Sku name that combines service tear and hardware generation, number of virtual cores and storage size in GB. The table below shows supported combinations.
  - License type that could be _BasePrice_ if you are eligible for [Azure Hybrid Use Benefit for SQL Server](https://azure.microsoft.com/en-us/pricing/hybrid-benefit/) or _LicenseIncluded_ otherwise
 
-||GP_Gen4|GP_Gen5|BC_Gen4|BC_Gen5|
-|----|------|-----|------|-----|
-|Tier|General Purpose|General Purpose|Business Critical|Busines Critical|
-|Hardware|Gen 4|Gen 5|Gen 4|Gen 5|
-|Min vCores|8|8|8|8|
-|Max vCores|24|80|32|80|
-|Min storage size|32|32|32|32|
-|Max storage size|8192|8192|1024|1024 GB for 8, 16 vCores<br/>2048 GB for 24 vCores<br/>4096 GB for 32, 40, 64, 80 vCores|
+||GP_Gen5|BC_Gen5|
+|----|------|------|
+|Tier|General Purpose|Busines Critical|
+|Hardware|Gen 5|Gen 5|
+|Min vCores|8|8|
+|Max vCores|80|80|
+|Min storage size|32|32|
+|Max storage size|8192|1024 GB for 8, 16 vCores<br/>2048 GB for 24 vCores<br/>4096 GB for 32, 40, 64, 80 vCores|
 
 ## Important
 
