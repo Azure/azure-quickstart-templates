@@ -17,9 +17,6 @@ param templateIdentityName string = substring('ImageGallery_${guid(resourceGroup
 @description('Permissions to allow for the user-assigned managed identity.')
 param templateIdentityRoleDefinitionName string = guid(resourceGroup().id)
 
-@description('Role that maps identity permissions to identity resource.')
-param templateIdentityRoleAssignmentName string = '${templateIdentityName}_build_${resourceGroup().name}'
-
 @description('Name of the new Azure Image Gallery resource.')
 param imageGalleryName string = substring('ImageGallery_${guid(resourceGroup().id)}', 0, 21)
 
@@ -53,6 +50,7 @@ param replicationRegions array = [
 param forceUpdateTag string = newGuid()
 
 var customizerScriptUri = uri(artifactsLocation, '${customizerScriptName}${artifactsLocationSasToken}')
+var templateIdentityRoleAssignmentName = guid(templateIdentity.id, resourceGroup().id, templateIdentityRoleDefinition.id)
 
 resource templateIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: templateIdentityName
