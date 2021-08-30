@@ -2,13 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "addUniqueSuffix": {
-      "type": "bool",
-      "defaultValue": true,
-      "metadata": {
-        "description": "Optional. Add unique suffix string to ASE name."
-      }
-    },
     "useExistingVnetandSubnet": {
       "type": "bool",
       "defaultValue": false,
@@ -18,7 +11,7 @@
     },
     "vNetResourceGroupName": {
       "type": "string",
-      "defaultValue": "rg-asev3-vnet",
+      "defaultValue": "[resourceGroup().name]",
       "metadata": {
         "description": "Required. Resource Group name of virtual network if using existing vnet and subnet."
       }
@@ -48,7 +41,7 @@
     },
     "subnetAddressPrefix": {
       "type": "string",
-      "defaultValue": "172.19.0.0/24",
+      "defaultValue": "172.16.0.0/24",
       "metadata": {
         "description": "Required. The subnet Name of ASEv3."
       }
@@ -83,9 +76,9 @@
         "description": "Required. The subnet properties."
       }
     },
-    "aseNamePrefix": {
+    "aseName": {
       "type": "string",
-      "defaultValue": "asev3-ilb",
+      "defaultValue": "GEN-UNIQUE",
       "metadata": {
         "description": "Required. Name of ASEv3."
       }
@@ -100,10 +93,6 @@
     "zoneRedundant": {
       "type": "bool",
       "defaultValue": false,
-      "allowedValues": [
-        true,
-        false
-      ],
       "metadata": {
         "description": "Required. Zone redundant of ASEv3."
       }
@@ -136,25 +125,17 @@
     },
     "networkSecurityGroupSecurityRules": {
       "type": "array",
+      "defaultValue": [],
       "metadata": {
         "description": "Required. Array of Security Rules to deploy to the Network Security Group."
-      }
-    },
-    "timeStamp": {
-      "type": "string",
-      "defaultValue": "[utcNow()]",
-      "metadata": {
-        "description": "Optional. It is only for unique string generation base on timestamp."
       }
     }
   },
   "functions": [],
   "variables": {
-    "uniStr": "[substring(uniqueString(resourceGroup().id, parameters('timeStamp')), 0, 4)]",
-    "aseName": "[if(parameters('addUniqueSuffix'), format('{0}-{1}', parameters('aseNamePrefix'), variables('uniStr')), parameters('aseNamePrefix'))]",
+    "uniStr": "[uniqueString(resourceGroup().id)]",
     "virtualNetworkId": "[if(parameters('useExistingVnetandSubnet'), resourceId(parameters('vNetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')), resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')))]",
-    "subnetId": "[if(parameters('useExistingVnetandSubnet'), resourceId(parameters('vNetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')), resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')))]",
-    "aseNetworkConfiguration": "[format('{0}/configurations/networking', resourceId('Microsoft.Web/hostingEnvironments', variables('aseName')))]"
+    "subnetId": "[if(parameters('useExistingVnetandSubnet'), resourceId(parameters('vNetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')), resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')))]"
   },
   "resources": [
     {
@@ -213,15 +194,12 @@
         "addressSpace": {
           "addressPrefixes": "[parameters('vNetAddressPrefixes')]"
         }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
-      ]
+      }
     },
     {
       "type": "Microsoft.Web/hostingEnvironments",
       "apiVersion": "2020-12-01",
-      "name": "[variables('aseName')]",
+      "name": "[parameters('aseName')]",
       "location": "[parameters('location')]",
       "kind": "ASEV3",
       "properties": {
@@ -231,11 +209,7 @@
         "virtualNetwork": {
           "id": "[variables('subnetId')]"
         }
-      },
-      "dependsOn": [
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vNetResourceGroupName')), 'Microsoft.Resources/deployments', format('{0}-subnet-delegation-{1}', parameters('subnetName'), variables('uniStr')))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-      ]
+      }
     },
     {
       "condition": "[parameters('useExistingVnetandSubnet')]",
@@ -319,13 +293,13 @@
         "mode": "Incremental",
         "parameters": {
           "privateDNSZoneName": {
-            "value": "[reference(resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))).dnsSuffix]"
+            "value": "[reference(resourceId('Microsoft.Web/hostingEnvironments', parameters('aseName'))).dnsSuffix]"
           },
           "virtualNetworkId": {
             "value": "[variables('virtualNetworkId')]"
           },
-          "aseNetworkConfiguration": {
-            "value": "[variables('aseNetworkConfiguration')]"
+          "aseNetworkConfigurationId": {
+            "value": "[resourceId('Microsoft.Web/hostingEnvironments', parameters('aseName'))]"
           }
         },
         "template": {
@@ -344,7 +318,7 @@
                 "description": "Required. Network Id."
               }
             },
-            "aseNetworkConfiguration": {
+            "aseNetworkConfigurationId": {
               "type": "string",
               "metadata": {
                 "description": "Required. ASE network configuration."
@@ -352,6 +326,9 @@
             }
           },
           "functions": [],
+          "variables": {
+            "aseNetworkConfigurationEndpoint": "[format('{0}/configurations/networking', parameters('aseNetworkConfigurationId'))]"
+          },
           "resources": [
             {
               "type": "Microsoft.Network/privateDnsZones",
@@ -383,7 +360,7 @@
                 "ttl": 3600,
                 "aRecords": [
                   {
-                    "ipv4Address": "[reference(parameters('aseNetworkConfiguration'), '2021-02-01').internalInboundIpAddresses[0]]"
+                    "ipv4Address": "[reference(variables('aseNetworkConfigurationEndpoint'), '2021-02-01').internalInboundIpAddresses[0]]"
                   }
                 ]
               },
@@ -399,7 +376,7 @@
                 "ttl": 3600,
                 "aRecords": [
                   {
-                    "ipv4Address": "[reference(parameters('aseNetworkConfiguration'), '2021-02-01').internalInboundIpAddresses[0]]"
+                    "ipv4Address": "[reference(variables('aseNetworkConfigurationEndpoint'), '2021-02-01').internalInboundIpAddresses[0]]"
                   }
                 ]
               },
@@ -415,7 +392,7 @@
                 "ttl": 3600,
                 "aRecords": [
                   {
-                    "ipv4Address": "[reference(parameters('aseNetworkConfiguration'), '2021-02-01').internalInboundIpAddresses[0]]"
+                    "ipv4Address": "[reference(variables('aseNetworkConfigurationEndpoint'), '2021-02-01').internalInboundIpAddresses[0]]"
                   }
                 ]
               },
@@ -427,7 +404,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
+        "[resourceId('Microsoft.Web/hostingEnvironments', parameters('aseName'))]"
       ]
     }
   ]
