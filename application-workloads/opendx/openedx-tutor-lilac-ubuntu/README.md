@@ -25,7 +25,7 @@ After 'tutor local quickstart', A full, production-ready Open edX platform (Lila
 
 When you launch the installation, you need to specify the following parameters:
 
-* `dnsLabelPrefix`: this is the public DNS name for the VM. You just need to specify an unique name.
+* `adminUsername`: Administrator username.
 * `adminPasswordOrKey`: self-explanatory. Be aware that Azure requires passwords to have One upper case, one lower case, a special character, and a number.
 * `vmSize`: The type of VM that you want to use for the node. The default size is Standard_D3_v2, but you can change that if you expect to run workloads that require more RAM or CPU resources. The allowed values have been listed.
 

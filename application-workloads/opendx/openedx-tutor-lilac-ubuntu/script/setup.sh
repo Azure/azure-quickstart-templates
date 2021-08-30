@@ -1,5 +1,6 @@
 #!/bin/bash
 echo "start"
+adminUsername=$1
 sudo apt update
 
 echo "install Docker"
@@ -18,18 +19,17 @@ yes Y | sudo chmod +x /usr/local/bin/docker-compose
 
 echo "Enable Docker without Sudo"
 #Enable Docker without Sudo (for user 'openadmin')
-sudo usermod -aG docker openadmin
+sudo usermod -aG docker $adminUsername
 
 yes Y | sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 yes Y | sudo chmod +x /usr/local/bin/docker-compose
 
 echo "install tutor"
 #install tutor
-
 sudo curl -L "https://github.com/overhangio/tutor/releases/download/v12.0.2/tutor-$(uname -s)_$(uname -m)" -o /usr/local/bin/tutor
 sudo chmod 0755 /usr/local/bin/tutor
 
 echo "install tutor deployment script"
-sudo curl -L "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/opendx/openedx-tutor-lilac-ubuntu/script/deploy_tutor.sh" -o ./deploy_tutor.sh
+sudo curl -L "https://raw.githubusercontent.com/CeciFan/azure-quickstart-templates/master/application-workloads/opendx/openedx-tutor-lilac-ubuntu/script/deploy_tutor.sh" -o ./deploy_tutor.sh
 sudo chmod 777 deploy_tutor.sh
-mv deploy_tutor.sh /home/openadmin
+mv deploy_tutor.sh /home/"$adminUsername"
