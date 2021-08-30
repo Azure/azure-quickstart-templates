@@ -135,7 +135,6 @@ resource asev3 'Microsoft.Web/hostingEnvironments@2020-12-01' = {
     }
     dependsOn: [
       virtualnetwork
-      subnet
     ]  
   }
 }
