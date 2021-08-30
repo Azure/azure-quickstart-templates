@@ -1,1 +1,0 @@
-az deployment group create --template-file main.bicep --parameters azuredeploy.parameters.json -g rg-asev3-templates-demo --name bicep-asev3-deployment-2021081201

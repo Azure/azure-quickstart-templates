@@ -5,7 +5,9 @@ param privateDNSZoneName string
 param virtualNetworkId string
 
 @description('Required. ASE network configuration.')
-param aseNetworkConfiguration string
+param aseNetworkConfigurationId string
+
+var aseNetworkConfigurationEndpoint = '${aseNetworkConfigurationId}/configurations/networking'
 
 resource privatezone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateDNSZoneName
@@ -32,7 +34,7 @@ resource webrecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
     ttl: 3600
     aRecords: [
       {
-        ipv4Address: reference(aseNetworkConfiguration, '2021-02-01').internalInboundIpAddresses[0]
+        ipv4Address: reference(aseNetworkConfigurationEndpoint, '2021-02-01').internalInboundIpAddresses[0]
       }
     ]
   }
@@ -45,7 +47,7 @@ resource scmrecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
     ttl: 3600
     aRecords: [
       {
-        ipv4Address: reference(aseNetworkConfiguration, '2021-02-01').internalInboundIpAddresses[0]
+        ipv4Address: reference(aseNetworkConfigurationEndpoint, '2021-02-01').internalInboundIpAddresses[0]
       }
     ]
   }
@@ -58,7 +60,7 @@ resource atrecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
     ttl: 3600
     aRecords: [
       {
-        ipv4Address: reference(aseNetworkConfiguration, '2021-02-01').internalInboundIpAddresses[0]
+        ipv4Address: reference(aseNetworkConfigurationEndpoint, '2021-02-01').internalInboundIpAddresses[0]
       }
     ]
   }

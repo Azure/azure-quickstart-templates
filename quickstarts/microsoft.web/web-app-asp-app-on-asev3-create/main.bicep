@@ -1,11 +1,8 @@
-@description('Optional. Add unique suffix string to ASE name.')
-param addUniqueSuffix bool = true
-
 @description('Required. Use existing virtual network and subnet.')
 param useExistingVnetandSubnet bool = false
 
 @description('Required. Resource Group name of virtual network if using existing vnet and subnet.')
-param vNetResourceGroupName string = 'rg-asev3-vnet'
+param vNetResourceGroupName string = resourceGroup().name
 
 @description('Required. The Virtual Network (vNet) Name.')
 param virtualNetworkName string = 'vnet-asev3'
@@ -19,7 +16,7 @@ param vNetAddressPrefixes array = [
 ]
 
 @description('Required. The subnet Name of ASEv3.')
-param subnetAddressPrefix string = '172.19.0.0/24'
+param subnetAddressPrefix string = '172.16.0.0/24'
 
 @description('Required. The subnet Name of ASEv3.')
 param subnetName string = 'snet-asev3'
@@ -29,7 +26,6 @@ param subnets array = [
   {
     name: 'snet-asev3'
     addressPrefix: '172.16.0.0/24'
-    // @description('Required. Delegation name of the ASEv3 subnet.')
     delegations: [
       {
         name: 'Microsoft.Web.hostingEnvironments'
@@ -45,15 +41,14 @@ param subnets array = [
 ]
 
 @description('Required. Name of ASEv3.')
-param aseNamePrefix string = 'asev3-ilb'
+param aseName string = 'GEN-UNIQUE'
+
 @description('Required. Dedicated host count of ASEv3.')
 param dedicatedHostCount string = '0'
+
 @description('Required. Zone redundant of ASEv3.')
-@allowed([
-  true
-  false
-])
 param zoneRedundant bool = false
+
 @description('Optional. Create a private DNS zone for ASEv3.')
 param createPrivateDNS bool = true
 @description('Required. Load balancer mode: 0-external load balancer, 3-internal load balancer for ASEv3.')
@@ -68,18 +63,12 @@ param internalLoadBalancingMode int = 3
 param networkSecurityGroupName string = 'nsg-asev3'
 
 @description('Required. Array of Security Rules to deploy to the Network Security Group.')
-param networkSecurityGroupSecurityRules array
+param networkSecurityGroupSecurityRules array = []
 
-@description('Optional. It is only for unique string generation base on timestamp.')
-param timeStamp string = utcNow()
-
-// Variable definitions
-var uniStr = substring('${uniqueString(resourceGroup().id, timeStamp)}', 0, 4)
-var aseName = addUniqueSuffix ? '${aseNamePrefix}-${uniStr}' : aseNamePrefix
+var uniStr = '${uniqueString(resourceGroup().id)}'
 var virtualNetworkId = useExistingVnetandSubnet ? resourceId(vNetResourceGroupName, 'Microsoft.Network/virtualNetworks', virtualNetworkName) : resourceId('Microsoft.Network/virtualNetworks', virtualNetworkName)
-var subnetId =  useExistingVnetandSubnet ? resourceId(vNetResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName) : resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
+var subnetId = useExistingVnetandSubnet ? resourceId(vNetResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName) : resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var privateDNSZoneName = asev3.properties.dnsSuffix
-var aseNetworkConfiguration = '${asev3.id}/configurations/networking'
 
 resource networksecuritygroup 'Microsoft.Network/networkSecurityGroups@2020-11-01' = if (!useExistingVnetandSubnet) {
   name: networkSecurityGroupName
@@ -121,15 +110,12 @@ resource virtualnetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = if (!us
       }
     }]
   }
-  dependsOn: [
-    networksecuritygroup
-  ]
 }
 
 module subnet 'modules/subnet.bicep' = if (useExistingVnetandSubnet) {
   name: '${subnetName}-subnet-delegation-${uniStr}'
   scope: resourceGroup(vNetResourceGroupName)
-  params: {    
+  params: {
     virtualNetworkName: virtualNetworkName
     subnetName: subnetName
     subnetAddressPrefix: subnetAddressPrefix
@@ -140,7 +126,6 @@ resource asev3 'Microsoft.Web/hostingEnvironments@2020-12-01' = {
   name: aseName
   location: location
   kind: 'ASEV3'
-  // @description('Required. Three key properties for ASEv3.')
   properties: {
     dedicatedHostCount: dedicatedHostCount
     zoneRedundant: zoneRedundant
@@ -149,17 +134,13 @@ resource asev3 'Microsoft.Web/hostingEnvironments@2020-12-01' = {
       id: subnetId
     }
   }
-  dependsOn: [
-    virtualnetwork
-    subnet
-  ]  
 }
 
 module privatednszone 'modules/privatednszone.bicep' = if (createPrivateDNS && internalLoadBalancingMode == 3) {
   name: 'private-dns-zone-deployment-${uniStr}'
-  params: {    
+  params: {
     privateDNSZoneName: privateDNSZoneName
     virtualNetworkId: virtualNetworkId
-    aseNetworkConfiguration: aseNetworkConfiguration
+    aseNetworkConfigurationId: asev3.id
   }
 }

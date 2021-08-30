@@ -1,1 +1,0 @@
-az deployment group create --template-file azuredeploy.json --parameters azuredeploy.parameters.json -g rg-asev3-templates-demo --name arm-asev3-deployment-2021081201
