@@ -142,7 +142,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2020-02-14
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      templateIdentity: {}
+      '${templateIdentity}': {}
     }
   }
   properties: {
@@ -193,7 +193,7 @@ resource imageTemplate_build 'Microsoft.Resources/deploymentScripts@2020-10-01' 
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      templateIdentity: {}
+      '${templateIdentity}': {}
     }
   }
   dependsOn: [
