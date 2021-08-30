@@ -45,8 +45,3 @@ The following resources are created by this template:
 - 1 role definition and 1 role assignment to limit access of the new identity
 - 1 Azure Image Gallery with 1 image and 1 template
 - 1 deployment script to trigger the build of the custom image in Azure Image Builder
-
-<img src="images/resources.png" />
-
-## Architecture Diagram
-<img src="images/architecture.png" />

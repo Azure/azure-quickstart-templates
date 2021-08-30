@@ -1,9 +1,9 @@
 @description('The base URI where artifacts required by this template are located including a trailing \'/\'')
-param _artifactsLocation string = deployment().properties.templateLink.uri
+param artifactsLocation string = deployment().properties.templateLink.uri
 
 @description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured.')
 @secure()
-param _artifactsLocationSasToken string = ''
+param artifactsLocationSasToken string = ''
 
 @description('The Azure region where resources in the template should be deployed.')
 param location string = resourceGroup().location
@@ -12,20 +12,20 @@ param location string = resourceGroup().location
 param customizerScriptName string = 'scripts/runScript.ps1'
 
 @description('Name of the user-assigned managed identity used by Azure Image Builder template, and for triggering the Azure Image Builder build at the end of the deployment')
-param identityName string = substring('ImageGallery_${guid(resourceGroup().id)}', 0, 21)
+param templateIdentityName string = substring('ImageGallery_${guid(resourceGroup().id)}', 0, 21)
 
 @description('Permissions to allow for the user-assigned managed identity.')
-param roleDefinitionName string = guid(resourceGroup().id)
+param templateIdentityRoleDefinitionName string = guid(resourceGroup().id)
 
-@description('Name of the role to grant for the user-assigned managed identity.')
-param roleAssignmentName string = guid(resourceGroup().id)
+@description('Role that maps identity permissions to identity resource.')
+param templateIdentityRoleAssignmentName string = '${templateIdentityName}_build_${resourceGroup().name}'
 
 @description('Name of the new Azure Image Gallery resource.')
 param imageGalleryName string = substring('ImageGallery_${guid(resourceGroup().id)}', 0, 21)
 
 @description('Detailed image information to set for the custom image produced by the Azure Image Builder build.')
-param imageDefinition object = {
-  imageDefinitionName: 'Win2019_AzureWindowsBaseline_Definition'
+param imageDefinitionProperties object = {
+  name: 'Win2019_AzureWindowsBaseline_Definition'
   publisher: 'AzureWindowsBaseline'
   offer: 'WindowsServer'
   sku: '2019-Datacenter'
@@ -45,22 +45,24 @@ param replicationRegions array = [
   'westus'
   'westus2'
   'westus3'
-  'northcentralus'
-  'southcentralus'
-  'westcentralus'
+  'northeurope'
+  'westeurope'
 ]
 
-var customizerScriptUri = uri(_artifactsLocation, '${customizerScriptName}${_artifactsLocationSasToken}')
+@description('A unique string generated for each deployment, to make sure the script is always run.')
+param forceUpdateTag string = newGuid()
 
-resource identityName_resource 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
-  name: identityName
+var customizerScriptUri = uri(artifactsLocation, '${customizerScriptName}${artifactsLocationSasToken}')
+
+resource templateIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: templateIdentityName
   location: location
 }
 
-resource roleDefinitionName_resource 'Microsoft.Authorization/roleDefinitions@2018-07-01' = {
-  name: roleDefinitionName
+resource templateIdentityRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-07-01' = {
+  name: templateIdentityRoleDefinitionName
   properties: {
-    roleName: roleDefinitionName
+    roleName: templateIdentityRoleDefinitionName
     description: 'Used for AIB template and ARM deployment script that runs AIB build'
     type: 'customRole'
     isCustom: true
@@ -92,33 +94,33 @@ resource roleDefinitionName_resource 'Microsoft.Authorization/roleDefinitions@20
   }
 }
 
-resource roleAssignmentName_resource 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
-  name: roleAssignmentName
+resource templateRoleAssignment 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
+  name: templateIdentityRoleAssignmentName
   properties: {
-    roleDefinitionId: roleDefinitionName_resource.id
-    principalId: reference(identityName_resource.id, '2018-11-30').principalId
+    roleDefinitionId: templateIdentityRoleDefinition.id
+    principalId: templateIdentity.properties.principalId
     scope: resourceGroup().id
     principalType: 'ServicePrincipal'
   }
 }
 
-resource imageGalleryName_resource 'Microsoft.Compute/galleries@2021-07-01' = {
+resource imageGallery 'Microsoft.Compute/galleries@2021-07-01' = {
   name: imageGalleryName
   location: location
   properties: {}
 }
 
-resource imageGalleryName_imageDefinition_imageDefinitionName 'Microsoft.Compute/galleries/images@2020-09-30' = {
-  parent: imageGalleryName_resource
-  name: '${imageDefinition.imageDefinitionName}'
+resource imageDefinition 'Microsoft.Compute/galleries/images@2020-09-30' = {
+  parent: imageGallery
+  name: imageDefinitionProperties.name
   location: location
   properties: {
     osType: 'Windows'
     osState: 'Generalized'
     identifier: {
-      publisher: imageDefinition.publisher
-      offer: imageDefinition.offer
-      sku: imageDefinition.sku
+      publisher: imageDefinitionProperties.publisher
+      offer: imageDefinitionProperties.offer
+      sku: imageDefinitionProperties.sku
     }
     recommended: {
       vCPUs: {
@@ -134,19 +136,19 @@ resource imageGalleryName_imageDefinition_imageDefinitionName 'Microsoft.Compute
   }
 }
 
-resource imageTemplateName_resource 'Microsoft.VirtualMachineImages/imageTemplates@2020-02-14' = {
+resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2020-02-14' = {
   name: imageTemplateName
   location: location
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${identityName_resource.id}': {}
+      templateIdentity: {}
     }
   }
   properties: {
     buildTimeoutInMinutes: 60
     vmProfile: {
-      vmSize: 'Standard_D1_v2'
+      vmSize: 'Standard_D1_v3'
       osDiskSizeGB: 127
     }
     source: {
@@ -176,37 +178,34 @@ resource imageTemplateName_resource 'Microsoft.VirtualMachineImages/imageTemplat
     distribute: [
       {
         type: 'SharedImage'
-        galleryImageId: imageGalleryName_imageDefinition_imageDefinitionName.id
+        galleryImageId: imageDefinition.id
         runOutputName: runOutputName
         replicationRegions: replicationRegions
       }
     ]
   }
-  dependsOn: [
-    imageGalleryName_resource
-  ]
 }
 
-resource Image_template_build 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource imageTemplate_build 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'Image_template_build'
   location: location
   kind: 'AzurePowerShell'
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${identityName_resource.id}': {}
+      templateIdentity: {}
     }
   }
+  dependsOn: [
+    imageTemplate
+    templateRoleAssignment
+  ]
   properties: {
-    forceUpdateTag: 'newGuid()'
+    forceUpdateTag: forceUpdateTag
     azPowerShellVersion: '6.2'
-    scriptContent: 'Invoke-AzResourceAction -ResourceName "${imageTemplateName}" -ResourceGroupName "${resourceGroup().name}" -ResourceType "Microsoft.VirtualMachineImages/imageTemplates" -ApiVersion "2020-02-14" -Action Run -Force'
+    scriptContent: 'Invoke-AzResourceAction -ResourceName "${imageTemplate}" -ResourceGroupName "${resourceGroup().name}" -ResourceType "Microsoft.VirtualMachineImages/imageTemplates" -ApiVersion "2020-02-14" -Action Run -Force'
     timeout: 'PT1H'
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
   }
-  dependsOn: [
-    imageTemplateName_resource
-    roleAssignmentName_resource
-  ]
 }
