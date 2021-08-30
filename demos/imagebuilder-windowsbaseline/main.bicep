@@ -1,9 +1,9 @@
 @description('The base URI where artifacts required by this template are located including a trailing \'/\'')
-param artifactsLocation string = deployment().properties.templateLink.uri
+param _artifactsLocation string = deployment().properties.templateLink.uri
 
 @description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured.')
 @secure()
-param artifactsLocationSasToken string = ''
+param _artifactsLocationSasToken string = ''
 
 @description('The Azure region where resources in the template should be deployed.')
 param location string = resourceGroup().location
@@ -49,7 +49,7 @@ param replicationRegions array = [
 @description('A unique string generated for each deployment, to make sure the script is always run.')
 param forceUpdateTag string = newGuid()
 
-var customizerScriptUri = uri(artifactsLocation, '${customizerScriptName}${artifactsLocationSasToken}')
+var customizerScriptUri = uri(_artifactsLocation, '${customizerScriptName}${_artifactsLocationSasToken}')
 var templateIdentityRoleAssignmentName = guid(templateIdentity.id, resourceGroup().id, templateIdentityRoleDefinition.id)
 
 resource templateIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
