@@ -5,35 +5,77 @@
     "clusterName": {
       "type": "string",
       "metadata": {
-        "description": "The name of the HDInsight cluster to be created. The cluster name must be globally unique."
+        "description": "The name of the HDInsight cluster to create. This must be unique, less than 59 characters, can contain letters, numbers, and hyphens (the first and last characters must be a letter or number).  The name cannot contain a reserved keyword."
       }
     },
     "clusterLoginUserName": {
       "type": "string",
       "defaultValue": "admin",
-      "metadata": {
-        "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+      "minLength": 2,
+      "maxLength": 20,
+	    "metadata": {
+        "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards. The cluster login username must be 2-20 characters and consist of digits, lowercase letters, and/or the following special characters: (!#$%&'()-^_`{}~).  The name cannot contain a reserved keyword."
       }
     },
     "clusterLoginPassword": {
       "type": "securestring",
+      "minLength": 10,
       "metadata": {
-        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one upper case letter, one lower case letter, and one non-alphanumeric character.  The following characters are not allowed (single-quote, double-quote, backslash, right-bracket, full-stop). Also, the password must not contain 3 consecutive characters from the cluster username or SSH username."
       }
     },
     "sshUserName": {
       "type": "string",
       "defaultValue": "sshuser",
+      "minLength":2,
       "metadata": {
-        "description": "These credentials can be used to remotely access the cluster."
+      "description": "These credentials can be used to remotely access the cluster. The SSH username can only consist of digits, upper or lowercase letters, and/or the following special characters (%&'^_`{}~). Also, it cannot be the same as the cluster login username or a reserved word."
       }
     },
     "sshPassword": {
       "type": "securestring",
+      "minLength": 6,
+      "maxLength": 72,
       "metadata": {
-        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+        "description": "SSH password must be 6-72 characters long and must contain at least one digit, one upper case letter, and one lower case letter.  It must not contain any 3 consecutive characters from the SSH username."
       }
     },
+      "HeadNodeVirtualMachineSize": {
+         "type": "string",
+         "defaultValue": "Standard_E4_v3",
+         "allowedValues": [
+            "Standard_A4_v2",
+            "Standard_A8_v2",
+            "Standard_E2_v3",
+            "Standard_E4_v3",
+            "Standard_E8_v3",
+            "Standard_E16_v3",
+            "Standard_E20_v3",
+            "Standard_E32_v3",
+            "Standard_E48_v3"
+         ],
+         "metadata": {
+            "description": "This is the headnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
+         }
+      },
+      "WorkerNodeVirtualMachineSize": {
+         "type": "string",
+         "defaultValue": "Standard_E8_v3",
+         "allowedValues": [
+           "Standard_A4_v2",
+           "Standard_A8_v2",
+           "Standard_E2_v3",
+           "Standard_E4_v3",
+           "Standard_E8_v3",
+           "Standard_E16_v3",
+           "Standard_E20_v3",
+           "Standard_E32_v3",
+           "Standard_E48_v3"
+         ],
+         "metadata": {
+            "description": "This is the worerdnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
+         }
+      },    
     "sqlAdminLogin": {
       "type": "string",
       "defaultValue": "sqluser",
@@ -91,7 +133,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('defaultStorageAccount').name]",
       "location": "[parameters('location')]",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2021-04-01",
       "sku": {
         "name": "[variables('defaultStorageAccount').type]"
       },
@@ -107,7 +149,7 @@
         "[resourceId('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name)]"
       ],
       "properties": {
-        "clusterVersion": "3.6",
+        "clusterVersion": "4.0",
         "osType": "Linux",
         "clusterDefinition": {
           "kind": "hadoop",
@@ -122,10 +164,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').primaryEndpoints.blob,'https://',''),'/','')]",
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2021-04-01').primaryEndpoints.blob,'https://',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').keys[0].value]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2021-04-01').keys[0].value]"
             }
           ]
         },
@@ -135,7 +177,7 @@
               "name": "headnode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "Standard_D4_v3"
+                "vmSize": "[parameters('HeadNodeVirtualMachineSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -148,7 +190,7 @@
               "name": "workernode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "Standard_D4_v3"
+                "vmSize": "[parameters('WorkerNodeVirtualMachineSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -168,7 +210,7 @@
       "tags": {
         "displayName": "SqlServer"
       },
-      "apiVersion": "2020-02-02-preview",
+      "apiVersion": "2020-11-01-preview",
       "properties": {
         "administratorLogin": "[parameters('sqlAdminLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdminPassword')]",
@@ -182,14 +224,14 @@
           "tags": {
             "displayName": "Database"
           },
-          "apiVersion": "2020-02-02-preview",
+          "apiVersion": "2020-11-01-preview",
           "dependsOn": [
             "[variables('sqlDatabase').serverName]"
           ],
           "properties": {
             "edition": "Basic",
             "collation": "SQL_Latin1_General_CP1_CI_AS",
-            "maxSizeBytes": "1073741824",
+            "maxSizeBytes": 1073741824,
             "requestedServiceObjectiveName": "Basic"
           },
           "resources": [
@@ -242,4 +284,3 @@
     }
   }
 }
-
