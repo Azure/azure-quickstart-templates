@@ -68,11 +68,8 @@ resource templateIdentityRoleDefinition 'Microsoft.Authorization/roleDefinitions
       {
         actions: [
           'Microsoft.Compute/galleries/*'
-          'Microsoft.Compute/images/read'
-          'Microsoft.Compute/images/write'
-          'Microsoft.Compute/images/delete'
-          'Microsoft.Storage/storageAccounts/blobServices/containers/read'
-          'Microsoft.Storage/storageAccounts/blobServices/containers/write'
+          'Microsoft.Compute/images/*'
+          'Microsoft.Storage/storageAccounts/*'
           'Microsoft.ContainerInstance/containerGroups/read'
           'Microsoft.ContainerInstance/containerGroups/write'
           'Microsoft.ContainerInstance/containerGroups/start/action'
