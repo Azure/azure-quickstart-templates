@@ -42,8 +42,8 @@ param replicationRegions array = [
   'westeurope'
 ]
 
-@description('A unique string generated for each deployment, to make sure the script is always run.')
-param forceUpdateTag string = newGuid()
+//@description('A unique string generated for each deployment, to make sure the script is always run.')
+//param forceUpdateTag string = newGuid()
 
 var customizerScriptUri = uri(_artifactsLocation, '${customizerScriptName}${_artifactsLocationSasToken}')
 var templateIdentityRoleAssignmentName = guid(templateIdentity.id, resourceGroup().id, templateIdentityRoleDefinition.id)
@@ -88,7 +88,7 @@ resource templateRoleAssignment 'Microsoft.Authorization/roleAssignments@2021-04
   }
 }
 
-resource imageGallery 'Microsoft.Compute/galleries@2019-03-01' = {
+resource imageGallery 'Microsoft.Compute/galleries@2020-09-30' = {
   name: imageGalleryName
   location: location
   properties: {}
