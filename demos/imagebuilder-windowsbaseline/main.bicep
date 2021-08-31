@@ -36,8 +36,11 @@ param runOutputName string = 'Win2019_AzureWindowsBaseline_CustomImage'
 
 @description('List the regions in Azure where you would like to replicate the custom image after it is created.')
 param replicationRegions array = [
+  'centralus'
   'eastus2'
   'westus2'
+  'northeurope'
+  'westeurope'
 ]
 
 //@description('A unique string generated for each deployment, to make sure the script is always run.')
@@ -61,11 +64,21 @@ resource templateIdentityRoleDefinition 'Microsoft.Authorization/roleDefinitions
     permissions: [
       {
         actions: [
-          'Microsoft.Compute/galleries/*'
-          'Microsoft.Storage/storageAccounts/*'
-          'Microsoft.ContainerInstance/containerGroups/*'
-          'Microsoft.Resources/deployments/*'
-          'Microsoft.Resources/deploymentScripts/*'
+          'Microsoft.Compute/galleries/read'
+          'Microsoft.Compute/galleries/images/read'
+          'Microsoft.Compute/galleries/images/versions/read'
+          'Microsoft.Compute/galleries/images/versions/write'
+          'Microsoft.Compute/images/read'
+          'Microsoft.Compute/images/write'
+          'Microsoft.Compute/images/delete'
+          'Microsoft.Storage/storageAccounts/blobServices/containers/read'
+          'Microsoft.Storage/storageAccounts/blobServices/containers/write'
+          'Microsoft.ContainerInstance/containerGroups/read'
+          'Microsoft.ContainerInstance/containerGroups/write'
+          'Microsoft.ContainerInstance/containerGroups/start/action'
+          'Microsoft.Resources/deployments/read'
+          'Microsoft.Resources/deploymentScripts/read'
+          'Microsoft.Resources/deploymentScripts/write'
           'Microsoft.VirtualMachineImages/imageTemplates/run/action'
         ]
       }
@@ -130,7 +143,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2020-02-14
   properties: {
     buildTimeoutInMinutes: 60
     vmProfile: {
-      vmSize: 'Standard_D1_v3'
+      vmSize: 'Standard_D2_v3'
       osDiskSizeGB: 127
     }
     source: {
@@ -157,14 +170,14 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2020-02-14
         scriptUri: customizerScriptUri
       }
     ]
-    //distribute: [
-    //  {
-    //    type: 'SharedImage'
-    //    galleryImageId: imageDefinition.id
-    //    runOutputName: runOutputName
-    //    replicationRegions: replicationRegions
-    //  }
-    //]
+    distribute: [
+      {
+        type: 'SharedImage'
+        galleryImageId: imageDefinition.id
+        runOutputName: runOutputName
+        replicationRegions: replicationRegions
+      }
+    ]
   }
 }
 
