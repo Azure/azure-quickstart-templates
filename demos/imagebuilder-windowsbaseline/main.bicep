@@ -157,14 +157,14 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2020-02-14
         scriptUri: customizerScriptUri
       }
     ]
-    distribute: [
-      {
-        type: 'SharedImage'
-        galleryImageId: imageDefinition.id
-        runOutputName: runOutputName
-        replicationRegions: replicationRegions
-      }
-    ]
+    //distribute: [
+    //  {
+    //    type: 'SharedImage'
+    //    galleryImageId: imageDefinition.id
+    //    runOutputName: runOutputName
+    //    replicationRegions: replicationRegions
+    //  }
+    //]
   }
 }
 
