@@ -43,8 +43,8 @@ param replicationRegions array = [
   'westeurope'
 ]
 
-//@description('A unique string generated for each deployment, to make sure the script is always run.')
-//param forceUpdateTag string = newGuid()
+@description('A unique string generated for each deployment, to make sure the script is always run.')
+param forceUpdateTag string = newGuid()
 
 var customizerScriptUri = uri(_artifactsLocation, '${customizerScriptName}${_artifactsLocationSasToken}')
 var templateIdentityRoleAssignmentName = guid(templateIdentity.id, resourceGroup().id, templateIdentityRoleDefinition.id)
@@ -181,26 +181,26 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2020-02-14
   }
 }
 
-//resource imageTemplate_build 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-//  name: 'Image_template_build'
-//  location: location
-//  kind: 'AzurePowerShell'
-//  identity: {
-//    type: 'UserAssigned'
-//    userAssignedIdentities: {
-//      '${templateIdentity.id}': {}
-//    }
-//  }
-//  dependsOn: [
-//    imageTemplate
-//    templateRoleAssignment
-//  ]
-//  properties: {
-//    forceUpdateTag: forceUpdateTag
-//    azPowerShellVersion: '6.2'
-//    scriptContent: 'Invoke-AzResourceAction -ResourceName "${imageTemplate}" -ResourceGroupName "${resourceGroup().name}" -ResourceType "Microsoft.VirtualMachineImages/imageTemplates" -ApiVersion "2020-02-14" -Action Run -Force'
-//    timeout: 'PT1H'
-//    cleanupPreference: 'OnSuccess'
-//    retentionInterval: 'P1D'
-//  }
-//}
+resource imageTemplate_build 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+  name: 'Image_template_build'
+  location: location
+  kind: 'AzurePowerShell'
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${templateIdentity.id}': {}
+    }
+  }
+  dependsOn: [
+    imageTemplate
+    templateRoleAssignment
+  ]
+  properties: {
+    forceUpdateTag: forceUpdateTag
+    azPowerShellVersion: '6.2'
+    scriptContent: 'Invoke-AzResourceAction -ResourceName "${imageTemplate}" -ResourceGroupName "${resourceGroup().name}" -ResourceType "Microsoft.VirtualMachineImages/imageTemplates" -ApiVersion "2020-02-14" -Action Run -Force'
+    timeout: 'PT1H'
+    cleanupPreference: 'OnSuccess'
+    retentionInterval: 'P1D'
+  }
+}

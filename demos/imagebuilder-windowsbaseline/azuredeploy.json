@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "3213473183313532876"
+      "templateHash": "802255667085113336"
     }
   },
   "parameters": {
@@ -95,6 +95,13 @@
       ],
       "metadata": {
         "description": "List the regions in Azure where you would like to replicate the custom image after it is created."
+      }
+    },
+    "forceUpdateTag": {
+      "type": "string",
+      "defaultValue": "[newGuid()]",
+      "metadata": {
+        "description": "A unique string generated for each deployment, to make sure the script is always run."
       }
     }
   },
@@ -250,6 +257,32 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/galleries/images', parameters('imageGalleryName'), parameters('imageDefinitionProperties').name)]",
         "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('templateIdentityName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2020-10-01",
+      "name": "Image_template_build",
+      "location": "[parameters('location')]",
+      "kind": "AzurePowerShell",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('templateIdentityName'))]": {}
+        }
+      },
+      "properties": {
+        "forceUpdateTag": "[parameters('forceUpdateTag')]",
+        "azPowerShellVersion": "6.2",
+        "scriptContent": "[format('Invoke-AzResourceAction -ResourceName \"{0}\" -ResourceGroupName \"{1}\" -ResourceType \"Microsoft.VirtualMachineImages/imageTemplates\" -ApiVersion \"2020-02-14\" -Action Run -Force', reference(resourceId('Microsoft.VirtualMachineImages/imageTemplates', parameters('imageTemplateName')), '2020-02-14', 'full'), resourceGroup().name)]",
+        "timeout": "PT1H",
+        "cleanupPreference": "OnSuccess",
+        "retentionInterval": "P1D"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.VirtualMachineImages/imageTemplates', parameters('imageTemplateName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('templateIdentityName'))]",
+        "[resourceId('Microsoft.Authorization/roleAssignments', variables('templateIdentityRoleAssignmentName'))]"
       ]
     }
   ]
