@@ -67,11 +67,7 @@ resource templateIdentityRoleDefinition 'Microsoft.Authorization/roleDefinitions
     permissions: [
       {
         actions: [
-          'Microsoft.Compute/galleries/read'
-          'Microsoft.Compute/galleries/images/read'
-          'Microsoft.Compute/galleries/images/write'
-          'Microsoft.Compute/galleries/images/versions/read'
-          'Microsoft.Compute/galleries/images/versions/write'
+          'Microsoft.Compute/galleries/*'
           'Microsoft.Compute/images/read'
           'Microsoft.Compute/images/write'
           'Microsoft.Compute/images/delete'
