@@ -349,7 +349,6 @@ $ErrorDocumentContents = '<h1>Example 404 error page</h1>'
 
 # Create the storage account if it doesn't already exist
 if ($StaticWebsiteStorageAccount -eq $null) {
-    New-AzureRmResourceGroup -Location "$Location" -Name $ResourceGroupName -Force
     $StaticWebsiteStorageAccount = New-AzureRmStorageAccount -StorageAccountName $StaticWebsiteStorageAccountName -Type 'Standard_LRS' -ResourceGroupName $ResourceGroupName -Location "$Location"
 }
 
