@@ -68,14 +68,10 @@ resource templateIdentityRoleDefinition 'Microsoft.Authorization/roleDefinitions
       {
         actions: [
           'Microsoft.Compute/galleries/*'
-          'Microsoft.Compute/images/*'
           'Microsoft.Storage/storageAccounts/*'
-          'Microsoft.ContainerInstance/containerGroups/read'
-          'Microsoft.ContainerInstance/containerGroups/write'
-          'Microsoft.ContainerInstance/containerGroups/start/action'
-          'Microsoft.Resources/deployments/read'
-          'Microsoft.Resources/deploymentScripts/read'
-          'Microsoft.Resources/deploymentScripts/write'
+          'Microsoft.ContainerInstance/containerGroups/*'
+          'Microsoft.Resources/deployments/*'
+          'Microsoft.Resources/deploymentScripts/*'
           'Microsoft.VirtualMachineImages/imageTemplates/run/action'
         ]
       }
