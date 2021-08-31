@@ -36,12 +36,8 @@ param runOutputName string = 'Win2019_AzureWindowsBaseline_CustomImage'
 
 @description('List the regions in Azure where you would like to replicate the custom image after it is created.')
 param replicationRegions array = [
-  'centralus'
-  'eastus'
   'eastus2'
-  'westus'
   'westus2'
-  'westus3'
   'northeurope'
   'westeurope'
 ]
@@ -92,7 +88,7 @@ resource templateRoleAssignment 'Microsoft.Authorization/roleAssignments@2021-04
   }
 }
 
-resource imageGallery 'Microsoft.Compute/galleries@2021-07-01' = {
+resource imageGallery 'Microsoft.Compute/galleries@2019-03-01' = {
   name: imageGalleryName
   location: location
   properties: {}
@@ -174,26 +170,26 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2020-02-14
   }
 }
 
-resource imageTemplate_build 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: 'Image_template_build'
-  location: location
-  kind: 'AzurePowerShell'
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${templateIdentity.id}': {}
-    }
-  }
-  dependsOn: [
-    imageTemplate
-    templateRoleAssignment
-  ]
-  properties: {
-    forceUpdateTag: forceUpdateTag
-    azPowerShellVersion: '6.2'
-    scriptContent: 'Invoke-AzResourceAction -ResourceName "${imageTemplate}" -ResourceGroupName "${resourceGroup().name}" -ResourceType "Microsoft.VirtualMachineImages/imageTemplates" -ApiVersion "2020-02-14" -Action Run -Force'
-    timeout: 'PT1H'
-    cleanupPreference: 'OnSuccess'
-    retentionInterval: 'P1D'
-  }
-}
+//resource imageTemplate_build 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+//  name: 'Image_template_build'
+//  location: location
+//  kind: 'AzurePowerShell'
+//  identity: {
+//    type: 'UserAssigned'
+//    userAssignedIdentities: {
+//      '${templateIdentity.id}': {}
+//    }
+//  }
+//  dependsOn: [
+//    imageTemplate
+//    templateRoleAssignment
+//  ]
+//  properties: {
+//    forceUpdateTag: forceUpdateTag
+//    azPowerShellVersion: '6.2'
+//    scriptContent: 'Invoke-AzResourceAction -ResourceName "${imageTemplate}" -ResourceGroupName "${resourceGroup().name}" -ResourceType "Microsoft.VirtualMachineImages/imageTemplates" -ApiVersion "2020-02-14" -Action Run -Force'
+//    timeout: 'PT1H'
+//    cleanupPreference: 'OnSuccess'
+//    retentionInterval: 'P1D'
+//  }
+//}
