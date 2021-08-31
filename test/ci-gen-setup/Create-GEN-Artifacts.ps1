@@ -339,5 +339,35 @@ $json.Add("APPCONFIGSTORE-KEY1", "key1")
 $json.Add("APPCONFIGSTORE-KEY1", "windowsOSVersion")
 $json.Add("APPCONFIGSTORE-KEY1", "diskSizeGB")
 
+# Create a static website using Azure Storage
+$StaticWebsiteStorageAccountName = 'stweb' + ((Get-AzureRmContext).Subscription.Id).Replace('-', '').substring(0, 19)
+$StaticWebsiteStorageAccount = (Get-AzureRmStorageAccount | Where-Object { $_.StorageAccountName -eq $StaticWebsiteStorageAccountName })
+$IndexDocumentPath = 'index.htm'
+$IndexDocumentContents = '<h1>Example static website</h1>'
+$ErrorDocument404Path = 'error.htm'
+$ErrorDocumentContents = '<h1>Example 404 error page</h1>'
+
+# Create the storage account if it doesn't already exist
+if ($StaticWebsiteStorageAccount -eq $null) {
+    $StorageResourceGroupName = 'ARM_Deploy_Staging'
+    New-AzureRmResourceGroup -Location "$Location" -Name $StorageResourceGroupName -Force
+    $StaticWebsiteStorageAccount = New-AzureRmStorageAccount -StorageAccountName $StaticWebsiteStorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$Location"
+}
+
+$ctx = $StaticWebsiteStorageAccount.Context
+Enable-AzStorageStaticWebsite -Context $ctx -IndexDocument $IndexDocumentPath -ErrorDocument404Path $ErrorDocument404Path
+
+New-Item $IndexDocumentPath -Force
+Set-Content $IndexDocumentPath $IndexDocumentContents -Force
+Set-AzStorageBlobContent -Context $ctx -Container '$web' -File $IndexDocumentPath -Blob $IndexDocumentPath -Properties @{'ContentType' = 'text/html'} -Force
+
+New-Item $ErrorDocument404Path -Force
+Set-Content $ErrorDocument404Path $ErrorDocumentContents -Force
+Set-AzStorageBlobContent -Context $ctx -Container '$web' -File $ErrorDocument404Path -Blob $ErrorDocument404Path -Properties @{'ContentType' = 'text/html'} -Force
+
+$hostName = (($StaticWebsiteStorageAccount.PrimaryEndpoints.Web) -Replace 'https://', '')  -Replace '/', ''
+$json.Add("STATIC-WEBSITE-URL", $StaticWebsiteStorageAccount.PrimaryEndpoints.Web)
+$json.Add("STATIC-WEBSITE-HOST-NAME", $hostName)
+
 # Output all the values needed for the config file
 Write-Output $($json | ConvertTo-json -Depth 30)
