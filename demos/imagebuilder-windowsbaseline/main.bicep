@@ -38,8 +38,6 @@ param runOutputName string = 'Win2019_AzureWindowsBaseline_CustomImage'
 param replicationRegions array = [
   'eastus2'
   'westus2'
-  'northeurope'
-  'westeurope'
 ]
 
 //@description('A unique string generated for each deployment, to make sure the script is always run.')
