@@ -27,13 +27,13 @@ $ctx = $staticWebsiteStorageAccount.Context
 Enable-AzStorageStaticWebsite -Context $ctx -IndexDocument $indexDocumentPath -ErrorDocument404Path $errorDocument404Path
 
 # Add the two HTML pages.
-New-Item $indexDocumentPath -Force
-Set-Content $indexDocumentPath $indexDocumentContents -Force
-Set-AzStorageBlobContent -Context $ctx -Container '$web' -File $indexDocumentPath -Blob $indexDocumentPath -Properties @{'ContentType' = 'text/html'} -Force
+$tempIndexFile = New-TemporaryFile
+Set-Content $tempIndexFile $indexDocumentContents -Force
+Set-AzStorageBlobContent -Context $ctx -Container '$web' -File $tempIndexFile -Blob $indexDocumentPath -Properties @{'ContentType' = 'text/html'} -Force
 
-New-Item $errorDocument404Path -Force
-Set-Content $errorDocument404Path $errorDocumentContents -Force
-Set-AzStorageBlobContent -Context $ctx -Container '$web' -File $errorDocument404Path -Blob $errorDocument404Path -Properties @{'ContentType' = 'text/html'} -Force
+$tempErrorDocument404File = New-TemporaryFile
+Set-Content $tempErrorDocument404File $errorDocumentContents -Force
+Set-AzStorageBlobContent -Context $ctx -Container '$web' -File $tempErrorDocument404File -Blob $errorDocument404Path -Properties @{'ContentType' = 'text/html'} -Force
 
 # Create a JSON object for the placeholder values.
 $json = New-Object System.Collections.Specialized.OrderedDictionary #This keeps things in the order we entered them, instead of: New-Object -TypeName Hashtable
