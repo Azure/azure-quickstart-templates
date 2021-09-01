@@ -33,18 +33,17 @@ You can select the **Deploy to Azure** button at the beginning of this document.
 - Sku name that combines service tier and hardware generation, number of virtual cores and storage size in GB. The table below shows supported combinations.
 - License type of _BasePrice_ if you're eligible for [Azure Hybrid Use Benefit for SQL Server](https://azure.microsoft.com/pricing/hybrid-benefit/) or _LicenseIncluded_.
 
-||GP_Gen4|GP_Gen5|BC_Gen4|BC_Gen5|
-|----|------|-----|------|-----|
-|Tier|General Purpose|General Purpose|Business Critical|Busines Critical|
-|Hardware|Gen 4|Gen 5|Gen 4|Gen 5|
-|Min vCores|8|8|8|8|
-|Max vCores|24|80|32|80|
-|Min storage size|32|32|32|32|
-|Max storage size|8192|8192|1024|1024 GB for 8, 16 vCores<br/>2048 GB for 24 vCores<br/>4096 GB for 32, 40, 64, 80 vCores|
+||GP_Gen5|BC_Gen5|
+|----|------|------|
+|Tier|General Purpose|Busines Critical|
+|Hardware|Gen 5|Gen 5|
+|Min vCores|8|8|
+|Max vCores|80|80|
+|Min storage size|32|32|
+|Max storage size|8192|1024 GB for 8, 16 vCores<br/>2048 GB for 24 vCores<br/>4096 GB for 32, 40, 64, 80 vCores|
 
 ## Important
 
-During the public preview deployment might take up to six hours. This is because a virtual cluster that hosts the instances needs time to deploy. Each subsequent instance creation in the same virtual cluster takes a few minutes.
+Deployment of first instance in the subnet might take up to six hours, while subsequent deployments take up to 1.5 hours. This is because a virtual cluster that hosts the instances needs time to deploy or resize the virtual cluster. For more details visit [Overview of Azure SQL Managed Instance management operations](https://docs.microsoft.com/azure/azure-sql/managed-instance/management-operations-overview)
 
-After the last Managed Instance is deprovisioned, the cluster stays alive for up to 24 hours. This avoids waiting for a new cluster to be provisioned in case that customer just wants to recreate the instance. During that time period the resource group and virtual network can't be deleted. This is a known issue and the Managed Instance team is working on a resolution.
-
+Each virtual cluster is associated with a subnet and deployed together with first instance creation. In the same way, a virtual cluster is [automatically removed together with last instance deletion](https://docs.microsoft.com/azure/azure-sql/managed-instance/virtual-cluster-delete) leaving the subnet empty and ready for removal.
