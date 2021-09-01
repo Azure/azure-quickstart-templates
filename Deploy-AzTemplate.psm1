@@ -215,6 +215,9 @@ function deploy {
     if (Test-Path $TemplateParametersFile) {
         $TemplateArgs.Add('TemplateParameterFile', $TemplateParametersFile)
     }
+
+    $OptionalParameters.Add('Name', $DeploymentName)
+
     Write-Host ($TemplateArgs | Out-String)
     Write-Host ($OptionalParameters | Out-String)
 
@@ -256,7 +259,7 @@ function deploy {
     
         switch ($deploymentScope) {
             "resourceGroup" {
-                New-AzResourceGroupDeployment -Name $DeploymentName `
+                New-AzResourceGroupDeployment `
                     -ResourceGroupName $ResourceGroupName `
                     @TemplateArgs `
                     @OptionalParameters `
@@ -264,7 +267,7 @@ function deploy {
                     -ErrorVariable ErrorMessages
             }
             "Subscription" {
-                New-AzDeployment -Name $DeploymentName `
+                New-AzDeployment `
                     -Location $Location `
                     @TemplateArgs `
                     @OptionalParameters `
@@ -272,7 +275,7 @@ function deploy {
                     -ErrorVariable ErrorMessages
             }
             "managementGroup" {           
-                New-AzManagementGroupDeployment -Name $DeploymentName `
+                New-AzManagementGroupDeployment `
                     -ManagementGroupId $managementGroupId `
                     -Location $Location `
                     @TemplateArgs `
@@ -281,7 +284,7 @@ function deploy {
                     -ErrorVariable ErrorMessages
             }
             "tenant" {
-                New-AzTenantDeployment -Name $DeploymentName `
+                New-AzTenantDeployment `
                     -Location $Location `
                     @TemplateArgs `
                     @OptionalParameters `
