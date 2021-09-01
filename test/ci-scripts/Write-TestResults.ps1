@@ -26,7 +26,10 @@ param(
     [string]$FairfaxLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
     [string]$PublicDeployment = "",
     [string]$PublicLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
-    [string]$BicepVersion = $ENV:BICEP_VERSION # empty if bicep not supported by the sample
+    [string]$BicepVersion = $ENV:BICEP_VERSION, # empty if bicep not supported by the sample
+    [bool]$TemplateAnalyzerReportedErrors = "$ENV:TEMPLATEANALYZER_REPORTEDERRORS", # TODO ask
+    [bool]$TemplateAnalyzerOutputFilePath = "$ENV:TEMPLATEANALYZER_OUTPUT_FILEPATH", # TODO ask
+    [string]$TemplateAnalyzerLogsContainerName = "template_analyzer_logs" # TODO ask
 )
 
 function Get-Regression(
@@ -142,6 +145,16 @@ if ($ValidationType -eq "Manual") {
     }
 }
 
+# TODO ask:
+$templateAnalyzerLogFileName = (New-Guid).ToString() # TODO ask
+Write-Host "Uploading TemplateAnalyzer log file named $templateAnalyzerLogFileName"
+Set-AzStorageBlobContent -Container $TemplateAnalyzerLogsContainerName `
+    -File $TemplateAnalyzerOutputFilePath `
+    -Blob $templateAnalyzerLogFileName `
+    -Context $ctx `
+    -Properties @{ "ContentType" = "text/plain" } `
+    -Force -Verbose
+
 # if the record doesn't exist, this is probably a new sample and needs to be added (or we just cleaned the table)
 if ($r -eq $null) {
 
@@ -157,6 +170,11 @@ if ($r -eq $null) {
     Write-Host "CredScan Result: $CredScanResult"
     if (![string]::IsNullOrWhiteSpace($CredScanResult)) {
         $results.Add("CredScanResult", $CredScanResult)
+    }
+    Write-Host "TemplateAnalyzer reported errors: $TemplateAnalyzerReportedErrors"
+    if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerReportedErrors)) {
+        $results.Add("TemplateAnalyzerReportedErrors", $TemplateAnalyzerReportedErrors)
+        $results.Add("TemplateAnalyzerLatestLogFileName", $templateAnalyzerLogFileName) # TODO ask
     }
     # set the values for Fairfax only if a result was passed
     Write-Host "FF Result"
@@ -207,6 +225,20 @@ else {
         }
         else {
             $r.BestPracticeResult = $BestPracticeResult
+        }
+    }
+    if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerReportedErrors)) {
+        if ($r.TemplateAnalyzerReportedErrors -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName 'TemplateAnalyzerReportedErrors' -NotePropertyValue $TemplateAnalyzerReportedErrors
+        } else {
+            $r.TemplateAnalyzerReportedErrors = $TemplateAnalyzerReportedErrors
+        }
+    }
+    if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerLatestLogFileName)) {
+        if ($r.TemplateAnalyzerLatestLogFileName -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName 'TemplateAnalyzerLatestLogFileName' -NotePropertyValue $templateAnalyzerLogFileName
+        } else {
+            $r.TemplateAnalyzerLatestLogFileName = $templateAnalyzerLogFileName
         }
     }
     if (![string]::IsNullOrWhiteSpace($BicepVersion)) {
@@ -441,6 +473,20 @@ switch ($CredScanResult) {
     }
 }
 
+# TODO ask:
+if ($r.TemplateAnalyzerReportedErrors -ne $null) {
+    # TODO can be removed when table is updated to string
+    $TemplateAnalyzerReportedErrors = ($r.TemplateAnalyzerReportedErrors).ToString().ToLower().Replace("true", "FAIL").Replace("false", "PASS")
+}
+switch ($TemplateAnalyzerReportedErrors) {
+    "PASS" { $TemplateAnalyzerResultColor = "brightgreen" }
+    "FAIL" { $TemplateAnalyzerResultColor = "red" }
+    default {
+        $TemplateAnalyzerReportedErrors = $na
+        $TemplateAnalyzerResultColor = "inactive"    
+    }
+}
+
 $BicepVersionColor = "brightgreen";
 
 $badges = @(
@@ -472,6 +518,10 @@ $badges = @(
     @{
         "url"      = "https://img.shields.io/badge/Bicep%20Version-$BicepVersion-/?color=$BicepVersionColor";
         "filename" = "BicepVersion.svg"
+    },
+    @{
+        "url"      = "https://img.shields.io/badge/Template%20Analyzer%20Check-$TemplateAnalyzerReportedErrors-/?color=$TemplateAnalyzerResultColor"; # TODO ask
+        "filename" = "TemplateAnalyzerResultColor.svg"
     }
 )
 
