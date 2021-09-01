@@ -18,10 +18,16 @@ param storageAccountName string = 'stor${uniqueString(resourceGroup().id)}'
 param storageSku string = 'Standard_LRS'
 
 @description('The path to the web index document.')
-param indexDocument string = 'index.html'
+param indexDocumentPath string = 'index.html'
+
+@description('The contents of the web index document.')
+param indexDocumentContents string = '<h1>Example static website</h1>'
 
 @description('The path to the web error document.')
 param errorDocument404Path string = 'error.html'
+
+@description('The contents of the web error document.')
+param errorDocument404Contents string = '<h1>Example 404 error page</h1>'
 
 resource contributorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: subscription()
@@ -71,7 +77,32 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     azPowerShellVersion: '3.0'
     scriptContent: loadTextContent('./scripts/enable-static-website.ps1')
     retentionInterval: 'PT4H'
-    arguments: '-ResourceGroupName ${resourceGroup().name} -StorageAccountName ${storageAccountName} -IndexDocument ${indexDocument} -ErrorDocument404Path ${errorDocument404Path}'
+    environmentVariables: [
+      {
+        name: 'ResourceGroupName'
+        value: resourceGroup().name
+      }
+      {
+        name: 'StorageAccountName'
+        value: storageAccount.name
+      }
+      {
+        name: 'IndexDocumentPath'
+        value: indexDocumentPath
+      }
+      {
+        name: 'IndexDocumentContents'
+        value: indexDocumentContents
+      }
+      {
+        name: 'ErrorDocument404Path'
+        value: errorDocument404Path
+      }
+      {
+        name: 'ErrorDocument404Contents'
+        value: errorDocument404Contents
+      }
+    ]
   }
 }
 

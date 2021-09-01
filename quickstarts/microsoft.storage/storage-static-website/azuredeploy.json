@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "10777736699421296727"
+      "templateHash": "6050322035502316178"
     }
   },
   "parameters": {
@@ -36,11 +36,18 @@
         "Premium_LRS"
       ]
     },
-    "indexDocument": {
+    "indexDocumentPath": {
       "type": "string",
       "defaultValue": "index.html",
       "metadata": {
         "description": "The path to the web index document."
+      }
+    },
+    "indexDocumentContents": {
+      "type": "string",
+      "defaultValue": "<h1>Example static website</h1>",
+      "metadata": {
+        "description": "The contents of the web index document."
       }
     },
     "errorDocument404Path": {
@@ -48,6 +55,13 @@
       "defaultValue": "error.html",
       "metadata": {
         "description": "The path to the web error document."
+      }
+    },
+    "errorDocument404Contents": {
+      "type": "string",
+      "defaultValue": "<h1>Example 404 error page</h1>",
+      "metadata": {
+        "description": "The contents of the web error document."
       }
     }
   },
@@ -98,13 +112,39 @@
       },
       "properties": {
         "azPowerShellVersion": "3.0",
-        "scriptContent": "param(\n    [string] $ResourceGroupName,\n    [string] $StorageAccountName,\n    [string] $IndexDocument,\n    [string] $ErrorDocument404Path)\n\n$ErrorActionPreference = 'Stop'\n$storageAccount = Get-AzStorageAccount -ResourceGroupName $ResourceGroupName -AccountName $StorageAccountName\n\n$ctx = $storageAccount.Context\nEnable-AzStorageStaticWebsite -Context $ctx -IndexDocument $IndexDocument -ErrorDocument404Path $ErrorDocument404Path\n",
+        "scriptContent": "$ErrorActionPreference = 'Stop'\n$storageAccount = Get-AzStorageAccount -ResourceGroupName $env:ResourceGroupName -AccountName $env:StorageAccountName\n\n# Enable the static website feature on the storage account.\n$ctx = $storageAccount.Context\nEnable-AzStorageStaticWebsite -Context $ctx -IndexDocument $env:IndexDocumentPath -ErrorDocument404Path $env:ErrorDocument404Path\n\n# Add the two HTML pages.\n$tempIndexFile = New-TemporaryFile\nSet-Content $tempIndexFile $env:IndexDocumentContents -Force\nSet-AzStorageBlobContent -Context $ctx -Container '$web' -File $tempIndexFile -Blob $env:IndexDocumentPath -Properties @{'ContentType' = 'text/html'} -Force\n\n$tempErrorDocument404File = New-TemporaryFile\nSet-Content $tempErrorDocument404File $env:ErrorDocument404Contents -Force\nSet-AzStorageBlobContent -Context $ctx -Container '$web' -File $tempErrorDocument404File -Blob $env:ErrorDocument404Path -Properties @{'ContentType' = 'text/html'} -Force\n",
         "retentionInterval": "PT4H",
-        "arguments": "[format('-ResourceGroupName {0} -StorageAccountName {1} -IndexDocument {2} -ErrorDocument404Path {3}', resourceGroup().name, parameters('storageAccountName'), parameters('indexDocument'), parameters('errorDocument404Path'))]"
+        "environmentVariables": [
+          {
+            "name": "ResourceGroupName",
+            "value": "[resourceGroup().name]"
+          },
+          {
+            "name": "StorageAccountName",
+            "value": "[parameters('storageAccountName')]"
+          },
+          {
+            "name": "IndexDocumentPath",
+            "value": "[parameters('indexDocumentPath')]"
+          },
+          {
+            "name": "IndexDocumentContents",
+            "value": "[parameters('indexDocumentContents')]"
+          },
+          {
+            "name": "ErrorDocument404Path",
+            "value": "[parameters('errorDocument404Path')]"
+          },
+          {
+            "name": "ErrorDocument404Contents",
+            "value": "[parameters('errorDocument404Contents')]"
+          }
+        ]
       },
       "dependsOn": [
         "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DeploymentScript')]",
-        "[extensionResourceId(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), 'Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DeploymentScript'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab')))]"
+        "[extensionResourceId(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), 'Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DeploymentScript'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
       ]
     }
   ],
