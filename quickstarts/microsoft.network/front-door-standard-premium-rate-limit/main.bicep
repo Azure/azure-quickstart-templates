@@ -4,6 +4,9 @@ param endpointName string = 'afd-${uniqueString(resourceGroup().id)}'
 @description('The host name that should be used when connecting from Front Door to the origin.')
 param originHostName string
 
+@description('TODO')
+param originUrl string
+
 @description('The name of the SKU to use when creating the Front Door profile.')
 @allowed([
   'Standard_AzureFrontDoor'
@@ -218,3 +221,7 @@ resource securityPolicy 'Microsoft.Cdn/profiles/securityPolicies@2020-09-01' = {
 }
 
 output frontDoorEndpointHostName string = endpoint.properties.hostName
+
+// TODO remove these
+output originHostName string = originHostName
+output originUrl string = originUrl
