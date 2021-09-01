@@ -352,6 +352,10 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-MACHINE-LEARNING-SP-OBJECTID** - objectId of the Azure ML Service Principal in the tenant
 + **GEN-COSMOS-DB-SP-OBJECTID** - objectId of the Cosmos DB Service Principal in the tenant
 
+**Static website related placeholders:**
++ **GEN-STATIC-WEBSITE-URL** - full URL of a static website
++ **GEN-STATIC-WEBSITE-HOST-NAME** - host name of a static website
+
 Here's an example in an `azuredeploy.parameters.json` file:
 
 ```json
