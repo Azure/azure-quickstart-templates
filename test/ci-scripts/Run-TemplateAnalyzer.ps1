@@ -1,6 +1,6 @@
 <#
 
-Downloads and runs TemplateAnalyzer against the pre requisites template, and the main deployment template, along with all the parameters files
+Downloads and runs TemplateAnalyzer against the nested templates, the pre requisites template, and the main deployment template, along with their parameters files
 
 #>
 
@@ -10,7 +10,6 @@ param(
     [string] $prereqTemplateFilename = $ENV:PREREQ_TEMPLATE_FILENAME_JSON, 
     [string] $prereqParametersFilename = $ENV:PREREQ_PARAMETERS_FILENAME_JSON, # TODO ask
     [string] $mainTemplateFilename = $ENV:MAINTEMPLATE_DEPLOYMENT_FILENAME
-    # [string[]] $ttkTestsToSkip = $ENV:TTK_SKIP_TESTS TODO ask
 )
 
 $RULE_FAILED_MESSAGE = "Result: Failed"
@@ -26,11 +25,18 @@ Write-Host "##vso[task.setvariable variable=TemplateAnalyzer.path]$templateAnaly
 $templateAnalyzerVersion = & $templateAnalyzerPath --version
 Write-Host "##vso[task.setvariable variable=TemplateAnalyzer.version]$templateAnalyzerVersion"
 
+# We don't want to run TTK checks by themselves and also in the TemplateAnalyzer integration
+# Also, TemplateAnalyzer still doesn't support skipping tests like TTK
+$ttkFolderInsideTemplateAnalyzer = "$templateAnalyzerFolderPath\TTK"
+if (Test-Path $ttkFolderInsideTemplateAnalyzer) {
+    Remove-Item -LiteralPath $ttkFolderInsideTemplateAnalyzer -Force -Recurse
+}
+
+$testOutputFilePath = "$templateAnalyzerFolderPath\analysis_output.txt"
 function Analyze-Template {
     param (
         $templateFileName,
-        $parametersFileName,
-        $testName
+        $parametersFileName
     )
 
     if ($templateFileName -and (Test-Path $templateFileName)) {
@@ -44,17 +50,26 @@ function Analyze-Template {
 
     if($testOutput.length -ne 0 -and $LASTEXITCODE -eq 0)
     {
-        $testOutput >> "$templateAnalyzerFolderPath\analysis_output.txt"
-        Write-Host "##vso[task.setvariable variable=TemplateAnalyzer.$testName.ran]$true"
-        Write-Host ("##vso[task.setvariable variable=TemplateAnalyzer.$testName.reportedErrors]" + $testOutput.Contains($RULE_FAILED_MESSAGE))
+        $testOutput >> $testOutputFilePath
+
+        return $testOutput.Contains($RULE_FAILED_MESSAGE)
     } else {
         exit 1 # TODO ask
     }
 }
 
-Analyze-Template $prereqTemplateFilename $prereqParametersFilename "preReqs"
+$reportedErrors = $false
+Get-ChildItem $sampleFolder -Directory | # To analyze all the JSON files in folders that could contain nested templates
+    ForEach-Object {
+        Get-ChildItem $_ -Recurse -Filter *.json |
+            ForEach-Object {
+                $reportedErrors = $reportedErrors -or (Analyze-Template $_.FullName)
+            }
+    }
+$reportedErrors = $reportedErrors -or (Analyze-Template $prereqTemplateFilename $prereqParametersFilename)
+$reportedErrors = $reportedErrors -or (Analyze-Template $mainTemplateFilename "$sampleFolder\azuredeploy.parameters.new.json") # TODO ask about params file
 
-$newTemplateParametersFile = "$sampleFolder\azuredeploy.parameters.new.json" # TODO ask
-Analyze-Template $mainTemplateFilename $newTemplateParametersFile "mainTemplate"
+Write-Host "##vso[task.setvariable variable=TemplateAnalyzer.reportedErrors]$reportedErrors"
+Write-Host "##vso[task.setvariable variable=TemplateAnalyzer.output.filePath]$testOutputFilePath"
 
 exit 0 # TODO ask
