@@ -8,9 +8,9 @@ param(
     [string] $ttkFolder = $ENV:TTK_FOLDER,
     [string] $sampleFolder = $ENV:SAMPLE_FOLDER,
     [string] $prereqTemplateFilename = $ENV:PREREQ_TEMPLATE_FILENAME_JSON, 
-    [string] $prereqParametersFilename = $ENV:GEN_PREREQ_PARAMETERS_FILENAME, # TODO doublecheck
+    [string] $prereqParametersFilename = $ENV:GEN_PREREQ_PARAMETERS_FILENAME,
     [string] $mainTemplateFilename = $ENV:MAINTEMPLATE_DEPLOYMENT_FILENAME,
-    [string] $mainParametersFilename = $ENV:GEN_PARAMETERS_FILENAME # TODO doublecheck
+    [string] $mainParametersFilename = $ENV:GEN_PARAMETERS_FILENAME
 )
 
 $RULE_FAILED_MESSAGE = "Result: Failed"
@@ -70,7 +70,7 @@ $preReqsFolder = "$sampleFolder\prereqs"
 $reportedErrors = $reportedErrors -or (Analyze-Template "$preReqsFolder\$prereqTemplateFilename" "$preReqsFolder\$prereqParametersFilename")
 $reportedErrors = $reportedErrors -or (Analyze-Template "$sampleFolder\$mainTemplateFilename" "$sampleFolder\$mainParametersFilename")
 
-Write-Host "##vso[task.setvariable variable=TemplateAnalyzer.reportedErrors]$reportedErrors"
-Write-Host "##vso[task.setvariable variable=TemplateAnalyzer.output.filePath]$testOutputFilePath"
+Write-Host "##vso[task.setvariable variable=templateAnalyzer.reportedErrors]$reportedErrors"
+Write-Host "##vso[task.setvariable variable=templateAnalyzer.output.filePath]$testOutputFilePath"
 
 exit 0
