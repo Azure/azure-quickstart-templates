@@ -1,58 +1,35 @@
-@description('Required. App service prefix.')
-param appNamePrefix string = 'app-2'
+@description('App service prefix.')
+param appName string = 'GEN-UNIQUE'
 
-@description('Required. App service location.')
+@description('App service location.')
 param location string = resourceGroup().location
 
-@description('Required. App service plan prefix.')
-param hostingPlanNamePrefix string = 'asev3-asp-2'
+@description('App service plan prefix.')
+param hostingPlanName string = 'GEN-UNIQUE'
 
-@description('Required. App service plan hosting environment profile name (ASEv3 name).')
-param hostingEnvironmentProfileName string = 'asev3-ilb-cua3tpryw2j64'
+@description('App service plan hosting environment profile name (ASEv3 name).')
+param hostingEnvironmentProfileName string
 
-@description('Required. Enable Always-on of App service.')
+@description('Enable Always-on of App service.')
 param alwaysOn bool = true
 
-@description('Required. App service plan sku.')
+@description('App service plan sku.')
 param sku string = 'IsolatedV2'
 
-@description('Required. App service plan sku code.')
+@description('App service plan sku code.')
 param skuCode string = 'I1V2'
 
-@description('Required. App service plan worker size.')
-param workerSize string = '6'
-
-@description('Required. App service plan worker size id.')
-param workerSizeId string = '6'
-
-@description('Required. Number of App service plan workers.')
-param numberOfWorkers string = '1'
-
-@description('Required. Current stack of App service.')
-param currentStack string = 'dotnet'
-
-@description('Required. Enable php of App service.')
+@description('Enable php of App service.')
 param phpVersion string = 'OFF'
 
-@description('Required. .NET Framework version of App service.')
+@description('.NET Framework version of App service.')
 param netFrameworkVersion string = 'v5.0'
-
-var uniStr = '${uniqueString(resourceGroup().id)}'
-var appName = '${appNamePrefix}-${uniStr}'
-var hostingPlanName = '${hostingPlanNamePrefix}-${uniStr}'
 
 resource site 'Microsoft.Web/sites@2021-01-15' = {
   name: appName
   location: location
   properties: {
-    name: appName
     siteConfig: {
-      metadata: [
-        {
-          name: 'CURRENT_STACK'
-          value: currentStack
-        }
-      ]
       phpVersion: phpVersion
       netFrameworkVersion: netFrameworkVersion
       alwaysOn: alwaysOn
@@ -63,25 +40,18 @@ resource site 'Microsoft.Web/sites@2021-01-15' = {
       id: resourceId('Microsoft.Web/hostingEnvironments', hostingEnvironmentProfileName)
     }
   }
-  dependsOn: [
-    hostingPlan
-  ]
 }
 
 resource hostingPlan 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: hostingPlanName
   location: location
   properties: {
-    name: hostingPlanName
-    workerSize: workerSize
-    workerSizeId: workerSizeId
-    numberOfWorkers: numberOfWorkers
     hostingEnvironmentProfile: {
       id: resourceId('Microsoft.Web/hostingEnvironments', hostingEnvironmentProfileName)
     }
   }
   sku: {
-    Tier: sku
-    Name: skuCode
+    tier: sku
+    name: skuCode
   }
 }

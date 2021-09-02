@@ -49,22 +49,19 @@ This template will create a Virtual Network, and a /24 Subnet will be created fo
 
 In the HostingEnvironments section of this template, an App Service Environments will be created with following properties**:**
 
-- **aseNamePrefix (string)**: Required. In this sample template, you will need to provide an ASEv3 name prefix, will plus a 4-digit unique string as ASEv3 name.
+- **aseName (string)**: Required. ASEv3 name.
 - **dedicatedHostCount (string)**: Required. Configure dedicated host count (Value : **"0"** means no dedicated host will be deployed).
 - **zoneRedundant (bool)**: Required. Configure zone redundant (Value: **false** means no zone redundant will be deployed).
 - **internalLoadBalancingMode (int)**: Required. Load balancer mode: **0** - external load balancer, **3** - internal load balancer for ASEv3.
 - **createPrivateDNS (bool)**: Optional, a custom defined parameter. Only when this properties set to **true** and **internalLoadBalancingMode** set to **3**. It will create a Private DNS zone.
-- **useExistingVnetandSubnet (bool)**: Required, a custom defined parameter. When set to **true**, will deploy to existing vnet and subnet.
+- **useExistingVnetandSubnet (bool)**: Optional, a custom defined parameter. When set to **true**, will deploy to existing vnet and subnet.
 - **vNetResourceGroupName (string)**: Optional, a custom defined parameter. Only when the virtual network resides in different resource group.
 
 ### Microsoft.Web/serverfarms
 
 In this template, an application service environment will be created in the ASEv3. This example will be created with the following default values. You can adjust the parameter settings upon your requirements.
 
-- **hostingPlanNamePrefix (string)**: In this sample template, you will need to provide an hosting plan name prefix, will plus a 4-digit unique string as App Service Plan name.
-- **workerSize (string)**: Required. App service plan worker size. Default value is **"6"**.
-- **workerSizeId (string)**: Required. App service plan worker size id. Default value is **"6"**.
-- **numberOfWorkers (string)**: Required. Number of App service plan workers. Default value is **"1"**.
+- **hostingPlan (string)**: Required. App Service Plan name.
 - **hostingEnvironmentProfile** (string): Required. The ASEv3 name where App service the reside.
 - **sku (string)**: Required. App service plan sku. Default value is **"IsolatedV2"**.
 - **skuCode (string)**: Required. App service plan sku code. Default value is **"I1V2"**.
@@ -73,17 +70,10 @@ In this template, an application service environment will be created in the ASEv
 
 In this template, an application service environment will be created in the App service plan. This example will be created with the following default values. You can adjust the parameter settings upon your requirements.
 
-- **appNamePrefix (string)**: In this sample template, you will need to provide an App service name prefix, will plus a 4-digit unique string as App service name.
-
-- **currentStack (string)**: Required. Current stack of App service. Default value is **"dotnet"**.
-
+- **appName (string)**: Required. App service name.
 - **phpVersion (string)**: Required. Enable php of App service. Default value is **"OFF"**.
-
 - **netFrameworkVersion (string)**: Required. .NET Framework version of App service, Default value is **"v5.0"**
-
-- **alwaysOn (bool)**: Required. Enable Always-on of App service. Default value is **true**.
-
-  
+- **alwaysOn (bool)**: Required. Enable Always-on of App service. Default value is **true**.  
 
 ## Prerequisites
 
