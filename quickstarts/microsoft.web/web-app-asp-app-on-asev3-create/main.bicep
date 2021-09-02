@@ -66,8 +66,8 @@ param networkSecurityGroupName string = 'nsg-asev3'
 param networkSecurityGroupSecurityRules array = []
 
 var uniStr = '${uniqueString(resourceGroup().id)}'
-var virtualNetworkId = useExistingVnetandSubnet ? resourceId(vNetResourceGroupName, 'Microsoft.Network/virtualNetworks', virtualNetworkName) : resourceId('Microsoft.Network/virtualNetworks', virtualNetworkName)
-var subnetId = useExistingVnetandSubnet ? resourceId(vNetResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName) : resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
+var virtualNetworkId = resourceId(vNetResourceGroupName, 'Microsoft.Network/virtualNetworks', virtualNetworkName)
+var subnetId = resourceId(vNetResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var privateDNSZoneName = asev3.properties.dnsSuffix
 
 resource networksecuritygroup 'Microsoft.Network/networkSecurityGroups@2020-11-01' = if (!useExistingVnetandSubnet) {
@@ -97,6 +97,9 @@ resource networksecuritygroup 'Microsoft.Network/networkSecurityGroups@2020-11-0
 resource virtualnetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = if (!useExistingVnetandSubnet) {
   name: virtualNetworkName
   location: location
+  dependsOn: [
+    networksecuritygroup
+  ]
   properties: {
     addressSpace: {
       addressPrefixes: vNetAddressPrefixes
@@ -126,16 +129,16 @@ resource asev3 'Microsoft.Web/hostingEnvironments@2020-12-01' = {
   name: aseName
   location: location
   kind: 'ASEV3'
+  dependsOn: [
+    virtualnetwork
+  ] 
   properties: {
     dedicatedHostCount: dedicatedHostCount
     zoneRedundant: zoneRedundant
     internalLoadBalancingMode: internalLoadBalancingMode
     virtualNetwork: {
       id: subnetId
-    }
-    dependsOn: [
-      virtualnetwork
-    ]  
+    } 
   }
 }
 
