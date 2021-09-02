@@ -131,6 +131,8 @@ $FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("true"), "PASS
 $FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("false"), "FAIL"
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("true"), "PASS"
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("false"), "FAIL"
+$TemplateAnalyzerResult = $TemplateAnalyzerReportedErrors -ireplace [regex]::Escape("true"), "FAIL"
+$TemplateAnalyzerResult = $TemplateAnalyzerReportedErrors -ireplace [regex]::Escape("false"), "PASS"
 
 Write-Host "Supported Environments Found: $supportedEnvironmentsJson"
 $supportedEnvironments = ($supportedEnvironmentsJson | ConvertFrom-JSON -AsHashTable)
@@ -169,9 +171,9 @@ if ($r -eq $null) {
     if (![string]::IsNullOrWhiteSpace($CredScanResult)) {
         $results.Add("CredScanResult", $CredScanResult)
     }
-    Write-Host "TemplateAnalyzer reported errors: $TemplateAnalyzerReportedErrors"
-    if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerReportedErrors)) {
-        $results.Add("TemplateAnalyzerReportedErrors", $TemplateAnalyzerReportedErrors)
+    Write-Host "TemplateAnalyzer result: $TemplateAnalyzerResult"
+    if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerResult)) {
+        $results.Add("TemplateAnalyzerResult", $TemplateAnalyzerResult)
     }
     # set the values for Fairfax only if a result was passed
     Write-Host "FF Result"
@@ -224,11 +226,11 @@ else {
             $r.BestPracticeResult = $BestPracticeResult
         }
     }
-    if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerReportedErrors)) {
-        if ($r.TemplateAnalyzerReportedErrors -eq $null) {
-            Add-Member -InputObject $r -NotePropertyName 'TemplateAnalyzerReportedErrors' -NotePropertyValue $TemplateAnalyzerReportedErrors
+    if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerResult)) {
+        if ($r.TemplateAnalyzerResult -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName 'TemplateAnalyzerResult' -NotePropertyValue $TemplateAnalyzerResult
         } else {
-            $r.TemplateAnalyzerReportedErrors = $TemplateAnalyzerReportedErrors
+            $r.TemplateAnalyzerResult = $TemplateAnalyzerResult
         }
     }
     if (![string]::IsNullOrWhiteSpace($BicepVersion)) {
@@ -354,6 +356,8 @@ else {
 $BPRegressed = Get-Regression $comparisonResults $newResults "BestPracticeResult"
 $FairfaxRegressed = Get-Regression $comparisonResults $newResults "FairfaxDeployment"
 $PublicRegressed = Get-Regression $comparisonResults $newResults "PublicDeployment"
+$TemplateAnalyzerRegressed = Get-Regression $comparisonResults $newResults "TemplateAnalyzerResult"
+
 $AnyRegressed = $BPRegressed -or $FairfaxRegressed -or $PublicRegresse
 
 if (!$isPullRequest) {
@@ -366,6 +370,7 @@ if (!$isPullRequest) {
     $regressionsRow | Add-Member "BPRegressed" $BPRegressed
     $regressionsRow | Add-Member "FairfaxRegressed" $FairfaxRegressed
     $regressionsRow | Add-Member "PublicRegressed" $PublicRegressed
+    $regressionsRow | Add-Member "TemplateAnalyzerRegressed" $TemplateAnalyzerRegressed
     $regressionsRow | Add-Member "BuildNumber" $ENV:BUILD_BUILDNUMBER
     $regressionsRow | Add-Member "BuildId" $ENV:BUILD_BUILDID
     $regressionsRow | Add-Member "Build" "https://dev.azure.com/azurequickstarts/azure-quickstart-templates/_build/results?buildId=$($ENV:BUILD_BUILDID)"
@@ -463,11 +468,7 @@ switch ($CredScanResult) {
     }
 }
 
-if ($r.TemplateAnalyzerReportedErrors -ne $null) {
-    # TODO can be removed when table is updated to string
-    $TemplateAnalyzerReportedErrors = ($r.TemplateAnalyzerReportedErrors).ToString().ToLower().Replace("true", "FAIL").Replace("false", "PASS")
-}
-switch ($TemplateAnalyzerReportedErrors) {
+switch ($TemplateAnalyzerResult) {
     "PASS" { $TemplateAnalyzerResultColor = "brightgreen" }
     "FAIL" { $TemplateAnalyzerResultColor = "red" }
     default {
