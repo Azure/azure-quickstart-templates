@@ -145,12 +145,10 @@ if ($ValidationType -eq "Manual") {
     }
 }
 
-# TODO ask:
-$templateAnalyzerLogFileName = (New-Guid).ToString() # TODO ask
-Write-Host "Uploading TemplateAnalyzer log file named $templateAnalyzerLogFileName"
+Write-Host "Uploading TemplateAnalyzer log file..."
 Set-AzStorageBlobContent -Container $TemplateAnalyzerLogsContainerName `
     -File $TemplateAnalyzerOutputFilePath `
-    -Blob $templateAnalyzerLogFileName `
+    -Blob $RowKey `
     -Context $ctx `
     -Properties @{ "ContentType" = "text/plain" } `
     -Force -Verbose
@@ -174,7 +172,6 @@ if ($r -eq $null) {
     Write-Host "TemplateAnalyzer reported errors: $TemplateAnalyzerReportedErrors"
     if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerReportedErrors)) {
         $results.Add("TemplateAnalyzerReportedErrors", $TemplateAnalyzerReportedErrors)
-        $results.Add("TemplateAnalyzerLatestLogFileName", $templateAnalyzerLogFileName) # TODO ask
     }
     # set the values for Fairfax only if a result was passed
     Write-Host "FF Result"
@@ -232,13 +229,6 @@ else {
             Add-Member -InputObject $r -NotePropertyName 'TemplateAnalyzerReportedErrors' -NotePropertyValue $TemplateAnalyzerReportedErrors
         } else {
             $r.TemplateAnalyzerReportedErrors = $TemplateAnalyzerReportedErrors
-        }
-    }
-    if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerLatestLogFileName)) {
-        if ($r.TemplateAnalyzerLatestLogFileName -eq $null) {
-            Add-Member -InputObject $r -NotePropertyName 'TemplateAnalyzerLatestLogFileName' -NotePropertyValue $templateAnalyzerLogFileName
-        } else {
-            $r.TemplateAnalyzerLatestLogFileName = $templateAnalyzerLogFileName
         }
     }
     if (![string]::IsNullOrWhiteSpace($BicepVersion)) {
@@ -473,7 +463,6 @@ switch ($CredScanResult) {
     }
 }
 
-# TODO ask:
 if ($r.TemplateAnalyzerReportedErrors -ne $null) {
     # TODO can be removed when table is updated to string
     $TemplateAnalyzerReportedErrors = ($r.TemplateAnalyzerReportedErrors).ToString().ToLower().Replace("true", "FAIL").Replace("false", "PASS")
@@ -520,7 +509,7 @@ $badges = @(
         "filename" = "BicepVersion.svg"
     },
     @{
-        "url"      = "https://img.shields.io/badge/Template%20Analyzer%20Check-$TemplateAnalyzerReportedErrors-/?color=$TemplateAnalyzerResultColor"; # TODO ask
+        "url"      = "https://img.shields.io/badge/Template%20Analyzer%20Check-$TemplateAnalyzerReportedErrors-/?color=$TemplateAnalyzerResultColor";
         "filename" = "TemplateAnalyzerResultColor.svg"
     }
 )
