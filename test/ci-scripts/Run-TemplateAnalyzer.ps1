@@ -5,11 +5,12 @@ Downloads and runs TemplateAnalyzer against the nested templates, the pre requis
 #>
 
 param(
-    [string] $ttkFolder = $ENV:TTK_FOLDER, # TODO ask
+    [string] $ttkFolder = $ENV:TTK_FOLDER,
     [string] $sampleFolder = $ENV:SAMPLE_FOLDER,
     [string] $prereqTemplateFilename = $ENV:PREREQ_TEMPLATE_FILENAME_JSON, 
-    [string] $prereqParametersFilename = $ENV:PREREQ_PARAMETERS_FILENAME_JSON, # TODO ask
-    [string] $mainTemplateFilename = $ENV:MAINTEMPLATE_DEPLOYMENT_FILENAME
+    [string] $prereqParametersFilename = $ENV:GEN_PREREQ_PARAMETERS_FILENAME, # TODO doublecheck
+    [string] $mainTemplateFilename = $ENV:MAINTEMPLATE_DEPLOYMENT_FILENAME,
+    [string] $mainParametersFilename = $ENV:GEN_PARAMETERS_FILENAME # TODO doublecheck
 )
 
 $RULE_FAILED_MESSAGE = "Result: Failed"
@@ -19,11 +20,6 @@ New-Item -ItemType Directory -Path $templateAnalyzerFolderPath -Force
 Invoke-WebRequest -OutFile "$templateAnalyzerFolderPath\TemplateAnalyzer.zip" https://github.com/Azure/template-analyzer/releases/download/0.0.2-alpha/TemplateAnalyzer.zip
 # ^ will be replaced by https://github.com/Azure/template-analyzer/releases/latest/download/TemplateAnalyzer.zip after CLI changes are released
 Expand-Archive -LiteralPath "$templateAnalyzerFolderPath\TemplateAnalyzer.zip" -DestinationPath "$templateAnalyzerFolderPath"
-$templateAnalyzerPath = "$templateAnalyzerFolderPath\TemplateAnalyzer.exe"
-Write-Host "##vso[task.setvariable variable=TemplateAnalyzer.path]$templateAnalyzerPath"
-
-$templateAnalyzerVersion = & $templateAnalyzerPath --version
-Write-Host "##vso[task.setvariable variable=TemplateAnalyzer.version]$templateAnalyzerVersion"
 
 # We don't want to run TTK checks by themselves and also in the TemplateAnalyzer integration
 # Also, TemplateAnalyzer still doesn't support skipping tests like TTK
@@ -32,19 +28,20 @@ if (Test-Path $ttkFolderInsideTemplateAnalyzer) {
     Remove-Item -LiteralPath $ttkFolderInsideTemplateAnalyzer -Force -Recurse
 }
 
+$templateAnalyzer = "$templateAnalyzerFolderPath\TemplateAnalyzer.exe"
 $testOutputFilePath = "$templateAnalyzerFolderPath\analysis_output.txt"
 function Analyze-Template {
     param (
-        $templateFileName,
-        $parametersFileName
+        $templateFilePath,
+        $parametersFilePath
     )
 
-    if ($templateFileName -and (Test-Path $templateFileName)) {
-        $params = @{ "t" = $templateFileName }
-        if ($parametersFileName -and (Test-Path $parametersFileName)) {
-            $params.Add("p", $parametersFileName)
+    if ($templateFilePath -and (Test-Path $templateFilePath)) {
+        $params = @{ "t" = $templateFilePath }
+        if ($parametersFilePath -and (Test-Path $parametersFilePath)) {
+            $params.Add("p", $parametersFilePath)
         } 
-        $testOutput = & $templateAnalyzerPath @params
+        $testOutput = & $templateAnalyzer @params
     }
     $testOutput = $testOutput -join "`n"
 
@@ -54,22 +51,26 @@ function Analyze-Template {
 
         return $testOutput.Contains($RULE_FAILED_MESSAGE)
     } else {
-        exit 1 # TODO ask
+        Write-Error "TemplateAnalyzer failed trying to analyze: $templateFilePath $parametersFilePath"
+        exit 1
     }
 }
 
 $reportedErrors = $false
 Get-ChildItem $sampleFolder -Directory | # To analyze all the JSON files in folders that could contain nested templates
     ForEach-Object {
-        Get-ChildItem $_ -Recurse -Filter *.json |
-            ForEach-Object {
-                $reportedErrors = $reportedErrors -or (Analyze-Template $_.FullName)
-            }
+        if ($_.Name -ne "prereqs") {
+            Get-ChildItem $_ -Recurse -Filter *.json |
+                ForEach-Object {
+                    $reportedErrors = $reportedErrors -or (Analyze-Template $_.FullName)
+                }
+        }
     }
-$reportedErrors = $reportedErrors -or (Analyze-Template $prereqTemplateFilename $prereqParametersFilename)
-$reportedErrors = $reportedErrors -or (Analyze-Template $mainTemplateFilename "$sampleFolder\azuredeploy.parameters.new.json") # TODO ask about params file
+$preReqsFolder = "$sampleFolder\prereqs"
+$reportedErrors = $reportedErrors -or (Analyze-Template "$preReqsFolder\$prereqTemplateFilename" "$preReqsFolder\$prereqParametersFilename")
+$reportedErrors = $reportedErrors -or (Analyze-Template "$sampleFolder\$mainTemplateFilename" "$sampleFolder\$mainParametersFilename")
 
 Write-Host "##vso[task.setvariable variable=TemplateAnalyzer.reportedErrors]$reportedErrors"
 Write-Host "##vso[task.setvariable variable=TemplateAnalyzer.output.filePath]$testOutputFilePath"
 
-exit 0 # TODO ask
+exit 0
