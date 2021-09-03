@@ -224,10 +224,6 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
       }
     }
   }
-  dependsOn: [
-    loadBalancer
-    virtualNetwork
-  ]
 }
 
 
