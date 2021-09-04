@@ -133,7 +133,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-08-01",
       "name": "deploy-xss-attack-oms-resource",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -161,7 +161,7 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-08-01",
       "name": "[concat(variables('vnetName'),'-resource')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -189,7 +189,7 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-08-01",
       "name": "[concat(variables('applicationGateways')[copyIndex()].name,'-pip','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -221,7 +221,7 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-08-01",
       "name": "[concat('deploy-',variables('applicationGateways')[copyIndex()].name,'-applicationgateway','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -230,7 +230,7 @@
       },
       "dependsOn": [
         "copy-appgateway-pip",
-        "[concat(variables('vnetName'),'-resource')]"
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('vnetName'),'-resource'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -245,7 +245,7 @@
             "value": "[parameters('location')]"
           },
           "publicIPRef": {
-            "value": "[reference(concat(variables('applicationGateways')[copyIndex()].name,'-pip','-resource')).outputs.publicIPRef.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments',concat(variables('applicationGateways')[copyIndex()].name,'-pip','-resource'))).outputs.publicIPRef.value]"
           },
           "frontendPorts": {
             "value": [
@@ -276,7 +276,7 @@
                 "properties": {
                   "BackendAddresses": [
                     {
-                      "fqdn": "[reference(concat(variables('webAppName'),'-resource')).outputs.endpoint.value]"
+                      "fqdn": "[reference(resourceId('Microsoft.Resources/deployments',concat(variables('webAppName'),'-resource'))).outputs.endpoint.value]"
                     }
                   ]
                 }
@@ -310,8 +310,7 @@
                   "FrontendPort": {
                     "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts',variables('applicationGateways')[copyIndex()].name, 'appGatewayFrontendPort')]"
                   },
-                  "Protocol": "Http",
-                  "SslCertificate": null
+                  "Protocol": "Http"
                 }
               }
             ]
@@ -341,7 +340,7 @@
                 "name": "[variables('httpProbeName')]",
                 "properties": {
                   "protocol": "Http",
-                  "host": "[reference(concat(variables('webAppName'),'-resource')).outputs.endpoint.value]",
+                  "host": "[reference(resourceId('Microsoft.Resources/deployments',concat(variables('webAppName'),'-resource'))).outputs.endpoint.value]",
                   "path": "/",
                   "interval": 30,
                   "timeout": 30,
@@ -352,7 +351,7 @@
                 "name": "[variables('httpsProbeName')]",
                 "properties": {
                   "protocol": "Https",
-                  "host": "[reference(concat(variables('webAppName'),'-resource')).outputs.endpoint.value]",
+                  "host": "[reference(resourceId('Microsoft.Resources/deployments',concat(variables('webAppName'),'-resource'))).outputs.endpoint.value]",
                   "path": "/",
                   "interval": 30,
                   "timeout": 30,
@@ -371,7 +370,7 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-08-01",
       "name": "[concat(variables('diagStorageAccName'),'-resource')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -393,7 +392,7 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-08-01",
       "name": "[concat(variables('aspName'),'-resource')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -415,11 +414,11 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-08-01",
       "name": "[concat(variables('webAppName'),'-resource')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('aspName'),'-resource')]"
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('aspName'),'-resource'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -443,12 +442,12 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-08-01",
       "name": "[concat(variables('webAppName'),'-connectionStrings','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('webAppName'),'-resource')]",
-        "[concat(variables('databases')[0].name,'-database','-resource')]"
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('webAppName'),'-resource'))]",
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('databases')[0].name,'-database','-resource'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -466,17 +465,17 @@
             "value": "[variables('appServiceConnectionType')]"
           },
           "connectionString": {
-            "value": "[reference(concat(variables('databases')[0].name,'-database','-resource')).outputs.dbConnetcionString.value]"
+            "value": "[concat(reference(resourceId('Microsoft.Resources/deployments',concat(variables('databases')[0].name,'-database','-resource'))).outputs.dbConnetcionString.value,';User Id=', parameters('sqlAdministratorName'), ';Password=', parameters('sqlServerPassword'), ';Connection Timeout=300;')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-08-01",
       "name": "[concat(variables('webAppName'),'-msdeploy','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('webAppName'),'-connectionStrings','-resource')]"
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('webAppName'),'-connectionStrings','-resource'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -500,7 +499,7 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-08-01",
       "name": "[concat(variables('sqlServerName'),'-resource')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -528,12 +527,12 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-08-01",
       "name": "[concat(variables('sqlServerName'),'-auditingSettings','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('sqlServerName'),'-resource')]",
-        "[concat(variables('diagStorageAccName'),'-resource')]"
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('sqlServerName'),'-resource'))]",
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('diagStorageAccName'),'-resource'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -551,11 +550,11 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-08-01",
       "name": "[concat(variables('sqlServerName'),'-securityAlertPolicies','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('sqlServerName'),'-auditingSettings','-resource')]"
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('sqlServerName'),'-auditingSettings','-resource'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -576,11 +575,11 @@
       }
     },
     {
-      "apiVersion": "2018-05-01",
+      "apiVersion": "2020-08-01",
       "name": "[concat(variables('databases')[0].name,'-database','-resource')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat(variables('sqlServerName'),'-resource')]"
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('sqlServerName'),'-resource'))]"
       ],
       "properties": {
         "mode": "Incremental",
