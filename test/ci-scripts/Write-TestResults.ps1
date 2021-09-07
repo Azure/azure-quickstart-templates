@@ -27,9 +27,9 @@ param(
     [string]$PublicDeployment = "",
     [string]$PublicLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
     [string]$BicepVersion = $ENV:BICEP_VERSION, # empty if bicep not supported by the sample
-    [bool]$TemplateAnalyzerReportedErrors = "$ENV:TEMPLATEANALYZER_REPORTEDERRORS", # TODO ask
-    [bool]$TemplateAnalyzerOutputFilePath = "$ENV:TEMPLATEANALYZER_OUTPUT_FILEPATH", # TODO ask
-    [string]$TemplateAnalyzerLogsContainerName = "template_analyzer_logs" # TODO ask
+    [bool]$TemplateAnalyzerReportedErrors = "$ENV:TEMPLATEANALYZER_REPORTEDERRORS",
+    [bool]$TemplateAnalyzerOutputFilePath = "$ENV:TEMPLATEANALYZER_OUTPUT_FILEPATH",
+    [string]$TemplateAnalyzerLogsContainerName = "bpa"
 )
 
 function Get-Regression(
