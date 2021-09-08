@@ -27,9 +27,9 @@ param(
     [string]$PublicDeployment = "",
     [string]$PublicLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
     [string]$BicepVersion = $ENV:BICEP_VERSION, # empty if bicep not supported by the sample
-    [string]$TemplateAnalyzerReportedErrors = "$ENV:TEMPLATEANALYZER_REPORTEDERRORS",
-    [string]$TemplateAnalyzerOutputFilePath = "$ENV:TEMPLATEANALYZER_OUTPUT_FILEPATH",
-    [string]$TemplateAnalyzerLogsContainerName = "$ENV:TEMPLATEANALYZER_LOGS_CONTAINER_NAME"
+    [string]$TemplateAnalyzerResult = "$ENV:TEMPLATE_ANALYZER_RESULT",
+    [string]$TemplateAnalyzerOutputFilePath = "$ENV:TEMPLATE_ANALYZER_OUTPUT_FILEPATH",
+    [string]$TemplateAnalyzerLogsContainerName = "$ENV:TEMPLATE_ANALYZER_LOGS_CONTAINER_NAME"
 )
 
 function Get-Regression(
@@ -131,8 +131,8 @@ $FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("true"), "PASS
 $FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("false"), "FAIL"
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("true"), "PASS"
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("false"), "FAIL"
-$TemplateAnalyzerResult = $TemplateAnalyzerReportedErrors -ireplace [regex]::Escape("true"), "FAIL"
-$TemplateAnalyzerResult = $TemplateAnalyzerReportedErrors -ireplace [regex]::Escape("false"), "PASS"
+$TemplateAnalyzerResult = $TemplateAnalyzerResult -ireplace [regex]::Escape("true"), "PASS"
+$TemplateAnalyzerResult = $TemplateAnalyzerResult -ireplace [regex]::Escape("false"), "FAIL"
 
 Write-Host "Supported Environments Found: $supportedEnvironmentsJson"
 $supportedEnvironments = ($supportedEnvironmentsJson | ConvertFrom-JSON -AsHashTable)

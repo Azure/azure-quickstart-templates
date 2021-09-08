@@ -6,7 +6,7 @@ Downloads and runs TemplateAnalyzer against the nested templates, the pre requis
 
 param(
     [string] $ttkFolder = $ENV:TTK_FOLDER,
-    [string] $templateAnalyzerReleaseUrl = $ENV:TEMPLATEANALYZER_RELEASE_URL,
+    [string] $templateAnalyzerReleaseUrl = $ENV:TEMPLATE_ANALYZER_RELEASE_URL,
     [string] $sampleFolder = $ENV:SAMPLE_FOLDER,
     [string] $prereqTemplateFilename = $ENV:PREREQ_TEMPLATE_FILENAME_JSON, 
     [string] $prereqParametersFilename = $ENV:GEN_PREREQ_PARAMETERS_FILENAME,
@@ -56,21 +56,21 @@ function Analyze-Template {
     }
 }
 
-$reportedErrors = $false
+$passed = $true
 Get-ChildItem $sampleFolder -Directory | # To analyze all the JSON files in folders that could contain nested templates
     ForEach-Object {
         if ($_.Name -ne "prereqs") {
             Get-ChildItem $_ -Recurse -Filter *.json |
                 ForEach-Object {
-                    $reportedErrors = $reportedErrors -or (Analyze-Template $_.FullName)
+                    $passed = $passed -and (Analyze-Template $_.FullName)
                 }
         }
     }
 $preReqsFolder = "$sampleFolder\prereqs"
-$reportedErrors = $reportedErrors -or (Analyze-Template "$preReqsFolder\$prereqTemplateFilename" "$preReqsFolder\$prereqParametersFilename")
-$reportedErrors = $reportedErrors -or (Analyze-Template "$sampleFolder\$mainTemplateFilename" "$sampleFolder\$mainParametersFilename")
+$passed = $passed -and (Analyze-Template "$preReqsFolder\$prereqTemplateFilename" "$preReqsFolder\$prereqParametersFilename")
+$passed = $passed -and (Analyze-Template "$sampleFolder\$mainTemplateFilename" "$sampleFolder\$mainParametersFilename")
 
-Write-Host "##vso[task.setvariable variable=templateAnalyzer.reportedErrors]$reportedErrors"
-Write-Host "##vso[task.setvariable variable=templateAnalyzer.output.filePath]$testOutputFilePath"
+Write-Host "##vso[task.setvariable variable=template.analyzer.result]$passed"
+Write-Host "##vso[task.setvariable variable=template.analyzer.output.filePath]$testOutputFilePath"
 
 exit 0
