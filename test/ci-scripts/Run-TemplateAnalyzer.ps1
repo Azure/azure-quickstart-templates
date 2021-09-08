@@ -57,18 +57,19 @@ function Analyze-Template {
 }
 
 $passed = $true
-Get-ChildItem $sampleFolder -Directory | # To analyze all the JSON files in folders that could contain nested templates
-    ForEach-Object {
-        if ($_.Name -ne "prereqs") {
-            Get-ChildItem $_ -Recurse -Filter *.json |
-                ForEach-Object {
-                    $passed = $passed -and (Analyze-Template $_.FullName)
-                }
-        }
-    }
 $preReqsFolder = "$sampleFolder\prereqs"
-$passed = $passed -and (Analyze-Template "$preReqsFolder\$prereqTemplateFilename" "$preReqsFolder\$prereqParametersFilename")
-$passed = $passed -and (Analyze-Template "$sampleFolder\$mainTemplateFilename" "$sampleFolder\$mainParametersFilename")
+Get-ChildItem $sampleFolder -Recurse -Filter *.json |
+    ForEach-Object {
+        $params = @{ "templateFilePath" = $_.FullName }
+        if ($_.FullName -eq "$preReqsFolder\$prereqTemplateFilename") {
+            $params.Add("parametersFilePath", "$preReqsFolder\$prereqParametersFilename")
+        } elseif ($_.FullName -eq "$sampleFolder\$mainTemplateFilename") {
+            $params.Add("parametersFilePath", "$sampleFolder\$mainParametersFilename")
+        }
+
+        $newAnalysisPassed = Analyze-Template @params
+        $passed = $passed -and $newAnalysisPassed # evaluation done in two lines to avoid PowerShell's lazy evaluation
+    }
 
 Write-Host "##vso[task.setvariable variable=template.analyzer.result]$passed"
 Write-Host "##vso[task.setvariable variable=template.analyzer.output.filePath]$testOutputFilePath"
