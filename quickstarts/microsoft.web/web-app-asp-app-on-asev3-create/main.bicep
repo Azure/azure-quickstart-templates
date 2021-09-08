@@ -41,7 +41,7 @@ param subnets array = [
 ]
 
 @description('Required. Name of ASEv3.')
-param aseName string = 'GEN-UNIQUE'
+param aseName string
 
 @description('Required. Dedicated host count of ASEv3.')
 param dedicatedHostCount string = '0'
@@ -147,6 +147,6 @@ module privatednszone 'modules/privatednszone.bicep' = if (createPrivateDNS && i
   params: {
     privateDNSZoneName: privateDNSZoneName
     virtualNetworkId: virtualNetworkId
-    aseNetworkConfigurationId: asev3.id
+    aseName: aseName
   }
 }

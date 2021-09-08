@@ -1,11 +1,11 @@
 @description('App service prefix.')
-param appName string = 'GEN-UNIQUE'
+param appName string
 
 @description('App service location.')
 param location string = resourceGroup().location
 
 @description('App service plan prefix.')
-param hostingPlanName string = 'GEN-UNIQUE'
+param hostingPlanName string
 
 @description('App service plan hosting environment profile name (ASEv3 name).')
 param hostingEnvironmentProfileName string
@@ -45,13 +45,13 @@ resource site 'Microsoft.Web/sites@2021-01-15' = {
 resource hostingPlan 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: hostingPlanName
   location: location
+  sku: {
+    tier: sku
+    name: skuCode
+  }
   properties: {
     hostingEnvironmentProfile: {
       id: resourceId('Microsoft.Web/hostingEnvironments', hostingEnvironmentProfileName)
     }
-  }
-  sku: {
-    tier: sku
-    name: skuCode
   }
 }
