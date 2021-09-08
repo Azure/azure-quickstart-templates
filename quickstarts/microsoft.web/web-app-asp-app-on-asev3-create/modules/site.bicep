@@ -1,11 +1,11 @@
 @description('App service prefix.')
-param appName string = 'GEN-UNIQUE'
+param appName string
 
 @description('App service location.')
 param location string = resourceGroup().location
 
 @description('App service plan prefix.')
-param hostingPlanName string = 'GEN-UNIQUE'
+param hostingPlanName string
 
 @description('App service plan hosting environment profile name (ASEv3 name).')
 param hostingEnvironmentProfileName string
