@@ -6,6 +6,7 @@ Downloads and runs TemplateAnalyzer against the nested templates, the pre requis
 
 param(
     [string] $ttkFolder = $ENV:TTK_FOLDER,
+    [string] $templateAnalyzerReleaseUrl = $ENV:TEMPLATEANALYZER_RELEASE_URL,
     [string] $sampleFolder = $ENV:SAMPLE_FOLDER,
     [string] $prereqTemplateFilename = $ENV:PREREQ_TEMPLATE_FILENAME_JSON, 
     [string] $prereqParametersFilename = $ENV:GEN_PREREQ_PARAMETERS_FILENAME,
@@ -17,8 +18,7 @@ $RULE_FAILED_MESSAGE = "Result: Failed"
 
 $templateAnalyzerFolderPath = "$ttkFolder\templateAnalyzer"
 New-Item -ItemType Directory -Path $templateAnalyzerFolderPath -Force
-Invoke-WebRequest -OutFile "$templateAnalyzerFolderPath\TemplateAnalyzer.zip" https://github.com/Azure/template-analyzer/releases/download/0.0.2-alpha/TemplateAnalyzer.zip
-# ^ will be replaced by https://github.com/Azure/template-analyzer/releases/latest/download/TemplateAnalyzer.zip after CLI changes are released
+Invoke-WebRequest -OutFile "$templateAnalyzerFolderPath\TemplateAnalyzer.zip" $templateAnalyzerReleaseUrl
 Expand-Archive -LiteralPath "$templateAnalyzerFolderPath\TemplateAnalyzer.zip" -DestinationPath "$templateAnalyzerFolderPath"
 
 # We don't want to run TTK checks by themselves and also in the TemplateAnalyzer integration

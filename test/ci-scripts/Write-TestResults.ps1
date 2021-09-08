@@ -29,7 +29,7 @@ param(
     [string]$BicepVersion = $ENV:BICEP_VERSION, # empty if bicep not supported by the sample
     [string]$TemplateAnalyzerReportedErrors = "$ENV:TEMPLATEANALYZER_REPORTEDERRORS",
     [string]$TemplateAnalyzerOutputFilePath = "$ENV:TEMPLATEANALYZER_OUTPUT_FILEPATH",
-    [string]$TemplateAnalyzerLogsContainerName = "bpa"
+    [string]$TemplateAnalyzerLogsContainerName = "$ENV:TEMPLATEANALYZER_LOGS_CONTAINER_NAME"
 )
 
 function Get-Regression(
