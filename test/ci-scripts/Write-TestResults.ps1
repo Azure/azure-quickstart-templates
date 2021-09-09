@@ -468,6 +468,15 @@ switch ($CredScanResult) {
     }
 }
 
+switch ($TemplateAnalyzerResult) {
+    "PASS" { $TemplateAnalyzerResultColor = "brightgreen" }
+    "FAIL" { $TemplateAnalyzerResultColor = "red" }
+    default {
+        $TemplateAnalyzerReportedErrors = $na
+        $TemplateAnalyzerResultColor = "inactive"    
+    }
+}
+
 $BicepVersionColor = "brightgreen";
 
 $badges = @(
@@ -499,6 +508,10 @@ $badges = @(
     @{
         "url"      = "https://img.shields.io/badge/Bicep%20Version-$BicepVersion-/?color=$BicepVersionColor";
         "filename" = "BicepVersion.svg"
+    },
+    @{
+        "url"      = "https://img.shields.io/badge/Template%20Analyzer%20Check-$TemplateAnalyzerReportedErrors-/?color=$TemplateAnalyzerResultColor";
+        "filename" = "TemplateAnalyzerResultColor.svg"
     }
 )
 
