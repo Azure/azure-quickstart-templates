@@ -45,13 +45,13 @@ resource site 'Microsoft.Web/sites@2021-01-15' = {
 resource hostingPlan 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: hostingPlanName
   location: location
+  sku: {
+    tier: sku
+    name: skuCode
+  }
   properties: {
     hostingEnvironmentProfile: {
       id: resourceId('Microsoft.Web/hostingEnvironments', hostingEnvironmentProfileName)
     }
-  }
-  sku: {
-    tier: sku
-    name: skuCode
   }
 }

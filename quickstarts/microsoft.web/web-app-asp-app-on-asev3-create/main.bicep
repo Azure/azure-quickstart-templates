@@ -147,6 +147,6 @@ module privatednszone 'modules/privatednszone.bicep' = if (createPrivateDNS && i
   params: {
     privateDNSZoneName: privateDNSZoneName
     virtualNetworkId: virtualNetworkId
-    aseNetworkConfigurationId: asev3.id
+    aseName: aseName
   }
 }
