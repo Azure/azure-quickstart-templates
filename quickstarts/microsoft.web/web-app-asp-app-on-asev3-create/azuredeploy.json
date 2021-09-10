@@ -1,0 +1,410 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "useExistingVnetandSubnet": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Required. Use existing virtual network and subnet."
+      }
+    },
+    "vNetResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Required. Resource Group name of virtual network if using existing vnet and subnet."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet-asev3",
+      "metadata": {
+        "description": "Required. The Virtual Network (vNet) Name."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Required. Location for all resources."
+      }
+    },
+    "vNetAddressPrefixes": {
+      "type": "array",
+      "defaultValue": [
+        "172.16.0.0/16"
+      ],
+      "metadata": {
+        "description": "Required. An Array of 1 or more IP Address Prefixes for the Virtual Network."
+      }
+    },
+    "subnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "172.16.0.0/24",
+      "metadata": {
+        "description": "Required. The subnet Name of ASEv3."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "snet-asev3",
+      "metadata": {
+        "description": "Required. The subnet Name of ASEv3."
+      }
+    },
+    "subnets": {
+      "type": "array",
+      "defaultValue": [
+        {
+          "name": "snet-asev3",
+          "addressPrefix": "172.16.0.0/24",
+          "delegations": [
+            {
+              "name": "Microsoft.Web.hostingEnvironments",
+              "properties": {
+                "serviceName": "Microsoft.Web/hostingEnvironments"
+              }
+            }
+          ],
+          "privateEndpointNetworkPolicies": "Enabled",
+          "privateLinkServiceNetworkPolicies": "Enabled",
+          "networkSecurityGroupName": "nsg-asev3"
+        }
+      ],
+      "metadata": {
+        "description": "Required. The subnet properties."
+      }
+    },
+    "aseName": {
+      "type": "string",
+      "metadata": {
+        "description": "Required. Name of ASEv3."
+      }
+    },
+    "dedicatedHostCount": {
+      "type": "string",
+      "defaultValue": "0",
+      "metadata": {
+        "description": "Required. Dedicated host count of ASEv3."
+      }
+    },
+    "zoneRedundant": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Required. Zone redundant of ASEv3."
+      }
+    },
+    "createPrivateDNS": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Optional. Create a private DNS zone for ASEv3."
+      }
+    },
+    "internalLoadBalancingMode": {
+      "type": "int",
+      "defaultValue": 3,
+      "allowedValues": [
+        0,
+        3
+      ],
+      "metadata": {
+        "description": "Required. Load balancer mode: 0-external load balancer, 3-internal load balancer for ASEv3."
+      }
+    },
+    "networkSecurityGroupName": {
+      "type": "string",
+      "defaultValue": "nsg-asev3",
+      "minLength": 1,
+      "metadata": {
+        "description": "Required. Name of the Network Security Group."
+      }
+    },
+    "networkSecurityGroupSecurityRules": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Required. Array of Security Rules to deploy to the Network Security Group."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "uniStr": "[uniqueString(resourceGroup().id)]",
+    "virtualNetworkId": "[resourceId(parameters('vNetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+    "subnetId": "[resourceId(parameters('vNetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+  },
+  "resources": [
+    {
+      "condition": "[not(parameters('useExistingVnetandSubnet'))]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-11-01",
+      "name": "[parameters('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "copy": [
+          {
+            "name": "securityRules",
+            "count": "[length(parameters('networkSecurityGroupSecurityRules'))]",
+            "input": {
+              "name": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].name]",
+              "properties": {
+                "description": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.description]",
+                "access": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.access]",
+                "destinationAddressPrefix": "[if(equals(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationAddressPrefix, ''), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationAddressPrefix)]",
+                "destinationAddressPrefixes": "[if(equals(length(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationAddressPrefixes), 0), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationAddressPrefixes)]",
+                "destinationPortRanges": "[if(equals(length(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationPortRanges), 0), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationPortRanges)]",
+                "destinationPortRange": "[if(equals(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationPortRange, ''), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.destinationPortRange)]",
+                "direction": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.direction]",
+                "priority": "[int(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.priority)]",
+                "protocol": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.protocol]",
+                "sourceAddressPrefix": "[if(equals(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourceAddressPrefix, ''), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourceAddressPrefix)]",
+                "sourcePortRanges": "[if(equals(length(parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourcePortRanges), 0), json('null'), parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourcePortRanges)]",
+                "sourcePortRange": "[parameters('networkSecurityGroupSecurityRules')[copyIndex('securityRules')].properties.sourcePortRange]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[not(parameters('useExistingVnetandSubnet'))]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-11-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "copy": [
+          {
+            "name": "subnets",
+            "count": "[length(parameters('subnets'))]",
+            "input": {
+              "name": "[parameters('subnets')[copyIndex('subnets')].name]",
+              "properties": {
+                "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]",
+                "networkSecurityGroup": "[if(empty(parameters('subnets')[copyIndex('subnets')].networkSecurityGroupName), json('null'), json(format('{{\"id\": \"{0}\"}}', resourceId('Microsoft.Network/networkSecurityGroups', parameters('subnets')[copyIndex('subnets')].networkSecurityGroupName))))]",
+                "delegations": "[parameters('subnets')[copyIndex('subnets')].delegations]"
+              }
+            }
+          }
+        ],
+        "addressSpace": {
+          "addressPrefixes": "[parameters('vNetAddressPrefixes')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/hostingEnvironments",
+      "apiVersion": "2020-12-01",
+      "name": "[parameters('aseName')]",
+      "location": "[parameters('location')]",
+      "kind": "ASEV3",
+      "properties": {
+        "dedicatedHostCount": "[parameters('dedicatedHostCount')]",
+        "zoneRedundant": "[parameters('zoneRedundant')]",
+        "internalLoadBalancingMode": "[parameters('internalLoadBalancingMode')]",
+        "virtualNetwork": {
+          "id": "[variables('subnetId')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('useExistingVnetandSubnet')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "[format('{0}-subnet-delegation-{1}', parameters('subnetName'), variables('uniStr'))]",
+      "resourceGroup": "[parameters('vNetResourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "subnetAddressPrefix": {
+            "value": "[parameters('subnetAddressPrefix')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "virtualNetworkName": {
+              "type": "string",
+              "metadata": {
+                "description": "Required. The Virtual Network (vNet) Name."
+              }
+            },
+            "subnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "Required. The subnet Name of ASEv3."
+              }
+            },
+            "subnetAddressPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Required. The subnet Name of ASEv3."
+              }
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2020-11-01",
+              "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnetName'))]",
+              "properties": {
+                "addressPrefix": "[parameters('subnetAddressPrefix')]",
+                "delegations": [
+                  {
+                    "name": "Microsoft.Web.hostingEnvironments",
+                    "properties": {
+                      "serviceName": "Microsoft.Web/hostingEnvironments"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "condition": "[and(parameters('createPrivateDNS'), equals(parameters('internalLoadBalancingMode'), 3))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "[format('private-dns-zone-deployment-{0}', variables('uniStr'))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "privateDNSZoneName": {
+            "value": "[reference(resourceId('Microsoft.Web/hostingEnvironments', parameters('aseName'))).dnsSuffix]"
+          },
+          "virtualNetworkId": {
+            "value": "[variables('virtualNetworkId')]"
+          },
+          "aseName": {
+            "value": "[parameters('aseName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "aseName": {
+              "type": "string",
+              "metadata": {
+                "description": "Required. ASE name."
+              }
+            },
+            "privateDNSZoneName": {
+              "type": "string",
+              "metadata": {
+                "description": "Required. Private DNS zone name."
+              }
+            },
+            "virtualNetworkId": {
+              "type": "string",
+              "metadata": {
+                "description": "Required. Network Id."
+              }
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "[parameters('privateDNSZoneName')]",
+              "location": "global",
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', parameters('privateDNSZoneName'), 'vnetLink')]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[parameters('virtualNetworkId')]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDNSZoneName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/A",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', parameters('privateDNSZoneName'), '*')]",
+              "properties": {
+                "ttl": 3600,
+                "aRecords": [
+                  {
+                    "ipv4Address": "[reference(resourceId('Microsoft.Web/hostingEnvironments/configurations', split(format('{0}/networking', parameters('aseName')), '/')[0], split(format('{0}/networking', parameters('aseName')), '/')[1]), '2021-01-15').internalInboundIpAddresses[0]]"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDNSZoneName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/A",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', parameters('privateDNSZoneName'), '*.scm')]",
+              "properties": {
+                "ttl": 3600,
+                "aRecords": [
+                  {
+                    "ipv4Address": "[reference(resourceId('Microsoft.Web/hostingEnvironments/configurations', split(format('{0}/networking', parameters('aseName')), '/')[0], split(format('{0}/networking', parameters('aseName')), '/')[1]), '2021-01-15').internalInboundIpAddresses[0]]"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDNSZoneName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/A",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', parameters('privateDNSZoneName'), '@')]",
+              "properties": {
+                "ttl": 3600,
+                "aRecords": [
+                  {
+                    "ipv4Address": "[reference(resourceId('Microsoft.Web/hostingEnvironments/configurations', split(format('{0}/networking', parameters('aseName')), '/')[0], split(format('{0}/networking', parameters('aseName')), '/')[1]), '2021-01-15').internalInboundIpAddresses[0]]"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDNSZoneName'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/hostingEnvironments', parameters('aseName'))]"
+      ]
+    }
+  ]
+}
