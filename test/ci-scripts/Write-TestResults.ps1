@@ -451,7 +451,7 @@ switch ($BestPracticeResult) {
     "FAIL" { $BestPracticeResultColor = "red" }
     default {
         $BestPracticeResult = $na
-        $BestPracticeResult = "inactive"    
+        $BestPracticeResultColor = "inactive"    
     }
 }
 
