@@ -11,7 +11,8 @@ param(
     [string] $prereqTemplateFilename = $ENV:PREREQ_TEMPLATE_FILENAME_JSON, 
     [string] $prereqParametersFilename = $ENV:GEN_PREREQ_PARAMETERS_FILENAME,
     [string] $mainTemplateFilename = $ENV:MAINTEMPLATE_DEPLOYMENT_FILENAME,
-    [string] $mainParametersFilename = $ENV:GEN_PARAMETERS_FILENAME
+    [string] $mainParametersFilename = $ENV:GEN_PARAMETERS_FILENAME,
+    [string] $templateAnalyzerOutputFilePath = $ENV:TEMPLATE_ANALYZER_OUTPUT_FILEPATH
 )
 
 $RULE_FAILED_MESSAGE = "Result: Failed"
@@ -29,7 +30,6 @@ if (Test-Path $ttkFolderInsideTemplateAnalyzer) {
 }
 
 $templateAnalyzer = "$templateAnalyzerFolderPath\TemplateAnalyzer.exe"
-$testOutputFilePath = "$templateAnalyzerFolderPath\analysis_output.txt"
 function Analyze-Template {
     param (
         $templateFilePath,
@@ -47,7 +47,7 @@ function Analyze-Template {
 
     if($testOutput.length -ne 0 -and $LASTEXITCODE -eq 0)
     {
-        $testOutput >> $testOutputFilePath
+        $testOutput >> $templateAnalyzerOutputFilePath
 
         return $testOutput.Contains($RULE_FAILED_MESSAGE)
     } else {
@@ -72,6 +72,5 @@ Get-ChildItem $sampleFolder -Recurse -Filter *.json |
     }
 
 Write-Host "##vso[task.setvariable variable=template.analyzer.result]$passed"
-Write-Host "##vso[task.setvariable variable=template.analyzer.output.filePath]$testOutputFilePath"
 
 exit 0
