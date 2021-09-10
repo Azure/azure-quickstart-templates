@@ -15,12 +15,10 @@
 
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vm-cse-msi/BicepVersion.svg)
 
-This template shows how to download artifacts for the Virtual Machine's custom script extension using a user assigned managed identity.  This approach does not require the use of a sasToken to download the artifacts.
+This template shows how to download artifacts for the Virtual Machine's custom script extension using a user assigned managed identity.  This approach does not require the use of a sasToken or public access to download the artifacts.
 
 The typical pattern in this repo (for all artifacts) is to stage and create a sasToken during deployment.  This sample expects that the artifacts are staged before deployment and the managed identity must have ```Storage Blob Data Reader``` access to the storageAccount.  Staging and access to the artifacts is distinct from the deployment of the template.
 
-Using this approach, the storageAccount does not need public access or a sasToken for access to the artifacts.
-
-Note that the managed identity must be assigned to the VM as well as specific on the extension resource.
+Note that the managed identity must be assigned to the VM as well as specified on the extension resource in ```protectedSettings```.
 
 For more information on this approach see [Custom Script Extension for Windows](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-windows#property-managedidentity).
