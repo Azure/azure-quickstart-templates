@@ -21,6 +21,7 @@ param identityName string
 @description('resourceGroup for the managedIdenity to use for custom script download')
 param identityResourceGroup string
 
+@description('For the sample, use this to ensure the extension will always execute.')
 param alwaysRun string = newGuid()
 
 var imagePublisher = 'MicrosoftWindowsServer'
@@ -138,12 +139,12 @@ resource cse 'Microsoft.Compute/virtualMachines/extensions@2021-04-01' = {
   properties: {
     publisher: 'Microsoft.Compute'
     type: 'CustomScriptExtension'
-    typeHandlerVersion: '1.4'
+    typeHandlerVersion: '1.10'
     autoUpgradeMinorVersion: true
     forceUpdateTag: alwaysRun
     settings: {
       fileUris: fileUris
-      commandToExecute: 'powershell -Command "gci"'
+      commandToExecute: 'powershell -Command "ls"'
     }
     protectedSettings: {
       managedIdentity: {

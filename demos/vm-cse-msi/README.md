@@ -21,4 +21,6 @@ The typical pattern in this repo (for all artifacts) is to stage and create a sa
 
 Note that the managed identity must be assigned to the VM as well as specified on the extension resource in ```protectedSettings```.
 
+The output of the deployment shows a directory listing of the downloaded files.
+
 For more information on this approach see [Custom Script Extension for Windows](https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-windows#property-managedidentity).
