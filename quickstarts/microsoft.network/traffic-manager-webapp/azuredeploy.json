@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "2507546902898660526"
+    }
+  },
   "parameters": {
     "uniqueDnsName": {
       "type": "string",
@@ -14,7 +21,7 @@
         "description": "Relative DNS name for the WebApps, must be globally unique.  An index will be appended for each Web App."
       }
     },
-    "webServerName": {
+    "appServicePlanName": {
       "type": "string",
       "metadata": {
         "description": "Name of the App Service Plan that is being created"
@@ -31,14 +38,12 @@
       }
     }
   },
-
-  "variables": {},
-
+  "functions": [],
   "resources": [
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2019-08-01",
-      "name": "[parameters('webServerName')]",
+      "apiVersion": "2020-12-01",
+      "name": "[parameters('appServicePlanName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "S1",
@@ -47,19 +52,18 @@
     },
     {
       "type": "Microsoft.Web/sites",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-12-01",
       "name": "[parameters('uniqueDnsNameForWebApp')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/',parameters('webServerName'))]"
-
-      ],
       "properties": {
-        "serverFarmId": "[parameters('webServerName')]"
-      }
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+      ]
     },
     {
-      "type": "Microsoft.Network/trafficManagerProfiles",
+      "type": "Microsoft.Network/trafficmanagerprofiles",
       "apiVersion": "2018-08-01",
       "name": "[parameters('trafficManagerName')]",
       "location": "global",
@@ -74,22 +78,21 @@
           "protocol": "HTTPS",
           "port": 443,
           "path": "/"
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
-      "apiVersion": "2018-08-01",
-      "name": "[concat(parameters('trafficManagerName'),'/',parameters('uniqueDnsNameForWebApp'))]",
-      "location": "global",
+        },
+        "endpoints": [
+          {
+            "name": "[parameters('uniqueDnsNameForWebApp')]",
+            "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+            "properties": {
+              "targetResourceId": "[resourceId('Microsoft.Web/sites', parameters('uniqueDnsNameForWebApp'))]",
+              "endpointStatus": "Enabled"
+            }
+          }
+        ]
+      },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/trafficManagerProfiles/',parameters('trafficManagerName'))]",
-        "[resourceId('Microsoft.Web/sites/',parameters('uniqueDnsNameForWebApp'))]"
-      ],
-      "properties": {
-        "targetResourceId": "[resourceId('Microsoft.Web/sites/', parameters('uniqueDnsNameForWebApp'))]",
-        "endpointStatus": "Enabled"
-      }
+        "[resourceId('Microsoft.Web/sites', parameters('uniqueDnsNameForWebApp'))]"
+      ]
     }
   ]
 }

@@ -1,0 +1,450 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "azure region where is deployed the vnet1"
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "VM Admin username"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "VM Admin password"
+            }
+        },
+        "vnetName": {
+            "type": "string",
+            "defaultValue": "vnet1",
+            "metadata": {
+                "description": "Virtual Network name"
+            }
+        },
+        "addressSpace1Prefix": {
+            "type": "string",
+            "defaultValue": "10.1.0.0/16",
+            "metadata": {
+                "description": "Virtual Network address space"
+            }
+        },
+        "subnet1Name": {
+            "type": "string",
+            "defaultValue": "RouteServerSubnet",
+            "metadata": {
+                "description": "subnet for hosting the Route Server. RouteServerSubnet is fixed name and it can't be changed."
+            }
+        },
+        "subnet1Prefix": {
+            "type": "string",
+            "defaultValue": "10.1.1.0/24",
+            "metadata": {
+                "description": "address prefix assigned to the subnet1"
+            }
+        },
+        "subnet2Name": {
+            "type": "string",
+            "defaultValue": "subnet2",
+            "metadata": {
+                "description": "name of the subnet2"
+            }
+        },
+        "subnet2Prefix": {
+            "type": "string",
+            "defaultValue": "10.1.2.0/24",
+            "metadata": {
+                "description": "address prefix assigned to the subnet2"
+            }
+        },
+        "subnet3Name": {
+            "type": "string",
+            "defaultValue": "subnet3",
+            "metadata": {
+                "description": "name of the subnet3"
+            }
+        },
+        "subnet3Prefix": {
+            "type": "string",
+            "defaultValue": "10.1.3.0/24",
+            "metadata": {
+                "description": "address prefix assigned to the subnet3"
+            }
+        },
+        "subnet4Name": {
+            "type": "string",
+            "defaultValue": "subnet4",
+            "metadata": {
+                "description": "name of the subnet4"
+            }
+        },
+        "subnet4Prefix": {
+            "type": "string",
+            "defaultValue": "10.1.4.0/24",
+            "metadata": {
+                "description": "address prefix assigned to the subnet4"
+            }
+        },
+        "gatewaysubnetPrefix": {
+            "type": "string",
+            "defaultValue": "10.1.5.0/24",
+            "metadata": {
+                "description": "address prefix assigned to the GatewaySubnet"
+            }
+        },
+        "routeServerName": {
+            "type": "string",
+            "defaultValue": "routesrv1",
+            "metadata": {
+                "description": "Route Server name"
+            }
+        },
+        "peering1IP": {
+            "type": "string",
+            "defaultValue": "10.1.4.10",
+            "metadata": {
+                "description": "private IP address of the VM running Quagga. it is the BGP remote peer of Route Server. The value is referenced in the quaggadeploy.sh script"
+            }
+        },
+        "peering1ASN": {
+            "type": "int",
+            "defaultValue": 65001,
+            "metadata": {
+                "description": "ASN assigned to Quagga. The value is referenced in the script quaggadeploy.sh"
+            }
+        },
+        "rsBGPconnectionName": {
+            "type": "string",
+            "defaultValue": "bgp-conn1",
+            "metadata": {
+                "description": "Route Server BGP connection name to establish the peer with Quagga"
+            }
+        },
+        "vHubIPconfigName": {
+            "type": "string",
+            "defaultValue": "ipconfig1",
+            "metadata": {
+                "description": "Route Server configuration name"
+            }
+        },
+        "vmName": {
+            "type": "string",
+            "defaultValue": "vm1",
+            "metadata": {
+                "description": "Virtual Machine name"
+            }
+        },
+        "vmPrivIP": {
+            "type": "string",
+            "defaultValue": "10.1.4.10",
+            "metadata": {
+                "description": "private IP of the VM. This IP has to match with the IP specified in the quaggadeploy.sh bash script"
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_B2s",
+            "metadata": {
+                "description": "VM Size"
+            }
+        },
+        "nsgName": {
+            "type": "string",
+            "defaultValue": "nsg1",
+            "metadata": {
+                "description": "name of the network security group applied to the subnets"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. For example, if stored on a public GitHub repo, you'd use the following URI: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.network/route-server-quagga/"
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  If your artifacts are stored on a public repo or public storage account you can leave this blank."
+            },
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "location": "[parameters('location')]",
+        "vnetName": "[parameters('vnetName')]",
+        "addressSpace1Prefix": "[parameters('addressSpace1Prefix')]",
+        "subnet1Name": "[parameters('subnet1Name')]",
+        "subnet1Prefix": "[parameters('subnet1Prefix')]",
+        "subnet2Name": "[parameters('subnet2Name')]",
+        "subnet2Prefix": "[parameters('subnet2Prefix')]",
+        "subnet3Name": "[parameters('subnet3Name')]",
+        "subnet3Prefix": "[parameters('subnet3Prefix')]",
+        "subnet4Name": "[parameters('subnet4Name')]",
+        "subnet4Prefix": "[parameters('subnet4Prefix')]",
+        "gatewaysubnetPrefix": "[parameters('gatewaysubnetPrefix')]",
+        "rsName": "[parameters('routeServerName')]",
+        "peering1IP": "[parameters('peering1IP')]",
+        "peering1ASN": "[parameters('peering1ASN')]",
+        "rsBGPconnectionName": "[parameters('rsBGPconnectionName')]",
+        "subnet_rs1_Id": "[resourceId( 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'),'RouteServerSubnet' )]",
+        "vHubIPconfigName": "[parameters('vHubIPconfigName')]",
+        "bgpConnectionName": "[concat(variables('rsName'), '/', variables('rsBGPconnectionName'))]",
+        "vmName": "[parameters('vmName')]",
+        "nicName": "[concat(variables('vmName'),'-nic')]",
+        "vmPubIPName": "[concat(variables('vmName'),'-pubIP')]",
+        "vmPrivIP": "[parameters('vmPrivIP')]",
+        "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "18.04-LTS",
+            "version": "latest"
+        },
+        "vmSize": "[parameters('vmSize')]",
+        "nsgName": "[parameters('nsgName')]",
+        "scriptFolder": "scripts",
+        "customScriptFilePath": "[uri(parameters('_artifactsLocation'), concat(variables('scriptFolder'), '/', 'quaggadeploy.sh', parameters('_artifactsLocationSasToken')))]"
+    },
+    "resources": [
+        {
+            "comments": "network security group",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-08-01",
+            "name": "[variables('nsgName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH-rule",
+                        "properties": {
+                            "description": "allow SSH",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "comments": "Create VNet1. subnet1 is assigned to RouteServerSubnet. subnet4 is used for the Ubuntu VM",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-08-01",
+            "name": "[variables('vnetName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressSpace1Prefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnet1Prefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('subnet2Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnet2Prefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('subnet3Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnet3Prefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('subnet4Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnet4Prefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "GatewaySubnet",
+                        "properties": {
+                            "addressPrefix": "[variables('gatewaysubnetPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "comments": "create a virtual hub object",
+            "type": "Microsoft.Network/virtualHubs",
+            "apiVersion": "2020-08-01",
+            "name": "[variables('rsName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId( 'Microsoft.Network/virtualNetworks', variables('vnetName') )]"
+            ],
+            "properties": {
+                "sku": "Standard",
+                "allowBranchToBranchTraffic": true
+            },
+            "resources": []
+        },
+        {
+            "comments": "create the Route Server and attach it to the RouteServerSubnet subnet",
+            "type": "Microsoft.Network/virtualHubs/ipConfigurations",
+            "apiVersion": "2020-08-01",
+            "name": "[concat(variables('rsName'), '/',variables('vHubIPconfigName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualHubs', variables('rsName'))]"
+            ],
+            "properties": {
+                "privateIPAllocationMethod": "Dynamic",
+                "subnet": {
+                    "id": "[variables('subnet_rs1_Id')]"
+                }
+            }
+        },
+        {
+            "comments": "name of the BGP connection configured on the Route Server. The BGP connection can be created when the Microsoft.Network/virtualHubs/ipConfigurations deployment complete.",
+            "type": "Microsoft.Network/virtualHubs/bgpConnections",
+            "apiVersion": "2020-08-01",
+            "name": "[variables('bgpConnectionName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualHubs/ipConfigurations', variables('rsName'), variables('vHubIPconfigName'))]"
+            ],
+            "properties": {
+                "peerIp": "[variables('peering1IP')]",
+                "peerAsn": "[variables('peering1ASN')]"
+            }
+        },
+        {
+            "comments": "public IP of the VM",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('vmPubIPName')]",
+            "apiVersion": "2020-08-01",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Basic"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+            }
+        },
+        {
+            "comments": "Network interface of the VM attached to the subnet4",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-08-01",
+            "name": "[variables('nicName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPubIPName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconf-nic0",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[variables('vmPrivIP')]",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('vmPubIPName')  )]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnet4Name') )]"
+
+                            }
+                        }
+                    }
+                ],
+                "enableIPForwarding": true
+            }
+        },
+        {
+            "comments": "spin up the Azure VM",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('vmName') ]",
+            "apiVersion": "2020-06-01",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[variables('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('imageReference').publisher]",
+                        "offer": "[variables('imageReference').offer]",
+                        "sku": "[variables('imageReference').sku]",
+                        "version": "[variables('imageReference').version]"
+                    },
+                    "osDisk": {
+                        "name": "[concat(variables('vmName'),'-OSdisk')]",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "properties": {
+                                "primary": true
+                            },
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName') )]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "comments": "customer script extension to install and set up Quagga",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2020-06-01",
+            "name": "[concat(variables('vmName'), '/installQuagga')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[variables('customScriptFilePath')]"
+                    ],
+                    "commandToExecute": "sh quaggadeploy.sh"
+                }
+            }
+        }
+    ]
+}

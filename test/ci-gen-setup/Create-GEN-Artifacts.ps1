@@ -46,17 +46,24 @@ if ($StorageAccount -eq $null) {
     New-AzureRmResourceGroup -Location "$Location" -Name $StorageResourceGroupName -Force
     $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$Location"
 }
-# Assign perms
-if ($ServicePrincipalObjectId) {
-    $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
-    New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $StorageAccount.Id -Verbose
-}
 
 #create a userAssigned MSI that can have access to the vault where test keys/certs are stored
 $msi = (az identity create -g "$ResourceGroupName" -n "$msiName" --verbose) | ConvertFrom-Json
 
 $json.Add("USER-ASSIGNED-IDENTITY-NAME", $msiName)
 $json.Add("USER-ASSIGNED-IDENTITY-RESOURCEGROUP-NAME", $ResourceGroupName)
+
+# Assign perms
+if ($ServicePrincipalObjectId) {
+    # to be able to write to the staging storage account (deployment script stages artifacts)
+    $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
+    New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $StorageAccount.Id -Verbose
+    # to use the MSI on a resource (the msi should have very limited permissions)
+    $roleDef = Get-AzureRmRoleDefinition -Name 'Managed Identity Operator'
+    $msiId = "/subscriptions/$((Get-AzureRMContext).Subscription.Id)/resourceGroups/$ResourceGroupName/providers/Microsoft.ManagedIdentity/userAssignedIdentities/$msiName"
+    New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $msiId -Verbose
+}
+
 
 #Create the VNET
 $subnet1 = New-AzureRMVirtualNetworkSubnetConfig -Name 'azbot-subnet-1' -AddressPrefix '10.0.1.0/24'

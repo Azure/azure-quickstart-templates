@@ -67,6 +67,16 @@
         "description": "Location of resources"
       }
     },
+    "vmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_D2s_v3"
+      ],
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "VM Size"
+      }
+    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -83,16 +93,13 @@
   "variables": {
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "OSDiskName": "[concat('webtestosdisk-', parameters('dnsNameForPublicIP'))]",
     "nicName": "[concat('webtestnic-', parameters('dnsNameForPublicIP'), '-', uniqueString(resourceGroup().id))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "vhdStorageType": "Standard_LRS",
     "publicIPAddressType": "Dynamic",
-    "vhdStorageContainerName": "vhds",
     "vmName": "[concat('webtestvm-', parameters('dnsNameForPublicIP'), '-', uniqueString(resourceGroup().id))]",
-    "vmSize": "Standard_D2_v2",
     "virtualNetworkName": "[concat('webtestvnet-', uniqueString(resourceGroup().id, parameters('dnsNameForPublicIP')))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'),  variables('subnetName'))]",
     "vhdStorageName": "[concat('webtestvhd', uniqueString(resourceGroup().id, parameters('dnsNameForPublicIP')))]",
@@ -118,17 +125,17 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('vhdStorageName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-01-01",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "StorageAccount"
       },
-      "properties": {
-        "accountType": "[variables('vhdStorageType')]"
+      "sku": {
+        "name": "[variables('vhdStorageType')]"
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[parameters('dnsNameForPublicIP')]",
       "location": "[parameters('location')]",
@@ -143,7 +150,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -167,7 +174,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('frontEndNSGName')]",
       "location": "[parameters('location')]",
@@ -208,7 +215,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-08-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
@@ -216,9 +223,9 @@
         "displayName": "NetworkInterface"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('dnsNameForPublicIP'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', parameters('dnsNameForPublicIP'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -241,7 +248,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30", 
+      "apiVersion": "2020-12-01", 
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
@@ -249,12 +256,12 @@
         "displayName": "VirtualMachine"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('vhdStorageName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -287,9 +294,9 @@
           "name": "PrepareServer",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2015-06-15",
+          "apiVersion": "2020-12-01",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
           ],
           "tags": {
             "displayName": "PrepareServer"
@@ -311,3 +318,4 @@
     }
   ]
 }
+

@@ -1,0 +1,2728 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adlsStorageAccountName": {
+      "type": "string",
+      "defaultValue": "[concat('adls', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the globally unique DNS Name for the ADLS Gen 2 storage account."
+      }
+    },
+    "blobStorageAccountName": {
+      "type": "string",
+      "defaultValue": "[concat('blob', uniquestring(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the globally unique name for the storage account used to store the test file system and the boot diagnostics logs of the virtual machines."
+      }
+    },
+    "adlsStorageAccountNetworkAclsDefaultAction": {
+      "type": "string",
+      "defaultValue": "Deny",
+      "allowedValues": [
+        "Allow",
+        "Deny"
+      ],
+      "metadata": {
+        "description": "Specifies the default action of allow or deny when no other rules match for the ADLS storage account."
+      }
+    },
+    "blobStorageAccountNetworkAclsDefaultAction": {
+      "type": "string",
+      "defaultValue": "Deny",
+      "allowedValues": [
+        "Allow",
+        "Deny"
+      ],
+      "metadata": {
+        "description": "Allow or disallow public access to all blobs or containers in the Blob storage account. The default interpretation is true for this property."
+      }
+    },
+    "adlsStorageAccountAllowBlobPublicAccess": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Allow or disallow public access to all blobs or containers in the ADLS storage account. The default interpretation is true for this property."
+      }
+    },
+    "blobStorageAccountAllowBlobPublicAccess": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Allow or disallow public access to all blobs or containers in the Blob storage account. The default interpretation is true for this property."
+      }
+    },
+    "deployCustomDnsForwarder": {
+      "type": "bool",
+      "defaultValue":false,
+      "metadata": {
+        "description": "Specify whether deploy a custom DNS forwarder in the Hub Virtual Network. Default value is false."
+      }
+    },
+    "dnsAvailabilitySetName": {
+      "type": "string",
+      "defaultValue": "[concat('availabilityset', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the Availability Set used by the DNS virtual machine."
+      }
+    },
+    "dnsVmName": {
+      "type": "string",
+      "defaultValue": "DnsVm",
+      "metadata": {
+        "description": "Specifies the name of the DNS virtual machine."
+      }
+    },
+    "devVmName": {
+      "type": "string",
+      "defaultValue": "DevVm",
+      "metadata": {
+        "description": "Specifies the name of the virtual machine in the Development Virtual Network."
+      }
+    },
+    "prodVmName": {
+      "type": "string",
+      "defaultValue": "ProdVm",
+      "metadata": {
+        "description": "Specifies the name of the virtual machine in the Production Virtual Network."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "Specifies the size of the virtual machine."
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "Canonical",
+      "metadata": {
+        "description": "Specifies the image publisher of the disk image used to create the virtual machine."
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "UbuntuServer",
+      "metadata": {
+        "description": "Specifies the offer of the platform image or marketplace image used to create the virtual machine."
+      }
+    },
+    "imageSku": {
+      "type": "string",
+      "defaultValue": "18.04-LTS",
+      "allowedValues": [
+        "12.04.5-LTS",
+        "14.04.5-LTS",
+        "16.04.0-LTS",
+        "18.04-LTS"
+      ],
+      "metadata": {
+        "description": "Specifies the Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Specifies the type of authentication when accessing the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the administrator account of the virtual machine."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Specifies the SSH Key or password for the virtual machine. SSH key is recommended."
+      }
+    },
+    "diskStorageAccounType": {
+      "type": "string",
+      "defaultValue": "Premium_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Premium_ZRS",
+        "StandardSSD_LRS",
+        "StandardSSD_ZRS", 
+        "Standard_LRS"
+      ],
+      "metadata": {
+        "description": "Defines the storage account type for OS and data disk."
+      }
+    },
+    "numDataDisks": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 0,
+      "maxValue": 64,
+      "metadata": {
+        "description": "Specifies the number of data disks of the virtual machine."
+      }
+    },
+    "osDiskSize": {
+      "type": "int",
+      "defaultValue": 100,
+      "metadata": {
+        "description": "The size in GB of the OS disk of the VM."
+      }
+    },
+    "dataDiskSize": {
+      "type": "int",
+      "defaultValue": 10,
+      "metadata": {
+        "description": "Specifies the size in GB of the OS disk of the virtual machine."
+      }
+    },
+    "dataDiskCaching": {
+      "type": "string",
+      "defaultValue": "ReadWrite",
+      "metadata": {
+        "description": "Specifies the caching requirements for the data disks."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "Specifies the base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specifies the sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      }
+    },
+    "adlsStorageAccountAdlsPrivateEndpointName": {
+      "type": "string",
+      "defaultValue": "AdlsStorageAccountAdlsPrivateEndpoint",
+      "metadata": {
+        "description": "Specifies the name of the adls private endpoint to the adls storage account."
+      }
+    },
+    "adlsStorageAccountBlobPrivateEndpointName": {
+      "type": "string",
+      "defaultValue": "AdlsStorageAccountBlobPrivateEndpoint",
+      "metadata": {
+        "description": "Specifies the name of the blob private endpoint to the adls storage account."
+      }
+    },
+    "blobStorageAccountBlobPrivateEndpointName": {
+      "type": "string",
+      "defaultValue": "BlobStorageAccountBlobPrivateEndpoint",
+      "metadata": {
+        "description": "Specifies the name of the blob private endpoint to the boot diagnostics storage account."
+      }
+    },
+
+    "privateDnsZoneName": {
+      "type": "string",
+      "defaultValue": "contoso.corp",
+      "metadata": {
+        "description": "Private DNS Zone name."
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": "[concat('loganalytics', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "the name of the Log Analytics workspace."
+      }
+    },
+    "workspaceSku": {
+      "type": "string",
+      "defaultValue": "PerGB2018",
+      "allowedValues": [
+        "Free",
+        "Standard",
+        "Premium",
+        "PerNode",
+        "PerGB2018",
+        "Standalone",
+        "CapacityReservation"
+      ],
+      "metadata": {
+        "description": "The sku of the Log Analytics workspace."
+      }
+    },
+    "firewallName": {
+      "type": "string",
+      "defaultValue": "HubFirewall",
+      "metadata": {
+        "description": "The name of the Azure Firewall."
+      }
+    },
+    "firewallAvailabilityZones": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Zone numbers e.g. 1,2,3."
+      }
+    },
+    "numberOfFirewallPublicIPAddresses": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 100,
+      "metadata": {
+        "description": "Number of public IP addresses for the Azure Firewall"
+      }
+    },
+    "createDnatRuleCollection": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Specifies whether create DNAT rule collection in the Azure Firewall policy or not."
+      }
+    },
+    "deployVpnGateway": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Specifies whether deploy a VPN Gateway in the Hub or not."
+      }
+    },
+    "gatewaySku": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Basic",
+        "HighPerformance",
+        "Standard",
+        "UltraPerformance",
+        "VpnGw1",
+        "VpnGw2",
+        "VpnGw3",
+        "VpnGw4",
+        "VpnGw5",
+        "VpnGw1AZ",
+        "VpnGw2AZ",
+        "VpnGw3AZ",
+        "VpnGw4AZ",
+        "VpnGw5AZ",
+        "ErGw1AZ",
+        "ErGw2AZ",
+        "ErGw3AZ"
+      ],
+      "metadata": {
+        "description": "The SKU of the Gateway, if deployed"
+      }
+    },
+    "gatewayType": {
+      "type": "string",
+      "defaultValue": "Vpn",
+      "allowedValues": [
+        "Vpn",
+        "ExpressRoute"
+      ],
+      "metadata": {
+        "description": "The type of this virtual network gateway. - Vpn or ExpressRoute"
+      }
+    },
+    "vpnType": {
+      "type": "string",
+      "defaultValue": "RouteBased",
+      "allowedValues": [
+        "PolicyBased",
+        "RouteBased"
+      ],
+      "metadata": {
+        "description": "The type of this virtual network gateway. - PolicyBased or RouteBased"
+      }
+    },
+    "enableBgp": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Whether BGP is enabled for this virtual network gateway or not."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "hubVnetName": {
+      "type": "string",
+      "defaultValue": "HubVnet"
+    },
+    "hubVnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.0.0/16"
+    },
+    "hubVnetFirewallSubnetName": {
+      "type": "string",
+      "defaultValue": "AzureFirewallSubnet",
+      "metadata": {
+        "description": "The name of the Firewall subnet."
+      }
+    },
+    "hubVnetFirewallSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.0.0/26",
+      "metadata": {
+        "description": "The address prefix of the Firewall subnet."
+      }
+    },
+    "hubVnetCommonSubnetName": {
+      "type": "string",
+      "defaultValue": "CommonSubnet",
+      "metadata": {
+        "description": "The name of the Management subnet."
+      }
+    },
+    "hubVnetCommonSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.1.0/24",
+      "metadata": {
+        "description": "The address prefix of the Management subnet."
+      }
+    },
+    "hubVnetGatewaySubnetName": {
+      "type": "string",
+      "defaultValue": "GatewaySubnet",
+      "metadata": {
+        "description": "The name of the Development Virtual Network."
+      }
+    },
+    "hubVnetGatewaySubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.15.224/27",
+      "metadata": {
+        "description": "The address prefix of the Gateway subnet."
+      }
+    },
+    "gatewayName": {
+      "type": "string",
+      "defaultValue": "HubVpnGateway",
+      "metadata": {
+        "description": "The name of gateway."
+      }
+    },
+    "devVnetName": {
+      "type": "string",
+      "defaultValue": "DevelopmentVNet",
+      "metadata": {
+        "description": "The name of the Development Virtual Network."
+      }
+    },
+    "devVnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "The address prefix of the Development Virtual Network."
+      }
+    },
+    "prodVnetName": {
+      "type": "string",
+      "defaultValue": "ProductionVNet",
+      "metadata": {
+        "description": "The name of the Production Virtual Network."
+      }
+    },
+    "prodVnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/16",
+      "metadata": {
+        "description": "The address prefix of the Production Virtual Network."
+      }
+    },
+    "devVnetDefaultSubnetName": {
+      "type": "string",
+      "defaultValue": "DefaultSubnet",
+      "metadata": {
+        "description": "The name of the Workload subnet."
+      }
+    },
+    "devVNetDefaultSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "The address prefix of the Workload subnet in the Development Virtual Network."
+      }
+    },
+    "prodVnetDefaultSubnetName": {
+      "type": "string",
+      "defaultValue": "DefaultSubnet",
+      "metadata": {
+        "description": "The name of the Workload subnet."
+      }
+    },
+    "prodVNetDefaultSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/24",
+      "metadata": {
+        "description": "The address prefix of the Workload subnet in the Production Virtual Network."
+      }
+    },
+    "hubVnetBastionSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.4.0/24",
+      "metadata": {
+        "description": "Specifies the Bastion subnet IP prefix. This prefix must be within vnet IP prefix address space."
+      }
+    },
+    "bastionHostName": {
+      "type": "string",
+      "defaultValue": "[concat('bastion', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the Azure Bastion resource."
+      }
+    },
+    "firewallPolicyName": {
+      "type": "string",
+      "defaultValue": "[concat(parameters('firewallName'), 'Policy')]",
+      "metadata": {
+        "description": "The name of the Firewall Policy uased by the Azure Firewall"
+      }
+    }
+  },
+  "variables": {
+    "bastionPublicIpAddressName": "[concat(parameters('bastionHostName'),'PublicIp')]",
+    "bastionPublicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIpAddressName'))]",
+    "bastionSubnetName": "AzureBastionSubnet",
+    "bastionSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('hubVnetName'), variables('bastionSubnetName'))]",
+    "gatewayPublicIpName": "[concat(parameters('gatewayName'), 'PublicIp')]",
+
+    "hubVnetGatewaySubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('hubVnetName'), parameters('hubVnetGatewaySubnetName'))]",
+    "hubVnetCommonSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('hubVnetName'), parameters('hubVnetCommonSubnetName'))]",
+    "hubVnetFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('hubVnetName'), parameters('hubVnetFirewallSubnetName'))]",
+    
+    "devVnetDefaultSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('devVnetName'), parameters('devVnetDefaultSubnetName'))]",
+    "prodVnetDefaultSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('prodVnetName'), parameters('prodVnetDefaultSubnetName'))]",
+
+    "hubVnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('hubVnetName'))]",
+    "devVnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('devVnetName'))]",
+    "prodVnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('prodVnetName'))]",
+    "gatewayId": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('gatewayName'))]",
+
+    "dnsVmNicName": "[concat(parameters('dnsVmName'), 'Nic')]",
+    "devVmNicName": "[concat(parameters('devVmName'), 'Nic')]",
+    "prodVmNicName": "[concat(parameters('prodVmName'), 'Nic')]",
+
+    "dnsVmNicId": "[resourceId('Microsoft.Network/networkInterfaces', variables('dnsVmNicName'))]",
+    "devVmNicId": "[resourceId('Microsoft.Network/networkInterfaces', variables('devVmNicName'))]",
+    "prodVmNicId": "[resourceId('Microsoft.Network/networkInterfaces', variables('prodVmNicName'))]",
+
+    "dnsVmId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('dnsVmName'))]",
+    "devVmId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('devVmName'))]",
+    "prodVmId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('prodVmName'))]",
+
+    "gatewayPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('gatewayPublicIpName'))]",
+    "hubVnetCommonSubnetNsgName": "[concat(parameters('hubVnetName'), parameters('hubVnetCommonSubnetName'), 'Nsg')]",
+    "hubVnetBastionSubnetNsgName": "[concat(parameters('hubVnetName'), variables('bastionSubnetName'), 'Nsg')]",
+    "devVnetDefaultSubnetNsgName": "[concat(parameters('devVnetName'), parameters('devVnetDefaultSubnetName'), 'Nsg')]",
+    "prodVnetDefaultSubnetNsgName": "[concat(parameters('prodVnetName'), parameters('prodVnetDefaultSubnetName'), 'Nsg')]",
+
+    "hubVnetCommonSubnetNsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('hubVnetCommonSubnetNsgName'))]",
+    "hubVnetBastionSubnetNsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('hubVnetBastionSubnetNsgName'))]",
+    "devVnetDefaultSubnetNsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('devVnetDefaultSubnetNsgName'))]",
+    "prodVnetDefaultSubnetNsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('prodVnetDefaultSubnetNsgName'))]",
+
+    "devVnetDefaultSubnetRouteTableName": "[concat(parameters('devVnetName'), parameters('devVnetDefaultSubnetName'), 'RouteTable')]",
+    "prodVnetDefaultSubnetRouteTableName": "[concat(parameters('prodVnetName'), parameters('prodVnetDefaultSubnetName'), 'RouteTable')]",
+
+    "devVnetDefaultSubnetRouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('devVnetDefaultSubnetRouteTableName'))]",
+    "prodVnetDefaultSubnetRouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('prodVnetDefaultSubnetRouteTableName'))]",
+
+    "firewallPublicIPNamePrefix": "[concat(parameters('firewallName'), 'PublicIP')]",
+    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('firewallPublicIPNamePrefix'))]",
+    "azureFirewallSubnetJSON": "[json(format('{{\"id\": \"{0}\"}}', variables('hubVnetFirewallSubnetId')))]",
+    "firewallId": "[resourceId('Microsoft.Network/azureFirewalls', parameters('firewallName'))]",
+    "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]",
+    "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]",
+
+    "firewallPolicyId": "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]",
+    "firewallPolicyDefaultNetworkRuleCollectionGroupName": "[concat(parameters('firewallPolicyName'), '/DefaultNetworkRuleCollectionGroup')]",
+    "firewallPolicyDefaultDnatRuleCollectionGroupName": "[concat(parameters('firewallPolicyName'), '/DefaultDnatRuleCollectionGroup')]",
+    "firewallPolicyDefaultNetworkRuleCollectionGroupId": "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups', parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]",
+
+    "devContributorRoleAssignmentGuid": "[guid(concat('devcontributor', resourceGroup().id, parameters('devVmName')))]",
+    "prodContributorRoleAssignmentGuid": "[guid(concat('prodcontributor', resourceGroup().id, parameters('prodVmName')))]",
+    "devContributorRoleAssignmentId": "[resourceId('Microsoft.Authorization/roleAssignments', variables('devContributorRoleAssignmentGuid'))]",
+    "prodContributorRoleAssignmentId": "[resourceId('Microsoft.Authorization/roleAssignments', variables('prodContributorRoleAssignmentGuid'))]",
+
+    "devStorageBlobDataContributorRoleAssignmentGuid": "[guid(concat('devStorageBlobDataContributor', resourceGroup().id, parameters('devVmName')))]",
+    "prodStorageBlobDataContributorRoleAssignmentGuid": "[guid(concat('prodStorageBlobDataContributor', resourceGroup().id, parameters('prodVmName')))]",
+    "devStorageBlobDataContributorRoleAssignmentId": "[resourceId('Microsoft.Authorization/roleAssignments', variables('devStorageBlobDataContributorRoleAssignmentGuid'))]",
+    "prodStorageBlobDataContributorRoleAssignmentId": "[resourceId('Microsoft.Authorization/roleAssignments', variables('prodStorageBlobDataContributorRoleAssignmentGuid'))]",
+    
+    "contributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+    "storageBlobDataContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+
+    "dnsCustomScriptId": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('dnsVmName'), 'CustomScript')]",
+    "devCustomScriptId": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('devVmName'), 'CustomScript')]",
+    "prodCustomScriptId": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('prodVmName'), 'CustomScript')]",
+    "dnsOmsAgentForLinuxId": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('dnsVmName'), 'LogAnalytics')]",
+    "devOmsAgentForLinuxId": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('devVmName'), 'LogAnalytics')]",
+    "prodOmsAgentForLinuxId": "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('prodVmName'), 'LogAnalytics')]",
+
+    "dnsAvailabilitySetId": "[resourceId('Microsoft.Compute/availabilitySets', parameters('dnsAvailabilitySetName'))]",
+
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      },
+      "provisionVMAgent": true
+    },
+    "adlsStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('adlsStorageAccountName'))]",
+    "blobStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('blobStorageAccountName'))]",
+    "adlsPublicDNSZoneForwarder": "[concat('.dfs.', environment().suffixes.storage)]",
+    "blobPublicDNSZoneForwarder": "[concat('.blob.', environment().suffixes.storage)]",
+    "adlsPrivateDnsZoneName": "[concat('privatelink', variables('adlsPublicDNSZoneForwarder'))]",
+    "blobPrivateDnsZoneName": "[concat('privatelink', variables('blobPublicDNSZoneForwarder'))]",
+    "adlsPrivateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('adlsPrivateDnsZoneName'))]",
+    "blobPrivateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('blobPrivateDnsZoneName'))]",
+    "adlsServicePrimaryEndpoint": "[concat(parameters('adlsStorageAccountName'), variables('adlsPublicDNSZoneForwarder'))]",
+    "blobServicePrimaryEndpoint": "[concat(parameters('blobStorageAccountName'), variables('blobPublicDNSZoneForwarder'))]",
+    "adlsStorageAccountAdlsPrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('adlsStorageAccountAdlsPrivateEndpointName'))]",
+    "adlsStorageAccountBlobPrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('adlsStorageAccountBlobPrivateEndpointName'))]",
+    "blobStorageAccountBlobPrivateEndpointId": "[resourceId('Microsoft.Network/privateEndpoints', parameters('blobStorageAccountBlobPrivateEndpointName'))]",
+    "adlsGroupName": "dfs",
+    "blobGroupName": "blob",
+
+    "dnsVmScriptFileName": "configure-custom-dns-forwarder.sh",
+    "testVmScriptFileName": "test-dns-and-private-endpoints.sh",
+    "dnsVmScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('dnsVmScriptFileName'), parameters('_artifactsLocationSasToken')))]",
+    "testVmScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('testVmScriptFileName'), parameters('_artifactsLocationSasToken')))]"
+
+  },
+  "resources": [
+    {
+      "apiVersion": "2021-01-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('adlsStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_RAGRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "networkAcls": {
+          "defaultAction": "[parameters('adlsStorageAccountNetworkAclsDefaultAction')]",
+          "bypass": "AzureServices"
+        },
+        "allowBlobPublicAccess": "[parameters('adlsStorageAccountAllowBlobPublicAccess')]"
+      }
+    },
+    {
+      "apiVersion": "2021-01-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('blobStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "networkAcls": {
+          "defaultAction": "[parameters('blobStorageAccountNetworkAclsDefaultAction')]",
+          "bypass": "AzureServices"
+        },
+        "allowBlobPublicAccess": "[parameters('blobStorageAccountAllowBlobPublicAccess')]"
+      }
+    },
+    {
+      "comments": "Network Security Group for the Subnets of the Hub Virtual Network",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-07-01",
+      "name": "[variables('hubVnetCommonSubnetNsgName')]",
+      "location": "[parameters('location')]",
+      "resources": [
+        {
+          "type": "providers/diagnosticSettings",
+          "apiVersion": "2017-05-01-preview",
+          "name": "Microsoft.Insights/default",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[variables('hubVnetCommonSubnetNsgId')]",
+            "[variables('workspaceId')]"
+          ],
+          "properties": {
+            "workspaceId": "[variables('workspaceId')]",
+            "logs": [
+              {
+                "category": "NetworkSecurityGroupEvent",
+                "enabled": true,
+                "retentionPolicy": {
+                  "enabled": false,
+                  "days": 0
+                }
+              },
+              {
+                "category": "NetworkSecurityGroupRuleCounter",
+                "enabled": true,
+                "retentionPolicy": {
+                  "enabled": false,
+                  "days": 0
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "comments": "Network Security Group for the Subnets of the Development Virtual Network",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-07-01",
+      "name": "[variables('devVnetDefaultSubnetNsgName')]",
+      "location": "[parameters('location')]",
+      "resources": [
+        {
+          "type": "providers/diagnosticSettings",
+          "apiVersion": "2017-05-01-preview",
+          "name": "Microsoft.Insights/default",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[variables('devVnetDefaultSubnetNsgId')]",
+            "[variables('workspaceId')]"
+          ],
+          "properties": {
+            "workspaceId": "[variables('workspaceId')]",
+            "logs": [
+              {
+                "category": "NetworkSecurityGroupEvent",
+                "enabled": true,
+                "retentionPolicy": {
+                  "enabled": false,
+                  "days": 0
+                }
+              },
+              {
+                "category": "NetworkSecurityGroupRuleCounter",
+                "enabled": true,
+                "retentionPolicy": {
+                  "enabled": false,
+                  "days": 0
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "comments": "Network Security Group for the Subnets of the Production Virtual Network",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-07-01",
+      "name": "[variables('prodVnetDefaultSubnetNsgName')]",
+      "location": "[parameters('location')]",
+      "resources": [
+        {
+          "type": "providers/diagnosticSettings",
+          "apiVersion": "2017-05-01-preview",
+          "name": "Microsoft.Insights/default",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[variables('prodVnetDefaultSubnetNsgId')]",
+            "[variables('workspaceId')]"
+          ],
+          "properties": {
+            "workspaceId": "[variables('workspaceId')]",
+            "logs": [
+              {
+                "category": "NetworkSecurityGroupEvent",
+                "enabled": true,
+                "retentionPolicy": {
+                  "enabled": false,
+                  "days": 0
+                }
+              },
+              {
+                "category": "NetworkSecurityGroupRuleCounter",
+                "enabled": true,
+                "retentionPolicy": {
+                  "enabled": false,
+                  "days": 0
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "comments": "Network Security Group for Azure Bastion",
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('hubVnetBastionSubnetNsgName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowHttpsInBound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "Internet",
+              "destinationPortRange": "443",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowGatewayManagerInBound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "GatewayManager",
+              "destinationPortRange": "443",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowLoadBalancerInBound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationPortRange": "443",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowBastionHostCommunicationInBound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationPortRanges": [
+                "8080",
+                "5701"
+              ],
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "DenyAllInBound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationPortRange": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowSshRdpOutBound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationPortRanges": [
+                "22",
+                "3389"
+              ],
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "AllowAzureCloudCommunicationOutBound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationPortRange": "443",
+              "destinationAddressPrefix": "AzureCloud",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "AllowBastionHostCommunicationOutBound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationPortRanges": [
+                "8080",
+                "5701"
+              ],
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "AllowGetSessionInformationOutBound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "destinationPortRanges": [
+                "80",
+                "443"
+              ],
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "DenyAllOutBound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 1000,
+              "direction": "Outbound"
+            }
+          }
+        ]
+      },
+      "resources": [
+        {
+          "type": "providers/diagnosticSettings",
+          "apiVersion": "2017-05-01-preview",
+          "name": "Microsoft.Insights/default",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[variables('hubVnetBastionSubnetNsgId')]",
+            "[variables('workspaceId')]"
+          ],
+          "properties": {
+            "workspaceId": "[variables('workspaceId')]",
+            "logs": [
+              {
+                "category": "NetworkSecurityGroupEvent",
+                "enabled": true,
+                "retentionPolicy": {
+                  "enabled": false,
+                  "days": 0
+                }
+              },
+              {
+                "category": "NetworkSecurityGroupRuleCounter",
+                "enabled": true,
+                "retentionPolicy": {
+                  "enabled": false,
+                  "days": 0
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "comments": "Azure Bastion Public IP Address",
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('bastionPublicIpAddressName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "comments": "Azure Bastion Host",
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/bastionHosts",
+      "name": "[parameters('bastionHostName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('bastionPublicIpAddressId')]",
+        "[variables('hubVnetId')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "IpConfiguration",
+            "properties": {
+              "subnet": {
+                "id": "[variables('bastionSubnetId')]"
+              },
+              "publicIPAddress": {
+                "id": "[variables('bastionPublicIpAddressId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Hub Virtual Network",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('hubVnetName')]",
+      "apiVersion": "2020-04-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('hubVnetCommonSubnetNsgId')]",
+        "[variables('hubVnetBastionSubnetNsgId')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('hubVnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('hubVnetCommonSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('hubVnetCommonSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[variables('hubVnetCommonSubnetNsgId')]"
+              },
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+          },
+          {
+            "name": "[variables('bastionSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('hubVnetBastionSubnetPrefix')]",
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled",
+              "networkSecurityGroup": {
+                "id": "[variables('hubVnetBastionSubnetNsgId')]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('hubVnetGatewaySubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('hubVnetGatewaySubnetPrefix')]"
+            }
+          },
+          {
+            "name": "[parameters('hubVnetFirewallSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('hubVnetFirewallSubnetPrefix')]"
+            }
+          }
+        ],
+        "enableDdosProtection": false,
+        "enableVmProtection": false
+      }
+    },
+    {
+      "comments": "Development Virtual Network",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('devVnetName')]",
+      "apiVersion": "2020-04-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('firewallId')]",
+        "[variables('devVnetDefaultSubnetNsgId')]",
+        "[variables('devVnetDefaultSubnetRouteTableId')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('devVnetAddressPrefix')]"
+          ]
+        },
+        "dhcpOptions": {
+          "dnsServers": [
+            "[reference(variables('firewallId')).ipConfigurations[0].properties.privateIPAddress]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('devVnetDefaultSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('devVNetDefaultSubnetPrefix')]",
+              "routeTable": {
+                "id": "[variables('devVnetDefaultSubnetRouteTableId')]"
+              },
+              "networkSecurityGroup": {
+                "id": "[variables('devVnetDefaultSubnetNsgId')]"
+              }
+            }
+          }
+        ],
+        "enableDdosProtection": false,
+        "enableVmProtection": false
+      }
+    },
+    {
+      "comments": "Production Virtual Network",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('prodVnetName')]",
+      "apiVersion": "2020-04-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('firewallId')]",
+        "[variables('prodVnetDefaultSubnetNsgId')]",
+        "[variables('prodVnetDefaultSubnetRouteTableId')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('prodVnetAddressPrefix')]"
+          ]
+        },
+        "dhcpOptions": {
+          "dnsServers": [
+            "[reference(variables('firewallId')).ipConfigurations[0].properties.privateIPAddress]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('prodVnetDefaultSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('prodVNetDefaultSubnetPrefix')]",
+              "routeTable": {
+                "id": "[variables('prodVnetDefaultSubnetRouteTableId')]"
+              },
+              "networkSecurityGroup": {
+                "id": "[variables('prodVnetDefaultSubnetNsgId')]"
+              }
+            }
+          }
+        ],
+        "enableDdosProtection": false,
+        "enableVmProtection": false
+      }
+    },
+    {
+      "comments": "Virtual network peering from the Hub Virtual Network to the Development Virtual Network",
+      "apiVersion": "2020-04-01",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[concat(parameters('hubVnetName'), '/', parameters('hubVnetName'), 'To', parameters('devVnetName'), 'Peering')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('hubVnetId')]",
+        "[variables('devVnetId')]",
+        "[variables('gatewayId')]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": "[parameters('deployVpnGateway')]",
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[variables('devVnetId')]"
+        }
+      }
+    },
+    {
+      "comments": "Virtual network peering from the Hub Virtual Network to the Production Virtual Network",
+      "apiVersion": "2020-04-01",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[concat(parameters('hubVnetName'), '/', parameters('hubVnetName'), 'To', parameters('prodVnetName'), 'Peering')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('hubVnetId')]",
+        "[variables('prodVnetId')]",
+        "[variables('gatewayId')]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": "[parameters('deployVpnGateway')]",
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[variables('prodVnetId')]"
+        }
+      }
+    },
+    {
+      "comments": "Virtual network peering from the Development Virtual Network to the Hub Virtual Network",
+      "apiVersion": "2020-04-01",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[concat(parameters('devVnetName'), '/', parameters('devVnetName'), 'To', parameters('hubVnetName'), 'Peering')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('hubVnetId')]",
+        "[variables('devVnetId')]",
+        "[variables('gatewayId')]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": "[parameters('deployVpnGateway')]",
+        "remoteVirtualNetwork": {
+          "id": "[variables('hubVnetId')]"
+        }
+      }
+    },
+    {
+      "comments": "Virtual Network Peering from the Production Virtual Network to the Hub Virtual Network",
+      "apiVersion": "2020-04-01",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[concat(parameters('prodVnetName'), '/', parameters('prodVnetName'), 'To', parameters('hubVnetName'), 'Peering')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('hubVnetId')]",
+        "[variables('prodVnetId')]",
+        "[variables('gatewayId')]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": "[parameters('deployVpnGateway')]",
+        "remoteVirtualNetwork": {
+          "id": "[variables('hubVnetId')]"
+        }
+      }
+    },
+    {
+      "comments": "Virtual Network Gateway Public IP Address",
+      "condition": "[parameters('deployVpnGateway')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-04-01",
+      "name": "[variables('gatewayPublicIpName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "comments": "Virtual Network Gateway",
+      "condition": "[parameters('deployVpnGateway')]",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "apiVersion": "2020-04-01",
+      "name": "[parameters('gatewayName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('gatewayPublicIpId')]",
+        "[variables('hubVnetId')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('hubVnetGatewaySubnetId')]"
+              },
+              "publicIPAddress": {
+                "id": "[variables('gatewayPublicIpId')]"
+              }
+            },
+            "name": "vnetGatewayConfig"
+          }
+        ],
+        "sku": {
+          "name": "[parameters('gatewaySku')]",
+          "tier": "[parameters('gatewaySku')]"
+        },
+        "gatewayType": "[parameters('gatewayType')]",
+        "vpnType": "[parameters('vpnType')]",
+        "enableBgp": "[parameters('enableBgp')]"
+      }
+    },
+    {
+      "condition": "[parameters('deployCustomDnsForwarder')]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "comments": "Thi is the availability set for creating a HA cluster, run the template multiple times to get multiple DNS servers",
+      "name": "[parameters('dnsAvailabilitySetName')]",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 2
+      }
+    },
+    {
+      "condition": "[parameters('deployCustomDnsForwarder')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('dnsVmNicName')]",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('hubVnetId')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "vmIpConfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('hubVnetCommonSubnetId')]"
+              },
+              "privateIPAddressVersion": "IPv4"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[parameters('deployCustomDnsForwarder')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('dnsVmName')]",
+      "apiVersion": "2020-06-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('dnsAvailabilitySetId')]",
+        "[variables('blobStorageAccountBlobPrivateEndpointId')]",
+        "[variables('dnsVmNicId')]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[variables('dnsAvailabilitySetId')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('dnsVmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('dnsVmName'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "diskSizeGB": "[parameters('osDiskSize')]",
+            "managedDisk": {
+              "storageAccountType": "[parameters('diskStorageAccounType')]"
+            }
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[parameters('numDataDisks')]",
+              "input": {
+                "caching": "[parameters('dataDiskCaching')]",
+                "diskSizeGB": "[parameters('dataDiskSize')]",
+                "lun": "[copyIndex('dataDisks')]",
+                "name": "[concat(parameters('dnsVmName'),'-DataDisk',copyIndex('dataDisks'))]",
+                "createOption": "Empty",
+                "managedDisk": {
+                  "storageAccountType": "[parameters('diskStorageAccounType')]"
+                }
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('dnsVmNicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(variables('blobStorageAccountId')).primaryEndpoints['blob']]"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[parameters('deployCustomDnsForwarder')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('dnsVmName'),'/CustomScript')]",
+      "apiVersion": "2020-06-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('dnsVmId')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('dnsVmScriptFileUri')]"
+          ],
+          "commandToExecute": "[concat('./', variables('dnsVmScriptFileName'))]"
+        }
+      }
+    },
+    {
+      "condition": "[parameters('deployCustomDnsForwarder')]",
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('dnsVmName'),'/LogAnalytics')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('dnsVmId')]",
+        "[variables('workspaceId')]",
+        "[variables('dnsCustomScriptId')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+        "type": "OmsAgentForLinux",
+        "typeHandlerVersion": "1.12",
+        "settings": {
+          "workspaceId": "[reference(variables('workspaceId'), '2020-03-01-preview').customerId]",
+          "stopOnMultipleConnections": false
+        },
+        "protectedSettings": {
+          "workspaceKey": "[listKeys(variables('workspaceId'),'2020-03-01-preview').primarySharedKey]"
+        }
+      }
+    },
+    {
+      "condition": "[parameters('deployCustomDnsForwarder')]",
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('dnsVmName'),'/DependencyAgent')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('dnsVmId')]",
+        "[variables('workspaceId')]",
+        "[variables('dnsCustomScriptId')]",
+        "[variables('dnsOmsAgentForLinuxId')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
+        "type": "DependencyAgentLinux",
+        "typeHandlerVersion": "9.10",
+        "autoUpgradeMinorVersion": true
+      }
+    },
+    {
+      "apiVersion": "2020-04-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('devVmNicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('devVnetId')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('devVnetDefaultSubnetId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-04-01-preview",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "name": "[variables('devContributorRoleAssignmentGuid')]",
+      "dependsOn": [
+        "[variables('devVmId')]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables('contributorRoleId')]",
+        "principalId": "[reference(variables('devVmId'), '2020-06-01', 'Full').identity.principalId]",
+        "scope": "[resourceGroup().id]"
+      }
+    },
+    {
+      "apiVersion": "2020-04-01-preview",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "name": "[variables('devStorageBlobDataContributorRoleAssignmentGuid')]",
+      "dependsOn": [
+        "[variables('devVmId')]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables('storageBlobDataContributorRoleId')]",
+        "principalId": "[reference(variables('devVmId'), '2020-06-01', 'Full').identity.principalId]",
+        "scope": "[resourceGroup().id]"
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('devVmName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[variables('adlsStorageAccountAdlsPrivateEndpointId')]",
+        "[variables('adlsStorageAccountBlobPrivateEndpointId')]",
+        "[variables('blobStorageAccountBlobPrivateEndpointId')]",
+        "[variables('devVmNicId')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('devVmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('devVmName'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "diskSizeGB": "[parameters('osDiskSize')]",
+            "managedDisk": {
+              "storageAccountType": "[parameters('diskStorageAccounType')]"
+            }
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[parameters('numDataDisks')]",
+              "input": {
+                "caching": "[parameters('dataDiskCaching')]",
+                "diskSizeGB": "[parameters('dataDiskSize')]",
+                "lun": "[copyIndex('dataDisks')]",
+                "name": "[concat(parameters('devVmName'),'-DataDisk',copyIndex('dataDisks'))]",
+                "createOption": "Empty",
+                "managedDisk": {
+                  "storageAccountType": "[parameters('diskStorageAccounType')]"
+                }
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('devVmNicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(variables('blobStorageAccountId')).primaryEndpoints['blob']]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('devVmName'), '/CustomScript')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('devVmId')]",
+        "[variables('devContributorRoleAssignmentId')]",
+        "[variables('devStorageBlobDataContributorRoleAssignmentId')]",
+        "[variables('firewallPolicyDefaultNetworkRuleCollectionGroupId')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.1",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "skipDos2Unix": false,
+          "timestamp": 123456789,
+          "fileUris": [
+            "[variables('testVmScriptFileUri')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('bash ',  variables('testVmScriptFileName'), ' ', parameters('privateDnsZoneName'), ' ', parameters('devVmName'), ' ', parameters('prodVmName'), ' ', variables('adlsServicePrimaryEndpoint'), ' ', variables('blobServicePrimaryEndpoint'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('devVmName'),'/LogAnalytics')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('devVmId')]",
+        "[variables('workspaceId')]",
+        "[variables('devCustomScriptId')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+        "type": "OmsAgentForLinux",
+        "typeHandlerVersion": "1.12",
+        "settings": {
+          "workspaceId": "[reference(variables('workspaceId'), '2020-03-01-preview').customerId]",
+          "stopOnMultipleConnections": false
+        },
+        "protectedSettings": {
+          "workspaceKey": "[listKeys(variables('workspaceId'),'2020-03-01-preview').primarySharedKey]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('devVmName'),'/DependencyAgent')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('devVmId')]",
+        "[variables('workspaceId')]",
+        "[variables('devCustomScriptId')]",
+        "[variables('devOmsAgentForLinuxId')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
+        "type": "DependencyAgentLinux",
+        "typeHandlerVersion": "9.10",
+        "autoUpgradeMinorVersion": true
+      }
+    },
+    {
+      "apiVersion": "2020-04-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('prodVmNicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('prodVnetId')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('prodVnetDefaultSubnetId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-04-01-preview",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "name": "[variables('prodContributorRoleAssignmentGuid')]",
+      "dependsOn": [
+        "[variables('prodVmId')]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables('contributorRoleId')]",
+        "principalId": "[reference(variables('prodVmId'), '2020-06-01', 'Full').identity.principalId]",
+        "scope": "[resourceGroup().id]"
+      }
+    },
+    {
+      "apiVersion": "2020-04-01-preview",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "name": "[variables('prodStorageBlobDataContributorRoleAssignmentGuid')]",
+      "dependsOn": [
+        "[variables('prodVmId')]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables('storageBlobDataContributorRoleId')]",
+        "principalId": "[reference(variables('prodVmId'), '2020-06-01', 'Full').identity.principalId]",
+        "scope": "[resourceGroup().id]"
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('prodVmName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[variables('adlsStorageAccountAdlsPrivateEndpointId')]",
+        "[variables('adlsStorageAccountBlobPrivateEndpointId')]",
+        "[variables('blobStorageAccountBlobPrivateEndpointId')]",
+        "[variables('prodVmNicId')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('prodVmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('prodVmName'),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "diskSizeGB": "[parameters('osDiskSize')]",
+            "managedDisk": {
+              "storageAccountType": "[parameters('diskStorageAccounType')]"
+            }
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[parameters('numDataDisks')]",
+              "input": {
+                "caching": "[parameters('dataDiskCaching')]",
+                "diskSizeGB": "[parameters('dataDiskSize')]",
+                "lun": "[copyIndex('dataDisks')]",
+                "name": "[concat(parameters('prodVmName'),'-DataDisk',copyIndex('dataDisks'))]",
+                "createOption": "Empty",
+                "managedDisk": {
+                  "storageAccountType": "[parameters('diskStorageAccounType')]"
+                }
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('prodVmNicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(variables('blobStorageAccountId')).primaryEndpoints['blob']]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('prodVmName'), '/CustomScript')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('prodVmId')]",
+        "[variables('prodContributorRoleAssignmentId')]",
+        "[variables('prodStorageBlobDataContributorRoleAssignmentId')]",
+        "[variables('firewallPolicyDefaultNetworkRuleCollectionGroupId')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.1",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "skipDos2Unix": false,
+          "timestamp": 123456789,
+          "fileUris": [
+            "[variables('testVmScriptFileUri')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('bash ',  variables('testVmScriptFileName'), ' ', parameters('privateDnsZoneName'), ' ', parameters('devVmName'), ' ', parameters('prodVmName'), ' ', variables('adlsServicePrimaryEndpoint'), ' ', variables('blobServicePrimaryEndpoint'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('prodVmName'),'/LogAnalytics')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('prodVmId')]",
+        "[variables('workspaceId')]",
+        "[variables('prodCustomScriptId')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+        "type": "OmsAgentForLinux",
+        "typeHandlerVersion": "1.12",
+        "settings": {
+          "workspaceId": "[reference(variables('workspaceId'), '2020-03-01-preview').customerId]",
+          "stopOnMultipleConnections": false
+        },
+        "protectedSettings": {
+          "workspaceKey": "[listKeys(variables('workspaceId'),'2020-03-01-preview').primarySharedKey]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('prodVmName'),'/DependencyAgent')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('prodVmId')]",
+        "[variables('workspaceId')]",
+        "[variables('prodCustomScriptId')]",
+        "[variables('prodOmsAgentForLinuxId')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
+        "type": "DependencyAgentLinux",
+        "typeHandlerVersion": "9.10",
+        "autoUpgradeMinorVersion": true
+      }
+    },
+    {
+      "comments": "Azure Firewall Public IP Addresses",
+      "name": "[if(equals(parameters('numberOfFirewallPublicIPAddresses'), 1), variables('firewallPublicIPNamePrefix'), concat(variables('firewallPublicIPNamePrefix'), add(copyIndex(), 1)))]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-04-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "copy": {
+        "name": "publicIpCopy",
+        "count": "[parameters('numberOfFirewallPublicIPAddresses')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "comments": "Azure Firewall Policy",
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/firewallPolicies",
+      "name": "[parameters('firewallPolicyName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('dnsVmNicId')]"   
+      ],
+      "properties": {
+        "dnsSettings": {
+          "enableProxy": true,
+          "servers": "[if(parameters('deployCustomDnsForwarder'), createArray(reference(variables('dnsVmNicId')).ipConfigurations[0].properties.privateIPAddress), createArray())]"
+        },
+        "threatIntelMode": "Alert"
+      }
+    },
+    {
+      "comments": "Azure Firewall",
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/azureFirewalls",
+      "name": "[parameters('firewallName')]",
+      "location": "[parameters('location')]",
+      "zones": "[if(equals(length(parameters('firewallAvailabilityZones')), 0), json('null'), parameters('firewallAvailabilityZones'))]",
+      "dependsOn": [
+        "[variables('firewallPolicyId')]",
+        "[variables('hubVnetId')]",
+        "publicIpCopy"
+      ],
+      "properties": {
+        "copy": [
+          {
+            "name": "ipConfigurations",
+            "count": "[parameters('numberOfFirewallPublicIPAddresses')]",
+            "input": {
+              "name": "[if(equals(parameters('numberOfFirewallPublicIPAddresses'), 1), 'IpConfiguration', concat('IpConfiguration', copyIndex('ipConfigurations')))]",
+              "properties": {
+                "subnet": "[if(equals(copyIndex('ipConfigurations'), 0), variables('azureFirewallSubnetJSON'), json('null'))]",
+                "publicIPAddress": {
+                  "id": "[if(equals(parameters('numberOfFirewallPublicIPAddresses'), 1), variables('azureFirewallPublicIpId'), concat(variables('azureFirewallPublicIpId'), add(copyIndex('ipConfigurations'), 1)))]"
+                }
+              }
+            }
+          }
+        ],
+        "firewallPolicy": {
+          "id": "[variables('firewallPolicyId')]"
+        }
+      }
+    },
+    {
+      "comments": "Azure Firewall Policy Network Rule Collection",
+      "name": "[variables('firewallPolicyDefaultNetworkRuleCollectionGroupName')]",
+      "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+      "apiVersion": "2020-07-01",
+      "dependsOn": [
+        "[variables('firewallPolicyId')]",
+        "[variables('firewallId')]",
+        "[variables('hubVnetId')]",
+        "[variables('devVnetId')]",
+        "[variables('prodVnetId')]"
+      ],
+      "properties": {
+        "priority": "200",
+        "ruleCollections": [
+          {
+            "name": "VnetToVnetNetworkRules",
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "priority": "100",
+            "action": {
+              "type": "Allow"
+            },
+            "rules": [
+              {
+                "name": "[concat('Allow-', parameters('devVnetName'), '-', parameters('devVnetDefaultSubnetName'), '-To-', parameters('prodVnetName'), '-', parameters('prodVnetDefaultSubnetName'), '-Traffic')]",
+                "ruleType": "NetworkRule",
+                "ipProtocols": [
+                  "Any"
+                ],
+                "sourceAddresses": [
+                  "[parameters('prodVnetAddressPrefix')]"
+                ],
+                "destinationAddresses": [
+                  "[parameters('devVnetAddressPrefix')]"
+                ],
+                "destinationPorts": [
+                  "*"
+                ]
+              },
+              {
+                "name": "[concat('Allow-', parameters('prodVnetName'), '-', parameters('prodVnetDefaultSubnetName'), '-To-', parameters('devVnetName'), '-', parameters('devVnetDefaultSubnetName'), '-Traffic')]",
+                "ruleType": "NetworkRule",
+                "ipProtocols": [
+                  "Any"
+                ],
+                "sourceAddresses": [
+                  "[parameters('devVnetAddressPrefix')]"
+                ],
+                "destinationAddresses": [
+                  "[parameters('prodVnetAddressPrefix')]"
+                ],
+                "destinationPorts": [
+                  "*"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "VnetToInternet",
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "priority": "200",
+            "action": {
+              "type": "Allow"
+            },
+            "rules": [
+              {
+                "name": "[concat('Allow-', parameters('hubVnetName'), '-', parameters('hubVnetCommonSubnetName'), '-Internet-Traffic')]",
+                "ruleType": "NetworkRule",
+                "ipProtocols": [
+                  "TCP"
+                ],
+                "sourceAddresses": [
+                  "[parameters('hubVnetCommonSubnetPrefix')]"
+                ],
+                "destinationAddresses": [
+                  "*"
+                ],
+                "destinationPorts": [
+                  "80",
+                  "443"
+                ]
+              },
+              {
+                "name": "[concat('Allow-', parameters('prodVnetName'), '-', parameters('prodVnetDefaultSubnetName'), '-Internet-Traffic')]",
+                "ruleType": "NetworkRule",
+                "ipProtocols": [
+                  "TCP"
+                ],
+                "sourceAddresses": [
+                  "[parameters('prodVNetDefaultSubnetPrefix')]"
+                ],
+                "destinationAddresses": [
+                  "*"
+                ],
+                "destinationPorts": [
+                  "80",
+                  "443"
+                ]
+              },
+              {
+                "name": "[concat('Allow-', parameters('devVnetName'), '-', parameters('devVnetDefaultSubnetName'), '-Internet-Traffic')]",
+                "ruleType": "NetworkRule",
+                "ipProtocols": [
+                  "TCP"
+                ],
+                "sourceAddresses": [
+                  "[parameters('devVNetDefaultSubnetPrefix')]"
+                ],
+                "destinationAddresses": [
+                  "*"
+                ],
+                "destinationPorts": [
+                  "80",
+                  "443"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[parameters('createDnatRuleCollection')]",
+      "comments": "Azure Firewall Policy NAT Rule Collection",
+      "name": "[variables('firewallPolicyDefaultDnatRuleCollectionGroupName')]",
+      "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+      "apiVersion": "2020-07-01",
+      "dependsOn": [
+        "[variables('firewallPolicyId')]",
+        "[variables('firewallId')]",
+        "[variables('firewallPolicyDefaultNetworkRuleCollectionGroupId')]",
+        "[variables('devVmNicId')]",
+        "[variables('prodVmNicId')]"
+      ],
+      "properties": {
+        "priority": "100",
+        "ruleCollections": [
+          {
+            "name": "VirtualMachineNatRules",
+            "ruleCollectionType": "FirewallPolicyNatRuleCollection",
+            "priority": "300",
+            "action": {
+              "type": "Dnat"
+            },
+            "rules": [
+              {
+                "name": "[concat(parameters('devVmName'), '-Rdp-Nat-Rule')]",
+                "ruleType": "NatRule",
+                "sourceAddresses": [
+                  "*"
+                ],
+                "destinationAddresses": [
+                  "[reference(resourceId('Microsoft.Network/publicIPAddresses', if(equals(parameters('numberOfFirewallPublicIPAddresses'), 1), variables('firewallPublicIPNamePrefix'), concat(variables('firewallPublicIPNamePrefix'), add(copyIndex(), 1))))).ipAddress]"
+                ],
+                "destinationPorts": [
+                  "4001"
+                ],
+                "ipProtocols": [
+                  "TCP"
+                ],
+                "translatedAddress": "[reference(variables('devVmNicId')).ipConfigurations[0].properties.privateIPAddress]",
+                "translatedPort": "22"
+              },
+              {
+                "name": "[concat(parameters('prodVmName'), '-Rdp-Nat-Rule')]",
+                "ruleType": "NatRule",
+                "sourceAddresses": [
+                  "*"
+                ],
+                "destinationAddresses": [
+                  "[reference(resourceId('Microsoft.Network/publicIPAddresses', if(equals(parameters('numberOfFirewallPublicIPAddresses'), 1), variables('firewallPublicIPNamePrefix'), concat(variables('firewallPublicIPNamePrefix'), add(copyIndex(), 1))))).ipAddress]"
+                ],
+                "destinationPorts": [
+                  "4002"
+                ],
+                "ipProtocols": [
+                  "TCP"
+                ],
+                "translatedAddress": "[reference(variables('prodVmNicId')).ipConfigurations[0].properties.privateIPAddress]",
+                "translatedPort": "22"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Route Table for the Subnet(s) of the Development Virtual Network",
+      "type": "Microsoft.Network/routeTables",
+      "name": "[variables('devVnetDefaultSubnetRouteTableName')]",
+      "apiVersion": "2020-06-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('firewallId')]"
+      ],
+      "properties": {
+        "disableBgpRoutePropagation": "[not(parameters('enableBgp'))]",
+        "routes": [
+          {
+            "name": "[concat('RouteTrafficTo', parameters('firewallName'))]",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[reference(variables('firewallId')).ipConfigurations[0].properties.privateIPAddress]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Route Table for the Subnet(s) of the Production Virtual Network",
+      "type": "Microsoft.Network/routeTables",
+      "name": "[variables('prodVnetDefaultSubnetRouteTableName')]",
+      "apiVersion": "2020-06-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('firewallId')]"
+      ],
+      "properties": {
+        "disableBgpRoutePropagation": "[not(parameters('enableBgp'))]",
+        "routes": [
+          {
+            "name": "[concat('RouteTrafficTo', parameters('firewallName'))]",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[reference(variables('firewallId')).ipConfigurations[0].properties.privateIPAddress]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Private DNS Zone used to the Virtual Machines in the Hub, Production, and Development Virtual Networks",
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('privateDnsZoneName')]",
+      "location": "global",
+      "properties": {
+        "maxNumberOfRecordSets": 25000,
+        "maxNumberOfVirtualNetworkLinks": 1000,
+        "maxNumberOfVirtualNetworkLinksWithRegistration": 100
+      },
+      "resources": [
+        {
+          "comments": "Virtual Network Link between the Private DNS Zone the Production Virtual Network",
+          "type": "virtualNetworkLinks",
+          "apiVersion": "2020-06-01",
+          "name": "[concat('LinkTo', parameters('prodVnetName'))]",
+          "location": "global",
+          "dependsOn": [
+            "[variables('privateDnsZoneId')]",
+            "[variables('prodVnetId')]"
+          ],
+          "properties": {
+            "registrationEnabled": true,
+            "virtualNetwork": {
+              "id": "[variables('prodVnetId')]"
+            }
+          }
+        },
+        {
+          "comments": "Virtual Network Link between the Private DNS Zone the Hub Virtual Network",
+          "type": "virtualNetworkLinks",
+          "apiVersion": "2020-06-01",
+          "name": "[concat('LinkTo', parameters('hubVnetName'))]",
+          "location": "global",
+          "dependsOn": [
+            "[variables('privateDnsZoneId')]",
+            "[variables('hubVnetId')]"
+          ],
+          "properties": {
+            "registrationEnabled": true,
+            "virtualNetwork": {
+              "id": "[variables('hubVnetId')]"
+            }
+          }
+        },
+        {
+          "comments": "Virtual Network Link between the Private DNS Zone the Development Virtual Network",
+          "type": "virtualNetworkLinks",
+          "apiVersion": "2020-06-01",
+          "name": "[concat('LinkTo', parameters('devVnetName'))]",
+          "location": "global",
+          "dependsOn": [
+            "[variables('privateDnsZoneId')]",
+            "[variables('devVnetId')]"
+          ],
+          "properties": {
+            "registrationEnabled": true,
+            "virtualNetwork": {
+              "id": "[variables('devVnetId')]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "comments": "Log Analytics Workspace",
+      "apiVersion": "2020-08-01",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "name": "[parameters('workspaceName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "[parameters('workspaceSku')]"
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-11-01-preview",
+          "location": "[parameters('location')]",
+          "name": "[concat('AgentHealthAssessment', '(', parameters('workspaceName'),')')]",
+          "type": "Microsoft.OperationsManagement/solutions",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "properties": {
+            "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+          },
+          "plan": {
+            "name": "[concat('AgentHealthAssessment', '(', parameters('workspaceName'),')')]",
+            "publisher": "Microsoft",
+            "product": "OMSGallery/AgentHealthAssessment",
+            "promotionCode": ""
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "location": "[parameters('location')]",
+          "name": "[concat('InfrastructureInsights', '(', parameters('workspaceName'),')')]",
+          "type": "Microsoft.OperationsManagement/solutions",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "properties": {
+            "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+          },
+          "plan": {
+            "name": "[concat('InfrastructureInsights', '(', parameters('workspaceName'),')')]",
+            "publisher": "Microsoft",
+            "product": "[concat('OMSGallery/', 'InfrastructureInsights')]",
+            "promotionCode": ""
+          }
+        },
+        {
+          "apiVersion": "2020-08-01",
+          "type": "dataSources",
+          "name": "Kern",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxSyslog",
+          "properties": {
+            "syslogName": "kern",
+            "syslogSeverities": [
+              {
+                "severity": "emerg"
+              },
+              {
+                "severity": "alert"
+              },
+              {
+                "severity": "crit"
+              },
+              {
+                "severity": "err"
+              },
+              {
+                "severity": "warning"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "2020-08-01",
+          "type": "dataSources",
+          "name": "Syslog",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxSyslog",
+          "properties": {
+            "syslogName": "syslog",
+            "syslogSeverities": [
+              {
+                "severity": "emerg"
+              },
+              {
+                "severity": "alert"
+              },
+              {
+                "severity": "crit"
+              },
+              {
+                "severity": "err"
+              },
+              {
+                "severity": "warning"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "2020-08-01",
+          "type": "dataSources",
+          "name": "User",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxSyslog",
+          "properties": {
+            "syslogName": "user",
+            "syslogSeverities": [
+              {
+                "severity": "emerg"
+              },
+              {
+                "severity": "alert"
+              },
+              {
+                "severity": "crit"
+              },
+              {
+                "severity": "err"
+              },
+              {
+                "severity": "warning"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "2020-08-01",
+          "type": "dataSources",
+          "name": "SampleSyslogCollection1",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxSyslogCollection",
+          "properties": {
+            "state": "Enabled"
+          }
+        },
+        {
+          "apiVersion": "2020-08-01",
+          "type": "dataSources",
+          "name": "DiskPerfCounters",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceObject",
+          "properties": {
+            "performanceCounters": [
+              {
+                "counterName": "% Used Inodes"
+              },
+              {
+                "counterName": "Free Megabytes"
+              },
+              {
+                "counterName": "% Used Space"
+              },
+              {
+                "counterName": "Disk Transfers/sec"
+              },
+              {
+                "counterName": "Disk Reads/sec"
+              },
+              {
+                "counterName": "Disk Writes/sec"
+              },
+              {
+                "counterName": "Disk Read Bytes/sec"
+              },
+              {
+                "counterName": "Disk Write Bytes/sec"
+              }
+            ],
+            "objectName": "Logical Disk",
+            "instanceName": "*",
+            "intervalSeconds": 10
+          }
+        },
+        {
+          "apiVersion": "2020-08-01",
+          "type": "dataSources",
+          "name": "ProcessorPerfCounters",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceObject",
+          "properties": {
+            "performanceCounters": [
+              {
+                "counterName": "% Processor Time"
+              },
+              {
+                "counterName": "% User Time"
+              },
+              {
+                "counterName": "% Privileged Time"
+              },
+              {
+                "counterName": "% IO Wait Time"
+              },
+              {
+                "counterName": "% Idle Time"
+              },
+              {
+                "counterName": "% Interrupt Time"
+              }
+            ],
+            "objectName": "Processor",
+            "instanceName": "*",
+            "intervalSeconds": 10
+          }
+        },
+        {
+          "apiVersion": "2020-08-01",
+          "type": "dataSources",
+          "name": "ProcessPerfCounters",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceObject",
+          "properties": {
+            "performanceCounters": [
+              {
+                "counterName": "% User Time"
+              },
+              {
+                "counterName": "% Privileged Time"
+              },
+              {
+                "counterName": "Used Memory"
+              },
+              {
+                "counterName": "Virtual Shared Memory"
+              }
+            ],
+            "objectName": "Process",
+            "instanceName": "*",
+            "intervalSeconds": 10
+          }
+        },
+        {
+          "apiVersion": "2020-08-01",
+          "type": "dataSources",
+          "name": "SystemPerfCounters",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceObject",
+          "properties": {
+            "performanceCounters": [
+              {
+                "counterName": "Processes"
+              }
+            ],
+            "objectName": "System",
+            "instanceName": "*",
+            "intervalSeconds": 10
+          }
+        },
+        {
+          "apiVersion": "2020-08-01",
+          "type": "dataSources",
+          "name": "NetworkPerfCounters",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceObject",
+          "properties": {
+            "performanceCounters": [
+              {
+                "counterName": "Total Bytes Transmitted"
+              },
+              {
+                "counterName": "Total Bytes Received"
+              },
+              {
+                "counterName": "Total Bytes"
+              },
+              {
+                "counterName": "Total Packets Transmitted"
+              },
+              {
+                "counterName": "Total Packets Received"
+              },
+              {
+                "counterName": "Total Rx Errors"
+              },
+              {
+                "counterName": "Total Tx Errors"
+              },
+              {
+                "counterName": "Total Collisions"
+              }
+            ],
+            "objectName": "Network",
+            "instanceName": "*",
+            "intervalSeconds": 10
+          }
+        },
+        {
+          "apiVersion": "2020-08-01",
+          "type": "dataSources",
+          "name": "MemorydataSources",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceObject",
+          "properties": {
+            "performanceCounters": [
+              {
+                "counterName": "Available MBytes Memory"
+              },
+              {
+                "counterName": "% Available Memory"
+              },
+              {
+                "counterName": "Used Memory MBytes"
+              },
+              {
+                "counterName": "% Used Memory"
+              }
+            ],
+            "objectName": "Memory",
+            "instanceName": "*",
+            "intervalSeconds": 10
+          }
+        },
+        {
+          "apiVersion": "2020-08-01",
+          "type": "dataSources",
+          "name": "SampleLinuxPerfCollection1",
+          "dependsOn": [
+            "[variables('workspaceId')]"
+          ],
+          "kind": "LinuxPerformanceCollection",
+          "properties": {
+            "state": "Enabled"
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('adlsPrivateDnsZoneName')]",
+      "location": "global",
+      "properties": {
+        "maxNumberOfRecordSets": 25000,
+        "maxNumberOfVirtualNetworkLinks": 1000,
+        "maxNumberOfVirtualNetworkLinksWithRegistration": 100
+      },
+      "resources": [
+        {
+          "type": "virtualNetworkLinks",
+          "apiVersion": "2020-06-01",
+          "name": "[concat('link_to_', toLower(parameters('HubVnetName')))]",
+          "location": "global",
+          "dependsOn": [
+            "[variables('adlsPrivateDnsZoneId')]",
+            "[variables('hubVnetId')]"
+          ],
+          "properties": {
+            "registrationEnabled": false,
+            "virtualNetwork": {
+              "id": "[variables('hubVnetId')]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('blobPrivateDnsZoneName')]",
+      "location": "global",
+      "properties": {
+        "maxNumberOfRecordSets": 25000,
+        "maxNumberOfVirtualNetworkLinks": 1000,
+        "maxNumberOfVirtualNetworkLinksWithRegistration": 100
+      },
+      "resources": [
+        {
+          "type": "virtualNetworkLinks",
+          "apiVersion": "2020-06-01",
+          "name": "[concat('link_to_', toLower(parameters('HubVnetName')))]",
+          "location": "global",
+          "dependsOn": [
+            "[variables('blobPrivateDnsZoneId')]",
+            "[variables('hubVnetId')]"
+          ],
+          "properties": {
+            "registrationEnabled": false,
+            "virtualNetwork": {
+              "id": "[variables('hubVnetId')]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-07-01",
+      "name": "[parameters('adlsStorageAccountAdlsPrivateEndpointName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('hubVnetId')]",
+        "[variables('adlsStorageAccountId')]"
+      ],
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[parameters('adlsStorageAccountAdlsPrivateEndpointName')]",
+            "properties": {
+              "privateLinkServiceId": "[variables('adlsStorageAccountId')]",
+              "groupIds": [
+                "[variables('adlsGroupName')]"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[variables('hubVnetCommonSubnetId')]"
+        }
+      },
+      "resources": [
+        {
+          "type": "privateDnsZoneGroups",
+          "apiVersion": "2020-07-01",
+          "name": "PrivateDnsZoneGroup",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[variables('adlsPrivateDnsZoneId')]",
+            "[variables('adlsStorageAccountAdlsPrivateEndpointId')]"
+          ],
+          "properties": {
+            "privateDnsZoneConfigs": [
+              {
+                "name": "dnsConfig",
+                "properties": {
+                  "privateDnsZoneId": "[variables('adlsPrivateDnsZoneId')]"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-07-01",
+      "name": "[parameters('adlsStorageAccountBlobPrivateEndpointName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('hubVnetId')]",
+        "[variables('adlsStorageAccountId')]"
+      ],
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[parameters('adlsStorageAccountBlobPrivateEndpointName')]",
+            "properties": {
+              "privateLinkServiceId": "[variables('adlsStorageAccountId')]",
+              "groupIds": [
+                "[variables('blobGroupName')]"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[variables('hubVnetCommonSubnetId')]"
+        }
+      },
+      "resources": [
+        {
+          "type": "privateDnsZoneGroups",
+          "apiVersion": "2020-07-01",
+          "name": "PrivateDnsZoneGroup",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[variables('BlobPrivateDnsZoneId')]",
+            "[variables('adlsStorageAccountBlobPrivateEndpointId')]"
+          ],
+          "properties": {
+            "privateDnsZoneConfigs": [
+              {
+                "name": "dnsConfig",
+                "properties": {
+                  "privateDnsZoneId": "[variables('BlobPrivateDnsZoneId')]"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-07-01",
+      "name": "[parameters('blobStorageAccountBlobPrivateEndpointName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('hubVnetId')]",
+        "[variables('blobStorageAccountId')]"
+      ],
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[parameters('blobStorageAccountBlobPrivateEndpointName')]",
+            "properties": {
+              "privateLinkServiceId": "[variables('blobStorageAccountId')]",
+              "groupIds": [
+                "[variables('blobGroupName')]"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[variables('hubVnetCommonSubnetId')]"
+        }
+      },
+      "resources": [
+        {
+          "type": "privateDnsZoneGroups",
+          "apiVersion": "2020-07-01",
+          "name": "PrivateDnsZoneGroup",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[variables('blobPrivateDnsZoneId')]",
+            "[variables('blobStorageAccountBlobPrivateEndpointId')]"
+          ],
+          "properties": {
+            "privateDnsZoneConfigs": [
+              {
+                "name": "dnsConfig",
+                "properties": {
+                  "privateDnsZoneId": "[variables('blobPrivateDnsZoneId')]"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+  }
+}
+

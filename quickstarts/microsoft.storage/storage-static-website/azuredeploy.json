@@ -1,0 +1,157 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "6050322035502316178"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location into which the resources should be deployed."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "[format('stor{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the storage account to use for site hosting."
+      }
+    },
+    "storageSku": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "The storage account sku name."
+      },
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS",
+        "Premium_LRS"
+      ]
+    },
+    "indexDocumentPath": {
+      "type": "string",
+      "defaultValue": "index.html",
+      "metadata": {
+        "description": "The path to the web index document."
+      }
+    },
+    "indexDocumentContents": {
+      "type": "string",
+      "defaultValue": "<h1>Example static website</h1>",
+      "metadata": {
+        "description": "The contents of the web index document."
+      }
+    },
+    "errorDocument404Path": {
+      "type": "string",
+      "defaultValue": "error.html",
+      "metadata": {
+        "description": "The path to the web error document."
+      }
+    },
+    "errorDocument404Contents": {
+      "type": "string",
+      "defaultValue": "<h1>Example 404 error page</h1>",
+      "metadata": {
+        "description": "The contents of the web error document."
+      }
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-04-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "[parameters('storageSku')]"
+      }
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2018-11-30",
+      "name": "DeploymentScript",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
+      "name": "[guid(resourceGroup().id, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DeploymentScript'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab'))]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab')]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DeploymentScript')).principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DeploymentScript')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2020-10-01",
+      "name": "deploymentScript",
+      "location": "[parameters('location')]",
+      "kind": "AzurePowerShell",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DeploymentScript')]": {}
+        }
+      },
+      "properties": {
+        "azPowerShellVersion": "3.0",
+        "scriptContent": "$ErrorActionPreference = 'Stop'\n$storageAccount = Get-AzStorageAccount -ResourceGroupName $env:ResourceGroupName -AccountName $env:StorageAccountName\n\n# Enable the static website feature on the storage account.\n$ctx = $storageAccount.Context\nEnable-AzStorageStaticWebsite -Context $ctx -IndexDocument $env:IndexDocumentPath -ErrorDocument404Path $env:ErrorDocument404Path\n\n# Add the two HTML pages.\n$tempIndexFile = New-TemporaryFile\nSet-Content $tempIndexFile $env:IndexDocumentContents -Force\nSet-AzStorageBlobContent -Context $ctx -Container '$web' -File $tempIndexFile -Blob $env:IndexDocumentPath -Properties @{'ContentType' = 'text/html'} -Force\n\n$tempErrorDocument404File = New-TemporaryFile\nSet-Content $tempErrorDocument404File $env:ErrorDocument404Contents -Force\nSet-AzStorageBlobContent -Context $ctx -Container '$web' -File $tempErrorDocument404File -Blob $env:ErrorDocument404Path -Properties @{'ContentType' = 'text/html'} -Force\n",
+        "retentionInterval": "PT4H",
+        "environmentVariables": [
+          {
+            "name": "ResourceGroupName",
+            "value": "[resourceGroup().name]"
+          },
+          {
+            "name": "StorageAccountName",
+            "value": "[parameters('storageAccountName')]"
+          },
+          {
+            "name": "IndexDocumentPath",
+            "value": "[parameters('indexDocumentPath')]"
+          },
+          {
+            "name": "IndexDocumentContents",
+            "value": "[parameters('indexDocumentContents')]"
+          },
+          {
+            "name": "ErrorDocument404Path",
+            "value": "[parameters('errorDocument404Path')]"
+          },
+          {
+            "name": "ErrorDocument404Contents",
+            "value": "[parameters('errorDocument404Contents')]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DeploymentScript')]",
+        "[extensionResourceId(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), 'Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'DeploymentScript'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab')))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "staticWebsiteUrl": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))).primaryEndpoints.web]"
+    }
+  }
+}
