@@ -8,6 +8,7 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [String]$SQLName,
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [String]$SharePointVersion,
+        [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
@@ -26,6 +27,7 @@ configuration ConfigureFEVM
     [String] $SPTrustedSitesName = "spsites"
     [String] $ComputerName = Get-Content env:computername
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
+    [String] $SetupPath = "C:\Setup"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
 
@@ -335,6 +337,16 @@ configuration ConfigureFEVM
             DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
+        if ($EnableAnalysis) {
+            # This resource is for  of dsc logs only and totally optionnal
+            cChocoPackageInstaller InstallPython
+            {
+                Name                 = "python"
+                Ensure               = "Present"
+                DependsOn            = "[cChocoInstaller]InstallChoco"
+            }
+        }
+
         #********************************************************************
         # Wait for SharePoint app server to be ready
         #********************************************************************
@@ -560,6 +572,32 @@ configuration ConfigureFEVM
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[CertReq]SPSSiteCert", "[SPFarm]JoinSPFarm"
+        }
+
+        if ($EnableAnalysis) {
+            # This resource is for analysis of dsc logs only and totally optionnal
+            xScript parseDscLogs
+            {
+                TestScript = { return $false }
+                SetScript = {
+                    $setupPath = $using:SetupPath
+                    $localScriptPath = "$setupPath\parse-dsc-logs.py"
+                    New-Item -ItemType Directory -Force -Path $setupPath
+
+                    $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
+                    $downloader = New-Object -TypeName System.Net.WebClient
+                    $downloader.DownloadFile($url, $localScriptPath)
+
+                    $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
+                    $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
+                    $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
+                    
+                    python $localScriptPath "$fullPathToDscLogs"
+                }
+                GetScript = { }
+                DependsOn            = "[cChocoPackageInstaller]InstallPython"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+            }
         }
     }
 }

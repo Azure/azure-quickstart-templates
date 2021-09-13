@@ -1,5 +1,7 @@
 # Azure template for SharePoint 2019 / 2016 / 2013
 
+## Presentation
+
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sharepoint/sharepoint-adfs/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sharepoint/sharepoint-adfs/PublicDeployment.svg)
 
@@ -25,24 +27,40 @@ This template deploys SharePoint 2019, 2016 or 2013 with the following configura
 * Latest version of claims provider [LDAPCP](https://ldapcp.com/) is installed and configured.
 * A 2nd SharePoint server can optionally be added to the farm.
 
-All subnets are protected by a Network Security Group with rules that restrict network access. You can connect to virtual machines using:
+## Remote access and security
 
-* [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion/) if you set parameter addAzureBastion to 'Yes'.
-* RDP protocol if you set parameter addPublicIPToVMs to 'Yes'. Each machine will have a public IP, a DNS name, and the TCP port 3389 will be allowed from Internet.
+The template creates 1 virtual network with 3 subnets. All subnets are protected by a [Network Security Group](https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview) with no custom rule by default.
 
-By default, virtual machines use standard storage and are sized with a good balance between cost and performance:
+The following parameters impact the remote access of the virtual machines, and the network security:
 
-* Virtual machine size for DC: [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series): 2 CPU / 7 GiB RAM with HDD ($183.96/month in West US as of 2020-08-12)
-* Virtual machine size for SQL Server: [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series): 2 CPU / 16 GiB RAM with HDD ($185.42/month in West US as of 2020-08-12)
-* Virtual machine size for SharePoint: [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series): 2 CPU / 16 GiB RAM with HDD ($185.42/month in West US as of 2020-08-12)
+* Parameter 'addPublicIPAddressToEachVM':
+  * if true (default value): Each virtual machine gets a public IP, a DNS name, and may be reachable from Internet.
+  * if false: No public IP resource is created.
+* Parameter 'RDPTrafficAllowed':
+  * If 'No' (default value): Firewall denies all incoming RDP traffic from Internet.
+  * If '*' or 'Internet': Firewall accepts all incoming RDP traffic from Internet.
+  * If 'ServiceTagName': Firewall accepts all incoming RDP traffic from the specified 'ServiceTagName'.
+  * If 'xx.xx.xx.xx': Firewall accepts incoming RDP traffic only from the IP 'xx.xx.xx.xx'.
+* Parameter 'addAzureBastion':
+  * if true: Configure service [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion/) to allow a secure remote access.
+  * if false (default value): Service Azure Bastion is not created.
 
-If you need a boost in performance, you may consider the following sizes / storage account types:
+## Cost
 
-* Virtual machine size for DC: [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series): 2 CPU / 7 GiB RAM with HDD ($183.96/month in West US as of 2020-08-12)
-* Virtual machine size for SQL Server: [Standard_E2as_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/eav4-easv4-series): 2 CPU / 16 GiB RAM with SSD ($169.36/month in West US as of 2020-08-12)
-* Virtual machine size for SharePoint: [Standard_E4as_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/eav4-easv4-series): 4 CPU / 32 GiB RAM with SSD ($338.72/month in West US as of 2020-08-12)
+By default, virtual machines use [B-series burstable](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable), ideal for such template and much cheaper than other comparable series.  
+Below is the default size and storage type per virtual machine role. Prices are shown in US Dollar, per month, as of 2021-09-13, in region West Europe, without enabling the '[Azure Hybrid Benefit](https://azure.microsoft.com/en-us/pricing/hybrid-benefit/)' licensing benefit, assuming they run 24*7:
 
-> **Notes:**  
-> I strongly recommend to update SharePoint to a recent build just after the provisioning is complete.  
-> With the default setting for virtual machines, provisioning of the template takes about 1h to complete.  
-> The password complexity check in the form is not accurate and may validate a password that will be rejected by Azure when it provisions the VMs. Make sure to **use at least 2 special characters for the passwords**.
+* DC: Size [Standard_B2s](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 4 GiB RAM) ($40.88) and OS disk is a 128 GiB standard HDD ($5.89).
+* SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) ($75.92) and OS disk is a 128 GiB standard HDD ($5.89).
+* SharePoint: Size [Standard_B4ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (4 vCPU / 16 GiB RAM) ($151.84) and OS disk is a 128 GiB [standard SSD](https://azure.microsoft.com/en-us/blog/preview-standard-ssd-disks-for-azure-virtual-machine-workloads/) ($9.60).
+
+You can visit <https://azure.com/e/cec4eb6f853d43c6bcfaf56be0363ee4> to view the global, up-to-date cost of the template when it is provisioned with the default resources, in the region/currency of your choice.
+
+## More information
+
+Additional notes:
+
+* I strongly recommend to update SharePoint to a recent build after the deployment completed.  
+* With the default settings, the deployment takes about 1h to complete.  
+* Once it is completed, the template will return valuable information in the 'Outputs' of the deployment.  
+* For various (very good) reasons, the template sets the local (not domain) administrator name with a string that is unique to your subscription (e.g. 'local-q1w2e3r4t5'). You can find the name of the local admin in the 'Outputs' of the deployment once it is completed.  
