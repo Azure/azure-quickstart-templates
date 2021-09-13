@@ -1,20 +1,20 @@
-@description('Rescovery Services vault name')
+@description('Recovery Services vault name')
 param vaultName string = uniqueString(resourceGroup().id)
 
-@description('Location of Rescovery Services vault')
+@description('Location of Recovery Services vault')
 param location string = resourceGroup().location
 
-@description('Enable system identity for Rescovery Services vault')
+@description('Enable system identity for Recovery Services vault')
 param enableSystemIdentity bool = false
 
-@description('Enable system identity for Rescovery Services vault')
+@description('Enable system identity for Recovery Services vault')
 @allowed([
   'Standard'
   'RS0'
 ])
 param sku string = 'RS0'
 
-@description('Storage replication type for Rescovery Services vault')
+@description('Storage replication type for Recovery Services vault')
 @allowed([
   'LocallyRedundant'
   'GeoRedundant'
