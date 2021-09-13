@@ -106,7 +106,7 @@ To make sure your template is added to Azure.com index, please follow these guid
 
 1. A single PR should reference a single template.  There shouldn't be multiple templates being referenced in a single PR
 1. For each PR created the contributor needs to acknowledge the Contribution and Best Practices Guide.
-1. Each PR will run through the [arm-ttk](https://github.com/Azure/arm-ttk) to ensure best practices
+1. Each PR will run through the [arm-ttk](https://github.com/Azure/arm-ttk) and [Template Analyzer](https://github.com/Azure/template-analyzer) to ensure best practices
 1. Part of the pre-merge checks will be a deployment to both the Public and USGov clouds
 
 ## Target Scopes
