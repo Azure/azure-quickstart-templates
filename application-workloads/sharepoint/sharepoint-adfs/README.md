@@ -48,13 +48,13 @@ The following parameters impact the remote access of the virtual machines, and t
 ## Cost
 
 By default, virtual machines use [B-series burstable](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable), ideal for such template and much cheaper than other comparable series.  
-Below is the default size and storage type per virtual machine role. Prices are shown in US Dollar, per month, as of 2021-09-13, in region West Europe, without enabling the '[Azure Hybrid Benefit](https://azure.microsoft.com/en-us/pricing/hybrid-benefit/)' licensing benefit, assuming they run 24*7:
+Here is the default size and storage type per virtual machine role:
 
-* DC: Size [Standard_B2s](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 4 GiB RAM) ($40.88) and OS disk is a 128 GiB standard HDD ($5.89).
-* SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) ($75.92) and OS disk is a 128 GiB standard HDD ($5.89).
-* SharePoint: Size [Standard_B4ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (4 vCPU / 16 GiB RAM) ($151.84) and OS disk is a 128 GiB [standard SSD](https://azure.microsoft.com/en-us/blog/preview-standard-ssd-disks-for-azure-virtual-machine-workloads/) ($9.60).
+* DC: Size [Standard_B2s](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 4 GiB RAM) and OS disk is a 128 GiB standard HDD.
+* SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) and OS disk is a 128 GiB standard HDD.
+* SharePoint: Size [Standard_B4ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (4 vCPU / 16 GiB RAM) and OS disk is a 128 GiB [standard SSD](https://azure.microsoft.com/en-us/blog/preview-standard-ssd-disks-for-azure-virtual-machine-workloads/).
 
-You can visit <https://azure.com/e/cec4eb6f853d43c6bcfaf56be0363ee4> to view the global, up-to-date cost of the template when it is provisioned with the default resources, in the region/currency of your choice.
+You can visit <https://azure.com/e/cec4eb6f853d43c6bcfaf56be0363ee4> to view the global cost of the template when it is deployed using the default settings, in the region/currency of your choice.
 
 ## More information
 
