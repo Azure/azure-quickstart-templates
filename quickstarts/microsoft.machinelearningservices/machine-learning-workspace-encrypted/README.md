@@ -1,4 +1,4 @@
-# Azure Machine Learning secured workspace & encryption
+# Azure Machine Learning workspace with customer-managed key encryption
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-encrypted-workspace/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-encrypted-workspace/PublicDeployment.svg)
