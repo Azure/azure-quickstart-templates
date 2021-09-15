@@ -44,7 +44,9 @@ else {
 
 foreach ($rg in $azdoResourceGroups) {
     
-    Write-Host $(Get-Date)
+    Write-Host "***********************"
+    Write-Host "  $(Get-Date)"
+    Write-Host "***********************"
 
     # remove the resource group
     $bypassTag = $(Get-AzTag -ResourceId $rg.ResourceId).properties.tagsproperty.bypass
@@ -52,6 +54,7 @@ foreach ($rg in $azdoResourceGroups) {
     # this enables getting to the other resourceGroups instead of timing out
     if (!$bypassTag) {
         Write-Host "First attempt on ResourceGroup: $($rg.ResourceGroupName)"
+        Write-Host "--------------------------------------------------------------------------"
         & $TTKPath/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName ($rg.ResourceGroupName) -Verbose -ErrorAction SilentlyContinue
 
         # if the resource group still exists after the first attempt, try again after a few minutes
@@ -60,12 +63,19 @@ foreach ($rg in $azdoResourceGroups) {
             Write-Host "Found the resource group - sleeping..." 
             Start-Sleep $SleepTime
             Write-Host "Second Attempt on ResourceGroup: $($rg.ResourceGroupName)"
+            Write-Host "--------------------------------------------------------------------------"
             & $TTKPath/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName ($rg.ResourceGroupName) -verbose -ErrorAction $SecondErrorAction
+            if ((Get-AzResourceGroup -Name $rg.ResourceGroupName -verbose -ErrorAction SilentlyContinue) -ne $null) {
+                Write-Host "=================================================================="
+                Write-Host " Failed to delete: $($rg.ResourceGroupName) "
+                Write-Host "=================================================================="
+            }
         }
         else {
             Write-Host "ResourceGroup Not found (delete success)"
         }
-    } else {
+    }
+    else {
         # Write to the log that we skipped an RG due to the tag
         Write-Host "`nSkipping $($rg.ResourceGroupName) due to bypass tag...`n"
     }
