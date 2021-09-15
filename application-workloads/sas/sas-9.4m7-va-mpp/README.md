@@ -1,5 +1,7 @@
 ﻿# SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics
 
+**Note:** As of October 4, 2021, SAS is no longer supporting the SAS 9.4 Quickstart Template for Azure with SAS Visual Analytics and SAS Visual Statistics.
+
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sas/sas-9.4m7-va-mpp/sas-9.4m7-va-mpp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sas/sas-9.4m7-va-mpp/sas-9.4m7-va-mpp/PublicDeployment.svg)
 
