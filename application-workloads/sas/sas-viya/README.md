@@ -1,5 +1,7 @@
 # SAS Viya 3.5 Quickstart Template for Azure
 
+**Note**: As of October 4, 2021, SAS is no longer supporting the SAS Viya 3.5 Quickstart Template for Azure.
+
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sas/sas-viya/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sas/sas-viya/PublicDeployment.svg)
 
