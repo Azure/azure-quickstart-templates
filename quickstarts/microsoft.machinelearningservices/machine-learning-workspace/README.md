@@ -1,4 +1,4 @@
-# Azure Machine Learning end-to-end setup (public network connectivity)
+# Azure Machine Learning workspace
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-end-to-end-public/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-end-to-end-public/PublicDeployment.svg)
