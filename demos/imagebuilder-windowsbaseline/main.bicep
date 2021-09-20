@@ -198,7 +198,7 @@ resource imageTemplate_build 'Microsoft.Resources/deploymentScripts@2020-10-01' 
   properties: {
     forceUpdateTag: forceUpdateTag
     azPowerShellVersion: '6.2'
-    scriptContent: 'Invoke-AzResourceAction -ResourceName "${imageTemplate}" -ResourceGroupName "${resourceGroup().name}" -ResourceType "Microsoft.VirtualMachineImages/imageTemplates" -ApiVersion "2020-02-14" -Action Run -Force'
+    scriptContent: 'Invoke-AzResourceAction -ResourceName "${imageTemplateName}" -ResourceGroupName "${resourceGroup().name}" -ResourceType "Microsoft.VirtualMachineImages/imageTemplates" -ApiVersion "2020-02-14" -Action Run -Force'
     timeout: 'PT1H'
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
