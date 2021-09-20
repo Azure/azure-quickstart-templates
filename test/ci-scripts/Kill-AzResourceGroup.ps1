@@ -99,17 +99,18 @@ remove disasterRecovery pairing on eventhub namespaces and service bus namespace
 if ((Get-AzContext).Environment.Name -eq "AzureCloud") {
     # The Az.DataProtection is not yet included with the rest of the Az module
     if ($(Get-Module -ListAvailable Az.DataProtection) -eq $null) {
-        Install-Module Az.DataProtection -Verbose
+        Write-Host "Installing Az.DataProtection module..."
+        Install-Module Az.DataProtection -Force -AllowClobber #| Out-Null # this is way too noisy for some reason
     }
 
-    $vaults = Get-AzDataProtectionBackupVault -ResourceGroupName $ResourceGroupName -Verbose 
+    $vaults = Get-AzDataProtectionBackupVault -ResourceGroupName $ResourceGroupName #-Verbose 
 
     foreach ($vault in $vaults) {
         Write-Host "Data Protection Vault: $($vault.name)"
         $backupInstances = Get-AzDataProtectionBackupInstance -ResourceGroupName $ResourceGroupName -VaultName $vault.Name
         foreach ($bi in $backupInstances) {
             Write-Host "Removing Backup Instance: $($bi.name)"
-            Remove-AzDataProtectionBackupInstance -ResourceGroupName $ResourceGroupName -VaultName $vault.Name -Name $bi.Name -verbose
+            Remove-AzDataProtectionBackupInstance -ResourceGroupName $ResourceGroupName -VaultName $vault.Name -Name $bi.Name 
         }
     
         $backupPolicies = Get-AzDataProtectionBackupPolicy -ResourceGroupName $ResourceGroupName -VaultName $vault.Name 
@@ -308,6 +309,8 @@ foreach ($pl in $privateLinks) {
     }
 }
 
+
+# TODO - logAnalytics now has soft delete by default, this apparently can be overridden but doesn't seem to work in portal in FF
 
 
 #finally...
