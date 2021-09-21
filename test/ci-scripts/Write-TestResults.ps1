@@ -147,21 +147,6 @@ if ($ValidationType -eq "Manual") {
     }
 }
 
-try {
-    Write-Host "Uploading TemplateAnalyzer log file..."
-    Set-AzStorageBlobContent -Container $TemplateAnalyzerLogsContainerName `
-        -File $TemplateAnalyzerOutputFilePath `
-        -Blob $RowKey `
-        -Context $ctx `
-        -Properties @{ "ContentType" = "text/plain" } `
-        -Force -Verbose
-}
-catch {
-    Write-Host "===================================================="
-    Write-Host " Failed to upload $TemplateAnalyzerOutputFilePath   "
-    Write-Host "===================================================="
-}
-
 # if the record doesn't exist, this is probably a new sample and needs to be added (or we just cleaned the table)
 if ($r -eq $null) {
 
@@ -551,6 +536,22 @@ foreach ($badge in $badges) {
         -Context $ctx `
         -Properties @{"ContentType" = "image/svg+xml"; "CacheControl" = "no-cache" } `
         -Force -Verbose
+}
+
+# Upload BPA Results file
+try {
+    Write-Host "Uploading TemplateAnalyzer log file..."
+    Set-AzStorageBlobContent -Container $TemplateAnalyzerLogsContainerName `
+        -File $TemplateAnalyzerOutputFilePath `
+        -Blob $RowKey `
+        -Context $ctx `
+        -Properties @{ "ContentType" = "text/plain" } `
+        -Force -Verbose
+}
+catch {
+    Write-Host "===================================================="
+    Write-Host " Failed to upload $TemplateAnalyzerOutputFilePath   "
+    Write-Host "===================================================="
 }
 
 <#Debugging only
