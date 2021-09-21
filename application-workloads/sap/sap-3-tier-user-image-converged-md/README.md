@@ -31,8 +31,8 @@ ERS Internal Load Balancer probe port: **62102**
 ## DB Internal Load Balancer ports
 
 * DB Internal Load Balancer ports: **1433**
+* DB Internal Load Balancer probe port: **62504**
 
-DB Internal Load Balancer probe port: **62504**
 
 | Size | HA | Non-HA |
 | :------------- | :----------: | :------------- |
