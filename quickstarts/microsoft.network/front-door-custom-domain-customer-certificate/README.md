@@ -27,6 +27,6 @@ Parameters for this template are:
 
 For the deployment of this template to succeed the specified custom domain will require a CNAME to the Front Door's default frontend host (say `contoso.azurefd.net`).
 
-For example, for a Front Door instance named `contoso`, the default frontend host name would be `contoso.azurefd.net`. To add a custom domain `www.contoso.com`, CNAME `www.contoso.com` to `contoso.azurefd.net`.
+For example, for a Front Door instance named `contoso`, the default frontend host name would be `contoso.azurefd.net`. To add a custom domain `www.contoso.com`, CNAME `www.contoso.com` to `contoso.azurefd.net`. For more details, see [Tutorial: Add a custom domain to your Front Door](https://docs.microsoft.com/azure/frontdoor/front-door-custom-domain).
 
-For more details, see [Tutorial: Add a custom domain to your Front Door](https://docs.microsoft.com/azure/frontdoor/front-door-custom-domain).
+You also need to configure your Key Vault instance to work with Front Door. See [Prepare your Azure Key vault account and certificate](https://docs.microsoft.com/azure/frontdoor/front-door-custom-domain-https#prepare-your-azure-key-vault-account-and-certificate).
