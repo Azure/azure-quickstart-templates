@@ -1,10 +1,17 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "9859297068666672118"
+    }
+  },
   "parameters": {
     "webAppName": {
       "type": "string",
-      "defaultValue": "[concat('webApp-', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('webApp-{0}', uniqueString(resourceGroup().id))]",
       "minLength": 2,
       "metadata": {
         "description": "Web app name."
@@ -39,8 +46,9 @@
       }
     }
   },
+  "functions": [],
   "variables": {
-    "appServicePlanPortalName": "[concat('AppServicePlan-', parameters('webAppName'))]"
+    "appServicePlanPortalName": "[format('AppServicePlan-{0}', parameters('webAppName'))]"
   },
   "resources": [
     {
@@ -61,33 +69,28 @@
       "apiVersion": "2020-06-01",
       "name": "[parameters('webAppName')]",
       "location": "[parameters('location')]",
-
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]"
-      ],
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]",
         "siteConfig": {
           "linuxFxVersion": "[parameters('linuxFxVersion')]"
-        },
-        "resources": [
-          {
-            "condition": "[contains(parameters('repoUrl'),'http')]",
-            "type": "sourcecontrols",
-            "apiVersion": "2020-06-01",
-            "name": "web",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-              "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
-            ],
-            "properties": {
-              "repoUrl": "[parameters('repoUrl')]",
-              "branch": "master",
-              "isManualIntegration": true
-            }
-          }
-        ]
-      }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/sourcecontrols",
+      "apiVersion": "2021-01-01",
+      "name": "[format('{0}/web', parameters('webAppName'))]",
+      "properties": {
+        "repoUrl": "[parameters('repoUrl')]",
+        "branch": "master",
+        "isManualIntegration": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+      ]
     }
   ]
 }
