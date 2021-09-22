@@ -1,10 +1,10 @@
-@description('The name of the frontdoor resource.')
+@description('The name of the Front Door resource.')
 param frontDoorName string
 
-@description('The hostname of the frontendEndpoints. Must be a domain name.')
+@description('The custom domain name to associate with your Front Door.')
 param customDomainName string
 
-@description('The hostname of the backend. Must be an IP address or FQDN.')
+@description('The hostname of the backend. Must be a public IP address or FQDN.')
 param backendAddress string
 
 var frontEndEndpointDefaultName = 'frontEndEndpointDefault'
@@ -113,5 +113,23 @@ resource frontDoor 'Microsoft.Network/frontDoors@2020-01-01' = {
         }
       }
     ]
+  }
+
+  resource frontendEndpoint 'frontendEndpoints' existing = {
+    name: frontEndEndpointCustomName
+  }
+}
+
+// This resource enables a Front Door-managed TLS certificate on the frontend.
+resource customHttpsConfiguration 'Microsoft.Network/frontdoors/frontendEndpoints/customHttpsConfiguration@2020-07-01' = {
+  parent: frontDoor::frontendEndpoint
+  name: 'default'
+  properties: {
+    protocolType: 'ServerNameIndication'
+    certificateSource: 'FrontDoor'
+    frontDoorCertificateSourceParameters: {
+      certificateType: 'Dedicated'
+    }
+    minimumTlsVersion: '1.2'
   }
 }

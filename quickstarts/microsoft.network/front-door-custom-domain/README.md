@@ -1,4 +1,4 @@
-# Onboard a custom domain with Front Door
+# Onboard a custom domain and managed TLS certificate with Front Door
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-custom-domain/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-custom-domain/PublicDeployment.svg)
@@ -17,14 +17,14 @@
 
 This template Creates a Front Door configuration with a single backend, onboards a custom domain with a path match '/*' for default frontend host and custom domain, and then secures custom domain with a Front Door managed certificate.
 
-Parameters for this template are
-frontDoorName - Name of the frontdoor (ex: contoso)
-customDomainName - FQDN name of the custom domain (ex: www.contoso.com)
-backendaddress - FQDN of the backend (ex: www.contoso-backend.azurewebsites.com)
+Parameters for this template are:
+- `frontDoorName` - Name of the frontdoor (ex: contoso)
+- `customDomainName` - FQDN name of the custom domain (ex: www.contoso.com)
+`backendaddress` - FQDN of the backend (ex: www.contoso-backend.azurewebsites.com)
 
-For the deployment of this template to succeed the specified custom domain will require a CNAME to the Front Door's default frontend host (say contoso.azurefd.net).
+For the deployment of this template to succeed the specified custom domain will require a CNAME to the Front Door's default frontend host (say `contoso.azurefd.net`).
 
-For example, for a frontdoor named "contoso", default frontend host name would be "contoso.azurefd.net". To add a custom domain "www.contoso.com", CNAME www.contoso.com to contoso.azurefd.net
+For example, for a frontdoor named `contoso`, the default frontend host name would be `contoso.azurefd.net`. To add a custom domain `www.contoso.com`, CNAME `www.contoso.com` to `contoso.azurefd.net`.
 
-For more details - https://docs.microsoft.com/en-us/azure/frontdoor/front-door-custom-domain
-
+For more details, see [Tutorial: Add a custom domain to your Front Door
+](https://docs.microsoft.com/azure/frontdoor/front-door-custom-domain).
