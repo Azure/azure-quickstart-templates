@@ -16,8 +16,9 @@ param certificateKeyVaultSecretVersion string = ''
 @description('The hostname of the backend. Must be a public IP address or FQDN.')
 param backendAddress string
 
-var frontEndEndpointDefaultName = 'frontEndEndpointDefault'
-var frontEndEndpointCustomName = 'frontEndEndpointCustom'
+var frontEndEndpointDefaultHostName = '${frontDoorName}.azurefd.net'
+var frontEndEndpointDefaultName = replace(frontEndEndpointDefaultHostName, '.', '-')
+var frontEndEndpointCustomName = replace(customDomainName, '.', '-')
 var loadBalancingSettingsName = 'loadBalancingSettings'
 var healthProbeSettingsName = 'healthProbeSettings'
 var routingRuleName = 'routingRule'
@@ -33,7 +34,7 @@ resource frontDoor 'Microsoft.Network/frontDoors@2020-01-01' = {
       {
         name: frontEndEndpointDefaultName
         properties: {
-          hostName: '${frontDoorName}.azurefd.net'
+          hostName: frontEndEndpointDefaultHostName
           sessionAffinityEnabledState: 'Disabled'
         }
       }
