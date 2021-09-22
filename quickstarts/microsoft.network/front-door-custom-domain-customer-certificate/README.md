@@ -18,7 +18,7 @@
 This template Creates a Front Door configuration with a single backend, onboards a custom domain with a path match '/*' for default frontend host and custom domain, and then secures custom domain with a customer-managed certificate.
 
 Parameters for this template are:
-- `frontDoorName` - Name of the Front DOor (ex: contoso)
+- `frontDoorName` - Name of the Front Door (ex: contoso)
 - `customDomainName` - FQDN name of the custom domain (ex: www.contoso.com)
 - `certificateKeyVaultResourceId` - The fully qualified resource ID of the Key Vault that contains the custom domain's certificate.
 - `certificateKeyVaultSecretName` - The name of the Key Vault secret that contains the custom domain's certificate.
