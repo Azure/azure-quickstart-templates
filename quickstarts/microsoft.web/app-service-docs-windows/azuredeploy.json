@@ -1,17 +1,10 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "metadata": {
-    "_generator": {
-      "name": "bicep",
-      "version": "0.4.613.9944",
-      "templateHash": "4823114260962730800"
-    }
-  },
   "parameters": {
     "webAppName": {
       "type": "string",
-      "defaultValue": "[format('webApp-{0}', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[concat('webApp-', uniqueString(resourceGroup().id))]",
       "minLength": 2,
       "metadata": {
         "description": "Web app name."
@@ -33,9 +26,9 @@
     },
     "language": {
       "type": "string",
-      "defaultValue": "dotnet",
+      "defaultValue": ".net",
       "allowedValues": [
-        "dotnet",
+        ".net",
         "php",
         "node",
         "html"
@@ -59,18 +52,17 @@
       }
     }
   },
-  "functions": [],
   "variables": {
-    "appServicePlanPortalName": "[format('AppServicePlan-{0}', parameters('webAppName'))]",
+    "appServicePlanPortalName": "[concat('AppServicePlan-', parameters('webAppName'))]",
     "gitRepoReference": {
-      "dotnet": "https://github.com/Azure-Samples/app-service-web-dotnet-get-started",
+      ".net": "https://github.com/Azure-Samples/app-service-web-dotnet-get-started",
       "node": "https://github.com/Azure-Samples/nodejs-docs-hello-world",
       "php": "https://github.com/Azure-Samples/php-docs-hello-world",
       "html": "https://github.com/Azure-Samples/html-docs-hello-world"
     },
     "gitRepoUrl": "[if(bool(parameters('helloWorld')), variables('gitRepoReference')[toLower(parameters('language'))], parameters('repoUrl'))]",
     "configReference": {
-      "dotnet": {
+      ".net": {
         "comments": ".Net app. No additional configuration needed."
       },
       "html": {
@@ -104,26 +96,29 @@
       "apiVersion": "2020-06-01",
       "name": "[parameters('webAppName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]"
+      ],
       "properties": {
         "siteConfig": "[variables('configReference')[parameters('language')]]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]"
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]"
-      ]
-    },
-    {
-      "condition": "[contains(variables('gitRepoUrl'), 'http')]",
-      "type": "Microsoft.Web/sites/sourcecontrols",
-      "apiVersion": "2020-06-01",
-      "name": "[format('{0}/{1}', parameters('webAppName'), 'web')]",
-      "properties": {
-        "repoUrl": "[variables('gitRepoUrl')]",
-        "branch": "master",
-        "isManualIntegration": true
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+      "resources": [
+        {
+          "condition": "[contains(variables('gitRepoUrl'),'http')]",
+          "type": "sourcecontrols",
+          "apiVersion": "2020-06-01",
+          "name": "web",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+          ],
+          "properties": {
+            "repoUrl": "[variables('gitRepoUrl')]",
+            "branch": "master",
+            "isManualIntegration": true
+          }
+        }
       ]
     }
   ]

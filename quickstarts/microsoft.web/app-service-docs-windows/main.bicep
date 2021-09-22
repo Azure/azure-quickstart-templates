@@ -10,12 +10,12 @@ param sku string = 'F1'
 
 @description('The language stack of the app.')
 @allowed([
-  'dotnet'
+  '.net'
   'php'
   'node'
   'html'
 ])
-param language string = 'dotnet'
+param language string = '.net'
 
 @description('true = deploy a sample Hello World app.')
 param helloWorld bool = false
@@ -25,14 +25,14 @@ param repoUrl string = ''
 
 var appServicePlanPortalName = 'AppServicePlan-${webAppName}'
 var gitRepoReference = {
-  dotnet: 'https://github.com/Azure-Samples/app-service-web-dotnet-get-started'
+  '.net': 'https://github.com/Azure-Samples/app-service-web-dotnet-get-started'
   node: 'https://github.com/Azure-Samples/nodejs-docs-hello-world'
   php: 'https://github.com/Azure-Samples/php-docs-hello-world'
   html: 'https://github.com/Azure-Samples/html-docs-hello-world'
 }
 var gitRepoUrl = (bool(helloWorld) ? gitRepoReference[toLower(language)] : repoUrl)
 var configReference = {
-  dotnet: {
+  '.net': {
     comments: '.Net app. No additional configuration needed.'
   }
   html: {
@@ -71,6 +71,7 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
 resource srcControls 'Microsoft.Web/sites/sourcecontrols@2020-06-01' = if (contains(gitRepoUrl, 'http')) {
   parent: webApp
   name: 'web'
+  location: location
   properties: {
     repoUrl: gitRepoUrl
     branch: 'master'
