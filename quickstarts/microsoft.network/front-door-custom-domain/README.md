@@ -20,7 +20,7 @@ This template Creates a Front Door configuration with a single backend, onboards
 Parameters for this template are:
 - `frontDoorName` - Name of the Front Door (ex: contoso)
 - `customDomainName` - FQDN name of the custom domain (ex: www.contoso.com)
-`backendaddress` - FQDN of the backend (ex: www.contoso-backend.azurewebsites.com)
+- `backendAddress` - FQDN of the backend (ex: www.contoso-backend.azurewebsites.com)
 
 For the deployment of this template to succeed the specified custom domain will require a CNAME to the Front Door's default frontend host (say `contoso.azurefd.net`).
 
