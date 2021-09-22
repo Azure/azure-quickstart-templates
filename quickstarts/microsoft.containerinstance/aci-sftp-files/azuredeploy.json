@@ -4,47 +4,28 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1.14562",
-      "templateHash": "8026105260493566096"
+      "version": "0.4.412.5873",
+      "templateHash": "15444482251491519619"
     }
   },
   "parameters": {
     "storageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS"
-      ],
-      "metadata": {
-        "description": "Storage account type"
-      }
+      "defaultValue": "Standard_LRS"
     },
     "fileShareName": {
       "type": "string",
-      "defaultValue": "sftpfileshare",
-      "metadata": {
-        "description": "Name of file share to be created"
-      }
+      "defaultValue": "sftpfileshare"
     },
     "sftpUser": {
-      "type": "string",
-      "metadata": {
-        "description": "Username to use for SFTP access"
-      }
+      "type": "string"
     },
     "sftpPassword": {
-      "type": "secureString",
-      "metadata": {
-        "description": "Password to use for SFTP access"
-      }
+      "type": "secureString"
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Primary location for resources"
-      }
+      "defaultValue": "[resourceGroup().location]"
     }
   },
   "functions": [],
@@ -69,7 +50,6 @@
     {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2020-04-01-preview",
-      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageAccountName'))]",
       "name": "[variables('roleAssignmentName')]",
       "properties": {
         "roleDefinitionId": "[variables('roleDefinitionId')]",
@@ -77,19 +57,21 @@
         "principalType": "ServicePrincipal"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]"
       ]
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2021-04-01",
+      "apiVersion": "2020-08-01-preview",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('storageAccountType')]"
       },
-      "kind": "StorageV2"
+      "kind": "StorageV2",
+      "dependsOn": [
+        "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleAssignmentName'))]"
+      ]
     },
     {
       "type": "Microsoft.Resources/deploymentScripts",
@@ -173,7 +155,7 @@
               "readOnly": false,
               "shareName": "[parameters('fileShareName')]",
               "storageAccountName": "[variables('storageAccountName')]",
-              "storageAccountKey": "[listKeys(variables('storageAccountName'), '2021-04-01').keys[0].value]"
+              "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2020-08-01-preview').keys[0].value]"
             }
           }
         ]
@@ -185,7 +167,7 @@
     }
   ],
   "outputs": {
-    "containerIPv4Address": {
+    "containerIpv4Address": {
       "type": "string",
       "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', variables('sftpContainerGroupName'))).ipAddress.ip]"
     }
