@@ -73,7 +73,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   kind: 'StorageV2'
 }
 
-resource appInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: functionAppName
   location: appInsightsLocation
   kind: 'web'
