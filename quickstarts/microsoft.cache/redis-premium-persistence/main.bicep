@@ -69,7 +69,7 @@ resource cache 'Microsoft.Cache/Redis@2020-06-01' = {
   }
 }
 
-resource diagSettings 'Microsoft.Insights/diagnosticsettings@2017-05-01-preview' = {
+resource diagSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: cache
   name: redisCacheName
   properties: {
