@@ -47,7 +47,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' existing 
   name: storageAccountName
 }
 
-var cacheAccountKey = listKeys(storageAccount.id, '2021-04-01').keys[0].value
+var cacheAccountKey = storageAccount.listKeys().keys[0].value
 
 resource cache 'Microsoft.Cache/Redis@2020-06-01' = {
   name: redisCacheName
