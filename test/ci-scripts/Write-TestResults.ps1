@@ -471,6 +471,7 @@ switch ($TemplateAnalyzerResult) {
 }
 
 $BicepVersionColor = "brightgreen";
+if ($BicepVersion -eq "") { $BicepVersion = "n/a" } # make sure the badge value is not empty
 
 $badges = @(
     @{
