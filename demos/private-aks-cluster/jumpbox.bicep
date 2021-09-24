@@ -132,7 +132,7 @@ resource virtualMachines 'Microsoft.Compute/virtualMachines@2020-12-01' = {
       computerName: vmName
       adminUsername: vmAdminUsername
       adminPassword: vmAdminPasswordOrKey
-      linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
+      linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
     storageProfile: {
       imageReference: {
@@ -190,7 +190,7 @@ resource omsAgentForLinux 'Microsoft.Compute/virtualMachines/extensions@2020-12-
       stopOnMultipleConnections: false
     }
     protectedSettings: {
-      workspaceKey: listKeys(logAnalyticsWorkspace.id, logAnalyticsWorkspace.apiVersion).primarySharedKey
+      workspaceKey: logAnalyticsWorkspace.listKeys().primarySharedKey
     }
   }
 }
