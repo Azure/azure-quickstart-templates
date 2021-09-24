@@ -33,7 +33,7 @@ options {
         };
         forward only;
 
-        dnssec-validation auto;
+        dnssec-validation no; # needed for private dns zones
 
         auth-nxdomain no;    # conform to RFC1035
         listen-on { any; };
