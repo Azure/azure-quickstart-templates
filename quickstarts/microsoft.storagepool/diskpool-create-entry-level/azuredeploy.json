@@ -38,6 +38,12 @@
                 "description": "Name of the managed disk (512 sector size) to create and export as an iSCSI LUN in the Disk Pool"
             }
         },
+        "principalId": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the principal ID assigned to the role."
+            }
+        },
         "availabilityZone": {
             "defaultValue": 1,
             "type": "string",
@@ -86,8 +92,7 @@
     "variables": {
         "diskId": "[resourceId('Microsoft.Compute/disks/', parameters('managedDiskName'))]",
         "diskRoleDefinitionName" : "[guid(resourceGroup().id, deployment().name)]",
-        "virtualMachineContributorRbacRoleDefinitionId": "9980e02c-c2be-4d73-94e8-173b1dc7cf3c",
-        "storagePoolRoleDefinitionId": "5741a1ff-751d-4ad7-bcd1-dfe3c998fd11"
+        "diskPoolOperatorRoleDefinitionId": "60fc6e62547942d48bf467625fcc2840"
     },
     "resources": [
         {
@@ -115,8 +120,8 @@
             "apiVersion": "2020-04-01-preview",
             "name": "[variables('diskRoleDefinitionName')]",
             "properties": {
-                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('virtualMachineContributorRbacRoleDefinitionId'))]",
-                "principalId": "[variables('storagePoolRoleDefinitionId')]"
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('diskPoolOperatorRoleDefinitionId'))]",
+                "principalId": "[parameters('principalId')]"
             }
         },
         {
@@ -124,7 +129,8 @@
             "apiVersion": "2021-04-01-preview",
             "name": "[parameters('diskPoolName')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/disks/', parameters('managedDiskName'))]"
+                "[resourceId('Microsoft.Compute/disks/', parameters('managedDiskName'))]",
+                "[variables('diskRoleDefinitionName')]"
             ],
             "sku": {
                 "name": "[parameters('diskPoolTier')]",
