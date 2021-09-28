@@ -94,23 +94,18 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
         myVNETPrefix
       ]
     }
-    subnets: [
-      {
-        name: myVNETSubnet1Name
-        properties: {
-          addressPrefix: myVNETSubnet1Prefix
-          networkSecurityGroup: {
-            id: networkSecurityGroup.id
-          }
-        }
-      }
-    ]
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = {
   parent: virtualNetwork
   name: myVNETSubnet1Name
+  properties: {
+    addressPrefix: myVNETSubnet1Prefix
+    networkSecurityGroup: {
+      id: networkSecurityGroup.id
+    }
+  }
 }
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
