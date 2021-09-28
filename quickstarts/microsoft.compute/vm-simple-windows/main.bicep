@@ -116,18 +116,23 @@ resource vn 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         addressPrefix
       ]
     }
+    subnets: [
+      {
+        name: subnetName
+        properties: {
+          addressPrefix: subnetPrefix
+          networkSecurityGroup: {
+            id: securityGroup.id
+          }
+        }
+      }
+    ]
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing = {
   parent: vn
   name: subnetName
-  properties: {
-    addressPrefix: subnetPrefix
-    networkSecurityGroup: {
-      id: securityGroup.id
-    }
-  }
 }
 
 resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
