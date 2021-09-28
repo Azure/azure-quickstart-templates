@@ -145,18 +145,23 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
         domainServicesVnetAddressPrefix
       ]
     }
+    subnets: [
+      {
+        name: domainServicesSubnetName
+        properties: {
+          addressPrefix: domainServicesSubnetAddressPrefix
+          networkSecurityGroup: {
+            id: nsg.id
+          }
+        }
+      }
+    ]
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-11-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-11-01' existing = {
   parent: vnet
   name: domainServicesSubnetName
-  properties: {
-    addressPrefix: domainServicesSubnetAddressPrefix
-    networkSecurityGroup: {
-      id: nsg.id
-    }
-  }
 }
 
 resource domainServices 'Microsoft.AAD/DomainServices@2020-01-01' = {
