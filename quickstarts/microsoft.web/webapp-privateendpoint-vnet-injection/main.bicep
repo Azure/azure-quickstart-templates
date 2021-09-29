@@ -71,36 +71,41 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
         virtualNetwork_CIDR
       ]
     }
-  }
-}
-
-resource subnet1 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' = {
-  parent: virtualNetwork
-  name: subnet1Name
-  properties: {
-    addressPrefix: subnet1_CIDR
-    privateEndpointNetworkPolicies: 'Disabled'
-  }
-}
-
-resource subnet2 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' = {
-  parent: virtualNetwork
-  name: subnet2Name
-  dependsOn: [
-    subnet1
-  ]
-  properties: {
-    addressPrefix: subnet2_CIDR
-    delegations: [
+    subnets: [
       {
-        name: 'delegation'
+        name: subnet1Name
         properties: {
-          serviceName: 'Microsoft.Web/serverfarms'
+          addressPrefix: subnet1_CIDR
+          privateEndpointNetworkPolicies: 'Disabled'
+        }
+      }
+      {
+        name: subnet2Name
+        properties: {
+          addressPrefix: subnet2_CIDR
+          delegations: [
+            {
+              name: 'delegation'
+              properties: {
+                serviceName: 'Microsoft.Web/serverfarms'
+              }
+            }
+          ]
+          privateEndpointNetworkPolicies: 'Enabled'
         }
       }
     ]
-    privateEndpointNetworkPolicies: 'Enabled'
   }
+}
+
+resource subnet1 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' existing = {
+  parent: virtualNetwork
+  name: subnet1Name
+}
+
+resource subnet2 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' existing = {
+  parent: virtualNetwork
+  name: subnet2Name
 }
 
 resource serverFarm 'Microsoft.Web/serverfarms@2020-06-01' = {
