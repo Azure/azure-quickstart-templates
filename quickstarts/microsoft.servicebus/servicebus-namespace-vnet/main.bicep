@@ -29,20 +29,25 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         '10.0.0.0/23'
       ]
     }
-  }
-}
-
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = {
-  parent: virtualNetwork
-  name: subnetName
-  properties: {
-    addressPrefix: '10.0.0.0/23'
-    serviceEndpoints: [
+    subnets: [
       {
-        service: 'Microsoft.ServiceBus'
+        name: subnetName
+        properties: {
+          addressPrefix: '10.0.0.0/23'
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.ServiceBus'
+            }
+          ]
+        }
       }
     ]
   }
+}
+
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing = {
+  parent: virtualNetwork
+  name: subnetName
 }
 
 resource namespaceVirtualNetworkRule 'Microsoft.ServiceBus/namespaces/virtualnetworkrules@2018-01-01-preview' = {
