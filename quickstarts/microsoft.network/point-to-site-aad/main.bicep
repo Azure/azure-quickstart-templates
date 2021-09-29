@@ -40,7 +40,7 @@ param vpnType string = 'RouteBased'
 param vpnClientAddressPool string = '172.16.0.0/24'
 
 @description('TenantID for the Azure AD tenant')
-param tenantId string
+param tenantId string = subscription().tenantId
 
 @description('The cloud your tenant is in')
 @allowed([
