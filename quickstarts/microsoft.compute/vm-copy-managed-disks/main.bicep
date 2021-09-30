@@ -108,11 +108,6 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing = {
-  parent: virtualNetwork
-  name: myVNETSubnet1Name
-}
-
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: diagnosticStorageAccountName
   location: location
@@ -200,7 +195,7 @@ resource networkInterfaces 'Microsoft.Network/networkInterfaces@2020-06-01' = [f
             id: publicIPAddresses[i].id
           }
           subnet: {
-            id: subnet.id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, myVNETSubnet1Name)
           }
         }
       }
