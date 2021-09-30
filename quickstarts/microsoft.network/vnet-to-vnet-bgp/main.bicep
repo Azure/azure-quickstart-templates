@@ -64,11 +64,6 @@ resource vnet1 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource vnet1GatewaySubnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing = {
-  name: 'GatewaySubnet'
-  parent: vnet1
-}
-
 resource vnet2 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   name: vnet2cfg.name
   location: location
@@ -95,10 +90,6 @@ resource vnet2 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource vnet2GatewaySubnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing = {
-  parent: vnet2
-  name: 'GatewaySubnet'
-}
 resource gw1pip 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   name: vnet1cfg.gatewayPublicIPName
   location: location
@@ -125,7 +116,7 @@ resource vnet1Gateway 'Microsoft.Network/virtualNetworkGateways@2020-06-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: vnet1GatewaySubnet.id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets',vnet1.name , 'GatewaySubnet')
           }
           publicIPAddress: {
             id: gw1pip.id
@@ -156,7 +147,7 @@ resource vnet2Gateway 'Microsoft.Network/virtualNetworkGateways@2020-05-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: vnet2GatewaySubnet.id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets',vnet2.name , 'GatewaySubnet')
           }
           publicIPAddress: {
             id: gw2pip.id
