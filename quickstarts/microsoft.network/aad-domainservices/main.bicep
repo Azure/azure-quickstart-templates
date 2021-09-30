@@ -159,11 +159,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-11-01' existing = {
-  parent: vnet
-  name: domainServicesSubnetName
-}
-
 resource domainServices 'Microsoft.AAD/DomainServices@2020-01-01' = {
   name: domainName
   location: location
@@ -173,7 +168,7 @@ resource domainServices 'Microsoft.AAD/DomainServices@2020-01-01' = {
     domainConfigurationType: domainConfigurationType
     replicaSets: [
       {
-        subnetId: subnet.id
+        subnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, domainServicesSubnetName)
         location: location
       }
     ]
