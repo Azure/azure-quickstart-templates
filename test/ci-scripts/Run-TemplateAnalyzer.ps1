@@ -50,7 +50,7 @@ function Analyze-Template {
 
     if($testOutput.length -ne 0 -and $LASTEXITCODE -eq 0)
     {
-        return $testOutput.Contains($RULE_FAILED_MESSAGE)
+        return !$testOutput.Contains($RULE_FAILED_MESSAGE)
     } else {
         Write-Error "TemplateAnalyzer failed trying to analyze: $templateFilePath $parametersFilePath"
         return $false
@@ -59,18 +59,25 @@ function Analyze-Template {
 
 $passed = $true
 $preReqsFolder = "$sampleFolder\prereqs"
+$preReqsParamsFilePath = "$preReqsFolder\$prereqParametersFilename"
+$mainParamsFilePath = "$sampleFolder\$mainParametersFilename"
 Get-ChildItem $sampleFolder -Recurse -Filter *.json |
-    ForEach-Object {
-        $params = @{ "templateFilePath" = $_.FullName }
-        if ($_.FullName -eq "$preReqsFolder\$prereqTemplateFilename") {
-            $params.Add("parametersFilePath", "$preReqsFolder\$prereqParametersFilename")
-        } elseif ($_.FullName -eq "$sampleFolder\$mainTemplateFilename") {
-            $params.Add("parametersFilePath", "$sampleFolder\$mainParametersFilename")
-        }
+    Where-Object { (Get-Content $_.FullName) -like "*deploymentTemplate.json#*" } |
+        ForEach-Object {
+            if (@($preReqsParamsFilePath, $mainParamsFilePath).Contains($_.FullName)) {
+                continue
+            }
 
-        $newAnalysisPassed = Analyze-Template @params
-        $passed = $passed -and $newAnalysisPassed # evaluation done in two lines to avoid PowerShell's lazy evaluation
-    }
+            $params = @{ "templateFilePath" = $_.FullName }
+            if ($_.FullName -eq "$preReqsFolder\$prereqTemplateFilename") {
+                $params.Add("parametersFilePath", $preReqsParamsFilePath)
+            } elseif ($_.FullName -eq "$sampleFolder\$mainTemplateFilename") {
+                $params.Add("parametersFilePath", $mainParamsFilePath)
+            }
+
+            $newAnalysisPassed = Analyze-Template @params
+            $passed = $passed -and $newAnalysisPassed # evaluation done in two lines to avoid PowerShell's lazy evaluation
+        }
 
 Write-Host "##vso[task.setvariable variable=template.analyzer.result]$passed"
 
