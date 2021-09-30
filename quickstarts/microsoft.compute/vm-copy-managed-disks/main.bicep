@@ -94,17 +94,17 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
         myVNETPrefix
       ]
     }
-  }
-}
-
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = {
-  parent: virtualNetwork
-  name: myVNETSubnet1Name
-  properties: {
-    addressPrefix: myVNETSubnet1Prefix
-    networkSecurityGroup: {
-      id: networkSecurityGroup.id
-    }
+    subnets: [
+      {
+        name: myVNETSubnet1Name
+        properties: {
+          addressPrefix: myVNETSubnet1Prefix
+          networkSecurityGroup: {
+            id: networkSecurityGroup.id
+          }
+        }
+      }
+    ]
   }
 }
 
@@ -195,7 +195,7 @@ resource networkInterfaces 'Microsoft.Network/networkInterfaces@2020-06-01' = [f
             id: publicIPAddresses[i].id
           }
           subnet: {
-            id: subnet.id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, myVNETSubnet1Name)
           }
         }
       }
