@@ -80,9 +80,4 @@ Get-ChildItem $sampleFolder -Recurse -Filter *.json |
         }
 
 Write-Host "##vso[task.setvariable variable=template.analyzer.result]$passed"
-
-if ($passed) {
-    exit 0
-} else {
-    exit 1
-}
+exit [int]!$passed
