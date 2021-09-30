@@ -45,14 +45,15 @@ function Analyze-Template {
     }
     $testOutput = $testOutput -join "`n"
 
+    Write-Host $testOutput
+    $testOutput >> $templateAnalyzerOutputFilePath
+
     if($testOutput.length -ne 0 -and $LASTEXITCODE -eq 0)
     {
-        $testOutput >> $templateAnalyzerOutputFilePath
-
         return $testOutput.Contains($RULE_FAILED_MESSAGE)
     } else {
         Write-Error "TemplateAnalyzer failed trying to analyze: $templateFilePath $parametersFilePath"
-        exit 1
+        return $false
     }
 }
 
@@ -73,4 +74,8 @@ Get-ChildItem $sampleFolder -Recurse -Filter *.json |
 
 Write-Host "##vso[task.setvariable variable=template.analyzer.result]$passed"
 
-exit 0
+if ($passed) {
+    exit 0
+} else {
+    exit 1
+}
