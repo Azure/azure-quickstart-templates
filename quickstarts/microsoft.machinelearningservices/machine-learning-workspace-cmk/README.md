@@ -25,7 +25,6 @@ When using a customer-managed key, Azure Machine Learning creates a secondary re
 
 | Provider and type | Description |
 | - | - |
-| `Microsoft.Resources/resourceGroups` | The resource group all resources get deployed into |
 | `Microsoft.Insights/components` | An Azure Application Insights instance associated to the Azure Machine Learning workspace |
 | `Microsoft.KeyVault/vaults` | An Azure Key Vault instance associated to the Azure Machine Learning workspace |
 | `Microsoft.Storage/storageAccounts` | An Azure Storage instance associated to the Azure Machine Learning workspace |
@@ -155,7 +154,7 @@ Azure CLI:
 PowerShell: 
 
 ```powershell
-    Get-AzureRMKeyVault -VaultName '<keyvault-name>'
+    Get-AzKeyVault -VaultName '<keyvault-name>'
 ``` 
 
 Use the below command to find the required value for the `cmk_keyvault_key_uri` template parameter. The property `kid` represents the cmk_keyvault_key_uri, and has the following resource naming: `https://<keyvault-name>.vault.azure.net/keys/<key-name>/<key-version>`.
