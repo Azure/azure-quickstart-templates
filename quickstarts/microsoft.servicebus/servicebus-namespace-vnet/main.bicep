@@ -45,15 +45,10 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing = {
-  parent: virtualNetwork
-  name: subnetName
-}
-
 resource namespaceVirtualNetworkRule 'Microsoft.ServiceBus/namespaces/virtualnetworkrules@2018-01-01-preview' = {
   parent: serviceBusNamespace
   name: vnetRuleName
   properties: {
-    virtualNetworkSubnetId: subnet.id
+    virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets',virtualNetwork.name ,subnetName)
   }
 }
