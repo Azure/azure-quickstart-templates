@@ -25,7 +25,7 @@
   "variables": {
     "sku": "s1",
     "workerSize": "0",
-    "AppServicePlanName": "[parameters('websiteName')]"
+    "AppServicePlanName": "[format('plan-{0}', uniqueString(resourceGroup().id))]"
   },
   "resources": [
     {
@@ -59,10 +59,11 @@
       "type": "Microsoft.Web/sites/hostNameBindings",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', parameters('websiteName'))]"
+        "[resourceId('Microsoft.Web/serverfarms', variables('AppServicePlanName'))]",
+        "[resourceId('Microsoft.Web/sites', parameters('websiteName'))]"
       ],
       "properties": {
-        "azureResourceName": "[concat('Microsoft.Web/sites/', parameters('websiteName'))]",
+        "azureResourceName": "[parameters('websiteName')]", //"[concat('Microsoft.Web/sites/', parameters('websiteName'))]",
         "azureResourceType": "Website",
         "customHostNameDnsRecordType": "A",
         "hostNameType": "Managed",
@@ -86,6 +87,15 @@
     "AppServicePlanName": {
       "type": "string",
      "value": "[variables('AppServicePlanName')]"
+    },
+    "manualSteps": {
+      "type": "object",
+      "value": {
+        "comment1": "An 'A' record named '@' with the ipAddress must be created manually.",
+        "ipAddress": "[reference(parameters('websiteName'),'2020-12-01', 'Full').properties.inboundIpAddress]",
+        "comment2": "A 'TXT' record named 'ausid' with the value of the customDomainVerificationId must be manually created.",
+        "customDomainVerificationId": "[reference(parameters('websiteName'),'2020-12-01', 'Full').properties.customDomainVerificationId]"
+      }
     }
   }
 }
