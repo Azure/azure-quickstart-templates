@@ -130,11 +130,6 @@ resource vn 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing = {
-  parent: vn
-  name: subnetName
-}
-
 resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   name: nicName
   location: location
@@ -148,7 +143,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
             id: pip.id
           }
           subnet: {
-            id: subnet.id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', vn.name, subnetName)
           }
         }
       }
