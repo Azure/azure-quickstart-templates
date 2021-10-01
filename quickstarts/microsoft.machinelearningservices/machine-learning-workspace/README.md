@@ -20,7 +20,6 @@ This configuration describes the minimal set of resources you require to get sta
 
 | Provider and type | Description |
 | - | - |
-| `Microsoft.Resources/resourceGroups` | The resource group all resources get deployed into |
 | `Microsoft.Insights/components` | An Azure Application Insights instance associated to the Azure Machine Learning workspace |
 | `Microsoft.KeyVault/vaults` | An Azure Key Vault instance associated to the Azure Machine Learning workspace |
 | `Microsoft.Storage/storageAccounts` | An Azure Storage instance associated to the Azure Machine Learning workspace |
