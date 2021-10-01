@@ -52,7 +52,6 @@ resource clusterName_resource 'Microsoft.ContainerService/managedClusters@2021-0
     addonProfiles: {
       openServiceMesh: {
         enabled: true
-        config: {}
       }
     }
   }
