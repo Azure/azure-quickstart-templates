@@ -1,12 +1,11 @@
-// https://docs.microsoft.com/azure/aks/troubleshooting#what-naming-restrictions-are-enforced-for-aks-resources-and-parameters
+@description('Provide a name for the AKS cluster. The only allowed characters are letters, numbers, dashes, and underscore. The first and last character must be a letter or a number.')
 @minLength(3)
 @maxLength(63)
-@description('Provide a name for the AKS cluster. The only allowed characters are letters, numbers, dashes, and underscore. The first and last character must be a letter or a number.')
-param clusterName string
+param clusterName string = 'aks-osm-addon-quickstart'
 
+@description('Provide a name for the AKS dnsPrefix. Valid characters include alphanumeric values and hyphens (-). The dnsPrefix can\'t include special characters such as a period (.)')
 @minLength(3)
 @maxLength(54)
-@description('Provide a name for the AKS dnsPrefix. Valid characters include alphanumeric values and hyphens (-). The dnsPrefix can\'t include special characters such as a period (.)')
 param clusterDNSPrefix string
 
 @description('The location of the Managed Cluster resource.')
@@ -17,12 +16,9 @@ param k8Version string = '1.20.9'
 
 @description('User name for the Linux Virtual Machines.')
 param linuxAdminUsername string
-
-@description('Configure all linux machines with the SSH RSA public key string. Your key should include three parts, for example \'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm\'')
 param sshPubKey string
 
-
-resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-03-01' = {
+resource clusterName_resource 'Microsoft.ContainerService/managedClusters@2021-03-01' = {
   name: clusterName
   location: location
   identity: {
@@ -54,9 +50,9 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-03-01' = {
       }
     }
     addonProfiles: {
-        openServiceMesh: {
-            enabled: true
-            config: {}
+      openServiceMesh: {
+        enabled: true
+        config: {}
       }
     }
   }
