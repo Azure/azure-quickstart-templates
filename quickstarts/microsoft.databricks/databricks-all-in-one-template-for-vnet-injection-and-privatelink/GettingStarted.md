@@ -23,6 +23,8 @@ All the other parameters can be left as default.
 **Public Subnet Name** Name of the Public Subnet
 **Location** Location of Data Center
 **Vnet Cidr** Cidr Range of the Vnet
+**publicNetworkAccess** Indicates whether public network access is allowed to the workspace with private endpoint - possible values are Enabled or Disabled
+**requiredNsgRules** Indicates whether to retain or remove the AzureDatabricks outbound NSG rule - possible values are AllRules or NoAzureDatabricksRules
 **Private Subnet Cidr** Cidr Range of the Private Subnet
 **Public Subnet Cidr** Cidr Range of the Public Subnet
 
