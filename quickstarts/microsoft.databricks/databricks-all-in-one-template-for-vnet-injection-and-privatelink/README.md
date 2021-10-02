@@ -1,4 +1,4 @@
-# Deploy a Network Security Group, a Virtual Network and an Azure Databricks Workspace with Virtual Network, Private Access and Private Link.
+# Deploy a Network Security Group, a Virtual Network and an Azure Databricks Workspace with Virtual Network, Private Access.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection/PublicDeployment.svg)
@@ -15,7 +15,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-all-in-one-template-for-vnet-injection%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-all-in-one-template-for-vnet-injection%2Fazuredeploy.json)
 
-This template allows you to create a network security group, a Virtual Network and an Azure Databricks Workspace with Virtual Network, Private Access and Private Link.
+This template allows you to create a network security group, a Virtual Network and an Azure Databricks Workspace with Virtual Network, Private Access.
 For more information, see the [Azure Databricks Documentation](https://docs.microsoft.com/en-us/azure/azure-databricks/).
 
 ### What is Azure Databricks?
@@ -26,15 +26,15 @@ Azure Databricks is a fast, easy, and collaborative Apache Spark-based analytics
 
 This template allows you to install the following options
 
-DataBricks 14 day trial
-DataBricks Standard
-DataBricks Premium
+Databricks 14 day trial
+Databricks Standard
+Databricks Premium
 
 ### DataBricks Resources
 
-[Getting Started with DataBricks](https://docs.microsoft.com/en-us/azure/databricks/getting-started/index)
-[Data Bricks Admin Guide](https://docs.azuredatabricks.net/administration-guide/index.html)
+[Getting Started with Databricks](https://docs.microsoft.com/en-us/azure/databricks/getting-started/index)
+[Databricks Admin Guide](https://docs.azuredatabricks.net/administration-guide/index.html)
 
 ### Microsoft Learn Modules
 
-[Data Bricks Microsoft Learn Modules](https://docs.microsoft.com/en-us/learn/browse/?term=Databricks)
+[Databricks Microsoft Learn Modules](https://docs.microsoft.com/en-us/learn/browse/?term=Databricks)
