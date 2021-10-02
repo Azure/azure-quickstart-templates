@@ -34,11 +34,15 @@ param subnets array = [
     addressPrefix: '10.0.1.0/24'
     privateEndpointNetworkPolicies: 'disabled'
     privateLinkServiceNetworkPolicies: 'disabled'
-    delegation: null
+    delegation: 'Microsoft.Web/serverFarms'
     natgatewayId: null
     nsgId: null
     udrId: null
-    serviceEndpoints: null
+    serviceEndpoints: [
+      {
+        service: 'Microsoft.Web'
+      }
+    ]
   }
 ]
 
