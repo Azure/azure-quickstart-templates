@@ -40,7 +40,7 @@ param subnets array = [
     udrId: null
     serviceEndpoints: [
       {
-        service: 'Microsoft.Web'
+        service: 'Microsoft.Storage'
       }
     ]
   }
