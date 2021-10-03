@@ -19,7 +19,7 @@ This configuration describes the set of resources required to:
 1. (prerequisite) Create and configure an Azure Key vault resource to host an encryption key for Azure Machine Learning.
 1. Create an Azure Machine Learning workspace and dependent resources, and configure it for encryption with the above encryption key.
 
-When using a customer-managed key, Azure Machine Learning creates a secondary resource group which contains the Cosmos DB instance. For more information, see [encryption at rest - Cosmos DB](https://docs.microsoft.com/en-us/azure/machine-learning/concept-enterprise-security#encryption-at-rest).
+When using a customer-managed key, Azure Machine Learning creates a secondary resource group in your subscription which contains a Cosmos DB resource, an Azure Storage resource, and Azure Search resource. For more information, see [encryption at rest - Cosmos DB](https://docs.microsoft.com/en-us/azure/machine-learning/concept-enterprise-security#encryption-at-rest).
 
 ## Resources
 
