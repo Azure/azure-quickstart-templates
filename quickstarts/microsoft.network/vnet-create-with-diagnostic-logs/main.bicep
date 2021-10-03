@@ -100,7 +100,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   }
 }
 
-resource diagnostics 'microsoft.insights/diagnosticSettings@2017-05-01-preview' = if (enableDiagnostics) {
+resource diagnostics 'microsoft.insights/diagnosticSettings@2021-05-01-preview' = if (enableDiagnostics) {
   scope: vnet
   name: diagnosticsName
   properties: {
@@ -121,7 +121,7 @@ resource diagnostics 'microsoft.insights/diagnosticSettings@2017-05-01-preview' 
   }
 }
 
-resource lock 'Microsoft.Authorization/locks@2016-09-01' = if (enableDeleteLock) {
+resource lock 'Microsoft.Authorization/locks@2017-04-01' = if (enableDeleteLock) {
   scope: vnet
   name: lockName
   properties: {
