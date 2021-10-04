@@ -1,5 +1,10 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in October 4, 2021
+
+* Improve reliability of DSC module cChoco, which caused most of the deployment errors.
+* Fix deployment error in SharePoint 2013 by also restarting service SPAdminV4 before deploying the solution.
+
 ## Enhancements & bug-fixes - Published in September 13, 2021
 
 * Fix the deployment error when parameter 'addPublicIPAddressToEachVM' is false and 'numberOfAdditionalFrontEnd' is greater than 0
