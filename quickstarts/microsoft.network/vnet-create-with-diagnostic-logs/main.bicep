@@ -12,37 +12,13 @@ param vnetAddressSpace array = [
 @description('Array containing DNS Servers')
 param dnsServers array = []
 
-@description('Array containing subnets to create within the Virtual Network')
-@metadata({
-  name: 'Subnet name'
-  addressPrefix: 'Subnet address prefix'
-  delegation: 'The name of the service to whom the subnet should be delegated (e.g. Microsoft.Web/serverFarms)'
-  natGatewayId: 'Resource id of the NAT gateway to associate to subnet'
-  nsgId: 'Resource id of the Network Security Group to associate to subnet'
-  udrId: 'Resource id of the Route Table to associate to subnet'
-  privateEndpointNetworkPolicies: 'Enable or disable Private Endpoint network policies on subnet'
-  privateLinkServiceNetworkPolicies: 'Enable or disable PrivateLink service network policies on subnet'
-  serviceEndpoints: [
-    {
-      service: 'The type of the endpoint service'
-    }
-  ]
-})
+@description('Array containing subnets to create within the Virtual Network. For properties format refer to https://docs.microsoft.com/en-us/azure/templates/microsoft.network/virtualnetworks/subnets?tabs=bicep#subnetpropertiesformat')
 param subnets array = [
   {
     name: 'subnet1'
     addressPrefix: '10.0.1.0/24'
     privateEndpointNetworkPolicies: 'disabled'
     privateLinkServiceNetworkPolicies: 'disabled'
-    delegation: 'Microsoft.Web/serverFarms'
-    natgatewayId: null
-    nsgId: null
-    udrId: null
-    serviceEndpoints: [
-      {
-        service: 'Microsoft.Storage'
-      }
-    ]
   }
 ]
 
@@ -75,26 +51,26 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       name: subnet.name
       properties: {
         addressPrefix: subnet.addressPrefix
-        delegations: empty(subnet.delegation) ? [] : [
+        delegations: contains(subnet, 'delegation') ? [
           {
             name: '${subnet.name}-delegation'
             properties: {
               serviceName: subnet.delegation
             }
           }
-        ]
-        natGateway: empty(subnet.natGatewayId) ? null : {
+        ] : []
+        natGateway: contains(subnet, 'natGatewayId') ? {
           id: subnet.natGatewayId
-        }
-        networkSecurityGroup: empty(subnet.nsgId) ? null : {
+        } : null
+        networkSecurityGroup: contains(subnet, 'nsgId') ? {
           id: subnet.nsgId
-        }
-        routeTable: empty(subnet.udrId) ? null : {
+        } : null
+        routeTable: contains(subnet, 'udrId') ? {
           id: subnet.udrId
-        }
+        } : null
         privateEndpointNetworkPolicies: subnet.privateEndpointNetworkPolicies
         privateLinkServiceNetworkPolicies: subnet.privateLinkServiceNetworkPolicies
-        serviceEndpoints: empty(subnet.serviceEndpoints) ? null : subnet.serviceEndpoints
+        serviceEndpoints: contains(subnet, 'serviceEndpoints') ? subnet.serviceEndpoints : null
       }
     }]
   }
