@@ -4,43 +4,7 @@ param nsgName string = uniqueString(resourceGroup().id)
 @description('Network security group location')
 param location string = resourceGroup().location
 
-@description('Security rules')
-@metadata({
-  name: 'Rule name'
-  properties: {
-    access: 'Whether network traffic is allowed or denied'
-    description: 'A description for the rule'
-    destinationAddressPrefix: 'The destination address prefix. CIDR or destination IP range. Service Tags or * can also be used'
-    destinationAddressPrefixes: [
-      'The destination address prefixes. CIDR or destination IP ranges. Only used when destinationAddressPrefix is not specified'
-    ]
-    destinationApplicationSecurityGroups: [
-      {
-        id: 'Resource Id of destination application security group. Only used when destinationAddressPrefix/destinationAddressPrefixes is not specified'
-      }
-    ]
-    destinationPortRange: 'The destination port or range'
-    destinationPortRanges: [
-      'The destination port ranges. Only used when destinationPortRange is not specified'
-    ]
-    direction: 'The direction of the rule. Inbound or Outbound'
-    priority: 'The priority of the rule. The value can be between 100 and 4096'
-    protocol: 'Network protocol for this rule'
-    sourceAddressPrefix: 'The source address prefix. CIDR or source IP range. Service Tags or * can also be used'
-    sourceAddressPrefixes: [
-      'The source address prefixes. CIDR or source IP ranges. Only used when sourceAddressPrefix is not specified'
-    ]
-    sourceApplicationSecurityGroups: [
-      {
-        id: 'Resource Id of source application security group. Only used when sourceAddressPrefix/sourceAddressPrefixes is not specified'
-      }
-    ]
-    sourcePortRange: 'The source port or range'
-    sourcePortRanges: [
-      'The source port ranges. Only used when sourcePortRange is not specified'
-    ]
-  }
-})
+@description('Array containing security rules. For properties format refer to https://docs.microsoft.com/en-us/azure/templates/microsoft.network/networksecuritygroups?tabs=bicep#securityrulepropertiesformat')
 param securityRules array = []
 
 @description('Enable delete lock')
