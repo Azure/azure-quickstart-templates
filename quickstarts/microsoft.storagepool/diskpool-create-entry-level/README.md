@@ -14,6 +14,12 @@
 
 This template deploys a Disk Pool with a 1TB Premium Disk into an existing subnet.
 
+This template also assigns the Disk Pool Operator Role to the deployed disk.
+
+**Use following powershell command to get Principal ID associated with a tenant. The ID is the principal ID.
+
+PS C:\> Get-AzADServicePrincipal -DisplayName "StoragePool Resource Provider"
+
 PARAMETER RESTRICTIONS
 ======================
 

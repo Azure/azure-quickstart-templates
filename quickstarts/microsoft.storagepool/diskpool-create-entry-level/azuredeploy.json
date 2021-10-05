@@ -41,9 +41,16 @@
         "principalId": {
             "type": "string",
             "metadata": {
-                "description": "Specifies the principal ID assigned to the role."
+                "description": "Specifies the principal ID of StoragePool Resource Provider."
             }
         },
+        "roleNameGuid": {
+            "type": "string",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "A new GUID used to identify the role assignment"
+            }
+          }, 
         "availabilityZone": {
             "defaultValue": 1,
             "type": "string",
@@ -91,7 +98,6 @@
     },
     "variables": {
         "diskId": "[resourceId('Microsoft.Compute/disks/', parameters('managedDiskName'))]",
-        "diskRoleDefinitionName" : "[guid(resourceGroup().id, deployment().name)]",
         "diskPoolOperatorRoleDefinitionId": "60fc6e62547942d48bf467625fcc2840"
     },
     "resources": [
@@ -113,12 +119,11 @@
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
+            "name": "[parameters('roleNameGuid')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/disks/', parameters('managedDiskName'))]"
             ],
-            "scope": "[concat('Microsoft.Compute/disks/', parameters('managedDiskName'))]",
             "apiVersion": "2020-04-01-preview",
-            "name": "[variables('diskRoleDefinitionName')]",
             "properties": {
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('diskPoolOperatorRoleDefinitionId'))]",
                 "principalId": "[parameters('principalId')]"
@@ -130,7 +135,7 @@
             "name": "[parameters('diskPoolName')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/disks/', parameters('managedDiskName'))]",
-                "[variables('diskRoleDefinitionName')]"
+                "[resourceId('Microsoft.Authorization/roleAssignments/', parameters('roleNameGuid'))]"
             ],
             "sku": {
                 "name": "[parameters('diskPoolTier')]",
