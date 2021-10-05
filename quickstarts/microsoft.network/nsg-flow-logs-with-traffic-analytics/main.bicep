@@ -1,17 +1,17 @@
 @description('Flow Log name')
-param flowlogName string
-
-@description('Network Watcher name')
-param networkWatcherName string
+param flowlogName string = 'flowlog'
 
 @description('Flow Log location')
 param location string = resourceGroup().location
 
+@description('Network Watcher name')
+param networkWatcherName string = 'NetworkWatcher_${location}'
+
 @description('Network Security Group resource id')
-param nsgId string
+param existingNsgId string
 
 @description('Storage account resource id')
-param flowLogStorageAccountId string
+param existingFlowLogStorageAccountId string
 
 @description('Log analytics workspace resource id')
 param logAnalyticsWorkspaceId string = ''
@@ -38,7 +38,7 @@ resource nsgFlowLog 'Microsoft.Network/networkWatchers/flowLogs@2021-02-01' = {
       days: flowLogsStorageRetention
       enabled: true
     }
-    storageId: flowLogStorageAccountId
-    targetResourceId: nsgId
+    storageId: existingFlowLogStorageAccountId
+    targetResourceId: existingNsgId
   }
 }
