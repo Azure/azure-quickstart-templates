@@ -1,0 +1,123 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.412.5873",
+      "templateHash": "8192223282203489077"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string",
+      "defaultValue": "[format('la-{0}', uniqueString(resourceGroup().id))]"
+    }
+  },
+  "functions": [],
+  "variables": {
+    "vmInsights": {
+      "name": "[format('VMInsights({0})', parameters('logAnalyticsWorkspaceName'))]",
+      "galleryName": "VMInsights"
+    },
+    "containerInsights": {
+      "name": "[format('ContainerInsights({0})', parameters('logAnalyticsWorkspaceName'))]",
+      "galleryName": "ContainerInsights"
+    },
+    "environmentName": "Production",
+    "costCenterName": "IT"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[parameters('logAnalyticsWorkspaceName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "Environment": "[variables('environmentName')]",
+        "CostCenter": "[variables('costCenterName')]"
+      },
+      "properties": {
+        "retentionInDays": 30,
+        "features": {
+          "searchVersion": 1
+        },
+        "sku": {
+          "name": "PerGB2018"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2017-05-01-preview",
+      "scope": "[format('Microsoft.OperationalInsights/workspaces/{0}', parameters('logAnalyticsWorkspaceName'))]",
+      "name": "diagnosticSettings",
+      "properties": {
+        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]",
+        "logs": [
+          {
+            "category": "Audit",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 7,
+              "enabled": true
+            }
+          }
+        ],
+        "metrics": [
+          {
+            "category": "AllMetrics",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 7,
+              "enabled": true
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.OperationsManagement/solutions",
+      "apiVersion": "2015-11-01-preview",
+      "name": "[variables('vmInsights').name]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+      },
+      "plan": {
+        "name": "[variables('vmInsights').name]",
+        "publisher": "Microsoft",
+        "product": "[format('OMSGallery/{0}', variables('vmInsights').galleryName)]",
+        "promotionCode": ""
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.OperationsManagement/solutions",
+      "apiVersion": "2015-11-01-preview",
+      "name": "[variables('containerInsights').name]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+      },
+      "plan": {
+        "name": "[variables('containerInsights').name]",
+        "publisher": "Microsoft",
+        "product": "[format('OMSGallery/{0}', variables('containerInsights').galleryName)]",
+        "promotionCode": ""
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+      ]
+    }
+  ]
+}

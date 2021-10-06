@@ -1,0 +1,101 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Type your domain name. Ex.: contoso.com"
+      }
+    },
+    "websiteName": {
+      "type": "string",
+      "metadata": {
+        "description": "Web App name that will host the Custom Domain. This name should be unique in Azure."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location into which the resources should be deployed."
+      }
+    }
+  },
+  "variables": {
+    "sku": "s1",
+    "workerSize": "0",
+    "AppServicePlanName": "[format('plan-{0}', uniqueString(resourceGroup().id))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-12-01",
+      "name": "[variables('AppServicePlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('sku')]",
+        "capacity": "[variables('workerSize')]"
+      },
+      "properties": {
+        "name": "[variables('AppServicePlanName')]"
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "name": "[parameters('websiteName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('AppServicePlanName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[variables('AppServicePlanName')]"
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "name": "[concat(parameters('websiteName'), '/', parameters('domainName'))]",
+      "type": "Microsoft.Web/sites/hostNameBindings",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('AppServicePlanName'))]",
+        "[resourceId('Microsoft.Web/sites', parameters('websiteName'))]"
+      ],
+      "properties": {
+        "azureResourceName": "[parameters('websiteName')]", //"[concat('Microsoft.Web/sites/', parameters('websiteName'))]",
+        "azureResourceType": "Website",
+        "customHostNameDnsRecordType": "A",
+        "hostNameType": "Managed",
+        "siteName": "[parameters('websiteName')]"
+      }
+    }
+  ],
+  "outputs": {
+    "domainName": {
+      "type": "string",
+      "value": "[parameters('domainName')]"
+    },
+    "websiteName": {
+      "type": "string",
+      "value": "[parameters('websiteName')]"
+    },
+    "rgName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "AppServicePlanName": {
+      "type": "string",
+     "value": "[variables('AppServicePlanName')]"
+    },
+    "manualSteps": {
+      "type": "object",
+      "value": {
+        "comment1": "An 'A' record named '@' with the ipAddress must be created manually.",
+        "ipAddress": "[reference(parameters('websiteName'),'2020-12-01', 'Full').properties.inboundIpAddress]",
+        "comment2": "A 'TXT' record named 'ausid' with the value of the customDomainVerificationId must be manually created.",
+        "customDomainVerificationId": "[reference(parameters('websiteName'),'2020-12-01', 'Full').properties.customDomainVerificationId]"
+      }
+    }
+  }
+}

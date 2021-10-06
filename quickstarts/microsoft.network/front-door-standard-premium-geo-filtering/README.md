@@ -17,15 +17,12 @@ This template deploys a Front Door Standard/Premium (Preview) with a geo-filteri
 
 ## Sample overview and deployed resources
 
-This sample template creates a Front Door profile with a geo-filtering policy. To keep the sample simple, Front Door is configured to direct traffic to an Azure Storage static website configured as an origin, but this could be [any origin supported by Front Door](https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin).
+This sample template creates a Front Door profile with a geo-filtering policy. To keep the sample simple, Front Door is configured to direct traffic to a static website configured as an origin, but this could be [any origin supported by Front Door](https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin).
 
 The following resources are deployed as part of the solution:
 
-### Prerequisites
-- Azure Storage with a static website, which acts as a simulated origin in this sample.
-
 ### Front Door Standard/Premium (Preview)
-- Front Door profile, endpoint, origin group, origin, and route to direct traffic to the Azure Storage static website.
+- Front Door profile, endpoint, origin group, origin, and route to direct traffic to the static website.
   - Note that you can use either the standard or premium Front Door SKU for this sample. The geo-filtering custom rule for the WAF are supported in either SKU (note that managed rule sets require the premium SKU though). By default, the standard SKU is used.
 - Front Door WAF policy with a custom geo-filtering rule. By default this is configured to allow requests from the United States, Australia, and New Zealand, as well as 'Unknown'.
   - You must specify the list of allowed country codes using ISO 3166-1 alpha-2 format. [See here for a list of country codes.](https://docs.microsoft.com/azure/frontdoor/front-door-geo-filtering#countryregion-code-reference) All requests from outside the specified list of countries will be blocked.
