@@ -1,0 +1,454 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+        "parameters": {
+        "rgName": {
+            "type": "string",
+            "metadata": {
+                "description": "Azure resource group name"
+            },
+            "defaultValue" : "Azure-Budget"
+        },    
+        "rgLocation": {
+            "type": "string",            
+            "metadata": {
+                "description": "Azure resource group location - Select the region that correspond to the Region selected above"
+            },
+            "allowedValues": [
+                "northeurope",
+                "eastus",
+                "westus",
+                "eastasia",
+                "southindia",
+                "brazilsoutheast"
+            ]
+        },
+        "resourcePrefix": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 25,
+            "metadata": {
+                "description": "Prefix to your Azure resources names"
+            }
+        },
+        "azureBudget": {
+            "type": "int",
+            "metadata": {
+                "description": "Your Azure monthly budget (in USD)"
+            },
+            "defaultValue": 500
+        },     
+        "recipient": {
+            "type": "string",
+            "metadata": {
+                "description": "e-mail address (UPN) of the user that will receive the notification in Microsoft Teams - e.g. john.doe@contoso.com"
+            }
+        },             
+        "startDay": {
+            "type": "string",
+            "metadata": {
+                "description": "First day of the current month"
+            },
+            "defaultValue": "[concat(utcNow('yyyy/MM'),'/01')]"
+        }
+    },
+    "functions": [],
+    "variables": {
+        "budgetAlertName" : "[concat('Alert-', parameters('resourcePrefix'))]",
+        "costManagerReaderRoleId" : "72fafb9e-0641-4937-9268-a91bfd8191a3",
+        "roleAssignmentName": "[guid(subscription().id, parameters('rgName'), variables('costManagerReaderRoleId'))]",
+        "actual_threshold" : 80,
+        "forecasted_threshold" : 100,
+        "deployThisResource" : true
+    },
+    "resources": [  
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2020-10-01",
+            "name": "[parameters('rgName')]",
+            "location": "[parameters('rgLocation')]",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "name": "nestedDeployment",
+            "resourceGroup": "[parameters('rgName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups/', parameters('rgName'))]"
+            ],            
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "resourcePrefix": {
+                        "value": "[parameters('resourcePrefix')]"
+                    },
+                    "rgName": {
+                        "value": "[parameters('rgName')]"
+                    },
+                    "rgLocation": {
+                        "value": "[parameters('rgLocation')]"
+                    },
+                    "recipient": {
+                        "value": "[parameters('recipient')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "rgName": {
+                            "type": "string",
+                            "metadata": {
+                                "description": "Azure resource group name"
+                            }
+                        },    
+                        "rgLocation": {
+                            "type": "string",            
+                            "metadata": {
+                                "description": "Azure resource group location"
+                            }
+                        },
+                        "resourcePrefix": {
+                            "type": "string",
+                            "minLength": 3,
+                            "maxLength": 25,
+                            "metadata": {
+                                "description": "Prefix to your Azure resourcecs names"
+                            },
+                            "defaultValue": "Azure-Budget"
+                        },
+                        "recipient": {
+                            "type": "string",
+                            "metadata": {
+                                "description": "e-mail address (UPN) of the user that will receive the notification in Microsoft Teams"
+                            }
+                        }                          
+                    },
+                    "variables": {
+                        "logicAppName" : "[concat('LogicApp-', parameters('resourcePrefix'))]",
+                        "connectionNameTeams" : "LogicApp-Connector-Teams",
+                        "actionGroupName" : "[concat('ActionGroup-', parameters('resourcePrefix'))]"
+                    },
+                    "resources": [                    
+                        {
+                            "name": "[variables('connectionNameTeams')]",
+                            "type": "Microsoft.Web/connections",
+                            "apiVersion": "2016-06-01",
+                            "location": "[parameters('rgLocation')]",
+                            "kind": "V1",
+                            "properties": {
+                                "displayName": "Microsoft Teams",
+                                "api": {
+                                    "name": "teams",
+                                    "displayName": "Microsoft Teams",
+                                    "description": "Microsoft Teams enables you to get all your content, tools and conversations in the Team workspace with Office 365.",
+                                    "iconUri": "https://connectoricons-prod.azureedge.net/releases/v1.0.1505/1.0.1505.2520/teams/icon.png",
+                                    "brandColor": "#4B53BC",
+                                    "type": "Microsoft.Web/locations/managedApis",
+                                    "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('rgLocation'), '/managedApis/', 'teams')]"
+                                }
+                            }
+                        },
+                        {
+                            "type": "Microsoft.Logic/workflows",
+                            "apiVersion": "2017-07-01",
+                            "name": "[variables('logicAppName')]",
+                            "location": "[parameters('rgLocation')]",
+                            "identity": {
+                                "type": "SystemAssigned"
+                            },
+                            "properties": {
+                                "state": "Enabled",
+                                "definition": {
+                                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                                    "contentVersion": "1.0.0.0",
+                                    "parameters": {
+                                        "$connections": {
+                                            "defaultValue": {},
+                                            "type": "Object"
+                                        }
+                                    },
+                                    "triggers": {
+                                        "manual": {
+                                            "type": "Request",
+                                            "kind": "Http",
+                                            "inputs": {}
+                                        }
+                                    },
+                                    "actions": {
+                                        "Get_alert_type_from_Azure_ARM": {
+                                            "inputs": {
+                                                "authentication": {
+                                                    "type": "ManagedServiceIdentity"
+                                                },
+                                                "method": "GET",
+                                                "uri": "https://management.azure.com/@{body('Parse_trigger_body')?['data']?['AlertId']}?api-version=2019-10-01"
+                                            },
+                                            "runAfter": {
+                                                "Parse_trigger_body": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "Http"
+                                        },
+                                        "Parse_alert_type": {
+                                            "inputs": {
+                                                "content": "@body('Get_alert_type_from_Azure_ARM')",
+                                                "schema": {
+                                                    "properties": {
+                                                        "properties": {
+                                                            "properties": {
+                                                                "definition": {
+                                                                    "properties": {
+                                                                        "criteria": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "type": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "runAfter": {
+                                                "Get_alert_type_from_Azure_ARM": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "ParseJson"
+                                        },
+                                        "Parse_trigger_body": {
+                                            "inputs": {
+                                                "content": "@triggerBody()",
+                                                "schema": {
+                                                    "properties": {
+                                                        "data": {
+                                                            "properties": {
+                                                                "AlertGenerationTime": {
+                                                                    "type": "string"
+                                                                },
+                                                                "AlertId": {
+                                                                    "type": "string"
+                                                                },
+                                                                "BudgetName": {
+                                                                    "type": "string"
+                                                                },
+                                                                "BudgetStartDate": {
+                                                                    "type": "string"
+                                                                },
+                                                                "BudgetThreshold": {
+                                                                    "type": "string"
+                                                                },
+                                                                "BudgetType": {
+                                                                    "type": "string"
+                                                                },
+                                                                "EvaluatedAmount": {
+                                                                    "type": "string"
+                                                                },
+                                                                "ForecastedTotalForPeriod": {
+                                                                    "type": "string"
+                                                                },
+                                                                "NotificationThresholdAmount": {
+                                                                    "type": "string"
+                                                                },
+                                                                "SubscriptionId": {
+                                                                    "type": "string"
+                                                                },
+                                                                "Unit": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "schemaId": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "runAfter": {},
+                                            "type": "ParseJson"
+                                        },
+                                        "Switch": {
+                                            "cases": {
+                                                "Case_actual_budget_alert": {
+                                                    "actions": {
+                                                        "Post_adaptive_card_for_actual_budget_alert": {
+                                                            "inputs": {
+                                                                "body": {
+                                                                    "messageBody": "{\n    \"type\": \"AdaptiveCard\",\n    \"body\": [\n         {\n            \"type\": \"Container\",\n            \"items\": [\n                {\n                    \"type\": \"Image\",\n                    \"url\": \"https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE1Mu3b\",\n                    \"altText\": \"Microsoft Azure Logo\",\n                    \"horizontalAlignment\": \"Right\",\n                    \"height\": \"20px\"\n                }\n            ],\n            \"minHeight\": \"30px\",\n            \"style\": \"emphasis\"\n        },\n        {\n            \"type\": \"TextBlock\",\n            \"text\": \"Budget, @{body('Parse_trigger_body')?['data']?['BudgetName']}, has exceeded its threshold value and requires your review\",\n            \"wrap\": true,\n            \"weight\": \"Bolder\"\n        },\n        {\n            \"type\": \"TextBlock\",\n            \"text\": \"The total evaluated amount for your Azure budget, **@{body('Parse_trigger_body')?['data']?['BudgetName']}**, is now **$@{body('Parse_trigger_body')?['data']?['EvaluatedAmount']}**. This amount exceeds the threshold value of **$@{body('Parse_trigger_body')?['data']?['NotificationThresholdAmount']}** that you specified. Please review this budget in the Azure portal and analyze your cost and usage.\",\n            \"wrap\": true\n        },\n        {\n            \"type\": \"FactSet\",\n            \"separator\" :true,\n            \"spacing\" : \"medium\",\n            \"facts\": [\n                {\n                \"title\": \"Budget name\",\n                \"value\": \"@{body('Parse_trigger_body')?['data']?['BudgetName']}\"\n                },\n                {\n                \"title\": \"Budget start date\",\n                \"value\": \"@{body('Parse_trigger_body')?['data']?['BudgetStartDate']}\"\n                },\n                {\n                \"title\": \"Budget type\",\n                \"value\": \"@{body('Parse_trigger_body')?['data']?['BudgetType']}\"\n                },\n                {\n                \"title\": \"Budget amount\",\n                \"value\": \"$@{body('Parse_trigger_body')?['data']?['BudgetThreshold']}\"\n                },\n                {\n                \"title\": \"Evaluated value\",\n                \"value\": \"$@{body('Parse_trigger_body')?['data']?['EvaluatedAmount']}\"\n                },\n                {\n                \"title\": \"Notification threshold for alert\",\n                \"value\": \"$@{body('Parse_trigger_body')?['data']?['NotificationThresholdAmount']}\"\n                },\n                {\n                \"title\": \"Total forecasted for period\",\n                \"value\": \"@{body('Parse_trigger_body')?['data']?['ForecastedTotalForPeriod']}\"\n                },\n                {\n                \"title\": \"Alert generation time\",\n                \"value\": \"@{body('Parse_trigger_body')?['data']?['AlertGenerationTime']}\"\n                }\n            ]\n        }        \n    ],\n    \"actions\": [\n\n        {\n            \"type\": \"Action.OpenUrl\",\n            \"title\": \"Click to review budget alerts in Azure\",\n            \"url\": \"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/@{body('Parse_trigger_body')?['data']?['SubscriptionId']}/costAlerts\"\n        }\n    ],\n    \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\",\n    \"version\": \"1.2\"\n}",
+                                                                    "recipient": "[parameters('recipient')]"
+                                                                },
+                                                                "host": {
+                                                                    "connection": {
+                                                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                                                    }
+                                                                },
+                                                                "method": "post",
+                                                                "path": "/v1.0/teams/conversation/adaptivecard/poster/Flow bot/location/@{encodeURIComponent('Chat with Flow bot')}"
+                                                            },
+                                                            "runAfter": {},
+                                                            "type": "ApiConnection"
+                                                        }
+                                                    },
+                                                    "case": "CostThresholdExceeded"
+                                                },
+                                                "Case_forecasted_budget_alert": {
+                                                    "actions": {
+                                                        "Post_adaptive_card_forecasted_budget_alert": {
+                                                            "inputs": {
+                                                                "body": {
+                                                                    "messageBody": "{\n    \"type\": \"AdaptiveCard\",\n    \"body\": [\n              {\n            \"type\": \"Container\",\n            \"items\": [\n                {\n                    \"type\": \"Image\",\n                    \"url\": \"https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE1Mu3b\",\n                    \"altText\": \"Microsoft Azure Logo\",\n                    \"horizontalAlignment\": \"Right\",\n                    \"height\": \"20px\"\n                }\n            ],\n            \"minHeight\": \"30px\",\n            \"style\": \"emphasis\"\n        },\n        {\n            \"type\": \"TextBlock\",\n            \"text\": \"Your cost is forecasted to exceed its threshold value for your Azure budget, @{body('Parse_trigger_body')?['data']?['BudgetName']}\",\n            \"wrap\": true,\n            \"weight\": \"Bolder\"\n        },\n        {\n            \"type\": \"TextBlock\",\n            \"text\": \"The total spend for your budget, **@{body('Parse_trigger_body')?['data']?['BudgetName']}**, is forecasted to reach **@{body('Parse_trigger_body')?['data']?['ForecastedTotalForPeriod']}** before the end of the period. This amount exceeds your specified budget threshold of **$@{body('Parse_trigger_body')?['data']?['NotificationThresholdAmount']}**. Please review your budget in the Azure portal and analyze your cost and usage.\",\n            \"wrap\": true\n        },\n        {\n            \"type\": \"FactSet\",\n            \"separator\" :true,\n            \"spacing\" : \"medium\",\n            \"facts\": [\n                {\n                \"title\": \"Budget name\",\n                \"value\": \"@{body('Parse_trigger_body')?['data']?['BudgetName']}\"\n                },\n                {\n                \"title\": \"Budget start date\",\n                \"value\": \"@{body('Parse_trigger_body')?['data']?['BudgetStartDate']}\"\n                },\n                {\n                \"title\": \"Budget type\",\n                \"value\": \"@{body('Parse_trigger_body')?['data']?['BudgetType']}\"\n                },\n                {\n                \"title\": \"Budget amount\",\n                \"value\": \"$@{body('Parse_trigger_body')?['data']?['BudgetThreshold']}\"\n                },\n                {\n                \"title\": \"Notification threshold for forecast alert\",\n                \"value\": \"$@{body('Parse_trigger_body')?['data']?['NotificationThresholdAmount']}\"\n                },\n                {\n                \"title\": \"Total forecasted for period\",\n                \"value\": \"@{body('Parse_trigger_body')?['data']?['ForecastedTotalForPeriod']}\"\n                },\n                {\n                \"title\": \"Alert generation time\",\n                \"value\": \"@{body('Parse_trigger_body')?['data']?['AlertGenerationTime']}\"\n                }\n            ]\n        }        \n    ],\n    \"actions\": [\n\n        {\n            \"type\": \"Action.OpenUrl\",\n            \"title\": \"Click to review budget alerts in Azure\",\n            \"url\": \"https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/@{body('Parse_trigger_body')?['data']?['SubscriptionId']}/costAlerts\"\n        }\n    ],\n    \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\",\n    \"version\": \"1.2\"\n}",
+                                                                    "recipient": "[parameters('recipient')]"
+                                                                },
+                                                                "host": {
+                                                                    "connection": {
+                                                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                                                    }
+                                                                },
+                                                                "method": "post",
+                                                                "path": "/v1.0/teams/conversation/adaptivecard/poster/Flow bot/location/@{encodeURIComponent('Chat with Flow bot')}"
+                                                            },
+                                                            "runAfter": {},
+                                                            "type": "ApiConnection"
+                                                        }
+                                                    },
+                                                    "case": "ForecastCostThresholdExceeded"
+                                                }
+                                            },
+                                            "default": {
+                                                "actions": {}
+                                            },
+                                            "expression": "@body('Parse_alert_type')?['properties']?['definition']?['criteria']",
+                                            "runAfter": {
+                                                "Parse_alert_type": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "Switch"
+                                        }
+                                    },
+                                    "outputs": {}
+                                },
+                                "parameters": {
+                                    "$connections": {
+                                        "value": {
+                                            "teams": {
+                                                "connectionId": "[resourceId('Microsoft.Web/connections', variables('connectionNameTeams'))]",
+                                                "connectionName": "[variables('connectionNameTeams')]",
+                                                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('rgLocation'), '/managedApis/', 'teams')]"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "dependsOn" :[
+                                "[resourceId('Microsoft.Web/connections',variables('connectionNameTeams'))]"
+                            ]  
+                        },
+                        {
+                            "type": "microsoft.insights/actionGroups",
+                            "apiVersion": "2019-06-01",
+                            "name": "[variables('actionGroupName')]",
+                            "location": "global",
+                            "properties": {
+                                "enabled": true,
+                                "groupShortName": "Azure-Budget",
+                                "logicAppReceivers": [
+                                    {
+                                        "callbackUrl": "[listCallbackURL(concat('/subscriptions/', subscription().subscriptionId ,'/resourceGroups/', parameters('rgName'), '/providers/Microsoft.Logic/workflows/' , variables('logicAppName'), '/triggers/manual'), '2019-05-01').value]",
+                                        "name": "AzLogicApp",
+                                        "resourceId": "[resourceId('Microsoft.Logic/workflows', variables('logicAppName'))]",
+                                        "useCommonAlertSchema": false
+                                    }
+                                ]
+                            },
+                            "dependsOn" :[
+                                "[resourceId('Microsoft.Logic/workflows',variables('logicAppName'))]"
+                            ]  
+                        }
+                    ],
+                    "outputs": {
+                        "principalID" : {
+                            "type" : "string",
+                            "value" : "[reference(resourceId('Microsoft.Logic/workflows',variables('logicAppName')), '2019-05-01', 'Full').identity.principalId]"
+                        },
+                        "actionGroupsID" : {
+                            "type" : "string",
+                            "value" : "[resourceId('microsoft.insights/actionGroups',variables('actionGroupName'))]"
+                        }
+                    }
+                }
+            }
+        },        
+        {
+            "type": "Microsoft.Consumption/budgets",
+            "apiVersion": "2019-04-01-preview",
+            "name": "[variables('budgetAlertName')]",
+            "condition": "[variables('deployThisResource')]",
+            "dependsOn": [
+                "nestedDeployment"
+            ],             
+            "properties": {
+                "amount": "[parameters('azureBudget')]",
+                "category": "Cost",
+                "timeGrain": "Monthly",
+                "timePeriod": {
+                    "startDate": "[parameters('startDay')]"
+                },
+                "filter": {},
+                "notifications": {
+                    "actual_threshold": {
+                        "enabled": true,
+                        "operator": "GreaterThan",
+                        "threshold": "[variables('actual_threshold')]",
+                        "contactEmails": [],
+                        "contactRoles": [],
+                        "contactGroups": [
+                            "[if(variables('deployThisResource'),reference('nestedDeployment').outputs.actionGroupsID.value,'Does not matter')]"
+                        ],
+                        "thresholdType": "Actual"
+                    },
+                    "forecasted_threshold": {
+                        "enabled": true,
+                        "operator": "GreaterThan",
+                        "threshold": "[variables('forecasted_threshold')]",
+                        "contactEmails": [],
+                        "contactRoles": [],
+                        "contactGroups": [
+                            "[if(variables('deployThisResource'),reference('nestedDeployment').outputs.actionGroupsID.value,'Does not matter')]"
+                        ],
+                        "thresholdType": "Forecasted"
+                    }                
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2019-04-01-preview",
+            "name": "[variables('roleAssignmentName')]",
+            "condition": "[variables('deployThisResource')]",
+            "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('costManagerReaderRoleId'))]",
+                "principalId": "[if(variables('deployThisResource'),reference('nestedDeployment').outputs.principalID.value,'Does not matter')]",
+                "principalType": "ServicePrincipal",
+                "scope" : "[subscription().id]"
+            },
+            "dependsOn": [
+                "nestedDeployment"
+            ]   
+        }              
+    ],
+    "outputs": {}
+}
