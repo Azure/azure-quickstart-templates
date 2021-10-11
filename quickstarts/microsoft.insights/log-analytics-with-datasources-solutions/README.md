@@ -1,4 +1,4 @@
-# Log Analytics
+# Log Analytics workspace with solutions and data sources
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/log-analytics-with-datasources-solutions/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.insights/log-analytics-with-datasources-solutions/PublicDeployment.svg)
