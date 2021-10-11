@@ -15,7 +15,8 @@ param name string
 ])
 param sku string
 
-@description('The workspace data retention in days, between 30 and 730')
+@description('The workspace data retention in days. Allowed values are per pricing plan. See pricing tiers documentation for details.')
+
 @minValue(7)
 @maxValue(730)
 param retentionInDays int
