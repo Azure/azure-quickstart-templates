@@ -43,19 +43,13 @@ param vpnClientAddressPool string = '172.16.0.0/24'
 param tenantId string = subscription().tenantId
 
 @description('The cloud your tenant is in')
-@allowed([
-  'Public'
-  'Government'
-  'Germany'
-  'China'
-])
-param cloud string = 'Public'
+param cloud string = environment().name
 
 var audienceMap = {
-  Public: '41b23e61-6c1e-4545-b367-cd054e0ed4b4'
-  Government: '51bb15d4-3a4f-4ebf-9dca-40096fe32426'
-  Germany: '538ee9e6-310a-468d-afef-ea97365856a9'
-  China: '49f817b6-84ae-4cc0-928c-73f27289b3aa'
+  AzureCloud: '41b23e61-6c1e-4545-b367-cd054e0ed4b4'
+  AzureUSGovernment: '51bb15d4-3a4f-4ebf-9dca-40096fe32426'
+  AzureGermanCloud: '538ee9e6-310a-468d-afef-ea97365856a9'
+  AzureChinaCloud: '49f817b6-84ae-4cc0-928c-73f27289b3aa'
 }
 
 var audience = audienceMap[cloud]
