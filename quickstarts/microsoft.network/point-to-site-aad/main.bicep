@@ -53,7 +53,7 @@ var audienceMap = {
 }
 
 var audience = audienceMap[cloud]
-var tenant = '${environment().authentication.loginEndpoint}${tenantId}/' 
+var tenant = uri(environment().authentication.loginEndpoint, tenantId)
 var issuer = 'https://sts.windows.net/${tenantId}/'
 var gatewaySubnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, 'GatewaySubnet')
 var publicIPAddressRef =  resourceId('Microsoft.Network/publicIPAddresses', gatewayPublicIPName)
