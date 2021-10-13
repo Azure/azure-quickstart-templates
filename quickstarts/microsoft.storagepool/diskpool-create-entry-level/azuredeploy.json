@@ -2,14 +2,16 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "diskPoolTier": {
+        "diskPoolSku": {
             "type": "string",
-            "defaultValue": "Standard",
+            "defaultValue": "Standard_S1",
             "allowedValues": [
-                "Standard"
+                "Basic_B1",
+                "Standard_S1",
+                "Premium_P1"
             ],
             "metadata": {
-                "description": "Tier of the Disk Pool"
+                "description": "Sku of the Disk Pool"
             }
         },
         "diskPoolLocation": {
@@ -43,14 +45,7 @@
             "metadata": {
                 "description": "Specifies the principal ID of StoragePool Resource Provider."
             }
-        },
-        "roleNameGuid": {
-            "type": "string",
-            "defaultValue": "[newGuid()]",
-            "metadata": {
-                "description": "A new GUID used to identify the role assignment"
-            }
-          }, 
+        }, 
         "availabilityZone": {
             "defaultValue": 1,
             "type": "string",
@@ -98,7 +93,8 @@
     },
     "variables": {
         "diskId": "[resourceId('Microsoft.Compute/disks/', parameters('managedDiskName'))]",
-        "diskPoolOperatorRoleDefinitionId": "60fc6e62547942d48bf467625fcc2840"
+        "diskPoolOperatorRoleDefinitionId": "60fc6e62547942d48bf467625fcc2840",
+        "roleAssignmentGuid": "[guid(resourceGroup().id)]"
     },
     "resources": [
         {
@@ -114,32 +110,33 @@
                 "creationData": {
                     "createOption": "Empty"
                 },
-                "diskSizeGB": 1023
+                "diskSizeGB": 1024,
+                "maxShares": 2
             }
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
-            "name": "[parameters('roleNameGuid')]",
+            "name": "[variables('roleAssignmentGuid')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/disks/', parameters('managedDiskName'))]"
             ],
             "apiVersion": "2020-04-01-preview",
             "properties": {
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('diskPoolOperatorRoleDefinitionId'))]",
-                "principalId": "[parameters('principalId')]"
+                "principalId": "[parameters('principalId')]",
+                "principalType": "ServicePrincipal"
             }
         },
         {
             "type": "Microsoft.StoragePool/diskPools",
-            "apiVersion": "2021-04-01-preview",
+            "apiVersion": "2021-08-01",
             "name": "[parameters('diskPoolName')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/disks/', parameters('managedDiskName'))]",
-                "[resourceId('Microsoft.Authorization/roleAssignments/', parameters('roleNameGuid'))]"
+                "[resourceId('Microsoft.Authorization/roleAssignments/', variables('roleAssignmentGuid'))]"
             ],
             "sku": {
-                "name": "[parameters('diskPoolTier')]",
-                "tier": "[parameters('diskPoolTier')]"
+                "name": "[parameters('diskPoolSku')]"
             },
             "location": "[parameters('diskPoolLocation')]",
             "properties": {
@@ -154,7 +151,7 @@
         },
         {
             "type": "Microsoft.StoragePool/diskPools/iscsiTargets",
-            "apiVersion": "2021-04-01-preview",
+            "apiVersion": "2021-08-01",
             "name": "[concat(parameters('diskPoolName'), '/', parameters('targetName'))]",
             "dependsOn": [
                 "[parameters('diskPoolName')]"
