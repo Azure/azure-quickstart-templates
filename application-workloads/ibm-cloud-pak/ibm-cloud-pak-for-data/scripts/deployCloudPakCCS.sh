@@ -9,6 +9,8 @@ export CLUSTERNAME=$6
 export DOMAINNAME=$7
 export OPENSHIFTUSER=$8
 export APIKEY=$9
+export CHANNEL=${10}
+export VERSION=${11}
 
 export INSTALLERHOME=/home/$SUDOUSER/.ibm
 export OPERATORNAMESPACE=ibm-common-services
@@ -47,7 +49,7 @@ metadata:
   name: ibm-cpd-ccs-operator
   namespace: $OPERATORNAMESPACE
 spec:
-  channel: v1.0
+  channel: $CHANNEL
   config:
     resources: {}
   installPlanApproval: Automatic

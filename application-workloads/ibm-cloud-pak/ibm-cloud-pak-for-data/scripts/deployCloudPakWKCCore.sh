@@ -9,6 +9,8 @@ export CLUSTERNAME=$6
 export DOMAINNAME=$7
 export OPENSHIFTUSER=$8
 export APIKEY=$9
+export CHANNEL=${10}
+export VERSION=${11}
 
 export INSTALLERHOME=/home/$SUDOUSER/.ibm
 export OPERATORNAMESPACE=ibm-common-services
@@ -37,6 +39,55 @@ var=$?
 echo "exit code: $var"
 done
 
+## Creating IIS SC yaml 
+
+runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-wkc-iis-scc.yaml <<EOF
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegeEscalation: true
+allowPrivilegedContainer: false
+allowedCapabilities: null
+apiVersion: security.openshift.io/v1
+defaultAddCapabilities: null
+fsGroup:
+  type: RunAsAny
+kind: SecurityContextConstraints
+metadata:
+  annotations:
+    kubernetes.io/description: WKC/IIS provides all features of the restricted SCC
+      but runs as user 10032.
+  name: wkc-iis-scc
+readOnlyRootFilesystem: false
+requiredDropCapabilities:
+- KILL
+- MKNOD
+- SETUID
+- SETGID
+runAsUser:
+  type: MustRunAs
+  uid: 10032
+seLinuxContext:
+  type: MustRunAs
+supplementalGroups:
+  type: RunAsAny
+volumes:
+- configMap
+- downwardAPI
+- emptyDir
+- persistentVolumeClaim
+- projected
+- secret
+users:
+- system:serviceaccount:$CPDNAMESPACE:wkc-iis-sa
+EOF"
+
+runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/ibm-wkc-iis-scc.yaml"
+runuser -l $SUDOUSER -c "echo 'Sleeping for 1m' "
+runuser -l $SUDOUSER -c "sleep 1m"
+
 # WKC subscription and CR creation 
 
 runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-wkc-sub.yaml <<EOF
@@ -50,7 +101,7 @@ metadata:
   name: ibm-cpd-wkc-operator
   namespace: ibm-common-services
 spec:
-  channel: v1.0
+  channel: $CHANNEL
   installPlanApproval: Automatic
   name: ibm-cpd-wkc
   source: ibm-operator-catalog
@@ -65,12 +116,14 @@ metadata:
   name: wkc-cr
   namespace: $CPDNAMESPACE
 spec:
-  version: \"4.0.0\"
+  version: \"$VERSION\"
   storageVendor: \"$STORAGEVENDOR_VALUE\"
   license:
     accept: true
     license: Enterprise
   docker_registry_prefix: cp.icr.io/cp/cpd
+  useODLM: true
+  install_wkc_core_only: true
 EOF"
 
 runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-wkc-nfs-cr.yaml <<EOF
@@ -80,12 +133,14 @@ metadata:
   name: wkc-cr
   namespace: $CPDNAMESPACE
 spec:
-  version: \"4.0.0\"
+  version: \"$VERSION\"
   storageClass: \"$STORAGECLASS_VALUE\"
   license:
     accept: true
     license: Enterprise
   docker_registry_prefix: cp.icr.io/cp/cpd
+  useODLM: true
+  install_wkc_core_only: true
 EOF"
 
 ## Creating Subscription 

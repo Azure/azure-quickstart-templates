@@ -9,6 +9,8 @@ export CLUSTERNAME=$6
 export DOMAINNAME=$7
 export OPENSHIFTUSER=$8
 export APIKEY=$9
+export CHANNEL=${10}
+export VERSION=${11}
 
 export INSTALLERHOME=/home/$SUDOUSER/.ibm
 export OPERATORNAMESPACE=ibm-common-services
@@ -43,14 +45,14 @@ runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-wos-sub.yaml <<EOF
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
-  name: ibm-watson-openscale-operator
+  name: ibm-watson-openscale-operator-subscription
   labels:
-    app.kubernetes.io/instance: ibm-watson-openscale-operator
+    app.kubernetes.io/instance: ibm-watson-openscale-operator-subscription
     app.kubernetes.io/managed-by: ibm-watson-openscale-operator
-    app.kubernetes.io/name: ibm-watson-openscale-operator
+    app.kubernetes.io/name: ibm-watson-openscale-operator-subscription
   namespace: $OPERATORNAMESPACE
 spec:
-  channel: alpha
+  channel: $CHANNEL
   installPlanApproval: Automatic
   name: ibm-cpd-wos
   source: ibm-operator-catalog
@@ -66,7 +68,7 @@ metadata:
 spec:
   scaleConfig: small
   storageClass: \"$STORAGECLASS_VALUE\"
-  version: 4.0.0
+  version: $VERSION
   type: service
   license:
     accept: true

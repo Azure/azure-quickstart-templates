@@ -9,6 +9,8 @@ export CLUSTERNAME=$6
 export DOMAINNAME=$7
 export OPENSHIFTUSER=$8
 export APIKEY=$9
+export CHANNEL=${10}
+export VERSION=${11}
 
 export INSTALLERHOME=/home/$SUDOUSER/.ibm
 export OPERATORNAMESPACE=ibm-common-services
@@ -20,13 +22,17 @@ export CPDTEMPLATES=/home/$SUDOUSER/.cpd/templates
 if [[ $STORAGEOPTION == "portworx" ]]; then
     STORAGECLASS_VALUE="portworx-shared-gp3"
     STORAGEVENDOR_VALUE="portworx"
+    STORAGE_TYPE_KEY="storageVendor"
 elif [[ $STORAGEOPTION == "ocs" ]]; then
     STORAGECLASS_VALUE="ocs-storagecluster-cephfs"
     STORAGEVENDOR_VALUE="ocs"
+    STORAGE_TYPE_KEY="storageVendor"
 elif [[ $STORAGEOPTION == "nfs" ]]; then
     STORAGECLASS_VALUE="nfs"
     STORAGEVENDOR_VALUE=""
+    STORAGE_TYPE_KEY="storageClass"
 fi
+STORAGE_TYPE_VALUE=$STORAGEOPTION
 
 #Login
 var=1
@@ -38,9 +44,9 @@ echo "exit code: $var"
 done
 
 
-# Spark subscription and CR creation 
+# Spark (Analytics Engine) subscription and CR creation 
 
-runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-spark-sub.yaml <<EOF
+runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-analyticsengine-sub.yaml <<EOF
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
@@ -51,34 +57,30 @@ metadata:
   name: ibm-cpd-ae-operator-subscription
   namespace: $OPERATORNAMESPACE
 spec:
-    channel: stable-v1
+    channel: $CHANNEL
     installPlanApproval: Automatic
     name: analyticsengine-operator
     source: ibm-operator-catalog
     sourceNamespace: openshift-marketplace
 EOF"
 
-runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-spark-cr.yaml <<EOF
+runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-analyticsengine-cr.yaml <<EOF
 apiVersion: ae.cpd.ibm.com/v1
 kind: AnalyticsEngine
 metadata:
   name: analyticsengine-cr
   namespace: $CPDNAMESPACE
-  labels:
-    app.kubernetes.io/instance: ibm-analyticsengine-operator
-    app.kubernetes.io/managed-by: ibm-analyticsengine-operator
-    app.kubernetes.io/name: ibm-analyticsengine-operator
-    build: 4.0.0
 spec:
-  version: \"4.0.0\"
-  storageClass: $STORAGECLASS_VALUE
+  version: \"$VERSION\"
+  $STORAGE_TYPE_KEY: $STORAGE_TYPE_VALUE
   license:
     accept: true
+    license: Enterprise
 EOF"
 
 ## Creating Subscription 
 
-runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/ibm-spark-sub.yaml"
+runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/ibm-analyticsengine-sub.yaml"
 runuser -l $SUDOUSER -c "echo 'Sleeping for 5m' "
 runuser -l $SUDOUSER -c "sleep 5m"
 
@@ -105,7 +107,7 @@ done
 
 ## Creating ibm-spark cr
 
-runuser -l $SUDOUSER -c "oc project $CPDNAMESPACE; oc create -f $CPDTEMPLATES/ibm-spark-cr.yaml"
+runuser -l $SUDOUSER -c "oc project $CPDNAMESPACE; oc create -f $CPDTEMPLATES/ibm-analyticsengine-cr.yaml"
 
 # Check CR Status
 
