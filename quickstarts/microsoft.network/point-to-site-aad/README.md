@@ -19,6 +19,6 @@
 
 This template deploys a Virtual Network with a frontend and gateway subnet. It then creates a public IP which is used to create a VPN Gateway in the VNet. Finally, it deploys a VPN Virtual Network Gateway configured for Azure Active Directory Point-to-Site (P2S) connections.
 
-Modify parameters file to change default names and addresses spaces. You must also provide the [ID](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant) of the tenant you using AAD with.
+Modify parameters file to change default names and addresses spaces.
 
 `Tags: VPN, Virtual Network Gateway, P2S, Point-to-site, AAD, Azure Active Directory`

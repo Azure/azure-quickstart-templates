@@ -39,12 +39,6 @@ param vpnType string = 'RouteBased'
 @description('The IP address range from which VPN clients will receive an IP address when connected. Range specified must not overlap with on-premise network')
 param vpnClientAddressPool string = '172.16.0.0/24'
 
-@description('TenantID for the Azure AD tenant')
-param tenantId string = subscription().tenantId
-
-@description('The cloud your tenant is in')
-param cloud string = environment().name
-
 var audienceMap = {
   AzureCloud: '41b23e61-6c1e-4545-b367-cd054e0ed4b4'
   AzureUSGovernment: '51bb15d4-3a4f-4ebf-9dca-40096fe32426'
@@ -52,6 +46,8 @@ var audienceMap = {
   AzureChinaCloud: '49f817b6-84ae-4cc0-928c-73f27289b3aa'
 }
 
+var tenantId = subscription().tenantId
+var cloud = environment().name
 var audience = audienceMap[cloud]
 var tenant = uri(environment().authentication.loginEndpoint, tenantId)
 var issuer = 'https://sts.windows.net/${tenantId}/'
