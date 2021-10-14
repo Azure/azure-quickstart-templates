@@ -1,4 +1,4 @@
-# Cloud Pak for Data 4.0 on Azure
+# Cloud Pak for Data 4.0.2 on Azure
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/ibm-cloud-pak/ibm-cloud-pak-for-data/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/ibm-cloud-pak/ibm-cloud-pak-for-data/PublicDeployment.svg)
 
@@ -16,7 +16,7 @@ Cloud Pak for Data uses IBM’s deep analytics portfolio to help organizations m
 
 Cloud Pak for Data uses Azure services and features, including VNets, Availability Zones, Availability Sets, security groups, Managed Disks, and Azure Load Balancers to build a reliable and scalable cloud platform.
 
-This deployment guide provides step-by-step instructions for deploying IBM Cloud Pak for Data on a Red Hat OpenShift Container Platform 4.6 cluster on Azure. With this Template, you can automatically deploy a multi-master, production instance of Cloud Pak for Data. See [Services](#cloud-pak-for-data-services) for the services that are enabled in this deployment.
+This deployment guide provides step-by-step instructions for deploying IBM Cloud Pak for Data on a Red Hat OpenShift Container Platform 4.8 cluster on Azure. With this Template, you can automatically deploy a multi-master, production instance of Cloud Pak for Data. See [Services](#cloud-pak-for-data-services) for the services that are enabled in this deployment.
 
 ## Cost and licenses
 Cloud Pak for Data offers a try and buy experience.
@@ -204,7 +204,7 @@ As part of the deployment, the following services can be enabled:
 •	Data Virtualization
 •	Watson Openscale
 •	Cognos Dashboard
-•	Spark
+•	Analytics Engine
 
 
 To get information on various other services that are available, you can visit [Cloud Pak for Data Service Catalog](https://www.ibm.com/support/producthub/icpdata/docs/content/SSQNUZ_current/cpd/svc/services.html)
