@@ -42,4 +42,4 @@
 | `installWatsonOpenscaleAndWatsonMachineLearning` | no | Install Watson AI Openscale Add-On |
 | `installWatsonMachineLearning` | no | Install Watson Machine Learning Add-On |
 | `installCognosDashboard` | no | Install Cognos Dashboard |
-| `installApacheSpark` | no | Install Apache Spark |
+| `installAnalyticsEngine` | no | Install AnalyticsEngine |

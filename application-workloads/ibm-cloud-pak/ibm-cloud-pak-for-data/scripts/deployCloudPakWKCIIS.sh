@@ -9,6 +9,8 @@ export CLUSTERNAME=$6
 export DOMAINNAME=$7
 export OPENSHIFTUSER=$8
 export APIKEY=$9
+export CHANNEL=${10}
+export VERSION=${11}
 
 export INSTALLERHOME=/home/$SUDOUSER/.ibm
 export OPERATORNAMESPACE=ibm-common-services
@@ -37,8 +39,7 @@ var=$?
 echo "exit code: $var"
 done
 
-# IIS case package download  and CR creation 
-
+# IIS CR creation
 
 runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-iis-ocs-pwx-cr.yaml <<EOF
 apiVersion: iis.cpd.ibm.com/v1alpha1
@@ -47,6 +48,7 @@ metadata:
   name: iis-cr
   namespace: $CPDNAMESPACE
 spec:
+  version: \"$VERSION\"
   storageVendor: \"$STORAGEVENDOR_VALUE\"
   license:
     accept: true
@@ -62,6 +64,7 @@ metadata:
   name: iis-cr
   namespace: $CPDNAMESPACE
 spec:
+  version: \"$VERSION\"
   storageClass: \"$STORAGECLASS_VALUE\"
   license:
     accept: true
@@ -72,7 +75,7 @@ EOF"
 
 ## Creating IIS SC yaml 
 
-runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-iis-scc.yaml <<EOF
+runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-wkc-iis-scc.yaml <<EOF
 allowHostDirVolumePlugin: false
 allowHostIPC: false
 allowHostNetwork: false
@@ -115,24 +118,35 @@ users:
 - system:serviceaccount:$CPDNAMESPACE:wkc-iis-sa
 EOF"
 
-runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/ibm-iis-scc.yaml"
+runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/ibm-wkc-iis-scc.yaml"
 runuser -l $SUDOUSER -c "echo 'Sleeping for 1m' "
 runuser -l $SUDOUSER -c "sleep 1m"
 
-# Check ibm-cpd-iis-operator pod status
+# IIS Subscription
+runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-iis-sub.yaml <<EOF
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  labels:
+    app.kubernetes.io/instance: ibm-cpd-iis-operator-catalog-subscription
+    app.kubernetes.io/managed-by: ibm-cpd-iis-operator
+    app.kubernetes.io/name: ibm-cpd-iis-operator-catalog-subscription
+  generation: 1
+  name: ibm-cpd-iis-operator-catalog-subscription
+  namespace: $OPERATORNAMESPACE
+spec:
+    channel: $CHANNEL
+    installPlanApproval: Automatic
+    name: ibm-cpd-iis
+    source: ibm-operator-catalog
+    sourceNamespace: openshift-marketplace
+EOF"
 
-runuser -l $SUDOUSER -c "wget https://raw.githubusercontent.com/IBM/cloud-pak/master/repo/case/ibm-iis/4.0.0/ibm-iis-4.0.0.tgz -P $CPDTEMPLATES -A 'ibm-iis-4.0.0.tgz'"
-
-runuser -l $SUDOUSER -c "cloudctl case launch  \
-    --case $CPDTEMPLATES/ibm-iis-4.0.0.tgz     \
-    --namespace $OPERATORNAMESPACE             \
-    --inventory iisOperatorSetup               \
-    --action installOperator                   \
-    --tolerance=1"
-
+runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/ibm-iis-sub.yaml"
 runuser -l $SUDOUSER -c "echo 'Sleeping 2m for operator to install'"
 runuser -l $SUDOUSER -c "sleep 2m"
 
+# Check ibm-cpd-iis-operator pod status
 
 podname="ibm-cpd-iis-operator"
 name_space=$OPERATORNAMESPACE

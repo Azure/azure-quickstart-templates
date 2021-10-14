@@ -9,6 +9,8 @@ export CLUSTERNAME=$6
 export DOMAINNAME=$7
 export OPENSHIFTUSER=$8
 export APIKEY=$9
+export CHANNEL=${10}
+export VERSION=${11}
 
 export INSTALLERHOME=/home/$SUDOUSER/.ibm
 export OPERATORNAMESPACE=ibm-common-services
@@ -50,11 +52,11 @@ done
 
 #CPD Config
 
-runuser -l $SUDOUSER -c "wget https://github.com/IBM/cloud-pak-cli/releases/download/v3.8.0/cloudctl-linux-amd64.tar.gz -O $CPDTEMPLATES/cloudctl-linux-amd64.tar.gz"
-runuser -l $SUDOUSER -c "https://github.com/IBM/cloud-pak-cli/releases/download/v3.8.0/cloudctl-linux-amd64.tar.gz.sig -O $CPDTEMPLATES/cloudctl-linux-amd64.tar.gz.sig"
-runuser -l $SUDOUSER -c "cd $CPDTEMPLATES && sudo tar -xvf cloudctl-linux-amd64.tar.gz -C /usr/local/bin"
-runuser -l $SUDOUSER -c "chmod +x /usr/local/bin/cloudctl-linux-amd64"
-runuser -l $SUDOUSER -c "sudo mv /usr/local/bin/cloudctl-linux-amd64 /usr/local/bin/cloudctl"
+#runuser -l $SUDOUSER -c "wget https://github.com/IBM/cloud-pak-cli/releases/download/v3.8.0/cloudctl-linux-amd64.tar.gz -O $CPDTEMPLATES/cloudctl-linux-amd64.tar.gz"
+#runuser -l $SUDOUSER -c "https://github.com/IBM/cloud-pak-cli/releases/download/v3.8.0/cloudctl-linux-amd64.tar.gz.sig -O $CPDTEMPLATES/cloudctl-linux-amd64.tar.gz.sig"
+#runuser -l $SUDOUSER -c "cd $CPDTEMPLATES && sudo tar -xvf cloudctl-linux-amd64.tar.gz -C /usr/local/bin"
+#runuser -l $SUDOUSER -c "chmod +x /usr/local/bin/cloudctl-linux-amd64"
+#runuser -l $SUDOUSER -c "sudo mv /usr/local/bin/cloudctl-linux-amd64 /usr/local/bin/cloudctl"
 
 # Service Account Token for CPD installation
 runuser -l $SUDOUSER -c "oc new-project $CPDNAMESPACE"
@@ -67,10 +69,9 @@ runuser -l $SUDOUSER -c "oc create serviceaccount cpdtoken"
 runuser -l $SUDOUSER -c "oc policy add-role-to-user admin system:serviceaccount:$OPERATORNAMESPACE:cpdtoken"
 
 ## Installing jq
-echo $(date) "Install jq starting..."
-yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-yum install -y jq
-echo $(date) "Install jq completed..."
+runuser -l $SUDOUSER -c "wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -O  $CPDTEMPLATES/jq"
+runuser -l $SUDOUSER -c "sudo mv $CPDTEMPLATES/jq /usr/local/bin"
+runuser -l $SUDOUSER -c "sudo chmod +x /usr/local/bin/jq"
 
 
 # Update global pull secret and sysctl changes: 
@@ -138,6 +139,23 @@ spec:
       interval: 45m
 EOF"
 
+runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/db2u-catalogsource.yaml <<EOF
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: ibm-db2uoperator-catalog
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  image: docker.io/ibmcom/ibm-db2uoperator-catalog:latest
+  imagePullPolicy: Always
+  displayName: IBM Db2U Catalog
+  publisher: IBM
+  updateStrategy:
+    registryPoll:
+      interval: 45m
+EOF"
+
 runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-operator-og.yaml <<EOF
 apiVersion: operators.coreos.com/v1alpha2
 kind: OperatorGroup
@@ -149,20 +167,6 @@ spec:
   - ibm-common-services
 EOF"
 
-runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-operator-sub.yaml <<EOF
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: ibm-common-service-operator
-  namespace: ibm-common-services
-spec:
-  channel: v3
-  installPlanApproval: Automatic
-  name: ibm-common-service-operator
-  source: ibm-operator-catalog
-  sourceNamespace: openshift-marketplace
-EOF"
-
 runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/cpd-platform-operator-sub.yaml <<EOF
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
@@ -170,7 +174,7 @@ metadata:
   name: cpd-operator
   namespace: ibm-common-services    # The project that contains the Cloud Pak for Data operator
 spec:
-  channel: stable-v1
+  channel: $CHANNEL
   installPlanApproval: Automatic
   name: cpd-platform-operator
   source: ibm-operator-catalog
@@ -182,7 +186,7 @@ apiVersion: operator.ibm.com/v1alpha1
 kind: OperandRequest
 metadata:
   name: empty-request
-  namespace: $CPDNAMESPACE
+  namespace: $CPDNAMESPACE        # Replace with the project where you will install Cloud Pak for Data
 spec:
   requests: []
 EOF"
@@ -193,6 +197,12 @@ EOF"
 runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/ibm-operator-catalogsource.yaml"
 runuser -l $SUDOUSER -c "echo 'Sleeping for 1m' "
 runuser -l $SUDOUSER -c "sleep 1m"
+
+# Create DB2U Operator catalog source
+
+runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/db2u-catalogsource.yaml"
+runuser -l $SUDOUSER -c "echo 'Sleeping for 2m' "
+runuser -l $SUDOUSER -c "sleep 2m"
 
 # Check ibm-operator-catalog pod status
 
@@ -215,15 +225,19 @@ do
   echo "$pod_name is $status"
 done
 
+# Create IBM Operator Group
 
 runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/ibm-operator-og.yaml"
-runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/ibm-operator-sub.yaml"
-runuser -l $SUDOUSER -c "echo 'Sleeping for 5m' "
-runuser -l $SUDOUSER -c "sleep 5m"
 
-# Check operand-deployment-lifecycle-manager pod status
+# Creating CPD Platform operator subscription: 
 
-podname="operand-deployment-lifecycle-manager"
+runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/cpd-platform-operator-sub.yaml"
+runuser -l $SUDOUSER -c "echo 'Sleeping for ' "
+runuser -l $SUDOUSER -c "sleep 2m"
+
+# Check cpd-platform-operator-manager pod status
+
+podname="cpd-platform-operator-manager"
 name_space=$OPERATORNAMESPACE
 status="unknown"
 while [ "$status" != "Running" ]
@@ -242,15 +256,52 @@ do
   echo "$pod_name is $status"
 done
 
-# Creating CPD Platform operator subscription: 
+# Check ibm-namespace-scope-operator pod status
 
-runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/cpd-platform-operator-sub.yaml"
-runuser -l $SUDOUSER -c "echo 'Sleeping for 2m' "
-runuser -l $SUDOUSER -c "sleep 2m"
+podname="ibm-namespace-scope-operator"
+name_space=$OPERATORNAMESPACE
+status="unknown"
+while [ "$status" != "Running" ]
+do
+  pod_name=$(oc get pods -n $name_space | grep $podname | awk '{print $1}' )
+  ready_status=$(oc get pods -n $name_space $pod_name  --no-headers | awk '{print $2}')
+  pod_status=$(oc get pods -n $name_space $pod_name --no-headers | awk '{print $3}')
+  echo $pod_name State - $ready_status, podstatus - $pod_status
+  if [ "$ready_status" == "1/1" ] && [ "$pod_status" == "Running" ]
+  then 
+  status="Running"
+  else
+  status="starting"
+  sleep 10 
+  fi
+  echo "$pod_name is $status"
+done
 
-# Check cpd-platform-operator-manager pod status
+# Check ibm-common-service-operator pod status
 
-podname="cpd-platform-operator-manager"
+podname="ibm-common-service-operator"
+name_space=$OPERATORNAMESPACE
+status="unknown"
+while [ "$status" != "Running" ]
+do
+  pod_name=$(oc get pods -n $name_space | grep $podname | awk '{print $1}' )
+  ready_status=$(oc get pods -n $name_space $pod_name  --no-headers | awk '{print $2}')
+  pod_status=$(oc get pods -n $name_space $pod_name --no-headers | awk '{print $3}')
+  echo $pod_name State - $ready_status, podstatus - $pod_status
+  if [ "$ready_status" == "1/1" ] && [ "$pod_status" == "Running" ]
+  then 
+  status="Running"
+  else
+  status="starting"
+  sleep 10 
+  fi
+  echo "$pod_name is $status"
+done
+
+
+# Check operand-deployment-lifecycle-manager pod status
+
+podname="operand-deployment-lifecycle-manager"
 name_space=$OPERATORNAMESPACE
 status="unknown"
 while [ "$status" != "Running" ]
@@ -286,7 +337,7 @@ spec:
     license: Enterprise                                   # Specify the Cloud Pak for Data license you purchased
   storageClass: \"REPLACE_STORAGECLASS\"                    # Replace with the name of a RWX storage class
   zenCoreMetadbStorageClass: \"REPLACE_STORAGECLASS\"       # (Recommended) Replace with the name of a RWO storage class
-  version: \"4.0.1\"
+  version: \"$VERSION\"
 EOF"
 
 runuser -l $SUDOUSER -c "sed -i -e s#REPLACE_STORAGECLASS#$STORAGECLASS_VALUE#g $CPDTEMPLATES/ibmcpd-cr.yaml"
@@ -316,5 +367,10 @@ done
 echo "*************************************"
 echo "$CRNAME Installation Finished!!!!"
 echo "*************************************"
+
+# Enable CSV injector patch
+# Can be removed later if this is no longer required. 
+oc patch namespacescope common-service --type='json' -p='[{"op":"replace", "path": "/spec/csvInjector/enable", "value":true}]' -n $OPERATORNAMESPACE
+
 
 echo "$(date) - ############### Script Complete #############"

@@ -9,6 +9,8 @@ export CLUSTERNAME=$6
 export DOMAINNAME=$7
 export OPENSHIFTUSER=$8
 export APIKEY=$9
+export CHANNEL=${10}
+export VERSION=${11}
 
 export INSTALLERHOME=/home/$SUDOUSER/.ibm
 export OPERATORNAMESPACE=ibm-common-services
@@ -41,23 +43,24 @@ done
 
 # DV operator and CR creation 
 
-# Download DV case package. 
+runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-dv-sub.yaml <<EOF
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: ibm-dv-operator-catalog-subscription
+  namespace: $OPERATORNAMESPACE        # Pick the project that contains the Cloud Pak for Data operator
+spec:
+  channel: $CHANNEL
+  installPlanApproval: Automatic
+  name: ibm-dv-operator
+  source: ibm-operator-catalog
+  sourceNamespace: openshift-marketplace
+EOF"
 
-runuser -l $SUDOUSER -c "wget https://raw.githubusercontent.com/IBM/cloud-pak/master/repo/case/ibm-dv-case/1.7.0/ibm-dv-case-1.7.0.tgz -P $CPDTEMPLATES -A 'ibm-dv-case-1.7.0.tgz'"
+runuser -l $SUDOUSER -c "oc project $OPERATORNAMESPACE; oc create -f $CPDTEMPLATES/ibm-dv-sub.yaml"
 
-runuser -l $SUDOUSER -c "cloudctl case launch      \
-    --case $CPDTEMPLATES/ibm-dv-case-1.7.0.tgz     \
-    --namespace openshift-marketplace              \
-    --inventory dv                                 \
-    --action installCatalog                        \
-    --tolerance=1"
-
-runuser -l $SUDOUSER -c "cloudctl case launch      \
-    --case $CPDTEMPLATES/ibm-dv-case-1.7.0.tgz     \
-    --namespace $OPERATORNAMESPACE                 \
-    --inventory dv                                 \
-    --action installOperator                       \
-    --tolerance=1"
+runuser -l $SUDOUSER -c "echo 'Sleeping 2m for DV Subscription to install'"
+runuser -l $SUDOUSER -c "sleep 2m"
 
 runuser -l $SUDOUSER -c "echo 'Sleeping 2m for operator to install'"
 runuser -l $SUDOUSER -c "sleep 2m"
@@ -85,18 +88,30 @@ done
 
 ## Creating ibm-DV cr
 
-runuser -l $SUDOUSER -c "cloudctl case launch      \
-    --case $CPDTEMPLATES/ibm-dv-case-1.7.0.tgz     \
-    --namespace $CPDNAMESPACE                      \
-    --inventory dv                                 \
-    --action applyCustomResources                  \
-    --tolerance=1"
+runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-dv-cr.yaml <<EOF
+apiVersion: db2u.databases.ibm.com/v1
+kind: DvService
+metadata:
+  name: dv-service-cr
+  namespace: $CPDNAMESPACE
+spec:
+  license:
+    accept: true
+    license: Enterprise
+  version: $VERSION
+  size: "small"
+  docker_registry_prefix: cp.icr.io/cp/cpd
+EOF"
+
+runuser -l $SUDOUSER -c "oc project $OPERATORNAMESPACE; oc create -f $CPDTEMPLATES/ibm-dv-cr.yaml"
+runuser -l $SUDOUSER -c "echo 'Sleeping 2m for DV CR to be created'"
+runuser -l $SUDOUSER -c "sleep 2m"
 
 
 # Check CR Status
 
-SERVICE="dvservice"
-CRNAME="dv-service"
+SERVICE="DvService"
+CRNAME="dv-service-cr"
 SERVICE_STATUS="reconcileStatus"
 
 STATUS=$(oc get $SERVICE $CRNAME -n $CPDNAMESPACE -o json | jq .status.$SERVICE_STATUS | xargs) 

@@ -9,6 +9,8 @@ export CLUSTERNAME=$6
 export DOMAINNAME=$7
 export OPENSHIFTUSER=$8
 export APIKEY=$9
+export CHANNEL=${10}
+export VERSION=${11}
 
 export INSTALLERHOME=/home/$SUDOUSER/.ibm
 export OPERATORNAMESPACE=ibm-common-services
@@ -45,13 +47,13 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
   labels:
-    app.kubernetes.io/instance: ibm-cpd-wml-operator
+    app.kubernetes.io/instance: ibm-cpd-wml-operator-subscription
     app.kubernetes.io/managed-by: ibm-cpd-wml-operator
-    app.kubernetes.io/name: ibm-cpd-wml-operator
-  name: ibm-cpd-wml-operator
+    app.kubernetes.io/name: ibm-cpd-wml-operator-subscription
+  name: ibm-cpd-wml-operator-subscription
   namespace: $OPERATORNAMESPACE
 spec:
-    channel: alpha
+    channel: $CHANNEL
     installPlanApproval: Automatic
     name: ibm-cpd-wml-operator
     source: ibm-operator-catalog
@@ -65,7 +67,7 @@ metadata:
   name: wml-cr
   namespace: $CPDNAMESPACE
   labels:
-    app.kubernetes.io/instance: wml
+    app.kubernetes.io/instance: wml-cr
     app.kubernetes.io/managed-by: ibm-cpd-wml-operator
     app.kubernetes.io/name: ibm-cpd-wml-operator
 spec:
@@ -75,7 +77,7 @@ spec:
   docker_registry_prefix: \"cp.icr.io/cp/cpd\"
   storageClass: $STORAGECLASS_VALUE
   storageVendor: $STORAGEVENDOR_VALUE
-  version: \"4.0.0\"
+  version: \"$VERSION\"
   license:
     accept: true
     license: \"Enterprise\"
@@ -88,7 +90,7 @@ metadata:
   name: wml-cr
   namespace: $CPDNAMESPACE
   labels:
-    app.kubernetes.io/instance: wml
+    app.kubernetes.io/instance: wml-cr
     app.kubernetes.io/managed-by: ibm-cpd-wml-operator
     app.kubernetes.io/name: ibm-cpd-wml-operator
 spec:
@@ -97,7 +99,7 @@ spec:
   ignoreForMaintenance: false
   docker_registry_prefix: \"cp.icr.io/cp/cpd\"
   storageClass: $STORAGECLASS_VALUE
-  version: \"4.0.0\"
+  version: \"$VERSION\"
   license:
     accept: true
     license: \"Enterprise\"
