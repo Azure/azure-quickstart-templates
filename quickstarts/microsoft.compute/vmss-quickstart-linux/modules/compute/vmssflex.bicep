@@ -1,5 +1,5 @@
 param vmssname string = 'myVmssFlex'
-param region string = resourceGroup().location
+param location string = resourceGroup().location
 param zones array = []
 
 param vmSize string = 'Standard_DS1_v2'
@@ -67,7 +67,7 @@ var imageReference = (os == 'ubuntulinux' ? linuxImageReference : windowsImageRe
 
 resource vmssflex 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
   name: vmssname
-  location: region
+  location: location
   zones: zones
   sku: {
     name: vmSize

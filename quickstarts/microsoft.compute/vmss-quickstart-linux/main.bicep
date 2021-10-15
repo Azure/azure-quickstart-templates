@@ -39,7 +39,7 @@ module basenetwork './modules/network/basenetwork.bicep' = {
   name: 'basenetwork'
   params: {
     virtualNetworkName: vnetName
-    region:location
+    location:location
   }
 }
 
@@ -47,14 +47,14 @@ module slb './modules/network/slb.bicep' = {
   name: 'slb'
   params: {
     slbName: lbName
-    region:location
+    location:location
   }
 }
 
 module vmss './modules/compute/vmssflex.bicep' = {
   name: 'vmss-bicep'
   params: {
-    region:location
+    location:location
     vmssname: vmssName
     vmCount: instanceCount
     vmSize: sku
