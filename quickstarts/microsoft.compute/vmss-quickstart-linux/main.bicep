@@ -1,9 +1,11 @@
-
 @description('Name for the virtual machine scale set')
 param vmssName string = 'vmss-quickstart-linux'
+
 @description('Number of virtual machine instances in the scale set')
+@minValue(0)
 @maxValue(1000)
 param instanceCount int = 3
+
 @description('The platform fault domain count for your scale set. Set to 1 to allow Azure to maximally spread instances across many racks in the datacenter.')
 @allowed([
   1
@@ -28,6 +30,8 @@ param lbName string = '${vmssName}-LB'
   'windowsserver'
 ])
 param os string = 'ubuntulinux'
+@description('Region where the scale set will be deployed')
+param location string = resourceGroup().location
 
 var vnetName= '${vnetPrefix}${uniqueString(resourceGroup().name)}'
 
@@ -35,6 +39,7 @@ module basenetwork './modules/network/basenetwork.bicep' = {
   name: 'basenetwork'
   params: {
     virtualNetworkName: vnetName
+    region:location
   }
 }
 
@@ -42,12 +47,14 @@ module slb './modules/network/slb.bicep' = {
   name: 'slb'
   params: {
     slbName: lbName
+    region:location
   }
 }
 
 module vmss './modules/compute/vmssflex.bicep' = {
   name: 'vmss-bicep'
   params: {
+    region:location
     vmssname: vmssName
     vmCount: instanceCount
     vmSize: sku

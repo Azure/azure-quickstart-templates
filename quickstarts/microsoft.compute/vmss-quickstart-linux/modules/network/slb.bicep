@@ -1,13 +1,10 @@
 //LB name
 param slbName string = 'myLoadBalancer'
-
-
-var location = resourceGroup().location
+param region string = resourceGroup().location
 var slbPIPName = '${slbName}-PIP'
-
 resource slbPIP 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: slbPIPName
-  location: location
+  location: region
   sku:{
     tier: 'Regional'
     name: 'Standard'
@@ -20,11 +17,9 @@ resource slbPIP 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   zones: [
   ]
 }
-
 resource slb 'Microsoft.Network/loadBalancers@2021-02-01' = {
   name: slbName
-  location: location
-  tags: {}
+  location: region
   sku: {
     name: 'Standard'
     tier: 'Regional'
@@ -44,7 +39,6 @@ resource slb 'Microsoft.Network/loadBalancers@2021-02-01' = {
     ]
     backendAddressPools: [
       {
-        properties: {}
         name: 'bepool01'
       }
     ]

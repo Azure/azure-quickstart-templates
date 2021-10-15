@@ -1,5 +1,5 @@
 // Location for all resources.
-param location string = resourceGroup().location
+param region string = resourceGroup().location
 
 // Name of the VNET.
 param virtualNetworkName string = 'vNet'
@@ -14,7 +14,7 @@ var nsgName = '${virtualNetworkName}NSG'
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
   name: nsgName
-  location: location
+  location: region
   properties: {
     securityRules: [
       {
@@ -75,7 +75,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   name: virtualNetworkName
-  location: location
+  location: region
   properties: {
     addressSpace: {
       addressPrefixes: [

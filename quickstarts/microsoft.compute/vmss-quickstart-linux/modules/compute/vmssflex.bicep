@@ -10,6 +10,7 @@ param vmSize string = 'Standard_DS1_v2'
   5
 ])
 param platformFaultDomainCount int = 1
+@minValue(0)
 @maxValue(1000)
 param vmCount int = 3
 
