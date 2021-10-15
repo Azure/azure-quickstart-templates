@@ -1,0 +1,180 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "13492360287604246242"
+    }
+  },
+  "parameters": {
+    "frontDoorName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Front Door resource."
+      }
+    },
+    "customDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The custom domain name to associate with your Front Door."
+      }
+    },
+    "certificateKeyVaultResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "The fully qualified resource ID of the Key Vault that contains the custom domain's certificate."
+      }
+    },
+    "certificateKeyVaultSecretName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Key Vault secret that contains the custom domain's certificate."
+      }
+    },
+    "certificateKeyVaultSecretVersion": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The version of the Key Vault secret that contains the custom domain's certificate."
+      }
+    },
+    "backendAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "The hostname of the backend. Must be a public IP address or FQDN."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "frontEndEndpointDefaultHostName": "[format('{0}.azurefd.net', parameters('frontDoorName'))]",
+    "frontEndEndpointDefaultName": "[replace(variables('frontEndEndpointDefaultHostName'), '.', '-')]",
+    "frontEndEndpointCustomName": "[replace(parameters('customDomainName'), '.', '-')]",
+    "loadBalancingSettingsName": "loadBalancingSettings",
+    "healthProbeSettingsName": "healthProbeSettings",
+    "routingRuleName": "routingRule",
+    "backendPoolName": "backendPool"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/frontDoors",
+      "apiVersion": "2020-01-01",
+      "name": "[parameters('frontDoorName')]",
+      "location": "global",
+      "properties": {
+        "enabledState": "Enabled",
+        "frontendEndpoints": [
+          {
+            "name": "[variables('frontEndEndpointDefaultName')]",
+            "properties": {
+              "hostName": "[variables('frontEndEndpointDefaultHostName')]",
+              "sessionAffinityEnabledState": "Disabled"
+            }
+          },
+          {
+            "name": "[variables('frontEndEndpointCustomName')]",
+            "properties": {
+              "hostName": "[parameters('customDomainName')]",
+              "sessionAffinityEnabledState": "Disabled"
+            }
+          }
+        ],
+        "loadBalancingSettings": [
+          {
+            "name": "[variables('loadBalancingSettingsName')]",
+            "properties": {
+              "sampleSize": 4,
+              "successfulSamplesRequired": 2
+            }
+          }
+        ],
+        "healthProbeSettings": [
+          {
+            "name": "[variables('healthProbeSettingsName')]",
+            "properties": {
+              "path": "/",
+              "protocol": "Http",
+              "intervalInSeconds": 120
+            }
+          }
+        ],
+        "backendPools": [
+          {
+            "name": "[variables('backendPoolName')]",
+            "properties": {
+              "backends": [
+                {
+                  "address": "[parameters('backendAddress')]",
+                  "backendHostHeader": "[parameters('backendAddress')]",
+                  "httpPort": 80,
+                  "httpsPort": 443,
+                  "weight": 50,
+                  "priority": 1,
+                  "enabledState": "Enabled"
+                }
+              ],
+              "loadBalancingSettings": {
+                "id": "[resourceId('Microsoft.Network/frontDoors/loadBalancingSettings', parameters('frontDoorName'), variables('loadBalancingSettingsName'))]"
+              },
+              "healthProbeSettings": {
+                "id": "[resourceId('Microsoft.Network/frontDoors/healthProbeSettings', parameters('frontDoorName'), variables('healthProbeSettingsName'))]"
+              }
+            }
+          }
+        ],
+        "routingRules": [
+          {
+            "name": "[variables('routingRuleName')]",
+            "properties": {
+              "frontendEndpoints": [
+                {
+                  "id": "[resourceId('Microsoft.Network/frontDoors/frontEndEndpoints', parameters('frontDoorName'), variables('frontEndEndpointDefaultName'))]"
+                },
+                {
+                  "id": "[resourceId('Microsoft.Network/frontDoors/frontEndEndpoints', parameters('frontDoorName'), variables('frontEndEndpointCustomName'))]"
+                }
+              ],
+              "acceptedProtocols": [
+                "Http",
+                "Https"
+              ],
+              "patternsToMatch": [
+                "/*"
+              ],
+              "routeConfiguration": {
+                "@odata.type": "#Microsoft.Azure.FrontDoor.Models.FrontdoorForwardingConfiguration",
+                "forwardingProtocol": "MatchRequest",
+                "backendPool": {
+                  "id": "[resourceId('Microsoft.Network/frontDoors/backEndPools', parameters('frontDoorName'), variables('backendPoolName'))]"
+                }
+              },
+              "enabledState": "Enabled"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/frontdoors/frontendEndpoints/customHttpsConfiguration",
+      "apiVersion": "2020-07-01",
+      "name": "[format('{0}/{1}/{2}', parameters('frontDoorName'), variables('frontEndEndpointCustomName'), 'default')]",
+      "properties": {
+        "protocolType": "ServerNameIndication",
+        "certificateSource": "AzureKeyVault",
+        "keyVaultCertificateSourceParameters": {
+          "vault": {
+            "id": "[parameters('certificateKeyVaultResourceId')]"
+          },
+          "secretName": "[parameters('certificateKeyVaultSecretName')]",
+          "secretVersion": "[if(equals(parameters('certificateKeyVaultSecretVersion'), ''), null(), parameters('certificateKeyVaultSecretVersion'))]"
+        },
+        "minimumTlsVersion": "1.2"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/frontDoors', parameters('frontDoorName'))]"
+      ]
+    }
+  ]
+}
