@@ -393,7 +393,7 @@ resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' =
 }
 
 // ---- Application Insights ----
-resource applicationInsights 'Microsoft.Insights/components@2020-02-02-preview' = {
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: 'ai-${baseName}'
   location: location
   kind: 'web'
@@ -725,8 +725,6 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           }
           hostName: apiManagementProxyCustomHostname
           requireServerNameIndication: true
-          hostNames: []
-          customErrorConfigurations: []
         }
       }
       {
@@ -744,8 +742,6 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           }
           hostName: apiManagementPortalCustomHostname
           requireServerNameIndication: true
-          hostNames: []
-          customErrorConfigurations: []
         }
       }
       {
@@ -763,12 +759,9 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           }
           hostName: apiManagementManagementCustomHostname
           requireServerNameIndication: true
-          hostNames: []
-          customErrorConfigurations: []
         }
       }
     ]
-    urlPathMaps: []
     requestRoutingRules: [
       {
         name: 'gatewayrule'
@@ -828,7 +821,6 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           unhealthyThreshold: 8
           pickHostNameFromBackendHttpSettings: false
           minServers: 0
-          match: {}
         }
       }
       {
@@ -842,7 +834,6 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           unhealthyThreshold: 8
           pickHostNameFromBackendHttpSettings: false
           minServers: 0
-          match: {}
         }
       }
       {
@@ -856,20 +847,14 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           unhealthyThreshold: 8
           pickHostNameFromBackendHttpSettings: false
           minServers: 0
-          match: {}
         }
       }
     ]
-    rewriteRuleSets: []
-    redirectConfigurations: []
-    privateLinkConfigurations: []
     webApplicationFirewallConfiguration: {
       enabled: true
       firewallMode: 'Prevention'
       ruleSetType: 'OWASP'
       ruleSetVersion: '3.1'
-      disabledRuleGroups: []
-      exclusions: []
       requestBodyCheck: true
       maxRequestBodySizeInKb: 128
       fileUploadLimitInMb: 100
@@ -929,7 +914,6 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
     networkAcls: {
       bypass: 'None'
       defaultAction: 'Deny'
-      virtualNetworkRules: []
     }
   }
 
