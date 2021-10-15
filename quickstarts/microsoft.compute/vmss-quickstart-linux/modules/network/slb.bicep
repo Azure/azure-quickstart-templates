@@ -5,7 +5,7 @@ param slbName string = 'myLoadBalancer'
 var location = resourceGroup().location
 var slbPIPName = '${slbName}-PIP'
 
-resource slbPIP 'Microsoft.Network/publicIPAddresses@2020-08-01' = {
+resource slbPIP 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: slbPIPName
   location: location
   sku:{

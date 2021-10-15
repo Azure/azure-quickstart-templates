@@ -21,7 +21,7 @@ param sku string = 'Standard_B1s'
 @description('Virtual network prefix')
 param vnetPrefix string = vmssName
 @description('Name for the load balancer')
-param lbName string = 'myLoadBalancer'
+param lbName string = '${vmssName}-LB'
 @description('Choose the operating system for the VMs in the Virtual Machine Scale Set')
 @allowed([
   'ubuntulinux'

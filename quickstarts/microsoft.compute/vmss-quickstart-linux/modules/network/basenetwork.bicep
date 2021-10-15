@@ -12,7 +12,7 @@ var addressPrefix = '10.1.0.0/16'
 
 var nsgName = '${virtualNetworkName}NSG'
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
   name: nsgName
   location: location
   properties: {
@@ -73,7 +73,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   name: virtualNetworkName
   location: location
   properties: {
