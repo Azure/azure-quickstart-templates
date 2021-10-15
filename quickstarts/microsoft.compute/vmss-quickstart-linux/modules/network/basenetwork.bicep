@@ -1,10 +1,10 @@
-// Location for all resources.
+@description('Location for all resources.')
 param location string = resourceGroup().location
 
-// Name of the VNET.
+@description ('Name of the VNET.')
 param virtualNetworkName string = 'vNet'
 
-// Name of the subnet in the virtual network.
+@description ('Name of the subnet')
 param subnetName string = 'Subnet'
 
 var subnetAddressPrefix = '10.1.0.0/24'

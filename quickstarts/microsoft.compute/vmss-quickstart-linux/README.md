@@ -17,7 +17,7 @@
 
 
 
-This template deploys a simple VM Scale Set of Ubuntu VMs behind an Azure Load Balancer. THe VM Scale set is in Flexible Orchestration Mode.
+This template deploys a simple VM Scale Set of Ubuntu VMs behind an Azure Load Balancer. The VM Scale set is in Flexible Orchestration Mode.
 
 `Tags:Managed Disks, Azure VMs, VMSS`
 

@@ -1,6 +1,9 @@
-//LB name
+@description('Load Balancer name')
 param slbName string = 'myLoadBalancer'
+
+@description('Location for the resources')
 param location string = resourceGroup().location
+
 var slbPIPName = '${slbName}-PIP'
 resource slbPIP 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: slbPIPName

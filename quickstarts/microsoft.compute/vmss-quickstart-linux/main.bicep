@@ -15,21 +15,27 @@ param instanceCount int = 3
   5
 ])
 param platformFaultDomainCount int = 1
+
 @description('Instances will be spread evenly between the zones you selected')
 param zones array = [
 ]
+
 @description('Specifies the virtual machine SKU to be used')
 param sku string = 'Standard_B1s'
+
 @description('Virtual network prefix')
 param vnetPrefix string = vmssName
+
 @description('Name for the load balancer')
 param lbName string = '${vmssName}-LB'
+
 @description('Choose the operating system for the VMs in the Virtual Machine Scale Set')
 @allowed([
   'ubuntulinux'
   'windowsserver'
 ])
 param os string = 'ubuntulinux'
+
 @description('Region where the scale set will be deployed')
 param location string = resourceGroup().location
 

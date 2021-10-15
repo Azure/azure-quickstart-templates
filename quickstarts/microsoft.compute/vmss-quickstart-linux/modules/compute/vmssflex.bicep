@@ -23,7 +23,7 @@ param os string = 'ubuntulinux'
 param subnetId string
 param lbBackendPoolArray array = []
 
-param adminUsername string = 'azureuser'
+param adminUsername string
 @allowed([
   'password'
   'sshPublicKey'
@@ -32,6 +32,8 @@ param authenticationType string = 'password'
 
 @secure()
 param adminPasswordOrKey string = newGuid()
+
+param pubicIPPerInstance bool = false
 
 var networkApiVersion = '2020-11-01'
 var linuxConfiguration = {
@@ -47,6 +49,14 @@ var linuxConfiguration = {
   }
 }
 
+var _pipConfig = {
+            name: '${vmssname}PipConfig'
+            properties:{
+              publicIPAddressVersion: 'IPv4'
+              idleTimeoutInMinutes: 5
+            }
+          }
+var publicIPAddressConfiguration = (pubicIPPerInstance == true? _pipConfig : null)
 var linuxImageReference = {
   publisher: 'Canonical'
   offer: 'UbuntuServer'
@@ -100,14 +110,7 @@ resource vmssflex 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
                 {
                   name: '${vmssname}IpConfig'
                   properties: {
-                    // Uncomment to enable public IP address per instance
-                    // publicIPAddressConfiguration: {
-                    //   name: '${vmssname}PipConfig'
-                    //   properties:{
-                    //     publicIPAddressVersion: 'IPv4'
-                    //     idleTimeoutInMinutes: 5
-                    //   }
-                    // }
+                    publicIPAddressConfiguration: publicIPAddressConfiguration
                     privateIPAddressVersion: 'IPv4'
                     subnet: {
                       id: subnetId
