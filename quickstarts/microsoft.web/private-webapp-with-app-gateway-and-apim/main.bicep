@@ -33,7 +33,7 @@ param apiManagementPortalCertificatePassword string
 
 @description('Used by Application Gateway, the Base64 encoded PFX certificate corresponding to the API Management custom developer portal domain name.')
 @secure()
-param apiManagementPortalCustomHostnameBase64EncodedPfxCertificate string
+param apiManagementPortalCustomHostnameBase64EncodedCertificate string
 
 @description('Password for corresponding to the certificate for the API Management custom proxy domain name.')
 @secure()
@@ -41,7 +41,7 @@ param apiManagementProxyCertificatePassword string
 
 @description('Used by Application Gateway, the Base64 encoded PFX certificate corresponding to the API Management custom proxy domain name.')
 @secure()
-param apiManagementProxyCustomHostnameBase64EncodedPfxCertificate string
+param apiManagementProxyCustomHostnameBase64EncodedCertificate string
 
 @description('Password for corresponding to the certificate for the API Management custom management domain name.')
 @secure()
@@ -49,12 +49,12 @@ param apiManagementManagementCertificatePassword string
 
 @description('Used by Application Gateway, the Base64 encoded PFX certificate corresponding to the API Management custom management domain name.')
 @secure()
-param apiManagementManagementCustomHostnameBase64EncodedPfxCertificate string
+param apiManagementManagementCustomHostnameBase64EncodedCertificate string
 
 // ---- Application Gateway parameters ----
 @description('Used by Application Gateway, the Base64 encoded CER/CRT certificate corresponding to the root certificate for Application Gateway.')
 @secure()
-param applicationGatewayTrustedRootBase64EncodedPfxCertificate string
+param applicationGatewayTrustedRootBase64EncodedCertificate string
 
 // ---- Virtual Network parameters ----
 @description('The virtual network IP space to use for the new virutal network.')
@@ -489,21 +489,21 @@ resource apiManagementInstance 'Microsoft.ApiManagement/service@2020-12-01' = {
       {
         type: 'DeveloperPortal'
         hostName: apiManagementPortalCustomHostname
-        encodedCertificate: apiManagementPortalCustomHostnameBase64EncodedPfxCertificate
+        encodedCertificate: apiManagementPortalCustomHostnameBase64EncodedCertificate
         certificatePassword: apiManagementPortalCertificatePassword
         negotiateClientCertificate: false
       }
       {
         type: 'Proxy'
         hostName: apiManagementProxyCustomHostname
-        encodedCertificate: apiManagementProxyCustomHostnameBase64EncodedPfxCertificate
+        encodedCertificate: apiManagementProxyCustomHostnameBase64EncodedCertificate
         certificatePassword: apiManagementProxyCertificatePassword
         negotiateClientCertificate: false
       }
       {
         type: 'Management'
         hostName: apiManagementManagementCustomHostname
-        encodedCertificate: apiManagementManagementCustomHostnameBase64EncodedPfxCertificate
+        encodedCertificate: apiManagementManagementCustomHostnameBase64EncodedCertificate
         certificatePassword: apiManagementManagementCertificatePassword
         negotiateClientCertificate: false
       }
@@ -586,30 +586,30 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
       {
         name: 'gatewaycert'
         properties: {
-          data: apiManagementProxyCustomHostnameBase64EncodedPfxCertificate
+          data: apiManagementProxyCustomHostnameBase64EncodedCertificate
           password: apiManagementProxyCertificatePassword
         }
       }
       {
         name: 'portalcert'
         properties: {
-          data: apiManagementPortalCustomHostnameBase64EncodedPfxCertificate
+          data: apiManagementPortalCustomHostnameBase64EncodedCertificate
           password: apiManagementPortalCertificatePassword
         }
       }
       {
         name: 'managementcert'
         properties: {
-          data: apiManagementManagementCustomHostnameBase64EncodedPfxCertificate
+          data: apiManagementManagementCustomHostnameBase64EncodedCertificate
           password: apiManagementManagementCertificatePassword
         }
       }
     ]
     trustedRootCertificates: [
       {
-        name: 'whitelistcert1'
+        name: 'trustedrootcert1'
         properties: {
-          data: applicationGatewayTrustedRootBase64EncodedPfxCertificate
+          data: applicationGatewayTrustedRootBase64EncodedCertificate
         }
       }
     ]
@@ -678,7 +678,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           }
           trustedRootCertificates: [
             {
-              id: '${resourceId('Microsoft.Network/applicationGateways', applicationGatewayName)}/trustedRootCertificates/whitelistcert1'
+              id: '${resourceId('Microsoft.Network/applicationGateways', applicationGatewayName)}/trustedRootCertificates/trustedrootcert1'
             }
           ]
         }
@@ -696,7 +696,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           }
           trustedRootCertificates: [
             {
-              id: '${resourceId('Microsoft.Network/applicationGateways', applicationGatewayName)}/trustedRootCertificates/whitelistcert1'
+              id: '${resourceId('Microsoft.Network/applicationGateways', applicationGatewayName)}/trustedRootCertificates/trustedrootcert1'
             }
           ]
         }
@@ -714,7 +714,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           }
           trustedRootCertificates: [
             {
-              id: '${resourceId('Microsoft.Network/applicationGateways', applicationGatewayName)}/trustedRootCertificates/whitelistcert1'
+              id: '${resourceId('Microsoft.Network/applicationGateways', applicationGatewayName)}/trustedRootCertificates/trustedrootcert1'
             }
           ]
         }
