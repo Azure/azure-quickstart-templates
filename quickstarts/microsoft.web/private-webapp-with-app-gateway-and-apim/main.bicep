@@ -230,7 +230,6 @@ resource applicationGatewayPublicIpAddress 'Microsoft.Network/publicIPAddresses@
     publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'
     idleTimeoutInMinutes: 4
-    ipTags: []
   }
 }
 
