@@ -432,6 +432,7 @@ resource webApp 'Microsoft.Web/sites@2020-12-01' = {
     virtualNetwork
   ]
   properties: {
+    httpsOnly: true
     serverFarmId: webAppPlan.id
 
     // Specify a virtual network subnet resource ID to enable regional virtual network integration.
@@ -442,6 +443,17 @@ resource webApp 'Microsoft.Web/sites@2020-12-01' = {
   }
   identity: {
     type: 'SystemAssigned'
+  }
+
+  resource config 'config' = {
+    name: 'web'
+    properties: {
+      ftpsState: 'Disabled'
+      minTlsVersion: '1.2'
+      detailedErrorLoggingEnabled: true
+      httpLoggingEnabled: true
+      requestTracingEnabled: true
+    }
   }
 }
 
