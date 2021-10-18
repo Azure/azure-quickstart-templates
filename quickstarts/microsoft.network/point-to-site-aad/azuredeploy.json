@@ -1,0 +1,200 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "6806854432718973934"
+    }
+  },
+  "parameters": {
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "VNet1",
+      "metadata": {
+        "description": "Name for the virtual network"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the resources"
+      }
+    },
+    "frontendSubName": {
+      "type": "string",
+      "defaultValue": "FrontEnd",
+      "metadata": {
+        "description": "Name for the frontend subnet"
+      }
+    },
+    "virtualNetworkPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/16",
+      "metadata": {
+        "description": "CIDR block representing the address space of the VNet"
+      }
+    },
+    "frontendSubPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/24",
+      "metadata": {
+        "description": "CIDR block for the front end subnet, subset of VNet address space"
+      }
+    },
+    "gatewaySubPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.255.0/27",
+      "metadata": {
+        "description": "CIDR block for the gateway subnet, subset of VNet address space"
+      }
+    },
+    "gatewayName": {
+      "type": "string",
+      "defaultValue": "VNet1GW",
+      "metadata": {
+        "description": "Name for the new gateway"
+      }
+    },
+    "gatewayPublicIPName": {
+      "type": "string",
+      "defaultValue": "VNet1GWIP",
+      "metadata": {
+        "description": "Name for public IP resource used for the new azure gateway"
+      }
+    },
+    "gatewaySku": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Standard",
+        "HighPerformance"
+      ],
+      "metadata": {
+        "description": "The SKU of the Gateway. This must be either Standard or HighPerformance to work with OpenVPN"
+      }
+    },
+    "vpnType": {
+      "type": "string",
+      "defaultValue": "RouteBased",
+      "allowedValues": [
+        "RouteBased",
+        "PolicyBased"
+      ],
+      "metadata": {
+        "description": "Route based (Dynamic Gateway) or Policy based (Static Gateway)"
+      }
+    },
+    "vpnClientAddressPool": {
+      "type": "string",
+      "defaultValue": "172.16.0.0/24",
+      "metadata": {
+        "description": "The IP address range from which VPN clients will receive an IP address when connected. Range specified must not overlap with on-premise network"
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "audienceMap": {
+      "AzureCloud": "41b23e61-6c1e-4545-b367-cd054e0ed4b4",
+      "AzureUSGovernment": "51bb15d4-3a4f-4ebf-9dca-40096fe32426",
+      "AzureGermanCloud": "538ee9e6-310a-468d-afef-ea97365856a9",
+      "AzureChinaCloud": "49f817b6-84ae-4cc0-928c-73f27289b3aa"
+    },
+    "tenantId": "[subscription().tenantId]",
+    "cloud": "[environment().name]",
+    "audience": "[variables('audienceMap')[variables('cloud')]]",
+    "tenant": "[uri(environment().authentication.loginEndpoint, variables('tenantId'))]",
+    "issuer": "[format('https://sts.windows.net/{0}/', variables('tenantId'))]",
+    "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'GatewaySubnet')]",
+    "publicIPAddressRef": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('gatewayPublicIPName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-02-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('frontendSubName')]",
+            "properties": {
+              "addressPrefix": "[parameters('frontendSubPrefix')]"
+            }
+          },
+          {
+            "name": "GatewaySubnet",
+            "properties": {
+              "addressPrefix": "[parameters('gatewaySubPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "apiVersion": "2021-02-01",
+      "name": "[parameters('gatewayName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('gatewaySubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[variables('publicIPAddressRef')]"
+              }
+            },
+            "name": "vnetGatewayConfig"
+          }
+        ],
+        "sku": {
+          "name": "[parameters('gatewaySku')]",
+          "tier": "[parameters('gatewaySku')]"
+        },
+        "gatewayType": "Vpn",
+        "vpnType": "[parameters('vpnType')]",
+        "vpnClientConfiguration": {
+          "vpnClientAddressPool": {
+            "addressPrefixes": [
+              "[parameters('vpnClientAddressPool')]"
+            ]
+          },
+          "vpnClientProtocols": [
+            "OpenVPN"
+          ],
+          "vpnAuthenticationTypes": [
+            "AAD"
+          ],
+          "aadTenant": "[variables('tenant')]",
+          "aadAudience": "[variables('audience')]",
+          "aadIssuer": "[variables('issuer')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('gatewayPublicIPName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2021-02-01",
+      "name": "[parameters('gatewayPublicIPName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    }
+  ]
+}
