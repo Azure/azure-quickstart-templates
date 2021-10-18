@@ -17,7 +17,7 @@
 
 
 
-This template deploys a simple VM Scale Set of Ubuntu VMs behind an Azure Load Balancer. The VM Scale set is in Flexible Orchestration Mode. Use the os parameter to choose Linux (Ubuntu) or Windows (Windows Server Datacenter 2019) deployment.
+This template deploys a simple VM Scale Set of Ubuntu VMs behind an Azure Load Balancer. The VM Scale set is in Flexible Orchestration Mode. Use the os parameter to choose Linux (Ubuntu) or Windows (Windows Server Datacenter 2019) deployment. NOTE: This quickstart template enables network access to VM management ports (SSH, RDP) from any internet address, and should not be used for production deployments. For Network security best practices for production deployments, see [Azure Network Security Best Practices](https://docs.microsoft.com/en-us/azure/security/fundamentals/network-best-practices)
 
 `Tags:Managed Disks, Azure VMs, VMSS`
 
