@@ -1,4 +1,4 @@
-# Virtual Machine Scale Sets Quickstart - Linux, Flexible Orchestration Mode
+# Virtual Machine Scale Sets Quickstart Flexible Orchestration Mode
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-quickstart-linux/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vmss-quickstart-linux/PublicDeployment.svg)
@@ -17,7 +17,7 @@
 
 
 
-This template deploys a simple VM Scale Set of Ubuntu VMs behind an Azure Load Balancer. The VM Scale set is in Flexible Orchestration Mode.
+This template deploys a simple VM Scale Set of Ubuntu VMs behind an Azure Load Balancer. The VM Scale set is in Flexible Orchestration Mode. Use the os parameter to choose Linux (Ubuntu) or Windows (Windows Server Datacenter 2019) deployment.
 
 `Tags:Managed Disks, Azure VMs, VMSS`
 

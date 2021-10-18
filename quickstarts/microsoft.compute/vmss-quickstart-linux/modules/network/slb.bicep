@@ -47,7 +47,7 @@ resource slb 'Microsoft.Network/loadBalancers@2021-02-01' = {
       {
         properties: {
           frontendIPConfiguration: {
-            id: '${resourceId('Microsoft.Network/loadBalancers', slbName)}/frontendIPConfigurations/${slbName}FrontEndConfig'
+            id: '${resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', slbName, '${slbName}FrontEndConfig')}
           }
           backendAddressPool: {
             id: '${resourceId('Microsoft.Network/loadBalancers', slbName)}/backendAddressPools/bepool01'
