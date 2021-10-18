@@ -35,7 +35,7 @@ resource slb 'Microsoft.Network/loadBalancers@2021-02-01' = {
             id: slbPIP.id
           }
         }
-        name: '${slbName}FrontEndConfig'
+        name: 'FrontEndConfig'
       }
     ]
     backendAddressPools: [
@@ -47,13 +47,13 @@ resource slb 'Microsoft.Network/loadBalancers@2021-02-01' = {
       {
         properties: {
           frontendIPConfiguration: {
-            id: '${resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', slbName, '${slbName}FrontEndConfig')}
+            id: '${resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', slbName, 'FrontEndConfig')}'
           }
           backendAddressPool: {
-            id: '${resourceId('Microsoft.Network/loadBalancers', slbName)}/backendAddressPools/bepool01'
+            id: '${resourceId('Microsoft.Network/loadBalancers/backendAddressPools', slbName, 'bepool01')}'
           }
           probe: {
-            id: '${resourceId('Microsoft.Network/loadBalancers', slbName)}/probes/${slbName}-probe01'
+            id: '${resourceId('Microsoft.Network/loadBalancers/probes', slbName, 'probe01')}'
           }
           protocol: 'Tcp'
           loadDistribution: 'Default'
@@ -75,7 +75,7 @@ resource slb 'Microsoft.Network/loadBalancers@2021-02-01' = {
           intervalInSeconds: 5
           numberOfProbes: 2
         }
-        name: '${slbName}-probe01'
+        name: 'probe01'
       }
     ]
   }

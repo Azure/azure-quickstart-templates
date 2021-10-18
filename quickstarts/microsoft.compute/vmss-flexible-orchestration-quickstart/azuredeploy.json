@@ -4,16 +4,28 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.613.9944",
-      "templateHash": "1415746820768810044"
+      "version": "0.4.1008.15138",
+      "templateHash": "3230651783556993993"
     }
   },
   "parameters": {
     "vmssName": {
       "type": "string",
-      "defaultValue": "vmss-quickstart-linux",
+      "defaultValue": "vmss-quickstart",
       "metadata": {
         "description": "Name for the virtual machine scale set"
+      }
+    },
+    "vmssAdminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for virtual machine instances"
+      }
+    },
+    "vmssAdminPasswordOrSSHKey": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Password or SSH Key for the VM instances. Be sure to also update whether using Password or SSH Key authentication on the VMSS Flex"
       }
     },
     "instanceCount": {
@@ -93,7 +105,7 @@
   "resources": [
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-10-01",
+      "apiVersion": "2020-06-01",
       "name": "basenetwork",
       "properties": {
         "expressionEvaluationOptions": {
@@ -114,22 +126,31 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.4.613.9944",
-              "templateHash": "4419040925399017753"
+              "version": "0.4.1008.15138",
+              "templateHash": "7254579564168303679"
             }
           },
           "parameters": {
             "location": {
               "type": "string",
-              "defaultValue": "[resourceGroup().location]"
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for all resources."
+              }
             },
             "virtualNetworkName": {
               "type": "string",
-              "defaultValue": "vNet"
+              "defaultValue": "vNet",
+              "metadata": {
+                "description": "Name of the VNET."
+              }
             },
             "subnetName": {
               "type": "string",
-              "defaultValue": "Subnet"
+              "defaultValue": "Subnet",
+              "metadata": {
+                "description": "Name of the subnet"
+              }
             }
           },
           "functions": [],
@@ -250,7 +271,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-10-01",
+      "apiVersion": "2020-06-01",
       "name": "slb",
       "properties": {
         "expressionEvaluationOptions": {
@@ -271,18 +292,24 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.4.613.9944",
-              "templateHash": "11896582618834647835"
+              "version": "0.4.1008.15138",
+              "templateHash": "4905690839637422557"
             }
           },
           "parameters": {
             "slbName": {
               "type": "string",
-              "defaultValue": "myLoadBalancer"
+              "defaultValue": "myLoadBalancer",
+              "metadata": {
+                "description": "Load Balancer name"
+              }
             },
             "location": {
               "type": "string",
-              "defaultValue": "[resourceGroup().location]"
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for the resources"
+              }
             }
           },
           "functions": [],
@@ -324,7 +351,7 @@
                         "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('slbPIPName'))]"
                       }
                     },
-                    "name": "[format('{0}FrontEndConfig', parameters('slbName'))]"
+                    "name": "FrontEndConfig"
                   }
                 ],
                 "backendAddressPools": [
@@ -336,13 +363,13 @@
                   {
                     "properties": {
                       "frontendIPConfiguration": {
-                        "id": "[format('{0}/frontendIPConfigurations/{1}FrontEndConfig', resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), parameters('slbName'))]"
+                        "id": "[format('{0}', resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', parameters('slbName'), 'FrontEndConfig'))]"
                       },
                       "backendAddressPool": {
-                        "id": "[format('{0}/backendAddressPools/bepool01', resourceId('Microsoft.Network/loadBalancers', parameters('slbName')))]"
+                        "id": "[format('{0}', resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('slbName'), 'bepool01'))]"
                       },
                       "probe": {
-                        "id": "[format('{0}/probes/{1}-probe01', resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), parameters('slbName'))]"
+                        "id": "[format('{0}', resourceId('Microsoft.Network/loadBalancers/probes', parameters('slbName'), 'probe01'))]"
                       },
                       "protocol": "Tcp",
                       "loadDistribution": "Default",
@@ -364,7 +391,7 @@
                       "intervalInSeconds": 5,
                       "numberOfProbes": 2
                     },
-                    "name": "[format('{0}-probe01', parameters('slbName'))]"
+                    "name": "probe01"
                   }
                 ]
               },
@@ -404,7 +431,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-10-01",
+      "apiVersion": "2020-06-01",
       "name": "vmss-bicep",
       "properties": {
         "expressionEvaluationOptions": {
@@ -424,6 +451,12 @@
           "vmSize": {
             "value": "[parameters('sku')]"
           },
+          "adminUsername": {
+            "value": "[parameters('vmssAdminUserName')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('vmssAdminPasswordOrSSHKey')]"
+          },
           "os": {
             "value": "[parameters('os')]"
           },
@@ -434,11 +467,11 @@
             "value": "[parameters('zones')]"
           },
           "subnetId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'basenetwork'), '2019-10-01').outputs.vnetSubnetArray.value[0].id]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'basenetwork'), '2020-06-01').outputs.vnetSubnetArray.value[0].id]"
           },
           "lbBackendPoolArray": {
             "value": [
-              "[reference(resourceId('Microsoft.Resources/deployments', 'slb'), '2019-10-01').outputs.slbBackendPoolArray.value[0]]"
+              "[reference(resourceId('Microsoft.Resources/deployments', 'slb'), '2020-06-01').outputs.slbBackendPoolArray.value[0]]"
             ]
           }
         },
@@ -448,8 +481,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.4.613.9944",
-              "templateHash": "5830741474695154"
+              "version": "0.4.1008.15138",
+              "templateHash": "6767928580268140259"
             }
           },
           "parameters": {
@@ -501,8 +534,7 @@
               "defaultValue": []
             },
             "adminUsername": {
-              "type": "string",
-              "defaultValue": "azureuser"
+              "type": "string"
             },
             "authenticationType": {
               "type": "string",
@@ -513,8 +545,11 @@
               ]
             },
             "adminPasswordOrKey": {
-              "type": "secureString",
-              "defaultValue": "[newGuid()]"
+              "type": "secureString"
+            },
+            "pubicIPPerInstance": {
+              "type": "bool",
+              "defaultValue": false
             }
           },
           "functions": [],
@@ -532,6 +567,14 @@
                 ]
               }
             },
+            "_pipConfig": {
+              "name": "[format('{0}PipConfig', parameters('vmssname'))]",
+              "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "idleTimeoutInMinutes": 5
+              }
+            },
+            "publicIPAddressConfiguration": "[if(equals(parameters('pubicIPPerInstance'), true()), variables('_pipConfig'), null())]",
             "linuxImageReference": {
               "publisher": "Canonical",
               "offer": "UbuntuServer",
@@ -585,6 +628,7 @@
                             {
                               "name": "[format('{0}IpConfig', parameters('vmssname'))]",
                               "properties": {
+                                "publicIPAddressConfiguration": "[variables('publicIPAddressConfiguration')]",
                                 "privateIPAddressVersion": "IPv4",
                                 "subnet": {
                                   "id": "[parameters('subnetId')]"
@@ -602,24 +646,6 @@
                       "enabled": true
                     }
                   },
-                  "extensionProfile": {
-                    "extensions": [
-                      {
-                        "name": "AppHealthExtension",
-                        "properties": {
-                          "publisher": "Microsoft.ManagedServices",
-                          "type": "ApplicationHealthLinux",
-                          "autoUpgradeMinorVersion": true,
-                          "typeHandlerVersion": "1.0",
-                          "settings": {
-                            "protocol": "http",
-                            "port": 80,
-                            "requestPath": "/health"
-                          }
-                        }
-                      }
-                    ]
-                  },
                   "storageProfile": {
                     "osDisk": {
                       "createOption": "FromImage",
@@ -629,17 +655,7 @@
                       }
                     },
                     "imageReference": "[variables('imageReference')]"
-                  },
-                  "scheduledEventsProfile": {
-                    "terminateNotificationProfile": {
-                      "notBeforeTimeout": "PT5M",
-                      "enable": true
-                    }
                   }
-                },
-                "automaticRepairsPolicy": {
-                  "enabled": true,
-                  "gracePeriod": "PT30M"
                 }
               }
             }

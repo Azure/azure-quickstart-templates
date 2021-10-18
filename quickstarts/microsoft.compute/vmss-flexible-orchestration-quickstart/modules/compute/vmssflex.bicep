@@ -31,9 +31,7 @@ param adminUsername string
 param authenticationType string = 'password'
 
 @secure()
-param adminPasswordOrKey string = newGuid()
-
-param pubicIPPerInstance bool = false
+param adminPasswordOrKey string
 
 var networkApiVersion = '2020-11-01'
 var linuxConfiguration = {
@@ -49,14 +47,8 @@ var linuxConfiguration = {
   }
 }
 
-var _pipConfig = {
-            name: '${vmssname}PipConfig'
-            properties:{
-              publicIPAddressVersion: 'IPv4'
-              idleTimeoutInMinutes: 5
-            }
-          }
-var publicIPAddressConfiguration = (pubicIPPerInstance == true? _pipConfig : null)
+
+
 var linuxImageReference = {
   publisher: 'Canonical'
   offer: 'UbuntuServer'
@@ -110,7 +102,13 @@ resource vmssflex 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
                 {
                   name: '${vmssname}IpConfig'
                   properties: {
-                    publicIPAddressConfiguration: publicIPAddressConfiguration
+                    publicIPAddressConfiguration: {
+                      name: '${vmssname}PipConfig'
+                      properties:{
+                        publicIPAddressVersion: 'IPv4'
+                        idleTimeoutInMinutes: 5
+                      }
+                    }
                     privateIPAddressVersion: 'IPv4'
                     subnet: {
                       id: subnetId
@@ -128,24 +126,6 @@ resource vmssflex 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
           enabled: true
         }
       }
-      extensionProfile: {
-        extensions: [
-          {
-            name: 'AppHealthExtension'
-            properties: {
-              publisher: 'Microsoft.ManagedServices'
-              type: 'ApplicationHealthLinux'
-              autoUpgradeMinorVersion: true
-              typeHandlerVersion: '1.0'
-              settings: {
-                protocol: 'http'
-                port: 80
-                requestPath: '/health'
-              }
-            }
-          }
-        ]
-      }
       storageProfile: {
         osDisk: {
           createOption: 'FromImage'
@@ -156,24 +136,7 @@ resource vmssflex 'Microsoft.Compute/virtualMachineScaleSets@2021-04-01' = {
         }
         imageReference: imageReference
       }
-      // Enable Terminate notification
-      scheduledEventsProfile: {
-        terminateNotificationProfile: {
-          notBeforeTimeout: 'PT5M'
-          enable: true
-        }
-      }
-      // Uncomment to use Azure Spot instances for significant cost savings. https://docs.microsoft.com/en-us/azure/virtual-machines/spot-vms
-      // priority: 'Spot'
-      // evictionPolicy: 'Delete'
-      // billingProfile: {
-      //   maxPrice: -1
-      // }
     }
-    automaticRepairsPolicy: {
-      enabled: true
-      gracePeriod: 'PT30M'
-    } 
   }
 }
 

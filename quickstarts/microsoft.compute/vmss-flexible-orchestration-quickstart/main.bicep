@@ -1,5 +1,12 @@
 @description('Name for the virtual machine scale set')
-param vmssName string = 'vmss-quickstart-linux'
+param vmssName string = 'vmss-quickstart'
+
+@description('User name for virtual machine instances')
+param vmssAdminUserName string
+
+@description('Password or SSH Key for the VM instances. Be sure to also update whether using Password or SSH Key authentication on the VMSS Flex')
+@secure()
+param vmssAdminPasswordOrSSHKey string
 
 @description('Number of virtual machine instances in the scale set')
 @minValue(0)
@@ -64,6 +71,8 @@ module vmss './modules/compute/vmssflex.bicep' = {
     vmssname: vmssName
     vmCount: instanceCount
     vmSize: sku
+    adminUsername: vmssAdminUserName
+    adminPasswordOrKey: vmssAdminPasswordOrSSHKey
     os: os
     platformFaultDomainCount: platformFaultDomainCount
     zones: zones
