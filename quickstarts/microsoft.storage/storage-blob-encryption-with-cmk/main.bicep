@@ -77,9 +77,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
       '${userAssignedIdentity.id}': {}
     }
   }
-  dependsOn: [
-    keyVault
-  ]
   properties: {
     accessTier: 'Hot'
     supportsHttpsTrafficOnly: true
@@ -96,7 +93,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
       keySource: 'Microsoft.Keyvault'
       keyvaultproperties: {
         keyname: kvKey.name
-        keyvaulturi: replace('${keyVault.properties.vaultUri}','azure.net/', 'azure.net')
+        keyvaulturi: endsWith(keyVault.properties.vaultUri,'/') ? substring(keyVault.properties.vaultUri,0,length(keyVault.properties.vaultUri)-1) : keyVault.properties.vaultUri
       }
     }
   }
