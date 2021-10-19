@@ -82,7 +82,7 @@ var subnetRef = '${vnetId}/subnets/${subnetName}'
 var virtualMachineComputerName = vmName
 var zone = '1'
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2018-10-01' = {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   name: 'nic1'
   location: location
   properties: {
@@ -112,12 +112,12 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2018-10-01' = {
   ]
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2019-02-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   name: networkSecurityGroupName
   location: location
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -137,7 +137,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = {
   }
 }
 
-resource publicIpAddress 'Microsoft.Network/publicIpAddresses@2019-02-01' = {
+resource publicIpAddress 'Microsoft.Network/publicIpAddresses@2021-05-01' = {
   name: publicIpName
   location: location
   sku: {
@@ -151,7 +151,7 @@ resource publicIpAddress 'Microsoft.Network/publicIpAddresses@2019-02-01' = {
   }
 }
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-05-01' = {
   name: vmName
   location: location
   zones: [
