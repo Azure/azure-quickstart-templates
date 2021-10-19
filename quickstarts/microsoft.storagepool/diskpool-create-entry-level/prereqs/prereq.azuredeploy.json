@@ -8,11 +8,33 @@
         "metadata": {
           "description": "Location for all resources."
         }
-      }
+      },
+      "principalId": {
+        "type": "string",
+        "metadata": {
+            "description": "Specifies the principal ID of StoragePool Resource Provider."
+        }
+    }, 
+    "availabilityZone": {
+        "defaultValue": 1,
+        "type": "string",
+        "allowedValues": [
+            "1",
+            "2",
+            "3"
+        ],
+        "metadata": {
+            "description": "Availability zone to deploy the managed disk and Disk Pool"
+        }
+    }
     },
     "variables": {
       "existingVnetName": "vnet",
-      "existingSubnetName": "subnet-1"
+      "existingSubnetName": "diskpool-subnet",
+      "existingManagedDiskName": "disk-1",
+      "diskPoolOperatorRoleDefinitionId": "60fc6e62547942d48bf467625fcc2840",
+      "roleAssignmentGuid": "[guid(resourceGroup().id)]"
+
     },
     "resources": [
       {
@@ -47,7 +69,37 @@
             }
           ]
         }
-      }
+      },
+      {
+        "type": "Microsoft.Compute/disks",
+        "apiVersion": "2020-09-30",
+        "name": "[variables('existingManagedDiskName')]",
+        "location": "[parameters('location')]",
+        "sku": {
+            "name": "Premium_LRS"
+        },
+        "zones": ["[parameters('availabilityZone')]"],
+        "properties": {
+            "creationData": {
+                "createOption": "Empty"
+            },
+            "diskSizeGB": 1024,
+            "maxShares": 2
+        }
+    },
+    {
+        "type": "Microsoft.Authorization/roleAssignments",
+        "name": "[variables('roleAssignmentGuid')]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Compute/disks/', variables('existingManagedDiskName'))]"
+        ],
+        "apiVersion": "2020-04-01-preview",
+        "properties": {
+            "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('diskPoolOperatorRoleDefinitionId'))]",
+            "principalId": "[parameters('principalId')]",
+            "principalType": "ServicePrincipal"
+        }
+    }
     ],
     "outputs": {
       "existingVnetName": {
@@ -58,9 +110,13 @@
         "type": "string",
         "value": "[variables('existingSubnetName')]"
       },
-      "existingVnetResourceGroupName": {
+      "existingResourceGroupName": {
         "type": "string",
         "value": "[resourceGroup().name]"
+      },
+      "existingManagedDiskName": {
+        "type": "string",
+        "value": "[variables('existingManagedDiskName')]"
       }
     }
   }
