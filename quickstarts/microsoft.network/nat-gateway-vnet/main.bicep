@@ -81,15 +81,4 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' = {
-  parent: vnet
-  name: 'mySubnet'
-  properties: {
-    addressPrefix: vnetSubnetPrefix
-    natGateway: {
-      id: natGateway.id
-    }
-    privateEndpointNetworkPolicies: 'Enabled'
-    privateLinkServiceNetworkPolicies: 'Enabled'
-  }
-}
+

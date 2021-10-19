@@ -147,14 +147,6 @@ if ($ValidationType -eq "Manual") {
     }
 }
 
-Write-Host "Uploading TemplateAnalyzer log file..."
-Set-AzStorageBlobContent -Container $TemplateAnalyzerLogsContainerName `
-    -File $TemplateAnalyzerOutputFilePath `
-    -Blob $RowKey `
-    -Context $ctx `
-    -Properties @{ "ContentType" = "text/plain" } `
-    -Force -Verbose
-
 # if the record doesn't exist, this is probably a new sample and needs to be added (or we just cleaned the table)
 if ($r -eq $null) {
 
@@ -229,7 +221,8 @@ else {
     if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerResult)) {
         if ($r.TemplateAnalyzerResult -eq $null) {
             Add-Member -InputObject $r -NotePropertyName 'TemplateAnalyzerResult' -NotePropertyValue $TemplateAnalyzerResult
-        } else {
+        }
+        else {
             $r.TemplateAnalyzerResult = $TemplateAnalyzerResult
         }
     }
@@ -478,6 +471,7 @@ switch ($TemplateAnalyzerResult) {
 }
 
 $BicepVersionColor = "brightgreen";
+if ($BicepVersion -eq "") { $BicepVersion = "n/a" } # make sure the badge value is not empty
 
 $badges = @(
     @{
@@ -543,6 +537,23 @@ foreach ($badge in $badges) {
         -Context $ctx `
         -Properties @{"ContentType" = "image/svg+xml"; "CacheControl" = "no-cache" } `
         -Force -Verbose
+}
+
+# Upload BPA results file:
+$templateAnalyzerLogFileName = "$($ENV:BUILD_BUILDNUMBER)_$RowKey"
+Write-Host "Uploading TemplateAnalyzer log file: $templateAnalyzerLogFileName"
+try {
+    Set-AzStorageBlobContent -Container $TemplateAnalyzerLogsContainerName `
+        -File $TemplateAnalyzerOutputFilePath `
+        -Blob $templateAnalyzerLogFileName `
+        -Context $ctx `
+        -Properties @{ "ContentType" = "text/plain" } `
+        -Force -Verbose
+}
+catch {
+    Write-Host "===================================================="
+    Write-Host " Failed to upload $TemplateAnalyzerOutputFilePath   "
+    Write-Host "===================================================="
 }
 
 <#Debugging only

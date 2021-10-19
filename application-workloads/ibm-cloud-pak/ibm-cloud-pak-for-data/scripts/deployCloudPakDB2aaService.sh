@@ -9,6 +9,8 @@ export CLUSTERNAME=$6
 export DOMAINNAME=$7
 export OPENSHIFTUSER=$8
 export APIKEY=$9
+export CHANNEL=${10}
+export VERSION=${11}
 
 export INSTALLERHOME=/home/$SUDOUSER/.ibm
 export OPERATORNAMESPACE=ibm-common-services
@@ -40,22 +42,22 @@ done
 
 # db2aaservice operator and CR creation 
 
-runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-db2aaservice-catalogsource.yaml <<EOF
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
-  name: ibm-db2aaservice-cp4d-operator-catalog
-  namespace: openshift-marketplace
-spec:
-  displayName: IBM Db2aaservice CP4D Catalog
-  image: icr.io/cpopen/ibm-db2aaservice-cp4d-operator-catalog@sha256:a0d9b6c314193795ec1918e4227ede916743381285b719b3d8cfb05c35fec071
-  imagePullPolicy: Always
-  publisher: IBM
-  sourceType: grpc
-  updateStrategy:
-    registryPoll:
-      interval: 45m
-EOF"
+#runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-db2aaservice-catalogsource.yaml <<EOF
+#apiVersion: operators.coreos.com/v1alpha1
+#kind: CatalogSource
+#metadata:
+#  name: ibm-db2aaservice-cp4d-operator-catalog
+#  namespace: openshift-marketplace
+#spec:
+#  displayName: IBM Db2aaservice CP4D Catalog
+#  image: icr.io/cpopen/ibm-db2aaservice-cp4d-operator-catalog@sha256:a0d9b6c314193795ec1918e4227ede916743381285b719b3d8cfb05c35fec071
+#  imagePullPolicy: Always
+#  publisher: IBM
+#  sourceType: grpc
+#  updateStrategy:
+#    registryPoll:
+#      interval: 45m
+#EOF"
 
 runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-db2aaservice-sub.yaml <<EOF
 apiVersion: operators.coreos.com/v1alpha1
@@ -64,10 +66,10 @@ metadata:
   name: ibm-db2aaservice-cp4d-operator
   namespace: $OPERATORNAMESPACE
 spec:
-  channel: v1.0
+  channel: $CHANNEL
   name: ibm-db2aaservice-cp4d-operator
   installPlanApproval: Automatic
-  source: ibm-db2aaservice-cp4d-operator-catalog
+  source: ibm-operator-catalog
   sourceNamespace: openshift-marketplace
 EOF"
 
@@ -78,16 +80,18 @@ metadata:
   name: db2aaservice-cr
   namespace: $CPDNAMESPACE
 spec:
+  storageClass: $STORAGECLASS_VALUE
+  version: \"$VERSION\"
   license:
     accept: true
     license: \"Enterprise\"
 EOF"
 
-# Create Catalogsource and subscription. 
+# Create Subscription. 
 
-runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/ibm-db2aaservice-catalogsource.yaml"
-runuser -l $SUDOUSER -c "echo 'Sleeping 2m for catalogsource to be created'"
-runuser -l $SUDOUSER -c "sleep 2m"
+#runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/ibm-db2aaservice-catalogsource.yaml"
+#runuser -l $SUDOUSER -c "echo 'Sleeping 2m for catalogsource to be created'"
+#runuser -l $SUDOUSER -c "sleep 2m"
 
 runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/ibm-db2aaservice-sub.yaml"
 runuser -l $SUDOUSER -c "echo 'Sleeping 2m for sub to be created'"
