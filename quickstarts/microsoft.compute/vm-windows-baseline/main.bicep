@@ -115,9 +115,6 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2018-10-01' = {
 resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2019-02-01' = {
   name: networkSecurityGroupName
   location: location
-  properties: {
-    securityRules: []
-  }
 }
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = {
@@ -211,22 +208,20 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
 resource guestConfigExtension 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' = {
   parent: virtualMachine
   name: 'AzurePolicyforWindows'
-  location: resourceGroup().location
+  location: location
   properties: {
     publisher: 'Microsoft.GuestConfiguration'
     type: 'ConfigurationforWindows'
     typeHandlerVersion: '1.0'
     autoUpgradeMinorVersion: true
     enableAutomaticUpgrade: true
-    settings: {}
-    protectedSettings: {}
   }
 }
 
 resource configuration 'Microsoft.GuestConfiguration/guestConfigurationAssignments@2020-06-25' = {
   name: 'AzureWindowsBaseline'
   scope: virtualMachine
-  location: resourceGroup().location
+  location: location
   properties: {
     guestConfiguration: {
       assignmentType: 'ApplyAndMonitor'
