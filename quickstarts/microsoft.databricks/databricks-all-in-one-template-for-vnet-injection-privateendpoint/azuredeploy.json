@@ -99,6 +99,13 @@
         "description": "The name of the virtual network to create."
       }
     },
+    "PrivateEndpointSubnetName": {
+      "type": "string",
+      "defaultValue": "default",
+      "metadata": {
+        "description": "The name of the subnet to create the private endpoint in."
+      }
+    },
     "workspaceName": {
       "type": "string",
       "metadata": {
@@ -108,7 +115,10 @@
   },
   "functions": [],
   "variables": {
-    "managedResourceGroupName": "[format('databricks-rg-{0}-{1}', parameters('workspaceName'), uniqueString(parameters('workspaceName'), resourceGroup().id))]"
+    "managedResourceGroupName": "[format('databricks-rg-{0}-{1}', parameters('workspaceName'), uniqueString(parameters('workspaceName'), resourceGroup().id))]",
+    "privateEndpointName": "[concat(parameters('workspaceName'), '-', 'pvtEndpoint')]",
+		"privateDnsZoneName": "privatelink.azuredatabricks.net",
+		"pvtEndpointDnsGroupName": "[concat(variables('privateEndpointName'),'/mydnsgroupname')]"
   },
   "resources": [
     {
@@ -257,7 +267,66 @@
         "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
       ]
     },
-    {
+	  {
+			"type": "Microsoft.Network/privateEndpoints",
+			"apiVersion": "2019-04-01",
+			"name": "[variables('privateEndpointName')]",
+			"location": "[parameters('location')]",
+			"properties": {
+				"subnet": {
+					"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('PrivateEndpointSubnetName'))]"
+				},
+				"privateLinkServiceConnections": [{
+					"name": "[variables('privateEndpointName')]",
+					"properties": {
+						"privateLinkServiceId": "[resourceId('Microsoft.Databricks/workspaces',parameters('workspaceName'))]",
+						"groupIds": [
+							"databricks_ui_api"
+						]
+					}
+				}]
+			}
+		},
+		{
+			"type": "Microsoft.Network/privateDnsZones",
+			"apiVersion": "2018-09-01",
+			"name": "[variables('privateDnsZoneName')]",
+			"location": "global"
+		},
+		{
+			"type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+			"apiVersion": "2018-09-01",
+			"name": "[concat(variables('privateDnsZoneName'), '/', variables('privateDnsZoneName'), '-link')]",
+			"location": "global",
+			"dependsOn": [
+				"[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+			],
+			"properties": {
+				"registrationEnabled": false,
+				"virtualNetwork": {
+					"id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+			"apiVersion": "2020-03-01",
+			"name": "[variables('pvtEndpointDnsGroupName')]",
+			"location": "[parameters('location')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+				"[variables('privateEndpointName')]"
+			],
+			"properties": {
+				"privateDnsZoneConfigs": [{
+					"name": "config1",
+					"properties": {
+						"privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+					}
+				}]
+			}
+		},
+	{
       "type": "Microsoft.Databricks/workspaces",
       "apiVersion": "2021-04-01-preview",
       "name": "[parameters('workspaceName')]",
@@ -280,11 +349,12 @@
           "enableNoPublicIp": {
             "value": "[parameters('disablePublicIp')]"
           }
-        },
-        "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
-        "requiredNsgRules": "[parameters('requiredNsgRules')]"
-      },
-      "dependsOn": [
+          },
+		    "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
+        "requiredNsgRules": "[parameters('requiredNsgRules')]",
+        "PrivateEndpointSubnetName":"[parameters('PrivateEndpointSubnetName')]"
+		},
+	    "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
       ]
     }
