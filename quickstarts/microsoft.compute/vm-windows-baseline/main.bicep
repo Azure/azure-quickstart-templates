@@ -28,7 +28,7 @@ param publicIPAllocationMethod string = 'Dynamic'
   'Basic'
   'Standard'
 ])
-param publicIpSku string = 'Basic'
+param publicIpSku string = 'Standard'
 
 @description('Name of the virtual machine.')
 param vmName string = 'hardened-winvm'
