@@ -39,14 +39,20 @@
       "metadata": {
         "description": "Location of app service plan."
       }
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Name of the resourceGroup."
+      }
     }
   },
   "variables": {
     "cert": "[toLower(concat(parameters('subDomainName'), '.', parameters('domainName')))]",
     "fqdndomain": "[if(not(empty(parameters('subDomainName'))), variables('cert'), parameters('domainName'))]",
     "cnametemp": "[if(not(empty(parameters('subDomainName'))) , parameters('subDomainName') , 'nothing')]",
-    "asuidTemp": "[if(not(empty(parameters('subDomainName'))) , '/asuid.' , '/asuid')]",
-    "mainTempalteRG": "[resourceGroup().name]"
+    "asuidTemp": "[if(not(empty(parameters('subDomainName'))) , '/asuid.' , '/asuid')]"
   },
   "resources": [
     {
@@ -97,7 +103,7 @@
                 "TTL": 3600,
                 "ARecords": [
                   {
-                    "ipv4Address": "[reference(resourceId(variables('mainTempalteRG'),'Microsoft.Web/sites', parameters('websiteName')), '2020-09-01', 'Full').properties.inboundIpAddress]"
+                    "ipv4Address": "[reference(resourceId(parameters('resourceGroupName'),'Microsoft.Web/sites', parameters('websiteName')), '2020-09-01', 'Full').properties.inboundIpAddress]"
                   }
                 ]
               },
@@ -115,7 +121,7 @@
                 "TXTRecords": [
                   {
                     "value": [
-                      "[reference(resourceId(variables('mainTempalteRG'),'Microsoft.Web/sites', parameters('websiteName')), '2020-09-01').customDomainVerificationId]"
+                      "[reference(resourceId(parameters('resourceGroupName'),'Microsoft.Web/sites', parameters('websiteName')), '2020-09-01').customDomainVerificationId]"
                     ]
                   }
                 ]
@@ -149,7 +155,7 @@
       "name": "[variables('fqdndomain')]",
       "type": "Microsoft.Web/certificates",
       "properties": {
-        "serverFarmId": "[resourceId(variables('mainTempalteRG'),'Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+        "serverFarmId": "[resourceId(parameters('resourceGroupName'),'Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
         "canonicalName": "[variables('fqdndomain')]",
         "domainValidationMethod": "[if(empty(parameters('subDomainName')),'http-token', 'cname-delegation')]"
       },
@@ -161,7 +167,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2021-04-01",
       "name": "nestedTemplate-bindManagedCertificatetoWebSite",
-      "resourceGroup": "[variables('mainTempalteRG')]",
+      "resourceGroup": "[parameters('resourceGroupName')]",
       "properties": {
         "mode": "Incremental",
         "template": {
