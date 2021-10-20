@@ -22,7 +22,7 @@ param privateSubnetCidr string = '10.179.0.0/18'
 param privateSubnetName string = 'private-subnet'
 
 @description('Indicates whether public network access is allowed to the workspace with private endpoint - possible values are Enabled or Disabled')
-param publicNetworkAccess string = 'Disabled'
+param publicNetworkAccess string = 'Enabled'
 
 @description('CIDR range for the public subnet..')
 param publicSubnetCidr string = '10.179.64.0/18'
@@ -34,10 +34,13 @@ param publicSubnetName string = 'public-subnet'
 param vnetCidr string = '10.179.0.0/16'
 
 @description('Indicates whether to retain or remove the AzureDatabricks outbound NSG rule - possible values are AllRules or NoAzureDatabricksRules')
-param requiredNsgRules string = 'NoAzureDatabricksRules'
+param requiredNsgRules string = 'AllRules'
 
 @description('The name of the virtual network to create.')
 param vnetName string = 'databricks-vnet'
+
+@description('The name of the subnet to create the private endpoint in.')
+param PrivateEndpointSubnetName string = 'default'
 
 @description('The name of the Azure Databricks workspace to create.')
 param workspaceName string

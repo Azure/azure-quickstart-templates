@@ -1,125 +1,117 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "metadata": {
-    "_generator": {
-      "name": "bicep",
-      "version": "0.4.1.14562",
-      "templateHash": "3247823006110740501"
-    }
-  },
   "parameters": {
     "disablePublicIp": {
-      "type": "bool",
       "defaultValue": false,
+      "type": "Bool",
       "metadata": {
         "description": "Specifies whether to deploy Azure Databricks workspace with secure cluster connectivity (SCC) enabled or not (No Public IP)"
       }
     },
     "location": {
-      "type": "string",
       "defaultValue": "[resourceGroup().location]",
+      "type": "String",
       "metadata": {
         "description": "Location for all resources."
       }
     },
     "nsgName": {
-      "type": "string",
       "defaultValue": "databricks-nsg",
+      "type": "String",
       "metadata": {
         "description": "The name of the network security group to create."
       }
     },
     "pricingTier": {
-      "type": "string",
       "defaultValue": "premium",
       "allowedValues": [
         "trial",
         "standard",
         "premium"
       ],
+      "type": "String",
       "metadata": {
         "description": "The pricing tier of workspace."
       }
     },
-
     "privateSubnetCidr": {
-      "type": "string",
       "defaultValue": "10.179.0.0/18",
+      "type": "String",
       "metadata": {
         "description": "CIDR range for the private subnet."
       }
     },
     "privateSubnetName": {
-      "type": "string",
       "defaultValue": "private-subnet",
+      "type": "String",
       "metadata": {
         "description": "The name of the private subnet to create."
       }
     },
     "publicNetworkAccess": {
       "defaultValue": "Enabled",
+      "type": "String",
       "metadata": {
         "description": "Indicates whether public network access is allowed to the workspace with private endpoint - possible values are Enabled or Disabled"
-      },
-      "type": "string"
+      }
     },
     "publicSubnetCidr": {
-      "type": "string",
       "defaultValue": "10.179.64.0/18",
+      "type": "String",
       "metadata": {
         "description": "CIDR range for the public subnet.."
       }
     },
     "publicSubnetName": {
-      "type": "string",
       "defaultValue": "public-subnet",
+      "type": "String",
       "metadata": {
         "description": "The name of the public subnet to create."
       }
     },
     "requiredNsgRules": {
       "defaultValue": "AllRules",
+      "type": "String",
       "metadata": {
         "description": "Indicates whether to retain or remove the AzureDatabricks outbound NSG rule - possible values are AllRules or NoAzureDatabricksRules"
-      },
-      "type": "string"
+      }
     },
     "vnetCidr": {
-      "type": "string",
       "defaultValue": "10.179.0.0/16",
+      "type": "String",
       "metadata": {
         "description": "CIDR range for the vnet."
       }
     },
     "vnetName": {
-      "type": "string",
       "defaultValue": "databricks-vnet",
+      "type": "String",
       "metadata": {
         "description": "The name of the virtual network to create."
       }
     },
     "PrivateEndpointSubnetName": {
-      "type": "string",
       "defaultValue": "default",
+      "type": "String",
       "metadata": {
         "description": "The name of the subnet to create the private endpoint in."
       }
     },
     "workspaceName": {
-      "type": "string",
+      "type": "String",
       "metadata": {
         "description": "The name of the Azure Databricks workspace to create."
       }
     }
   },
-  "functions": [],
   "variables": {
     "managedResourceGroupName": "[format('databricks-rg-{0}-{1}', parameters('workspaceName'), uniqueString(parameters('workspaceName'), resourceGroup().id))]",
     "privateEndpointName": "[concat(parameters('workspaceName'), '-', 'pvtEndpoint')]",
-		"privateDnsZoneName": "privatelink.azuredatabricks.net",
-		"pvtEndpointDnsGroupName": "[concat(variables('privateEndpointName'),'/mydnsgroupname')]"
+    "privateDnsZoneName": "privatelink.azuredatabricks.net",
+    "pvtEndpointDnsGroupName": "[concat(variables('privateEndpointName'),'/mydnsgroupname')]"
   },
+  "functions": [],
   "resources": [
     {
       "type": "Microsoft.Network/networkSecurityGroups",
@@ -220,6 +212,9 @@
       "apiVersion": "2020-05-01",
       "name": "[parameters('vnetName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -262,75 +257,79 @@
             }
           }
         ]
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
-      ]
+      }
     },
-	  {
-			"type": "Microsoft.Network/privateEndpoints",
-			"apiVersion": "2019-04-01",
-			"name": "[variables('privateEndpointName')]",
-			"location": "[parameters('location')]",
-			"properties": {
-				"subnet": {
-					"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('PrivateEndpointSubnetName'))]"
-				},
-				"privateLinkServiceConnections": [{
-					"name": "[variables('privateEndpointName')]",
-					"properties": {
-						"privateLinkServiceId": "[resourceId('Microsoft.Databricks/workspaces',parameters('workspaceName'))]",
-						"groupIds": [
-							"databricks_ui_api"
-						]
-					}
-				}]
-			}
-		},
-		{
-			"type": "Microsoft.Network/privateDnsZones",
-			"apiVersion": "2018-09-01",
-			"name": "[variables('privateDnsZoneName')]",
-			"location": "global"
-		},
-		{
-			"type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-			"apiVersion": "2018-09-01",
-			"name": "[concat(variables('privateDnsZoneName'), '/', variables('privateDnsZoneName'), '-link')]",
-			"location": "global",
-			"dependsOn": [
-				"[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
-			],
-			"properties": {
-				"registrationEnabled": false,
-				"virtualNetwork": {
-					"id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
-				}
-			}
-		},
-		{
-			"type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-			"apiVersion": "2020-03-01",
-			"name": "[variables('pvtEndpointDnsGroupName')]",
-			"location": "[parameters('location')]",
-			"dependsOn": [
-				"[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
-				"[variables('privateEndpointName')]"
-			],
-			"properties": {
-				"privateDnsZoneConfigs": [{
-					"name": "config1",
-					"properties": {
-						"privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
-					}
-				}]
-			}
-		},
-	{
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2019-04-01",
+      "name": "[variables('privateEndpointName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('PrivateEndpointSubnetName'))]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "[variables('privateEndpointName')]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Databricks/workspaces',parameters('workspaceName'))]",
+              "groupIds": [
+                "databricks_ui_api"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2018-09-01",
+      "name": "[variables('privateDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2018-09-01",
+      "name": "[concat(variables('privateDnsZoneName'), '/', variables('privateDnsZoneName'), '-link')]",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+      ],
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2020-03-01",
+      "name": "[variables('pvtEndpointDnsGroupName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+        "[variables('privateEndpointName')]"
+      ],
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config1",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+            }
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.Databricks/workspaces",
       "apiVersion": "2021-04-01-preview",
       "name": "[parameters('workspaceName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ],
       "sku": {
         "name": "[parameters('pricingTier')]"
       },
@@ -349,14 +348,11 @@
           "enableNoPublicIp": {
             "value": "[parameters('disablePublicIp')]"
           }
-          },
-		    "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
+        },
+        "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
         "requiredNsgRules": "[parameters('requiredNsgRules')]",
         "PrivateEndpointSubnetName":"[parameters('PrivateEndpointSubnetName')]"
-		},
-	    "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
-      ]
+      }
     }
   ]
 }
