@@ -356,6 +356,9 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-STATIC-WEBSITE-URL** - full URL of a static website
 + **GEN-STATIC-WEBSITE-HOST-NAME** - host name of a static website
 
+**Role definition related placeholders:**
++ **GEN-ROLE-DEFINITION-RESOURCE-ID-READER** - fully qualified resource ID of the Reader built-in role definition
+
 Here's an example in an `azuredeploy.parameters.json` file:
 
 ```json

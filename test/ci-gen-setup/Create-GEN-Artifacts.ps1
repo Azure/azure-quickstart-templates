@@ -352,5 +352,11 @@ $json.Add("APPCONFIGSTORE-KEY1", "key1")
 $json.Add("APPCONFIGSTORE-KEY1", "windowsOSVersion")
 $json.Add("APPCONFIGSTORE-KEY1", "diskSizeGB")
 
+# Propagate a role definition ID to make it available for quickstarts and modules to use.
+$subscriptionId = (Get-AzureRmContext).Subscription.Id
+$readerRoleDefinitionId = (Get-AzureRmRoleDefinition -Name Reader).Id
+$readerRoleDefinitionResourceId = "/subscriptions/$subscriptionId/providers/Microsoft.Authorization/roleDefinitions/$readerRoleDefinitionId"
+$json.Add("ROLE-DEFINITION-RESOURCE-ID-READER", $readerRoleDefinitionId)
+
 # Output all the values needed for the config file
 Write-Output $($json | ConvertTo-json -Depth 30)
