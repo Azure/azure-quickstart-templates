@@ -21,11 +21,13 @@ This template needs the following pre-requisites:
 
 **Use following powershell command to get Principal ID associated with a tenant. The ID is the principal ID.
 
+```powershell
 PS C:\> Get-AzADServicePrincipal -DisplayName "StoragePool Resource Provider"
+```
 
 PARAMETER RESTRICTIONS
 ======================
 
-The VNet and subnet needs to be previously created and the subnet needs to be delegated to Microsoft.StoragePool/diskPools.
 diskPoolName must be 7-30 characters in length.
 targetName must be 5-40 characters in length; supported characters include [0-9a-z-.]; and the name should end with an alphanumeric character.
+diskPoolAvailabilityZone should be the same as the availability zone of the managed disk.
