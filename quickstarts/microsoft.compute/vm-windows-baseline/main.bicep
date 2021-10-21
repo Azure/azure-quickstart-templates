@@ -151,7 +151,7 @@ resource publicIpAddress 'Microsoft.Network/publicIpAddresses@2021-05-01' = {
   }
 }
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-05-01' = {
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-07-01' = {
   name: vmName
   location: location
   zones: [
@@ -205,7 +205,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-05-01' = {
   }
 }
 
-resource guestConfigExtension 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' = {
+resource guestConfigExtension 'Microsoft.Compute/virtualMachines/extensions@2021-07-01' = {
   parent: virtualMachine
   name: 'AzurePolicyforWindows'
   location: location
