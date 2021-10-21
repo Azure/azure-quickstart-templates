@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "disablePublicIp": {
-      "defaultValue": false,
+      "defaultValue": true,
       "type": "Bool",
       "metadata": {
         "description": "Specifies whether to deploy Azure Databricks workspace with secure cluster connectivity (SCC) enabled or not (No Public IP)"
@@ -50,7 +50,7 @@
       }
     },
     "publicNetworkAccess": {
-      "defaultValue": "Enabled",
+      "defaultValue": "Disabled",
       "type": "String",
       "metadata": {
         "description": "Indicates whether public network access is allowed to the workspace with private endpoint - possible values are Enabled or Disabled"
@@ -61,6 +61,13 @@
       "type": "String",
       "metadata": {
         "description": "CIDR range for the public subnet.."
+      }
+    },
+    "privateEndpointSubnetCidr": {
+      "defaultValue": "10.179.128.0/24",
+      "type": "String",
+      "metadata": {
+        "description": "CIDR range for the private endpoint subnet.."
       }
     },
     "publicSubnetName": {
@@ -255,15 +262,55 @@
                 }
               ]
             }
+          },
+          {
+            "name": "[parameters('PrivateEndpointSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('privateEndpointSubnetCidr')]",
+              "privateEndpointNetworkPolicies": "Disabled"            
+            }
           }
         ]
       }
     },
+        {
+      "type": "Microsoft.Databricks/workspaces",
+      "apiVersion": "2021-04-01-preview",
+      "name": "[parameters('workspaceName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ],
+      "sku": {
+        "name": "[parameters('pricingTier')]"
+      },
+      "properties": {
+        "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('managedResourceGroupName'))]",
+        "parameters": {
+          "customVirtualNetworkId": {
+            "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+          },
+          "customPublicSubnetName": {
+            "value": "[parameters('publicSubnetName')]"
+          },
+          "customPrivateSubnetName": {
+            "value": "[parameters('privateSubnetName')]"
+          },
+          "enableNoPublicIp": {
+            "value": "[parameters('disablePublicIp')]"
+          }
+        },
+        "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
+        "requiredNsgRules": "[parameters('requiredNsgRules')]"
+      }
+    },
     {
       "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2020-03-01",
       "name": "[variables('privateEndpointName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))]"],
       "properties": {
         "subnet": {
           "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('PrivateEndpointSubnetName'))]"
@@ -285,7 +332,9 @@
       "type": "Microsoft.Network/privateDnsZones",
       "apiVersion": "2018-09-01",
       "name": "[variables('privateDnsZoneName')]",
-      "location": "global"
+      "location": "global",
+        "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName'))]"]
     },
     {
       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
@@ -320,38 +369,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "type": "Microsoft.Databricks/workspaces",
-      "apiVersion": "2021-04-01-preview",
-      "name": "[parameters('workspaceName')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
-      ],
-      "sku": {
-        "name": "[parameters('pricingTier')]"
-      },
-      "properties": {
-        "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('managedResourceGroupName'))]",
-        "parameters": {
-          "customVirtualNetworkId": {
-            "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
-          },
-          "customPublicSubnetName": {
-            "value": "[parameters('publicSubnetName')]"
-          },
-          "customPrivateSubnetName": {
-            "value": "[parameters('privateSubnetName')]"
-          },
-          "enableNoPublicIp": {
-            "value": "[parameters('disablePublicIp')]"
-          }
-        },
-        "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
-        "requiredNsgRules": "[parameters('requiredNsgRules')]",
-        "PrivateEndpointSubnetName":"[parameters('PrivateEndpointSubnetName')]"
       }
     }
   ]
