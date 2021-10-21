@@ -12,17 +12,21 @@ param adminUsername string
 ])
 param authenticationType string = 'sshPublicKey'
 
-@description('Number of VM instances (100 or less).')
+@description('Number of VM instances (16 or less).')
 @minValue(1)
-@maxValue(100)
+@maxValue(16)
 param instanceCount int = 5
 
 @description('Location for resources. Default is the current resource group location.')
 param location string = resourceGroup().location
 
 @description('Length of public IP prefix.')
-@minValue(28)
-@maxValue(31)
+@allowed([
+  28
+  29
+  30
+  31
+])
 param publicIPPrefixLength int = 28
 
 @description('Size of VMs in the VM Scale Set.')
@@ -31,6 +35,11 @@ param vmSku string = 'Standard_D2_v3'
 @description('String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended.')
 @maxLength(9)
 param vmssName string
+
+@description('String used to connect to your VMSS VM using dnsName.location.cloudapp.azure.com (must be globally unique)')
+@minLength(3)
+@maxLength(61)
+param dnsName string
 
 
 var linuxConfiguration = {
@@ -57,7 +66,6 @@ var virtualNetworkName = '${vmssName}vnet'
 var subnetName = '${vmssName}subnet'
 var addressPrefix = '10.0.0.0/16'
 var subnetPrefix = '10.0.0.0/24'
-var dnsName = 'dns${toLower(vmssName)}'
 var loadBalancerName = '${vmssName}lb'
 var natPoolName = '${vmssName}natpool'
 var natStartPort = 50000
