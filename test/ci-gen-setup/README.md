@@ -19,7 +19,7 @@ If using KeyVault scenarios in deployment the principal used for deploying must 
 
 **NOTE: If you allow PRs to automatically trigger on a PR, then any one who can submit a PR can retrieve secrets from this vault.  This process gives users who can create PRs access to a service principal that can retrieve secrets during deployment.**
 
-## Running Create-GEN-Artifcats.ps1
+## Running Create-GEN-Artifacts.ps1
 
 This script will create the resources required for a subscription - there are default values for the parameters, but check each param to make sure the value is correct for your subscription.  The KeyVault name and StorageAccount name must be globally unique.
 
@@ -39,3 +39,9 @@ If you need to test AKS a service principal needs to be created - until AKS supp
 ## Using Your Configuration
 
 Make sure your pipeline variable for the .config.json file, is updated to reference your config.  The file must be publicly accessible or you need to update the task the downloads it.
+
+## Front Door CNAME Protection
+
+Azure Front Door quickstarts deploy a temporary Front Door instance for validation. Front Door's dangling CNAME prevention policy prevents the deletion of the Front Door instance after it's created.
+
+To work around this, contact the Front Door team and ask them to enable the "bypass dangling CNAME protection" feature flag for your Azure subscription's ID.

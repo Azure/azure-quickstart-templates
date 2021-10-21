@@ -26,7 +26,10 @@ param(
     [string]$FairfaxLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
     [string]$PublicDeployment = "",
     [string]$PublicLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
-    [string]$BicepVersion = $ENV:BICEP_VERSION # empty if bicep not supported by the sample
+    [string]$BicepVersion = $ENV:BICEP_VERSION, # empty if bicep not supported by the sample
+    [string]$TemplateAnalyzerResult = "$ENV:TEMPLATE_ANALYZER_RESULT",
+    [string]$TemplateAnalyzerOutputFilePath = "$ENV:TEMPLATE_ANALYZER_OUTPUT_FILEPATH",
+    [string]$TemplateAnalyzerLogsContainerName = "$ENV:TEMPLATE_ANALYZER_LOGS_CONTAINER_NAME"
 )
 
 function Get-Regression(
@@ -128,6 +131,8 @@ $FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("true"), "PASS
 $FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("false"), "FAIL"
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("true"), "PASS"
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("false"), "FAIL"
+$TemplateAnalyzerResult = $TemplateAnalyzerResult -ireplace [regex]::Escape("true"), "PASS"
+$TemplateAnalyzerResult = $TemplateAnalyzerResult -ireplace [regex]::Escape("false"), "FAIL"
 
 Write-Host "Supported Environments Found: $supportedEnvironmentsJson"
 $supportedEnvironments = ($supportedEnvironmentsJson | ConvertFrom-JSON -AsHashTable)
@@ -157,6 +162,10 @@ if ($r -eq $null) {
     Write-Host "CredScan Result: $CredScanResult"
     if (![string]::IsNullOrWhiteSpace($CredScanResult)) {
         $results.Add("CredScanResult", $CredScanResult)
+    }
+    Write-Host "TemplateAnalyzer result: $TemplateAnalyzerResult"
+    if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerResult)) {
+        $results.Add("TemplateAnalyzerResult", $TemplateAnalyzerResult)
     }
     # set the values for Fairfax only if a result was passed
     Write-Host "FF Result"
@@ -207,6 +216,14 @@ else {
         }
         else {
             $r.BestPracticeResult = $BestPracticeResult
+        }
+    }
+    if (![string]::IsNullOrWhiteSpace($TemplateAnalyzerResult)) {
+        if ($r.TemplateAnalyzerResult -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName 'TemplateAnalyzerResult' -NotePropertyValue $TemplateAnalyzerResult
+        }
+        else {
+            $r.TemplateAnalyzerResult = $TemplateAnalyzerResult
         }
     }
     if (![string]::IsNullOrWhiteSpace($BicepVersion)) {
@@ -332,6 +349,8 @@ else {
 $BPRegressed = Get-Regression $comparisonResults $newResults "BestPracticeResult"
 $FairfaxRegressed = Get-Regression $comparisonResults $newResults "FairfaxDeployment"
 $PublicRegressed = Get-Regression $comparisonResults $newResults "PublicDeployment"
+$TemplateAnalyzerRegressed = Get-Regression $comparisonResults $newResults "TemplateAnalyzerResult"
+
 $AnyRegressed = $BPRegressed -or $FairfaxRegressed -or $PublicRegresse
 
 if (!$isPullRequest) {
@@ -344,6 +363,7 @@ if (!$isPullRequest) {
     $regressionsRow | Add-Member "BPRegressed" $BPRegressed
     $regressionsRow | Add-Member "FairfaxRegressed" $FairfaxRegressed
     $regressionsRow | Add-Member "PublicRegressed" $PublicRegressed
+    $regressionsRow | Add-Member "TemplateAnalyzerRegressed" $TemplateAnalyzerRegressed
     $regressionsRow | Add-Member "BuildNumber" $ENV:BUILD_BUILDNUMBER
     $regressionsRow | Add-Member "BuildId" $ENV:BUILD_BUILDID
     $regressionsRow | Add-Member "Build" "https://dev.azure.com/azurequickstarts/azure-quickstart-templates/_build/results?buildId=$($ENV:BUILD_BUILDID)"
@@ -424,7 +444,7 @@ switch ($BestPracticeResult) {
     "FAIL" { $BestPracticeResultColor = "red" }
     default {
         $BestPracticeResult = $na
-        $BestPracticeResult = "inactive"    
+        $BestPracticeResultColor = "inactive"    
     }
 }
 
@@ -441,7 +461,17 @@ switch ($CredScanResult) {
     }
 }
 
+switch ($TemplateAnalyzerResult) {
+    "PASS" { $TemplateAnalyzerResultColor = "brightgreen" }
+    "FAIL" { $TemplateAnalyzerResultColor = "red" }
+    default {
+        $TemplateAnalyzerResult = $na
+        $TemplateAnalyzerResultColor = "inactive"    
+    }
+}
+
 $BicepVersionColor = "brightgreen";
+if ($BicepVersion -eq "") { $BicepVersion = "n/a" } # make sure the badge value is not empty
 
 $badges = @(
     @{
@@ -472,6 +502,10 @@ $badges = @(
     @{
         "url"      = "https://img.shields.io/badge/Bicep%20Version-$BicepVersion-/?color=$BicepVersionColor";
         "filename" = "BicepVersion.svg"
+    },
+    @{
+        "url"      = "https://img.shields.io/badge/Template%20Analyzer%20Check-$TemplateAnalyzerResult-/?color=$TemplateAnalyzerResultColor";
+        "filename" = "TemplateAnalyzerResult.svg"
     }
 )
 
@@ -503,6 +537,23 @@ foreach ($badge in $badges) {
         -Context $ctx `
         -Properties @{"ContentType" = "image/svg+xml"; "CacheControl" = "no-cache" } `
         -Force -Verbose
+}
+
+# Upload BPA results file:
+$templateAnalyzerLogFileName = "$($ENV:BUILD_BUILDNUMBER)_$RowKey"
+Write-Host "Uploading TemplateAnalyzer log file: $templateAnalyzerLogFileName"
+try {
+    Set-AzStorageBlobContent -Container $TemplateAnalyzerLogsContainerName `
+        -File $TemplateAnalyzerOutputFilePath `
+        -Blob $templateAnalyzerLogFileName `
+        -Context $ctx `
+        -Properties @{ "ContentType" = "text/plain" } `
+        -Force -Verbose
+}
+catch {
+    Write-Host "===================================================="
+    Write-Host " Failed to upload $TemplateAnalyzerOutputFilePath   "
+    Write-Host "===================================================="
 }
 
 <#Debugging only
