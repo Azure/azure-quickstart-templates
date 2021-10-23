@@ -1,5 +1,24 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in October 4, 2021
+
+* Improve reliability of DSC module cChoco, which caused most of the deployment errors.
+* Fix deployment error in SharePoint 2013 by also restarting service SPAdminV4 before deploying the solution.
+
+## Enhancements & bug-fixes - Published in September 13, 2021
+
+* Fix the deployment error when parameter 'addPublicIPAddressToEachVM' is false and 'numberOfAdditionalFrontEnd' is greater than 0
+* Change default size of virtual machines to use B-series burstable, ideal for such template and much cheaper than other comparable series.
+* Change default storage type of SharePoint virtual machines to 'StandardSSD_LRS'.
+* Change type of parameters to boolean when possible.
+* Introduce new parameter 'RDPTrafficAllowed', to finely configure if/how RDP traffic should be allowed.
+* Reorder parameters to have a more logical display when deploying the template from the portal.
+* Update the list of disk types available for virtual machines.
+* Improve management of automatic Windows updates
+* Update apiVersion of all resources to latest version.
+* Update DSC module SharePointDSC from 4.7 to 4.8, which no longer needs custom changes.
+* Update DSC module SqlServerDsc from 15.1.1 to 15.2
+
 ## Enhancements & bug-fixes - Published in June 22, 2021
 
 * Reduce deployment time by skipping creation of developer site /sites/dev, not so useful

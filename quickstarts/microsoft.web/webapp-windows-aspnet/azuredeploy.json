@@ -1,0 +1,122 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "webAppName": {
+            "type": "string",
+            "defaultValue": "[concat('ASPNET-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "That name is the name of our application. It has to be unique. Type a name followed by your resource group name. (<name>-<resourceGroupName>)"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "variables": {
+        "alwaysOn": false,
+        "sku": "Free",
+        "skuCode": "F1",
+        "workerSize": "0",
+        "workerSizeId": 0,
+        "numberOfWorkers": "1",
+        "currentStack": "dotnet",
+        "netFrameworkVersion": "v4.0",
+        "hostingPlanName": "[concat('hpn-', resourceGroup().name)]",
+        "appInsight": "[concat('insights-', parameters('webAppName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('webAppName')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Insights/components/', variables('appInsight'))]",
+                "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+            ],
+            "properties": {
+                "name": "[parameters('webAppName')]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsight')), '2020-02-02').InstrumentationKey]"
+                        },
+                        {
+                            "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
+                            "value": "~2"
+                        },
+                        {
+                            "name": "XDT_MicrosoftApplicationInsights_Mode",
+                            "value": "default"
+                        },
+                        {
+                            "name": "DiagnosticServices_EXTENSION_VERSION",
+                            "value": "disabled"
+                        },
+                        {
+                            "name": "APPINSIGHTS_PROFILERFEATURE_VERSION",
+                            "value": "disabled"
+                        },
+                        {
+                            "name": "APPINSIGHTS_SNAPSHOTFEATURE_VERSION",
+                            "value": "disabled"
+                        },
+                        {
+                            "name": "InstrumentationEngine_EXTENSION_VERSION",
+                            "value": "disabled"
+                        },
+                        {
+                            "name": "SnapshotDebugger_EXTENSION_VERSION",
+                            "value": "disabled"
+                        },
+                        {
+                            "name": "XDT_MicrosoftApplicationInsights_BaseExtensions",
+                            "value": "disabled"
+                        }
+                    ],
+                    "metadata": [
+                        {
+                            "name": "CURRENT_STACK",
+                            "value": "[variables('currentStack')]"
+                        }
+                    ],
+                    "netFrameworkVersion": "[variables('netFrameworkVersion')]",
+                    "alwaysOn": "[variables('alwaysOn')]"
+                },
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+                "clientAffinityEnabled": true
+            }
+        },
+        {
+            "apiVersion": "2020-06-01",
+            "name": "[variables('hostingPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[parameters('location')]",
+            "properties": {
+                "name": "[variables('hostingPlanName')]",
+                "workerSize": "[variables('workerSize')]",
+                "workerSizeId": "[variables('workerSizeId')]",
+                "numberOfWorkers": "[variables('numberOfWorkers')]"
+            },
+            "sku": {
+                "Tier": "[variables('sku')]",
+                "Name": "[variables('skuCode')]"
+            }
+        },
+        {
+            "apiVersion": "2020-02-02-preview",
+            "name": "[variables('appInsight')]",
+            "type": "microsoft.insights/components",
+            "location": "[parameters('location')]",
+            "properties": {
+                "ApplicationId": "[parameters('webAppName')]"
+            }
+        }
+    ]
+}

@@ -1,0 +1,104 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "omsWorkspaceName": {
+        "type": "string",
+        "defaultValue": "[concat('oms-workspace',uniqueString(resourceGroup().id))]"
+      },
+      "omsSolutionsName": {
+        "type": "array"
+      },
+      "tags": {
+        "type": "object"
+      },
+      "sku": {
+        "type": "string",
+        "allowedValues": [
+          "Free",
+          "Standalone",
+          "PerNode"
+        ],
+        "defaultValue": "Free",
+        "metadata": {
+          "description": "Service Tier: Free, Standalone, or PerNode"
+        }
+      },
+      "dataRetention": {
+        "type": "int",
+        "defaultValue": 90,
+        "minValue": 7,
+        "maxValue": 730,
+        "metadata": {
+          "description": "Number of days of retention. Free plans can only have 7 days, Standalone and OMS plans include 30 days for free"
+        }
+      },
+      "location": {
+        "type": "string"
+      }
+    },
+    "resources": [
+      {
+        "name": "[parameters('omsWorkspaceName')]",
+        "type": "Microsoft.OperationalInsights/workspaces",
+        "apiVersion": "2020-08-01",
+        "location": "[parameters('location')]",
+        "tags": "[parameters('tags')]",
+        "properties": {
+          "sku": {
+            "name": "[parameters('sku')]"
+          },
+          "retention": "[parameters('dataRetention')]"
+        }
+      },
+      {
+        "type": "Microsoft.OperationsManagement/solutions",
+        "name": "[concat(parameters('omsSolutionsName')[copyIndex()], '(', parameters('omsWorkspaceName'), ')')]",
+        "apiVersion": "2015-11-01-preview",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+          "[parameters('omsWorkspaceName')]"
+        ],
+        "copy": {
+          "name": "copy-oms-solutions",
+          "count": "[length(parameters('omsSolutionsName'))]"
+        },
+        "plan": {
+          "name": "[concat(parameters('omsSolutionsName')[copyIndex()], '(', parameters('omsWorkspaceName'), ')')]",
+          "product": "[concat('OMSGallery/', parameters('omsSolutionsName')[copyIndex()])]",
+          "promotionCode": "",
+          "publisher": "Microsoft"
+        },
+        "properties": {
+          "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('omsWorkspaceName'))]"
+        }
+      },
+      {
+        "type": "Microsoft.OperationalInsights/workspaces/datasources",
+        "kind": "AzureActivityLog",
+        "name": "[concat(parameters('omsWorkspaceName'), '/', subscription().subscriptionId)]",
+        "apiVersion": "2020-08-01",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+          "[parameters('omsWorkspaceName')]"
+        ],
+        "properties": {
+          "linkedResourceId": "[subscriptionResourceId('microsoft.insights/eventTypes', 'management')]"
+        }
+      }
+    ],
+    "outputs": {
+      "workspaceName": {
+        "type": "string",
+        "value": "[parameters('omsWorkspaceName')]"
+      },
+      "workspaceId": {
+        "type": "string",
+        "value": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('omsWorkspaceName'))]"
+      },
+      "workspaceCustomerId": {
+        "type": "string",
+        "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('omsWorkspaceName')), '2020-08-01').customerId]"
+      }
+    }
+  }

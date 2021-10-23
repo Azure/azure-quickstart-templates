@@ -9,6 +9,7 @@ For bicep samples:
 
 #>
 
+[CmdletBinding()] # Cmdlet binding needed to enable using -ErrorAction, -ErrorVariable etc from testing
 param (
     [string] $SampleFolder = $ENV:SAMPLE_FOLDER,
     [string] $MainTemplateFilenameBicep = $ENV:MAINTEMPLATE_FILENAME,
@@ -19,7 +20,10 @@ param (
     [switch] $bicepSupported = ($ENV:BICEP_SUPPORTED -eq "true")
 )
 
+$Error.Clear()
 $isPR = $BuildReason -eq "PullRequest"
+
+Write-Host "##vso[task.setvariable variable=label.bicep.warnings]false"
 
 if ($bicepSupported) {
     $MainTemplatePathBicep = "$($SampleFolder)/$($MainTemplateFilenameBicep)"
@@ -32,25 +36,45 @@ if ($bicepSupported) {
     Write-host "BUILDING: $BicepPath build $MainTemplatePathBicep --outfile $CompiledJsonPath"
     Start-Process $BicepPath -ArgumentList @('build', $MainTemplatePathBicep, '--outfile', $CompiledJsonPath) -RedirectStandardError $errorFile -Wait
     $errorOutput = [string[]](Get-Content $errorFile)
+
     Remove-Item $errorFile
     
-    if (!(Test-Path $CompiledJsonPath)) {
-        Write-Error "Bicep build produced no output file. Check above for build errors."
-        return
-    }
-
-    $errors = @()
+    $warnings = 0
+    $errors = 0
     foreach ($item in $errorOutput) {
-        if ($item -imatch " Warning BCP") {
+        if ($item -imatch ": Warning ") {
+            $warnings += 1
             Write-Warning $item
         }
+        elseif ($item -imatch ": Error BCP") {
+            $errors += 1
+            Write-Error $item
+        }
         else {
-            $errors += $item
+            # Build succeeded: 0 Warning(s), 0 Error(s) [possibly localized]
+            if ($item -match " 0 .* 0 ") {
+                # Succeeded
+            }
+            else {
+                # This should only occur on the last line (the error/warnings summary line)
+                if ($item -ne $errorOutput[-1]) {
+                    throw "Only the last error output line should not be a warning or error"
+                }
+            }
         }
     }
-    if ($errors) {
-        Write-Error ($errors -join "`n")
-    }
+
+    if (($errors -gt 0) -or !(Test-Path $CompiledJsonPath)) {
+        # Can't continue, fail pipeline
+        Write-Error "Bicep build failed."
+        return
+    }    
+
+    if ($warnings -gt 0) {
+        # Can't continue, fail pipeline
+        Write-Warning "Bicep build had warnings."
+        Write-Host "##vso[task.setvariable variable=label.bicep.warnings]true"
+    }    
 
     # If this is a PR, compare it against the JSON file included in the sample
     if ($isPR) {
@@ -78,5 +102,5 @@ else {
     $fileToDeploy = $MainTemplateFilenameJson
 }
 
-Write-Host "Deploying the file $fileToDeploy"
+Write-Host "File to deploy: $fileToDeploy"
 Write-Host "##vso[task.setvariable variable=mainTemplate.deployment.filename]$fileToDeploy"

@@ -69,19 +69,32 @@
       "metadata": {
         "description": "Unique public DNS label for the deployment. The fqdn will look something like 'dnsname.region.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
       }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "vnetName": "[uniqueString(resourceGroup().id, 'labVNet')]",
     "labVNetPrefix": "172.16.0.0/12",
     "storageAccountSuffix": "st",
-    "storageAccountType": "[concat(parameters('storageCategory'),'_LRS')]",
     "adDataDiskSize": "30",
     "mbrDataDiskSize": "127"
   },
   "resources": [
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "name": "sbn0",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -108,12 +121,15 @@
           },
           "dnsLabel": {
             "value": "[parameters('dnsLabelPrefix')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "name": "[concat('sbn', copyIndex(1))]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -131,7 +147,7 @@
             "value": "[variables('labVNetPrefix')]"
           },
           "subnets": {
-            "value": "[reference(concat('sbn', copyIndex())).outputs.vnetSubnets.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('sbn', copyIndex()))).outputs.vnetSubnets.value]"
           },
           "vnetName": {
             "value": "[variables('vnetName')]"
@@ -144,12 +160,15 @@
           },
           "addedSubnetPrefix": {
             "value": "[concat('172.16.',copyIndex(1),'.0/24')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "name": "LabStorage",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -162,14 +181,14 @@
           "storageAccountSuffix": {
             "value": "[variables('storageAccountSuffix')]"
           },
-          "storageAccountType": {
-            "value": "[variables('storageAccountType')]"
+          "location": {
+              "value": "[parameters('location')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "name": "Step0",
       "type": "Microsoft.Resources/deployments",
       "properties": {
@@ -181,16 +200,19 @@
         "parameters": {
           "availabilitySetName": {
             "value": "AVSetDC"
+          },
+          "location": {
+              "value": "[parameters('location')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "name": "confDC0",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'sbn0')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'sbn0')]",
         "Microsoft.Resources/deployments/LabStorage",
         "Microsoft.Resources/deployments/dc0"
       ],
@@ -224,12 +246,15 @@
           },
           "_artifactsLocationSasToken": {
             "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "name": "Step1",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
@@ -251,18 +276,21 @@
             "value": "[variables('vnetName')]"
           },
           "virtualNetworkSubnets": {
-            "value": "[reference(concat('sbn', add(parameters('numberOfSubnets'),-1))).outputs.vnetSubnets.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('sbn', add(parameters('numberOfSubnets'),-1)))).outputs.vnetSubnets.value]"
           },
           "virtualNetworkAddressRanges": {
             "value": [
               "[variables('labVNetPrefix')]"
             ]
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "name": "dc0",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
@@ -275,6 +303,9 @@
           "contentVersion": "1.2.0.0"
         },
         "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
           "indx": {
             "value": 0
           },
@@ -282,7 +313,7 @@
             "value": "[equals(parameters('storageCategory'), 'Standard')]"
           },
           "vmSize": {
-            "value": "Standard_DS1_V2"
+            "value": "[parameters('vmSize')]"
           },
           "lbName": {
             "value": "[reference('sbn0').outputs.lbName.value]"
@@ -290,14 +321,8 @@
           "computerName": {
             "value": "dc"
           },
-          "publicIPAddressName": {
-            "value": "[reference('sbn0').outputs.publicIPAddressName.value]"
-          },
           "publicStartRdpPort": {
             "value": 5000
-          },
-          "vnetName": {
-            "value": "[variables('vnetName')]"
           },
           "subnets": {
             "value": "[reference('sbn0').outputs.vnetSubnets.value]"
@@ -341,7 +366,7 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "name": "[concat('dc', copyIndex(1))]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
@@ -359,6 +384,9 @@
           "contentVersion": "1.2.0.0"
         },
         "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
           "indx": {
             "value": "[copyIndex(1)]"
           },
@@ -366,7 +394,7 @@
             "value": "[equals(parameters('storageCategory'), 'Standard')]"
           },
           "vmSize": {
-            "value": "Standard_DS1_V2"
+            "value": "[parameters('vmSize')]"
           },
           "lbName": {
             "value": "[reference('sbn0').outputs.lbName.value]"
@@ -374,17 +402,11 @@
           "computerName": {
             "value": "dc"
           },
-          "publicIPAddressName": {
-            "value": "[reference('sbn0').outputs.publicIPAddressName.value]"
-          },
           "publicStartRdpPort": {
             "value": 5000
           },
-          "vnetName": {
-            "value": "[variables('vnetName')]"
-          },
           "subnets": {
-            "value": "[reference(concat('sbn', add(parameters('numberOfSubnets'),-1))).outputs.vnetSubnets.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('sbn', add(parameters('numberOfSubnets'),-1)))).outputs.vnetSubnets.value]"
           },
           "storageAccountName": {
             "value": "[reference('LabStorage').outputs.storageAccountName.value]"
@@ -425,7 +447,7 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "name": "[concat('Members', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
@@ -443,6 +465,9 @@
           "contentVersion": "1.2.0.0"
         },
         "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
           "indx": {
             "value": "[copyIndex()]"
           },
@@ -450,7 +475,7 @@
             "value":"[equals(parameters('storageCategory'), 'Standard')]"
           },
           "vmSize": {
-            "value": "Standard_DS1_V2"
+            "value": "[parameters('vmSize')]"
           },
           "lbName": {
             "value": "[reference('sbn0').outputs.lbName.value]"
@@ -461,14 +486,8 @@
           "publicStartRdpPort": {
             "value": 6000
           },
-          "publicIPAddressName": {
-            "value": "[reference('sbn0').outputs.publicIPAddressName.value]"
-          },
-          "vnetName": {
-            "value": "[variables('vnetName')]"
-          },
           "subnets": {
-            "value": "[reference(concat('sbn', add(parameters('numberOfSubnets'),-1))).outputs.vnetSubnets.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('sbn', add(parameters('numberOfSubnets'),-1)))).outputs.vnetSubnets.value]"
           },
           "storageAccountName": {
             "value": "[reference('LabStorage').outputs.storageAccountName.value]"
@@ -503,12 +522,12 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "name": "[concat('confDc', copyIndex(1))]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
         "Microsoft.Resources/deployments/confDC0",
-        "[concat('Microsoft.Resources/deployments/dc', copyIndex(1))]"
+        "[resourceId('Microsoft.Resources/deployments', concat('dc', copyIndex(1)))]"
       ],
       "copy": {
         "name": "otherDCConfs",
@@ -521,6 +540,9 @@
           "contentVersion": "1.1.0.0"
         },
         "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
           "indx": {
             "value": "[copyIndex(1)]"
           },
@@ -549,12 +571,12 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "name": "[concat('confMembers', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
         "Microsoft.Resources/deployments/confDC0",
-        "[concat('Microsoft.Resources/deployments/Members', copyIndex())]"
+        "[resourceId('Microsoft.Resources/deployments',concat('Members', copyIndex()))]"
       ],
       "copy": {
         "name": "confMembers",
@@ -567,6 +589,9 @@
           "contentVersion": "1.1.0.0"
         },
         "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
           "indx": {
             "value": "[copyIndex()]"
           },
@@ -593,11 +618,12 @@
     },
     "subnets": {
       "type": "array",
-      "value": "[reference(concat('sbn',add(parameters('numberOfSubnets'),-1))).outputs.vnetSubnets.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('sbn',add(parameters('numberOfSubnets'),-1)))).outputs.vnetSubnets.value]"
     },
     "lenVnetSubnets": {
       "type": "int",
-      "value": "[reference(concat('sbn',add(parameters('numberOfSubnets'),-1))).outputs.vnetLength.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', concat('sbn',add(parameters('numberOfSubnets'),-1)))).outputs.vnetLength.value]"
     }
   }
 }
+

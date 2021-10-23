@@ -1,0 +1,630 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templatelink.uri]",
+      "metadata": {
+        "description": "this will be the location for artifacts"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "this will be the sas key to access artifacts"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "your resources will be created in this location"
+      }
+    },
+    "omsSku": {
+      "type": "string",
+      "defaultValue": "PerNode",
+      "allowedValues": [
+        "Free",
+        "Standalone",
+        "PerNode"
+      ],
+      "metadata": {
+        "description": "this will be you SKU for OMS"
+      }
+    },
+    "pipAddressType": {
+      "type": "string",
+      "defaultValue": "dynamic",
+      "allowedValues": [
+        "dynamic",
+        "static"
+      ],
+      "metadata": {
+        "description": "this will be the type of public IP address used for the VM name"
+      }
+    },
+    "sqlAdministratorName": {
+      "type": "string",
+      "metadata": {
+        "description": "this will be the admin user for sql server"
+      }
+    },
+    "sqlServerPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "this will be the password for the admin user of sql server"
+      }
+    },
+    "emailToSendAlertsTo": {
+      "type": "string",
+      "defaultValue": "dummy@contoso.com",
+      "metadata": {
+        "description": "this user will get the alert emails"
+      }
+    },
+    "bacpacUri": {
+      "type": "string",
+      "metadata": {
+        "description": "The uri to the Contoso Clinic BacPac - must be hosted in Azure Storage, use the defaultValue if deploying from QuickStarts."
+      }
+    },
+    "bacpacUriSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken needed to access the Contoso Clinic BacPac - use the defaultValue of '?' if the file is not secured"
+      }
+    }
+  },
+  "variables": {
+    "omsWorkspaceName": "[concat('sql-injection-oms','-',uniqueString(resourceGroup().id))]",
+    "omsSolutions": [
+      "Security",
+      "AzureActivity",
+      "AzureWebAppsAnalytics",
+      "AzureSQLAnalytics",
+      "AzureAppGatewayAnalytics"
+    ],
+    "tags": {
+      "scenario": "SQL-Injection-Attack-Prevention"
+    },
+    "vNetName": "sql-appgw-vnet",
+    "vNetAddressSpace": "10.1.0.0/16",
+    "subnets": [
+      {
+        "name": "appgw-subnet",
+        "properties": {
+          "addressPrefix": "10.1.0.0/24"
+        }
+      }
+    ],
+    "applicationGateways": [
+      {
+        "name": "appgw-detection",
+        "wafMode": "Detection"
+      },
+      {
+        "name": "appgw-prevention",
+        "wafMode": "Prevention"
+      }
+    ],
+    "httpProbeName": "aseProbeHTTP",
+    "httpsProbeName": "aseProbeHTTPS",
+    "diagStorageAccName": "[concat('sqlinjection','stg',substring(uniqueString(resourceGroup().id),0,5))]",
+    "webAppName": "[concat('sql-injection-webapp','-',substring(uniqueString(resourceGroup().id),0,5))]",
+    "aspName": "[concat('sql-injection-asp','-',substring(uniqueString(resourceGroup().id),0,5))]",
+    "appServiceConnectionType": "SQLAzure",
+    "sqlServerName": "[concat('sqlinjectionserver',substring(uniqueString(resourceGroup().id),0,5))]",
+    "database": {
+      "name": "contosoclinic",
+      "edition": "Standard"
+    },
+    "omsTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.loganalytics/workspaces.json', parameters('_artifactsLocationSasToken')))]",
+    "vnetTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.network/virtualnetworks.json', parameters('_artifactsLocationSasToken')))]",
+    "pipTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.network/publicipaddress.json', parameters('_artifactsLocationSasToken')))]",
+    "appgwTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.network/applicationgateways.json', parameters('_artifactsLocationSasToken')))]",
+    "storageTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.storage/storageaccounts.storage.json', parameters('_artifactsLocationSasToken')))]",
+    "webappTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.web/sites.json', parameters('_artifactsLocationSasToken')))]",
+    "aspTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.web/serverfarms.json', parameters('_artifactsLocationSasToken')))]",
+    "webappConnectionStringTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.web/sites.config.connectionstrings.json', parameters('_artifactsLocationSasToken')))]",
+    "webappMsDeployTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.web/sites.extensions.msdeploy.json', parameters('_artifactsLocationSasToken')))]",
+    "webPackageUri": "[uri(parameters('_artifactsLocation'), concat('artifacts/ContosoClinic.zip', parameters('_artifactsLocationSasToken')))]",
+    "sqlServerTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.sql/servers.v12.0.json', parameters('_artifactsLocationSasToken')))]",
+    "sqlDatabaseTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.sql/servers.databases.json', parameters('_artifactsLocationSasToken')))]",
+    "sqlAuditingTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.sql/servers.auditingsettings.json', parameters('_artifactsLocationSasToken')))]",
+    "sqlSecurityTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/microsoft.sql/servers.securityalertpolicies.json', parameters('_artifactsLocationSasToken')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "deploy-sql-injection-attack-oms-resource",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('omsTemplateUri')]"
+        },
+        "parameters": {
+          "omsWorkspaceName": {
+            "value": "[variables('omsWorkspaceName')]"
+          },
+          "omsSolutionsName": {
+            "value": "[variables('omsSolutions')]"
+          },
+          "sku": {
+            "value": "[parameters('omsSku')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('vnetName'),'-resource')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vnetTemplateUri')]"
+        },
+        "parameters": {
+          "vnetName": {
+            "value": "[variables('vnetName')]"
+          },
+          "addressPrefix": {
+            "value": "[variables('vNetAddressSpace')]"
+          },
+          "subnets": {
+            "value": "[variables('subnets')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('applicationGateways')[copyIndex()].name,'-pip','-resource')]",
+      "copy": {
+        "name": "copy-appgateway-pip",
+        "count": 2
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('pipTemplateUri')]"
+        },
+        "parameters": {
+          "publicIPAddressName": {
+            "value": "[concat(variables('applicationGateways')[copyIndex()].name,'-pip')]"
+          },
+          "publicIPAddressType": {
+            "value": "[parameters('pipAddressType')]"
+          },
+          "dnsNameForPublicIP": {
+            "value": "[concat(variables('applicationGateways')[copyIndex()].name,'-',uniqueString(resourceGroup().id, 'pip'),'-pip')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat('deploy-',variables('applicationGateways')[copyIndex()].name,'-applicationgateway')]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "copy-appgateway",
+        "count": 2
+      },
+      "dependsOn": [
+        "copy-appgateway-pip",
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('vnetName'),'-resource'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('appgwTemplateUri')]"
+        },
+        "parameters": {
+          "applicationGatewayName": {
+            "value": "[variables('applicationGateways')[copyIndex()].name]"
+          },
+          "publicIPRef": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', concat(variables('applicationGateways')[copyIndex()].name,'-pip','-resource'))).outputs.publicIPRef.value]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "frontendPorts": {
+            "value": [
+              {
+                "name": "appGatewayFrontendPort",
+                "properties": {
+                  "Port": 80
+                }
+              }
+            ]
+          },
+          "gatewayIPConfigurations": {
+            "value": [
+              {
+                "name": "appGatewayIpConfig",
+                "properties": {
+                  "subnet": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vNetName'),variables('subnets')[0].name)]"
+                  }
+                }
+              }
+            ]
+          },
+          "backendAddressPools": {
+            "value": [
+              {
+                "name": "appGatewayBackendPool",
+                "properties": {
+                  "BackendAddresses": [
+                    {
+                      "fqdn": "[reference(resourceId('Microsoft.Resources/deployments', concat(variables('webAppName'),'-resource'))).outputs.endpoint.value]"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "backendHttpSettingsCollection": {
+            "value": [
+              {
+                "name": "appGatewayBackendHttpSettings",
+                "properties": {
+                  "Port": 80,
+                  "Protocol": "Http",
+                  "CookieBasedAffinity": "Disabled",
+                  "pickHostNameFromBackendAddress": "true",
+                  "Probe": {
+                    "id": "[resourceId('Microsoft.Network/applicationGateways/probes',variables('applicationGateways')[copyIndex()].name,variables('httpProbeName'))]"
+                  }
+                }
+              }
+            ]
+          },
+          "httpListeners": {
+            "value": [
+              {
+                "name": "appGatewayHttpListener",
+                "properties": {
+                  "FrontendIPConfiguration": {
+                    "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations',variables('applicationGateways')[copyIndex()].name, 'appGatewayFrontendIP')]"
+                  },
+                  "FrontendPort": {
+                    "Id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts',variables('applicationGateways')[copyIndex()].name, 'appGatewayFrontendPort')]"
+                  },
+                  "Protocol": "Http"
+                }
+              }
+            ]
+          },
+          "requestRoutingRules": {
+            "value": [
+              {
+                "Name": "rule1",
+                "properties": {
+                  "RuleType": "Basic",
+                  "httpListener": {
+                    "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners',variables('applicationGateways')[copyIndex()].name, 'appGatewayHttpListener')]"
+                  },
+                  "backendAddressPool": {
+                    "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools',variables('applicationGateways')[copyIndex()].name, 'appGatewayBackendPool')]"
+                  },
+                  "backendHttpSettings": {
+                    "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection',variables('applicationGateways')[copyIndex()].name, 'appGatewayBackendHttpSettings')]"
+                  }
+                }
+              }
+            ]
+          },
+          "probes": {
+            "value": [
+              {
+                "name": "[variables('httpProbeName')]",
+                "properties": {
+                  "protocol": "Http",
+                  "host": "[reference(resourceId('Microsoft.Resources/deployments', concat(variables('webAppName'),'-resource'))).outputs.endpoint.value]",
+                  "path": "/",
+                  "interval": 30,
+                  "timeout": 30,
+                  "unhealthyThreshold": 8
+                }
+              },
+              {
+                "name": "[variables('httpsProbeName')]",
+                "properties": {
+                  "protocol": "Https",
+                  "host": "[reference(resourceId('Microsoft.Resources/deployments', concat(variables('webAppName'),'-resource'))).outputs.endpoint.value]",
+                  "path": "/",
+                  "interval": 30,
+                  "timeout": 30,
+                  "unhealthyThreshold": 8
+                }
+              }
+            ]
+          },
+          "wafMode": {
+            "value": "[variables('applicationGateways')[copyIndex()].wafMode]"
+          },
+          "omsWorkspaceResourceId": {
+            "value": "[reference('deploy-sql-injection-attack-oms-resource').outputs.workspaceId.value]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('diagStorageAccName'),'-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('storageTemplateUri')]"
+        },
+        "parameters": {
+          "storageAccountName": {
+            "value": "[variables('diagStorageAccName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('aspName'),'-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('aspTemplateUri')]"
+        },
+        "parameters": {
+          "name": {
+            "value": "[variables('aspName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('webAppName'),'-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('aspName'),'-resource'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('webappTemplateUri')]"
+        },
+        "parameters": {
+          "name": {
+            "value": "[variables('webAppName')]"
+          },
+          "hostingPlanName": {
+            "value": "[variables('aspName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('webAppName'),'-connectionStrings','-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('webAppName'),'-resource'))]",
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('database').name,'-database','-resource'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('webappConnectionStringTemplateUri')]"
+        },
+        "parameters": {
+          "webAppName": {
+            "value": "[variables('webAppName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "connectionType": {
+            "value": "[variables('appServiceConnectionType')]"
+          },
+          "connectionString": {
+            "value": "[format('Data Source=tcp:{0},1433;Initial Catalog={1};User Id={2};Password={3};Connection Timeout=300;', reference(resourceId('Microsoft.Resources/deployments', concat(variables('sqlServerName'),'-resource'))).outputs.fqdn.value, variables('database').name, parameters('sqlAdministratorName'), parameters('sqlServerPassword'))]"
+          }
+        }
+      }
+    },
+
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('webAppName'),'-msdeploy','-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('webAppName'),'-connectionStrings','-resource'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('webappMsDeployTemplateUri')]"
+        },
+        "parameters": {
+          "webAppName": {
+            "value": "[variables('webAppName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "packageUri": {
+            "value": "[variables('webPackageUri')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('sqlServerName'),'-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sqlServerTemplateUri')]"
+        },
+        "parameters": {
+          "sqlServerName": {
+            "value": "[variables('sqlServerName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "administratorLogin": {
+            "value": "[parameters('sqlAdministratorName')]"
+          },
+          "administratorLoginPassword": {
+            "value": "[parameters('sqlServerPassword')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('sqlServerName'),'-auditingSettings','-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('sqlServerName'),'-resource'))]",
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('diagStorageAccName'),'-resource'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sqlAuditingTemplateUri')]"
+        },
+        "parameters": {
+          "sqlServerName": {
+            "value": "[variables('sqlServerName')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('diagStorageAccName')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('sqlServerName'),'-securityAlertPolicies','-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('sqlServerName'),'-auditingSettings','-resource'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sqlSecurityTemplateUri')]"
+        },
+        "parameters": {
+          "sqlServerName": {
+            "value": "[variables('sqlServerName')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('diagStorageAccName')]"
+          },
+          "sendAlertsTo": {
+            "value": "[parameters('emailToSendAlertsTo')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('database').name,'-database','-resource')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments',concat(variables('sqlServerName'),'-resource'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sqlDatabaseTemplateUri')]"
+        },
+        "parameters": {
+          "sqlServerName": {
+            "value": "[variables('sqlServerName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "databaseName": {
+            "value": "[variables('database').name]"
+          },
+          "omsWorkspaceResourceId": {
+            "value": "[reference('deploy-sql-injection-attack-oms-resource').outputs.workspaceId.value]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          },
+          "administratorLogin": {
+            "value": "[parameters('sqlAdministratorName')]"
+          },
+          "administratorLoginPassword": {
+            "value": "[parameters('sqlServerPassword')]"
+          },
+          "bacpacuri": {
+            "value": "[parameters('bacpacUri')]"
+          },
+          "bacpacUriSasToken": {
+            "value": "[parameters('bacpacUriSasToken')]"
+          },
+          "edition": {
+            "value": "[variables('database').edition]"
+          }
+        }
+      }
+    }
+  ]
+}

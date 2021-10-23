@@ -1,0 +1,131 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "principalId": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the principal ID of StoragePool Resource Provider."
+      }
+    },
+    "availabilityZone": {
+      "defaultValue": 1,
+      "type": "string",
+      "allowedValues": [
+        "1",
+        "2",
+        "3"
+      ],
+      "metadata": {
+        "description": "Availability zone to deploy the managed disk and Disk Pool"
+      }
+    }
+  },
+  "variables": {
+    "existingVnetName": "vnet",
+    "existingSubnetName": "diskpool-subnet",
+    "existingManagedDiskName": "disk-1",
+    "diskPoolOperatorRoleDefinitionId": "60fc6e62547942d48bf467625fcc2840",
+    "roleAssignmentGuid": "[guid(variables('diskPoolOperatorRoleDefinitionId'), parameters('principalId'), resourceGroup().id)]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('existingVnetName')]",
+      "apiVersion": "2020-08-01",
+      "location": "[parameters('location')]",
+      "comments": "Virtual network for overall solution",
+      "tags": {
+        "displayName": "Virtual Network"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('existingSubnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24",
+              "delegations": [
+                {
+                  "name": "StoragePoolDelegation",
+                  "properties": {
+                    "serviceName": "Microsoft.StoragePool/diskPools"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2020-09-30",
+      "name": "[variables('existingManagedDiskName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Premium_LRS"
+      },
+      "zones": [
+        "[parameters('availabilityZone')]"
+      ],
+      "properties": {
+        "creationData": {
+          "createOption": "Empty"
+        },
+        "diskSizeGB": 1024,
+        "maxShares": 2
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "name": "[variables('roleAssignmentGuid')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/disks/', variables('existingManagedDiskName'))]"
+      ],
+      "apiVersion": "2020-04-01-preview",
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('diskPoolOperatorRoleDefinitionId'))]",
+        "principalId": "[parameters('principalId')]",
+        "principalType": "ServicePrincipal"
+      }
+    }
+  ],
+  "outputs": {
+    "existingVnetName": {
+      "type": "string",
+      "value": "[variables('existingVnetName')]"
+    },
+    "existingSubnetName": {
+      "type": "string",
+      "value": "[variables('existingSubnetName')]"
+    },
+    "existingResourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "existingManagedDiskName": {
+      "type": "string",
+      "value": "[variables('existingManagedDiskName')]"
+    },
+    "existingManagedDiskAvailabilityZone": {
+      "type": "string",
+      "value": "[parameters('availabilityZone')]"
+    },
+    "location": {
+      "type": "string",
+      "value": "[parameters('location')]"
+    }
+  }
+}

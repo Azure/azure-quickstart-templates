@@ -1,0 +1,308 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualMachineAdminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator Username for the local admin account"
+      }
+    },
+    "virtualMachineAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Administrator password for the local admin account"
+      }
+    },
+    "virtualMachineNamePrefix": {
+      "defaultValue": "MyVM0",
+      "type": "string",
+      "maxLength": 15,
+      "metadata": {
+        "description": "Name of the virtual machine to be created"
+      }
+    },
+    "virtualMachineCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "minValue": 1,
+      "maxValue": 150,
+      "metadata": {
+        "description": "Number of  virtual machines to be created"
+      }
+    },
+    "virtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_B1s",
+      "allowedValues": [
+        "Standard_B1ls",
+        "Standard_B1s",
+        "Standard_B1ms",
+        "Standard_B2s",
+        "Standard_B2ms",
+        "Standard_D2s_v3",
+        "Standard_D4s_v3"
+      ],
+      "metadata": {
+        "description": "Virtual Machine Size."
+      }
+    },
+    "operatingSystem": {
+      "type": "string",
+      "defaultValue": "UbuntuLTS",
+      "metadata": {
+        "description": "Operating System of the Server"
+      },
+      "allowedValues": [
+        "Win2019DataCenter",
+        "Win2016DataCenter",
+        "UbuntuLTS"
+      ]
+    },
+    "virtualMachineScaleSetName": {
+      "defaultValue": "MyVirtualMachineScaleSet",
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Machine Scale Set Name where the VM will be placed"
+      }
+    },
+    "virtualMachineScaleSetAvailabilityZone": {
+      "type": "string",
+      "defaultValue": "none",
+      "metadata": {
+        "description": "Specify an Availability Zone for the Virtual Machine Scale Set. All Virtual Machines added the the scale set will inherit this zone. Not all Azure regions support Availability zones. VMSS deployed into a zone must have a platformFaultDomainCount = 1. Learn more about maximum fault domain count by region: https://aka.ms/azurefdcountbyregion"
+      },
+      "allowedValues": [
+        "none",
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    "dnsPrefixForPublicIP": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 14,
+      "defaultValue": "[concat('d',uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Globally unique DNS prefix for the Public IPs used to access the Virtual Machines"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "myVNETName": "myVMSS-VNET",
+    "myVNETPrefix": "10.0.0.0/16",
+    "myVNETSubnet1Name": "VMSS-Subnet1",
+    "myVNETSubnet1Prefix": "10.0.0.0/24",
+    "operatingSystemValues": {
+      "Win2019DataCenter": {
+        "PublisherValue": "MicrosoftWindowsServer",
+        "OfferValue": "WindowsServer",
+        "SkuValue": "2019-Datacenter"
+      },
+      "Win2016DataCenter": {
+        "PublisherValue": "MicrosoftWindowsServer",
+        "OfferValue": "WindowsServer",
+        "SkuValue": "2016-Datacenter"
+      },
+      "UbuntuLTS": {
+        "PublisherValue": "Canonical",
+        "OfferValue": "UbuntuServer",
+        "SkuValue": "18.04-LTS"
+      }
+    },
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('myVNETName'),  variables('myVNETSubnet1Name'))]",
+    "fdCountOptions": {
+      "zonal": 1,
+      "nonzonal": 2
+    },
+    "selectedZone": "[if(equals(parameters('virtualMachineScaleSetAvailabilityZone'), 'none'), '', array(parameters('virtualMachineScaleSetAvailabilityZone')))]",
+    "virtualMachineScaleSetPlatformFaultDomainCount": "[if(equals(parameters('virtualMachineScaleSetAvailabilityZone'), 'none'), variables('fdCountOptions').nonzonal, variables('fdCountOptions').zonal)]",
+    "networkSecurityGroupName": "[concat(variables('myVNETSubnet1Name'), '-nsg')]"
+  },
+  "resources": [
+    {
+      "comments": "Simple Network Security Group for subnet [variables('myVNETSubnet1Name')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-22",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "22",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('myVNETName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "apiVersion": "2021-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
+      "tags": {
+        "displayName": "[variables('myVNETName')]"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('myVNETPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('myVNETSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('myVNETSubnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[parameters('virtualMachineScaleSetName')]",
+      "apiVersion": "2021-07-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "singlePlacementGroup": false,
+        "platformFaultDomainCount": "[variables('virtualMachineScaleSetPlatformFaultDomainCount')]"
+      },
+      "zones": "[variables('selectedZone')]"
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1))]",
+      "apiVersion": "2021-07-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "VMcopy",
+        "count": "[parameters('virtualMachineCount')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachineScaleSets/', parameters('virtualMachineScaleSetName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-NIC1'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('operatingSystemValues')[parameters('operatingSystem')].PublisherValue]",
+            "offer": "[variables('operatingSystemValues')[parameters('operatingSystem')].OfferValue]",
+            "sku": "[variables('operatingSystemValues')[parameters('operatingSystem')].SkuValue]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('virtualMachineNamePrefix'),copyIndex(1))]",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "caching": "ReadWrite"
+          }
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('virtualMachineNamePrefix'),copyIndex(1))]",
+          "adminUsername": "[parameters('virtualMachineAdminUserName')]",
+          "adminPassword": "[parameters('virtualMachineAdminPassword')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-NIC1'))]"
+            }
+          ]
+        },
+        "virtualMachineScaleSet": {
+          "id": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('virtualMachineScaleSetName'))]"
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-NIC1')]",
+      "apiVersion": "2021-05-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "NICCopy",
+        "count": "[parameters('virtualMachineCount')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-PIP1'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ],
+        "enableIPForwarding": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-PIP1'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('myVNETName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2020-08-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-PIP1')]",
+      "location": "[parameters('location')]",
+      "zones": "[variables('selectedZone')]",
+      "copy": {
+        "name": "PIPCopy",
+        "count": "[parameters('virtualMachineCount')]"
+      },
+      "tags": {
+        "displayName": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-PIP1')]"
+      },
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('dnsPrefixForPublicIP'), copyIndex(1))]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
+

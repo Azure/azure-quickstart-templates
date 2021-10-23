@@ -2,6 +2,12 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "omsWorkspaceSharedKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Shared key of the OMS workspace"
+      }
+    },
     "skuName": {
       "type": "string",
       "defaultValue": "F1",
@@ -27,6 +33,7 @@
       "type": "int",
       "defaultValue": 1,
       "minValue": 1,
+      "maxValue": 10,
       "metadata": {
         "description": "Describes plan's instance count"
       }
@@ -110,7 +117,6 @@
     }
   },
   "variables": {
-    "packageURI": "https://msignite2016stg.blob.core.windows.net/cloudwise/package.zip",
     "hostingPlanName": "[concat('CloudWiseHostingplan-', uniqueString(resourceGroup().id))]",
     "webSiteName": "[concat('CloudWise', uniqueString(resourceGroup().id))]",
     "sqlserverName": "[concat('sqlcloudwise', uniqueString(resourceGroup().id))]",
@@ -139,7 +145,7 @@
         "displayName": "SqlServer",
         "quickstartName": "[variables('quickstartTags').name]"
       },
-      "apiVersion": "2019-06-01-preview",
+      "apiVersion": "2021-02-01-preview",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]"
@@ -149,9 +155,9 @@
           "name": "[variables('sqlDatabaseName')]",
           "type": "databases",
           "location": "[parameters('location')]",
-          "apiVersion": "2019-06-01-preview",
+          "apiVersion": "2021-02-01-preview",
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
           ],
           "properties": {
             "edition": "[variables('sqlEdition')]",
@@ -163,7 +169,7 @@
       ]
     },
     {
-      "apiVersion": "2018-02-01",
+      "apiVersion": "2020-12-01",
       "name": "[variables('hostingPlanName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[parameters('location')]",
@@ -180,7 +186,7 @@
       }
     },
     {
-      "apiVersion": "2018-02-01",
+      "apiVersion": "2020-12-01",
       "name": "[variables('webSiteName')]",
       "type": "Microsoft.Web/sites",
       "location": "[parameters('location')]",
@@ -198,12 +204,12 @@
       },
       "resources": [
         {
-          "apiVersion": "2018-02-01",
+          "apiVersion": "2020-12-01",
           "name": "web",
           "type": "config",
           "dependsOn": [
-            "[concat('Microsoft.Web/sites/', variables('webSiteName'))]",
-            "[concat('Microsoft.Web/Sites/', variables('webSiteName'), '/Extensions/MSDeploy')]"
+            "[resourceId('Microsoft.Web/sites/', variables('webSiteName'))]",
+            "[resourceId('Microsoft.Web/Sites/extensions', variables('webSiteName'), 'MSDeploy')]"
           ],
           "tags": {
             "displayName": "WebAppConfig",
@@ -214,20 +220,20 @@
           }
         },
         {
-          "apiVersion": "2018-02-01",
+          "apiVersion": "2020-12-01",
           "type": "config",
           "name": "connectionstrings",
           "dependsOn": [
             "[variables('webSiteName')]",
-            "[concat('Microsoft.Web/Sites/', variables('webSiteName'), '/Extensions/MSDeploy')]"
+            "[resourceId('Microsoft.Web/Sites/extensions', variables('webSiteName'), 'MSDeploy')]"
           ],
           "properties": {
             "DefaultConnection": {
-              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('sqlDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';', 'MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
+              "value": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('sqlDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';', 'MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
               "type": "SQLServer"
             },
             "SQLCONNSTR_DefaultConnection": {
-              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('sqlDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';', 'MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
+              "value": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('sqlDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';', 'MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
               "type": "SQLServer"
             }
           }
@@ -236,16 +242,16 @@
           "name": "MSDeploy",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2018-02-01",
+          "apiVersion": "2020-12-01",
           "dependsOn": [
-            "[concat('Microsoft.Web/sites/', variables('Websitename'))]"
+            "[resourceId('Microsoft.Web/sites/', variables('Websitename'))]"
           ],
           "tags": {
             "displayName": "WebAppMSDeploy",
             "quickstartName": "[variables('quickstartTags').name]"
           },
           "properties": {
-            "packageUri": "[variables('packageURI')]"
+            "packageUri": "[uri(parameters('_artifactsLocation'), concat('artifacts/package.zip', parameters('_artifactsLocationSasToken')))]"
           }
         }
       ]
@@ -254,9 +260,9 @@
       "name": "[concat(variables('hostingPlanName'), '-', resourceGroup().name)]",
       "type": "Microsoft.Insights/autoscalesettings",
       "location": "[parameters('location')]",
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2015-04-01",
       "dependsOn": [
-        "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+        "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
       ],
       "tags": {
         "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource",
@@ -269,15 +275,15 @@
           {
             "name": "Default",
             "capacity": {
-              "minimum": 1,
-              "maximum": 2,
-              "default": 1
+              "minimum": "1",
+              "maximum": "2",
+              "default": "1"
             },
             "rules": [
               {
                 "metricTrigger": {
                   "metricName": "CpuPercentage",
-                  "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT10M",
@@ -288,14 +294,14 @@
                 "scaleAction": {
                   "direction": "Increase",
                   "type": "ChangeCount",
-                  "value": 1,
+                  "value": "1",
                   "cooldown": "PT10M"
                 }
               },
               {
                 "metricTrigger": {
                   "metricName": "CpuPercentage",
-                  "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT1H",
@@ -306,7 +312,7 @@
                 "scaleAction": {
                   "direction": "Decrease",
                   "type": "ChangeCount",
-                  "value": 1,
+                  "value": "1",
                   "cooldown": "PT1H"
                 }
               }
@@ -314,7 +320,7 @@
           }
         ],
         "enabled": false,
-        "targetResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+        "targetResourceUri": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
       }
     },
     {
@@ -343,7 +349,7 @@
         "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource"
       },
       "dependsOn": [
-        "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+        "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
       ],
       "properties": {
         "severity": 1,
@@ -361,14 +367,13 @@
             {
               "name": "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'), '-cpupercentage')]",
               "metricName": "CpuPercentage",
-              "dimensions": [],
               "operator": "GreaterThan",
               "threshold": 90,
               "timeAggregation": "Average",
               "criterionType": "StaticThresholdCriterion"
             }
           ],
-          "componentId": "[variables('insightsName')]",
+          "componentId": "[resourceId('Microsoft.Insights/components',variables('insightsName'))]",
           "metricName": "[concat('The average CPU is high across all the instances of ', variables('hostingPlanName'))]"
           },
             "actions": [
@@ -387,7 +392,7 @@
         "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource"
       },
       "dependsOn": [
-        "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+        "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
       ],
       "properties": {
         "severity": 1,
@@ -405,14 +410,13 @@
             {
               "name": "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'), '-httpqueuelegth')]",
               "metricName": "HttpQueueLength",
-              "dimensions": [],
               "operator": "GreaterThan",
               "threshold": 100,
               "timeAggregation": "Average",
               "criterionType": "StaticThresholdCriterion"
             }
           ],
-          "componentId": "[variables('insightsName')]",
+          "componentId": "[resourceId('Microsoft.Insights/components',variables('insightsName'))]",
           "metricName": "[concat('The HTTP queue for the instances of ', variables('hostingPlanName'), ' has a large number of pending requests.')]"
           },
             "actions": [
@@ -428,7 +432,7 @@
       "apiVersion": "2018-03-01",
       "location": "global",
       "dependsOn": [
-        "[concat('Microsoft.Web/sites/', variables('webSiteName'))]"
+        "[resourceId('Microsoft.Web/sites/', variables('webSiteName'))]"
       ],
       "tags": {
         "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('webSiteName'))]": "Resource"
@@ -449,7 +453,6 @@
             {
               "name": "[concat('Microsoft.Web/sites', variables('webSiteName'), '-5XX-errors')]",
               "metricName": "Http5xx",
-              "dimensions": [],
               "operator": "GreaterThan",
               "threshold": 0,
               "timeAggregation": "Average",
@@ -458,14 +461,13 @@
             {
               "name": "[concat('Microsoft.Web/sites', variables('webSiteName'), '-403-errors')]",
               "metricName": "Http403",
-              "dimensions": [],
               "operator": "GreaterThan",
               "threshold": 0,
               "timeAggregation": "Average",
               "criterionType": "StaticThresholdCriterion"
             }
           ],
-          "componentId": "[variables('insightsName')]",
+          "componentId": "[resourceId('Microsoft.Insights/components',variables('insightsName'))]",
           "metricName": "[concat(variables('webSiteName'), 'server errors')]"
           },
             "actions": [
@@ -479,9 +481,9 @@
       "name": "[variables('insightsName')]",
       "type": "Microsoft.Insights/components",
       "location": "[parameters('location')]",
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2020-02-02",
       "dependsOn": [
-        "[concat('Microsoft.Web/sites/', variables('webSiteName'))]"
+        "[resourceId('Microsoft.Web/sites/', variables('webSiteName'))]"
       ],
       "tags": {
         "displayName": "[concat('Component', variables('insightsName'))]",
@@ -489,14 +491,13 @@
         "quickstartName": "[variables('quickstartTags').name]"
       },
       "properties": {
-        "applicationId": "[variables('webSiteName')]"
+        "Application_Type": "web"
       }
     },
     {
       "name": "omsWorkspace",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [],
+      "apiVersion": "2020-10-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -507,7 +508,7 @@
           "workspaceName": {
             "value": "[variables('omsWorkspaceName')]"
           },
-          "location": {
+          "omsRegion": {
             "value": "[parameters('omsRegion')]"
           },
           "serviceTier": {
@@ -522,7 +523,7 @@
     {
       "name": "OMSAutomationRunBooksAndDashboard",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2020-10-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/omsWorkspace"
       ],
@@ -537,19 +538,13 @@
             "value": "[reference('omsWorkspace').outputs.workspaceIdOutput.value]"
           },
           "omsKey": {
-            "value": "[reference('omsWorkspace').outputs.sharedKeyOutput.value]"
-          },
-          "omsWorkspaceName": {
-            "value": "[variables('omsWorkspaceName')]"
+            "value": "[parameters('omsWorkspaceSharedKey')]"
           },
           "automationAccountName": {
             "value": "[parameters('automationAccountName')]"
           },
           "automationRegion": {
             "value": "[parameters('automationRegion')]"
-          },
-          "omsworkspaceRegion": {
-            "value": "[parameters('omsRegion')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"

@@ -18,12 +18,9 @@ This template deploys a Front Door Standard/Premium (Preview) with an Applicatio
 
 ## Sample overview and deployed resources
 
-This sample template creates an Application Gateway instance and a Front Door profile. To keep the sample simple, the Application Gateway instance is configured to direct traffic to an Azure Storage static website configured as a backend, but this could be [any backend supported by Application Gateway](https://docs.microsoft.com/azure/application-gateway/application-gateway-components#backend-pools). The Application Gateway instance has a public IP address associated with it, but a network security group is used to ensure that incoming connections to your system must come through Front Door. The Application Gateway WAF is used to verify that the traffic has come specifically from your Front Door instance.
+This sample template creates an Application Gateway instance and a Front Door profile. To keep the sample simple, the Application Gateway instance is configured to direct traffic to a static website configured as a backend, but this could be [any backend supported by Application Gateway](https://docs.microsoft.com/azure/application-gateway/application-gateway-components#backend-pools). The Application Gateway instance has a public IP address associated with it, but a network security group is used to ensure that incoming connections to your system must come through Front Door. The Application Gateway WAF is used to verify that the traffic has come specifically from your Front Door instance.
 
 The following resources are deployed as part of the solution:
-
-## Prerequisites
-- Azure Storage with a static website, which acts as a simulated backend in this sample.
 
 ## Networking
 - Virtual network, with one subnet (`ApplicationGateway`).
@@ -62,6 +59,6 @@ You can also attempt to access the Application Gateway hostname directly. The ho
 - For simplicity, this sample does not follow best practices around end-to-end HTTPS. The sample is configured as follows:
   - Front Door requires HTTPS connections to the Front Door endpoint, and HTTP connections are automatically redirected to HTTPS.
   - When Front Door sends requests to Application Gateway, it does so using HTTP and not HTTPS. This is to avoid configuring TLS certificates on Application Gateway.
-  - When Application Gateway sends requests to the backend (Azure Storage), it also does so using HTTP.
+  - When Application Gateway sends requests to the backend, it also does so using HTTP.
   - **You should configure your environment to use HTTPS for all connections before using this sample in a production environment.**
 - This sample uses a WAF policy for Application Gateway. WAF policies for Application Gateway require that a managed rule set is applied, so the OWASP version 3.1 rule set is applied.

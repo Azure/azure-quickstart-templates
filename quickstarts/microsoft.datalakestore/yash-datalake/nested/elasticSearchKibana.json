@@ -1,0 +1,338 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "String",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "vmSize": {
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_D2_v3",
+        "Standard_D2_v3",
+        "Standard_D4_v3",
+        "Standard_D8_v3"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "Size of vm"
+      }
+    },
+    "username": {
+      "type": "String",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "password": {
+      "type": "SecureString",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "dnsLabelPrefix": {
+      "type": "String",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "SecureString",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    }
+  },
+  "variables": {
+    "networkSecurityGroupName": "customdatalakeSecurrityGroup",
+    "extensionName": "CustomScript",
+    "scenarioPrefix": "customscriptLinux",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "ubuntuOSVersion": "16.04-LTS",
+    "nicName": "[concat(variables('scenarioPrefix'),'Nic')]",
+    "vnetAddressPrefix": "10.0.0.0/16",
+    "subnetName": "[concat(variables('scenarioPrefix'),'Subnet')]",
+    "subnetPrefix": "10.0.0.0/24",
+    "publicIPAddressName": "[concat(variables('scenarioPrefix'),'PublicIp')]",
+    "publicIPAddressType": "Dynamic",
+    "vmName": "[concat(variables('scenarioPrefix'),'VM')]",
+    "virtualNetworkName": "[concat(variables('scenarioPrefix'),'Vnet')]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+    "scriptFolder": "scripts",
+    "scriptFilename": "kibana_install_script.sh"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "apiVersion": "2020-08-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "apiVersion": "2020-08-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "apiVersion": "2020-08-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('username')]",
+          "adminPassword": "[parameters('password')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk1",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            },
+            "caching": "ReadWrite"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('networkSecurityGroupName')]",
+      "apiVersion": "2020-08-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-ssh",
+            "properties": {
+              "priority": 1000,
+              "protocol": "TCP",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "22"
+            }
+          },
+          {
+            "name": "elasticsearch-inbound-access",
+            "properties": {
+              "priority": 1020,
+              "protocol": "TCP",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "9200-9300"
+            }
+          },
+          {
+            "name": "kibana-inbound-access",
+            "properties": {
+              "priority": 1015,
+              "protocol": "*",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "5601"
+            }
+          },
+          {
+            "name": "elasticsearch-outbound-access",
+            "properties": {
+              "priority": 110,
+              "protocol": "TCP",
+              "access": "Allow",
+              "direction": "Outbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "9200-9300"
+            }
+          },
+          {
+            "name": "kibana-outbound-access",
+            "properties": {
+              "priority": 105,
+              "protocol": "*",
+              "access": "Allow",
+              "direction": "Outbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "5601"
+            }
+          },
+          {
+            "name": "neo4j-inbound-access",
+            "properties": {
+              "priority": 1030,
+              "protocol": "*",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "7474"
+            }
+          },
+          {
+            "name": "neo4j-outbound-access",
+            "properties": {
+              "priority": 120,
+              "protocol": "*",
+              "access": "Allow",
+              "direction": "Outbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "7474"
+            }
+          },
+          {
+            "name": "neo4j-bolt-inbound-access",
+            "properties": {
+              "priority": 1040,
+              "protocol": "*",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "7687"
+            }
+          },
+          {
+            "name": "neo4j-bolt-outbound-access",
+            "properties": {
+              "priority": 130,
+              "protocol": "*",
+              "access": "Allow",
+              "direction": "Outbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "7687"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/', variables('extensionName'))]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'),concat(variables('scriptFolder'),'/',variables('scriptFilename'),parameters('_artifactsLocationSasToken')))]"
+          ],
+          "commandToExecute": "[concat('sh ', variables('scriptFilename'),' >> ','/home/testingDataFileLog.txt')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "publicIpAddress": {
+      "type": "String",
+      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+    }
+  }
+}
+

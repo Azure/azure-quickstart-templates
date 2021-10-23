@@ -31,40 +31,13 @@ ERS Internal Load Balancer probe port: **62102**
 ## DB Internal Load Balancer ports
 
 * DB Internal Load Balancer ports: **1433**
-
-DB Internal Load Balancer probe port: **62504**
-
-<table>
-	<tr>
-		<th>Size</th>
-		<th>HA</th>
-		<th>Non-HA</th>
-	</tr>
-	<tr>
-		<td>Demo</td>
-		<td>2xDS12_v2 DB/ASCS/SCS (CL) Server (1xP10) + 2xDS2_v2 DI</td>
-		<td>1xDS12_v2 DB/ASCS/SCS (CL) Server (1xP10) + 1xDS2_v2 DI</td>
-	</tr>
-	<tr>
-		<td>Small < 30.000 SAPS</td>
-		<td>2xDS13_v2 DB/ASCS/SCS (CL) Server (4xP20 1xP20) + 2xDS13_v2 DI</td>
-		<td>1xDS13_v2 DB/ASCS/SCS (CL) Server (4xP20 1xP20) + 1xDS13_v2 DI</td>
-	</tr>
-	<tr>
-		<td>Medium < 70.000 SAPS</td>
-		<td>2xDS14_v2 DB/ASCS/SCS (CL) Server (6xP20 1xP20) + 4xDS13_v2 DI</td>
-		<td>1xDS14_v2 DB/ASCS/SCS (CL) Server (6xP20 1xP20) + 4xDS13_v2 DI</td>
-	</tr>
-	<tr>
-		<td>Large < 180.000 SAPS</td>
-		<td>2xGS4 DB/ASCS/SCS (CL) Server (5xP30 1xP20) + 6xDS14_v2 DI</td>
-		<td>1xGS4 DB/ASCS/SCS (CL) Server (5xP30 1xP20) + 6xDS14_v2 DI</td>
-	</tr>
-	<tr>
-		<td>X-Large < 250.000 SAPS</td>
-		<td>2xGS5 DB/ASCS/SCS (CL) Server (6xP30 1xP30) + 10xDS14_v2 DI</td>
-		<td>1xGS5 DB/ASCS/SCS (CL) Server (6xP30 1xP30) + 10xDS14_v2 DI</td>
-	</tr>
-</table>				
+* DB Internal Load Balancer probe port: **62504**
 
 
+| Size | HA | Non-HA |
+| :------------- | :----------: | :------------- |
+| Demo | 2xDS12_v2 DB/ASCS/SCS (CL) Server (1xP10) + 2xDS2_v2 DI | 1xDS12_v2 DB/ASCS/SCS (CL) Server (1xP10) + 1xDS2_v2 DI |
+| Small | 2xDS13_v2 DB/ASCS/SCS (CL) Server (4xP20 1xP20) + 2xDS13_v2 DI | 1xDS13_v2 DB/ASCS/SCS (CL) Server (4xP20 1xP20) + 1xDS13_v2 DI |
+| Medium | 2xDS14_v2 DB/ASCS/SCS (CL) Server (6xP20 1xP20) + 4xDS13_v2 DI | 1xDS14_v2 DB/ASCS/SCS (CL) Server (6xP20 1xP20) + 4xDS13_v2 DI |
+| Large | 2xGS4 DB/ASCS/SCS (CL) Server (5xP30 1xP20) + 6xDS14_v2 DI | 1xGS4 DB/ASCS/SCS (CL) Server (5xP30 1xP20) + 6xDS14_v2 DI |
+| X-Large | 2xGS5 DB/ASCS/SCS (CL) Server (6xP30 1xP30) + 10xDS14_v2 DI | 1xGS5 DB/ASCS/SCS (CL) Server (6xP30 1xP30) + 10xDS14_v2 DI |

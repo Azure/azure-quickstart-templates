@@ -2,16 +2,104 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "virtualMachineName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Name"
+      }
+    },
+    "virtualMachineSize": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Size"
+      },
+      "defaultValue": "Standard_D2s_v3"
+    },
     "adminUsername": {
       "type": "string",
       "metadata": {
-        "description": "Username to access the Virtual Machines"
+        "description": "SQL Server Virtual Machine Administrator User Name"
       }
     },
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Password to access the Virtual Machines"
+        "description": "SQL Server Virtual Machine Administrator Password"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Storage Account Name"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Storage Account Type"
+      },
+      "allowedValues": [
+        "Premium_LRS",
+        "Standard_LRS"
+      ],
+      "defaultValue": "Premium_LRS"
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Virtual Network Name"
+      }
+    },
+    "networkInterfaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Network Interface Name"
+      }
+    },
+    "networkSecurityGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Network Security Group Name"
+      }
+    },
+    "addressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Subnet Name"
+      },
+      "defaultValue": "10.0.0.0/16"
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Subnet Name"
+      },
+      "defaultValue": "default"
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Subnet Name"
+      },
+      "defaultValue": "10.0.0.0/24"
+    },
+    "publicIpAddressName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Public IP Address Name"
+      }
+    },
+    "publicIpAddressType": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Public IP Address Type"
+      },
+      "defaultValue": "Dynamic"
+    },
+    "sqlAutobackupStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Auto Backup Storage Account Name"
       }
     },
     "location": {
@@ -23,156 +111,29 @@
     }
   },
   "variables": {
-    "storageAccountName1": "[concat(uniqueString(resourceGroup().id),'storage1')]",
-    "storageAccountName2": "[concat(uniqueString(resourceGroup().id),'storage2')]",
-    "vmNSGName": "ExistingNSG",
-    "ipAddressName": "ExistingPip",
-    "virtualNetworkName": "ExistingVnet",
-    "vmNicName": "ExistingNic",
-    "vmName": "ExistingWinvm"
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'),  parameters('subnetName'))]"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName1')]",
-      "apiVersion": "2016-01-01",
-      "location": "[parameters('location')]",
-      "comments": "Storage account used to store VM disks",
-      "tags": {
-        "displayName": "Storage Account"
-      },
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName2')]",
-      "apiVersion": "2016-01-01",
-      "location": "[parameters('location')]",
-      "comments": "Storage account used to store diagnostics and backup data",
-      "tags": {
-        "displayName": "Storage Account"
-      },
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
-    {
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('vmNSGName')]",
-      "apiVersion": "2016-03-30",
-      "location": "[parameters('location')]",
-      "comments": "NSG for the VM subnet.",
-      "tags": {
-        "displayName": "VM NSG"
-      },
-      "properties": {
-        "securityRules": []
-      }
-    },
-    {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('ipAddressName')]",
-      "apiVersion": "2016-03-30",
-      "location": "[parameters('location')]",
-      "comments": " Public IP used by the Jump VM",
-      "tags": {
-        "displayName": "VM Public IP"
-      },
-      "properties": {
-        "publicIPAllocationMethod": "Static",
-        "idleTimeoutInMinutes": 4
-      }
-    },
-    {
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetworkName')]",
-      "apiVersion": "2016-03-30",
-      "location": "[parameters('location')]",
-      "comments": "Virtual network for overall solution",
-      "tags": {
-        "displayName": "Virtual Network"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('vmNSGName'))]"
-      ],
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "10.0.0.0/16"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "default",
-            "properties": {
-              "addressPrefix": "10.0.1.0/24",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vmNSGName'))]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('vmNicName')]",
-      "apiVersion": "2016-03-30",
-      "location": "[parameters('location')]",
-      "comments": "NIC for the VM",
-      "tags": {
-        "displayName": "VM NIC"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('ipAddressName'))]"
-              },
-              "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'),'default')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
+      "name": "[parameters('virtualMachineName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
-      "apiVersion": "2017-03-30",
+      "apiVersion":  "2021-07-01", 
       "location": "[parameters('location')]",
-      "comments": "Windows VM",
-      "tags": {
-        "displayName": "Virtual Machine"
-      },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName1'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
       ],
       "properties": {
-        "hardwareProfile": {
-          "vmSize": "Standard_DS1_v2"
-        },
         "osProfile": {
-          "computerName": "windowsvm",
+          "computerName": "[parameters('virtualMachineName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "provisionVmAgent": "true"
           }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -182,15 +143,22 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),'_OSDisk')]", 
-            "caching": "ReadWrite",
+            
+           "name": "[concat(parameters('virtualMachineName'),'_OSDisk')]", 
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "[concat(variables('vmName'), '_DataDisk1')]",
+              "name": "[concat(parameters('virtualMachineName'),'_DataDisk1')]",
               "createOption": "Empty",
               "lun": 0,
+              "diskSizeGB": 1023,
+              "caching": "ReadOnly"
+            },
+            {
+              "name": "[concat(parameters('virtualMachineName'),'_DataDisk2')]",
+              "createOption": "Empty",
+              "lun": 1,
               "diskSizeGB": 1023,
               "caching": "ReadOnly"
             }
@@ -199,31 +167,25 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
             }
           ]
-        },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName2'))).primaryEndpoints.blob]"
-          }
         }
       }
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'), '/SqlIaasExtension')]",
+      "name": "[concat(parameters('virtualMachineName'), '/SqlIaasExtension')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
       ],
       "properties": {
         "type": "SqlIaaSAgent",
         "publisher": "Microsoft.SqlServer.Management",
         "typeHandlerVersion": "1.2",
-        "autoUpgradeMinorVersion": "true",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "AutoTelemetrySettings": {
             "Region": "[parameters('location')]"
@@ -236,8 +198,7 @@
             "MaintenanceWindowDuration": "60"
           },
           "KeyVaultCredentialSettings": {
-            "Enable": false,
-            "CredentialName": ""
+            "Enable": false
           },
           "ServerConfigurationsManagementSettings": {
             "SQLConnectivityUpdateSettings": {
@@ -257,19 +218,132 @@
               "IsRServicesEnabled": "false"
             }
           }
+        }
+      }
+    },
+    {
+      "name": "[parameters('storageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "accountType": "[parameters('storageAccountType')]"
+      }
+    },
+    {
+      "name": "[parameters('sqlAutobackupStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "name": "[parameters('virtualNetworkName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
         },
-        "protectedSettings": {}
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('networkInterfaceName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIpAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+        }
+      }
+    },
+    {
+      "name": "[parameters('publicIpAddressName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIpAddressType')]"
+      }
+    },
+    {
+      "name": "[parameters('networkSecurityGroupName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "priority": 1000,
+              "sourceAddressPrefix": "*",
+              "protocol": "Tcp",
+              "destinationPortRange": "3389",
+              "access": "Allow",
+              "direction": "inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-sql",
+            "properties": {
+              "priority": 1500,
+              "sourceAddressPrefix": "*",
+              "protocol": "Tcp",
+              "destinationPortRange": "1433",
+              "access": "Allow",
+              "direction": "inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
       }
     }
   ],
   "outputs": {
-    "existingVirtualMachineName": {
+    "vmName": {
       "type": "string",
-      "value": "[variables('vmName')]"
+      "value": "[parameters('virtualMachineName')]"
     },
     "sqlAutobackupStorageAccountName": {
       "type": "string",
-      "value": "[variables('storageAccountName2')]"
+      "value": "[parameters('sqlAutobackupStorageAccountName')]"
     }
   }
 }

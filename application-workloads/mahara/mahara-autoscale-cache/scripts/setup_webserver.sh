@@ -62,7 +62,7 @@ check_fileServerType_param $fileServerType
   sudo apt clean
   sudo add-apt-repository universe
   sudo add-apt-repository ppa:ondrej/php
-  sudo apt-get install php5.6
+  sudo apt-get install -y php5.6
 
   # make sure the system does automatic update
   sudo apt-get update

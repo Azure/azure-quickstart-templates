@@ -31,7 +31,7 @@ if ($RemoveGeneratorMetadata) {
     $withoutGeneratorMetadata = Remove-GeneratorMetadata $raw
 }
 else {
-    $withoutGeneratorMetadata= $raw
+    $withoutGeneratorMetadata = $raw
 }
 
 if ($null -eq $withoutGeneratorMetadata -or $withoutGeneratorMetadata -eq "") {
@@ -45,12 +45,12 @@ try {
     $response = Invoke-RestMethod -Uri $uri `
         -Method "POST" `
         -Headers $Headers `
-        -Body $withoutGeneratorMetadata `
-        -verbose
+        -Body $withoutGeneratorMetadata
     $templateHash = $response.templateHash
 }
 catch {
-    Write-Host $response
+    Write-Warning $Error[0]
+    Write-Warning ($response ? $response : "(no response)")
     Write-Error "Failed to get hash for: $templateFilePath"
 }
 

@@ -32,12 +32,6 @@
 				"description": "Name of the target table in the Azure SQL database."
 			}
 		},
-		"azureStorageConnectionString": {
-			"type": "securestring",
-			"metadata": {
-				"description": "Connection string for the Azure Storage account."
-			}
-		},
 		"blobContainer": {
 			"type": "string",
 			"metadata": {
@@ -49,6 +43,12 @@
 			"metadata": {
 				"description": "The folder in the blob container to which the data is copied."
 			}
+		},
+		"storageAccountName": {
+			"type": "string",
+			"metadata": {
+				"description": "Storage AccountName"
+			}
 		}
 	},
 	"variables": {
@@ -57,12 +57,13 @@
 		"onPremSqlServerLinkedServiceName": "Tutorial3-OnPremSqlServerLinkedService",
 		"inputDatasetName": "Tutorial3-InputBlobDataset",
 		"outputDatasetName": "Tutorial3-OutputSqlDataset",
-		"pipelineName": "Tutorial3-CopyFromOnPremSqlToBlobPipeline"
+		"pipelineName": "Tutorial3-CopyFromOnPremSqlToBlobPipeline",
+		"storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
 	},
 	"resources": [
 		{
 			"name": "[parameters('dataFactoryName')]",
-			"apiVersion": "2017-09-01-preview",
+			"apiVersion": "2018-06-01",
 			"type": "Microsoft.DataFactory/factories",
 			"location": "[parameters('dataFactoryLocation')]",
 			"properties": {},
@@ -73,13 +74,13 @@
 					"dependsOn": [
 						"[parameters('dataFactoryName')]"
 					],
-					"apiVersion": "2017-09-01-preview",
+					"apiVersion": "2018-06-01",
 					"properties": {
 						"type": "AzureStorage",
 						"description": "Azure Storage linked service",
 						"typeProperties": {
 							"connectionString": {
-								"value": "[parameters('azureStorageConnectionString')]",
+								"value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(variables('storageAccountId'), '2021-01-01').keys[0].value)]",
 								"type": "SecureString"
 							}
 						}
@@ -88,7 +89,7 @@
 				{
 					"name": "[variables('selfHostedIRName')]",
 					"type": "integrationRuntimes",
-					"apiVersion": "2017-09-01-preview",
+					"apiVersion": "2018-06-01",
 					"properties": {
 						"type": "SelfHosted"
 					},
@@ -99,7 +100,7 @@
 				{
 					"name": "[variables('onPremSqlServerLinkedServiceName')]",
 					"type": "linkedServices",
-					"apiVersion": "2017-09-01-preview",
+					"apiVersion": "2018-06-01",
 					"properties": {
 						"type": "SqlServer",
 						"typeProperties": {
@@ -121,7 +122,7 @@
 				{
 					"name": "[variables('inputDatasetName')]",
 					"type": "datasets",
-					"apiVersion": "2017-09-01-preview",
+					"apiVersion": "2018-06-01",
 					"properties": {
 						"linkedServiceName": {
 							"referenceName": "[variables('onPremSqlServerLinkedServiceName')]",
@@ -140,7 +141,7 @@
 				{
 					"name": "[variables('outputDatasetName')]",
 					"type": "datasets",
-					"apiVersion": "2017-09-01-preview",
+					"apiVersion": "2018-06-01",
 					"properties": {
 						"linkedServiceName": {
 							"referenceName": "[variables('azureStorageLinkedServiceName')]",
@@ -165,7 +166,7 @@
 						"[variables('inputDatasetName')]",
 						"[variables('outputDatasetName')]"
 					],
-					"apiVersion": "2017-09-01-preview",
+					"apiVersion": "2018-06-01",
 					"properties": {
 						"activities": [
 							{

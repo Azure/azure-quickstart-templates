@@ -2,6 +2,20 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+    "type": "securestring",
+    "metadata": {
+      "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+    },
+    "defaultValue": ""
+    },
     "scaleNumber": {
       "type": "int",
       "defaultValue": 2,
@@ -15,13 +29,6 @@
         "description": "Name of new storage account"
       }
     },
-    "storageAccountType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "metadata": {
-        "description": "Type of storage account"
-      }
-    },
     "vmName": {
       "type": "string",
       "metadata": {
@@ -30,7 +37,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D1_V2",
+      "defaultValue": "Standard_D2_v3",
       "metadata": {
         "description": "Size of the VM"
       }
@@ -60,12 +67,6 @@
       "type": "string",
       "metadata": {
         "description": "VM Admin Username"
-      }
-    },
-    "customScriptFilePath": {
-      "type": "string",
-      "metadata": {
-        "description": "Path to the download the custom script from"
       }
     },
     "customScriptCommandToExecute": {
@@ -103,11 +104,10 @@
     "availabilitySetName": "myAVSet",
     "publicIPAddressType": "Dynamic",
     "virtualNetworkName": "myVNET",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/24",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
+    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]",
     "nicName": "myNic",
     "vmExtensionName": "myCustomScriptExtension",
     "networkSecurityGroupName": "default-NSG",
@@ -127,25 +127,28 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2021-02-01",
       "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage"
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": 2,
-        "platformUpdateDomainCount": 2,
-        "managed": "true"
+        "platformUpdateDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat('publicIP', copyIndex())]",
       "location": "[parameters('location')]",
@@ -160,7 +163,7 @@
     {
       "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2020-11-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -182,7 +185,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -209,13 +212,13 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), 0)]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP0')]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', 'publicIP0')]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -235,13 +238,13 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), 1)]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP1')]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', 'publicIP1')]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -261,7 +264,7 @@
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('vmName'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -270,9 +273,9 @@
         "count": "[parameters('scaleNumber')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), copyIndex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -308,7 +311,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(parameters('newStorageAccountName'), '2017-10-01').primaryEndpoints['blob']]"
+            "storageUri": "[reference(parameters('newStorageAccountName'), '2021-02-01').primaryEndpoints['blob']]"
           }
         }
       }
@@ -316,11 +319,11 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'), '1/', variables('vmExtensionName'))]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'), '1')]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), '0')]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('vmName'), '1'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), '0'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -329,11 +332,12 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[parameters('customScriptFilePath')]"
+            "[uri(parameters('_artifactsLocation'), concat('privateip.sh', parameters('_artifactsLocationSasToken')))]"
           ],
-          "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), reference(concat(variables('nicName'), '0')).ipConfigurations[0].properties.privateIPAddress)]"
+          "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), reference(resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), '0'))).ipConfigurations[0].properties.privateIPAddress)]"
         }
       }
     }
   ]
 }
+
