@@ -1,0 +1,239 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.451.19169",
+      "templateHash": "13826511842460355977"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource."
+      }
+    },
+    "frontDoorEndpointName": {
+      "type": "string",
+      "defaultValue": "[format('afd-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Front Door endpoint to create. This must be globally unique."
+      }
+    },
+    "frontDoorSkuName": {
+      "type": "string",
+      "defaultValue": "Standard_AzureFrontDoor",
+      "allowedValues": [
+        "Standard_AzureFrontDoor",
+        "Premium_AzureFrontDoor"
+      ],
+      "metadata": {
+        "description": "The name of the SKU to use when creating the Front Door profile."
+      }
+    },
+    "containerGroupDnsNameLabel": {
+      "type": "string",
+      "defaultValue": "[format('aci-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The DNS name for the container group."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "frontDoorProfileName": "MyFrontDoor",
+    "frontDoorOriginGroupName": "MyOriginGroup",
+    "frontDoorOriginName": "MyAppServiceOrigin",
+    "frontDoorRouteName": "MyRoute",
+    "containerGroupName": "HelloWorld",
+    "containerName": "helloworld",
+    "containerImageUri": "mcr.microsoft.com/azuredocs/aci-helloworld:latest"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2021-03-01",
+      "name": "[variables('containerGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[variables('containerName')]",
+            "properties": {
+              "image": "[variables('containerImageUri')]",
+              "ports": [
+                {
+                  "port": 80
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": 1,
+                  "memoryInGB": 4
+                }
+              }
+            }
+          }
+        ],
+        "restartPolicy": "OnFailure",
+        "osType": "Linux",
+        "ipAddress": {
+          "type": "Public",
+          "dnsNameLabel": "[parameters('containerGroupDnsNameLabel')]",
+          "ports": [
+            {
+              "protocol": "TCP",
+              "port": 80
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Cdn/profiles",
+      "apiVersion": "2020-09-01",
+      "name": "[variables('frontDoorProfileName')]",
+      "location": "global",
+      "sku": {
+        "name": "[parameters('frontDoorSkuName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'))]",
+      "location": "global",
+      "properties": {
+        "originResponseTimeoutSeconds": 240,
+        "enabledState": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]",
+      "properties": {
+        "loadBalancingSettings": {
+          "sampleSize": 4,
+          "successfulSamplesRequired": 3
+        },
+        "healthProbeSettings": {
+          "probePath": "/",
+          "probeRequestType": "HEAD",
+          "probeProtocol": "Http",
+          "probeIntervalInSeconds": 100
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups/origins",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}/{2}', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'), variables('frontDoorOriginName'))]",
+      "properties": {
+        "hostName": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', variables('containerGroupName'))).ipAddress.fqdn]",
+        "httpPort": 80,
+        "httpsPort": 443,
+        "originHostHeader": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', variables('containerGroupName'))).ipAddress.fqdn]",
+        "priority": 1,
+        "weight": 1000
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerInstance/containerGroups', variables('containerGroupName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]",
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}/{2}', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'), variables('frontDoorRouteName'))]",
+      "properties": {
+        "originGroup": {
+          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]"
+        },
+        "supportedProtocols": [
+          "Http",
+          "Https"
+        ],
+        "patternsToMatch": [
+          "/*"
+        ],
+        "compressionSettings": {
+          "contentTypesToCompress": [
+            "application/eot",
+            "application/font",
+            "application/font-sfnt",
+            "application/javascript",
+            "application/json",
+            "application/opentype",
+            "application/otf",
+            "application/pkcs7-mime",
+            "application/truetype",
+            "application/ttf",
+            "application/vnd.ms-fontobject",
+            "application/xhtml+xml",
+            "application/xml",
+            "application/xml+rss",
+            "application/x-font-opentype",
+            "application/x-font-truetype",
+            "application/x-font-ttf",
+            "application/x-httpd-cgi",
+            "application/x-javascript",
+            "application/x-mpegurl",
+            "application/x-opentype",
+            "application/x-otf",
+            "application/x-perl",
+            "application/x-ttf",
+            "font/eot",
+            "font/ttf",
+            "font/otf",
+            "font/opentype",
+            "image/svg+xml",
+            "text/css",
+            "text/csv",
+            "text/html",
+            "text/javascript",
+            "text/js",
+            "text/plain",
+            "text/richtext",
+            "text/tab-separated-values",
+            "text/xml",
+            "text/x-script",
+            "text/x-component",
+            "text/x-java-source"
+          ],
+          "isCompressionEnabled": true
+        },
+        "queryStringCachingBehavior": "IgnoreQueryString",
+        "forwardingProtocol": "HttpOnly",
+        "linkToDefaultDomain": "Enabled",
+        "httpsRedirect": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'), variables('frontDoorOriginName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]",
+        "[resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "frontDoorEndpointHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'))).hostName]"
+    },
+    "containerGroupFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', variables('containerGroupName'))).ipAddress.fqdn]"
+    }
+  }
+}

@@ -59,7 +59,6 @@
     },
     "vmssName": {
       "type": "string",
-      "defaultValue": "[uniqueString(resourceGroup().id)]",
       "metadata": {
         "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
       },
@@ -71,6 +70,7 @@
       "metadata": {
         "description": "Number of VM instances (100 or less)."
       },
+      "minValue": 1,
       "maxValue": 100
     }
   },
@@ -81,12 +81,11 @@
     "subnetName": "[concat(parameters('vmssName'), 'subnet')]",
     "loadBalancerName": "[concat(parameters('vmssName'), 'lb')]",
     "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
     "natPoolName": "[concat(parameters('vmssName'), 'natpool')]",
     "bePoolName": "[concat(parameters('vmssName'), 'bepool')]",
     "nicName": "[concat(parameters('vmssName'), 'nic')]",
     "ipConfigName": "[concat(parameters('vmssName'), 'ipconfig')]",
-    "frontEndIPConfigID": "[concat(variables('lbID'), '/frontendIPConfigurations/loadBalancerFrontEnd')]",
+    "frontEndIPConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerName'), 'loadBalancerFrontEnd')]",
     "imageReference": {
       "publisher": "MicrosoftWindowsServer",
       "offer": "WindowsServer",
@@ -97,7 +96,7 @@
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-11-01",
       "name": "[variables('virtualNetworkName')]",
 			"location": "[parameters('location')]",
       "properties": {
@@ -118,7 +117,7 @@
     },
     {
 			"type": "Microsoft.Network/networkSecurityGroups",
-			"apiVersion": "2017-08-01",
+			"apiVersion": "2020-11-01",
 			"name": "[variables('networkSecurityGroupName')]",
 			"location": "[parameters('location')]",
 			"properties": {
@@ -156,7 +155,7 @@
 		},
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-11-01",
       "name": "[variables('publicIPAddressName')]",
 			"location": "[parameters('location')]",
       "sku": {
@@ -171,7 +170,7 @@
     },
     {
       "type": "Microsoft.Network/loadBalancers",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2020-11-01",
       "name": "[variables('loadBalancerName')]",
 			"location": "[parameters('location')]",
       "sku": {
@@ -214,13 +213,13 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2020-12-01",
       "name": "[parameters('vmssName')]",
 			"location": "[parameters('location')]",
       "zones": ["1"],
       "dependsOn": [
         "[variables('loadBalancerName')]",
-        "[ variables('virtualNetworkName')]"
+        "[variables('virtualNetworkName')]"
       ],
       "sku": {
         "name": "Standard_A1_v2",

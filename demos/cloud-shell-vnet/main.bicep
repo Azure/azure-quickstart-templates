@@ -3,9 +3,8 @@ param existingVNETName string
 
 @description('Name of Azure Relay Namespace.')
 param relayNamespaceName string
-// Object Id of Azure Container Instance Service Principal. 
-// We have to grant this permission to create hybrid connections in the Azure Relay you specify.
-// To get it: Get-AzADServicePrincipal -DisplayNameBeginsWith \'Azure Container Instance\'
+
+@description('Object Id of Azure Container Instance Service Principal. We have to grant this permission to create hybrid connections in the Azure Relay you specify. To get it: Get-AzADServicePrincipal -DisplayNameBeginsWith \'Azure Container Instance\'')
 param azureContainerInstanceOID string
 
 @description('Name of the subnet to use for cloud shell containers.')

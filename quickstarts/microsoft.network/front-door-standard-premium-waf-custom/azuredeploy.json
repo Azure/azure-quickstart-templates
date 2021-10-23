@@ -1,0 +1,319 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.451.19169",
+      "templateHash": "13209801836335547580"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location into which regional resources should be deployed."
+      }
+    },
+    "endpointName": {
+      "type": "string",
+      "defaultValue": "[format('afd-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Front Door endpoint to create. This must be globally unique."
+      }
+    },
+    "originHostName": {
+      "type": "string",
+      "metadata": {
+        "description": "The host name that should be used when connecting from Front Door to the origin."
+      }
+    },
+    "frontDoorSkuName": {
+      "type": "string",
+      "defaultValue": "Standard_AzureFrontDoor",
+      "allowedValues": [
+        "Standard_AzureFrontDoor",
+        "Premium_AzureFrontDoor"
+      ],
+      "metadata": {
+        "description": "The name of the SKU to use when creating the Front Door profile."
+      }
+    },
+    "wafMode": {
+      "type": "string",
+      "defaultValue": "Prevention",
+      "allowedValues": [
+        "Detection",
+        "Prevention"
+      ],
+      "metadata": {
+        "description": "The mode that the WAF should be deployed using. In 'Prevention' mode, the WAF will block requests it detects as malicious. In 'Detection' mode, the WAF will not block requests and will simply log the request."
+      }
+    },
+    "ipAddressRangesToBlock": {
+      "type": "array",
+      "defaultValue": [
+        "198.51.100.100",
+        "203.0.113.0/24"
+      ],
+      "metadata": {
+        "description": "The IP address ranges to block. Individual IP addresses can be specified as-is. Ranges should be specified using CIDR notation."
+      }
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string",
+      "defaultValue": "[format('la-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Log Analytics workspace to create."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "profileName": "MyFrontDoor",
+    "originGroupName": "MyOriginGroup",
+    "originName": "MyOrigin",
+    "routeName": "MyRoute",
+    "wafPolicyName": "WafPolicy",
+    "securityPolicyName": "SecurityPolicy"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Cdn/profiles",
+      "apiVersion": "2020-09-01",
+      "name": "[variables('profileName')]",
+      "location": "global",
+      "sku": {
+        "name": "[parameters('frontDoorSkuName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}', variables('profileName'), parameters('endpointName'))]",
+      "location": "global",
+      "properties": {
+        "originResponseTimeoutSeconds": 240,
+        "enabledState": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}', variables('profileName'), variables('originGroupName'))]",
+      "properties": {
+        "loadBalancingSettings": {
+          "sampleSize": 4,
+          "successfulSamplesRequired": 3
+        },
+        "healthProbeSettings": {
+          "probePath": "/",
+          "probeRequestType": "HEAD",
+          "probeProtocol": "Http",
+          "probeIntervalInSeconds": 100
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/originGroups/origins",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}/{2}', variables('profileName'), variables('originGroupName'), variables('originName'))]",
+      "properties": {
+        "hostName": "[parameters('originHostName')]",
+        "httpPort": 80,
+        "httpsPort": 443,
+        "originHostHeader": "[parameters('originHostName')]",
+        "priority": 1,
+        "weight": 1000
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]",
+        "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}/{2}', variables('profileName'), parameters('endpointName'), variables('routeName'))]",
+      "properties": {
+        "originGroup": {
+          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]"
+        },
+        "supportedProtocols": [
+          "Http",
+          "Https"
+        ],
+        "patternsToMatch": [
+          "/*"
+        ],
+        "compressionSettings": {
+          "contentTypesToCompress": [
+            "application/eot",
+            "application/font",
+            "application/font-sfnt",
+            "application/javascript",
+            "application/json",
+            "application/opentype",
+            "application/otf",
+            "application/pkcs7-mime",
+            "application/truetype",
+            "application/ttf",
+            "application/vnd.ms-fontobject",
+            "application/xhtml+xml",
+            "application/xml",
+            "application/xml+rss",
+            "application/x-font-opentype",
+            "application/x-font-truetype",
+            "application/x-font-ttf",
+            "application/x-httpd-cgi",
+            "application/x-javascript",
+            "application/x-mpegurl",
+            "application/x-opentype",
+            "application/x-otf",
+            "application/x-perl",
+            "application/x-ttf",
+            "font/eot",
+            "font/ttf",
+            "font/otf",
+            "font/opentype",
+            "image/svg+xml",
+            "text/css",
+            "text/csv",
+            "text/html",
+            "text/javascript",
+            "text/js",
+            "text/plain",
+            "text/richtext",
+            "text/tab-separated-values",
+            "text/xml",
+            "text/x-script",
+            "text/x-component",
+            "text/x-java-source"
+          ],
+          "isCompressionEnabled": true
+        },
+        "queryStringCachingBehavior": "IgnoreQueryString",
+        "forwardingProtocol": "HttpsOnly",
+        "linkToDefaultDomain": "Enabled",
+        "httpsRedirect": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', variables('profileName'), variables('originGroupName'), variables('originName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]",
+        "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/FrontDoorWebApplicationFirewallPolicies",
+      "apiVersion": "2020-11-01",
+      "name": "[variables('wafPolicyName')]",
+      "location": "global",
+      "sku": {
+        "name": "[parameters('frontDoorSkuName')]"
+      },
+      "properties": {
+        "policySettings": {
+          "enabledState": "Enabled",
+          "mode": "[parameters('wafMode')]"
+        },
+        "customRules": {
+          "rules": [
+            {
+              "name": "BlockTrafficFromIPRanges",
+              "priority": 100,
+              "enabledState": "Enabled",
+              "ruleType": "MatchRule",
+              "action": "Block",
+              "matchConditions": [
+                {
+                  "matchVariable": "RemoteAddr",
+                  "operator": "IPMatch",
+                  "matchValue": "[parameters('ipAddressRangesToBlock')]"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/securityPolicies",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}', variables('profileName'), variables('securityPolicyName'))]",
+      "properties": {
+        "parameters": {
+          "type": "WebApplicationFirewall",
+          "wafPolicy": {
+            "id": "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', variables('wafPolicyName'))]"
+          },
+          "associations": [
+            {
+              "domains": [
+                {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]"
+                }
+              ],
+              "patternsToMatch": [
+                "/*"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]",
+        "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]",
+        "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', variables('wafPolicyName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2021-06-01",
+      "name": "[parameters('logAnalyticsWorkspaceName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "retentionInDays": 30,
+        "sku": {
+          "name": "PerGB2018"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "scope": "[format('Microsoft.Cdn/profiles/{0}', variables('profileName'))]",
+      "name": "diagnosticSettings",
+      "properties": {
+        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]",
+        "logs": [
+          {
+            "category": "FrontDoorWebApplicationFirewallLog",
+            "enabled": true,
+            "retentionPolicy": {
+              "days": 0,
+              "enabled": true
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]",
+        "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "frontDoorEndpointHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))).hostName]"
+    }
+  }
+}

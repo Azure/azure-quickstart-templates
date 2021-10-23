@@ -5,7 +5,7 @@
     "prefix": {
       "type": "string",
       "minLength": 2,
-      "maxLength": 9,
+      "maxLength": 12,
       "metadata": {
         "description": "The prefix name of machines. "
       }
@@ -33,10 +33,17 @@
         "description": "Configuration for the environment, support both standalone and hierarchy"
       }
     },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_B2s",
+      "metadata": {
+        "description": "Size of the Virtual Machines"
+      }
+    },
     "adminUsername": {
       "type": "string",
       "minLength": 2,
-      "maxLength": 10,
+      "maxLength": 13,
       "metadata": {
         "description": "The name of the administrator account of the new VM. The domain name is contoso.com "
       }
@@ -53,7 +60,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located including a trailing '/'"
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-workloads/sccm/sccm-currentbranch/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -68,6 +75,13 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "SQLVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_B2ms",
+      "metadata": {
+        "description": "SQL VM size"
+      }       
     }
   },
   "variables": {
@@ -102,22 +116,22 @@
       "DC": {
         "name": "DC01",
         "disktype": "Premium_LRS",
-        "Size": "Standard_B2s",
+        "Size": "[parameters('vmSize')]",
         "imageReference": {
           "publisher": "MicrosoftWindowsServer",
           "offer": "WindowsServer",
-          "sku": "2019-Datacenter",
+          "sku": "2022-datacenter",
           "version": "latest"
         }
       },
       "DPMP": {
         "name": "DPMP01",
         "disktype": "Premium_LRS",
-        "size": "Standard_B2s",
+        "size": "[parameters('vmSize')]",
         "imageReference": {
           "publisher": "MicrosoftWindowsServer",
           "offer": "WindowsServer",
-          "sku": "2019-Datacenter",
+          "sku": "2022-datacenter",
           "version": "latest"
         }
       }
@@ -136,11 +150,11 @@
       {          
           "name": "clientInfo",
           "count": "[parameters('ClientsCount')]", 
-          "input": "[json(concat('{\"Client',copyIndex('clientInfo',1),'\":{\"name\": \"Cl0',copyIndex('clientInfo',1),'\",\"disktype\": \"Premium_LRS\",\"size\": \"Standard_B2s\",\"imageReference\": {\"publisher\": \"MicrosoftWindowsDesktop\",\"offer\": \"Windows-10\",\"sku\": \"19h1-pro\",\"version\": \"latest\"}}}'))]"  
+          "input": "[json(concat('{\"Client',copyIndex('clientInfo',1),'\":{\"name\": \"Cl0',copyIndex('clientInfo',1),'\",\"disktype\": \"Premium_LRS\",\"size\": \"',parameters('vmSize'),'\",\"imageReference\": {\"publisher\": \"MicrosoftWindowsDesktop\",\"offer\": \"Windows-10\",\"sku\": \"21h1-ent\",\"version\": \"latest\"}}}'))]"  
       }
     ], 
     "siteRole": "[if(equals(parameters('configuration'),'Standalone'),createarray('PS'),createarray('CS','PS'))]",
-    "siteInfo": "[if(equals(parameters('configuration'),'Standalone'),json('{\"PS\":{\"name\":\"PS01\",\"DiskType\":\"Premium_LRS\",\"size\":\"Standard_B2ms\",\"imageReference\":{\"publisher\": \"MicrosoftSQLServer\",\"offer\": \"SQL2019-WS2019\",\"sku\": \"Standard\",\"version\": \"latest\"}}}'),json('{\"CS\":{\"name\":\"CS01\",\"DiskType\":\"Premium_LRS\",\"size\":\"Standard_B2ms\",\"imageReference\":{\"publisher\": \"MicrosoftSQLServer\",\"offer\": \"SQL2019-WS2019\",\"sku\": \"Standard\",\"version\": \"latest\"}},\"PS\":{\"name\":\"PS01\",\"DiskType\":\"Premium_LRS\",\"size\":\"Standard_B2ms\",\"imageReference\":{\"publisher\": \"MicrosoftSQLServer\",\"offer\": \"SQL2019-WS2019\",\"sku\": \"Standard\",\"version\": \"latest\"}}}'))]"
+    "siteInfo": "[if(equals(parameters('configuration'),'Standalone'),json(concat('{\"PS\":{\"name\":\"PS01\",\"DiskType\":\"Premium_LRS\",\"size\":\"',parameters('SQLVmSize'),'\",\"imageReference\":{\"publisher\": \"MicrosoftSQLServer\",\"offer\": \"SQL2019-WS2019\",\"sku\": \"Standard\",\"version\": \"latest\"}}}')),json(concat('{\"CS\":{\"name\":\"CS01\",\"DiskType\":\"Premium_LRS\",\"size\":\"',parameters('SQLVmSize'),'\",\"imageReference\":{\"publisher\": \"MicrosoftSQLServer\",\"offer\": \"SQL2019-WS2019\",\"sku\": \"Standard\",\"version\": \"latest\"}},\"PS\":{\"name\":\"PS01\",\"DiskType\":\"Premium_LRS\",\"size\":\"',parameters('SQLVmSize'),'\",\"imageReference\":{\"publisher\": \"MicrosoftSQLServer\",\"offer\": \"SQL2019-WS2019\",\"sku\": \"Standard\",\"version\": \"latest\"}}}')))]"
   },
   "resources": [   
       {

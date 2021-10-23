@@ -25,7 +25,7 @@
     },
     "headNodeVMSize": {
       "type": "string",
-      "defaultValue": "Standard_DS4_v2",
+      "defaultValue": "Standard_D8s_v3",
       "metadata": {
         "description": "The VM size of the head node, all available VM sizes in Azure can be found at https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sizes. Note that some VM sizes in the list are only available in some particular locations. Please check the availability and the price of the VM sizes at https://azure.microsoft.com/pricing/details/virtual-machines/windows/ before deployment."
       }
@@ -89,7 +89,7 @@
     },
     "computeNodeVMSize": {
       "type": "string",
-      "defaultValue": "Standard_D3_v2",
+      "defaultValue": "Standard_D4_v3",
       "metadata": {
         "description": "The VM size of the compute nodes, all available VM sizes in Azure can be found at https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sizes. Note that some VM sizes in the list are only available in some particular locations. Please check the availability and the price of the VM sizes at https://azure.microsoft.com/pricing/details/virtual-machines/windows/ before deployment."
       }
@@ -162,20 +162,21 @@
       }
     },
     "_artifactsLocation": {
-        "type": "string",
-        "metadata": {
-            "description": "The location of resources, such as templates and DSC modules, that the template depends on"
-        }
-    },
+            "type": "string",
+            "metadata": {
+                "description": "The location of resources, such as templates and DSC modules, that the template depends on"
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
     "_artifactsLocationSasToken": {
         "type": "securestring",
         "metadata": {
             "description": "Auto-generated token to access _artifactsLocation"
-        }
+        },
+        "defaultValue": ""
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
       }
@@ -236,7 +237,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('hnStorageAccountName')]",
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2021-04-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -287,6 +288,9 @@
           },
           "publicIPRGName": {
             "value": "[parameters('publicIpRGName')]"
+          },
+          "location":{
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -297,7 +301,7 @@
       "name": "[variables('nicNameHN')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
         "Microsoft.Resources/deployments/setupClusterPublicIP"
       ],
       "properties": {
@@ -322,7 +326,7 @@
       "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[concat(variables('availabilitySetNamePrefix'), padLeft(string(copyIndex()), 2, '0'))]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
       },
@@ -340,8 +344,8 @@
       "type": "Microsoft.Resources/deployments",
       "name": "createHeadNode",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('hnStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('hnStorageAccountName'))]",
         "availabilitySetCopy"
       ],
       "properties": {
@@ -380,6 +384,9 @@
           },
           "privateDomainName": {
             "value": "[parameters('privateDomainName')]"
+          },
+          "location":{
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -415,6 +422,9 @@
               "10.0.0.4",
               "8.8.8.8"
             ]
+          },
+          "location":{
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -515,6 +525,9 @@
           },
           "computeNodePostConfigScript": {
             "value": "[trim(parameters('computeNodePostConfigScript'))]"
+          },
+          "location":{
+            "value":"[parameters('location')]"
           }
         }
       }
@@ -527,3 +540,4 @@
     }
   }
 }
+

@@ -1,10 +1,17 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "4848305918507774483"
+    }
+  },
   "parameters": {
     "virtualMachineSize": {
       "type": "string",
-      "defaultValue": "Standard_DS1_v2",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Virtual machine size (has to be at least the size of Standard_A3 to support 2 NICs)"
       }
@@ -16,7 +23,7 @@
       }
     },
     "adminPassword": {
-      "type": "securestring",
+      "type": "secureString",
       "metadata": {
         "description": "Default Admin password"
       }
@@ -24,13 +31,13 @@
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
-      "metadata": {
-        "description": "Storage Account type for the VM and VM diagnostic storage"
-      },
       "allowedValues": [
         "Standard_LRS",
         "Premium_LRS"
-      ]
+      ],
+      "metadata": {
+        "description": "Storage Account type for the VM and VM diagnostic storage"
+      }
     },
     "location": {
       "type": "string",
@@ -40,39 +47,32 @@
       }
     }
   },
+  "functions": [],
   "variables": {
     "virtualMachineName": "VM-MultiNic",
-    "nic1": "nic-1",
-    "nic2": "nic-2",
+    "nic1Name": "nic-1",
+    "nic2Name": "nic-2",
     "virtualNetworkName": "virtualNetwork",
     "subnet1Name": "subnet-1",
     "subnet2Name": "subnet-2",
     "publicIPAddressName": "publicIp",
-    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]",
-    "subnet2Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet2Name'))]",
-    "diagStorageAccountName": "[concat('diags',uniqueString(resourceGroup().id))]",
+    "diagStorageAccountName": "[format('diags{0}', uniqueString(resourceGroup().id))]",
     "networkSecurityGroupName": "NSG",
-    "networkSecurityGroupName2": "[concat(variables('subnet2Name'), '-nsg')]"
+    "networkSecurityGroupName2": "[format('{0}-nsg', variables('subnet2Name'))]"
   },
   "resources": [
     {
-      "name": "[variables('virtualMachineName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('virtualMachineName')]",
       "location": "[parameters('location')]",
-      "comments": "This is the virtual machine that you're building.",
-      "dependsOn": [
-        "[variables('nic1')]",
-        "[variables('nic2')]",
-        "[variables('diagStorageAccountName')]"
-      ],
       "properties": {
         "osProfile": {
           "computerName": "[variables('virtualMachineName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
-            "provisionVmAgent": "true"
+            "provisionVMAgent": true
           }
         },
         "hardwareProfile": {
@@ -95,28 +95,33 @@
               "properties": {
                 "primary": true
               },
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic1'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic1Name'))]"
             },
             {
               "properties": {
                 "primary": false
               },
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic2'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic2Name'))]"
             }
           ]
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName')), '2019-06-01').primaryEndpoints['blob']]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nic1Name'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nic2Name'))]"
+      ]
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('diagStorageAccountName')]",
       "apiVersion": "2019-06-01",
+      "name": "[variables('diagStorageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('storageAccountType')]"
@@ -124,21 +129,16 @@
       "kind": "StorageV2"
     },
     {
-      "comments": "Simple Network Security Group for subnet [variables('subnet2Name')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2020-06-01",
       "name": "[variables('networkSecurityGroupName2')]",
       "location": "[parameters('location')]"
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
       "name": "[variables('virtualNetworkName')]",
-      "apiVersion": "2020-05-01",
       "location": "[parameters('location')]",
-      "comments": "This will build a Virtual Network.",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName2'))]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -162,30 +162,27 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName2'))]"
+      ]
     },
     {
-      "name": "[variables('nic1')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('nic1Name')]",
       "location": "[parameters('location')]",
-      "comments": "This will be your Primary NIC",
-      "dependsOn": [
-        "[variables('publicIpAddressName')]",
-        "[variables('networkSecurityGroupName')]",
-        "[variables('virtualNetworkName')]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
               "subnet": {
-                "id": "[variables('subnet1Ref')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]"
               },
               "privateIPAllocationMethod": "Dynamic",
-              "publicIpAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               }
             }
           }
@@ -193,47 +190,49 @@
         "networkSecurityGroup": {
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
     },
     {
-      "name": "[variables('nic2')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('nic2Name')]",
       "location": "[parameters('location')]",
-      "comments": "This will be your Secondary NIC",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
               "subnet": {
-                "id": "[variables('subnet2Ref')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet2Name'))]"
               },
               "privateIPAllocationMethod": "Dynamic"
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
     },
     {
-      "name": "[variables('publicIpAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
-      "comments": "Public IP for your Primary NIC",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
-      "name": "[variables('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
-      "comments": "Network Security Group (NSG) for your Primary NIC",
       "properties": {
         "securityRules": [
           {
