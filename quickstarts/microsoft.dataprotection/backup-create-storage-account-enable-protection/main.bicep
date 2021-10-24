@@ -4,7 +4,6 @@ param vaultName string = 'vault${uniqueString(resourceGroup().id)}'
 @description('Change Vault Storage Type (not allowed if the vault has registered backups)')
 @allowed([
   'LocallyRedundant'
-  'ZonallyRedundant'
   'GeoRedundant'
 ])
 param vaultStorageRedundancy string = 'GeoRedundant'
@@ -31,7 +30,7 @@ var dataSourceType = 'Microsoft.Storage/storageAccounts/blobServices'
 var resourceType = 'Microsoft.Storage/storageAccounts'
 var retentionDuration = 'P${retentionDays}D'
 
-resource vaultName_resource 'Microsoft.DataProtection/backupVaults@2021-01-01' = {
+resource backupVault 'Microsoft.DataProtection/backupVaults@2021-01-01' = {
   name: vaultName
   location: location
   identity: {
@@ -47,8 +46,8 @@ resource vaultName_resource 'Microsoft.DataProtection/backupVaults@2021-01-01' =
   }
 }
 
-resource vaultName_backupPolicyName 'Microsoft.DataProtection/backupVaults/backupPolicies@2021-01-01' = {
-  parent: vaultName_resource
+resource backupPolicy 'Microsoft.DataProtection/backupVaults/backupPolicies@2021-01-01' = {
+  parent: backupVault
   name: '${backupPolicyName}'
   properties: {
     policyRules: [
@@ -78,7 +77,7 @@ resource vaultName_backupPolicyName 'Microsoft.DataProtection/backupVaults/backu
   }
 }
 
-resource storageAccountName_resource 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   name: storageAccountName
   location: location
   kind: 'StorageV2'
@@ -88,38 +87,38 @@ resource storageAccountName_resource 'Microsoft.Storage/storageAccounts@2019-06-
   }
 }
 
-resource roleNameGuid_resource 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: roleNameGuid
   properties: {
     roleDefinitionId: roleDefinitionId
-    principalId: reference(vaultName_resource.id, '2021-01-01', 'Full').identity.principalId
+    principalId: reference(backupVault.id, '2021-01-01', 'Full').identity.principalId
   }
   dependsOn: [
-    vaultName_backupPolicyName
-    storageAccountName_resource
+    backupPolicy
+    storageAccount
   ]
 }
 
-resource vaultName_storageAccountName 'Microsoft.DataProtection/backupvaults/backupInstances@2021-01-01' = {
-  parent: vaultName_resource
+resource createBackupInstance 'Microsoft.DataProtection/backupvaults/backupInstances@2021-01-01' = {
+  parent: backupVault
   name: '${storageAccountName}'
   properties: {
     objectType: 'BackupInstance'
     dataSourceInfo: {
       objectType: 'Datasource'
-      resourceID: storageAccountName_resource.id
+      resourceID: storageAccount.id
       resourceName: storageAccountName
       resourceType: resourceType
-      resourceUri: storageAccountName_resource.id
+      resourceUri: storageAccount.id
       resourceLocation: location
       datasourceType: dataSourceType
     }
     policyInfo: {
-      policyId: vaultName_backupPolicyName.id
+      policyId: backupPolicy.id
       name: backupPolicyName
     }
   }
   dependsOn: [
-    roleNameGuid_resource
+    roleAssignment
   ]
 }
