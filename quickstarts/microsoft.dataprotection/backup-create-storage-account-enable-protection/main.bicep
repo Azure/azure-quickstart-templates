@@ -99,7 +99,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-prev
   ]
 }
 
-resource createBackupInstance 'Microsoft.DataProtection/backupvaults/backupInstances@2021-01-01' = {
+resource backupInstance 'Microsoft.DataProtection/backupvaults/backupInstances@2021-01-01' = {
   parent: backupVault
   name: '${storageAccountName}'
   properties: {
