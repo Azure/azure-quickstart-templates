@@ -49,7 +49,7 @@ resource backupVault 'Microsoft.DataProtection/backupVaults@2021-01-01' = {
 
 resource backupPolicy 'Microsoft.DataProtection/backupVaults/backupPolicies@2021-01-01' = {
   parent: backupVault
-  name: '${backupPolicyName}'
+  name: backupPolicyName
   properties: {
     policyRules: [
       {
@@ -146,7 +146,7 @@ resource roleAssignmentForSnapshotRG 'Microsoft.Authorization/roleAssignments@20
 
 resource backupInstance 'Microsoft.DataProtection/backupvaults/backupInstances@2021-01-01' = {
   parent: backupVault
-  name: '${diskName}'
+  name: diskName
   properties: {
     objectType: 'BackupInstance'
     dataSourceInfo: {
