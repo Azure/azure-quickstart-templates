@@ -28,8 +28,8 @@ var dataSourceType = 'Microsoft.Compute/disks'
 var resourceType = 'Microsoft.Compute/disks'
 var retentionDuration = 'P${retentionDays}D'
 var repeatingTimeInterval = 'R/2021-05-20T22:00:00+00:00/PT4H'
-var roleNameGuidForDisk_var = guid(resourceGroup().id, roleDefinitionIdForDisk, vaultName_resource.id)
-var roleNameGuidForSnapshotRG_var = guid(resourceGroup().id, roleDefinitionIdForSnapshotRG, vaultName_resource.id)
+var roleNameGuidForDisk = guid(resourceGroup().id, roleDefinitionIdForDisk, vaultName_resource.id)
+var roleNameGuidForSnapshotRG = guid(resourceGroup().id, roleDefinitionIdForSnapshotRG, vaultName_resource.id)
 
 resource vaultName_resource 'Microsoft.DataProtection/backupVaults@2021-01-01' = {
   name: vaultName
@@ -120,8 +120,8 @@ resource diskName_resource 'Microsoft.Compute/disks@2020-12-01' = {
   }
 }
 
-resource roleNameGuidForDisk 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: roleNameGuidForDisk_var
+resource roleAssignmentForDisk 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: roleNameGuidForDisk
   properties: {
     roleDefinitionId: roleDefinitionIdForDisk
     principalId: reference(vaultName_resource.id, '2021-01-01', 'Full').identity.principalId
@@ -132,8 +132,8 @@ resource roleNameGuidForDisk 'Microsoft.Authorization/roleAssignments@2020-04-01
   ]
 }
 
-resource roleNameGuidForSnapshotRG 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: roleNameGuidForSnapshotRG_var
+resource roleAssignmentForSnapshotRG 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: roleNameGuidForSnapshotRG
   properties: {
     roleDefinitionId: roleDefinitionIdForSnapshotRG
     principalId: reference(vaultName_resource.id, '2021-01-01', 'Full').identity.principalId
@@ -173,7 +173,7 @@ resource vaultName_diskName 'Microsoft.DataProtection/backupvaults/backupInstanc
     }
   }
   dependsOn: [
-    roleNameGuidForDisk
-    roleNameGuidForSnapshotRG
+    roleAssignmentForDisk
+    roleAssignmentForSnapshotRG
   ]
 }
