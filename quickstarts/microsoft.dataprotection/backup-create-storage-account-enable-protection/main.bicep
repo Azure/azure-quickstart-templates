@@ -18,7 +18,7 @@ param backupPolicyName string = 'policy${uniqueString(resourceGroup().id)}'
 param retentionDays int = 30
 
 @description('Name of the Storage Account')
-param storageAccountName string = 'backupstore${uniqueString(resourceGroup().id)}'
+param storageAccountName string = 'store${uniqueString(resourceGroup().id)}'
 
 @description('A new GUID used to identify the role assignment')
 param roleNameGuid string = newGuid()
