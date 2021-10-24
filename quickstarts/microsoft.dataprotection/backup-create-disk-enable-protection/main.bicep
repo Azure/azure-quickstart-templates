@@ -9,7 +9,7 @@ param vaultName string = 'vault${uniqueString(resourceGroup().id)}'
 param vaultStorageRedundancy string = 'GeoRedundant'
 
 @description('Name of the Backup Policy')
-param backupPolicyName string = 'diskpolicy${uniqueString(resourceGroup().id)}'
+param backupPolicyName string = 'policy${uniqueString(resourceGroup().id)}'
 
 @description('Retention duration in days')
 @minValue(1)
@@ -17,7 +17,7 @@ param backupPolicyName string = 'diskpolicy${uniqueString(resourceGroup().id)}'
 param retentionDays int = 30
 
 @description('Name of the Disk')
-param diskName string = 'backupdisk${uniqueString(resourceGroup().id)}'
+param diskName string = 'disk${uniqueString(resourceGroup().id)}'
 
 @description('Location for all resources')
 param location string = resourceGroup().location
