@@ -28,10 +28,10 @@ var dataSourceType = 'Microsoft.Compute/disks'
 var resourceType = 'Microsoft.Compute/disks'
 var retentionDuration = 'P${retentionDays}D'
 var repeatingTimeInterval = 'R/2021-05-20T22:00:00+00:00/PT4H'
-var roleNameGuidForDisk = guid(resourceGroup().id, roleDefinitionIdForDisk, vaultName_resource.id)
-var roleNameGuidForSnapshotRG = guid(resourceGroup().id, roleDefinitionIdForSnapshotRG, vaultName_resource.id)
+var roleNameGuidForDisk = guid(resourceGroup().id, roleDefinitionIdForDisk, backupVault.id)
+var roleNameGuidForSnapshotRG = guid(resourceGroup().id, roleDefinitionIdForSnapshotRG, backupVault.id)
 
-resource vaultName_resource 'Microsoft.DataProtection/backupVaults@2021-01-01' = {
+resource backupVault 'Microsoft.DataProtection/backupVaults@2021-01-01' = {
   name: vaultName
   location: location
   identity: {
@@ -47,8 +47,8 @@ resource vaultName_resource 'Microsoft.DataProtection/backupVaults@2021-01-01' =
   }
 }
 
-resource vaultName_backupPolicyName 'Microsoft.DataProtection/backupVaults/backupPolicies@2021-01-01' = {
-  parent: vaultName_resource
+resource backupPolicy 'Microsoft.DataProtection/backupVaults/backupPolicies@2021-01-01' = {
+  parent: backupVault
   name: '${backupPolicyName}'
   properties: {
     policyRules: [
@@ -109,7 +109,7 @@ resource vaultName_backupPolicyName 'Microsoft.DataProtection/backupVaults/backu
   }
 }
 
-resource diskName_resource 'Microsoft.Compute/disks@2020-12-01' = {
+resource computeDisk 'Microsoft.Compute/disks@2020-12-01' = {
   name: diskName
   location: location
   properties: {
@@ -124,11 +124,11 @@ resource roleAssignmentForDisk 'Microsoft.Authorization/roleAssignments@2020-04-
   name: roleNameGuidForDisk
   properties: {
     roleDefinitionId: roleDefinitionIdForDisk
-    principalId: reference(vaultName_resource.id, '2021-01-01', 'Full').identity.principalId
+    principalId: reference(backupVault.id, '2021-01-01', 'Full').identity.principalId
   }
   dependsOn: [
-    vaultName_backupPolicyName
-    diskName_resource
+    backupPolicy
+    computeDisk
   ]
 }
 
@@ -136,30 +136,30 @@ resource roleAssignmentForSnapshotRG 'Microsoft.Authorization/roleAssignments@20
   name: roleNameGuidForSnapshotRG
   properties: {
     roleDefinitionId: roleDefinitionIdForSnapshotRG
-    principalId: reference(vaultName_resource.id, '2021-01-01', 'Full').identity.principalId
+    principalId: reference(backupVault.id, '2021-01-01', 'Full').identity.principalId
   }
   dependsOn: [
-    vaultName_backupPolicyName
-    diskName_resource
+    backupPolicy
+    computeDisk
   ]
 }
 
-resource vaultName_diskName 'Microsoft.DataProtection/backupvaults/backupInstances@2021-01-01' = {
-  parent: vaultName_resource
+resource backupInstance 'Microsoft.DataProtection/backupvaults/backupInstances@2021-01-01' = {
+  parent: backupVault
   name: '${diskName}'
   properties: {
     objectType: 'BackupInstance'
     dataSourceInfo: {
       objectType: 'Datasource'
-      resourceID: diskName_resource.id
+      resourceID: computeDisk.id
       resourceName: diskName
       resourceType: resourceType
-      resourceUri: diskName_resource.id
+      resourceUri: computeDisk.id
       resourceLocation: location
       datasourceType: dataSourceType
     }
     policyInfo: {
-      policyId: vaultName_backupPolicyName.id
+      policyId: backupPolicy.id
       name: backupPolicyName
       policyParameters: {
         dataStoreParametersList: [
