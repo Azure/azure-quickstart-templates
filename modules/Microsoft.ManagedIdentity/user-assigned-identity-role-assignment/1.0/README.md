@@ -30,6 +30,7 @@ This module creates a user-assigned managed identity. It also optionally assigns
 
 | Name | Type | Description |
 | :------------- | :----------: | :------------- |
+| managedIdentityResourceId | string | The resource ID of the user-assigned managed identity. |
 | managedIdentityClientId | string | The ID of the Azure AD application associated with the managed identity. |
 | managedIdentityPrincipalId | string | The ID of the Azure AD service principal associated with the managed identity. |
 
