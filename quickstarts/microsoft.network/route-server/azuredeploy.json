@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "14189622545852797588"
+    }
+  },
   "parameters": {
     "vnetName": {
       "type": "string",
@@ -13,25 +20,43 @@
       "type": "string",
       "defaultValue": "10.1.0.0/16",
       "metadata": {
-          "description": "IP prefix for available addresses in vnet address space."
+        "description": "IP prefix for available addresses in vnet address space."
       }
     },
-    "vnetNew-or-Existing": {
-        "type": "string",
-        "allowedValues": [
-            "New",
-            "Existing"
-        ],
-        "defaultValue": "New",
-        "metadata": {
-            "description": "Specify whether to provision new vnet or deploy to existing vnet."
-        }
+    "vnetNew_or_Existing": {
+      "type": "string",
+      "defaultValue": "New",
+      "allowedValues": [
+        "New",
+        "Existing"
+      ],
+      "metadata": {
+        "description": "Specify whether to provision new vnet or deploy to existing vnet."
+      }
     },
     "routeServerSubnetIpPrefix": {
       "type": "string",
       "defaultValue": "10.1.1.0/27",
       "metadata": {
-          "description": "Route Server subnet IP prefix MUST be within vnet IP prefix address space."
+        "description": "Route Server subnet IP prefix MUST be within vnet IP prefix address space."
+      }
+    },
+    "publicIpNew_or_Existing": {
+      "type": "string",
+      "defaultValue": "New",
+      "allowedValues": [
+        "New",
+        "Existing"
+      ],
+      "metadata": {
+        "description": "Specify whether to provision new standard public IP or deploy using existing standard public IP."
+      }
+    },
+    "publicIpName": {
+      "type": "string",
+      "defaultValue": "routeserverpip",
+      "metadata": {
+        "description": "Name of the standard Public IP used for the Route Server"
       }
     },
     "firstRouteServerName": {
@@ -49,8 +74,8 @@
       }
     },
     "peerAsn": {
-      "type": "string",
-      "defaultValue": "65002",
+      "type": "int",
+      "defaultValue": 65002,
       "metadata": {
         "description": "Peer ASN connecting to."
       }
@@ -68,38 +93,52 @@
       "metadata": {
         "description": "Azure region for Route Server and virtual network."
       }
-    }    
+    }
   },
-  "variables": {    
-    "ipconfigName": "[concat(parameters('firstRouteServerName'), '/ipconfig1')]",
-    "bgpConnectionName": "[concat(parameters('firstRouteServerName'), '/', parameters('routeServerBgpConnectionName'))]",
-    "routeserver-subnet-name": "RouteServerSubnet"
+  "functions": [],
+  "variables": {
+    "ipconfigName": "ipconfig1",
+    "routeServerSubnetName": "RouteServerSubnet"
   },
   "resources": [
     {
-      "condition": "[equals(parameters('vnetNew-or-Existing'), 'New')]",
+      "condition": "[equals(parameters('vnetNew_or_Existing'), 'New')]",
+      "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2020-05-01",
       "name": "[parameters('vnetName')]",
-      "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
-       "properties": {
-           "addressSpace": {
-               "addressPrefixes": [
-                  "[parameters('vnetIpPrefix')]"
-                ]
-            }
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetIpPrefix')]"
+          ]
         }
+      }
     },
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "apiVersion": "2020-05-01",
-      "name": "[concat(parameters('vnetName'), '/', variables('routeserver-subnet-name'))]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-          "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
-      ],
+      "name": "[format('{0}/{1}', parameters('vnetName'), variables('routeServerSubnetName'))]",
       "properties": {
-          "addressPrefix": "[parameters('routeServerSubnetIpPrefix')]"
+        "addressPrefix": "[parameters('routeServerSubnetIpPrefix')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "condition": "[equals(parameters('publicIpNew_or_Existing'), 'New')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-05-01",
+      "name": "[parameters('publicIpName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4",
+        "idleTimeoutInMinutes": 4
       }
     },
     {
@@ -107,10 +146,6 @@
       "apiVersion": "2020-06-01",
       "name": "[parameters('firstRouteServerName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-          "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
-          "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('routeserver-subnet-name'))]"
-      ],
       "properties": {
         "sku": "Standard"
       }
@@ -118,28 +153,33 @@
     {
       "type": "Microsoft.Network/virtualHubs/ipConfigurations",
       "apiVersion": "2020-06-01",
-      "name": "[variables('ipconfigName')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualHubs', parameters('firstRouteServerName'))]"
-      ],
+      "name": "[format('{0}/{1}', parameters('firstRouteServerName'), variables('ipconfigName'))]",
       "properties": {
         "subnet": {
-          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('routeserver-subnet-name'))]"
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('routeServerSubnetName'))]"
+        },
+        "publicIPAddress": {
+          "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualHubs', parameters('firstRouteServerName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('routeServerSubnetName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/virtualHubs/bgpConnections",
       "apiVersion": "2020-06-01",
-      "name": "[variables('bgpConnectionName')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualHubs/ipConfigurations', parameters('firstRouteServerName'), 'ipconfig1')]"
-      ],
+      "name": "[format('{0}/{1}', parameters('firstRouteServerName'), parameters('routeServerBgpConnectionName'))]",
       "properties": {
         "peerAsn": "[parameters('peerAsn')]",
         "peerIp": "[parameters('peerIp')]"
-      }
-    }   
-  ],
-  "outputs": {}
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualHubs', parameters('firstRouteServerName'))]",
+        "[resourceId('Microsoft.Network/virtualHubs/ipConfigurations', parameters('firstRouteServerName'), variables('ipconfigName'))]"
+      ]
+    }
+  ]
 }
