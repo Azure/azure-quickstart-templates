@@ -31,6 +31,9 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-prev
   }
 }]
 
+@description('The resource ID of the user-assigned managed identity.')
+output managedIdentityResourceId string = managedIdentity.id
+
 @description('The ID of the Azure AD application associated with the managed identity.')
 output managedIdentityClientId string = managedIdentity.properties.clientId
 
