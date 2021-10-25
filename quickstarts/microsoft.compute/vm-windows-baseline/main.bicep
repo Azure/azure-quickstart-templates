@@ -65,6 +65,9 @@ param osDiskStorageAccountType string = 'Standard_LRS'
 @description('Size of the virtual machine.')
 param vmSize string = 'Standard_D2s_v3'
 
+@description('Availability zone number.')
+param zone string = '1'
+
 @description('Username for the Virtual Machine.')
 param adminUsername string
 
@@ -75,42 +78,6 @@ param adminPassword string
 
 @description('Enable accelerated networking.')
 param enableAcceleratedNetworking bool = true
-
-var nsgId = resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', networkSecurityGroupName)
-var vnetId = resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', virtualNetworkName)
-var subnetRef = '${vnetId}/subnets/${subnetName}'
-var virtualMachineComputerName = vmName
-var zone = '1'
-
-resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
-  name: 'nic1'
-  location: location
-  properties: {
-    ipConfigurations: [
-      {
-        name: 'ipconfig1'
-        properties: {
-          subnet: {
-            id: subnetRef
-          }
-          privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress: {
-            id: resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', publicIpName)
-          }
-        }
-      }
-    ]
-    enableAcceleratedNetworking: enableAcceleratedNetworking
-    networkSecurityGroup: {
-      id: nsgId
-    }
-  }
-  dependsOn: [
-    networkSecurityGroup
-    virtualNetwork
-    publicIpAddress
-  ]
-}
 
 resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   name: networkSecurityGroupName
@@ -148,6 +115,31 @@ resource publicIpAddress 'Microsoft.Network/publicIpAddresses@2021-05-01' = {
   ]
   properties: {
     publicIPAllocationMethod: publicIPAllocationMethod
+  }
+}
+
+resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
+  name: '${vmName}-nic'
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'ipconfig1'
+        properties: {
+          subnet: {
+            id: virtualNetwork.properties.subnets[0].id
+          }
+          privateIPAllocationMethod: 'Dynamic'
+          publicIPAddress: {
+            id: publicIpAddress.id
+          }
+        }
+      }
+    ]
+    enableAcceleratedNetworking: enableAcceleratedNetworking
+    networkSecurityGroup: {
+      id: networkSecurityGroup.id
+    }
   }
 }
 
@@ -190,7 +182,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-07-01' = {
       ]
     }
     osProfile: {
-      computerName: virtualMachineComputerName
+      computerName: vmName
       adminUsername: adminUsername
       adminPassword: adminPassword
       windowsConfiguration: {

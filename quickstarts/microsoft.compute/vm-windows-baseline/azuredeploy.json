@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "15376425947708457759"
+      "templateHash": "15663565076626079460"
     }
   },
   "parameters": {
@@ -124,6 +124,13 @@
         "description": "Size of the virtual machine."
       }
     },
+    "zone": {
+      "type": "string",
+      "defaultValue": "1",
+      "metadata": {
+        "description": "Availability zone number."
+      }
+    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -146,45 +153,7 @@
     }
   },
   "functions": [],
-  "variables": {
-    "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
-    "vnetId": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-    "subnetRef": "[format('{0}/subnets/{1}', variables('vnetId'), parameters('subnetName'))]",
-    "virtualMachineComputerName": "[parameters('vmName')]",
-    "zone": "1"
-  },
   "resources": [
-    {
-      "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2021-05-01",
-      "name": "nic1",
-      "location": "[parameters('location')]",
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "subnet": {
-                "id": "[variables('subnetRef')]"
-              },
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', parameters('publicIpName'))]"
-              }
-            }
-          }
-        ],
-        "enableAcceleratedNetworking": "[parameters('enableAcceleratedNetworking')]",
-        "networkSecurityGroup": {
-          "id": "[variables('nsgId')]"
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
-        "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-      ]
-    },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2021-05-01",
@@ -221,11 +190,42 @@
         "name": "[parameters('publicIpSku')]"
       },
       "zones": [
-        "[variables('zone')]"
+        "[parameters('zone')]"
       ],
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIPAllocationMethod')]"
       }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2021-05-01",
+      "name": "[format('{0}-nic', parameters('vmName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))).subnets[0].id]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpName'))]"
+              }
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": "[parameters('enableAcceleratedNetworking')]",
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+        "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
@@ -233,7 +233,7 @@
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "zones": [
-        "[variables('zone')]"
+        "[parameters('zone')]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -263,12 +263,12 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'nic1')]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('vmName')))]"
             }
           ]
         },
         "osProfile": {
-          "computerName": "[variables('virtualMachineComputerName')]",
+          "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
@@ -282,7 +282,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', 'nic1')]"
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', parameters('vmName')))]"
       ]
     },
     {
