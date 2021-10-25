@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "8539912218285142591"
+    }
+  },
   "parameters": {
     "keyVaultName": {
       "type": "string",
@@ -81,10 +88,10 @@
     },
     "skuName": {
       "type": "string",
-      "defaultValue": "Standard",
+      "defaultValue": "standard",
       "allowedValues": [
-        "Standard",
-        "Premium"
+        "standard",
+        "premium"
       ],
       "metadata": {
         "description": "Specifies whether the key vault is a standard vault or a premium vault."
@@ -92,21 +99,18 @@
     },
     "secretsObject": {
       "type": "secureObject",
-      "defaultValue": "{}",
       "metadata": {
         "description": "Specifies all secrets {\"secretName\":\"\",\"secretValue\":\"\"} wrapped in a secure object."
       }
     }
   },
+  "functions": [],
   "resources": [
     {
       "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2021-04-01-preview",
       "name": "[parameters('keyVaultName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2019-09-01",
-      "tags": {
-        "displayName": "KeyVault"
-      },
       "properties": {
         "enabledForDeployment": "[parameters('enabledForDeployment')]",
         "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
@@ -133,19 +137,19 @@
       }
     },
     {
-      "type": "Microsoft.KeyVault/vaults/secrets",
-      "name": "[concat(parameters('keyVaultName'), '/', parameters('secretsObject').secrets[copyIndex()].secretName)]",
-      "apiVersion": "2019-09-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
-      ],
       "copy": {
-        "name": "secretsCopy",
+        "name": "secrets",
         "count": "[length(parameters('secretsObject').secrets)]"
       },
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-04-01-preview",
+      "name": "[format('{0}/{1}', parameters('keyVaultName'), parameters('secretsObject').secrets[copyIndex()].secretName)]",
       "properties": {
         "value": "[parameters('secretsObject').secrets[copyIndex()].secretValue]"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ]
     }
   ]
 }
