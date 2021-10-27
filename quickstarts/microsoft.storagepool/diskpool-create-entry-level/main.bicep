@@ -47,7 +47,22 @@ param existingVnetName string
 @description('Name of the existing subnet to deploy the Disk Pool into.')
 param existingSubnetName string
 
-var diskId = resourceId(existingResourceGroupName, 'Microsoft.Compute/disks/', existingManagedDiskName)
+resource vnet 'Microsoft.Network/virtualNetworks@2020-05-01' existing = {
+  scope: resourceGroup(existingResourceGroupName)
+  name: existingVnetName
+}
+
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-05-01' existing = {
+  name: existingSubnetName
+  parent: vnet
+}
+var subnetId = subnet.id
+
+resource disk 'Microsoft.Compute/disks@2021-04-01' existing =  {
+  scope: resourceGroup(existingResourceGroupName)
+  name: existingManagedDiskName
+}
+var diskId = disk.id
 
 resource diskPool 'Microsoft.StoragePool/diskPools@2021-08-01' = {
   name: diskPoolName
@@ -59,7 +74,7 @@ resource diskPool 'Microsoft.StoragePool/diskPools@2021-08-01' = {
     availabilityZones: [
       diskPoolAvailabilityZone
     ]
-    subnetId: resourceId(existingResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', existingVnetName, existingSubnetName)
+    subnetId: subnetId
     disks: [
       {
         id: diskId
