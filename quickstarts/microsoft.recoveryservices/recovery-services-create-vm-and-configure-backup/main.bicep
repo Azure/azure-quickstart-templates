@@ -44,7 +44,7 @@ var protectionContainer = 'iaasvmcontainer;iaasvmcontainerv2;${resourceGroup().n
 var protectedItem = 'vm;iaasvmcontainerv2;${resourceGroup().name};${vmName}'
 var networkSecurityGroupName = 'default-NSG'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2020-08-01-preview' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   name: storageAccountName
   location: location
   sku: {
