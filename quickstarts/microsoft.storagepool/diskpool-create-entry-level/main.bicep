@@ -1,9 +1,3 @@
-@description('Tier of the Disk Pool')
-@allowed([
-  'Standard'
-])
-param diskPoolTier string = 'Standard'
-
 @description('Location of the Disk Pool')
 @allowed([
   'AustraliaEast'
@@ -20,25 +14,32 @@ param diskPoolTier string = 'Standard'
 ])
 param diskPoolLocation string
 
-@description('Name of the managed disk (512 sector size) to create and export as an iSCSI LUN in the Disk Pool')
-param managedDiskName string = 'disk-10'
-
-@description('Availability zone to deploy the managed disk and Disk Pool')
+@description('Sku of the Disk Pool')
 @allowed([
-  '1'
-  '2'
-  '3'
+  'Basic_B1'
+  'Standard_S1'
+  'Premium_P1'
 ])
-param availabilityZone string = '1'
+param diskPoolSku string = 'Standard_S1'
 
 @description('Name of the Disk Pool')
-param diskPoolName string = 'diskpool-09'
+@minLength(7)
+@maxLength(30)
+param diskPoolName string = 'diskpool-01'
+
+@description('Availability zone to deploy the Disk Pool')
+param diskPoolAvailabilityZone string
+
+@description('Name of the managed disk (512 sector size) to create and export as an iSCSI LUN in the Disk Pool')
+param existingManagedDiskName string = 'disk-1'
 
 @description('Name of the iSCSI Target')
+@minLength(5)
+@maxLength(40)
 param targetName string = 'iscsi-target-01'
 
-@description('Name of the resourceGroup for the existing virtual network to deploy the Disk Pool into.')
-param existingVnetResourceGroupName string
+@description('Name of the resourceGroup for the existing virtual network and disk to deploy the Disk Pool.')
+param existingResourceGroupName string
 
 @description('Name of the existing virtual network to deploy the Disk Pool into.')
 param existingVnetName string
@@ -46,48 +47,29 @@ param existingVnetName string
 @description('Name of the existing subnet to deploy the Disk Pool into.')
 param existingSubnetName string
 
-var diskId = '${resourceGroup().id}/providers/Microsoft.Compute/disks/${managedDiskName}'
+var diskId = resourceId(existingResourceGroupName, 'Microsoft.Compute/disks/', existingManagedDiskName)
 
-resource managedDiskNamePrefix 'Microsoft.Compute/disks@2020-09-30' = {
-  name: managedDiskName
-  location: diskPoolLocation
-  sku: {
-    name: 'Premium_LRS'
-  }
-  zones: [
-    availabilityZone
-  ]
-  properties: {
-    creationData: {
-      createOption: 'Empty'
-    }
-    diskSizeGB: 1023
-  }
-}
-
-resource diskPoolNamePrefix 'Microsoft.StoragePool/diskPools@2021-04-01-preview' = {
+resource diskPool 'Microsoft.StoragePool/diskPools@2021-08-01' = {
   name: diskPoolName
   sku: {
-    name: diskPoolTier
-    tier: diskPoolTier
+    name: diskPoolSku
   }
   location: diskPoolLocation
   properties: {
-    availabilityZones: reference(diskId, '2017-03-30', 'Full').zones
-    subnetId: resourceId(existingVnetResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', existingVnetName, existingSubnetName)
+    availabilityZones: [
+      diskPoolAvailabilityZone
+    ]
+    subnetId: resourceId(existingResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', existingVnetName, existingSubnetName)
     disks: [
       {
         id: diskId
       }
     ]
   }
-  dependsOn: [
-    managedDiskNamePrefix
-  ]
 }
 
-resource targetNamePrefix 'Microsoft.StoragePool/diskPools/iscsiTargets@2021-04-01-preview' = {
-  parent: diskPoolNamePrefix
+resource target 'Microsoft.StoragePool/diskPools/iscsiTargets@2021-08-01' = {
+  parent: diskPool
   name: targetName
   properties: {
     targetIqn: 'iqn.2021-04.org.microsoft.com:target'
