@@ -1,0 +1,189 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+      "name": {
+        "type": "string",
+        "metadata": {
+          "description": "Specifies the name of the deployment."
+        }
+      },
+      "environment": {
+        "type": "string",
+        "metadata": {
+          "description": "Specifies the name of the environment."
+        }
+      },
+      "location": {
+        "type": "string",
+        "allowedValues": [
+          "australiaeast",
+          "brazilsouth",
+          "canadacentral",
+          "centralus",
+          "eastasia",
+          "eastus",
+          "eastus2",
+          "francecentral",
+          "japaneast",
+          "koreacentral",
+          "northcentralus",
+          "northeurope",
+          "southeastasia",
+          "southcentralus",
+          "uksouth",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westeurope",
+          "usgovvirginia",
+          "usgovarizona"
+        ],
+        "metadata": {
+          "description": "Specifies the location of the Azure Machine Learning workspace and dependent resources."
+        }
+      },
+      "hbi_workspace":{
+        "type": "string",
+        "defaultValue": "true",
+          "allowedValues": [
+            "false",
+            "true"
+          ],
+          "metadata": {
+            "description": "Specifies whether to reduce telemetry collection and enable additional encryption."
+          }
+      },
+      "encryption_status":{
+        "type": "string",
+        "defaultValue": "Enabled",
+        "allowedValues": [
+          "Enabled",
+          "Disabled"
+        ],
+        "metadata": {
+          "description": "Specifies if the Azure Machine Learning workspace should be encrypted with the customer managed key."
+        }
+      },
+      "cmk_keyvault_id": {
+        "type": "string",
+        "metadata": {
+          "description": "Specifies the customer managed keyvault Resource Manager ID."
+        }
+      },
+      "cmk_keyvault_key_uri":{
+        "type": "string",
+        "metadata": {
+          "description": "Specifies the customer managed keyvault key uri."
+        }
+      }
+  },
+  "variables": {
+      "tenantId": "[subscription().tenantId]",
+      "storageAccountName": "[concat('st', parameters('name'), parameters('environment'))]",
+      "keyVaultName": "[concat('kv-', parameters('name'), '-', parameters('environment'))]",
+      "applicationInsightsName": "[concat('appi-', parameters('name'), '-', parameters('environment'))]",
+      "resourceGroupName": "[resourceGroup().name]",
+      "containerRegistryName": "[concat('cr', parameters('name'), parameters('environment'))]",
+      "workspaceName": "[concat('mlw', parameters('name'), parameters('environment'))]",
+      "storageAccount": "[resourceId(variables('resourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+      "keyVault": "[resourceId(variables('resourceGroupName'), 'Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+      "applicationInsights": "[resourceId(variables('resourceGroupName'), 'Microsoft.Insights/components', variables('applicationInsightsName'))]",
+      "containerRegistry": "[resourceId(variables('resourceGroupName'), 'Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))]"
+  },
+  "resources": [
+      {
+          "type": "Microsoft.Storage/storageAccounts",
+          "apiVersion": "2021-01-01",
+          "name": "[variables('storageAccountName')]",
+          "location": "[parameters('location')]",
+          "sku": {
+              "name": "Standard_RAGRS"
+          },
+          "kind": "StorageV2",
+          "properties": {
+              "encryption": {
+                  "services": {
+                      "blob": {
+                          "enabled": true
+                      },
+                      "file": {
+                          "enabled": true
+                      }
+                  },
+                  "keySource": "Microsoft.Storage"
+              },
+              "supportsHttpsTrafficOnly": true
+          }
+      },
+      {
+          "type": "Microsoft.KeyVault/vaults",
+          "apiVersion": "2021-04-01-preview",
+          "name": "[variables('keyVaultName')]",
+          "location": "[parameters('location')]",
+          "properties": {
+              "tenantId": "[variables('tenantId')]",
+              "sku": {
+                  "name": "standard",
+                  "family": "A"
+              },
+              "accessPolicies": [],
+              "enableSoftDelete": true,
+              "enablePurgeProtection": true
+          }
+      },
+      {
+          "type": "Microsoft.Insights/components",
+          "apiVersion": "2020-02-02",
+          "name": "[variables('applicationInsightsName')]",
+          "location": "[if(or(equals(parameters('location'),'eastus2'), equals(parameters('location'),'westcentralus')),'southcentralus',parameters('location'))]",
+          "kind": "web",
+          "properties": {
+              "Application_Type": "web"
+          }
+      },
+      {
+        "type": "Microsoft.ContainerRegistry/registries",
+        "sku": {
+            "name": "Standard",
+            "tier": "Standard"
+        },
+        "name": "[variables('containerRegistryName')]",
+        "apiVersion": "2019-12-01-preview",
+        "location": "[parameters('location')]",
+        "properties": {
+            "adminUserEnabled": true
+        }
+    },
+    {
+        "type": "Microsoft.MachineLearningServices/workspaces",
+        "apiVersion": "2020-03-01",
+        "identity": {
+            "type": "systemAssigned"
+        },
+        "name": "[variables('workspaceName')]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[variables('storageAccount')]",
+            "[variables('keyVault')]",
+            "[variables('applicationInsights')]",
+            "[variables('containerRegistry')]"
+        ],
+        "properties": {
+            "friendlyName": "[variables('workspaceName')]",
+            "storageAccount": "[variables('storageAccount')]",
+            "keyVault": "[variables('keyVault')]",
+            "applicationInsights": "[variables('applicationInsights')]",
+            "containerRegistry": "[variables('containerRegistry')]",
+            "hbiWorkspace": "[parameters('hbi_workspace')]",
+            "encryption": {
+              "status": "[parameters('encryption_status')]",
+              "keyVaultProperties": {
+                  "keyVaultArmId": "[parameters('cmk_keyvault_id')]",
+                  "keyIdentifier": "[parameters('cmk_keyvault_key_uri')]"
+              }
+            }
+        }
+    }
+  ]
+}

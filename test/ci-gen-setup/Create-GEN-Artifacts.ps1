@@ -201,6 +201,12 @@ $cdn = New-AzureRmADServicePrincipal -ApplicationId 205478c0-bd83-4e1b-a9d6-db63
 # $cdn = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd" 
 Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $cdn.id -PermissionsToSecrets get 
 
+# Assign Front Door access to the vault to work with custom domain certificates.
+# See https://docs.microsoft.com/azure/frontdoor/front-door-custom-domain-https#option-2-use-your-own-certificate
+$frontDoor = New-AzureRmADServicePrincipal -ApplicationId 'ad0e1c7e-6d38-4ba4-9efd-0bc77ba9f037'
+# $frontDoor = Get-AzureRmADServicePrincipal -ServicePrincipalName "ad0e1c7e-6d38-4ba4-9efd-0bc77ba9f037"
+Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $frontDoor.id -PermissionsToSecrets get -PermissionsToCertificates get
+
 # 1) Create a sample password for the vault
 $SecretValue = ConvertTo-SecureString -String $CertPass -AsPlainText -Force
 Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $KeyVaultNotSecretName -SecretValue $SecretValue -Verbose

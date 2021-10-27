@@ -42,10 +42,10 @@ export AZURE_HTTP_USER_AGENT="AzureQuickStarts $AZURE_HTTP_USER_AGENT"
 if [[ $bicep || ($templateFile == *.bicep) ]]
 then
     isBicep=true
-    defaultTemplateFile="main.bicep"
+    defaultTemplateFile="/main.bicep"
 else
     isBicep=false
-    defaultTemplateFile="azuredeploy.json"
+    defaultTemplateFile="/azuredeploy.json"
 fi
 
 if [[ -z $templateFile ]]

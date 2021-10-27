@@ -386,7 +386,7 @@
 				"description": "Install Watson OpenScale and Watson Machine Learning"
 			}
 		},
-		"installApacheSpark": {
+		"installAnalyticsEngine": {
 			"type": "string",
 			"defaultValue": "no",
 			"allowedValues": [
@@ -394,7 +394,7 @@
 				"no"
 			],
 			"metadata": {
-				"description": "Install Cognos Dashboard"
+				"description": "Install AnalyticsEngine (Spark)"
 			}
 		},
 		"apiKey": {
@@ -462,8 +462,8 @@
 		"cloudPakWMLScriptFileName": "deployCloudPakWML.sh",
 		"cloudPakWOSScriptUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/deployCloudPakWOS.sh', parameters('_artifactsLocationSasToken')))]",
 		"cloudPakWOSScriptFileName": "deployCloudPakWOS.sh",
-		"cloudPakSPARKScriptUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/deployCloudPakSPARK.sh', parameters('_artifactsLocationSasToken')))]",
-		"cloudPakSPARKScriptFileName": "deployCloudPakSPARK.sh",
+		"cloudPakAnalyticsEngineScriptUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/deployCloudPakAnalyticsEngine.sh', parameters('_artifactsLocationSasToken')))]",
+		"cloudPakAnalyticsEngineScriptFileName": "deployCloudPakAnalyticsEngine.sh",
 		"cloudPakWKCCoreScriptUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/deployCloudPakWKCCore.sh', parameters('_artifactsLocationSasToken')))]",
 		"cloudPakWKCCoreScriptFileName": "deployCloudPakWKCCore.sh",
 		"cloudPakWKCIISScriptUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/deployCloudPakWKCIIS.sh', parameters('_artifactsLocationSasToken')))]",
@@ -540,7 +540,7 @@
 		{
 			"condition": "[equals(parameters('newOrExistingNetwork'), 'new')]",
 			"type": "Microsoft.Network/virtualNetworks",
-			"apiVersion": "2019-09-01",
+			"apiVersion": "2021-05-01",
 			"name": "[parameters('virtualNetworkName')]",
 			"location": "[parameters('location')]",
 			"tags": {
@@ -592,7 +592,7 @@
 		{
 			"condition": "[equals(parameters('publicBootnodeIP'), variables('vTrue'))]",
 			"type": "Microsoft.Network/publicIPAddresses",
-			"apiVersion": "2019-09-01",
+			"apiVersion": "2021-05-01",
 			"name": "[variables('bastionPublicIpDnsLabel')]",
 			"location": "[parameters('location')]",
 			"sku": {
@@ -613,7 +613,7 @@
 		},
 		{
 			"type": "Microsoft.Network/networkInterfaces",
-			"apiVersion": "2019-09-01",
+			"apiVersion": "2021-05-01",
 			"name": "[concat(variables('bastionHostname'), '-nic')]",
 			"location": "[parameters('location')]",
 			"dependsOn": [
@@ -648,7 +648,7 @@
 		{
 			"condition": "[equals(parameters('storageOption'), 'nfs')]",
 			"type": "Microsoft.Network/networkInterfaces",
-			"apiVersion": "2019-09-01",
+			"apiVersion": "2021-05-01",
 			"name": "[concat(variables('nfsHostname'), '-nic')]",
 			"location": "[parameters('location')]",
 			"dependsOn": [
@@ -680,7 +680,7 @@
 		},
 		{
 			"type": "Microsoft.Network/networkSecurityGroups",
-			"apiVersion": "2019-09-01",
+			"apiVersion": "2021-05-01",
 			"name": "[variables('bastionSecurityGroupName')]",
 			"location": "[parameters('location')]",
 			"tags": {
@@ -782,7 +782,7 @@
 		},
 		{
 			"type": "Microsoft.Network/networkSecurityGroups",
-			"apiVersion": "2019-09-01",
+			"apiVersion": "2021-05-01",
 			"name": "[variables('masterSecurityGroupName')]",
 			"location": "[parameters('location')]",
 			"tags": {
@@ -813,7 +813,7 @@
 		},
 		{
 			"type": "Microsoft.Network/networkSecurityGroups",
-			"apiVersion": "2019-09-01",
+			"apiVersion": "2021-05-01",
 			"name": "[variables('workerSecurityGroupName')]",
 			"location": "[parameters('location')]",
 			"tags": {
@@ -849,6 +849,34 @@
 							"destinationAddressPrefix": "*",
 							"access": "Allow",
 							"priority": 300,
+							"direction": "Inbound"
+						}
+					},
+					{
+						"name": "allowNFS_network",
+						"properties": {
+							"description": "Allow NFS server connections from within the network only",
+							"protocol": "Tcp",
+							"sourcePortRange": "*",
+							"destinationPortRange": "2049",
+							"sourceAddressPrefixes": "[parameters('virtualNetworkCIDR')]",
+							"destinationAddressPrefix": "*",
+							"access": "Allow",
+							"priority": 400,
+							"direction": "Inbound"
+						}
+					},
+					{
+						"name": "allowRPC_network",
+						"properties": {
+							"description": "Allow rpcbind connections from within the network only",
+							"protocol": "Tcp",
+							"sourcePortRange": "*",
+							"destinationPortRange": "111",
+							"sourceAddressPrefixes": "[parameters('virtualNetworkCIDR')]",
+							"destinationAddressPrefix": "*",
+							"access": "Allow",
+							"priority": 410,
 							"direction": "Inbound"
 						}
 					}
@@ -1234,6 +1262,12 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "v2.0"
+					},
+					"version": {
+						"value": "4.0.2"
 					}
 				}
 			}
@@ -1298,6 +1332,12 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "v1.0"
+					},
+					"version": {
+						"value": "4.0.2"
 					}
 				}
 			}
@@ -1362,6 +1402,12 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "v1.0"
+					},
+					"version": {
+						"value": "4.0.2"
 					}
 				}
 			}
@@ -1426,6 +1472,12 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "v1.0"
+					},
+					"version": {
+						"value": "4.0.2"
 					}
 				}
 			}
@@ -1490,6 +1542,12 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "v1.0"
+					},
+					"version": {
+						"value": "4.0.2"
 					}
 				}
 			}
@@ -1554,6 +1612,12 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "v1.7"
+					},
+					"version": {
+						"value": "1.7.2"
 					}
 				}
 			}
@@ -1618,6 +1682,12 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "v1.0"
+					},
+					"version": {
+						"value": "4.0.2"
 					}
 				}
 			}
@@ -1682,6 +1752,12 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "v2.0"
+					},
+					"version": {
+						"value": "4.0.2"
 					}
 				}
 			}
@@ -1746,6 +1822,12 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "v1.1"
+					},
+					"version": {
+						"value": "4.0.2"
 					}
 				}
 			}
@@ -1810,6 +1892,12 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "v1.0"
+					},
+					"version": {
+						"value": "4.0.2"
 					}
 				}
 			}
@@ -1874,6 +1962,12 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "v1.0"
+					},
+					"version": {
+						"value": "4.0.2"
 					}
 				}
 			}
@@ -1938,6 +2032,12 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "v1.0"
+					},
+					"version": {
+						"value": "4.0.2"
 					}
 				}
 			}
@@ -2002,15 +2102,21 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "v1"
+					},
+					"version": {
+						"value": "4.0.2"
 					}
 				}
 			}
 		},
 		{
-			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installApacheSpark'), 'yes'))]",
+			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'accept'), equals(parameters('installAnalyticsEngine'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2021-01-01",
-			"name": "CloudPakSparkDeployment",
+			"name": "CloudPakAnalyticsEngineDeployment",
 			"dependsOn": [
 				"nfsVmDeployment",
 				"OpenShiftDeployment",
@@ -2026,13 +2132,13 @@
 				},
 				"parameters": {
 					"assembly": {
-						"value": "spark"
+						"value": "analyticsengine"
 					},
 					"cloudPakDeploymentScriptUrl": {
-						"value": "[variables('cloudPakSPARKScriptUrl')]"
+						"value": "[variables('cloudPakAnalyticsEngineScriptUrl')]"
 					},
 					"cloudPakDeploymentScriptFileName": {
-						"value": "[variables('cloudPakSPARKScriptFileName')]"
+						"value": "[variables('cloudPakAnalyticsEngineScriptFileName')]"
 					},
 					"redHatTags": {
 						"value": "[variables('redHatTags')]"
@@ -2066,6 +2172,12 @@
 					},
 					"apiKey": {
 						"value": "[parameters('apiKey')]"
+					},
+					"subscriptionChannel": {
+						"value": "stable-v1"
+					},
+					"version": {
+						"value": "4.0.2"
 					}
 				}
 			}

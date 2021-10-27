@@ -145,17 +145,17 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
         domainServicesVnetAddressPrefix
       ]
     }
-  }
-}
-
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-11-01' = {
-  parent: vnet
-  name: domainServicesSubnetName
-  properties: {
-    addressPrefix: domainServicesSubnetAddressPrefix
-    networkSecurityGroup: {
-      id: nsg.id
-    }
+    subnets: [
+      {
+        name: domainServicesSubnetName
+        properties: {
+          addressPrefix: domainServicesSubnetAddressPrefix
+          networkSecurityGroup: {
+            id: nsg.id
+          }
+        }
+      }
+    ]
   }
 }
 
@@ -168,7 +168,7 @@ resource domainServices 'Microsoft.AAD/DomainServices@2020-01-01' = {
     domainConfigurationType: domainConfigurationType
     replicaSets: [
       {
-        subnetId: subnet.id
+        subnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, domainServicesSubnetName)
         location: location
       }
     ]

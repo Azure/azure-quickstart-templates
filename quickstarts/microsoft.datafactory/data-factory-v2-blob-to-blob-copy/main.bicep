@@ -42,7 +42,7 @@ resource dataFactoryLinkedService 'Microsoft.DataFactory/factories/linkedservice
   properties: {
     type: 'AzureBlobStorage'
     typeProperties: {
-      connectionString: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
+      connectionString: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value}'
     }
   }
 }

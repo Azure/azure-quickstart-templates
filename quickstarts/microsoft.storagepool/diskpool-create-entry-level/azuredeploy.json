@@ -2,18 +2,7 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "diskPoolTier": {
-            "type": "string",
-            "defaultValue": "Standard",
-            "allowedValues": [
-                "Standard"
-            ],
-            "metadata": {
-                "description": "Tier of the Disk Pool"
-            }
-        },
         "diskPoolLocation": {
-            "type": "string",
             "allowedValues": [
                 "AustraliaEast",
                 "CanadaCentral",
@@ -27,47 +16,58 @@
                 "WestEurope",
                 "WestUS2"
             ],
+            "type": "String",
             "metadata": {
                 "description": "Location of the Disk Pool"
             }
         },
-        "managedDiskName": {
-            "defaultValue": "disk-01",
+        "diskPoolSku": {
             "type": "string",
-            "metadata": {
-                "description": "Name of the managed disk (512 sector size) to create and export as an iSCSI LUN in the Disk Pool"
-            }
-        },
-        "availabilityZone": {
-            "defaultValue": 1,
-            "type": "string",
+            "defaultValue": "Standard_S1",
             "allowedValues": [
-                "1",
-                "2",
-                "3"
+                "Basic_B1",
+                "Standard_S1",
+                "Premium_P1"
             ],
             "metadata": {
-                "description": "Availability zone to deploy the managed disk and Disk Pool"
+                "description": "Sku of the Disk Pool"
             }
         },
         "diskPoolName": {
             "defaultValue": "diskpool-01",
+            "minLength": 7,
+            "maxLength": 30,
             "type": "string",
             "metadata": {
                 "description": "Name of the Disk Pool"
             }
         },
+        "diskPoolAvailabilityZone": {
+            "type": "string",
+            "metadata": {
+                "description": "Availability zone to deploy the Disk Pool"
+            }
+        },
+        "existingManagedDiskName": {
+            "defaultValue": "disk-1",
+            "type": "string",
+            "metadata": {
+                "description": "Name of the managed disk (512 sector size) to create and export as an iSCSI LUN in the Disk Pool"
+            }
+        },
         "targetName": {
             "defaultValue": "iscsi-target-01",
             "type": "string",
+            "minLength": 5,
+            "maxLength": 40,
             "metadata": {
                 "description": "Name of the iSCSI Target"
             }
         },
-        "existingVnetResourceGroupName": {
+        "existingResourceGroupName": {
             "type": "string",
             "metadata": {
-                "description": "Name of the resourceGroup for the existing virtual network to deploy the Disk Pool into."
+                "description": "Name of the resourceGroup for the existing virtual network and disk to deploy the Disk Pool."
             }
         },
         "existingVnetName": {
@@ -84,40 +84,20 @@
         }
     },
     "variables": {
-        "diskId": "[resourceId('Microsoft.Compute/disks/', variables('managedDiskName'))]"
+        "diskId": "[resourceId(parameters('existingResourceGroupName'), 'Microsoft.Compute/disks/', parameters('existingManagedDiskName'))]"
     },
     "resources": [
         {
-            "type": "Microsoft.Compute/disks",
-            "apiVersion": "2020-09-30",
-            "name": "[parameters('managedDiskName')]",
-            "location": "[parameters('diskPoolLocation')]",
-            "sku": {
-                "name": "Premium_LRS"
-            },
-            "zones": ["[parameters('availabilityZone')]"],
-            "properties": {
-                "creationData": {
-                    "createOption": "Empty"
-                },
-                "diskSizeGB": 1023
-            }
-        },
-        {
             "type": "Microsoft.StoragePool/diskPools",
-            "apiVersion": "2021-04-01-preview",
+            "apiVersion": "2021-08-01",
             "name": "[parameters('diskPoolName')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Compute/disks/', parameters('managedDiskName'))]"
-            ],
             "sku": {
-                "name": "[parameters('diskPoolTier')]",
-                "tier": "[parameters('diskPoolTier')]"
+                "name": "[parameters('diskPoolSku')]"
             },
             "location": "[parameters('diskPoolLocation')]",
             "properties": {
-                "availabilityZones": "[reference(variables('diskId'), '2017-03-30', 'Full').zones]",
-                "subnetId": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubNetName'))]",
+                "availabilityZones": ["[parameters('diskPoolAvailabilityZone')]"],
+                "subnetId": "[resourceId(parameters('existingResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubNetName'))]",
                 "disks": [
                     {
                         "id": "[variables('diskId')]"
@@ -127,7 +107,7 @@
         },
         {
             "type": "Microsoft.StoragePool/diskPools/iscsiTargets",
-            "apiVersion": "2021-04-01-preview",
+            "apiVersion": "2021-08-01",
             "name": "[concat(parameters('diskPoolName'), '/', parameters('targetName'))]",
             "dependsOn": [
                 "[parameters('diskPoolName')]"

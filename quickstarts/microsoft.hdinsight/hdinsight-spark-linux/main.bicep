@@ -84,7 +84,7 @@ resource cluster 'Microsoft.HDInsight/clusters@2018-06-01-preview' = {
           name: replace(replace(defaultStorageAccount.properties.primaryEndpoints.blob, 'https://', ''), '/', '')
           isDefault: true
           container: clusterName
-          key: listKeys(defaultStorageAccount.id, '2021-04-01').keys[0].value
+          key: defaultStorageAccount.listKeys('2021-04-01').keys[0].value
         }
       ]
     }

@@ -1,0 +1,101 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "12468313532454153179"
+    }
+  },
+  "parameters": {
+    "routeTableName": {
+      "type": "string",
+      "defaultValue": "[uniqueString(resourceGroup().id)]",
+      "metadata": {
+        "description": "Route table name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Route table location"
+      }
+    },
+    "disableBgpRoutePropagation": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Disable the routes learned by BGP on the route table"
+      }
+    },
+    "routes": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Array containing routes. For properties format refer to https://docs.microsoft.com/en-us/azure/templates/microsoft.network/routetables?tabs=bicep#routepropertiesformat"
+      }
+    },
+    "enableDeleteLock": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable delete lock"
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "lockName": "[format('{0}-lck', parameters('routeTableName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "2021-02-01",
+      "name": "[parameters('routeTableName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "copy": [
+          {
+            "name": "routes",
+            "count": "[length(parameters('routes'))]",
+            "input": {
+              "name": "[parameters('routes')[copyIndex('routes')].name]",
+              "properties": {
+                "addressPrefix": "[parameters('routes')[copyIndex('routes')].addressPrefix]",
+                "hasBgpOverride": "[if(contains(parameters('routes')[copyIndex('routes')], 'hasBgpOverride'), parameters('routes')[copyIndex('routes')].hasBgpOverride, null())]",
+                "nextHopIpAddress": "[if(contains(parameters('routes')[copyIndex('routes')], 'nextHopIpAddress'), parameters('routes')[copyIndex('routes')].nextHopIpAddress, null())]",
+                "nextHopType": "[parameters('routes')[copyIndex('routes')].nextHopType]"
+              }
+            }
+          }
+        ],
+        "disableBgpRoutePropagation": "[parameters('disableBgpRoutePropagation')]"
+      }
+    },
+    {
+      "condition": "[parameters('enableDeleteLock')]",
+      "type": "Microsoft.Authorization/locks",
+      "apiVersion": "2017-04-01",
+      "scope": "[format('Microsoft.Network/routeTables/{0}', parameters('routeTableName'))]",
+      "name": "[variables('lockName')]",
+      "properties": {
+        "level": "CanNotDelete"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/routeTables', parameters('routeTableName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "name": {
+      "type": "string",
+      "value": "[parameters('routeTableName')]"
+    },
+    "id": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/routeTables', parameters('routeTableName'))]"
+    }
+  }
+}
