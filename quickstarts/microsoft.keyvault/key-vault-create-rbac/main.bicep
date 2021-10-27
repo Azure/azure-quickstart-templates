@@ -86,8 +86,8 @@ resource secret 'Microsoft.KeyVault/vaults/secrets@2021-04-01-preview' = {
   }
 }
 
-resource kvRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (contains(roleIdMapping, roleName)) {
-  name: guid(roleName,objectId,kv.id)
+resource kvRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(roleIdMapping[roleName],objectId,kv.id)
   scope: kv
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIdMapping[roleName])
