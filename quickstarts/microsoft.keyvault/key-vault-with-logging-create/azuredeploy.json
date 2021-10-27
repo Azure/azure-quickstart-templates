@@ -1,10 +1,17 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "14128899252285887828"
+    }
+  },
   "parameters": {
     "keyVaultName": {
       "type": "string",
-      "defaultValue": "[concat('kv-', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('kv-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Specifies the name of the key vault."
       }
@@ -42,10 +49,10 @@
     },
     "vaultSku": {
       "type": "string",
-      "defaultValue": "Standard",
+      "defaultValue": "standard",
       "allowedValues": [
-        "Standard",
-        "Premium"
+        "standard",
+        "premium"
       ],
       "metadata": {
         "description": "Specifies the SKU for the key vault"
@@ -54,8 +61,8 @@
     "logsRetentionInDays": {
       "type": "int",
       "defaultValue": 0,
-      "minValue": 0,
       "maxValue": 365,
+      "minValue": 0,
       "metadata": {
         "description": "Specifies the number of days that logs are gonna be kept. If you do not want to apply any retention policy and retain data forever, set value to 0."
       }
@@ -68,15 +75,15 @@
       }
     }
   },
+  "functions": [],
   "variables": {
-    "uniqueString": "[uniqueString(subscription().id, resourceGroup().id)]",
-    "diagnosticStorageAccountName": "[toLower( substring( replace( concat( parameters('keyVaultName'), variables('uniqueString'), variables('uniqueString') ), '-', ''), 0, 23) )]"
+    "diagnosticStorageAccountName": "[format('diagst{0}', uniqueString(subscription().id, resourceGroup().id))]"
   },
   "resources": [
     {
       "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2021-04-01-preview",
       "name": "[parameters('keyVaultName')]",
-      "apiVersion": "2019-09-01",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "Key Vault with logging"
@@ -101,27 +108,22 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-06-01",
       "name": "[variables('diagnosticStorageAccountName')]",
-      "apiVersion": "2019-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
       },
       "kind": "StorageV2",
       "tags": {
-        "displayName": "[concat('Key Vault', parameters('keyVaultName'), 'diagnostics storage account')]"
+        "displayName": "[format('Key Vault {0} diagnostics storage account', parameters('keyVaultName'))]"
       }
     },
     {
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
       "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
-      "type": "Microsoft.Insights/diagnosticsettings",
-      "apiVersion": "2017-05-01-preview",
       "name": "service",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]"
-      ],
       "properties": {
         "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]",
         "logs": [
@@ -130,37 +132,41 @@
             "enabled": true,
             "retentionPolicy": {
               "enabled": true,
-              "days": "[parameters('LogsRetentionInDays')]"
+              "days": "[parameters('logsRetentionInDays')]"
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]"
+      ]
     },
     {
       "condition": "[parameters('protectWithLocks')]",
-      "scope": "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
       "type": "Microsoft.Authorization/locks",
       "apiVersion": "2017-04-01",
+      "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
       "name": "keyVaultDoNotDelete",
+      "properties": {
+        "level": "CanNotDelete"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
-      ],
-      "properties": {
-        "level": "CannotDelete"
-      }
+      ]
     },
     {
       "condition": "[parameters('protectWithLocks')]",
-      "scope": "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticStorageAccountName'))]",
       "type": "Microsoft.Authorization/locks",
       "apiVersion": "2017-04-01",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('diagnosticStorageAccountName'))]",
       "name": "storageDoNotDelete",
+      "properties": {
+        "level": "CanNotDelete"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]"
-      ],
-      "properties": {
-        "level": "CannotDelete"
-      }
+      ]
     }
   ]
 }
