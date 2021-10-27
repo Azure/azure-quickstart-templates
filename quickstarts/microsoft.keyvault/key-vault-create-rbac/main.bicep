@@ -37,7 +37,7 @@ param objectId string
   'Key Vault Secrets Officer'
   'Key Vault Secrets User'
 ])
-param secretRole string = 'Key Vault Secrets User'
+param roleName string = 'Key Vault Secrets User'
 
 var roleIdMapping = {
   'Key Vault Administrator': '00482a5a-887f-4fb3-b363-3b7fe8e74483'
@@ -86,11 +86,11 @@ resource secret 'Microsoft.KeyVault/vaults/secrets@2021-04-01-preview' = {
   }
 }
 
-resource kvRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (contains(roleIdMapping, secretRole)) {
-  name: '${secretRole} for ${objectId}'
+resource kvRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (contains(roleIdMapping, roleName)) {
+  name: guid(roleName,objectId,kv.id)
   scope: kv
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIdMapping[secretRole])
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIdMapping[roleName])
     principalId: objectId
     principalType: 'ServicePrincipal'
   }
