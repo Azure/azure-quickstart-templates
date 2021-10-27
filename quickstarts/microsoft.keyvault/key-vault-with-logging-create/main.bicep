@@ -89,7 +89,7 @@ resource service 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   }
 }
 
-resource kvDoNotDelete 'Microsoft.Authorization/locks@2020-05-01' = if (protectWithLocks) {
+resource kvDoNotDelete 'Microsoft.Authorization/locks@2017-04-01' = if (protectWithLocks) {
   scope: kv
   name: 'keyVaultDoNotDelete'
   properties: {
@@ -97,7 +97,7 @@ resource kvDoNotDelete 'Microsoft.Authorization/locks@2020-05-01' = if (protectW
   }
 }
 
-resource storageDoNotDelete 'Microsoft.Authorization/locks@2020-05-01' = if (protectWithLocks) {
+resource storageDoNotDelete 'Microsoft.Authorization/locks@2017-04-01' = if (protectWithLocks) {
   scope: sto
   name: 'storageDoNotDelete'
   properties: {
