@@ -110,7 +110,7 @@ if ((Get-AzContext).Environment.Name -eq "AzureCloud") {
         $backupInstances = Get-AzDataProtectionBackupInstance -ResourceGroupName $ResourceGroupName -VaultName $vault.Name
         foreach ($bi in $backupInstances) {
             Write-Host "Removing Backup Instance: $($bi.name)"
-            Remove-AzDataProtectionBackupInstance -ResourceGroupName $ResourceGroupName -VaultName $vault.Name -Name $bi.Name -verbose
+            Remove-AzDataProtectionBackupInstance -ResourceGroupName $ResourceGroupName -VaultName $vault.Name -Name $bi.Name 
         }
     
         $backupPolicies = Get-AzDataProtectionBackupPolicy -ResourceGroupName $ResourceGroupName -VaultName $vault.Name 

@@ -13,6 +13,9 @@ objects:
       name: nfs-client-provisioner-runner
     rules:
       - apiGroups: [""]
+        resources: ["nodes"]
+        verbs: ["get", "list", "watch"]
+      - apiGroups: [""]
         resources: ["persistentvolumes"]
         verbs: ["get", "list", "watch", "create", "delete"]
       - apiGroups: [""]
@@ -60,7 +63,7 @@ objects:
     apiVersion: storage.k8s.io/v1
     metadata:
       name: nfs
-    provisioner: example.com/nfs #must match deployment's env PROVISIONER_NAME'
+    provisioner: provisioner/nfs #must match deployment's env PROVISIONER_NAME'
     parameters:
       archiveOnDelete: "false"
   - kind: Deployment
@@ -82,13 +85,13 @@ objects:
           serviceAccountName: nfs-client-provisioner
           containers:
             - name: nfs-client-provisioner
-              image: quay.io/external_storage/nfs-client-provisioner:latest
+              image: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
               volumeMounts:
                 - name: nfs-client-root
                   mountPath: /persistentvolumes
               env:
                 - name: PROVISIONER_NAME
-                  value: example.com/nfs
+                  value: provisioner/nfs
                 - name: NFS_SERVER
                   value: "${{NFS_SERVER}}"
                 - name: NFS_PATH

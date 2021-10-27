@@ -4,34 +4,35 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1.14562",
-      "templateHash": "2622102016433644211"
+      "version": "0.4.613.9944",
+      "templateHash": "14804954580338012947"
     }
   },
   "parameters": {
     "frontDoorName": {
       "type": "string",
       "metadata": {
-        "description": "The name of the frontdoor resource."
+        "description": "The name of the Front Door resource."
       }
     },
     "customDomainName": {
       "type": "string",
       "metadata": {
-        "description": "The hostname of the frontendEndpoints. Must be a domain name."
+        "description": "The custom domain name to associate with your Front Door."
       }
     },
     "backendAddress": {
       "type": "string",
       "metadata": {
-        "description": "The hostname of the backend. Must be an IP address or FQDN."
+        "description": "The hostname of the backend. Must be a public IP address or FQDN."
       }
     }
   },
   "functions": [],
   "variables": {
-    "frontEndEndpointDefaultName": "frontEndEndpointDefault",
-    "frontEndEndpointCustomName": "frontEndEndpointCustom",
+    "frontEndEndpointDefaultHostName": "[format('{0}.azurefd.net', parameters('frontDoorName'))]",
+    "frontEndEndpointDefaultName": "[replace(variables('frontEndEndpointDefaultHostName'), '.', '-')]",
+    "frontEndEndpointCustomName": "[replace(parameters('customDomainName'), '.', '-')]",
     "loadBalancingSettingsName": "loadBalancingSettings",
     "healthProbeSettingsName": "healthProbeSettings",
     "routingRuleName": "routingRule",
@@ -49,7 +50,7 @@
           {
             "name": "[variables('frontEndEndpointDefaultName')]",
             "properties": {
-              "hostName": "[format('{0}.azurefd.net', parameters('frontDoorName'))]",
+              "hostName": "[variables('frontEndEndpointDefaultHostName')]",
               "sessionAffinityEnabledState": "Disabled"
             }
           },
@@ -135,6 +136,22 @@
           }
         ]
       }
+    },
+    {
+      "type": "Microsoft.Network/frontdoors/frontendEndpoints/customHttpsConfiguration",
+      "apiVersion": "2020-07-01",
+      "name": "[format('{0}/{1}/{2}', parameters('frontDoorName'), variables('frontEndEndpointCustomName'), 'default')]",
+      "properties": {
+        "protocolType": "ServerNameIndication",
+        "certificateSource": "FrontDoor",
+        "frontDoorCertificateSourceParameters": {
+          "certificateType": "Dedicated"
+        },
+        "minimumTlsVersion": "1.2"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/frontDoors', parameters('frontDoorName'))]"
+      ]
     }
   ]
 }
