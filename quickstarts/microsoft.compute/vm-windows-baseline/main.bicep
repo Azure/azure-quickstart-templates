@@ -1,5 +1,5 @@
 @description('The Azure region where resources in the template should be deployed.')
-param location string = resourceGroup().location
+param location string = 'eastus'
 
 @description('Name for the subnet in the virtual network where the network interface is connected.')
 param subnetName string = 'subnet'
@@ -22,13 +22,6 @@ param publicIpName string = 'myPublicIP'
   'Static'
 ])
 param publicIPAllocationMethod string = 'Static'
-
-@description('SKU for the Public IP used to access the Virtual Machine.')
-@allowed([
-  'Basic'
-  'Standard'
-])
-param publicIpSku string = 'Standard'
 
 @description('Name of the virtual machine.')
 param vmName string = 'hardened-winvm'
@@ -66,6 +59,11 @@ param osDiskStorageAccountType string = 'Standard_LRS'
 param vmSize string = 'Standard_D2s_v3'
 
 @description('Availability zone number.')
+@allowed([
+  '1'
+  '2'
+  '3'
+])
 param zone string = '1'
 
 @description('Username for the Virtual Machine.')
@@ -82,6 +80,23 @@ param enableAcceleratedNetworking bool = true
 resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   name: networkSecurityGroupName
   location: location
+  properties: {
+    securityRules: [
+      {
+        name: 'allow-443'
+        properties: {
+          priority: 1000
+          access: 'Allow'
+          direction: 'Inbound'
+          destinationPortRange: '443'
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: '*'
+        }
+      }
+    ]
+  }
 }
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
@@ -108,7 +123,7 @@ resource publicIpAddress 'Microsoft.Network/publicIpAddresses@2021-05-01' = {
   name: publicIpName
   location: location
   sku: {
-    name: publicIpSku
+    name: 'Standard'
   }
   zones: [
     zone
