@@ -19,9 +19,6 @@ param retentionDays int = 30
 @description('Name of the Storage Account')
 param storageAccountName string = 'store${uniqueString(resourceGroup().id)}'
 
-@description('A new GUID used to identify the role assignment')
-param roleNameGuid string = newGuid()
-
 @description('Location for all resources')
 param location string = resourceGroup().location
 
@@ -88,7 +85,8 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
 }
 
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: roleNameGuid
+  name: guid(backupVault.id, roleDefinitionId, storageAccount.id)
+  scope: storageAccount
   properties: {
     roleDefinitionId: roleDefinitionId
     principalId: reference(backupVault.id, '2021-01-01', 'Full').identity.principalId
