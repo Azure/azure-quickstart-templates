@@ -6,6 +6,8 @@
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storagepool/diskpool-create-entry-level/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storagepool/diskpool-create-entry-level/FairfaxDeployment.svg)
 
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storagepool/diskpool-create-entry-level/BicepVersion.svg)
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storagepool/diskpool-create-entry-level/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storagepool/diskpool-create-entry-level/CredScanResult.svg)
 
