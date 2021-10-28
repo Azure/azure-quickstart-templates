@@ -123,15 +123,12 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2020-06-01' = {
             id: publicIPAddress.id
           }
           subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', vNetName, vNetSubnetName)
+            id: '${vNet.id}/subnets/${vNetSubnetName}'
           }
         }
       }
     ]
   }
-  dependsOn: [
-    vNet
-  ]
 }
 
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2020-06-01' = {
@@ -194,10 +191,7 @@ resource vaultName_backupFabric_protectionContainer_protectedItem 'Microsoft.Rec
   name: '${vaultName}/${backupFabric}/${protectionContainer}/${protectedItem}'
   properties: {
     protectedItemType: 'Microsoft.Compute/virtualMachines'
-    policyId: resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', vaultName, backupPolicyName)
+    policyId: '${recoveryServicesVault.id}/backupPolicies/${backupPolicyName}'
     sourceResourceId: virtualMachine.id
   }
-  dependsOn: [
-    recoveryServicesVault
-  ]
 }
