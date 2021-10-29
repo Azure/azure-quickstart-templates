@@ -10,10 +10,10 @@ param initialAdminObjectIds array
 @description('String specifying the Azure Active Directory tenant ID that should be used for authenticating requests to the managed HSM.')
 param tenantId string = subscription().tenantId
 
-@description('Specifies the number of days that logs are gonna be kept. If you do not want to apply any retention policy and retain data forever, set value to 0.')
-@minValue(0)
-@maxValue(365)
-param logsRetentionInDays int = 0
+@description('Specifies the number of days that managed Key Vault will be kept recoverable if deleted. If you do not want to have soft delete enabled, set value to 0.')
+@minValue(7)
+@maxValue(90)
+param softRetentionInDays int = 7
 
 resource managedHSM 'Microsoft.KeyVault/managedHSMs@2021-04-01-preview' = {
   name: managedHSMName
@@ -23,8 +23,8 @@ resource managedHSM 'Microsoft.KeyVault/managedHSMs@2021-04-01-preview' = {
     family: 'B'
   }
   properties: {
-    enableSoftDelete: true
-    softDeleteRetentionInDays: logsRetentionInDays
+    enableSoftDelete: softRetentionInDays>0
+    softDeleteRetentionInDays: softRetentionInDays==0 ? null : softRetentionInDays
     enablePurgeProtection: false
     tenantId: tenantId
     initialAdminObjectIds: initialAdminObjectIds
@@ -32,8 +32,6 @@ resource managedHSM 'Microsoft.KeyVault/managedHSMs@2021-04-01-preview' = {
     networkAcls: {
       bypass: 'None'
       defaultAction: 'Allow'
-      ipRules: []
-      virtualNetworkRules: []
     }
   }
 }
