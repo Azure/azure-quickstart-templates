@@ -20,6 +20,7 @@ Below are the parameters that the template expects.
 |:--- |:---|
 | name  | Name for the logic app. |
 | catalogId  | CatalogId of the Azure AD entitlement management catalog, where you are going to use this logic app.  |
+| resourceApplicationId  | Azure AD application Id which will be used by entitlement management as a resource in token and will be added to logic auth settings to verify this as audience.  |
 
 Then, the arm template will achieve the following:
  * Create a logic app
