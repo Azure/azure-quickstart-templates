@@ -18,7 +18,7 @@ param dnsLabelPrefix string
 @description('Virtual machine size.')
 param vmSize string = 'Standard_A2'
 
-@description('Specifies the Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter, 2016-Nano-Server, 2016-Datacenter-with-Containers, 2016-Datacenter.')
+@description('Specifies the Windows version for the VM. This will pick a fully patched image of this given Windows version.')
 @allowed([
   '2008-R2-SP1'
   '2012-Datacenter'
@@ -35,7 +35,7 @@ param vmSize string = 'Standard_A2'
   '2019-Datacenter-with-Containers'
   '2019-Datacenter-with-Containers-smalldisk'
 ])
-param windowsOSVersion string = '2016-Datacenter'
+param windowsOSVersion string = '2019-Datacenter'
 
 var storageAccountName = '${projectName}store'
 var networkInterfaceName = '${projectName}-nic'
