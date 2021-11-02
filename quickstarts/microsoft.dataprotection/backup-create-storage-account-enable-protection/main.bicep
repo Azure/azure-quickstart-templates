@@ -90,11 +90,8 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-prev
   properties: {
     roleDefinitionId: roleDefinitionId
     principalId: reference(backupVault.id, '2021-01-01', 'Full').identity.principalId
+    principalType: 'ServicePrincipal'
   }
-  dependsOn: [
-    backupPolicy
-    storageAccount
-  ]
 }
 
 resource backupInstance 'Microsoft.DataProtection/backupvaults/backupInstances@2021-01-01' = {
