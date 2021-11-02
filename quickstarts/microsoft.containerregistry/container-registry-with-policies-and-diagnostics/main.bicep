@@ -19,6 +19,9 @@ param acrSku string = 'Basic'
 param enableSystemIdentity bool = false
 
 @description('The list of user identity resource ids to associate with the Azure Container Registry')
+@metadata({
+  userAssignedIdentityResourceId: {}
+})
 param userAssignedIdentities object = {}
 
 @description('Enable admin user')
@@ -111,22 +114,7 @@ resource acr 'Microsoft.ContainerRegistry/registries@2021-06-01-preview' = {
       defaultAction: ipRules.defaultAction
       ipRules: ipRules.ipRules
     } : {}
-    policies: {
-      exportPolicy: contains(policies, 'exportPolicy') ? {
-        status: policies.exportPolicy.status
-      } : {}
-      quarantinePolicy: contains(policies, 'quarantinePolicy') ? {
-        status: policies.quarantinePolicy.status
-      } : {}
-      retentionPolicy: contains(policies, 'retentionPolicy') ? {
-        status: policies.retentionPolicy.status
-        days: policies.retentionPolicy.days
-      } : {}
-      trustPolicy: contains(policies, 'trustPolicy') ? {
-        status: policies.trustPolicy.status
-        type: 'Notary'
-      } : {}
-    }
+    policies: policies
   }
 }
 
