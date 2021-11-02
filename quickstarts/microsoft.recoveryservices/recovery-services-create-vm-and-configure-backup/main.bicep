@@ -35,7 +35,7 @@ param vmSize string = 'Standard_A2'
   '2019-Datacenter-with-Containers'
   '2019-Datacenter-with-Containers-smalldisk'
 ])
-param windowsOSVersion string = '2019-Datacenter'
+param windowsOSVersion string = '2016-Datacenter'
 
 var storageAccountName = '${projectName}store'
 var networkInterfaceName = '${projectName}-nic'
