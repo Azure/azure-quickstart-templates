@@ -1,0 +1,101 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "15576385974467650524"
+    }
+  },
+  "parameters": {
+    "managedIdentityName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the managed identity resource."
+      }
+    },
+    "roleDefinitionIds": {
+      "type": "array",
+      "metadata": {
+        "description": "The IDs of the role definitions to assign to the managed identity. Each role assignment is created at the resource group scope. Role definition IDs are GUIDs. To find the GUID for built-in Azure role definitions, see https://docs.microsoft.com/azure/role-based-access-control/built-in-roles. You can also use IDs of custom role definitions."
+      }
+    },
+    "roleAssignmentDescription": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "An optional description to apply to each role assignment, such as the reason this managed identity needs to be granted the role."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The Azure location where the managed identity should be created."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "copy": [
+      {
+        "name": "roleAssignmentsToCreate",
+        "count": "[length(parameters('roleDefinitionIds'))]",
+        "input": {
+          "name": "[guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), resourceGroup().id, parameters('roleDefinitionIds')[copyIndex('roleAssignmentsToCreate')])]",
+          "roleDefinitionId": "[parameters('roleDefinitionIds')[copyIndex('roleAssignmentsToCreate')]]"
+        }
+      }
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2018-11-30",
+      "name": "[parameters('managedIdentityName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "copy": {
+        "name": "roleAssignment",
+        "count": "[length(variables('roleAssignmentsToCreate'))]"
+      },
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[variables('roleAssignmentsToCreate')[copyIndex()].name]",
+      "properties": {
+        "description": "[parameters('roleAssignmentDescription')]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))).principalId]",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('roleAssignmentsToCreate')[copyIndex()].roleDefinitionId)]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "managedIdentityResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]",
+      "metadata": {
+        "description": "The resource ID of the user-assigned managed identity."
+      }
+    },
+    "managedIdentityClientId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))).clientId]",
+      "metadata": {
+        "description": "The ID of the Azure AD application associated with the managed identity."
+      }
+    },
+    "managedIdentityPrincipalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))).principalId]",
+      "metadata": {
+        "description": "The ID of the Azure AD service principal associated with the managed identity."
+      }
+    }
+  }
+}
