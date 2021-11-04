@@ -17,7 +17,7 @@ param containerAppLogAnalyticsName string = 'containerapp-log-${uniqueString(res
   'northeurope'
   'canadacentral'
 ])
-param location string = 'eastus' //cannot use resourceGroup().location since it's not available in most of regions
+param location string //cannot use resourceGroup().location since it's not available in most of regions
 
 @description('Specifie the docker container image to deploy.')
 param containerImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
