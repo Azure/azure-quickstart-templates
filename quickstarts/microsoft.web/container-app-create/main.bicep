@@ -10,16 +10,13 @@ param containerAppLogAnalyticsName string = 'containerapp-log-${uniqueString(res
 @description('Specifies the location for all resources.')
 @allowed([
   'northcentralusstage'
-  'westcentralus'
   'eastus'
-  'westeurope'
-  'jioindiawest'
   'northeurope'
   'canadacentral'
 ])
 param location string //cannot use resourceGroup().location since it's not available in most of regions
 
-@description('Specifie the docker container image to deploy.')
+@description('Specifies the docker container image to deploy.')
 param containerImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
 @description('Specifies the container port.')
@@ -28,14 +25,17 @@ param targetPort int = 80
 @description('Number of CPU cores the container can use. Can be with a maximum of two decimals.')
 param cpuCore string = '0.5'
 
-@description('Amount of memory (in gibibytes, Gi) allocated to the container up to 4Gi. Can be with a maximum of two decimals. Ratio with CPU cores must be equal to 2.')
+@description('Amount of memory (in gibibytes, GiB) allocated to the container up to 4GiB. Can be with a maximum of two decimals. Ratio with CPU cores must be equal to 2.')
 param memorySize string = '1'
 
-@description('Minimum number of replica that will be deployed')
+@description('Minimum number of replicas that will be deployed')
 @minValue(0)
+@maxValue(25)
 param minReplica int = 1
 
-@description('Maximum number of replica that will be deployed')
+@description('Maximum number of replicas that will be deployed')
+@minValue(0)
+@maxValue(25)
 param maxReplica int = 3
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2020-10-01' = {
@@ -48,14 +48,13 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2020-10-01' = {
   }
 }
 
-resource containerAppEnv 'Microsoft.Web/kubeEnvironments@2021-03-01' = {
+resource containerAppEnv 'Microsoft.Web/kubeEnvironments@2021-02-01' = {
   name: containerAppEnvName
   location: location
   kind: 'containerenvironment'
   properties: {
     type: 'managed'
     internalLoadBalancerEnabled: false
-    containerAppsConfiguration: {}
     appLogsConfiguration: {
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
