@@ -32,7 +32,6 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
   location: location
   tags: tags
   properties: {
-    accessPolicies: []
     createMode: 'default'
     enabledForDeployment: false
     enabledForDiskEncryption: false
@@ -42,8 +41,6 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
     networkAcls: {
       bypass: 'AzureServices'
       defaultAction: 'Deny'
-      ipRules: []
-      virtualNetworkRules: []
     }
     sku: {
       family: 'A'
@@ -59,7 +56,6 @@ resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01'
   location: location
   tags: tags
   properties: {
-    manualPrivateLinkServiceConnections: []
     privateLinkServiceConnections: [
       {
         name: keyvaultPleName
@@ -68,7 +64,6 @@ resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01'
             privateDnsGroupName
           ]
           privateLinkServiceId: keyVault.id
-          requestMessage: ''
         }
       }
     ]
@@ -78,7 +73,7 @@ resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01'
   }
 }
 
-resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
+resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
   name: privateDnsZoneName[toLower(environment().name)]
   location: 'global'
   dependsOn: [
@@ -104,7 +99,7 @@ resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
   ]
 }
 
-resource keyVaultPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+resource keyVaultPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
   name: '${keyVaultPrivateDnsZone.name}/${uniqueString(keyVault.id)}'
   location: 'global'
   properties: {

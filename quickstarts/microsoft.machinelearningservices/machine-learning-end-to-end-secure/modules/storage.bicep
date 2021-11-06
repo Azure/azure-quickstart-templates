@@ -120,7 +120,6 @@ resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2020-11-
             'blob'
           ]
           privateLinkServiceId: storage.id
-          requestMessage: ''
           privateLinkServiceConnectionState: {
             status: 'Approved'
             description: 'Auto-Approved'
@@ -148,7 +147,6 @@ resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2020-11-
             'file'
           ]
           privateLinkServiceId: storage.id
-          requestMessage: ''
           privateLinkServiceConnectionState: {
             status: 'Approved'
             description: 'Auto-Approved'
@@ -163,7 +161,7 @@ resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2020-11-
   }
 }
 
-resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
+resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
   name: blobPrivateDnsZoneName[toLower(environment().name)]
   dependsOn: [
     storagePrivateEndpointBlob
@@ -189,7 +187,7 @@ resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
   }
 }
 
-resource blobPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+resource blobPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
   name: '${blobPrivateDnsZone.name}/${uniqueString(storage.id)}'
   dependsOn: [
     blobPrivateDnsZone
@@ -229,7 +227,7 @@ resource filePrivateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZo
   }
 }
 
-resource filePrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+resource filePrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
   name: '${filePrivateDnsZone.name}/${uniqueString(storage.id)}'
   location: 'global'
   dependsOn: [

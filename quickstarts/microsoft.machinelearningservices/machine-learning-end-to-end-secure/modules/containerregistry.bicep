@@ -77,7 +77,6 @@ resource containerRegistryPrivateEndpoint 'Microsoft.Network/privateEndpoints@20
             groupName
           ]
           privateLinkServiceId: containerRegistry.id
-          requestMessage: ''
         }
       }
     ]
@@ -87,7 +86,7 @@ resource containerRegistryPrivateEndpoint 'Microsoft.Network/privateEndpoints@20
   }
 }
 
-resource acrPrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
+resource acrPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
   name: privateDnsZoneName[toLower(environment().name)]
   location: 'global'
   dependsOn: [
@@ -113,7 +112,7 @@ resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
   ]
 }
 
-resource acrPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+resource acrPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
   name: '${acrPrivateDnsZone.name}/${uniqueString(containerRegistry.id)}'
   location: 'global'
   properties: {
