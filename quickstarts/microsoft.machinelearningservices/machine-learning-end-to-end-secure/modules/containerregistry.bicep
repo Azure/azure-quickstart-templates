@@ -45,8 +45,6 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-pr
     networkRuleBypassOptions: 'AzureServices'
     networkRuleSet: {
       defaultAction: 'Deny'
-      ipRules: []
-      virtualNetworkRules: []
     }
     policies: {
       quarantinePolicy: {
@@ -71,7 +69,6 @@ resource containerRegistryPrivateEndpoint 'Microsoft.Network/privateEndpoints@20
   location: location
   tags: tags
   properties: {
-    manualPrivateLinkServiceConnections: []
     privateLinkServiceConnections: [
       {
         name: containerRegistryPleName
@@ -93,8 +90,6 @@ resource containerRegistryPrivateEndpoint 'Microsoft.Network/privateEndpoints@20
 resource acrPrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
   name: privateDnsZoneName[toLower(environment().name)]
   location: 'global'
-  properties: {
-  }
   dependsOn: [
     containerRegistryPrivateEndpoint
   ]

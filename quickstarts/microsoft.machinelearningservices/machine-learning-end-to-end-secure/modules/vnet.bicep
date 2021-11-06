@@ -39,7 +39,6 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
           addressPrefix: trainingSubnetPrefix
           privateEndpointNetworkPolicies: 'Disabled'
           privateLinkServiceNetworkPolicies: 'Disabled'
-          serviceEndpoints: []
           networkSecurityGroup: {
             id: networkSecurityGroupId
           }

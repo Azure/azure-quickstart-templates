@@ -28,10 +28,6 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-07-01' = {
           access: 'Allow'
           priority: 120
           direction: 'Inbound'
-          sourcePortRanges: []
-          destinationPortRanges: []
-          sourceAddressPrefixes: []
-          destinationAddressPrefixes: []
         }
       }
       {
@@ -45,10 +41,6 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-07-01' = {
           access: 'Allow'
           priority: 130
           direction: 'Inbound'
-          sourcePortRanges: []
-          destinationPortRanges: []
-          sourceAddressPrefixes: []
-          destinationAddressPrefixes: []
         }
       }
       {
@@ -62,10 +54,6 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-07-01' = {
           access: 'Allow'
           priority: 140
           direction: 'Outbound'
-          sourcePortRanges: []
-          destinationPortRanges: []
-          sourceAddressPrefixes: []
-          destinationAddressPrefixes: []
         }
       }
       {
@@ -79,10 +67,6 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-07-01' = {
           access: 'Allow'
           priority: 150
           direction: 'Outbound'
-          sourcePortRanges: []
-          destinationPortRanges: []
-          sourceAddressPrefixes: []
-          destinationAddressPrefixes: []
         }
       }
       {
@@ -96,10 +80,6 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-07-01' = {
           access: 'Allow'
           priority: 160
           direction: 'Outbound'
-          sourcePortRanges: []
-          destinationPortRanges: []
-          sourceAddressPrefixes: []
-          destinationAddressPrefixes: []
         }
       }
       {
@@ -113,10 +93,6 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-07-01' = {
           access: 'Allow'
           priority: 170
           direction: 'Outbound'
-          sourcePortRanges: []
-          destinationPortRanges: []
-          sourceAddressPrefixes: []
-          destinationAddressPrefixes: []
         }
       }
       {
@@ -130,10 +106,6 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-07-01' = {
           access: 'Allow'
           priority: 180
           direction: 'Outbound'
-          sourcePortRanges: []
-          destinationPortRanges: []
-          sourceAddressPrefixes: []
-          destinationAddressPrefixes: []
         }
       }
       {
@@ -147,10 +119,6 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-07-01' = {
           access: 'Allow'
           priority: 190
           direction: 'Outbound'
-          sourcePortRanges: []
-          destinationPortRanges: []
-          sourceAddressPrefixes: []
-          destinationAddressPrefixes: []
         }
       }
       {
@@ -164,10 +132,6 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-07-01' = {
           access: 'Allow'
           priority: 200
           direction: 'Outbound'
-          sourcePortRanges: []
-          destinationPortRanges: []
-          sourceAddressPrefixes: []
-          destinationAddressPrefixes: []
         }
       }
     ]

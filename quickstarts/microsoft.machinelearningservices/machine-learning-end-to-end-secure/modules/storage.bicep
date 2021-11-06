@@ -97,8 +97,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
     networkAcls: {
       bypass: 'AzureServices'
       defaultAction: 'Deny'
-      ipRules: []
-      virtualNetworkRules: []
     }
     routingPreference: {
       routingChoice: 'MicrosoftRouting'
@@ -114,7 +112,6 @@ resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2020-11-
   location: location
   tags: tags
   properties: {
-    manualPrivateLinkServiceConnections: []
     privateLinkServiceConnections: [
       { 
         name: storagePleBlobName
@@ -143,7 +140,6 @@ resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2020-11-
   location: location
   tags: tags
   properties: {
-    manualPrivateLinkServiceConnections: []
     privateLinkServiceConnections: [
       {
         name: storagePleFileName
@@ -173,8 +169,6 @@ resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
     storagePrivateEndpointBlob
   ]
   location: 'global'
-  properties: {
-  }
 }
 
 resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
@@ -215,8 +209,6 @@ resource filePrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
     storagePrivateEndpointFile
   ]
   location: 'global'
-  properties: {
-  }
 }
 
 resource filePrivateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {

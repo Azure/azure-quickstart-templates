@@ -102,7 +102,6 @@ resource machineLearningComputeInstance001 'Microsoft.MachineLearningServices/wo
       computeInstanceAuthorizationType: 'personal'
       sshSettings: {
         sshPublicAccess: 'Disabled'
-        adminPublicKey: ''
       }
       subnet: {
         id: computeSubnetId

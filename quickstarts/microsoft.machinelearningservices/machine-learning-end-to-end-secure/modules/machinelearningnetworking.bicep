@@ -36,7 +36,6 @@ resource machineLearningPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020
   location: location
   tags: tags
   properties: {
-    manualPrivateLinkServiceConnections: []
     privateLinkServiceConnections: [
       {
         name: machineLearningPleName
@@ -58,8 +57,6 @@ resource machineLearningPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020
 resource amlPrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
   name: privateDnsZoneName[toLower(environment().name)]
   location: 'global'
-  properties: {
-  }
   dependsOn: [
     machineLearningPrivateEndpoint
   ]
@@ -83,8 +80,6 @@ resource amlPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNet
 resource notebookPrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
   name: privateAznbDnsZoneName[toLower(environment().name)]
   location: 'global'
-  properties: {
-  }
   dependsOn: [
     machineLearningPrivateEndpoint
   ]
