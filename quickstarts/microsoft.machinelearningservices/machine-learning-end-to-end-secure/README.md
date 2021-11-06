@@ -60,6 +60,9 @@ Then deploy the 'main' Bicep template file:
 
 After succesful deployment, log on to the Data Science Virtual Machine Jumpbox machine that you just deployed to access your workspace from the virtual network. To learn more, see [Securely connect to your workspace](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-secure-workspace-vnet?tabs=pe#securely-connect-to-your-workspace).
 
+Optionally, you could build an Azure Resource Manager template after making changes to your Bicep file:
+`az bicep build --file main.bicep --outdir .\ `
+
 ## Learn more
 
 If you are new to Azure Machine Learning, see:
