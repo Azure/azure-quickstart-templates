@@ -58,7 +58,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
     allowBlobPublicAccess: false
     allowCrossTenantReplication: false
     allowSharedKeyAccess: true
-    
     encryption: {
       keySource: 'Microsoft.Storage'
       requireInfrastructureEncryption: false
@@ -91,11 +90,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
     networkAcls: {
       bypass: 'AzureServices'
       defaultAction: 'Deny'
-    }
-    routingPreference: {
-      routingChoice: 'MicrosoftRouting'
-      publishInternetEndpoints: false
-      publishMicrosoftEndpoints: false
     }
     supportsHttpsTrafficOnly: true
   }
