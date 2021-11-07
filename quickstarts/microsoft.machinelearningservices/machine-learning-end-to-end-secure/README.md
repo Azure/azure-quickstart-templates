@@ -17,7 +17,7 @@
 
 This set of Bicep templates demonstrates how to set up Azure Machine Learning end-to-end in a secure set up.
 
-This reference implementation includes the Workspace, a CPU compute cluster, a GPU compute cluster, compute instance and attached private AKS cluster. It also includes the configuration of associated resources including Azure Key Vault, Azure Storage, Azure Application Insights and Azure Container Registry in a secure setup.
+This reference implementation includes the Workspace, a CPU compute cluster, a GPU compute cluster, compute instance and attached private AKS cluster. It  includes the configuration of associated resources including Azure Key Vault, Azure Storage, Azure Application Insights and Azure Container Registry in a network-isolated setup.
 
 ## Resources
 
