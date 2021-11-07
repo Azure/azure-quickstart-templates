@@ -31,8 +31,8 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
     enabledForDiskEncryption: false
     enabledForTemplateDeployment: false
     enableSoftDelete: true
+    accessPolicies: []
     enablePurgeProtection: true
-    accessPolicies: array({})
     networkAcls: {
       bypass: 'AzureServices'
       defaultAction: 'Deny'
