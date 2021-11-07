@@ -201,7 +201,7 @@ resource blobPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNe
   }
 }
 
-resource filePrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
+resource filePrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
   name: filePrivateDnsZoneName[toLower(environment().name)]
   dependsOn: [
     storagePrivateEndpointFile
