@@ -25,8 +25,6 @@ var privateDnsZoneName =  {
   azurecloud: 'privatelink.vaultcore.azure.net'
 }
 
-var privateDnsGroupName = 'vault'
-
 resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
   name: keyvaultName
   location: location
@@ -38,6 +36,8 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
     enabledForTemplateDeployment: false
     enableSoftDelete: true
     enablePurgeProtection: true
+    // populated by Azure ML
+    accessPolicies: null
     networkAcls: {
       bypass: 'AzureServices'
       defaultAction: 'Deny'
@@ -61,7 +61,7 @@ resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01'
         name: keyvaultPleName
         properties: {
           groupIds: [
-            privateDnsGroupName
+            'vault'
           ]
           privateLinkServiceId: keyVault.id
         }
@@ -82,7 +82,7 @@ resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' =
 }
 
 resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
-  name: '${keyVaultPrivateEndpoint.name}/${privateDnsGroupName}-PrivateDnsZoneGroup'
+  name: '${keyVaultPrivateEndpoint.name}/vault-PrivateDnsZoneGroup'
   properties:{
     privateDnsZoneConfigs: [
       {
