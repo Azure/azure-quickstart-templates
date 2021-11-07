@@ -11,6 +11,9 @@ param networkSecurityGroupId string
 @description('Virtual machine name')
 param virtualMachineName string
 
+@description('Virtual machine size')
+param vmSize string = 'Standard_DS3_v2'
+
 @description('Virtual machine admin username')
 param adminUsername string = 'azureuser'
 
@@ -49,7 +52,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   location: location
   properties: {
     hardwareProfile: {
-      vmSize: 'Standard_DS3_v2'
+      vmSize: vmSize
     }
     storageProfile: {
       osDisk: {
