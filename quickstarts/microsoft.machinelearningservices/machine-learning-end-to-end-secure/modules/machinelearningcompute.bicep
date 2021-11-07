@@ -23,7 +23,7 @@ param aksName string
 @description('Resource ID of the Azure Kubernetes services resource')
 param aksSubnetId string
 
-resource machineLearningCpuCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2021-04-01' = {
+resource machineLearningCpuCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
   name: '${machineLearning}/cpucluster001'
   location: location
   tags: tags
@@ -54,7 +54,7 @@ resource machineLearningCpuCluster001 'Microsoft.MachineLearningServices/workspa
   }
 }
 
-resource machineLearningGpuCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2021-04-01' = {
+resource machineLearningGpuCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
   name: '${machineLearning}/gpucluster001'
   location: location
   tags: tags
@@ -85,7 +85,7 @@ resource machineLearningGpuCluster001 'Microsoft.MachineLearningServices/workspa
   }
 }
 
-resource machineLearningComputeInstance001 'Microsoft.MachineLearningServices/workspaces/computes@2021-04-01' = {
+resource machineLearningComputeInstance001 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
   name: '${machineLearning}/${prefix}-ci001'
   location: location
   tags: tags
