@@ -32,6 +32,7 @@ param deployJumphost bool
 param dsvmJumpboxUsername string
 
 @secure()
+@minLength(8)
 @description('Jumphost virtual machine password')
 param dsvmJumpboxPassword string
 

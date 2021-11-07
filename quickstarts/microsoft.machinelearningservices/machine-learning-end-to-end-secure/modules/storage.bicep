@@ -32,21 +32,15 @@ param virtualNetworkId string
   'Premium_LRS'
   'Premium_ZRS'
 ])
+
+@description('Storage SKU')
 param storageSkuName string = 'Standard_LRS'
 
 var storageNameCleaned = replace(storageName, '-', '')
 
-var blobPrivateDnsZoneName =  {
-  azureusgovernment: 'privatelink.blob.core.usgovcloudapi.net'
-  azurechinacloud: 'privatelink.blob.core.chinacloudapi.cn'
-  azurecloud: 'privatelink.blob.core.windows.net'
-}
+var blobPrivateDnsZoneName = 'privatelink.blob.${environment().suffixes.storage}'
 
-var filePrivateDnsZoneName =  {
-  azureusgovernment: 'privatelink.file.core.usgovcloudapi.net'
-  azurechinacloud: 'privatelink.file.core.chinacloudapi.cn'
-  azurecloud: 'privatelink.file.core.windows.net'
-}
+var filePrivateDnsZoneName = 'privatelink.file.${environment().suffixes.storage}'
 
 resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: storageNameCleaned
@@ -162,7 +156,7 @@ resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2020-11-
 }
 
 resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
-  name: blobPrivateDnsZoneName[toLower(environment().name)]
+  name: blobPrivateDnsZoneName
   dependsOn: [
     storagePrivateEndpointBlob
   ]
@@ -178,7 +172,7 @@ resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
   properties:{
     privateDnsZoneConfigs: [
       {
-        name: blobPrivateDnsZoneName[toLower(environment().name)]
+        name: blobPrivateDnsZoneName
         properties:{
           privateDnsZoneId: blobPrivateDnsZone.id
         }
@@ -202,7 +196,7 @@ resource blobPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNe
 }
 
 resource filePrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
-  name: filePrivateDnsZoneName[toLower(environment().name)]
+  name: filePrivateDnsZoneName
   dependsOn: [
     storagePrivateEndpointFile
   ]
@@ -218,7 +212,7 @@ resource filePrivateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZo
   properties:{
     privateDnsZoneConfigs: [
       {
-        name: filePrivateDnsZoneName[toLower(environment().name)]
+        name: filePrivateDnsZoneName
         properties:{
           privateDnsZoneId: filePrivateDnsZone.id
         }
