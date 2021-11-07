@@ -36,8 +36,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
     enabledForTemplateDeployment: false
     enableSoftDelete: true
     enablePurgeProtection: true
-    // populated by Azure ML
-    accessPolicies: null
+    accessPolicies: []
     networkAcls: {
       bypass: 'AzureServices'
       defaultAction: 'Deny'
