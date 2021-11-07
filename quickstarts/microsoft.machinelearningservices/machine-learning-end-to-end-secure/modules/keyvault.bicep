@@ -19,11 +19,7 @@ param subnetId string
 @description('The VNet ID where the Key Vault Private Link is to be created')
 param virtualNetworkId string
 
-var privateDnsZoneName =  {
-  azureusgovernment: 'privatelink.vaultcore.usgovcloudapi.net'
-  azurechinacloud: 'privatelink.vaultcore.azure.cn'
-  azurecloud: 'privatelink.vaultcore.azure.net'
-}
+var privateDnsZoneName = 'privatelink.blob.${environment().suffixes.keyvaultDns}'
 
 resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
   name: keyvaultName
@@ -36,7 +32,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
     enabledForTemplateDeployment: false
     enableSoftDelete: true
     enablePurgeProtection: true
-    accessPolicies: []
+    accessPolicies: array({})
     networkAcls: {
       bypass: 'AzureServices'
       defaultAction: 'Deny'
@@ -73,7 +69,7 @@ resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01'
 }
 
 resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
-  name: privateDnsZoneName[toLower(environment().name)]
+  name: privateDnsZoneName
   location: 'global'
   dependsOn: [
     keyVaultPrivateEndpoint
@@ -85,7 +81,7 @@ resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
   properties:{
     privateDnsZoneConfigs: [
       {
-        name: privateDnsZoneName[toLower(environment().name)]
+        name: privateDnsZoneName
         properties:{
           privateDnsZoneId: keyVaultPrivateDnsZone.id
         }

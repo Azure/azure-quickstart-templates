@@ -20,6 +20,7 @@ param subnetId string
 param virtualNetworkId string
 
 var containerRegistryNameCleaned = replace(containerRegistryName, '-', '')
+
 var privateDnsZoneName = {
   azureusgovernment: 'privatelink.azurecr.us'
   azurechinacloud: 'privatelink.azurecr.cn'
