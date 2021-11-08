@@ -51,17 +51,6 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
           addressPrefix: scoringSubnetPrefix
           privateEndpointNetworkPolicies: 'Disabled'
           privateLinkServiceNetworkPolicies: 'Disabled'
-          serviceEndpoints: [
-            {
-              service: 'Microsoft.KeyVault'
-            }
-            {
-              service: 'Microsoft.ContainerRegistry'
-            }
-            {
-              service: 'Microsoft.Storage'
-            }
-          ]
           networkSecurityGroup: {
             id: networkSecurityGroupId
           }
