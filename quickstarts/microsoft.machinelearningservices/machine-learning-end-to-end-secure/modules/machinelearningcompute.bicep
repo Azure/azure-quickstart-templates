@@ -23,6 +23,9 @@ param aksName string
 @description('Resource ID of the Azure Kubernetes services resource')
 param aksSubnetId string
 
+@description('Resource ID of the Azure Kubernetes services resource')
+param amlComputePublicIp bool
+
 resource machineLearningCpuCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
   name: '${machineLearning}/cpucluster001'
   location: location
@@ -38,7 +41,7 @@ resource machineLearningCpuCluster001 'Microsoft.MachineLearningServices/workspa
     properties: {
       vmPriority: 'Dedicated'
       vmSize: 'Standard_Ds3_v2'
-      enableNodePublicIp: false
+      enableNodePublicIp: amlComputePublicIp
       isolatedNetwork: false
       osType: 'Linux'
       remoteLoginPortPublicAccess: 'Disabled'
@@ -67,7 +70,7 @@ resource machineLearningGpuCluster001 'Microsoft.MachineLearningServices/workspa
     description: 'Machine Learning cluster 001'
     disableLocalAuth: true
     properties: {
-      enableNodePublicIp: false
+      enableNodePublicIp: amlComputePublicIp
       isolatedNetwork: false
       osType: 'Linux'
       remoteLoginPortPublicAccess: 'Disabled'

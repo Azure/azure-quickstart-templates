@@ -49,6 +49,9 @@ param virtualNetworkId string
 
 @description('Machine learning workspace private link endpoint name')
 param machineLearningPleName string
+
+@description('Enable public IP for Azure Machine Learning compute nodes')
+param amlComputePublicIp bool = true
  
 resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2021-04-01' = {
   name: machineLearningName
@@ -98,6 +101,7 @@ module machineLearningCompute 'machinelearningcompute.bicep' = {
     aksSubnetId: aksSubnetId
     prefix: prefix
     tags: tags
+    amlComputePublicIp: amlComputePublicIp
   }
   dependsOn: [
     machineLearning

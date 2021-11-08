@@ -36,6 +36,9 @@ param dsvmJumpboxUsername string
 @description('Jumphost virtual machine password')
 param dsvmJumpboxPassword string
 
+@description('Enable public IP for Azure Machine Learning compute nodes')
+param amlComputePublicIp bool = true
+
 // Variables
 var name = toLower('${prefix}')
 
@@ -152,7 +155,8 @@ module azuremlWorkspace 'modules/machinelearning.bicep' = {
     virtualNetworkId: '${vnet.outputs.id}'
     machineLearningPleName: 'ple-${name}-${uniqueSuffix}-mlw'
 
-    // attached compute
+    // compute
+    amlComputePublicIp: amlComputePublicIp
     mlAksName: 'aks-${name}-${uniqueSuffix}'
   }
   dependsOn: [
