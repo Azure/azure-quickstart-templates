@@ -52,7 +52,7 @@ param headNodeVirtualMachineSize string = 'Standard_E8_v3'
 ])
 param workerNodeVirtualMachineSize string = 'Standard_E8_v3'
 
-resource storage_id 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: 'storage${uniqueString(resourceGroup().id)}'
   location: location
   sku: {
@@ -61,7 +61,7 @@ resource storage_id 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   kind: 'StorageV2'
 }
 
-resource clusterName_resource 'Microsoft.HDInsight/clusters@2021-06-01' = {
+resource cluster 'Microsoft.HDInsight/clusters@2021-06-01' = {
   name: clusterName
   location: location
   properties: {
