@@ -1,7 +1,8 @@
 param (
     $mail,
     $publicdnsname,
-    $adminPwd
+    $adminPwd,
+    $basePath
 )
 
 $ProgressPreference = 'SilentlyContinue' 
@@ -42,7 +43,7 @@ $adminPwd | Out-File -NoNewline -Encoding ascii "f:\portainerdata\passwordfile"
 # download compose, the compose file and deploy it
 [DownloadWithRetry]::DoDownloadWithRetry("https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Windows-x86_64.exe", 5, 10, $null, "$($Env:ProgramFiles)\Docker\docker-compose.exe", $false)
 
-$template = Get-Content '.\docker-compose.yml.template' -Raw
+$template = Get-Content (Join-Path $basepath 'docker-compose.yml.template') -Raw
 $expanded = Invoke-Expression "@`"`r`n$template`r`n`"@"
 $expanded | Out-File "f:\compose\docker-compose.yml" -Encoding ASCII
 
