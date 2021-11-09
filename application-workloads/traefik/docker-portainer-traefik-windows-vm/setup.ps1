@@ -3,6 +3,9 @@ param (
     $publicdnsname,
     $adminPwd
 )
+
+$ProgressPreference = 'SilentlyContinue' 
+
 # format disk and create folders
 Get-Disk | Where-Object partitionstyle -eq 'raw' | Initialize-Disk -PartitionStyle MBR -PassThru | New-Partition -UseMaximumSize -DriveLetter F | Format-Volume -FileSystem NTFS -Confirm:$false -Force
 New-Item -Path f:\le -ItemType Directory | Out-Null
@@ -25,11 +28,11 @@ Restart-Service sshd
 
 # relocate docker data
 Stop-Service docker
-#$dockerDaemonConfig = @"
-#{
-#    `"data-root`": `"f:\\dockerdata`"
-#}
-#"@
+$dockerDaemonConfig = @"
+{
+    `"data-root`": `"f:\\dockerdata`"
+}
+"@
 $dockerDaemonConfig | Out-File "c:\programdata\docker\config\daemon.json" -Encoding ascii
 Start-Service docker
 
@@ -37,7 +40,7 @@ Start-Service docker
 $adminPwd | Out-File -NoNewline -Encoding ascii "f:\portainerdata\passwordfile"
 
 # download compose, the compose file and deploy it
-[DownloadWithRetry]::DoDownloadWithRetry("https://github.com/docker/compose/releases/download/1.28.2/docker-compose-Windows-x86_64.exe", 5, 10, $null, "$($Env:ProgramFiles)\Docker\docker-compose.exe", $false)
+[DownloadWithRetry]::DoDownloadWithRetry("https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Windows-x86_64.exe", 5, 10, $null, "$($Env:ProgramFiles)\Docker\docker-compose.exe", $false)
 
 $template = Get-Content '.\docker-compose.yml.template' -Raw
 $expanded = Invoke-Expression "@`"`r`n$template`r`n`"@"
