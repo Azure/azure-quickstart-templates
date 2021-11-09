@@ -25,11 +25,11 @@ Restart-Service sshd
 
 # relocate docker data
 Stop-Service docker
-$dockerDaemonConfig = @"
-{
-    `"data-root`": `"f:\\dockerdata`"
-}
-"@
+#$dockerDaemonConfig = @"
+#{
+#    `"data-root`": `"f:\\dockerdata`"
+#}
+#"@
 $dockerDaemonConfig | Out-File "c:\programdata\docker\config\daemon.json" -Encoding ascii
 Start-Service docker
 
