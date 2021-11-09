@@ -27,7 +27,7 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
   }
 }
 
-resource endpoint 'Microsoft.Cdn/profiles/endpoints@2019-04-15' = {
+resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
   parent: profile
   name: endpointName
   location: location
