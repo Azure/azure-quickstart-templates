@@ -33,6 +33,15 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
   }
   properties: {
     serverFarmId: serverFarm.id
+    siteConfig:{
+      ftpsState: 'FtpsOnly'
+      minTlsVersion: '1.2'
+      scmMinTlsVersion: '1.2'
+    }
+    httpsOnly: true
+  }
+  identity: {
+    type: 'SystemAssigned'
   }
 }
 
