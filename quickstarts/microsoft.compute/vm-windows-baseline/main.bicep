@@ -1,5 +1,5 @@
 @description('The Azure region where resources in the template should be deployed.')
-param location string = 'eastus'
+param location string
 
 @description('Name for the subnet in the virtual network where the network interface is connected.')
 param subnetName string = 'subnet'
@@ -80,23 +80,6 @@ param enableAcceleratedNetworking bool = true
 resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   name: networkSecurityGroupName
   location: location
-  properties: {
-    securityRules: [
-      {
-        name: 'allow-443'
-        properties: {
-          priority: 1000
-          access: 'Allow'
-          direction: 'Inbound'
-          destinationPortRange: '443'
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          sourceAddressPrefix: '*'
-          destinationAddressPrefix: '*'
-        }
-      }
-    ]
-  }
 }
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
