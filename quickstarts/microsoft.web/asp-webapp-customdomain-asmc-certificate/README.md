@@ -18,11 +18,13 @@ To deploy this template, you need to have the following resources:
 2. An existing Web App.
 3. A domain purchased that has a DNS zone hosted at Azure DNS. 
    You can confirm the Name Server records (NS type) querying the domain at https://digwebinterface.com
+
+   This is because the template will create the required DNS records to Bind the custom domain and validate the Manged Certificate ownership.
 4. **Make sure you Web App does not have any Network restriction or redirection (such as http to https or to another url). When generating certificate to the apex/root domain**
 
 This arm deployment will:
 
-1. Createa a DNS record with ASUID, CNAME or A to your Azure DNS zone responsible to resolve names at this domain. This will be used to validate your custom domain while adding to the Web App.
+1. Create DNS record with ASUID, CNAME or A at your Azure DNS zone responsible to resolve names at this domain. This will be used to validate your custom domain while adding to the Web App.
 2. Add a Custom Domain to the Web App.
 3. Create a Managed Certificate (Free).
 4. Bind the Managed Certificate to the Web App.
