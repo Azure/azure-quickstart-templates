@@ -1,0 +1,112 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "addressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "Address prefix"
+      }
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Subnet-1 Prefix"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "flowLogStorageAccountName": {
+      "type": "string",
+      "defaultValue": "[concat('flowlog', uniquestring(resourceGroup().id))]",
+      "metadata": {
+        "description": "Flow logs Storage Account Name."
+      }
+    }
+  },
+  "variables": {
+    "networkSecurityGroupName": "networkSecurityGroup01",
+    "virtualNetworkName": "virtualNetwork01",
+    "subnetName": "subnet1"
+  },
+  "resources": [
+    {
+      "apiVersion": "2021-04-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('flowLogStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_RAGRS"
+      },
+      "kind": "StorageV2"
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "first_rule",
+            "properties": {
+              "description": "This is the first rule",
+              "protocol": "Tcp",
+              "sourcePortRange": "23-45",
+              "destinationPortRange": "46-56",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 123,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "existingNsgId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+    },
+    "existingFlowLogStorageAccountId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Storage/storageAccounts', parameters('flowLogStorageAccountName'))]"
+    }
+  }
+}
