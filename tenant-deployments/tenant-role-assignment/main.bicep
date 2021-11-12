@@ -1,6 +1,6 @@
 targetScope = 'tenant'
 
-@description('principalId if the user that will be given contributor access to the resourceGroup')
+@description('principalId if the user that will be given contributor access to the tenant')
 param principalId string
 
 @description('roleDefinition for the assignment - default is owner')
