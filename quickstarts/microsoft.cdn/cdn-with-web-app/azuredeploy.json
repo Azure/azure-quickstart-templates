@@ -1,7 +1,42 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "16325559001506718153"
+    }
+  },
   "parameters": {
+    "profileName": {
+      "type": "string",
+      "defaultValue": "[format('cdn-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the CDN Profile"
+      }
+    },
+    "endpointName": {
+      "type": "string",
+      "defaultValue": "[format('endpoint-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the CDN Endpoint, must be unique"
+      }
+    },
+    "serverFarmName": {
+      "type": "string",
+      "defaultValue": "[format('asp-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the App Service Plan"
+      }
+    },
+    "webAppName": {
+      "type": "string",
+      "defaultValue": "[format('web-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the App Service Web App"
+      }
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -10,104 +45,102 @@
       }
     }
   },
-  "variables": {
-    "endpointName": "[concat('endpoint-', uniqueString(resourceGroup().id))]",
-    "serverFarmName": "ServerFarm1",
-    "profileName": "CdnProfile1",
-    "webAppName": "[concat('web-', uniqueString(resourceGroup().id))]"
-  },
+  "functions": [],
   "resources": [
     {
-      "name": "[variables('serverFarmName')]",
       "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2021-02-01",
+      "name": "[parameters('serverFarmName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2019-08-01",
       "tags": {
-        "displayName": "[variables('serverFarmName')]"
+        "displayName": "[parameters('serverFarmName')]"
       },
       "sku": {
         "name": "F1",
         "capacity": 1
-      },
-      "properties": {
-        "name": "[variables('serverFarmName')]"
       }
     },
     {
-      "name": "[variables('webAppName')]",
       "type": "Microsoft.Web/sites",
+      "apiVersion": "2021-02-01",
+      "name": "[parameters('webAppName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2019-08-01",
-      "dependsOn": [
-        "[variables('serverFarmName')]"
-      ],
       "tags": {
-        "displayName": "[variables('webAppName')]"
+        "displayName": "[parameters('webAppName')]"
       },
       "properties": {
-        "name": "[variables('webAppName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]"
-      }
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverFarmName'))]",
+        "siteConfig": {
+          "ftpsState": "FtpsOnly",
+          "minTlsVersion": "1.2",
+          "scmMinTlsVersion": "1.2"
+        },
+        "httpsOnly": true
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('serverFarmName'))]"
+      ]
     },
     {
-      "name": "[variables('profileName')]",
       "type": "Microsoft.Cdn/profiles",
+      "apiVersion": "2020-09-01",
+      "name": "[parameters('profileName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-04-15",
       "tags": {
-        "displayName": "[variables('profileName')]"
+        "displayName": "[parameters('profileName')]"
       },
       "sku": {
         "name": "Standard_Microsoft"
       },
-      "properties": {},
-      "resources": [
-        {
-          "name": "[variables('endpointName')]",
-          "type": "endpoints",
-          "location": "[parameters('location')]",
-          "apiVersion": "2020-04-15",
-          "dependsOn": [
-            "[variables('profileName')]",
-            "[variables('webAppName')]"
-          ],
-          "tags": {
-            "displayName": "[variables('endpointName')]"
-          },
-          "properties": {
-            "originHostHeader": "[reference(variables('webAppName')).hostNames[0]]",
-            "isHttpAllowed": true,
-            "isHttpsAllowed": true,
-            "queryStringCachingBehavior": "IgnoreQueryString",
-            "contentTypesToCompress": [
-              "text/plain",
-              "text/html",
-              "text/css",
-              "application/x-javascript",
-              "text/javascript"
-            ],
-            "isCompressionEnabled": true,
-            "origins": [
-              {
-                "name": "origin1",
-                "properties": {
-                  "hostName": "[reference(variables('webAppName')).hostNames[0]]"
-                }
-              }
-            ]
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/endpoints",
+      "apiVersion": "2020-09-01",
+      "name": "[format('{0}/{1}', parameters('profileName'), parameters('endpointName'))]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "[parameters('endpointName')]"
+      },
+      "properties": {
+        "originHostHeader": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName'))).hostNames[0]]",
+        "isHttpAllowed": true,
+        "isHttpsAllowed": true,
+        "queryStringCachingBehavior": "IgnoreQueryString",
+        "contentTypesToCompress": [
+          "text/plain",
+          "text/html",
+          "text/css",
+          "application/x-javascript",
+          "text/javascript"
+        ],
+        "isCompressionEnabled": true,
+        "origins": [
+          {
+            "name": "origin1",
+            "properties": {
+              "hostName": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName'))).hostNames[0]]"
+            }
           }
-        }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', parameters('profileName'))]",
+        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
       ]
     }
   ],
   "outputs": {
     "hostName": {
       "type": "string",
-      "value": "[reference(variables('endpointName')).hostName]"
+      "value": "[reference(resourceId('Microsoft.Cdn/profiles/endpoints', parameters('profileName'), parameters('endpointName'))).hostName]"
     },
     "originHostHeader": {
       "type": "string",
-      "value": "[reference(variables('endpointName')).originHostHeader]"
+      "value": "[reference(resourceId('Microsoft.Cdn/profiles/endpoints', parameters('profileName'), parameters('endpointName'))).originHostHeader]"
     }
   }
 }
