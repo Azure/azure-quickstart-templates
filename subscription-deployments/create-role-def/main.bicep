@@ -16,7 +16,7 @@ param roleDescription string = 'Subscription Level Deployment of a Role Definiti
 
 var roleDefName = guid(subscription().id, string(actions), string(notActions))
 
-resource roleDef 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' = {
+resource roleDef 'Microsoft.Authorization/roleDefinitions@2018-07-01' = {
   name: roleDefName
   properties: {
     roleName: roleName
