@@ -24,7 +24,7 @@ param publicIpName string = 'myPublicIP'
 param publicIPAllocationMethod string = 'Static'
 
 @description('Name of the virtual machine.')
-param vmName string = 'hardened-winvm'
+param vmName string
 
 @description('The Windows version for the VM. This will pick a fully patched image of this given Windows version.')
 @allowed([
