@@ -21,7 +21,7 @@ var storageAccountName = '${projectName}store'
 var containerName = '${projectName}container'
 var dataShareAccountName = '${projectName}shareaccount'
 var dataShareName = '${projectName}share'
-var roleAssignmentName = guid(uniqueString(storageAccountName, storageBlobDataReaderRoleDefinitionId, dataShareAccountName))
+var roleAssignmentName = guid(sa.id, storageBlobDataReaderRoleDefinitionId, dataShareAccount.id)
 var inviteName = '${dataShareName}invite'
 var storageBlobDataReaderRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')
 
@@ -64,6 +64,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-prev
   properties: {
     roleDefinitionId: storageBlobDataReaderRoleDefinitionId
     principalId: dataShareAccount.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
@@ -77,9 +78,6 @@ resource dataSet 'Microsoft.DataShare/accounts/shares/dataSets@2021-08-01' = {
     storageAccountName: storageAccountName
     containerName: containerName
   }
-  dependsOn: [
-    roleAssignment
-  ]
 }
 
 resource invitation 'Microsoft.DataShare/accounts/shares/invitations@2021-08-01' = {
@@ -88,9 +86,6 @@ resource invitation 'Microsoft.DataShare/accounts/shares/invitations@2021-08-01'
   properties: {
     targetEmail: invitationEmail
   }
-  dependsOn: [
-    roleAssignment
-  ]
 }
 
 resource synchronizationSetting 'Microsoft.DataShare/accounts/shares/synchronizationSettings@2021-08-01' = {
@@ -101,7 +96,4 @@ resource synchronizationSetting 'Microsoft.DataShare/accounts/shares/synchroniza
     recurrenceInterval: syncInterval
     synchronizationTime: syncTime
   }
-  dependsOn: [
-    roleAssignment
-  ]
 }
