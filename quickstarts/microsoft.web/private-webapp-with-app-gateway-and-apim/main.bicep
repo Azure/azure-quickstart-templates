@@ -105,7 +105,7 @@ var privateEndpointSubnetId = resourceId('Microsoft.Network/virtualNetworks/subn
 var webAppName = 'web-${baseName}'
 
 // ---- Create Virtual Network with subnets ----
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2019-11-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-03-01' = {
   name: vnetName
   location: location
   properties: {
@@ -220,7 +220,7 @@ resource nsgApiManagemnt 'Microsoft.Network/networkSecurityGroups@2021-02-01' = 
 }
 
 // ---- Public IP Address ----
-resource applicationGatewayPublicIpAddress 'Microsoft.Network/publicIPAddresses@2019-11-01' = {
+resource applicationGatewayPublicIpAddress 'Microsoft.Network/publicIPAddresses@2021-03-01' = {
   name: appGatewayPublicIpAddressName
   location: location
   sku: {
