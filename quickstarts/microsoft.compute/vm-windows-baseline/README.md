@@ -27,6 +27,36 @@ General information about how configurations are assigned to machines in Azure i
 A detailed how to document about assigning configurations to machines, and how to customize configurations from ARM,
 is also available.
 
+---
+
+**Common administration ports are not opened in this template.**, to log in to the machine directly.
+After deploying this machine, it is expected that you will
+[deploy applications](https://docs.microsoft.com/azure/devops/pipelines/release/deployment-groups/deploying-azure-vms-deployment-groups)
+using a service such as Azure DevOps.
+
+- [Provision agents for deployment groups](https://docs.microsoft.com/azure/devops/pipelines/release/deployment-groups/howto-provision-deployment-group-agents)
+
+To provide ongoing operations for the machine, it is expected you will use the available
+Azure management services. You can also view the
+[Cloud Adoption Framework](https://docs.microsoft.com/azure/cloud-adoption-framework/manage/azure-server-management/)
+for more information about best practices.
+
+- [Azure Automanage](https://docs.microsoft.com/azure/automanage/automanage-virtual-machines)
+- [Azure Monitor](https://docs.microsoft.com/azure/azure-monitor/)
+- [Azure Update Management](https://docs.microsoft.com/azure/automation/update-management/overview)
+- [Azure Automation inventory feature](https://docs.microsoft.com/azure/automation/change-tracking/manage-inventory-vms)
+- [Azure Policy's guest configuration feature](https://docs.microsoft.com/azure/governance/policy/concepts/guest-configuration)
+- [Azure Backup](https://docs.microsoft.com/azure/backup/)
+- [Azure Custom Script extension for Windows](https://docs.microsoft.com/azure/virtual-machines/extensions/custom-script-windows)
+- [Azure Run Commands for Windows](https://docs.microsoft.com/azure/virtual-machines/windows/run-command)
+
+If you would prefer to open common ports, modify rules in the network security group
+associated with the network adapter for the machine.
+
+- [Network security groups](https://docs.microsoft.com/azure/virtual-network/network-security-groups-overview)
+
+---
+
 [How to create a guest configuration assignment using templates](https://docs.microsoft.com/en-us/azure/governance/policy/how-to/guest-configuration-create-assignment)
 
 If you're new to Azure virtual machines, see:
