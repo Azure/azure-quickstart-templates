@@ -29,7 +29,7 @@ is also available.
 
 ---
 
-**Common administration ports are not opened in this template.**, to log in to the machine directly.
+**Common administration ports to log in to the VM directly, are not opened in this template.**
 After deploying this machine, it is expected that you will
 [deploy applications](https://docs.microsoft.com/azure/devops/pipelines/release/deployment-groups/deploying-azure-vms-deployment-groups)
 using a service such as Azure DevOps.
