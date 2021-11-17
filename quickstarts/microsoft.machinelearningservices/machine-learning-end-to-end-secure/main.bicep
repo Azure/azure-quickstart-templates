@@ -1,5 +1,4 @@
 // Execute this main file to configure Azure Machine Learning end-to-end in a moderately secure set up
-targetScope = 'resourceGroup'
 
 // Parameters
 @minLength(2)
@@ -26,7 +25,7 @@ param scoringSubnetPrefix string = '192.168.1.0/24'
 param azureBastionSubnetPrefix string = '192.168.250.0/27'
 
 @description('Deploy a Bastion jumphost to access the network-isolated environment?')
-param deployJumphost bool
+param deployJumphost bool = true
 
 @description('Jumphost virtual machine username')
 param dsvmJumpboxUsername string
@@ -66,9 +65,6 @@ module vnet 'modules/vnet.bicep' = {
     scoringSubnetPrefix: scoringSubnetPrefix
     tags: tags
   }
-  dependsOn: [
-    nsg
-  ]
 }
 
 // Dependent resources for the Azure Machine Learning workspace
@@ -82,9 +78,6 @@ module keyvault 'modules/keyvault.bicep' = {
     virtualNetworkId: '${vnet.outputs.id}'
     tags: tags
   }
-  dependsOn: [
-    vnet
-  ]
 }
 
 module storage 'modules/storage.bicep' = {
@@ -99,9 +92,6 @@ module storage 'modules/storage.bicep' = {
     virtualNetworkId: '${vnet.outputs.id}'
     tags: tags
   }
-  dependsOn: [
-    vnet
-  ]
 }
 
 module containerRegistry 'modules/containerregistry.bicep' = {
@@ -114,9 +104,6 @@ module containerRegistry 'modules/containerregistry.bicep' = {
     virtualNetworkId: '${vnet.outputs.id}'
     tags: tags
   }
-  dependsOn: [
-    vnet
-  ]
 }
 
 module applicationInsights 'modules/applicationinsights.bicep' = {
@@ -126,9 +113,6 @@ module applicationInsights 'modules/applicationinsights.bicep' = {
     applicationInsightsName: 'appi-${name}-${uniqueSuffix}'
     tags: tags
   }
-  dependsOn: [
-    vnet
-  ]
 }
 
 module azuremlWorkspace 'modules/machinelearning.bicep' = {

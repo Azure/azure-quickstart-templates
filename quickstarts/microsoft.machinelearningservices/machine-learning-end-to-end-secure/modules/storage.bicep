@@ -1,6 +1,4 @@
 // Creates a storage account, private endpoints and DNS zones
-targetScope = 'resourceGroup'
-
 @description('Azure region of the deployment')
 param location string
 
@@ -46,9 +44,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: storageNameCleaned
   location: location
   tags: tags
-  identity: {
-    type: 'SystemAssigned'
-  }
   sku: {
     name: storageSkuName
   }
@@ -151,18 +146,11 @@ resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2020-11-
 
 resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
   name: blobPrivateDnsZoneName
-  dependsOn: [
-    storagePrivateEndpointBlob
-  ]
   location: 'global'
 }
 
 resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
   name: '${storagePrivateEndpointBlob.name}/blob-PrivateDnsZoneGroup'
-  dependsOn: [
-    storagePrivateEndpointBlob
-    blobPrivateDnsZone
-  ]
   properties:{
     privateDnsZoneConfigs: [
       {
@@ -177,9 +165,6 @@ resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
 
 resource blobPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
   name: '${blobPrivateDnsZone.name}/${uniqueString(storage.id)}'
-  dependsOn: [
-    blobPrivateDnsZone
-  ]
   location: 'global'
   properties: {
     registrationEnabled: false
@@ -191,18 +176,11 @@ resource blobPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNe
 
 resource filePrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
   name: filePrivateDnsZoneName
-  dependsOn: [
-    storagePrivateEndpointFile
-  ]
   location: 'global'
 }
 
 resource filePrivateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
   name: '${storagePrivateEndpointFile.name}/flie-PrivateDnsZoneGroup'
-  dependsOn: [
-    storagePrivateEndpointFile
-    filePrivateDnsZone
-  ]
   properties:{
     privateDnsZoneConfigs: [
       {
@@ -218,9 +196,6 @@ resource filePrivateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZo
 resource filePrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
   name: '${filePrivateDnsZone.name}/${uniqueString(storage.id)}'
   location: 'global'
-  dependsOn: [
-    storagePrivateEndpointFile
-  ]
   properties: {
     registrationEnabled: false
     virtualNetwork: {

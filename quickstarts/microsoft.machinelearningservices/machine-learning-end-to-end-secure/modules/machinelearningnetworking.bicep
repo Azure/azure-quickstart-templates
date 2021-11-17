@@ -1,6 +1,4 @@
 // Creates private endpoints and DNS zones for the azure machine learning workspace
-targetScope = 'resourceGroup'
-
 @description('Azure region of the deployment')
 param location string
 
@@ -56,9 +54,6 @@ resource machineLearningPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020
 resource amlPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
   name: privateDnsZoneName[toLower(environment().name)]
   location: 'global'
-  dependsOn: [
-    machineLearningPrivateEndpoint
-  ]
 }
 
 resource amlPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
@@ -70,18 +65,12 @@ resource amlPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNet
       id: virtualNetworkId
     }
   }
-  dependsOn: [
-    amlPrivateDnsZone
-  ]
 }
 
 // Notebook
 resource notebookPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
   name: privateAznbDnsZoneName[toLower(environment().name)]
   location: 'global'
-  dependsOn: [
-    machineLearningPrivateEndpoint
-  ]
 }
 
 resource notebookPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
@@ -93,9 +82,6 @@ resource notebookPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtu
       id: virtualNetworkId
     }
   }
-  dependsOn: [
-    notebookPrivateDnsZone
-  ]
 }
 
 resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
@@ -116,8 +102,4 @@ resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
       }
     ]
   }
-  dependsOn: [
-    machineLearningPrivateEndpoint
-    notebookPrivateDnsZone
-  ]
 }

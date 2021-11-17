@@ -1,6 +1,4 @@
 // Creates a virtual network
-targetScope = 'resourceGroup'
-
 @description('Azure region of the deployment')
 param location string = resourceGroup().location
 
@@ -33,8 +31,8 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
       ]
     }
     subnets: [
-      {
-        id: 'snet-training'
+      { 
+        name: 'snet-training'
         properties: {
           addressPrefix: trainingSubnetPrefix
           privateEndpointNetworkPolicies: 'Disabled'
@@ -43,19 +41,28 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
             id: networkSecurityGroupId
           }
         }
-        name: 'snet-training'
       }
-      {
-        id: 'snet-scoring'
+      { 
+        name: 'snet-scoring'
         properties: {
           addressPrefix: scoringSubnetPrefix
           privateEndpointNetworkPolicies: 'Disabled'
           privateLinkServiceNetworkPolicies: 'Disabled'
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.KeyVault'
+            }
+            {
+              service: 'Microsoft.ContainerRegistry'
+            }
+            {
+              service: 'Microsoft.Storage'
+            }
+          ]
           networkSecurityGroup: {
             id: networkSecurityGroupId
           }
         }
-        name: 'snet-scoring'
       }
     ]
   }

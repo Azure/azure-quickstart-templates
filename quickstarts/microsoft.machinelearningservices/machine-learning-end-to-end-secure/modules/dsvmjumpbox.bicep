@@ -15,7 +15,7 @@ param virtualMachineName string
 param vmSize string = 'Standard_DS3_v2'
 
 @description('Virtual machine admin username')
-param adminUsername string = 'azureuser'
+param adminUsername string
 
 @secure()
 @minLength(8)
@@ -47,9 +47,6 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2021-03-01' = {
 
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   name: virtualMachineName
-  dependsOn: [
-    networkInterface
-  ]
   location: location
   properties: {
     hardwareProfile: {

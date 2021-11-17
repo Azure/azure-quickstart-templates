@@ -1,7 +1,5 @@
 // Creates compute resources in the specified machine learning workspace
 // Includes Compute Instance, Compute Cluster and attached Azure Kubernetes Service compute types
-targetScope = 'resourceGroup'
-
 @description('Prefix for resource names')
 param prefix string
 
@@ -26,6 +24,12 @@ param aksSubnetId string
 @description('Resource ID of the Azure Kubernetes services resource')
 param amlComputePublicIp bool
 
+@description('VM size for the default CPU compute cluster')
+param cpuDefaultVmSize string = 'Standard_Ds3_v2'
+
+@description('VM size for the default GPU compute cluster')
+param gpuDefaultVmSize string = 'Standard_NC6'
+
 resource machineLearningCpuCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
   name: '${machineLearning}/cpucluster001'
   location: location
@@ -40,7 +44,7 @@ resource machineLearningCpuCluster001 'Microsoft.MachineLearningServices/workspa
     disableLocalAuth: true
     properties: {
       vmPriority: 'Dedicated'
-      vmSize: 'Standard_Ds3_v2'
+      vmSize: cpuDefaultVmSize
       enableNodePublicIp: amlComputePublicIp
       isolatedNetwork: false
       osType: 'Linux'
@@ -83,7 +87,7 @@ resource machineLearningGpuCluster001 'Microsoft.MachineLearningServices/workspa
         id: computeSubnetId
       }
       vmPriority: 'Dedicated'
-      vmSize: 'Standard_NC6'
+      vmSize: gpuDefaultVmSize
     }
   }
 }
@@ -102,6 +106,7 @@ resource machineLearningComputeInstance001 'Microsoft.MachineLearningServices/wo
     disableLocalAuth: true
     properties: {
       applicationSharingPolicy: 'Personal'
+      
       computeInstanceAuthorizationType: 'personal'
       sshSettings: {
         sshPublicAccess: 'Disabled'
@@ -109,7 +114,7 @@ resource machineLearningComputeInstance001 'Microsoft.MachineLearningServices/wo
       subnet: {
         id: computeSubnetId
       }
-      vmSize: 'Standard_DS3_v2'
+      vmSize: cpuDefaultVmSize
     }
   }
 }

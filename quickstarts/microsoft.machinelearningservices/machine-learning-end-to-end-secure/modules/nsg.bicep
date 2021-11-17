@@ -1,7 +1,5 @@
 // Creates a network security group preconfigured for use with Azure ML
 // To learn more, see https://docs.microsoft.com/en-us/azure/machine-learning/how-to-access-azureml-behind-firewall
-targetScope = 'resourceGroup'
-
 @description('Azure region of the deployment')
 param location string
 

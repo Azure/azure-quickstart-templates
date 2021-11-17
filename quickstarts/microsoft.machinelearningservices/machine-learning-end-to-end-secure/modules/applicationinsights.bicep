@@ -1,6 +1,4 @@
 // Creates an Application Insights instance as dependency for Azure ML
-targetScope = 'resourceGroup'
-
 @description('Azure region of the deployment')
 param location string = resourceGroup().location
 

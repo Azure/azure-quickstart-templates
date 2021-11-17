@@ -1,6 +1,4 @@
 // Creates an Azure Container Registry with Azure Private Link endpoint
-targetScope = 'resourceGroup'
-
 @description('Azure region of the deployment')
 param location string
 
@@ -29,9 +27,6 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-pr
   name: containerRegistryNameCleaned
   location: location
   tags: tags
-  identity: {
-    type: 'SystemAssigned'
-  }
   sku: {
     name: 'Premium'
   }
@@ -86,9 +81,6 @@ resource containerRegistryPrivateEndpoint 'Microsoft.Network/privateEndpoints@20
 resource acrPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
   name: privateDnsZoneName
   location: 'global'
-  dependsOn: [
-    containerRegistryPrivateEndpoint
-  ]
 }
 
 resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
@@ -103,10 +95,6 @@ resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
       }
     ]
   }
-  dependsOn: [
-    containerRegistryPrivateEndpoint
-    acrPrivateDnsZone
-  ]
 }
 
 resource acrPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
@@ -118,9 +106,6 @@ resource acrPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNet
       id: virtualNetworkId
     }
   }
-  dependsOn: [
-    acrPrivateDnsZone
-  ]
 }
 
 output containerRegistryId string = containerRegistry.id

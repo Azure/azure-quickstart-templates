@@ -17,12 +17,16 @@ param workspaceName string
 @description('Name of the Azure Machine Learning attached compute')
 param computeName string
 
+@description('Availability zones')
+param availabilityZones array = [
+  '1'
+  '2'
+  '3'
+]
+
 resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-07-01' = {
   name: aksClusterName
   location: location
-  identity: {
-    type: 'SystemAssigned'
-  }
   tags: tags
   properties: {
     kubernetesVersion: '1.20.7'
@@ -38,11 +42,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-07-01' = {
         osType: 'Linux'
         mode: 'System'
         type: 'VirtualMachineScaleSets'
-        availabilityZones: [
-          '1'
-          '2'
-          '3'
-        ]
+        availabilityZones: availabilityZones
       }
     ]
     enableRBAC: true

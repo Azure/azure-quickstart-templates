@@ -1,7 +1,5 @@
 // Creates a machine learning workspace, private endpoints and compute resources
 // Compute resources include a GPU cluster, CPU cluster, compute instance and attached private AKS cluster
-targetScope = 'resourceGroup'
-
 @description('Prefix for resource names')
 param prefix string
 
@@ -57,9 +55,6 @@ resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2021-04-0
   name: machineLearningName
   location: location
   tags: tags
-  identity: {
-    type: 'SystemAssigned'
-  }
   properties: {
     // workspace organization
     friendlyName: machineLearningFriendlyName

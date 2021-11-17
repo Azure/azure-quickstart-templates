@@ -1,6 +1,4 @@
 // Creates a KeyVault with Private Link Endpoint
-targetScope = 'resourceGroup'
-
 @description('The Azure Region to deploy the resrouce group into')
 param location string = resourceGroup().location
 
@@ -71,9 +69,6 @@ resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01'
 resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-01-01' = {
   name: privateDnsZoneName
   location: 'global'
-  dependsOn: [
-    keyVaultPrivateEndpoint
-  ]
 }
 
 resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
@@ -88,10 +83,6 @@ resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
       }
     ]
   }
-  dependsOn: [
-    keyVaultPrivateEndpoint
-    keyVaultPrivateDnsZone
-  ]
 }
 
 resource keyVaultPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-01-01' = {
@@ -103,9 +94,6 @@ resource keyVaultPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtu
       id: virtualNetworkId
     }
   }
-  dependsOn: [
-    keyVaultPrivateDnsZone
-  ]
 }
 
 output keyvaultId string = keyVault.id
