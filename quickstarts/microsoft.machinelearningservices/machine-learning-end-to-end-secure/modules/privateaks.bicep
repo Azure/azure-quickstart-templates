@@ -28,6 +28,9 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-07-01' = {
   name: aksClusterName
   location: location
   tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     kubernetesVersion: '1.20.7'
     dnsPrefix: '${aksClusterName}-dns'
