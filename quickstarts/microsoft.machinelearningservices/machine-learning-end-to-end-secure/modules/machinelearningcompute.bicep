@@ -27,10 +27,7 @@ param amlComputePublicIp bool
 @description('VM size for the default CPU compute cluster')
 param cpuDefaultVmSize string = 'Standard_Ds3_v2'
 
-@description('VM size for the default GPU compute cluster')
-param gpuDefaultVmSize string = 'Standard_NC6'
-
-resource machineLearningCpuCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
+resource machineLearningCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
   name: '${machineLearning}/cpucluster001'
   location: location
   tags: tags
@@ -51,43 +48,12 @@ resource machineLearningCpuCluster001 'Microsoft.MachineLearningServices/workspa
       remoteLoginPortPublicAccess: 'Disabled'
       scaleSettings: {
         minNodeCount: 0
-        maxNodeCount: 8
+        maxNodeCount: 5
         nodeIdleTimeBeforeScaleDown: 'PT120S'
       }
       subnet: {
         id: computeSubnetId
       }
-    }
-  }
-}
-
-resource machineLearningGpuCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
-  name: '${machineLearning}/gpucluster001'
-  location: location
-  tags: tags
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    computeType: 'AmlCompute'
-    computeLocation: location
-    description: 'Machine Learning cluster 001'
-    disableLocalAuth: true
-    properties: {
-      enableNodePublicIp: amlComputePublicIp
-      isolatedNetwork: false
-      osType: 'Linux'
-      remoteLoginPortPublicAccess: 'Disabled'
-      scaleSettings: {
-        minNodeCount: 0
-        maxNodeCount: 8
-        nodeIdleTimeBeforeScaleDown: 'PT120S'
-      }
-      subnet: {
-        id: computeSubnetId
-      }
-      vmPriority: 'Dedicated'
-      vmSize: gpuDefaultVmSize
     }
   }
 }
