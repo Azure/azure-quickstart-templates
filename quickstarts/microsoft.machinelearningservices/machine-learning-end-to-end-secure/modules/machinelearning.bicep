@@ -55,6 +55,9 @@ resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2021-04-0
   name: machineLearningName
   location: location
   tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     // workspace organization
     friendlyName: machineLearningFriendlyName
