@@ -24,11 +24,11 @@ param aksSubnetId string
 @description('Resource ID of the Azure Kubernetes services resource')
 param amlComputePublicIp bool
 
-@description('VM size for the default CPU compute cluster')
-param cpuDefaultVmSize string = 'Standard_Ds3_v2'
+@description('VM size for the default compute cluster')
+param amlComputeDefaultVmSize string = 'Standard_Ds3_v2'
 
 resource machineLearningCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
-  name: '${machineLearning}/cpucluster001'
+  name: '${machineLearning}/cluster001'
   location: location
   tags: tags
   identity: {
@@ -41,7 +41,7 @@ resource machineLearningCluster001 'Microsoft.MachineLearningServices/workspaces
     disableLocalAuth: true
     properties: {
       vmPriority: 'Dedicated'
-      vmSize: cpuDefaultVmSize
+      vmSize: amlComputeDefaultVmSize
       enableNodePublicIp: amlComputePublicIp
       isolatedNetwork: false
       osType: 'Linux'
@@ -80,7 +80,7 @@ resource machineLearningComputeInstance001 'Microsoft.MachineLearningServices/wo
       subnet: {
         id: computeSubnetId
       }
-      vmSize: cpuDefaultVmSize
+      vmSize: amlComputeDefaultVmSize
     }
   }
 }

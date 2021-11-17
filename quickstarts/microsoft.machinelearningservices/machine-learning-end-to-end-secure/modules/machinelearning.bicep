@@ -70,7 +70,7 @@ resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2021-04-0
     storageAccount: storageAccountId
 
     // configuration for workspaces with private link endpoint
-    imageBuildCompute: 'cpucluster001'
+    imageBuildCompute: 'cluster001'
     allowPublicAccessWhenBehindVnet: false
   }
 }
