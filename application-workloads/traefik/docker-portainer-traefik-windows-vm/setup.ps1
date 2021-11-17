@@ -35,6 +35,12 @@ $dockerDaemonConfig = @"
 }
 "@
 $dockerDaemonConfig | Out-File "c:\programdata\docker\config\daemon.json" -Encoding ascii
+# avoid https://github.com/docker/for-win/issues/12358#issuecomment-964937374
+Remove-Item 'f:\dockerdata\panic.log' -Force -ErrorAction SilentlyContinue | Out-Null
+New-Item 'f:\dockerdata\panic.log' -ItemType File -ErrorAction SilentlyContinue | Out-Null
+# avoid containers stuck in "create"
+Add-MpPreference -ExclusionPath 'C:\Program Files\docker\'
+Add-MpPreference -ExclusionPath 'f:\dockerdata'
 Start-Service docker
 
 # prepare password file for portainer
