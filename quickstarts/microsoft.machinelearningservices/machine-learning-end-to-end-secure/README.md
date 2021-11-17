@@ -17,7 +17,7 @@
 
 This set of Bicep templates demonstrates how to set up Azure Machine Learning end-to-end in a secure set up.
 
-This reference implementation includes the Workspace, a CPU compute cluster, a GPU compute cluster, compute instance and attached private AKS cluster. It  includes the configuration of associated resources including Azure Key Vault, Azure Storage, Azure Application Insights and Azure Container Registry in a network-isolated setup.
+This reference implementation includes the Workspace, a compute cluster, compute instance and attached private AKS cluster. It  includes the configuration of associated resources including Azure Key Vault, Azure Storage, Azure Application Insights and Azure Container Registry in a network-isolated setup.
 
 ## Resources
 
@@ -35,20 +35,6 @@ This reference implementation includes the Workspace, a CPU compute cluster, a G
 | `Microsoft.ContainerService/managedClusters` | An Azure Kubernetes Services cluster for inferencing |
 | `Microsoft.Compute/virtualMachines` | A Data Science Virtual Machine `jumpbox` to access the workspace over the private link endpoint |
 | `Microsoft.Network/virtualNetworks` | A virtual network to deploy all resources in |
-
-## Variables
-
-| Name | Description | Default |
-|-|-|-|
-| location | Specifies the Azure region for all resources | resourceGroup().location |
-| prefix | Specifies the prefix for all resources created in this deployment | - |
-| tags | Any tags you want to apply to all resources | {} |
-| vnetAddressPrefix | Specifies the address prefix of the virtual network. | '192.168.0.0/16' |
-| trainingSubnetPrefix | Specifies the address prefix of the training subnet. | '192.168.0.0/24' |
-| scoringSubnetPrefix | Specifies the address prefix of the scoring subnet. | '192.168.1.0/24' |
-| azureBastionSubnetPrefix | Specifies the address prefix of the azure bastion subnet. | '192.168.250.0/27' |
-| dsvmJumpboxUsername | Admin username for the Data Science Virtual Machine (jumpbox) | - |
-| dsvmJumpboxPassword | Admin password for the Data Science Virtual Machine (jumpbox) | - |
 
 ## Usage
 
