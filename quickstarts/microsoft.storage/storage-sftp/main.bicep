@@ -24,7 +24,7 @@ param storageAccountType string = 'Standard_LRS'
   'eastasia'
   'francecentral'
 ])
-param location string = 'centralus'
+param location string
 
 @description('Username of primary user')
 param userName string
@@ -69,7 +69,7 @@ resource user 'Microsoft.Storage/storageAccounts/localUsers@2021-04-01' = {
       }
     ]
     homeDirectory: homeDirectory
-    sshAuthorizedKeys: [
+    sshAuthorizedKeys: empty(publicKey) ? null : [
       {
         description: '${userName} public key'
         key: publicKey
