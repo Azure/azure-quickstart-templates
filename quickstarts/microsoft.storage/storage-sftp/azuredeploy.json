@@ -1,0 +1,124 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "9247874931968821108"
+    }
+  },
+  "parameters": {
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage Account Name"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "centralus",
+      "allowedValues": [
+        "westeurope",
+        "northcentralus",
+        "eastus2",
+        "eastus2euap",
+        "centralus",
+        "canadaeast",
+        "canadacentral",
+        "northeurope",
+        "australiaeast",
+        "switzerlandnorth",
+        "germanywestcentral",
+        "eastasia",
+        "francecentral"
+      ],
+      "metadata": {
+        "description": "Region"
+      }
+    },
+    "userName": {
+      "type": "string",
+      "metadata": {
+        "description": "Username of primary user"
+      }
+    },
+    "homeDirectory": {
+      "type": "string",
+      "metadata": {
+        "description": "Home directory of primary user. Should be a container."
+      }
+    },
+    "publicKey": {
+      "type": "string",
+      "metadata": {
+        "description": "SSH Public Key for primary user."
+      }
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-04-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "isHnsEnabled": true,
+        "isLocalUserEnabled": true,
+        "isSftpEnabled": true
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2021-04-01",
+      "name": "[format('{0}/default/{1}', parameters('storageAccountName'), parameters('homeDirectory'))]",
+      "properties": {
+        "publicAccess": "None"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/localUsers",
+      "apiVersion": "2021-04-01",
+      "name": "[format('{0}/{1}', parameters('storageAccountName'), parameters('userName'))]",
+      "properties": {
+        "permissionScopes": [
+          {
+            "permissions": "rcwdl",
+            "service": "blob",
+            "resourceName": "[parameters('homeDirectory')]"
+          }
+        ],
+        "homeDirectory": "[parameters('homeDirectory')]",
+        "sshAuthorizedKeys": [
+          {
+            "description": "[format('{0} public key', parameters('userName'))]",
+            "key": "[parameters('publicKey')]"
+          }
+        ],
+        "hasSharedKey": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    }
+  ]
+}
