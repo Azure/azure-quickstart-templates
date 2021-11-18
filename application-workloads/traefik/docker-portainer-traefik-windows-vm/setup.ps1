@@ -23,7 +23,7 @@ choco install --no-progress --limit-output vim
 choco install --no-progress --limit-output openssh -params '"/SSHServerFeature"'
 
 # configure OpenSSH, make PS the default shell and restart sshd
-Copy-Item '.\sshd_config_wpwd' 'C:\ProgramData\ssh\sshd_config'
+Copy-Item (Join-Path $basepath 'sshd_config_wpwd') 'C:\ProgramData\ssh\sshd_config'
 New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
 Restart-Service sshd
 
