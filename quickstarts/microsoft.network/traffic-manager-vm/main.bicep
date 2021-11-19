@@ -180,7 +180,7 @@ resource customScript 'Microsoft.Compute/virtualMachines/extensions@2021-07-01' 
     typeHandlerVersion: '2.0'
     autoUpgradeMinorVersion: true
     settings: {
-      commandToExecute: loadTextContent('scripts/install-webserver.sh')
+      commandToExecute: 'sudo bash -c "sudo apt-get install -f -y && sudo apt-get update -y && sudo apt-get upgrade -y && sudo apt-get install -y apache2 && echo \\"You\'re connected to $(hostname)\\" | sudo tee /var/www/html/index.html"'
     }
   }
 }]
