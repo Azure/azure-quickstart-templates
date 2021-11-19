@@ -52,7 +52,7 @@ param headNodeVirtualMachineSize string = 'Standard_E8_v3'
 ])
 param workerNodeVirtualMachineSize string = 'Standard_E8_v3'
 
-resource storage_id 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storage 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: 'storage${uniqueString(resourceGroup().id)}'
   location: location
   sku: {
@@ -81,10 +81,10 @@ resource clusterName_resource 'Microsoft.HDInsight/clusters@2021-06-01' = {
     storageProfile: {
       storageaccounts: [
         {
-          name: replace(replace(storage_id.properties.primaryEndpoints.blob, 'https://', ''), '/', '')
+          name: replace(replace(storage.properties.primaryEndpoints.blob, 'https://', ''), '/', '')
           isDefault: true
           container: clusterName
-          key: listKeys(storage_id.id, '2021-04-01').keys[0].value
+          key: listKeys(storage.id, '2021-04-01').keys[0].value
         }
       ]
     }
@@ -121,5 +121,5 @@ resource clusterName_resource 'Microsoft.HDInsight/clusters@2021-06-01' = {
   }
 }
 
-output storage object = storage_id.properties
+output storage object = storage.properties
 output cluster object = clusterName_resource.properties
