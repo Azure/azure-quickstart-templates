@@ -13,9 +13,9 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-end-to-end-secure%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-end-to-end-secure%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-end-to-end-secure%2Fazuredeploy.json)   
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-end-to-end-secure%2Fazuredeploy.json)
 
-This set of Bicep templates demonstrates how to set up Azure Machine Learning end-to-end in a secure set up.
+This set of templates demonstrates how to set up Azure Machine Learning end-to-end in a secure set up.
 
 This reference implementation includes the Workspace, a compute cluster, compute instance and attached private AKS cluster. It  includes the configuration of associated resources including Azure Key Vault, Azure Storage, Azure Application Insights and Azure Container Registry in a network-isolated setup.
 
@@ -35,19 +35,6 @@ This reference implementation includes the Workspace, a compute cluster, compute
 | `Microsoft.ContainerService/managedClusters` | An Azure Kubernetes Services cluster for inferencing |
 | `Microsoft.Compute/virtualMachines` | A Data Science Virtual Machine `jumpbox` to access the workspace over the private link endpoint |
 | `Microsoft.Network/virtualNetworks` | A virtual network to deploy all resources in |
-
-## Usage
-
-First, create an Azure resource group:
-`az group create --name <resource-group-name> --location <location>`
-
-Then deploy the 'main' Bicep template file:
-`az deployment group create --resource-group <resource-group-name> --template-file .\main.bicep`
-
-After succesful deployment, log on to the Data Science Virtual Machine Jumpbox machine that you just deployed to access your workspace from the virtual network. To learn more, see [Securely connect to your workspace](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-secure-workspace-vnet?tabs=pe#securely-connect-to-your-workspace).
-
-Optionally, you could build an Azure Resource Manager template after making changes to your Bicep file:
-`az bicep build --file .\main.bicep --outfile .\azuredeploy.json`
 
 ## Learn more
 
