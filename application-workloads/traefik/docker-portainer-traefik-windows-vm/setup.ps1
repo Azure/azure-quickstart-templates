@@ -23,7 +23,7 @@ choco install --no-progress --limit-output vim
 choco install --no-progress --limit-output openssh -params '"/SSHServerFeature"'
 
 # configure OpenSSH, make PS the default shell and restart sshd
-Copy-Item '.\sshd_config_wpwd' 'C:\ProgramData\ssh\sshd_config'
+Copy-Item (Join-Path $basepath 'sshd_config_wpwd') 'C:\ProgramData\ssh\sshd_config'
 New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
 Restart-Service sshd
 
@@ -35,6 +35,12 @@ $dockerDaemonConfig = @"
 }
 "@
 $dockerDaemonConfig | Out-File "c:\programdata\docker\config\daemon.json" -Encoding ascii
+# avoid https://github.com/docker/for-win/issues/12358#issuecomment-964937374
+Remove-Item 'f:\dockerdata\panic.log' -Force -ErrorAction SilentlyContinue | Out-Null
+New-Item 'f:\dockerdata\panic.log' -ItemType File -ErrorAction SilentlyContinue | Out-Null
+# avoid containers stuck in "create"
+Add-MpPreference -ExclusionPath 'C:\Program Files\docker\'
+Add-MpPreference -ExclusionPath 'f:\dockerdata'
 Start-Service docker
 
 # prepare password file for portainer
