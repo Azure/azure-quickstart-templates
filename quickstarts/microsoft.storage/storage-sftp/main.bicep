@@ -10,7 +10,6 @@ param storageAccountType string = 'Standard_LRS'
 
 @description('Region')
 @allowed([
-  'westeurope'
   'northcentralus'
   'eastus2'
   'eastus2euap'
