@@ -15,6 +15,28 @@
 
 This template creates an Azure Storage account and a blob container that can be accessed using SFTP protocol. Access can be password or public-key based.
 
+This feature is currently in Public Preview. To enable the feature on your subscription, you will need execute either of the following commands:
+
+- Azure CLI
+```azurecli
+# Check if the SFTP feature is registered first 
+az feature show --namespace Microsoft.Storage --name AllowSFTP
+
+# Register the SFTP feature on your subscription
+az feature register --namespace Microsoft.Storage --name AllowSFTP
+```
+
+- PowerShell
+```powershell
+# Check if the SFTP feature is registered first
+Get-AzProviderFeature -FeatureName "AllowSFTP" -ProviderNamespace "Microsoft.Storage"
+
+# Register the SFTP feature on your subscription
+Register-AzProviderFeature -FeatureName "AllowSFTP" -ProviderNamespace "Microsoft.Storage"
+```
+
+If using password authentication, you will need to access to the storage account in Azure Portal to securely generate a password for the user.
+
 If you are new to Azure Storage account, see:
 
 - [Azure Storage account documentation](http://azure.microsoft.com/documentation/articles/storage-create-storage-account/)
