@@ -32,7 +32,7 @@ param disableGatewayInAdditionalLocation bool = false
 ])
 param minApiVersionToAllowOnControlPlane string = '2019-12-01'
 
-resource apiManagementService 'Microsoft.ApiManagement/service@2021-04-01-preview' = {
+resource apiManagementService 'Microsoft.ApiManagement/service@2020-12-01' = {
   name: apiManagementServiceName
   location: location
   sku: {
