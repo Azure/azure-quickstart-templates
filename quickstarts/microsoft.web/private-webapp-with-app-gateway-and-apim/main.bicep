@@ -56,6 +56,9 @@ param apiManagementManagementCustomHostnameBase64EncodedCertificate string
 @secure()
 param applicationGatewayTrustedRootBase64EncodedCertificate string
 
+@description('Flag to indicate if certificates used by Application Gateway were signed by a public Certificate Authority.')
+param useWellKnownCertificateAuthority bool = true
+
 // ---- Virtual Network parameters ----
 @description('The virtual network IP space to use for the new virutal network.')
 param vnetAddressPrefix string = '10.0.0.0/20'
@@ -103,6 +106,21 @@ var appServiceIntegrationSubnetId = resourceId('Microsoft.Network/virtualNetwork
 var privateEndpointSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetPrivateEndpointName)
 
 var webAppName = 'web-${baseName}'
+
+var applicationGatewayTrustedRootCertificates = [
+  {
+    name: 'trustedrootcert'
+    properties: {
+      data: applicationGatewayTrustedRootBase64EncodedCertificate
+    }
+  }
+]
+
+var applicationGatewayTrustedRootCertificateReferences = [
+  {
+    id: '${resourceId('Microsoft.Network/applicationGateways', applicationGatewayName)}/trustedRootCertificates/trustedrootcert'
+  }
+]
 
 // ---- Create Virtual Network with subnets ----
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-03-01' = {
@@ -606,14 +624,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
         }
       }
     ]
-    trustedRootCertificates: [
-      {
-        name: 'trustedrootcert1'
-        properties: {
-          data: applicationGatewayTrustedRootBase64EncodedCertificate
-        }
-      }
-    ]
+    trustedRootCertificates: useWellKnownCertificateAuthority ? null : applicationGatewayTrustedRootCertificates
     frontendIPConfigurations: [
       {
         name: 'frontend1'
@@ -677,11 +688,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           probe: {
             id: '${resourceId('Microsoft.Network/applicationGateways', applicationGatewayName)}/probes/apimgatewayprobe'
           }
-          trustedRootCertificates: [
-            {
-              id: '${resourceId('Microsoft.Network/applicationGateways', applicationGatewayName)}/trustedRootCertificates/trustedrootcert1'
-            }
-          ]
+          trustedRootCertificates: useWellKnownCertificateAuthority ? null : applicationGatewayTrustedRootCertificateReferences
         }
       }
       {
@@ -695,11 +702,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           probe: {
             id: '${resourceId('Microsoft.Network/applicationGateways', applicationGatewayName)}/probes/apimportalprobe'
           }
-          trustedRootCertificates: [
-            {
-              id: '${resourceId('Microsoft.Network/applicationGateways', applicationGatewayName)}/trustedRootCertificates/trustedrootcert1'
-            }
-          ]
+          trustedRootCertificates: useWellKnownCertificateAuthority ? null : applicationGatewayTrustedRootCertificateReferences
         }
       }
       {
@@ -713,11 +716,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           probe: {
             id: '${resourceId('Microsoft.Network/applicationGateways', applicationGatewayName)}/probes/apimmanagementprobe'
           }
-          trustedRootCertificates: [
-            {
-              id: '${resourceId('Microsoft.Network/applicationGateways', applicationGatewayName)}/trustedRootCertificates/trustedrootcert1'
-            }
-          ]
+          trustedRootCertificates: useWellKnownCertificateAuthority ? null : applicationGatewayTrustedRootCertificateReferences
         }
       }
     ]
@@ -862,11 +861,15 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
         }
       }
     ]
+    sslPolicy: {
+      policyType: 'Predefined'
+      policyName: 'AppGwSslPolicy20170401S'
+    }
     webApplicationFirewallConfiguration: {
       enabled: true
-      firewallMode: 'Prevention'
+      firewallMode: 'Detection'
       ruleSetType: 'OWASP'
-      ruleSetVersion: '3.1'
+      ruleSetVersion: '3.2'
       requestBodyCheck: true
       maxRequestBodySizeInKb: 128
       fileUploadLimitInMb: 100

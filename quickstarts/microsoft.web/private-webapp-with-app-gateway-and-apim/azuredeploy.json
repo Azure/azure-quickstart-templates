@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1008.15138",
-      "templateHash": "16967023254357681703"
+      "templateHash": "7224702123077746320"
     }
   },
   "parameters": {
@@ -105,6 +105,13 @@
         "description": "Used by Application Gateway, the Base64 encoded CER/CRT certificate corresponding to the root certificate for Application Gateway."
       }
     },
+    "useWellKnownCertificateAuthority": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Flag to indicate if certificates used by Application Gateway were signed by a public Certificate Authority."
+      }
+    },
     "vnetAddressPrefix": {
       "type": "string",
       "defaultValue": "10.0.0.0/20",
@@ -168,7 +175,20 @@
     "appGatewaySubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetAppGatewayName'))]",
     "appServiceIntegrationSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetAppServiceIntName'))]",
     "privateEndpointSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetPrivateEndpointName'))]",
-    "webAppName": "[format('web-{0}', variables('baseName'))]"
+    "webAppName": "[format('web-{0}', variables('baseName'))]",
+    "applicationGatewayTrustedRootCertificates": [
+      {
+        "name": "trustedrootcert",
+        "properties": {
+          "data": "[parameters('applicationGatewayTrustedRootBase64EncodedCertificate')]"
+        }
+      }
+    ],
+    "applicationGatewayTrustedRootCertificateReferences": [
+      {
+        "id": "[format('{0}/trustedRootCertificates/trustedrootcert', resourceId('Microsoft.Network/applicationGateways', variables('applicationGatewayName')))]"
+      }
+    ]
   },
   "resources": [
     {
@@ -759,14 +779,7 @@
             }
           }
         ],
-        "trustedRootCertificates": [
-          {
-            "name": "trustedrootcert1",
-            "properties": {
-              "data": "[parameters('applicationGatewayTrustedRootBase64EncodedCertificate')]"
-            }
-          }
-        ],
+        "trustedRootCertificates": "[if(parameters('useWellKnownCertificateAuthority'), null(), variables('applicationGatewayTrustedRootCertificates'))]",
         "frontendIPConfigurations": [
           {
             "name": "frontend1",
@@ -830,11 +843,7 @@
               "probe": {
                 "id": "[format('{0}/probes/apimgatewayprobe', resourceId('Microsoft.Network/applicationGateways', variables('applicationGatewayName')))]"
               },
-              "trustedRootCertificates": [
-                {
-                  "id": "[format('{0}/trustedRootCertificates/trustedrootcert1', resourceId('Microsoft.Network/applicationGateways', variables('applicationGatewayName')))]"
-                }
-              ]
+              "trustedRootCertificates": "[if(parameters('useWellKnownCertificateAuthority'), null(), variables('applicationGatewayTrustedRootCertificateReferences'))]"
             }
           },
           {
@@ -848,11 +857,7 @@
               "probe": {
                 "id": "[format('{0}/probes/apimportalprobe', resourceId('Microsoft.Network/applicationGateways', variables('applicationGatewayName')))]"
               },
-              "trustedRootCertificates": [
-                {
-                  "id": "[format('{0}/trustedRootCertificates/trustedrootcert1', resourceId('Microsoft.Network/applicationGateways', variables('applicationGatewayName')))]"
-                }
-              ]
+              "trustedRootCertificates": "[if(parameters('useWellKnownCertificateAuthority'), null(), variables('applicationGatewayTrustedRootCertificateReferences'))]"
             }
           },
           {
@@ -866,11 +871,7 @@
               "probe": {
                 "id": "[format('{0}/probes/apimmanagementprobe', resourceId('Microsoft.Network/applicationGateways', variables('applicationGatewayName')))]"
               },
-              "trustedRootCertificates": [
-                {
-                  "id": "[format('{0}/trustedRootCertificates/trustedrootcert1', resourceId('Microsoft.Network/applicationGateways', variables('applicationGatewayName')))]"
-                }
-              ]
+              "trustedRootCertificates": "[if(parameters('useWellKnownCertificateAuthority'), null(), variables('applicationGatewayTrustedRootCertificateReferences'))]"
             }
           }
         ],
@@ -1015,11 +1016,15 @@
             }
           }
         ],
+        "sslPolicy": {
+          "policyType": "Predefined",
+          "policyName": "AppGwSslPolicy20170401S"
+        },
         "webApplicationFirewallConfiguration": {
           "enabled": true,
-          "firewallMode": "Prevention",
+          "firewallMode": "Detection",
           "ruleSetType": "OWASP",
-          "ruleSetVersion": "3.1",
+          "ruleSetVersion": "3.2",
           "requestBodyCheck": true,
           "maxRequestBodySizeInKb": 128,
           "fileUploadLimitInMb": 100
