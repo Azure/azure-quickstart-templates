@@ -136,6 +136,30 @@
       "metadata": {
         "description": "Name of the network security group"
       }
+    },
+    "maaEndpoint": {
+      "type": "string",
+      "defaultValue": "https://sharedeus2.eus2.attest.azure.net/",
+      "allowedValues": [
+        "https://sharedcus.cus.attest.azure.net/",
+        "https://sharedcae.cae.attest.azure.net/",
+        "https://sharedeus2.eus2.attest.azure.net/",
+        "https://shareduks.uks.attest.azure.net/",
+        "https://sharedcac.cac.attest.azure.net/",
+        "https://sharedukw.ukw.attest.azure.net/",
+        "https://sharedneu.neu.attest.azure.net/",
+        "https://sharedeus.eus.attest.azure.net/",
+        "https://sharedeau.eau.attest.azure.net/",
+        "https://sharedncus.ncus.attest.azure.net/",
+        "https://sharedwus.wus.attest.azure.net/",
+        "https://sharedweu.weu.attest.azure.net/",
+        "https://sharedscus.scus.attest.azure.net/",
+        "https://sharedsasia.sasia.attest.azure.net/",
+        "https://sharedsau.sau.attest.azure.net/"
+      ],
+      "metadata": {
+        "description": "MAA Endpoint to attest to."
+      }
     }
   },
   "variables": {
@@ -166,9 +190,16 @@
       }
     },
     "addressPrefix": "10.0.0.0/16",
+    "ascReportingEndpoint": "https://sharedeus2.eus2.attest.azure.net/",
+    "disableAlerts": "false",
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('subnetName'))]",
+    "useAlternateToken": "false",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -278,6 +309,9 @@
       "apiVersion": "2020-12-01",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
       ],
@@ -313,6 +347,31 @@
             "vTPMEnabled": "[parameters('VTPM')]"
           },
           "securityType": "TrustedLaunch"
+        }
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('VTPM'), 'true'), equals(parameters('secureBoot'), 'true'))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'), '/', variables('extensionName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+      ],
+      "apiVersion": "2020-06-01",
+      "properties": {
+        "publisher": "[variables('extensionPublisher')]",
+        "type": "[variables('extensionName')]",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "AttestationEndpointCfg": {
+            "maaEndpoint": "[parameters('maaEndpoint')]",
+            "maaTenantName": "[variables('maaTenantName')]",
+            "ascReportingEndpoint": "[variables('ascReportingEndpoint')]",
+            "useAlternateToken": "[variables('useAlternateToken')]",
+            "disableAlerts": "[variables('disableAlerts')]"
+          }
         }
       }
     }

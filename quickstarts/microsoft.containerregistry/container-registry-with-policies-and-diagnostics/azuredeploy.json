@@ -1,0 +1,241 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "4838740942973970094"
+    }
+  },
+  "parameters": {
+    "acrName": {
+      "type": "string",
+      "defaultValue": "[format('acr{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Azure Container Registry name"
+      },
+      "maxLength": 50,
+      "minLength": 5
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure Container Registry location"
+      }
+    },
+    "acrSku": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium",
+        "Classic"
+      ],
+      "metadata": {
+        "description": "Azure Container Registry tier"
+      }
+    },
+    "enableSystemIdentity": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable System Assign Identity for Azure Container Registry"
+      }
+    },
+    "userAssignedIdentities": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "userAssignedIdentityResourceId": {},
+        "description": "The list of user identity resource ids to associate with the Azure Container Registry"
+      }
+    },
+    "enableAdminUser": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable admin user"
+      }
+    },
+    "publicNetworkAccess": {
+      "type": "string",
+      "defaultValue": "Enabled",
+      "allowedValues": [
+        "Disabled",
+        "Enabled"
+      ],
+      "metadata": {
+        "description": "Enable public network access"
+      }
+    },
+    "zoneRedundancy": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Disabled",
+        "Enabled"
+      ],
+      "metadata": {
+        "description": "Enable zone redundancy"
+      }
+    },
+    "ipRules": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "defaultAction": "The default action of allow or deny when no other rules match. Valid values are Allow/Deny",
+        "ipRules": [
+          {
+            "action": "Allow",
+            "value": "Specifies the IP or IP range in CIDR format. Only IPV4 address is allowed"
+          }
+        ],
+        "description": "The network rule set for a container registry"
+      }
+    },
+    "networkRuleBypassOptions": {
+      "type": "string",
+      "defaultValue": "None",
+      "allowedValues": [
+        "AzureServices",
+        "None"
+      ],
+      "metadata": {
+        "description": "Allow trusted Azure services to access a network restricted registry"
+      }
+    },
+    "policies": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "exportPolicy": {
+          "status": "The value that indicates whether the policy is enabled or not. Valid values are enabled/disabled"
+        },
+        "quarantinePolicy": {
+          "status": "The value that indicates whether the policy is enabled or not. Valid values are enabled/disabled"
+        },
+        "retentionPolicy": {
+          "status": "The value that indicates whether the policy is enabled or not. Valid values are enabled/disabled",
+          "days": "The number of days to retain an untagged manifest after which it gets purged"
+        },
+        "trustPolicy": {
+          "status": "The value that indicates whether the policy is enabled or not. Valid values are enabled/disabled"
+        },
+        "description": "Azure Container Registry policies"
+      }
+    },
+    "enableDeleteLock": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable delete lock"
+      }
+    },
+    "enableDiagnostics": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable diagnostic logs"
+      }
+    },
+    "diagnosticStorageAccountId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Storage account resource id. Only required if enableDiagnostics is set to true."
+      }
+    },
+    "logAnalyticsWorkspaceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Log analytics workspace resource id. Only required if enableDiagnostics is set to true."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "lockName": "[format('{0}-lck', parameters('acrName'))]",
+    "diagnosticsName": "[format('{0}-dgs', parameters('acrName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ContainerRegistry/registries",
+      "apiVersion": "2021-06-01-preview",
+      "name": "[parameters('acrName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('acrSku')]"
+      },
+      "identity": "[if(parameters('enableSystemIdentity'), createObject('type', 'SystemAssigned'), if(not(empty(parameters('userAssignedIdentities'))), createObject('type', 'UserAssigned', 'userAssignedIdentities', parameters('userAssignedIdentities')), null()))]",
+      "properties": {
+        "adminUserEnabled": "[parameters('enableAdminUser')]",
+        "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
+        "zoneRedundancy": "[parameters('zoneRedundancy')]",
+        "networkRuleBypassOptions": "[parameters('networkRuleBypassOptions')]",
+        "networkRuleSet": "[if(not(empty(parameters('ipRules'))), createObject('defaultAction', parameters('ipRules').defaultAction, 'ipRules', parameters('ipRules').ipRules), createObject())]",
+        "policies": "[parameters('policies')]"
+      }
+    },
+    {
+      "condition": "[parameters('enableDiagnostics')]",
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('acrName'))]",
+      "name": "[variables('diagnosticsName')]",
+      "properties": {
+        "workspaceId": "[if(empty(parameters('logAnalyticsWorkspaceId')), null(), parameters('logAnalyticsWorkspaceId'))]",
+        "storageAccountId": "[if(empty(parameters('diagnosticStorageAccountId')), null(), parameters('diagnosticStorageAccountId'))]",
+        "logs": [
+          {
+            "category": "ContainerRegistryRepositoryEvents",
+            "enabled": true
+          },
+          {
+            "category": "ContainerRegistryLoginEvents",
+            "enabled": true
+          }
+        ],
+        "metrics": [
+          {
+            "category": "AllMetrics",
+            "enabled": true
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableDeleteLock')]",
+      "type": "Microsoft.Authorization/locks",
+      "apiVersion": "2020-05-01",
+      "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('acrName'))]",
+      "name": "[variables('lockName')]",
+      "properties": {
+        "level": "CanNotDelete"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "name": {
+      "type": "string",
+      "value": "[parameters('acrName')]"
+    },
+    "id": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName'))]"
+    },
+    "acrLoginServer": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName'))).loginServer]"
+    }
+  }
+}

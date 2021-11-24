@@ -72,14 +72,16 @@
         }
     },
     "variables": {
-        "scriptUrl": "[uri(parameters('_artifactsLocation'),concat('setup.ps1',parameters('_artifactsLocationSasToken')))]",
+        "setupScriptUrl": "[uri(parameters('_artifactsLocation'),concat('setup.ps1',parameters('_artifactsLocationSasToken')))]",
+        "initScriptUrl": "[uri(parameters('_artifactsLocation'),concat('initialize.ps1',parameters('_artifactsLocationSasToken')))]",
+        "installDockerScriptUrl": "[uri(parameters('_artifactsLocation'),concat('InstallOrUpdateDockerEngine.ps1',parameters('_artifactsLocationSasToken')))]",
         "templateUrl": "[uri(parameters('_artifactsLocation'),concat('configs/docker-compose.yml.template',parameters('_artifactsLocationSasToken')))]",
         "sshdConfigUrl": "[uri(parameters('_artifactsLocation'),concat('configs/sshd_config_wpwd',parameters('_artifactsLocationSasToken')))]"
     },
     "resources": [
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2019-06-01",
+            "apiVersion": "2021-06-01",
             "name": "[toLower(parameters('storagename'))]",
             "location": "[parameters('location')]",
             "sku": {
@@ -93,7 +95,7 @@
         },
         {
             "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2019-11-01",
+            "apiVersion": "2021-05-01",
             "name": "publicIP",
             "location": "[parameters('location')]",
             "tags": {
@@ -152,6 +154,20 @@
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
                             "priority": 120,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "applications",
+                        "properties": {
+                            "description": "description",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8080-8089",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 130,
                             "direction": "Inbound"
                         }
                     }
@@ -219,7 +235,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2019-07-01",
+            "apiVersion": "2021-07-01",
             "name": "dockerhost",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -242,7 +258,7 @@
                     "imageReference": {
                         "publisher": "MicrosoftWindowsServer",
                         "offer": "WindowsServer",
-                        "sku": "datacenter-core-2004-with-containers-smalldisk",
+                        "sku": "2022-datacenter-core-smalldisk-g2",
                         "version": "latest"
                     },
                     "osDisk": {
@@ -275,7 +291,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "apiVersion": "2019-07-01",
+            "apiVersion": "2021-07-01",
             "name": "dockerhost/setupScript",
             "location": "[parameters('location')]",
             "tags": {
@@ -291,13 +307,15 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "[variables('scriptUrl')]",
+                        "[variables('setupScriptUrl')]",
+                        "[variables('initScriptUrl')]",
+                        "[variables('installDockerScriptUrl')]",
                         "[variables('sshdConfigUrl')]",
                         "[variables('templateUrl')]"
                     ]
                 },
                 "protectedSettings": {
-                    "commandToExecute": "[concat('powershell -ExecutionPolicy Bypass -file setup.ps1 -email ', parameters('email'), ' -publicdnsname ',reference(resourceId('Microsoft.Network/publicIPAddresses','publicIP')).dnsSettings.fqdn, ' -adminPwd ', parameters('adminPassword'))]"
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Bypass -file initialize.ps1 -mail ', parameters('email'), ' -publicdnsname ',reference(resourceId('Microsoft.Network/publicIPAddresses','publicIP')).dnsSettings.fqdn, ' -adminPwd ', parameters('adminPassword'))]"
                 }
             }
         }

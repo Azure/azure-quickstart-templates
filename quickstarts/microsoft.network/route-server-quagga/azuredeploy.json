@@ -196,14 +196,15 @@
         "subnet_rs1_Id": "[resourceId( 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'),'RouteServerSubnet' )]",
         "vHubIPconfigName": "[parameters('vHubIPconfigName')]",
         "bgpConnectionName": "[concat(variables('rsName'), '/', variables('rsBGPconnectionName'))]",
+        "rsPubIPName": "[concat(variables('rsName'),'-pubIP')]",
         "vmName": "[parameters('vmName')]",
         "nicName": "[concat(variables('vmName'),'-nic')]",
         "vmPubIPName": "[concat(variables('vmName'),'-pubIP')]",
         "vmPrivIP": "[parameters('vmPrivIP')]",
         "imageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "18.04-LTS",
+            "publisher": "canonical",
+            "offer": "0001-com-ubuntu-server-focal",
+            "sku": "20_04-lts",
             "version": "latest"
         },
         "vmSize": "[parameters('vmSize')]",
@@ -215,7 +216,7 @@
         {
             "comments": "network security group",
             "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2020-08-01",
+            "apiVersion": "2021-03-01",
             "name": "[variables('nsgName')]",
             "location": "[variables('location')]",
             "properties": {
@@ -240,7 +241,7 @@
         {
             "comments": "Create VNet1. subnet1 is assigned to RouteServerSubnet. subnet4 is used for the Ubuntu VM",
             "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2020-08-01",
+            "apiVersion": "2021-03-01",
             "name": "[variables('vnetName')]",
             "location": "[variables('location')]",
             "dependsOn": [
@@ -298,7 +299,7 @@
         {
             "comments": "create a virtual hub object",
             "type": "Microsoft.Network/virtualHubs",
-            "apiVersion": "2020-08-01",
+            "apiVersion": "2021-03-01",
             "name": "[variables('rsName')]",
             "location": "[variables('location')]",
             "dependsOn": [
@@ -311,24 +312,41 @@
             "resources": []
         },
         {
+            "comments": "public IP of the route server",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('rsPubIPName')]",
+            "apiVersion": "2021-03-01",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
             "comments": "create the Route Server and attach it to the RouteServerSubnet subnet",
             "type": "Microsoft.Network/virtualHubs/ipConfigurations",
-            "apiVersion": "2020-08-01",
+            "apiVersion": "2021-03-01",
             "name": "[concat(variables('rsName'), '/',variables('vHubIPconfigName'))]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualHubs', variables('rsName'))]"
+                "[resourceId('Microsoft.Network/virtualHubs', variables('rsName'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('rsPubIPName') )]"
             ],
             "properties": {
                 "privateIPAllocationMethod": "Dynamic",
                 "subnet": {
                     "id": "[variables('subnet_rs1_Id')]"
+                },
+                "publicIPAddress": {
+                    "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('rsPubIPName') )]"
                 }
             }
         },
         {
             "comments": "name of the BGP connection configured on the Route Server. The BGP connection can be created when the Microsoft.Network/virtualHubs/ipConfigurations deployment complete.",
             "type": "Microsoft.Network/virtualHubs/bgpConnections",
-            "apiVersion": "2020-08-01",
+            "apiVersion": "2021-03-01",
             "name": "[variables('bgpConnectionName')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualHubs/ipConfigurations', variables('rsName'), variables('vHubIPconfigName'))]"
@@ -342,7 +360,7 @@
             "comments": "public IP of the VM",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('vmPubIPName')]",
-            "apiVersion": "2020-08-01",
+            "apiVersion": "2021-03-01",
             "location": "[variables('location')]",
             "sku": {
                 "name": "Basic"
@@ -354,7 +372,7 @@
         {
             "comments": "Network interface of the VM attached to the subnet4",
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2020-08-01",
+            "apiVersion": "2021-03-01",
             "name": "[variables('nicName')]",
             "location": "[variables('location')]",
             "dependsOn": [
@@ -385,7 +403,7 @@
             "comments": "spin up the Azure VM",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[variables('vmName') ]",
-            "apiVersion": "2020-06-01",
+            "apiVersion": "2021-07-01",
             "location": "[variables('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
@@ -427,7 +445,7 @@
         {
             "comments": "customer script extension to install and set up Quagga",
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "apiVersion": "2020-06-01",
+            "apiVersion": "2021-07-01",
             "name": "[concat(variables('vmName'), '/installQuagga')]",
             "location": "[variables('location')]",
             "dependsOn": [

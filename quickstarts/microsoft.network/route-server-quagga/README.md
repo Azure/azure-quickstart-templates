@@ -47,6 +47,16 @@ Inside the vtysh shell, run the command to visualize the BGP table:
 vm1# show ip bgp
 ```
 
+To remove the peering in the Route Server:
+```powershell
+Remove-AzVirtualRouterPeer -ResourceGroupName <Resource_Group_Name> -PeerName <BGP_Connection_Name> -VirtualRouterName <Route_Server_Name>
+```
+
+To remove the Route Server:
+```powershell
+Remove-AzVirtualRouter -ResourceGroupName <Resource_Group_Name> -RouterName <Route_Server_Name>
+```
+
 `Tags: route server, BGP`
 
 <!--Image References-->
