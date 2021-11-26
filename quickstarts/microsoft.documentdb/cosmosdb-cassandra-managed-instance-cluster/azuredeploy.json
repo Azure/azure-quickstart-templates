@@ -1,0 +1,132 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+      "name": {
+          "type": "string",
+          "defaultValue": "[format('cassandra-mi-{0}', uniqueString(resourceGroup().id))]",
+          "metadata": {
+              "description": "The name for the Cassandra cluster to be created."
+          }
+      },
+      "location": {
+          "type": "string",
+          "defaultValue": "East US",
+          "metadata": {
+              "description": "Region to create the cluster in."
+          }
+      },
+      "initialCassandraAdminPassword": {
+          "type": "string",
+          "metadata": {
+              "description": "Initial password to set on the cluster for the admin account."
+          }
+      },
+      "subscriptionID": {
+          "type": "string",
+          "defaultValue": "[subscription().subscriptionId]",
+          "metadata": {
+              "description": "Subscription ID"
+          }
+      },        
+      "nodeCount": {
+          "type": "int",
+          "metadata": {
+              "description": "The number of nodes to create in this cluster."
+          }
+      },
+      "cidr1": {
+          "type": "string",
+          "defaultValue": "10.0.128.0/24",
+          "metadata": {
+              "description": "CIDR of the vnet and its subnet."
+          }
+      }, 
+      "vNetName": {
+          "type": "string",
+          "defaultValue": "cassandra-vnet1",
+          "metadata": {
+              "description": "VNet name"
+          }
+      },
+      "subNetName": {
+          "type": "string",
+          "defaultValue": "subnet",
+          "metadata": {
+              "description": "VNet name"
+          }
+      },        
+    "rgName": {
+          "type": "string",
+          "defaultValue": "[resourceGroup().name]",
+          "metadata": {
+        "description": "Resource group name"
+          }
+    }        
+  },
+  "variables": {
+      "networkContributorId": "4d97b98b-1d4f-4787-a291-c67834d212e7",
+      "cosmosDbPrincipalId": "e5007d2c-4b13-4a74-9b6a-605d99f03501",
+      "dcName": "[concat(parameters('name'), '-dc')]"
+  },
+  "resources": [  
+      {
+      
+          "name": "[parameters('vNetName')]",
+          "type": "Microsoft.Network/virtualNetworks",
+          "apiVersion": "2020-05-01",
+          "location": "[parameters('location')]",
+          "properties": {
+              "addressSpace": {
+                  "addressPrefixes": [
+                      "[parameters('cidr1')]"
+                  ]
+              },
+              "subnets": [
+                  {
+                      "name": "[parameters('subNetName')]",
+                      "properties": {
+                          "addressPrefix": "[parameters('cidr1')]"
+                      }
+                  }
+              ]
+          }
+      },   
+      {
+          "name": "[concat('cassandra-vnet1','/Microsoft.Authorization/',guid(subscription().subscriptionId, resourceGroup().id, 'cassandra-vnet1'))]",
+          "type": "Microsoft.Authorization/roleAssignments",
+          "apiVersion": "2020-04-01-preview",
+          "dependsOn": [ "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]"],
+          "properties": {
+              "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('networkContributorId'))]",
+              "principalId": "[variables('cosmosDbPrincipalId')]",
+              "principalType": "ServicePrincipal"
+          }
+      },        
+      {
+          "type": "Microsoft.DocumentDB/cassandraClusters",
+          "name": "[parameters('name')]",
+          "location": "[parameters('location')]",
+          "apiVersion": "2021-04-01-preview",
+          "properties": {
+              "initialCassandraAdminPassword": "[parameters('initialCassandraAdminPassword')]",
+              "delegatedManagementSubnetId": "[concat('/subscriptions/',parameters('subscriptionID'), '/resourceGroups/', parameters('rgName'),'/providers/Microsoft.Network/virtualNetworks/',parameters('vNetName'),'/subnets/',parameters('subNetName'))]"
+          }
+      },
+      {
+          "type": "Microsoft.DocumentDB/cassandraClusters/dataCenters",
+          "name": "[concat(parameters('name'), '/', variables('dcName'))]",
+          "location": "[parameters('location')]",
+          "apiVersion": "2021-04-01-preview",
+          "dependsOn": [
+              "[resourceId('Microsoft.DocumentDB/cassandraClusters', parameters('name'))]"
+          ],
+          "properties": {
+              "dataCenterLocation": "[parameters('location')]",
+              "delegatedSubnetId": "[concat('/subscriptions/',parameters('subscriptionID'), '/resourceGroups/', parameters('rgName'),'/providers/Microsoft.Network/virtualNetworks/',parameters('vNetName'),'/subnets/',parameters('subNetName'))]",
+              "nodeCount": "[parameters('nodeCount')]"
+          }
+      }
+  ],
+  "outputs": {}
+}
