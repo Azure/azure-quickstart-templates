@@ -1,5 +1,5 @@
 @description('Private DNS zone name')
-param privateDnsZoneName string = 'contoso.com'
+param privateDnsZoneName string
 
 @description('Enable automatic VM DNS registration in the zone')
 param vmRegistration bool = true
