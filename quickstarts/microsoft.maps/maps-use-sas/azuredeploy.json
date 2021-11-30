@@ -65,13 +65,6 @@
                 "description": "The pricing tier for the account. Use Gen1 for small-scale development. Use Gen2 for large-scale applications."
             }
         },
-        "guid": {
-            "type": "string",
-            "defaultValue": "[guid(resourceGroup().id)]",
-            "metadata": {
-                "description": "Input string for new GUID associated with assigning built in role types"
-            }
-        },
         "startDateTime": {
             "type": "string",
             "defaultValue": "[utcNow('u')]",
@@ -117,7 +110,7 @@
     },
     "variables": {
         "accountId": "[resourceId('Microsoft.Maps/accounts', parameters('accountName'))]",
-        "Azure Maps Data Reader": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '423170ca-a8f6-4b0f-8487-9e4eb8f49bfa')]",
+        "AzureMapsDataReader": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '423170ca-a8f6-4b0f-8487-9e4eb8f49bfa')]",
         "sasParameters": {
             "signingKey": "[parameters('signingKey')]",
             "principalId": "[parameters('userAssignedIdentityPrincipalId')]",
@@ -128,14 +121,20 @@
     },
     "resources": [
         {
-            "name": "[parameters('accountName')]",
             "type": "Microsoft.Maps/accounts",
             "apiVersion": "2021-12-01-preview",
+            "name": "[parameters('accountName')]",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "[parameters('pricingTier')]"
             },
             "kind": "[parameters('kind')]",
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[parameters('userAssignedIdentityResourceId')]": {}
+                }
+            },
             "properties": {
                 "cors": {
                     "corsRules": [
@@ -144,30 +143,24 @@
                         }
                     ]
                 }
-            },
-            "identity": {
-                "type": "UserAssigned",
-                "userAssignedIdentities": {
-                    "[parameters('userAssignedIdentityResourceId')]": {}
-                }
             }
         },
         {
-            "apiVersion": "2020-04-01-preview",
-            "name": "[concat(parameters('accountName'), '/Microsoft.Authorization/', parameters('guid'))]",
             "type": "Microsoft.Maps/accounts/providers/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[concat(parameters('accountName'), '/Microsoft.Authorization/', guid(parameters('userAssignedIdentityPrincipalId'), variables('AzureMapsDataReader'), resourceId('Microsoft.Maps/accounts', parameters('accountName'))))]",            
             "dependsOn": [
                 "[parameters('accountName')]"
             ],
             "properties": {
-                "roleDefinitionId": "[variables('Azure Maps Data Reader')]",
+                "roleDefinitionId": "[variables('AzureMapsDataReader')]",
                 "principalId": "[parameters('userAssignedIdentityPrincipalId')]",
                 "principalType": "ServicePrincipal"
             }
         },
         {
-            "apiVersion": "2021-04-01-preview",
             "type": "Microsoft.KeyVault/vaults/secrets",
+            "apiVersion": "2021-04-01-preview",
             "name": "[concat(parameters('keyVaultName'), '/', parameters('accountName'))]",
             "dependsOn": [
                 "[variables('accountId')]"
