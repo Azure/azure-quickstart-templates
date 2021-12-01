@@ -18,7 +18,13 @@
     "catalogId": {
       "type": "String",
       "metadata": {
-        "Description": "Catalog Id from ELM"
+        "Description": "Catalog Id from Entitlement Management"
+      }
+    },
+    "resourceApplicationId": {
+      "type": "String",
+      "metadata": {
+        "Description": "Resource application Id from Entitlement Management"
       }
     }
   },
@@ -36,7 +42,9 @@
         "definition": {
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "contentVersion": "1.0.0.0",
-          "parameters": {},
+          "parameters": {
+
+          },
           "triggers": {
             "manual": {
               "type": "Request",
@@ -44,10 +52,19 @@
               "inputs": {
                 "schema": {
                   "properties": {
+                    "AccessPackageAssignmentId": {
+                      "type": "string"
+                    },
+                    "AccessPackageAssignmentRequestId": {
+                      "type": "string"
+                    },
                     "AccessPackageId": {
                       "type": "string"
                     },
                     "AccessPackageName": {
+                      "type": "string"
+                    },
+                    "AccessPackagePolicyId": {
                       "type": "string"
                     },
                     "AccessPackagePolicyName": {
@@ -65,42 +82,16 @@
                     "Event": {
                       "type": "string"
                     },
-                    "GrantRequestCreatedDateTime": {
+                    "RequestCreatedDateTime": {
                       "type": "string"
                     },
-                    "Roles": {
-                      "items": {
-                        "properties": {
-                          "Id": {
-                            "type": "string"
-                          },
-                          "Name": {
-                            "type": "string"
-                          },
-                          "ResourceId": {
-                            "type": "string"
-                          },
-                          "ResourceName": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "Id",
-                          "Name",
-                          "ResourceId",
-                          "ResourceName"
-                        ],
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "UserEmail": {
+                    "TargetEmail": {
                       "type": "string"
                     },
-                    "UserId": {
+                    "TargetId": {
                       "type": "string"
                     },
-                    "UserName": {
+                    "TargetDisplayName": {
                       "type": "string"
                     }
                   },
@@ -115,37 +106,22 @@
               "actions": {
                 "Condition_2": {
                   "actions": {
-                    "Response_2": {
-                      "inputs": {
-                        "statusCode": 200
-                      },
-                      "kind": "Http",
-                      "type": "Response"
-                    }
+
                   },
                   "expression": {
                     "and": [
                       {
                         "equals": [
                           "@triggerBody()?['Event']",
-                          "CustomActionConnectionTest"
+                          "CustomExtensionConnectionTest"
                         ]
                       }
                     ]
                   },
+                  "runAfter": {
+
+                  },
                   "type": "If"
-                }
-              },
-              "else": {
-                "actions": {
-                  "Response": {
-                    "inputs": {
-                      "body": "[concat('CatalogId mismatch, expected CatalogId:  ',  parameters('catalogId'), ' Provided CatalogId: ', variables('catalogIdExpression'))]",
-                      "statusCode": 400
-                    },
-                    "kind": "Http",
-                    "type": "Response"
-                  }
                 }
               },
               "expression": {
@@ -153,22 +129,29 @@
                   {
                     "equals": [
                       "[variables('catalogIdExpression')]",
-                      "[parameters('catalogId')]"
+                      "[trim(parameters('catalogId'))]"
                     ]
                   }
                 ]
               },
+              "runAfter": {
+
+              },
               "type": "If"
             }
           },
-          "outputs": {}
+          "outputs": {
+
+          }
         },
-        "parameters": {},
+        "parameters": {
+
+        },
         "accessControl": {
           "triggers": {
             "openAuthenticationPolicies": {
               "policies": {
-                "ELMAuthPolicy": {
+                "AzureADEntitlementManagementAuthPolicy": {
                   "type": "AAD",
                   "claims": [
                     {
@@ -177,10 +160,27 @@
                     },
                     {
                       "name": "aud",
-                      "value": "[environment().authentication.audiences[0]]"
+                      "value": "[trim(parameters('resourceApplicationId'))]"
                     },
                     {
                       "name": "appid",
+                      "value": "810dcf14-1858-4bf2-8134-4c369fa3235b"
+                    }
+                  ]
+                },
+                "AzureADEntitlementManagementAuthPolicyV2App": {
+                  "type": "AAD",
+                  "claims": [
+                    {
+                      "name": "iss",
+                      "value": "[concat(environment().authentication.loginEndpoint, subscription().tenantId, '/v2.0')]"
+                    },
+                    {
+                      "name": "aud",
+                      "value": "[trim(parameters('resourceApplicationId'))]"
+                    },
+                    {
+                      "name": "azp",
                       "value": "810dcf14-1858-4bf2-8134-4c369fa3235b"
                     }
                   ]

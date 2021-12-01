@@ -9,6 +9,8 @@ export CLUSTERNAME=$6
 export DOMAINNAME=$7
 export OPENSHIFTUSER=$8
 export APIKEY=$9
+export CHANNEL=${10}
+export VERSION=${11}
 
 export INSTALLERHOME=/home/$SUDOUSER/.ibm
 export OPERATORNAMESPACE=ibm-common-services
@@ -37,41 +39,17 @@ var=$?
 echo "exit code: $var"
 done
 
-
-# Datarefinery Catalog source 
-
-runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-dr-catalogsource.yaml <<EOF
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
-  name: ibm-cpd-datarefinery-operator-catalog
-  namespace: openshift-marketplace
-spec:
-  sourceType: grpc
-  image: icr.io/cpopen/ibm-cpd-datarefinery-operator-catalog@sha256:27c6b458244a7c8d12da72a18811d797a1bef19dadf84b38cedf6461fe53643a
-  imagePullPolicy: Always
-  displayName: Cloud Pak for Data IBM DataRefinery
-  publisher: IBM
-EOF"
-
-# Create DR catalog source. 
-
-runuser -l $SUDOUSER -c "oc create -f $CPDTEMPLATES/ibm-dr-catalogsource.yaml"
-runuser -l $SUDOUSER -c "echo 'Sleeping for 1m' "
-runuser -l $SUDOUSER -c "sleep 1m"
-
-
-# WOS subscription and CR creation 
+# WSL subscription and CR creation 
 
 runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-wsl-sub.yaml <<EOF
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
   annotations: {}
-  name: ibm-cpd-ws-operator-catalog
+  name: ibm-cpd-ws-operator-catalog-subscription
   namespace: $OPERATORNAMESPACE
 spec:
-  channel: v2.0
+  channel: $CHANNEL
   installPlanApproval: Automatic
   name: ibm-cpd-wsl
   source: ibm-operator-catalog
@@ -83,15 +61,15 @@ apiVersion: ws.cpd.ibm.com/v1beta1
 kind: WS
 metadata:
   name: ws-cr
+  namespace: $CPDNAMESPACE
 spec:
-  version: \"4.0.0\"
+  version: \"$VERSION\"
   size: \"small\"
   storageClass: \"$STORAGECLASS_VALUE\"
   storageVendor: \"$STORAGEVENDOR_VALUE\"
   license:
     accept: true
     license: Enterprise
-  docker_registry_prefix: \"cp.icr.io/cp/cpd\"
 EOF"
 
 runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-wsl-nfs-cr.yaml <<EOF
@@ -99,14 +77,14 @@ apiVersion: ws.cpd.ibm.com/v1beta1
 kind: WS
 metadata:
   name: ws-cr
+  namespace: $CPDNAMESPACE
 spec:
-  version: \"4.0.0\"
+  version: \"$VERSION\"
   size: \"small\"
   storageClass: \"$STORAGECLASS_VALUE\"
   license:
     accept: true
     license: Enterprise
-  docker_registry_prefix: \"cp.icr.io/cp/cpd\"
 EOF"
 
 ## Creating Subscription 

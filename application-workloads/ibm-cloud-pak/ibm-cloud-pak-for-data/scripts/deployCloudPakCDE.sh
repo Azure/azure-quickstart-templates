@@ -9,6 +9,8 @@ export CLUSTERNAME=$6
 export DOMAINNAME=$7
 export OPENSHIFTUSER=$8
 export APIKEY=$9
+export CHANNEL=${10}
+export VERSION=${11}
 
 export INSTALLERHOME=/home/$SUDOUSER/.ibm
 export OPERATORNAMESPACE=ibm-common-services
@@ -42,32 +44,28 @@ done
 # Download cde case package. 
 runuser -l $SUDOUSER -c "wget https://raw.githubusercontent.com/IBM/cloud-pak/master/repo/case/ibm-cde-2.0.0.tgz -P $CPDTEMPLATES -A 'ibm-cde-2.0.0.tgz'"
 
-runuser -l $SUDOUSER -c "cloudctl case launch  \
-    --case $CPDTEMPLATES/ibm-cde-2.0.0.tgz     \
-    --namespace $OPERATORNAMESPACE             \
-    --inventory cdeOperatorSetup               \
-    --action installOperator                   \
-    --tolerance=1"
+runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-cde-sub.yaml <<EOF
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  labels:
+    app.kubernetes.io/instance: ibm-cde-operator-subscription
+    app.kubernetes.io/managed-by: ibm-cde-operator
+    app.kubernetes.io/name: ibm-cde-operator-subscription
+  name: ibm-cde-operator-subscription
+  namespace: ${OPERATORNAMESPACE}
+spec:
+  channel: $CHANNEL
+  installPlanApproval: Automatic
+  name: ibm-cde-operator
+  source: ibm-operator-catalog
+  sourceNamespace: openshift-marketplace
+EOF"
+
+runuser -l $SUDOUSER -c "oc project $OPERATORNAMESPACE; oc create -f $CPDTEMPLATES/ibm-cde-sub.yaml"
 
 runuser -l $SUDOUSER -c "echo 'Sleeping 2m for operator to install'"
 runuser -l $SUDOUSER -c "sleep 2m"
-
-runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-cde-cr.yaml <<EOF
-apiVersion: cde.cpd.ibm.com/v1
-kind: CdeProxyService
-metadata:
-  name: cde-cr
-  namespace: $CPDNAMESPACE
-spec:
-  version: 4.0.0
-  size: \"small\"
-  namespace: \"$CPDNAMESPACE\"
-  storageClass: \"$STORAGECLASS_VALUE\"
-  cert_manager_enabled: true
-  license:
-    accept: true
-    license: Enterprise
-EOF"
 
 # Check ibm-cpd-ae-operator pod status
 
@@ -91,6 +89,23 @@ do
 done
 
 ## Creating ibm-cde cr
+
+runuser -l $SUDOUSER -c "cat > $CPDTEMPLATES/ibm-cde-cr.yaml <<EOF
+apiVersion: cde.cpd.ibm.com/v1
+kind: CdeProxyService
+metadata:
+  name: cde-cr
+  namespace: $CPDNAMESPACE
+spec:
+  version: $VERSION
+  size: \"small\"
+  namespace: \"$CPDNAMESPACE\"
+  storageClass: \"$STORAGECLASS_VALUE\"
+  cert_manager_enabled: true
+  license:
+    accept: true
+    license: Enterprise
+EOF"
 
 runuser -l $SUDOUSER -c "oc project $CPDNAMESPACE; oc create -f $CPDTEMPLATES/ibm-cde-cr.yaml"
 
