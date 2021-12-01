@@ -1,0 +1,138 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vm_name": {
+            "defaultValue": "kemp-flowmon-vm",
+            "type": "String"
+        },
+        "os_disk": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "data_disk": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "nic0": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "nic1": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "nic2": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "adminPasswordOrKey": {
+            "defaultValue": "",
+            "type": "secureString"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2021-03-01",
+            "name": "[parameters('vm_name')]",
+            "location": "eastus",
+            "plan": {
+                "name": "v1101-byol",
+                "product": "flowmon_collector",
+                "publisher": "flowmon"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_B4ms"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "flowmon",
+                        "offer": "flowmon_collector",
+                        "sku": "v1101-byol",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('vm_name'), '_OsDisk_1_69c746b8dae1467aa06c7351781777cc')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "writeAcceleratorEnabled": false,
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS",
+                            "id": "[parameters('os_disk')]"
+                        },
+                        "diskSizeGB": 40
+                    },
+                    "dataDisks": [
+                        {
+                            "lun": 1,
+                            "name": "DRendon-Flowmon-data-disk",
+                            "createOption": "Attach",
+                            "caching": "None",
+                            "writeAcceleratorEnabled": false,
+                            "managedDisk": {
+                                "storageAccountType": "Standard_LRS",
+                                "id": "[parameters('data_disk')]"
+                            },
+                            "diskSizeGB": 100,
+                            "toBeDetached": false
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vm_name')]",
+                    "adminUsername": "flowmon",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "/home/flowmon/.ssh/authorized_keys",
+                                    "keyData": "[parameters('adminPasswordOrKey')]"
+                                }
+                            ]
+                        },
+                        "provisionVMAgent": true,
+                        "patchSettings": {
+                            "patchMode": "ImageDefault",
+                            "assessmentMode": "ImageDefault"
+                        }
+                    },
+                    "secrets": [],
+                    "allowExtensionOperations": true,
+                    "requireGuestProvisionSignal": true
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[parameters('nic0')]",
+                            "properties": {
+                                "primary": true
+                            }
+                        },
+                        {
+                            "id": "[parameters('nic1')]",
+                            "properties": {
+                                "primary": false
+                            }
+                        },
+                        {
+                            "id": "[parameters('nic2')]",
+                            "properties": {
+                                "primary": false
+                            }
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                }
+            }
+        }
+    ]
+}
