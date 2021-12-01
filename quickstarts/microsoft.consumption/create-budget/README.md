@@ -27,9 +27,9 @@ Before running the script, edit *azuredeploy.parameters.json* and replace the sa
 - **Time Grain**: The time covered by a budget. Tracking of the amount will be reset based on the time grain. Allowed values are: _Monthly_, _Quarterly_, _Annually_.
 - **Start Date**: The start date must be first of the month in `YYYY-MM-DD` format and should be less than the end date. Budget start date must be on or after June 1, 2017. Future start date shouldn't be more than three months. Past start date should be selected within the **Time Grain** period.
 - **End Date**: Any date after the start date in in `YYYY-MM-DD` format.
-- **First Threshold**: It's the first threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It's always percent and has to be between 0 and 1000.
-- **Second Threshold**: It's the second threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It's always percent and has to be between 0 and 1000.
+- **First Threshold**: It's the first threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It's always percent and has to be between 0.01 and 1000.
+- **Second Threshold**: It's the second threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It's always percent and has to be between 0.01 and 1000.
 - **Contact Emails**: The list of email addresses to send the budget notification to when the threshold is exceeded. It accepts array of strings.
 - **Contact Groups**: The list of action groups to send the budget notification to when the threshold is exceeded. It accepts array of strings.
-- **Resource Groups Filter**: The list of filters on resource groups. It accepts array of strings.
-- **Meter Categories Filter**: The list of filters on meters. It accepts array of strings.
+- **Resource Groups Filter**: The list of filters on resource groups. It accepts array of strings. This should not be an empty array.
+- **Meter Categories Filter**: The list of filters on meters. It accepts array of strings. This should not be an empty array.
