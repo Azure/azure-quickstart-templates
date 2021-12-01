@@ -1410,6 +1410,37 @@
       }
     },
     {
+      "comments": "Grant the AKS cluster ingress controller pod managed identity with reader role permissions over Key Vault; paired with the Access Policy, this allows our ingress controller to pull certificates.",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[variables('aksReaderRoleAssignmentName')]",
+      "dependsOn": [
+        "[variables('keyVaultId')]",
+        "[variables('aadPodIdentityUserDefinedManagedIdentityId')]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables('readerRoleId')]",
+        "principalId": "[reference(variables('aadPodIdentityUserDefinedManagedIdentityId')).principalId]",
+        "principalType": "ServicePrincipal",
+        "scope": "[variables('keyVaultId')]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[variables('acrPullRoleAssignmentName')]",
+      "dependsOn": [
+        "[variables('aksClusterId')]", 
+        "[variables('acrId')]"
+        ],
+      "properties": {
+        "roleDefinitionId": "[variables('acrPullRoleId')]",
+        "principalId": "[reference(variables('aksClusterId'), '2020-12-01', 'Full').properties.identityProfile.kubeletidentity.objectId]",
+        "principalType": "ServicePrincipal",
+        "scope": "[variables('acrId')]"
+      }
+    },
+    {
       "type": "Microsoft.KeyVault/vaults",
       "apiVersion": "2019-09-01",
       "name": "[parameters('keyVaultName')]",
@@ -1485,21 +1516,6 @@
               }
             ]
           }
-        },
-        {
-          "comments": "Grant the AKS cluster ingress controller pod managed identity with reader role permissions over Key Vault; paired with the Access Policy, this allows our ingress controller to pull certificates.",
-          "type": "providers/roleAssignments",
-          "apiVersion": "2020-04-01-preview",
-          "name": "[variables('aksReaderRoleAssignmentName')]",
-          "dependsOn": [
-            "[variables('keyVaultId')]",
-            "[variables('aadPodIdentityUserDefinedManagedIdentityId')]"
-          ],
-          "properties": {
-            "roleDefinitionId": "[variables('readerRoleId')]",
-            "principalId": "[reference(variables('aadPodIdentityUserDefinedManagedIdentityId')).principalId]",
-            "principalType": "ServicePrincipal"
-          }
         }
       ]
     },
@@ -1546,20 +1562,6 @@
         "networkRuleBypassOptions": "AzureServices"
       },
       "resources": [
-        {
-          "type": "providers/roleAssignments",
-          "apiVersion": "2020-04-01-preview",
-          "name": "[variables('acrPullRoleAssignmentName')]",
-          "dependsOn": [
-            "[variables('aksClusterId')]", 
-            "[variables('acrId')]"
-            ],
-          "properties": {
-            "roleDefinitionId": "[variables('acrPullRoleId')]",
-            "principalId": "[reference(variables('aksClusterId'), '2020-12-01', 'Full').properties.identityProfile.kubeletidentity.objectId]",
-            "principalType": "ServicePrincipal"
-          }
-        },
         {
           "type": "providers/diagnosticSettings",
           "apiVersion": "2017-05-01-preview",
