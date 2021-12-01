@@ -1,4 +1,4 @@
-# Create an AKS compute target with a Private IP address
+# Create an Azure ML monitoring dashboard
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-sample-monitoring-dashboard/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.machinelearningservices/machine-learning-sample-monitoring-dashboard/PublicDeployment.svg)
