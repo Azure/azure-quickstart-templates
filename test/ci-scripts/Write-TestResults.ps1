@@ -540,7 +540,7 @@ foreach ($badge in $badges) {
 }
 
 # Upload BPA results file:
-$templateAnalyzerLogFileName = "$($ENV:BUILD_BUILDNUMBER)_$RowKey"
+$templateAnalyzerLogFileName = "$($ENV:BUILD_BUILDNUMBER)_$RowKey.txt"
 Write-Host "Uploading TemplateAnalyzer log file: $templateAnalyzerLogFileName"
 try {
     Set-AzStorageBlobContent -Container $TemplateAnalyzerLogsContainerName `
