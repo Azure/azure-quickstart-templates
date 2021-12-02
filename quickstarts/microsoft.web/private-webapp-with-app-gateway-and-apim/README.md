@@ -130,23 +130,45 @@ The following prerequisites are required to use this quickstart:
 
 ## Deployment steps
 
-You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+Please follow the instructions below for a command line (Azure CLI) deployment.
 
-You will need to either have certificates to use for the trusted root domain, and API Management's developer portal, management, and proxy endpoints.  The certificates will need to be Base64 encoded and the Base64 encoded text added to the appropriate parameter values when executing the template.  
+You will need certificates to use for custom domains for Application Gateway and API Management's developer portal, management, and proxy endpoints.  The certificates will need to be Base64 encoded and the Base64 encoded text added to the appropriate parameter values when executing the template.  
 
 The included [create-certs.sh](./scripts/create-certs.sh) script will create a .txt file for each .PFX and .CRT file.  The .txt file includes the Base64 encoded version of the certificate.
 
+```shell
+./create-certs.sh *.contoso.net
+```
+
+> Be sure the domain used in the parameters file matches the hostname of the certificates.  For example, if the certificates were created using `*.contoso.net`, the parameters file should use `contoso.net` for the domains.
+
 1. Execute the included [create-certs.sh](./scripts/create-certs.sh) script to create self-signed certificates useful for testing.
-1. Copy the text of the .txt file into the appropriate parameter fields in the azuredeploy.parameters.json file.  Assuming the root domain name for the certificates is _contoso.net_, copy the text from the appropriate .txt file to the corresponding parameter, as shown in the table below.
-    | Certificate file               | Template parameter                                               |
-    | ------------------------------ | ---------------------------------------------------------------- |
-    | portal.contoso.net.pfx.txt     | apiManagementPortalCustomHostnameBase64EncodedPfxCertificate     |
-    | api.contoso.net.pfx.txt        | apiManagementProxyCustomHostnameBase64EncodedPfxCertificate      |
-    | management.contoso.net.pfx.txt | apiManagementManagementCustomHostnameBase64EncodedPfxCertificate |
-    | contoso.net.crt.txt            | applicationGatewayTrustedRootBase64EncodedPfxCertificate         |
-1. The script creates a random password for the self-signed certificates.  Copy the value in the _pass_ file to the the following fields in the parameter file:
-    1. apiManagementProxyCertificatePassword
-    1. apiManagementManagementCertificatePassword
-    1. apiManagementPortalCertificatePassword
+1. Copy the contents of the .txt file into the appropriate parameter fields in the azuredeploy.parameters.json file.  Assuming the root domain name for the certificates is _*.contoso.net_, copy the text from the appropriate .txt file to the corresponding parameter, as shown in the table below.
+    | Certificate file | Template parameter                                            |
+    | ---------------- | ------------------------------------------------------------- |
+    | domain.pfx.txt   | apiManagementPortalCustomHostnameBase64EncodedCertificate     |
+    | domain.pfx.txt   | apiManagementProxyCustomHostnameBase64EncodedCertificate      |
+    | domain.pfx.txt   | apiManagementManagementCustomHostnameBase64EncodedCertificate |
+    | rootCA.crt.txt   | applicationGatewayTrustedRootBase64EncodedCertificate         |
+    | pass             | apiManagementPortalCertificatePassword                        |
+    | pass             | apiManagementProxyCertificatePassword                         |
+    | pass             | apiManagementManagementCertificatePassword                    |
 1. Provide values for the other required fields in the parameters file.
+    1. If using a self-signed certificate (not a certificate from Certificate Authority), set the `useWellKnownCertificateAuthority` parameter to "false".
 1. Deploy the template.
+
+An alternative approach is to read in the certificate files as part of the Azure CLI command to deploy the template.
+
+```shell
+    az deployment group create \
+    --resource-group <RESOURCE_GROUP_NAME> \
+    --template-file main.bicep \
+    --parameters azuredeploy.parameters.json \
+      applicationGatewayTrustedRootBase64EncodedCertificate=$(cat ./scripts/.certs/rootCA.crt.txt) \
+      apiManagementPortalCustomHostnameBase64EncodedCertificate=$(cat ./scripts/.certs/domain.pfx.txt) \
+      apiManagementProxyCustomHostnameBase64EncodedCertificate=$(cat ./scripts/.certs/domain.pfx.txt) \
+      apiManagementManagementCustomHostnameBase64EncodedCertificate=$(cat ./scripts/.certs/domain.pfx.txt) \
+      apiManagementPortalCertificatePassword=$(cat ./scripts/.certs/pass) \
+      apiManagementProxyCertificatePassword=$(cat ./scripts/.certs/pass) \
+      apiManagementManagementCertificatePassword=$(cat ./scripts/.certs/pass)
+```
