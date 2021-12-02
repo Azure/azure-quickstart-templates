@@ -1,0 +1,74 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure region where resources in the template should be deployed."
+      }
+    },
+    "machineName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the machine."
+      }
+    },
+    "artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "artifactsLocationSasToken": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation."
+      }
+    },
+    "configurationFolder": {
+      "type": "string",
+      "defaultValue": "configuration",
+      "metadata": {
+        "description": "Name of subfolder containing the configuration package."
+      }
+    },
+    "configurationFileName": {
+      "type": "string",
+      "defaultValue": "netcore6.zip",
+      "metadata": {
+        "description": "File name of the configuration package."
+      }
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.HybridCompute/machines",
+      "apiVersion": "2021-05-20",
+      "name": "[parameters('machineName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.GuestConfiguration/guestConfigurationAssignments",
+      "apiVersion": "2020-06-25",
+      "scope": "[format('Microsoft.HybridCompute/machines/{0}', parameters('machineName'))]",
+      "name": "netcore6",
+      "location": "[parameters('location')]",
+      "properties": {
+        "guestConfiguration": {
+          "assignmentType": "ApplyAndMonitor",
+          "name": "netcore6",
+          "contentUri": "[uri(parameters('artifactsLocation'), format('{0}/{1}{2}', parameters('configurationFolder'), parameters('configurationFileName'), parameters('artifactsLocationSasToken')))]",
+          "contentHash": "1B7C29568FE05CB0C6A2BF097777F3051E584A66AB23B6AE36BA97ADCE42126D",
+          "version": "1.0.0"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.HybridCompute/machines', parameters('machineName'))]"
+      ]
+    }
+  ]
+}
