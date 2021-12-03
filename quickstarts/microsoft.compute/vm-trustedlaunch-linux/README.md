@@ -13,7 +13,7 @@
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-trustedlaunch-linux%2Fazuredeploy.json)
 
-This template deploys a [trusted launch](https://docs.microsoft.com/en-us/azure/virtual-machines/trusted-launch) capable Linux virtual machine using the latest patched version. By default, this will deploy a Standard_D2s_v3 size virtual machine in the resource group location and return the fully qualified domain name of the virtual machine.
+This template deploys a [trusted launch](https://docs.microsoft.com/en-us/azure/virtual-machines/trusted-launch) capable Linux virtual machine using the latest patched version. If you enable Secureboot and vTPM, the Guest Attestation extension will be installed on your VM. This extension will perform remote [attestation](https://docs.microsoft.com/en-us/windows/security/information-protection/tpm/tpm-fundamentals#measured-boot-with-support-for-attestation) by the cloud. By default, this will deploy a Standard_D2s_v3 size virtual machine in the resource group location and return the fully qualified domain name of the virtual machine.
 
 If you are new to Azure virtual machines, see:
 
