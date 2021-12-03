@@ -37,11 +37,11 @@ function Analyze-Template {
     )
 
     if ($templateFilePath -and (Test-Path $templateFilePath)) {
-        $params = @{ "t" = $templateFilePath }
+        $params = @{}
         if ($parametersFilePath -and (Test-Path $parametersFilePath)) {
             $params.Add("p", $parametersFilePath)
         } 
-        $testOutput = & $templateAnalyzer @params
+        $testOutput = & $templateAnalyzer analyze-template $templateFilePath @params
     }
     $testOutput = $testOutput -join "`n"
 

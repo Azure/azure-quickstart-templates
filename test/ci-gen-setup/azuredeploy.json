@@ -1,0 +1,146 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "zoneName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the DNS zone to be created.  Must have at least 2 segements, e.g. hostname.org"
+      }
+    },
+    "CNAMEs": {
+      "type": "array",
+      "metadata": {
+        "description": "object array for cname record values",
+        "sampleValue": {
+          "name": "name of the record",
+          "value": "record value",
+          "TTL": "TTL"
+        }
+      }
+    },
+    "As": {
+      "type": "array",
+      "metadata": {
+        "description": "object array for A record values",
+        "sampleValue": {
+          "name": "name of the record",
+          "value": "record value",
+          "TTL": "TTL"
+        }
+      }
+    },
+    "TXTs": {
+      "type": "array",
+      "metadata": {
+        "description": "object array for TXT record values",
+        "sampleValue": {
+          "name": "name of the record",
+          "value": "record value",
+          "TTL": "TTL"
+        }
+      }
+    },
+    "principalId": {
+      "type": "string",
+      "metadata": {
+        "description": "The principalId of the limit service principal used to deploy templates"
+      }
+    }
+  },
+  "variables": {
+    "DNSZoneContributor": "[subscriptionResourceId('Microsoft.Authorization/roleAssignments', 'befefa01-2a29-4197-83a8-272ff33ce314')]",
+    "roleAssignmentName": "[guid(parameters('principalId'), variables('DNSZoneContributor'), resourceId('Microsoft.Network/dnsZones', parameters('zoneName')))]"
+  },
+
+  "resources": [
+    {
+      "type": "Microsoft.Network/dnsZones",
+      "apiVersion": "2018-05-01",
+      "name": "[parameters('zoneName')]",
+      "location": "global",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Network/dnsZones/A",
+      "apiVersion": "2018-05-01",
+      "name": "[concat(parameters('zoneName'), '/', parameters('As')[copyIndex()].name)]",
+      "location": "global",
+      "copy": {
+        "name": "As",
+        "count": "[length(parameters('As'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/dnsZones', parameters('zoneName'))]"
+      ],
+      "properties": {
+        "TTL": 3600,
+        "Arecords": [ // can have multiple A records here, not sure how that's modelled (and not needed in QSs)
+          {
+            "ipv4Address": "[parameters('As')[copyIndex()].value]"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/dnszones/TXT",
+      "name": "[concat(parameters('zoneName'), '/', parameters('TXTs')[copyIndex()].name)]",
+      "apiVersion": "2016-04-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/dnsZones', parameters('zoneName'))]"
+      ],
+      "copy": {
+        "name": "TXTs",
+        "count": "[length(parameters('TXTs'))]"
+      },
+      "properties": {
+        "TTL": "[parameters('TXTs')[copyIndex()].TTL]",
+        "TXTRecords": [
+          {
+            "value": [
+              "[parameters('TXTs')[copyIndex()].value]"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/dnszones/CNAME",
+      "name": "[concat(parameters('zoneName'),'/', parameters('CNAMEs')[copyIndex()].name)]",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/dnsZones', parameters('zoneName'))]"
+      ],
+      "copy": {
+        "name": "cnames",
+        "count": "[length(parameters('CNAMEs'))]"
+      },
+      "properties": {
+        "TTL": "[parameters('CNAMEs')[copyIndex()].TTL]",
+        "CNAMERecord": {
+          "cname": "[parameters('CNAMEs')[copyIndex()].value]" // awverify.azurequickstarts-ci.azurewebsites.us 
+        }
+      }
+    },
+    {
+      "scope": "[concat('Microsoft.Network/dnsZones/', parameters('zoneName'))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2021-04-01-preview",
+      "name": "[variables('roleAssignmentName')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/dnsZones', parameters('zoneName'))]"
+      ],
+      "properties": {
+        "principalId": "[parameters('principalId')]",
+        "roleDefinitionId": "[variables('DNSZoneContributor')]",
+        "principalType": "ServicePrincipal"
+      }
+    }
+  ],
+  "outputs": {
+    "nameServers": {
+      "type": "array",
+      "value": "[reference(parameters('zoneName')).nameServers]"
+    }
+  }
+}
