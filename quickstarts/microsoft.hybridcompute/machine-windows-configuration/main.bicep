@@ -20,11 +20,6 @@ param configurationFileName string = 'netcore6.zip'
 resource machine 'Microsoft.HybridCompute/Machines@2021-05-20' = {
   name: machineName
   location: location
-  identity: {
-    type:'SystemAssigned'
-  }
-  properties:{
-  }
 }
 
 resource configuration 'Microsoft.GuestConfiguration/guestConfigurationAssignments@2020-06-25' = {
