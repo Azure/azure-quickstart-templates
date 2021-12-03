@@ -71,17 +71,24 @@ jobs:
           # Install PowerShell
           sudo apt-get install -y powershell
 
+      - name: Sync master
+        uses: actions/checkout@v2.3.4
+        with:
+          ref: master
+          fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+
       - uses: actions/checkout@v2.3.4
         with:
           fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
 
       - name: Find sample folder
         run: |
+          git status
           # Get path of last file checked in
           pwd
           cd $GITHUB_WORKSPACE
           pwd
-          LAST_PATH=$( git log --pretty="" --name-only -n 100 master... | fgrep -v ".github" | head -1 )
+          LAST_PATH=$( git log --pretty="" --name-only -n 100 origin/master... -- | fgrep -v ".github" | head -1 )
           echo Last file modified: $LAST_PATH
 
           # Look for the main template file in this file's path or parents
@@ -106,6 +113,7 @@ jobs:
 
           if [ ! $FOUNDFOLDER_PATH ]; then
               echo "Could not find main.bicep or azdeploy.json in folder or parents of $SAMPLEFOLDER_PATH" 1>&2
+              exit 1
           fi
 
           echo "SAMPLEFOLDER_PATH=$FOUNDFOLDER_PATH" >> $GITHUB_ENV
