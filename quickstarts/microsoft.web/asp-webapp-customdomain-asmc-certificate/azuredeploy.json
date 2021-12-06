@@ -1,0 +1,244 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "domainName": {
+            "type": "string",
+            "metadata": {
+                "description": "Type your domain name. Ex.: contoso.com"
+            }
+        },
+        "subDomainName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Type your subdomain name. Ex.: www. Leave it blank for APEX/Naked domain"
+            }
+        },
+        "websiteName": {
+            "type": "string",
+            "metadata": {
+                "description": "Web App name that will host the Custom Domain."
+            }
+        },
+        "hostingPlanName": {
+            "type": "string",
+            "metadata": {
+                "description": "You App Service Plan where it is running your app."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "location of app service plan."
+            }
+        },
+        "webResourceGroupName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Name of the resourceGroup."
+            }
+        }
+    },
+    "variables": {
+        "cert": "[toLower(concat(parameters('subDomainName'), '.', parameters('domainName')))]",
+        "fqdndomain": "[if(not(empty(parameters('subDomainName'))), variables('cert'), parameters('domainName'))]",
+        "cnametemp": "[if(not(empty(parameters('subDomainName'))) , parameters('subDomainName') , 'nothing')]",
+        "asuidTemp": "[if(not(empty(parameters('subDomainName'))) , 'asuid.' , 'asuid')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/dnszones",
+            "apiVersion": "2018-05-01",
+            "name": "[parameters('domainName')]",
+            "location": "global",
+            "properties": {
+                "zoneType": "Public"
+            }
+        },
+        {
+            "condition": "[not(equals(parameters('subDomainName'), ''))]",
+            "type": "Microsoft.Network/dnszones/CNAME",
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('domainName'), '/', variables('cnametemp'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/dnszones', parameters('domainName'))]"
+            ],
+            "properties": {
+                "TTL": 3600,
+                "CNAMERecord": {
+                    "cname": "[concat(parameters('websiteName'), '.azurewebsites.net')]"
+                }
+            }
+        },
+        {
+            "condition": "[equals(parameters('subDomainName'), '')]",
+            "type": "Microsoft.Network/dnszones/A",
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('domainName'), '/', '@')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/dnszones', parameters('domainName'))]"
+            ],
+            "properties": {
+                "TTL": 3600,
+                "ARecords": [
+                    {
+                        "ipv4Address": "[reference(resourceId(parameters('webResourceGroupName'),'Microsoft.Web/sites', parameters('websiteName')), '2020-09-01', 'Full').properties.inboundIpAddress]"
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('domainName'), '/', variables('asuidTemp'), parameters('subDomainName'))]",
+            "type": "Microsoft.Network/dnszones/TXT",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/dnszones', parameters('domainName'))]"
+            ],
+            "properties": {
+                "TTL": 3600,
+                "TXTRecords": [
+                    {
+                        "value": [
+                            "[reference(resourceId(parameters('webResourceGroupName'),'Microsoft.Web/sites', parameters('websiteName')), '2020-09-01').customDomainVerificationId]"
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "nestedTemplate-CreateDNSName",
+            "resourceGroup": "[parameters('webResourceGroupName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/dnszones/A', parameters('domainName'), '@')]",
+                "[resourceId('Microsoft.Network/dnszones/CNAME', parameters('domainName'), variables('cnametemp'))]",
+                "[resourceId('Microsoft.Network/dnszones/TXT', parameters('domainName'), concat(variables('asuidTemp'), parameters('subDomainName')))]"
+            ],
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "Inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "subDomainName": {
+                        "value": "[parameters('subDomainName')]"
+                    },
+                    "websiteName": {
+                        "value": "[parameters('websiteName')]"
+                    },
+                    "hostingPlanName": {
+                        "value": "[parameters('hostingPlanName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "fqdndomain": {
+                        "value": "[variables('fqdndomain')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "subDomainName": {
+                            "type": "string"
+                        },
+                        "websiteName": {
+                            "type": "string"
+                        },
+                        "hostingPlanName": {
+                            "type": "string"
+                        },
+                        "location": {
+                            "type": "string"
+                        },
+                        "fqdndomain": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.Web/sites/hostNameBindings",
+                            "apiVersion": "2021-02-01",
+                            "name": "[concat(parameters('websiteName'), '/', parameters('fqdndomain'))]",
+                            "location": "[parameters('location')]",
+                            "properties": {
+                                "azureResourceName": "[concat('Microsoft.Web/sites/', parameters('websiteName'))]",
+                                "azureResourceType": "Website",
+                                "customHostNameDnsRecordType": "[if(empty(parameters('subDomainName')), 'A', 'CName')]",
+                                "hostNameType": "Managed",
+                                "siteName": "[parameters('websiteName')]"
+                            }
+                        },
+                        {
+                            "type": "Microsoft.Web/certificates",
+                            "apiVersion": "2020-09-01",
+                            "name": "[parameters('fqdndomain')]",
+                            "location": "[parameters('location')]",
+                            "dependsOn": [
+                                "[resourceId('Microsoft.Web/sites/hostNameBindings', parameters('websiteName'), parameters('fqdndomain'))]"
+                            ],
+                            "properties": {
+                                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+                                "canonicalName": "[parameters('fqdndomain')]",
+                                "domainValidationMethod": "[if(empty(parameters('subDomainName')),'http-token', 'cname-delegation')]"
+                            }
+                        },
+                        {
+                            "name": "updateHostNameBindings",
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "2021-04-01",
+                            "dependsOn": [
+                                "[resourceId('Microsoft.Web/certificates', parameters('fqdndomain'))]"
+                            ],
+                            "properties": {
+                                "mode": "Incremental",
+                                "template": {
+                                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                    "contentVersion": "1.0.0.0",
+                                    "variables": {},
+                                    "resources": [
+                                        {
+                                            "type": "Microsoft.Web/sites/hostNameBindings",
+                                            "apiVersion": "2021-02-01",
+                                            "name": "[concat(parameters('websiteName'), '/', parameters('fqdndomain'))]",
+                                            "location": "[parameters('location')]",
+                                            "properties": {
+                                                "sslState": "SniEnabled",
+                                                "Thumbprint": "[reference(resourceId('Microsoft.Web/certificates', parameters('fqdndomain'))).thumbprint]"
+                                            }
+                                        }
+                                    ],
+                                    "outputs": {}
+                                }
+                            }
+                        }
+
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "subDomainName": {
+            "type": "string",
+            "value": "[concat(parameters('websiteName'), '.', parameters('domainName'))]"
+        },
+        "cert": {
+            "type": "string",
+            "value": "[concat(parameters('websiteName'), '.', parameters('domainName'), '-', parameters('websiteName'))]"
+        },
+        "fqdndomain": {
+            "type": "string",
+            "value": "[concat(variables('fqdndomain'))]"
+        },
+        "certificateThumbprint": {
+            "type": "string",
+            "value": "[reference(resourceId(parameters('webResourceGroupName'), 'Microsoft.Web/certificates', variables('fqdndomain')), '2021-03-01').thumbprint]"
+        }
+    }
+}

@@ -17,15 +17,12 @@ This template deploys a Front Door Standard/Premium (Preview) with a Web Applica
 
 ## Sample overview and deployed resources
 
-This sample template creates a Front Door profile with a WAF. To keep the sample simple, Front Door is configured to direct traffic to an Azure Storage static website configured as an origin, but this could be [any origin supported by Front Door](https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin).
+This sample template creates a Front Door profile with a WAF. To keep the sample simple, Front Door is configured to direct traffic to a static website configured as an origin, but this could be [any origin supported by Front Door](https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin).
 
 The following resources are deployed as part of the solution:
 
-### Prerequisites
-- Azure Storage with a static website, which acts as a simulated origin in this sample.
-
 ### Front Door Standard/Premium (Preview)
-- Front Door profile, endpoint, origin group, origin, and route to direct traffic to the Azure Storage static website.
+- Front Door profile, endpoint, origin group, origin, and route to direct traffic to the static website.
   - Note that you can use either the standard or premium Front Door SKU for this sample. Custom rules for the WAF are supported in either SKU (note that managed rule sets require the premium SKU though). By default, the standard SKU is used.
 - Front Door WAF policy with a custom rule blocking requests from a defined set of IP address ranges.
   - In this sample, the IP address 198.51.100.100 and the range 203.0.113.0/24 are both blocked. These are within the [IANA IP address ranges reserved for documentation](https://tools.ietf.org/html/rfc5737).

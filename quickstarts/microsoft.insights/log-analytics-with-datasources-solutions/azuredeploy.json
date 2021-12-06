@@ -1,0 +1,203 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "2709439563516393297"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of the workspace"
+      }
+    },
+    "name": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the workspace"
+      }
+    },
+    "sku": {
+      "type": "string",
+      "allowedValues": [
+        "PerGB2018",
+        "Free",
+        "Standalone",
+        "PerNode",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "Sku of the workspace"
+      }
+    },
+    "retentionInDays": {
+      "type": "int",
+      "maxValue": 730,
+      "minValue": 7,
+      "metadata": {
+        "description": "The workspace data retention in days. Allowed values are per pricing plan. See pricing tiers documentation for details."
+      }
+    },
+    "solutions": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Solutions to add to workspace"
+      }
+    },
+    "automationAccountName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name of automation account to link to workspace"
+      }
+    },
+    "dataSources": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Datasources to add to workspace"
+      }
+    },
+    "enableDeleteLock": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable lock to prevent accidental deletion"
+      }
+    },
+    "enableDiagnostics": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable diagnostic logs"
+      }
+    },
+    "diagnosticStorageAccountName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Storage account name. Only required if enableDiagnostics is set to true."
+      }
+    },
+    "diagnosticStorageAccountResourceGroup": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Storage account resource group. Only required if enableDiagnostics is set to true."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "lockName": "[format('{0}-lck', parameters('name'))]",
+    "diagnosticsName": "[format('{0}-dgs', parameters('name'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2020-08-01",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "[parameters('sku')]"
+        },
+        "retentionInDays": "[parameters('retentionInDays')]"
+      }
+    },
+    {
+      "copy": {
+        "name": "logAnalyticsSolutions",
+        "count": "[length(parameters('solutions'))]"
+      },
+      "type": "Microsoft.OperationsManagement/solutions",
+      "apiVersion": "2015-11-01-preview",
+      "name": "[format('{0}({1})', parameters('solutions')[copyIndex()].name, parameters('name'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+      },
+      "plan": {
+        "name": "[format('{0}({1})', parameters('solutions')[copyIndex()].name, parameters('name'))]",
+        "product": "[parameters('solutions')[copyIndex()].product]",
+        "publisher": "[parameters('solutions')[copyIndex()].publisher]",
+        "promotionCode": "[parameters('solutions')[copyIndex()].promotionCode]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+      ]
+    },
+    {
+      "condition": "[not(empty(parameters('automationAccountName')))]",
+      "type": "Microsoft.OperationalInsights/workspaces/linkedServices",
+      "apiVersion": "2020-08-01",
+      "name": "[format('{0}/{1}', parameters('name'), 'Automation')]",
+      "properties": {
+        "resourceId": "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "logAnalyticsDataSource",
+        "count": "[length(parameters('dataSources'))]"
+      },
+      "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+      "apiVersion": "2020-08-01",
+      "name": "[format('{0}/{1}', parameters('name'), parameters('dataSources')[copyIndex()].name)]",
+      "kind": "[parameters('dataSources')[copyIndex()].kind]",
+      "properties": "[parameters('dataSources')[copyIndex()].properties]",
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableDeleteLock')]",
+      "type": "Microsoft.Authorization/locks",
+      "apiVersion": "2017-04-01",
+      "scope": "[format('Microsoft.OperationalInsights/workspaces/{0}', parameters('name'))]",
+      "name": "[variables('lockName')]",
+      "properties": {
+        "level": "CanNotDelete"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableDiagnostics')]",
+      "type": "Microsoft.Insights/diagnosticSettings",
+      "apiVersion": "2021-05-01-preview",
+      "scope": "[format('Microsoft.OperationalInsights/workspaces/{0}', parameters('name'))]",
+      "name": "[variables('diagnosticsName')]",
+      "properties": {
+        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]",
+        "storageAccountId": "[resourceId(parameters('diagnosticStorageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('diagnosticStorageAccountName'))]",
+        "logs": [
+          {
+            "category": "Audit",
+            "enabled": true
+          }
+        ],
+        "metrics": [
+          {
+            "category": "AllMetrics",
+            "enabled": true
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+      ]
+    }
+  ]
+}
