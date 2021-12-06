@@ -17,15 +17,12 @@ This template deploys a Front Door Standard/Premium (Preview) with a rate limit.
 
 ## Sample overview and deployed resources
 
-This sample template creates a Front Door profile with a rate limit. To keep the sample simple, Front Door is configured to direct traffic to an Azure Storage static website configured as an origin, but this could be [any origin supported by Front Door](https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin).
+This sample template creates a Front Door profile with a rate limit. To keep the sample simple, Front Door is configured to direct traffic to a static website configured as an origin, but this could be [any origin supported by Front Door](https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin).
 
 The following resources are deployed as part of the solution:
 
-### Prerequisites
-- Azure Storage with a static website, which acts as a simulated origin in this sample.
-
 ### Front Door Standard/Premium (Preview)
-- Front Door profile, endpoint, origin group, origin, and route to direct traffic to the Azure Storage static website.
+- Front Door profile, endpoint, origin group, origin, and route to direct traffic to the static website.
   - Note that you can use either the standard or premium Front Door SKU for this sample. The rate limit custom rule for the WAF are supported in either SKU (note that managed rule sets require the premium SKU though). By default, the standard SKU is used.
 - Front Door WAF policy with a custom rate limit rule.
   -  Currently Front Door requires that a rate limit rule has a match condition. This specifies the subset of requests it should apply to. For this sample, we are using an IP address-based match condition and setting the value to "not 192.0.2.0/24". This is an IANA documentation range and no real clients will use that range, so this match condition effectively matches all requests. Note that the rate limit is applied per IP address.

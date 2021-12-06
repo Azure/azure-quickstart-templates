@@ -51,7 +51,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   }
 }
 
-resource applicationGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
+resource applicationGateway 'Microsoft.Network/applicationGateways@2021-02-01' = {
   name: applicationGatewayName
   location: location
   properties: {
@@ -148,6 +148,16 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2019-09-01' =
         }
       }
     ]
+    webApplicationFirewallConfiguration: {
+      enabled: true
+      firewallMode: 'Prevention'
+      ruleSetVersion: wafPolicyManagedRuleSetVersion
+      ruleSetType: wafPolicyManagedRuleSetType
+      requestBodyCheck: false
+    }
+    firewallPolicy: {
+      id: wafPolicy.id
+    }
   }
 }
 
@@ -158,6 +168,7 @@ resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPo
     policySettings: {
       mode: 'Prevention'
       state: 'Enabled'
+      requestBodyCheck: false
     }
     customRules: [
       {

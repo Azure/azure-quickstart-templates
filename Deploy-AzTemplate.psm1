@@ -215,6 +215,7 @@ function deploy {
     if (Test-Path $TemplateParametersFile) {
         $TemplateArgs.Add('TemplateParameterFile', $TemplateParametersFile)
     }
+
     Write-Host ($TemplateArgs | Out-String)
     Write-Host ($OptionalParameters | Out-String)
 

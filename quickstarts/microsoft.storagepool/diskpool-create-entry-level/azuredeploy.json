@@ -1,0 +1,138 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "657559697202475547"
+    }
+  },
+  "parameters": {
+    "diskPoolLocation": {
+      "type": "string",
+      "allowedValues": [
+        "AustraliaEast",
+        "CanadaCentral",
+        "CentralUS",
+        "EastUS",
+        "JapanEast",
+        "NorthEurope",
+        "SouthCentralUS",
+        "SoutheastAsia",
+        "UKSouth",
+        "WestEurope",
+        "WestUS2"
+      ],
+      "metadata": {
+        "description": "Location of the Disk Pool"
+      }
+    },
+    "diskPoolSku": {
+      "type": "string",
+      "defaultValue": "Standard_S1",
+      "allowedValues": [
+        "Basic_B1",
+        "Standard_S1",
+        "Premium_P1"
+      ],
+      "metadata": {
+        "description": "Sku of the Disk Pool"
+      }
+    },
+    "diskPoolName": {
+      "type": "string",
+      "defaultValue": "diskpool-01",
+      "maxLength": 30,
+      "minLength": 7,
+      "metadata": {
+        "description": "Name of the Disk Pool"
+      }
+    },
+    "diskPoolAvailabilityZone": {
+      "type": "string",
+      "metadata": {
+        "description": "Availability zone to deploy the Disk Pool"
+      }
+    },
+    "existingManagedDiskName": {
+      "type": "string",
+      "defaultValue": "disk-1",
+      "metadata": {
+        "description": "Name of the managed disk (512 sector size) to create and export as an iSCSI LUN in the Disk Pool"
+      }
+    },
+    "targetName": {
+      "type": "string",
+      "defaultValue": "iscsi-target-01",
+      "maxLength": 40,
+      "minLength": 5,
+      "metadata": {
+        "description": "Name of the iSCSI Target"
+      }
+    },
+    "existingResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the resourceGroup for the existing virtual network and disk to deploy the Disk Pool."
+      }
+    },
+    "existingVnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing virtual network to deploy the Disk Pool into."
+      }
+    },
+    "existingSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing subnet to deploy the Disk Pool into."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "subnetId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('existingResourceGroupName')), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubnetName'))]",
+    "diskId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('existingResourceGroupName')), 'Microsoft.Compute/disks', parameters('existingManagedDiskName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.StoragePool/diskPools",
+      "apiVersion": "2021-08-01",
+      "name": "[parameters('diskPoolName')]",
+      "sku": {
+        "name": "[parameters('diskPoolSku')]"
+      },
+      "location": "[parameters('diskPoolLocation')]",
+      "properties": {
+        "availabilityZones": [
+          "[parameters('diskPoolAvailabilityZone')]"
+        ],
+        "subnetId": "[variables('subnetId')]",
+        "disks": [
+          {
+            "id": "[variables('diskId')]"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.StoragePool/diskPools/iscsiTargets",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}/{1}', parameters('diskPoolName'), parameters('targetName'))]",
+      "properties": {
+        "targetIqn": "iqn.2021-04.org.microsoft.com:target",
+        "aclMode": "Dynamic",
+        "luns": [
+          {
+            "managedDiskAzureResourceId": "[variables('diskId')]",
+            "name": "lun0"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.StoragePool/diskPools', parameters('diskPoolName'))]"
+      ]
+    }
+  ]
+}

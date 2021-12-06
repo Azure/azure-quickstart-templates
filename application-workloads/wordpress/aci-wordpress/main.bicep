@@ -74,7 +74,7 @@ resource dScriptWp 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     azPowerShellVersion: '3.0'
     storageAccountSettings: {
       storageAccountName: stg.name
-      storageAccountKey: listKeys(stg.id, stg.apiVersion).keys[0].value
+      storageAccountKey: stg.listKeys().keys[0].value
     }
     scriptContent: wpScriptToExecute
     cleanupPreference: 'OnSuccess'
@@ -98,7 +98,7 @@ resource dScriptSql 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     azPowerShellVersion: '3.0'
     storageAccountSettings: {
       storageAccountName: stg.name
-      storageAccountKey: listKeys(stg.id, stg.apiVersion).keys[0].value
+      storageAccountKey: stg.listKeys().keys[0].value
     }
     scriptContent: sqlScriptToExecute
     cleanupPreference: 'OnSuccess'
@@ -133,7 +133,7 @@ resource wpAci 'Microsoft.ContainerInstance/containerGroups@2019-12-01' = {
             }
             {
               name: 'WORDPRESS_DB_PASSWORD'
-              value: mySqlPassword
+              secureValue: mySqlPassword
             }
           ]
           volumeMounts: [
@@ -185,7 +185,7 @@ resource wpAci 'Microsoft.ContainerInstance/containerGroups@2019-12-01' = {
       {
         azureFile: {
           shareName: wordpressShareName
-          storageAccountKey: listKeys(stg.name, stg.apiVersion).keys[0].value
+          storageAccountKey: stg.listKeys().keys[0].value
           storageAccountName: stg.name
         }
         name: 'wordpressfile'
@@ -193,7 +193,7 @@ resource wpAci 'Microsoft.ContainerInstance/containerGroups@2019-12-01' = {
       {
         azureFile: {
           shareName: mysqlShareName
-          storageAccountKey: listKeys(stg.name, stg.apiVersion).keys[0].value
+          storageAccountKey: stg.listKeys().keys[0].value
           storageAccountName: stg.name
         }
         name: 'mysqlfile'
