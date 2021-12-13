@@ -36,7 +36,6 @@ param publicIpSku string = 'Basic'
  '2019-datacenter-smalldisk-gensecond'
  '2019-datacenter-with-containers-gensecond'
  '2019-datacenter-with-containers-smalldisk-g2'
- '2016-datacenter-with-containers'
  '2016-datacenter-gensecond'
 ])
 param OSVersion string = '2019-datacenter-gensecond'
