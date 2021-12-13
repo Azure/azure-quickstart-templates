@@ -28,15 +28,15 @@ param publicIpSku string = 'Basic'
 
 @description('The Windows version for the VM. This will pick a fully patched image of this given Windows version.')
 @allowed([
-'2019-datacenter-gensecond',
-'2019-datacenter-core-gensecond',
-'2019-datacenter-core-smalldisk-gensecond',
-'2019-datacenter-core-with-containers-gensecond',
-'2019-datacenter-core-with-containers-smalldisk-g2',
-'2019-datacenter-smalldisk-gensecond',
-'2019-datacenter-with-containers-gensecond',
-'2019-datacenter-with-containers-smalldisk-g2',
-'2016-Datacenter-with-Containers',
+'2019-datacenter-gensecond'
+'2019-datacenter-core-gensecond'
+'2019-datacenter-core-smalldisk-gensecond'
+'2019-datacenter-core-with-containers-gensecond'
+'2019-datacenter-core-with-containers-smalldisk-g2'
+'2019-datacenter-smalldisk-gensecond'
+'2019-datacenter-with-containers-gensecond'
+'2019-datacenter-with-containers-smalldisk-g2'
+'2016-Datacenter-with-Containers'
 '2016-datacenter-gensecond'
 ])
 param OSVersion string = '2019-datacenter-gensecond'
