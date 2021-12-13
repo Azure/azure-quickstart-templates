@@ -26,7 +26,7 @@ param publicIPAllocationMethod string = 'Dynamic'
 ])
 param publicIpSku string = 'Basic'
 
-@description('The Windows version for the VM. This will pick a fully patched image of this given Windows version.')
+@description('The Windows version for the VM. This will pick a fully patched Gen2 image of this given Windows version.')
 @allowed([
  '2019-datacenter-gensecond'
  '2019-datacenter-core-gensecond'
