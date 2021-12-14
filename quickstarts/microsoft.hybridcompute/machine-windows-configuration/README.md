@@ -13,7 +13,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-windows-baseline%2Fazuredeploy.json)
 
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-windows-baseline%2Fazuredeploy.json)   
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-windows-baseline%2Fazuredeploy.json)
 
 This template allows you to deploy a Windows VM with the Azure secure baseline applied. For details about the settings in the baseline,
 review the reference documentation.
@@ -26,6 +26,22 @@ General information about how configurations are assigned to machines in Azure i
 
 A detailed how to document about assigning configurations to machines, and how to customize configurations from ARM,
 is also available.
+
+## Required prerequisites
+
+Before testing this quickstart template, you must create a Windows machine
+(virtual or physical) outside of Azure and install the Arc agent
+to project it into Azure.
+
+The simplest approach to building this prereq is to follow the docs page
+for Azure Arc-enabled servers.
+
+[Enable Arc-enabled servers agent](https://docs.microsoft.com/en-us/azure/azure-arc/servers/learn/quick-enable-hybrid-vm)
+
+After you have an Arc-enabled machine ready, you can deploy this sample
+in to the same resource group and use the "machineName" parameter to specify
+the machine where the configuration will be applied.
+
 
 ---
 
