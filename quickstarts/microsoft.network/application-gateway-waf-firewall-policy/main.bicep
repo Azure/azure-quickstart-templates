@@ -239,7 +239,7 @@ param firewallPolicyCustomRules array = []
 param firewallPolicyManagedRuleSets array = [
   {
     ruleSetType: 'OWASP'
-    ruleSetVersion: '3.0'
+    ruleSetVersion: '3.2'
   }
 ]
 
@@ -338,10 +338,10 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2021-03-01' =
     }
     enableHttp2: http2Enabled
     webApplicationFirewallConfiguration: enableWebApplicationFirewall ? {
-      enabled: true
-      firewallMode: 'Detection'
+      enabled: firewallPolicySettings.state == 'Enabled' ? true : false
+      firewallMode: firewallPolicySettings.mode
       ruleSetType: 'OWASP'
-      ruleSetVersion: '3.0'
+      ruleSetVersion: '3.2'
     } : null
     gatewayIPConfigurations: [
       {
