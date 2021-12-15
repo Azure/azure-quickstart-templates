@@ -1,0 +1,115 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Same location of resource group for all resources"
+            }
+        },
+        "virtualNetworkName": {
+            "type": "String",
+            "defaultValue": "[concat('vnet', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Virtual Network name for the subnet."
+            }
+        },
+        "anfSubnetName": {
+            "type": "String",
+            "defaultValue": "default",
+            "metadata": {
+                "description": "Delegated Subnet name."
+            }
+        },
+        "netappAccountName": {
+            "defaultValue": "[concat('anfacc', uniqueString(resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "Name of Azure NetApp Files (ANF) account. The account name must be unique within the subscription"
+            }
+        },
+        "netAppPoolName": {
+            "defaultValue": "[concat('pool', uniqueString(resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "Name of Azure NetApp Files (ANF) account. The account name must be unique within the subscription"
+            }
+        },
+        "anfSubnetAddressPrefix": {
+            "type": "String",
+            "metadata": {
+                "description": "Subnet address range."
+            }
+        }
+    },
+    "resources": [
+        {
+            "subscriptionId": "[subscription().subscriptionId]",
+            "resourceGroup": "[resourceGroup().name]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "name": "AddSubnet",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                            "apiVersion": "2020-05-01",
+                            "name": "[concat(parameters('virtualNetworkName'),'/',parameters('anfSubnetName'))]",
+                            "location": "[parameters('location')]",
+                            "properties": {
+                                "addressPrefix": "[parameters('anfSubnetAddressPrefix')]",
+                                "delegations": [
+                                    {
+                                        "name": "Microsoft.Netapp.volumes",
+                                        "properties": {
+                                            "serviceName": "Microsoft.Netapp/volumes"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.NetApp/netAppAccounts",
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('netAppAccountName')]",
+            "location": "[parameters('location')]"
+        },
+        {
+            "type": "Microsoft.NetApp/netAppAccounts/capacityPools",
+            "apiVersion": "2020-06-01",
+            "name": "[concat(parameters('netAppAccountName'),'/',parameters('netAppPoolName'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.NetApp/netAppAccounts', parameters('netAppAccountName'))]"
+            ],
+            "properties": {
+                "serviceLevel": "Premium",
+                "size": "21990232555520"
+            }
+        }
+    ],
+    "outputs": {
+        "anfNetAppAccountName": {
+            "type": "string",
+            "value": "[parameters('netAppAccountName')]"
+        },
+        "capacityPoolName": {
+            "type": "string",
+            "value": "[parameters('netAppPoolName')]"
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "value": "[parameters('virtualNetworkName')]"
+        }
+    }
+}
