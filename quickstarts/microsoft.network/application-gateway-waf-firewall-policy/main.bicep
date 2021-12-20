@@ -73,9 +73,8 @@ param trustedRootCertificates array = []
 @metadata({
   name: 'Listener name'
   protocol: 'Listener protocol'
-  port: 'integer containing port number'
   frontEndPort: 'Front end port name'
-  sslCertificate: 'SSL certificate name' // only required for https listeners
+  sslCertificate: 'SSL certificate name'
   hostNames: 'Array containing host names'
   firewallPolicy: 'Enabled/Disabled. Configures firewall policy on listener'
 })
@@ -83,7 +82,6 @@ param httpListeners array = [
   {
     name: 'HttpListener01'
     protocol: 'Http'
-    port: 80
     frontEndPort: 'port_80'
     firewallPolicy: 'Enabled'
   }
