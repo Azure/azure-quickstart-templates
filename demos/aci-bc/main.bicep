@@ -50,14 +50,15 @@ param azurecontainerSuffix string = '.azurecontainer.io'
 param location string = resourceGroup().location
 
 @description('The base URI where artifacts required by this template are located including a trailing \'/\'')
-param artifactsLocation string = '' //deployment().properties.templateLink.uri
+param _artifactsLocation string = deployment().properties.templateLink.uri
 
 @description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured.')
 @secure()
-param artifactsLocationSasToken string = ''
+param _artifactsLocationSasToken string = ''
 
 var image = bcRelease
 var publicdnsname = '${dnsPrefix}.${location}${azurecontainerSuffix}'
+var foldersZipUri = uri(_artifactsLocation, 'scripts/SetupCertificate.zip${_artifactsLocationSasToken}')
 
 resource contGroupName_resource 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
   name: contGroupName
@@ -98,7 +99,7 @@ resource contGroupName_resource 'Microsoft.ContainerInstance/containerGroups@202
             }
             {
               name: 'folders'
-              value: 'c:\\run\\my=https://github.com/tfenster/azure-quickstart-templates/raw/patch-1/demos/aci-dynamicsnav/scripts/SetupCertificate.zip'
+              value: 'c:\\run\\my=${foldersZipUri}'
             }
             {
               name: 'ContactEMailForLetsEncrypt'
