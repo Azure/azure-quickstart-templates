@@ -60,7 +60,7 @@ var image = bcRelease
 var publicdnsname = '${dnsPrefix}.${location}${azurecontainerSuffix}'
 var foldersZipUri = uri(_artifactsLocation, 'scripts/SetupCertificate.zip${_artifactsLocationSasToken}')
 
-resource contGroupName_resource 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
+resource contGroupName 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
   name: contGroupName
   location: location
   properties: {
@@ -177,4 +177,4 @@ resource contGroupName_resource 'Microsoft.ContainerInstance/containerGroups@202
   }
 }
 
-output containerIPAddressFqdn string = contGroupName_resource.properties.ipAddress.fqdn
+output containerIPAddressFqdn string = contGroupName.properties.ipAddress.fqdn
