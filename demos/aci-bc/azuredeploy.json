@@ -1,13 +1,20 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1124.51302",
+      "templateHash": "13576407864211273477"
+    }
+  },
   "parameters": {
     "contGroupName": {
       "type": "string",
+      "defaultValue": "msdyn365bc",
       "metadata": {
         "description": "Name for the container group"
-      },
-      "defaultValue": "acinavcontainergroup"
+      }
     },
     "dnsPrefix": {
       "type": "string",
@@ -24,71 +31,78 @@
     },
     "bcRelease": {
       "type": "string",
+      "defaultValue": "mcr.microsoft.com/businesscentral:10.0.19041.985",
       "metadata": {
-        "description": "Dynamics 365 Business Central Generic image (10.0.17763.973 is the version of Windows Server). See https://hub.docker.com/_/microsoft-businesscentral"
-      },
-      "defaultValue": "mcr.microsoft.com/businesscentral:10.0.17763.973"
+        "description": "Dynamics 365 Business Central Generic image (10.0.19041.985 is the version of Windows Server). See https://mcr.microsoft.com/v2/businesscentral/tags/list"
+      }
+    },
+    "bcArtifactUrl": {
+      "type": "string",
+      "defaultValue": "https://bcartifacts.azureedge.net/onprem/19.2.32968.33504/w1",
+      "metadata": {
+        "description": "Dynamics 365 Business Central artifact URL. See https://freddysblog.com/2020/06/25/working-with-artifacts/ to understand how to find the right one."
+      }
     },
     "username": {
       "type": "string",
       "metadata": {
-        "description": "Username for your NAV super user"
+        "description": "Username for your BC super user"
       }
     },
     "password": {
-      "type": "securestring",
+      "type": "secureString",
       "metadata": {
-        "description": "Password for your NAV/BC super user and your sa user on the database"
+        "description": "Password for your BC super user and your sa user on the database"
       }
     },
     "cpuCores": {
       "type": "int",
+      "defaultValue": 2,
       "metadata": {
         "description": "The number of CPU cores to allocate to the container"
-      },
-      "defaultValue": 4
+      }
     },
     "memoryInGb": {
       "type": "int",
+      "defaultValue": 4,
       "metadata": {
-        "description": "The amount of memory to allocate to the container in gigabytes. Provide a minimum of 2 as he container will include SQL Server and NAV NST"
-      },
-      "defaultValue": 4
+        "description": "The amount of memory to allocate to the container in gigabytes. Provide a minimum of 3 as he container will include SQL Server and BCST"
+      }
     },
     "customNavSettings": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
-        "description": "Custom settings for the NAV / BC NST"
-      },
-      "defaultValue": ""
+        "description": "Custom settings for the BCST"
+      }
     },
     "customWebSettings": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "Custom settings for the Web Client"
-      },
-      "defaultValue": ""
+      }
     },
     "acceptEula": {
       "type": "string",
-      "metadata": {
-        "description": "Change to 'Y' to accept the end user license agreement available at https://go.microsoft.com/fwlink/?linkid=861843. This is necessary to successfully run the container"
-      },
       "defaultValue": "N",
       "allowedValues": [
         "Y",
         "N"
-      ]
+      ],
+      "metadata": {
+        "description": "Change to 'Y' to accept the end user license agreement available at https://go.microsoft.com/fwlink/?linkid=861843. This is necessary to successfully run the container"
+      }
     },
     "azurecontainerSuffix": {
       "type": "string",
-      "metadata": {
-        "description": "Please select the Azure container URL suffix for your current region. For the standard Azure cloud, this is azurecontainer.io"
-      },
       "defaultValue": ".azurecontainer.io",
       "allowedValues": [
         ".azurecontainer.io"
-      ]
+      ],
+      "metadata": {
+        "description": "Please select the Azure container URL suffix for your current region. For the standard Azure cloud, this is azurecontainer.io"
+      }
     },
     "location": {
       "type": "string",
@@ -97,30 +111,30 @@
         "description": "Default location for all resources."
       }
     },
-    "_artifactsLocation": {
+    "artifactsLocation": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-      },
-      "defaultValue": "[deployment().properties.templateLink.uri]"
+      }
     },
-    "_artifactsLocationSasToken": {
-      "type": "securestring",
+    "artifactsLocationSasToken": {
+      "type": "secureString",
+      "defaultValue": "",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
-      },
-      "defaultValue": ""
+      }
     }
   },
   "variables": {
     "image": "[parameters('bcRelease')]",
-    "publicdnsname": "[concat(parameters('dnsPrefix'),'.',parameters('location'),parameters('azurecontainerSuffix'))]"
+    "publicdnsname": "[format('{0}.{1}{2}', parameters('dnsPrefix'), parameters('location'), parameters('azurecontainerSuffix'))]"
   },
   "resources": [
     {
-      "name": "[parameters('contGroupName')]",
       "type": "Microsoft.ContainerInstance/containerGroups",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2021-09-01",
+      "name": "[parameters('contGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
         "containers": [
@@ -131,6 +145,10 @@
                 {
                   "name": "ACCEPT_EULA",
                   "value": "[parameters('acceptEula')]"
+                },
+                {
+                  "name": "accept_outdated",
+                  "value": "y"
                 },
                 {
                   "name": "username",
@@ -154,7 +172,7 @@
                 },
                 {
                   "name": "folders",
-                  "value": "[concat('c:\\run\\my=', uri(parameters('_artifactsLocation'), concat('scripts/SetupCertificate.zip', parameters('_artifactsLocationSasToken'))))]"
+                  "value": "c:\\run\\my=https://github.com/tfenster/azure-quickstart-templates/raw/patch-1/demos/aci-dynamicsnav/scripts/SetupCertificate.zip"
                 },
                 {
                   "name": "ContactEMailForLetsEncrypt",
@@ -162,29 +180,33 @@
                 },
                 {
                   "name": "artifacturl",
-                  "value": "https://bcartifacts.azureedge.net/onprem/11.0.46855.0/w1"
+                  "value": "[parameters('bcArtifactUrl')]"
+                },
+                {
+                  "name": "certificatePfxPassword",
+                  "value": "[parameters('password')]"
                 }
               ],
               "image": "[variables('image')]",
               "ports": [
                 {
-                  "protocol": "Tcp",
+                  "protocol": "TCP",
                   "port": 443
                 },
                 {
-                  "protocol": "Tcp",
+                  "protocol": "TCP",
                   "port": 8080
                 },
                 {
-                  "protocol": "Tcp",
+                  "protocol": "TCP",
                   "port": 7049
                 },
                 {
-                  "protocol": "Tcp",
+                  "protocol": "TCP",
                   "port": 7048
                 },
                 {
-                  "protocol": "Tcp",
+                  "protocol": "TCP",
                   "port": 80
                 }
               ],
@@ -197,28 +219,29 @@
             }
           }
         ],
+        "restartPolicy": "Never",
         "osType": "Windows",
         "ipAddress": {
           "type": "Public",
           "ports": [
             {
-              "protocol": "Tcp",
+              "protocol": "TCP",
               "port": 443
             },
             {
-              "protocol": "Tcp",
+              "protocol": "TCP",
               "port": 8080
             },
             {
-              "protocol": "Tcp",
+              "protocol": "TCP",
               "port": 7049
             },
             {
-              "protocol": "Tcp",
+              "protocol": "TCP",
               "port": 7048
             },
             {
-              "protocol": "Tcp",
+              "protocol": "TCP",
               "port": 80
             }
           ],
@@ -230,7 +253,7 @@
   "outputs": {
     "containerIPAddressFqdn": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('contGroupName'))).ipAddress.fqdn]"
+      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('contGroupName'))).ipAddress.fqdn]"
     }
   }
 }
