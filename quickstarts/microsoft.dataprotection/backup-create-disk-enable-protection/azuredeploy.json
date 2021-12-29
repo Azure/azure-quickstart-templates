@@ -1,10 +1,17 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "10547656111475360214"
+    }
+  },
   "parameters": {
     "vaultName": {
       "type": "string",
-      "defaultValue": "[concat('vault', uniquestring(resourceGroup().id))]",
+      "defaultValue": "[format('vault{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Name of the Vault"
       }
@@ -22,7 +29,7 @@
     },
     "backupPolicyName": {
       "type": "string",
-      "defaultValue": "[concat('policy', uniquestring(resourceGroup().id))]",
+      "defaultValue": "[format('policy{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Name of the Backup Policy"
       }
@@ -30,15 +37,15 @@
     "retentionDays": {
       "type": "int",
       "defaultValue": 30,
-      "minValue": 1,
       "maxValue": 35,
+      "minValue": 1,
       "metadata": {
         "description": "Retention duration in days"
       }
     },
     "diskName": {
       "type": "string",
-      "defaultValue": "[concat('disk', uniquestring(resourceGroup().id))]",
+      "defaultValue": "[format('disk{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Name of the Disk"
       }
@@ -51,12 +58,13 @@
       }
     }
   },
+  "functions": [],
   "variables": {
     "roleDefinitionIdForDisk": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3e5e47e6-65f7-47ef-90b5-e5dd4d455f24')]",
     "roleDefinitionIdForSnapshotRG": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7efff54f-a5b4-42b5-a1c5-5411624893ce')]",
     "dataSourceType": "Microsoft.Compute/disks",
     "resourceType": "Microsoft.Compute/disks",
-    "retentionDuration": "[concat('P', parameters('retentionDays') ,'D')]",
+    "retentionDuration": "[format('P{0}D', parameters('retentionDays'))]",
     "repeatingTimeInterval": "R/2021-05-20T22:00:00+00:00/PT4H",
     "roleNameGuidForDisk": "[guid(resourceGroup().id, variables('roleDefinitionIdForDisk'), resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName')))]",
     "roleNameGuidForSnapshotRG": "[guid(resourceGroup().id, variables('roleDefinitionIdForSnapshotRG'), resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName')))]"
@@ -64,7 +72,7 @@
   "resources": [
     {
       "type": "Microsoft.DataProtection/backupVaults",
-      "apiVersion": "2020-01-01-alpha",
+      "apiVersion": "2021-01-01",
       "name": "[parameters('vaultName')]",
       "location": "[parameters('location')]",
       "identity": {
@@ -81,45 +89,42 @@
     },
     {
       "type": "Microsoft.DataProtection/backupVaults/backupPolicies",
-      "apiVersion": "2020-01-01-alpha",
-      "name": "[concat(parameters('vaultName'), '/', parameters('backupPolicyName'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]"
-      ],
+      "apiVersion": "2021-01-01",
+      "name": "[format('{0}/{1}', parameters('vaultName'), parameters('backupPolicyName'))]",
       "properties": {
         "policyRules": [
-            {
-                "backupParameters": {
-                    "backupType": "Incremental",
-                    "objectType": "AzureBackupParams"
-                },
-                "trigger": {
-                    "schedule": {
-                        "repeatingTimeIntervals": [
-                            "[variables('repeatingTimeInterval')]"
-                        ],
-                        "timeZone": "UTC"
-                    },
-                    "taggingCriteria": [
-                        {
-                            "tagInfo": {
-                                "tagName": "Default",
-                                "id": "Default_"
-                            },
-                            "taggingPriority": 99,
-                            "isDefault": true
-                        }
-                    ],
-                    "objectType": "ScheduleBasedTriggerContext"
-                },
-                "dataStore": {
-                    "dataStoreType": "OperationalStore",
-                    "objectType": "DataStoreInfoBase"
-                },
-                "name": "BackupHourly",
-                "objectType": "AzureBackupRule"
+          {
+            "backupParameters": {
+              "backupType": "Incremental",
+              "objectType": "AzureBackupParams"
             },
-            {
+            "trigger": {
+              "schedule": {
+                "repeatingTimeIntervals": [
+                  "[variables('repeatingTimeInterval')]"
+                ],
+                "timeZone": "UTC"
+              },
+              "taggingCriteria": [
+                {
+                  "tagInfo": {
+                    "tagName": "Default",
+                    "id": "Default_"
+                  },
+                  "taggingPriority": 99,
+                  "isDefault": true
+                }
+              ],
+              "objectType": "ScheduleBasedTriggerContext"
+            },
+            "dataStore": {
+              "dataStoreType": "OperationalStore",
+              "objectType": "DataStoreInfoBase"
+            },
+            "name": "BackupHourly",
+            "objectType": "AzureBackupRule"
+          },
+          {
             "lifecycles": [
               {
                 "sourceDataStore": {
@@ -142,8 +147,11 @@
           "[variables('dataSourceType')]"
         ],
         "objectType": "BackupPolicy"
-      }
-    },    
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]"
+      ]
+    },
     {
       "type": "Microsoft.Compute/disks",
       "apiVersion": "2020-12-01",
@@ -160,41 +168,34 @@
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2020-04-01-preview",
       "name": "[variables('roleNameGuidForDisk')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]",
-        "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]",
-        "[resourceId('Microsoft.Compute/disks', parameters('diskName'))]"
-      ],
       "properties": {
         "roleDefinitionId": "[variables('roleDefinitionIdForDisk')]",
-        "principalId": "[reference(resourceId('Microsoft.DataProtection/backupVaults/', parameters('vaultName')), '2020-01-01-alpha', 'Full').identity.principalId]"
-      }
+        "principalId": "[reference(resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName')), '2021-01-01', 'Full').identity.principalId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]",
+        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]",
+        "[resourceId('Microsoft.Compute/disks', parameters('diskName'))]"
+      ]
     },
     {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2020-04-01-preview",
       "name": "[variables('roleNameGuidForSnapshotRG')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]",
-        "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]",
-        "[resourceId('Microsoft.Compute/disks', parameters('diskName'))]"
-      ],
       "properties": {
         "roleDefinitionId": "[variables('roleDefinitionIdForSnapshotRG')]",
-        "principalId": "[reference(resourceId('Microsoft.DataProtection/backupVaults/', parameters('vaultName')), '2020-01-01-alpha', 'Full').identity.principalId]"
-      }
+        "principalId": "[reference(resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName')), '2021-01-01', 'Full').identity.principalId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]",
+        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]",
+        "[resourceId('Microsoft.Compute/disks', parameters('diskName'))]"
+      ]
     },
     {
-      "type": "Microsoft.DataProtection/backupvaults/backupInstances",
-      "apiVersion": "2020-01-01-alpha",
-      "name": "[concat(parameters('vaultName'), '/', parameters('diskName'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]",
-        "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]",
-        "[resourceId('Microsoft.Compute/disks', parameters('diskName'))]",
-        "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleNameGuidForDisk'))]",
-        "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleNameGuidForSnapshotRG'))]"
-      ],
+      "type": "Microsoft.DataProtection/backupVaults/backupInstances",
+      "apiVersion": "2021-01-01",
+      "name": "[format('{0}/{1}', parameters('vaultName'), parameters('diskName'))]",
       "properties": {
         "objectType": "BackupInstance",
         "dataSourceInfo": {
@@ -219,7 +220,14 @@
             ]
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]",
+        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]",
+        "[resourceId('Microsoft.Compute/disks', parameters('diskName'))]",
+        "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleNameGuidForDisk'))]",
+        "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleNameGuidForSnapshotRG'))]"
+      ]
     }
   ]
 }

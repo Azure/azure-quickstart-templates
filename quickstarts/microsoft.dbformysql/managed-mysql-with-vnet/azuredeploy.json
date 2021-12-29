@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "6360281189485765882"
+    }
+  },
   "parameters": {
     "serverName": {
       "type": "string",
@@ -16,7 +23,7 @@
       }
     },
     "administratorLoginPassword": {
-      "type": "securestring",
+      "type": "secureString",
       "minLength": 8,
       "metadata": {
         "description": "Database administrator password"
@@ -46,6 +53,11 @@
     "SkuTier": {
       "type": "string",
       "defaultValue": "GeneralPurpose",
+      "allowedValues": [
+        "Basic",
+        "GeneralPurpose",
+        "MemoryOptimized"
+      ],
       "metadata": {
         "description": "Azure database for MySQL pricing tier"
       }
@@ -59,10 +71,11 @@
     },
     "mysqlVersion": {
       "type": "string",
-      "defaultValue": "5.7",
+      "defaultValue": "8.0",
       "allowedValues": [
         "5.6",
-        "5.7"
+        "5.7",
+        "8.0"
       ],
       "metadata": {
         "description": "MySQL version"
@@ -125,25 +138,35 @@
       }
     }
   },
+  "functions": [],
   "variables": {
-    "firewallrules": {
-      "batch": {
-        "rules": [
-          {
-            "Name": "rule1",
-            "StartIpAddress": "0.0.0.0",
-            "EndIpAddress": "255.255.255.255"
-          },
-          {
-            "Name": "rule2",
-            "StartIpAddress": "0.0.0.0",
-            "EndIpAddress": "255.255.255.255"
-          }
-        ]
+    "firewallrules": [
+      {
+        "Name": "rule1",
+        "StartIpAddress": "0.0.0.0",
+        "EndIpAddress": "255.255.255.255"
+      },
+      {
+        "Name": "rule2",
+        "StartIpAddress": "0.0.0.0",
+        "EndIpAddress": "255.255.255.255"
       }
-    }
+    ]
   },
   "resources": [
+    {
+      "type": "Microsoft.DBforMySQL/servers/virtualNetworkRules",
+      "apiVersion": "2017-12-01",
+      "name": "[format('{0}/{1}', parameters('serverName'), parameters('virtualNetworkRuleName'))]",
+      "properties": {
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+        "ignoreMissingVnetServiceEndpoint": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforMySQL/servers', parameters('serverName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+      ]
+    },
     {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2020-06-01",
@@ -155,20 +178,17 @@
             "[parameters('vnetAddressPrefix')]"
           ]
         }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnetName'))]",
+      "properties": {
+        "addressPrefix": "[parameters('subnetPrefix')]"
       },
-      "resources": [
-        {
-          "type": "subnets",
-          "apiVersion": "2020-06-01",
-          "name": "[parameters('subnetName')]",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[parameters('virtualNetworkName')]"
-          ],
-          "properties": {
-            "addressPrefix": "[parameters('subnetPrefix')]"
-          }
-        }
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
       ]
     },
     {
@@ -178,9 +198,9 @@
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('skuName')]",
-        "tier": "[parameters('skuTier')]",
+        "tier": "[parameters('SkuTier')]",
         "capacity": "[parameters('skuCapacity')]",
-        "size": "[parameters('skuSizeMB')]",
+        "size": "[format('{0}', parameters('SkuSizeMB'))]",
         "family": "[parameters('skuFamily')]"
       },
       "properties": {
@@ -189,44 +209,29 @@
         "administratorLogin": "[parameters('administratorLogin')]",
         "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
         "storageProfile": {
-          "storageMB": "[parameters('skuSizeMB')]",
+          "storageMB": "[parameters('SkuSizeMB')]",
           "backupRetentionDays": "[parameters('backupRetentionDays')]",
           "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
         }
-      },
-      "resources": [
-        {
-          "type": "virtualNetworkRules",
-          "apiVersion": "2017-12-01",
-          "name": "[parameters('virtualNetworkRuleName')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.DBforMySQL/servers/', parameters('serverName'))]"
-          ],
-          "properties": {
-            "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
-            "ignoreMissingVnetServiceEndpoint": true
-          }
-        }
-      ]
+      }
     },
     {
+      "copy": {
+        "name": "firewallRules",
+        "count": "[length(variables('firewallrules'))]",
+        "mode": "serial",
+        "batchSize": 1
+      },
       "type": "Microsoft.DBforMySQL/servers/firewallRules",
       "apiVersion": "2017-12-01",
-      "name": "[concat(parameters('serverName'),'/',variables('firewallrules').batch.rules[copyIndex()].Name)]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "firewallRulesCopy",
-        "mode": "Serial",
-        "batchSize": 1,
-        "count": "[length(variables('firewallrules').batch.rules)]"
+      "name": "[format('{0}/{1}', parameters('serverName'), variables('firewallrules')[copyIndex()].Name)]",
+      "properties": {
+        "startIpAddress": "[variables('firewallrules')[copyIndex()].StartIpAddress]",
+        "endIpAddress": "[variables('firewallrules')[copyIndex()].EndIpAddress]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DBforMySQL/servers/', parameters('serverName'))]"
-      ],
-      "properties": {
-        "StartIpAddress": "[variables('firewallrules').batch.rules[copyIndex()].StartIpAddress]",
-        "EndIpAddress": "[variables('firewallrules').batch.rules[copyIndex()].EndIpAddress]"
-      }
+        "[resourceId('Microsoft.DBforMySQL/servers', parameters('serverName'))]"
+      ]
     }
   ]
 }

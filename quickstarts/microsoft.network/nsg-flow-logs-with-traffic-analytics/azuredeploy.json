@@ -1,0 +1,177 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "4817499997026753485"
+    }
+  },
+  "parameters": {
+    "flowlogName": {
+      "type": "string",
+      "defaultValue": "flowlog",
+      "metadata": {
+        "description": "Flow Log name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Flow Log location"
+      }
+    },
+    "networkWatcherName": {
+      "type": "string",
+      "defaultValue": "[format('NetworkWatcher_{0}', parameters('location'))]",
+      "metadata": {
+        "description": "Network Watcher name"
+      }
+    },
+    "networkWatcherResourceGroup": {
+      "type": "string",
+      "defaultValue": "NetworkWatcherRG",
+      "metadata": {
+        "description": "Network Watcher Resource Group"
+      }
+    },
+    "existingNsgId": {
+      "type": "string",
+      "metadata": {
+        "description": "Network Security Group resource id"
+      }
+    },
+    "existingFlowLogStorageAccountId": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage account resource id"
+      }
+    },
+    "logAnalyticsWorkspaceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Log analytics workspace resource id"
+      }
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "deployFlowLogs",
+      "resourceGroup": "[parameters('networkWatcherResourceGroup')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "flowlogName": {
+            "value": "[parameters('flowlogName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "networkWatcherName": {
+            "value": "[parameters('networkWatcherName')]"
+          },
+          "existingNsgId": {
+            "value": "[parameters('existingNsgId')]"
+          },
+          "existingFlowLogStorageAccountId": {
+            "value": "[parameters('existingFlowLogStorageAccountId')]"
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[parameters('logAnalyticsWorkspaceId')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1008.15138",
+              "templateHash": "4407055582915177902"
+            }
+          },
+          "parameters": {
+            "flowlogName": {
+              "type": "string",
+              "metadata": {
+                "description": "Flow Log name"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Flow Log location"
+              }
+            },
+            "networkWatcherName": {
+              "type": "string",
+              "metadata": {
+                "description": "Network Watcher name"
+              }
+            },
+            "existingNsgId": {
+              "type": "string",
+              "metadata": {
+                "description": "Network Security Group resource id"
+              }
+            },
+            "existingFlowLogStorageAccountId": {
+              "type": "string",
+              "metadata": {
+                "description": "Storage account resource id"
+              }
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Log analytics workspace resource id"
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "flowLogsStorageRetention": 60
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkWatchers/flowLogs",
+              "apiVersion": "2021-02-01",
+              "name": "[format('{0}/{1}', parameters('networkWatcherName'), parameters('flowlogName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "enabled": true,
+                "flowAnalyticsConfiguration": {
+                  "networkWatcherFlowAnalyticsConfiguration": {
+                    "enabled": "[if(empty(parameters('logAnalyticsWorkspaceId')), false(), true())]",
+                    "trafficAnalyticsInterval": 60,
+                    "workspaceResourceId": "[if(empty(parameters('logAnalyticsWorkspaceId')), null(), parameters('logAnalyticsWorkspaceId'))]"
+                  }
+                },
+                "format": {
+                  "type": "JSON",
+                  "version": 2
+                },
+                "retentionPolicy": {
+                  "days": "[variables('flowLogsStorageRetention')]",
+                  "enabled": true
+                },
+                "storageId": "[parameters('existingFlowLogStorageAccountId')]",
+                "targetResourceId": "[parameters('existingNsgId')]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

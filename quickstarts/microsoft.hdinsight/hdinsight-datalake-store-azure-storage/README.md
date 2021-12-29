@@ -69,5 +69,3 @@ Below are instructions for creating the certificate and service principal.
     * AAD Tenant ID: ``(Get-AzureRmContext).Tenant.TenantId``
     * Base-64 PFX file contents: ``[System.Convert]::ToBase64String((Get-Content $certFilePath -Encoding Byte))``
     * PFX password: ``$certPassword``
-
-
