@@ -1,5 +1,5 @@
 // Creates a KeyVault with Private Link Endpoint
-@description('The Azure Region to deploy the resrouce group into')
+@description('The Azure Region to deploy the resource into')
 param location string = resourceGroup().location
 
 @description('Tags to apply to the Key Vault Instance')
