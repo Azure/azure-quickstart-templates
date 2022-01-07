@@ -31,6 +31,7 @@ param location string = resourceGroup().location
 param privateEndpointName string
 
 var subnetName = 'default'
+var privateDNSZoneName = 'privatelink.azure-api.net'
 
 resource virtualNetwork 'Microsoft.Network/VirtualNetworks@2020-06-01' = {
   name: virtualNetworkName
@@ -84,6 +85,41 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2020-07-01' = {
           groupIds: [
             'Gateway'
           ]
+        }
+      }
+    ]
+  }
+}
+
+resource privateDnsZones 'Microsoft.Network/privateDnsZones@2018-09-01' = {
+  name: privateDNSZoneName
+  location: 'global'
+  dependsOn: [
+    virtualNetwork
+  ]
+}
+
+resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+  parent: privateDnsZones
+  name: '${privateDnsZones.name}-link'
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: virtualNetwork.id
+    }
+  }
+}
+
+resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
+  parent: privateEndpoint
+  name: 'dnsgroupname'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config1'
+        properties: {
+          privateDnsZoneId: privateDnsZones.id
         }
       }
     ]
