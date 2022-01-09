@@ -91,7 +91,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2020-07-01' = {
   }
 }
 
-resource privateDnsZones 'Microsoft.Network/privateDnsZones@2018-09-01' = {
+resource privateDnsZones 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateDNSZoneName
   location: 'global'
   dependsOn: [
@@ -99,7 +99,7 @@ resource privateDnsZones 'Microsoft.Network/privateDnsZones@2018-09-01' = {
   ]
 }
 
-resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   parent: privateDnsZones
   name: '${privateDnsZones.name}-link'
   location: 'global'
@@ -111,7 +111,7 @@ resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLin
   }
 }
 
-resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
+resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-08-01' = {
   parent: privateEndpoint
   name: 'dnsgroupname'
   properties: {
