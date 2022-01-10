@@ -1,4 +1,4 @@
-# Azure template for SharePoint 2019 / 2016 / 2013
+# Azure template for SharePoint Subscription / 2019 / 2016 / 2013
 
 ## Presentation
 
@@ -15,17 +15,18 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsharepoint%2Fsharepoint-adfs%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsharepoint%2Fsharepoint-adfs%2Fazuredeploy.json)
 
-This template deploys SharePoint 2019, 2016 or 2013 with the following configuration:
+This template deploys SharePoint Subscription, 2019, 2016 or 2013 with the following configuration:
 
 * 1 web application created with 2 zones: Windows NTLM on Default zone and ADFS on Intranet zone.
-* ADFS is installed on the DC, and SAML trust is configured in SharePoint.
+* ADFS is installed on the DC.
+* If SharePoint Subscription is selected, an Open ID Connect trust is configured between SharePoint and ADFS. Otherwise, a SAML trust is configured.
 * A certificate authority (ADCS) is provisioned on the DC and issues all certificates needed for ADFS and SharePoint.
 * A couple of site collections are created, including [host-named site collections](https://docs.microsoft.com/en-us/SharePoint/administration/host-named-site-collection-architecture-and-deployment) that are configured for both zones.
 * User Profiles Application service is provisioned and personal sites are configured as [host-named site collections](https://docs.microsoft.com/en-us/SharePoint/administration/host-named-site-collection-architecture-and-deployment).
 * Add-ins service application is provisioned and an app catalog is created.
-* 2 app domains are set (1 for for each zone of the web application) and corresponding DNS zones are created.
+* 2 add-in domains / DNS zones are created (1 for for each zone of the web application).
 * Latest version of claims provider [LDAPCP](https://ldapcp.com/) is installed and configured.
-* A 2nd SharePoint server can optionally be added to the farm.
+* Multiple SharePoint Web Front End servers can optionally be created and joined to the farm.
 
 ## Remote access and security
 
@@ -50,11 +51,11 @@ The following parameters impact the remote access of the virtual machines, and t
 By default, virtual machines use [B-series burstable](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable), ideal for such template and much cheaper than other comparable series.  
 Here is the default size and storage type per virtual machine role:
 
-* DC: Size [Standard_B2s](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 4 GiB RAM) and OS disk is a 128 GiB standard HDD.
+* DC: Size [Standard_B2s](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 4 GiB RAM) and OS disk is a 32 GiB standard HDD.
 * SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) and OS disk is a 128 GiB standard HDD.
 * SharePoint: Size [Standard_B4ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (4 vCPU / 16 GiB RAM) and OS disk is a 128 GiB [standard SSD](https://azure.microsoft.com/en-us/blog/preview-standard-ssd-disks-for-azure-virtual-machine-workloads/).
 
-You can visit <https://azure.com/e/cec4eb6f853d43c6bcfaf56be0363ee4> to view the global cost of the template when it is deployed using the default settings, in the region/currency of your choice.
+You can visit <https://azure.com/e/a2349269adde449396e4a39163692ec1> to view the global cost of the template when it is deployed using the default settings, in the region/currency of your choice.
 
 ## More information
 
