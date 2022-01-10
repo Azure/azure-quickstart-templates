@@ -1,6 +1,6 @@
-@description('The name of the FrontDoor to be created/updated')
+@description('The name of the frontdoor resource.')
 param frontDoorName string
-@description('The Address for the Backend Pool Frontdoor will route to')
+@description('The hostname of the backend. Must be an IP address or FQDN.')
 param backendAddress string
 
 var frontEndEndpointName = 'frontEndEndpoint'
