@@ -12,7 +12,7 @@ choco install --no-progress --limit-output pwsh
 choco install --no-progress --limit-output openssh -params '"/SSHServerFeature"'
 
 # configure OpenSSH, make pwsh the default shell, show hostname in shell, add data disk and restart sshd
-Copy-Item (Join-Path $basepath 'sshd_config_wopwd') 'C:\ProgramData\ssh\sshd_config'
+Copy-Item '.\sshd_config_wopwd' 'C:\ProgramData\ssh\sshd_config'
 "$publicSshKey" | Out-File -Encoding utf8 -FilePath 'c:\ProgramData\ssh\administrators_authorized_keys'
 New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Program Files\PowerShell\7\pwsh.exe" -PropertyType String -Force
 'function prompt { "PS [$env:COMPUTERNAME]:$($executionContext.SessionState.Path.CurrentLocation)$(''>'' * ($nestedPromptLevel + 1)) " }' | Out-File -FilePath "$($PROFILE.AllUsersAllHosts)" -Encoding utf8
