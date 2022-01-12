@@ -48,7 +48,7 @@ param _artifactsLocation string = deployment().properties.templateLink.uri
 @secure()
 param _artifactsLocationSasToken string = ''
 
-var initScriptUrl = uri(_artifactsLocation, 'scripts/initialize.ps1${_artifactsLocationSasToken}')
+var initScriptUrl = uri(_artifactsLocation, 'initialize.ps1${_artifactsLocationSasToken}')
 var sshdConfigUrl = uri(_artifactsLocation, 'configs/sshd_config_wopwd${_artifactsLocationSasToken}')
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
