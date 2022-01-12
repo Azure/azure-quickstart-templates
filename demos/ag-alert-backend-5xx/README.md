@@ -1,5 +1,14 @@
 # Setup alert for Backend Response 5xx for your Azure Application Gateway 
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-alert-backend-5xx/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-alert-backend-5xx/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-alert-backend-5xx/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-alert-backend-5xx/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-alert-backend-5xx/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-alert-backend-5xx/CredScanResult.svg)
+
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjaesoni%2Fazure-quickstart-templates%2Fagw-alerts%2Fdemos%2Fag-alert-backend-5xx%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fjaesoni%2Fazure-quickstart-templates%2Fagw-alerts%2Fdemos%2Fag-alert-backend-5xx%2Fazuredeploy.json)
