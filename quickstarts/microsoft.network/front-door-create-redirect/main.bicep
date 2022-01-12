@@ -4,7 +4,7 @@ param frontDoorName string
 @description('The hostname of the backend. Must be an IP address or FQDN.')
 param backendAddress string
 
-resource frontDoorName_resource 'Microsoft.Network/frontDoors@2020-05-01' = {
+resource frontdoor 'Microsoft.Network/frontDoors@2020-05-01' = {
   name: frontDoorName
   location: 'global'
   properties: {
