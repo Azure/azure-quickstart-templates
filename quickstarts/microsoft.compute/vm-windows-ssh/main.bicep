@@ -14,7 +14,7 @@ param adminPassword string = newGuid()
 param publicSshKey string
 
 @description('VM size for VM')
-param vmsize string = 'Standard_D4_v3'
+param vmsize string = 'Standard_D4_v5'
 
 @description('SKU of the Windows Server')
 @allowed([
