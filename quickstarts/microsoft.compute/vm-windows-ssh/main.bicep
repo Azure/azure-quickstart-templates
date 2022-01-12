@@ -14,7 +14,7 @@ param adminPassword string = newGuid()
 param publicSshKey string
 
 @description('VM size for VM')
-param vmsize string = 'Standard_D4_v5'
+param vmsize string = 'Standard_D4_v3'
 
 @description('SKU of the Windows Server')
 @allowed([
@@ -156,15 +156,12 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-04-01' = {
             id: publicIP.id
           }
           subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', 'virtualNetwork', 'subnet')
+            id: virtualNetwork.properties.subnets[0].id
           }
         }
       }
     ]
   }
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
 resource datadisk 'Microsoft.Compute/disks@2020-09-30' = {
@@ -228,13 +225,10 @@ resource sshhost 'Microsoft.Compute/virtualMachines@2021-07-01' = {
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: true
-        storageUri: reference(resourceId('Microsoft.Storage/storageAccounts/', storagename)).primaryEndpoints.blob
+        storageUri: storageAccount.properties.primaryEndpoints.blob
       }
     }
   }
-  dependsOn: [
-    storageAccount
-  ]
 }
 
 resource sshhost_setupScript 'Microsoft.Compute/virtualMachines/extensions@2021-07-01' = {
