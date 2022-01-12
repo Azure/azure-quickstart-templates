@@ -35,6 +35,7 @@ $dockerDaemonConfig = @"
 }
 "@
 $dockerDaemonConfig | Out-File "c:\programdata\docker\config\daemon.json" -Encoding ascii
+Start-Service docker
 
 # prepare password file for portainer
 $adminPwd | Out-File -NoNewline -Encoding ascii "f:\portainerdata\passwordfile"
