@@ -21,10 +21,10 @@
         "description": "The administrator password of the SQL Server."
       }
     },
-    "dataWarehouseName": {
+    "databasesName": {
       "type": "string",
       "metadata": {
-        "description": "The name of the Data Warehouse."
+        "description": "The name of the Database."
       }
     },
     "transparentDataEncryption": {
@@ -38,11 +38,19 @@
         "description": "Enable/Disable Transparent Data Encryption"
       }
     },
-    "serviceLevelObjective": {
-      "type": "string",
-      "defaultValue": "DW400c",
+    "capacity": {
+      "type": "int",
       "metadata": {
-        "description": "Performance Level"
+        "description": "The Elastic Pool DTU or nomber of vcore."
+      },
+      "minValue": 9000,
+      "maxValue": 54000
+    },
+    "databaseCollation": {
+      "type": "string",
+      "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
+      "metadata": {
+        "description": "The SQL Database collation."
       }
     },
     "location": {
@@ -57,49 +65,51 @@
   "resources": [
     {
       "type": "Microsoft.Sql/servers",
-      "apiVersion": "2020-02-02-preview",
+      "apiVersion": "2021-05-01-preview",
       "name": "[parameters('sqlServerName')]",
       "location": "[parameters('location')]",
+      "kind": "v12.0",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdministratorPassword')]",
-        "version": "12.0"
+        "version": "12.0",
+        "publicNetworkAccess": "Enabled",
+        "restrictOutboundNetworkAccess": "Disabled"
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2021-05-01-preview",
+      "name": "[concat(parameters('sqlServerName'), concat('/', parameters('databasesName')))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ],
+      "sku": {
+        "name": "DataWarehouse",
+        "tier": "DataWarehouse",
+        "capacity": "[parameters('capacity')]"
       },
-      "resources": [
-        {
-          "type": "databases",
-          "apiVersion": "2020-02-02-preview",
-          "name": "[parameters('dataWarehouseName')]",
-          "location": "[parameters('location')]",
-          "kind": "v12.0,user,datawarehouse",
-          "dependsOn": [
-            "[parameters('sqlServerName')]"
-          ],
-          "properties": {
-            "edition": "DataWarehouse",
-            "status": "Online",
-            "requestedServiceObjectiveName": "[parameters('serviceLevelObjective')]",
-            "collation": "SQL_Latin1_General_CP1_CI_AS",
-            "readScale": "Disabled",
-            "zoneRedundant": false,
-            "isUpgradeRequested": false
-          },
-          "resources": [
-            {
-              "comments": "Transparent Data Encryption",
-              "type": "transparentDataEncryption",
-              "apiVersion": "2017-03-01-preview",
-              "name": "current",
-              "dependsOn": [
-                "[parameters('dataWarehouseName')]"
-              ],
-              "properties": {
-                "status": "[parameters('transparentDataEncryption')]"
-              }
-            }
-          ]
-        }
-      ]
+      "kind": "v12.0,user,datawarehouse,gen2",
+      "properties": {
+        "collation": "[parameters('databaseCollation')]",
+        "catalogCollation": "[parameters('databaseCollation')]",
+        "readScale": "Disabled",
+        "requestedBackupStorageRedundancy": "Geo",
+        "isLedgerOn": false
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases/transparentDataEncryption",
+      "apiVersion": "2021-05-01-preview",
+      "name": "[concat(parameters('sqlServerName'), concat(concat('/', parameters('databasesName')), '/Current'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), parameters('databasesName'))]",
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ],
+      "properties": {
+        "state": "[parameters('transparentDataEncryption')]"
+      }
     }
   ]
 }
