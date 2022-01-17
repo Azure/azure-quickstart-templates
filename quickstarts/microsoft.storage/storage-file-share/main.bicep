@@ -9,7 +9,7 @@ param fileShareName string
 @description('Specifies the location in which the Azure Storage resources should be deployed.')
 param location string = resourceGroup().location
 
-resource sa 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource sa 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   name: storageAccountName
   location: location
   kind: 'StorageV2'
@@ -21,6 +21,6 @@ resource sa 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   }
 }
 
-resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-04-01' = {
+resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-06-01' = {
   name: '${sa.name}/default/${fileShareName}'
 }
