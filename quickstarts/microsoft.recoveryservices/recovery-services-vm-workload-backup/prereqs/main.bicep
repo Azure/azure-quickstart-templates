@@ -27,12 +27,19 @@ param sqlAuthenticationLogin string
 @secure()
 param sqlAuthenticationPassword string
 param rServicesEnabled string
+param location string = location
 
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2018-06-01' = {
   name: virtualMachineName
-  location: resourceGroup().location
+  location: location
+		 
+					   
+					   
+				 
+					
+   
   properties: {
     osProfile: {
       computerName: virtualMachineName
@@ -82,7 +89,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2018-06-01' = {
 
 resource SqlVirtualMachine 'Microsoft.SqlVirtualMachine/SqlVirtualMachines@2017-03-01-preview' = {
   name: virtualMachineName
-  location: resourceGroup().location
+  location: location
   properties: {
     virtualMachineResourceId: virtualMachine.id
     autoPatchingSettings: {
@@ -118,7 +125,7 @@ resource SqlVirtualMachine 'Microsoft.SqlVirtualMachine/SqlVirtualMachines@2017-
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2018-08-01' = {
   name: virtualNetworkName
-  location: resourceGroup().location
+  location: location
   properties: {
     addressSpace: {
       addressPrefixes: [
@@ -138,7 +145,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2018-08-01' = {
 
 resource networkInterface 'Microsoft.Network/networkInterfaces@2018-10-01' = {
   name: networkInterfaceName
-  location: resourceGroup().location
+  location: location
   properties: {
     ipConfigurations: [
       {
@@ -168,7 +175,7 @@ resource publicIpAddress 'Microsoft.Network/publicIpAddresses@2018-08-01' = {
     name: publicIpAddressSku
   }
   name: publicIpAddressName
-  location: resourceGroup().location
+  location: location
   properties: {
     publicIPAllocationMethod: publicIpAddressType
   }
@@ -176,7 +183,7 @@ resource publicIpAddress 'Microsoft.Network/publicIpAddresses@2018-08-01' = {
 
 resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2018-08-01' = {
   name: networkSecurityGroupName
-  location: resourceGroup().location
+  location: location
   properties: {
     securityRules: [
       {
