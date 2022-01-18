@@ -4,6 +4,7 @@ param adminUsername string
 param virtualNetworkName string
 param networkInterfaceName string
 param networkSecurityGroupName string
+param location string = resourceGroup().location
 
 @secure()
 param adminPassword string
@@ -27,19 +28,12 @@ param sqlAuthenticationLogin string
 @secure()
 param sqlAuthenticationPassword string
 param rServicesEnabled string
-param location string = location
 
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2018-06-01' = {
   name: virtualMachineName
   location: location
-		 
-					   
-					   
-				 
-					
-   
   properties: {
     osProfile: {
       computerName: virtualMachineName
