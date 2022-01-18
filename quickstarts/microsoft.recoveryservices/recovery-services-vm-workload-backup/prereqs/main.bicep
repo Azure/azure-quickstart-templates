@@ -93,7 +93,6 @@ resource SqlVirtualMachine 'Microsoft.SqlVirtualMachine/SqlVirtualMachines@2017-
     }
     keyVaultCredentialSettings: {
       enable: false
-      credentialName: ''
     }
     serverConfigurationsManagementSettings: {
       sqlConnectivityUpdateSettings: {
