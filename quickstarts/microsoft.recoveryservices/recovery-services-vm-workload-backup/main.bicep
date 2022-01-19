@@ -5,7 +5,7 @@ param vaultName string = 'SqlBackupDemoVault'
 param vmResourceGroup string = resourceGroup().name
 
 @description('Name of the Compute VM containing the workload')
-param vmName string = 'sqlvmbackup'
+param vmName string = 'sqlvmbackupdemo'
 
 @description('Backup Policy Name')
 param policyName string
