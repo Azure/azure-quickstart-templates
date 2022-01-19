@@ -64,6 +64,7 @@ resource protectionContainer 'Microsoft.RecoveryServices/vaults/backupFabrics/pr
   }
   dependsOn: [
     recoveryServicesVault
+    backupPolicy
   ]
 }
 
