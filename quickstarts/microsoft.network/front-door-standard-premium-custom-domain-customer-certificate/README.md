@@ -36,15 +36,16 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 ### Connect
 
-Once you have deployed the Azure Resource Manager template, you need to validate the custom domain. TODO
+Once you have deployed the Azure Resource Manager template, you need to validate your ownership of the custom domain by updating your DNS server. You must create a TXT record with the name specified in the `customDomainValidationDnsTxtRecordName` deployment output, and use the value specified in the `customDomainValidationDnsTxtRecordValue` deployment output. You must the validation before the time specified in the `customDomainValidationExpiry` deployment output.
 
-Next, configure CNAME forwarding TODO
+Front Door validates your domin ownership and updates the status automatically. You can monitor the validation process, or trigger an immediate validation, in the domain configuration in the Azure portal.
 
-You can then access the Front Door endpoint by using your custom domain name. If you access the base hostname you should see a page saying _Welcome_. If you see a different error page, wait a few minutes and try again.
+Next, you should configure your DNS server with a CNAME record to direct the traffic to Front Door. You must create a CNAME record at the host name you specified in the `customDomainName` deployment parameter, and use the value specified in the `frontDoorEndpointHostName` deployment output.
+
+You can then access the Front Door endpoint by using your custom domain name. If you access the hostname you should see a page saying _Welcome_. If you see a different error page, wait a few minutes and try again.
 
 ## Notes
 
-TODO granting Key Vault access
-
+- You must grant Front Door access to your key vault before it can access your certificate. [Follow the guidance here](https://docs.microsoft.com/azure/frontdoor/standard-premium/how-to-configure-https-custom-domain#using-your-own-certificate) to register the Azure Front Door application with your Azure Active Directory tenant, and grant Azure Front Door access to your key vault.
 - Front Door Standard/Premium is currently in preview.
 - Front Door Standard/Premium is not currently available in the US Government regions.
