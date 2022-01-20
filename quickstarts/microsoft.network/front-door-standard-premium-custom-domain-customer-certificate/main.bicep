@@ -14,14 +14,25 @@ param originHostName string
 @description('The custom domain name to associate with your Front Door endpoint.')
 param customDomainName string
 
-@description('The fully qualified resource ID of the Key Vault secret sthat contains the custom domain\'s certificate.')
-param certificateKeyVaultSecretResourceId string
+@description('The name of the resource group that contains the key vault with custom domain\'s certificate.')
+param certificateKeyVaultResourceGroupName string = resourceGroup().name
+
+@description('The name of the Key Vault that contains the custom domain\'s certificate.')
+param certificateKeyVaultName string
+
+@description('The name of the Key Vault secret that contains the custom domain\'s certificate.')
+param certificateKeyVaultSecretName string
+
+@description('The version of the Key Vault secret that contains the custom domain\'s certificate. Set the value to an empty string to use the latest version.')
+param certificateKeyVaultSecretVersion string = ''
 
 var profileName = 'MyFrontDoor'
 var originGroupName = 'MyOriginGroup'
 var originName = 'MyOrigin'
 var routeName = 'MyRoute'
 var secretName = 'MySecret'
+
+// Create a valid resource name for the custom domain. Resource names don't include periods.
 var customDomainResourceName = replace(customDomainName, '.', '-')
 
 resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
@@ -59,16 +70,26 @@ resource originGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
   }
 }
 
+resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' existing = {
+  scope: resourceGroup(certificateKeyVaultResourceGroupName)
+  name: certificateKeyVaultName
+
+  resource secret 'secrets' existing = {
+    name: certificateKeyVaultSecretName
+  }
+}
+
 resource secret 'Microsoft.Cdn/profiles/secrets@2020-09-01' = {
   name: secretName
   parent: profile
   properties: {
     parameters: {
       type: 'CustomerCertificate'
+      useLatestVersion: (certificateKeyVaultSecretVersion == '')
+      secretVersion: certificateKeyVaultSecretVersion
       secretSource: {
-        id: certificateKeyVaultSecretResourceId
+        id: keyVault::secret.id
       }
-      useLatestVersion: true
     }
   }
 }
