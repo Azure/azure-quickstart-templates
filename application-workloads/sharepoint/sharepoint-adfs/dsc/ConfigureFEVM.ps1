@@ -347,6 +347,65 @@ configuration ConfigureFEVM
         #     }
         # }
 
+        if ($SharePointVersion -eq "Subscription") {
+            #**********************************************************
+            # Download and install for SharePoint
+            #**********************************************************
+            Script DownloadSharePoint
+            {
+                SetScript = {
+                    $count = 0
+                    $maxCount = 10
+                    $spIsoUrl = "https://go.microsoft.com/fwlink/?linkid=2171943"
+                    $dstFolder = Join-Path -Path $env:windir -ChildPath "Temp"
+                    $dstFile = Join-Path -Path $dstFolder -ChildPath "OfficeServer.iso"
+                    $spInstallFolder = Join-Path -Path $dstFolder -ChildPath "OfficeServer"
+                    $setupFile =  Join-Path -Path $spInstallFolder -ChildPath "setup.exe"
+                    while (($count -lt $maxCount) -and (-not(Test-Path $setupFile)))
+                    {
+                        try {
+                        # donwload the installation package
+                        Start-BitsTransfer -Source $spIsoUrl -Destination $dstFile
+                
+                        # mount the image file and copy to C:\windows\TEMP\OfficeServer folder
+                        $mountedIso = Mount-DiskImage -ImagePath $dstFile -PassThru
+                        $driverLetter =  (Get-Volume -DiskImage $mountedIso).DriveLetter
+                        Copy-Item -Path "${driverLetter}:\" -Destination $spInstallFolder -Recurse -Force -ErrorAction SilentlyContinue
+                        Dismount-DiskImage -DevicePath $mountedIso.DevicePath -ErrorAction SilentlyContinue
+                        
+                        (Get-ChildItem -Path $spInstallFolder -Recurse -File).FullName | Foreach-Object {Unblock-File $_}
+                        $count++
+                        }
+                        catch {
+                        $count++
+                        }
+                    }
+
+                    if (-not(Test-Path $setupFile)) {
+                        Write-Error -Message "Failed to download SharePoint installation package" 
+                    }
+                }
+                TestScript = { Test-Path "${env:windir}\Temp\OfficeServer\setup.exe" }
+                GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            }
+
+            SPInstallPrereqs InstallPrerequisites
+            {
+                IsSingleInstance  = "Yes"
+                InstallerPath     = "${env:windir}\Temp\OfficeServer\Prerequisiteinstaller.exe"
+                OnlineMode        = $true
+                DependsOn         = "[Script]DownloadSharePoint"
+            }
+
+            SPInstall InstallBinaries
+            {
+                IsSingleInstance = "Yes"
+                BinaryDir        = "${env:windir}\Temp\OfficeServer"
+                ProductKey       = "VW2FM-FN9FT-H22J4-WV9GT-H8VKF"
+                DependsOn        = "[SPInstallPrereqs]InstallPrerequisites"
+            }
+        }
+
         #********************************************************************
         # Wait for SharePoint app server to be ready
         #********************************************************************
@@ -592,11 +651,12 @@ configuration ConfigureFEVM
         #             $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
         #             $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
-        #             python $localScriptPath "$fullPathToDscLogs"
+        #             # Start python in a new process to ensure python.exe is in the path
+        #             Write-Verbose -Message "Run python $localScriptPath `"$fullPathToDscLogs`" in a new PowerShell process..."
+        #             Start-Process -FilePath "powershell" -ArgumentList "python $localScriptPath `"$fullPathToDscLogs`""
         #         }
         #         GetScript = { }
-        #         DependsOn            = "[cChocoPackageInstaller]InstallPython"
-        #         PsDscRunAsCredential = $DomainAdminCredsQualified
+        #         DependsOn = "[cChocoPackageInstaller]InstallPython"
         #     }
         # }
     }
