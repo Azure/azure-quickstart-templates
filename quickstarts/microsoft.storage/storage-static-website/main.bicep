@@ -59,7 +59,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-prev
   }
 }
 
-resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2021-04-01-preview' = {
   name: 'deploymentScript'
   location: location
   kind: 'AzurePowerShell'
