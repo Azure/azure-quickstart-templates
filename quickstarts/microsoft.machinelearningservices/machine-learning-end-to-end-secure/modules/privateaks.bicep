@@ -25,7 +25,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-07-01' = {
     type: 'SystemAssigned'
   }
   properties: {
-    kubernetesVersion: '1.20.7'
+    kubernetesVersion: '1.22.4'
     dnsPrefix: '${aksClusterName}-dns'
     agentPoolProfiles: [
       {
