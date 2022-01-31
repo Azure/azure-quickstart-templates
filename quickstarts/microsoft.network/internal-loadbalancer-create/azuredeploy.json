@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1124.51302",
+      "templateHash": "10113790264401608946"
+    }
+  },
   "parameters": {
     "vnetAddressPrefix": {
       "type": "string",
@@ -29,15 +36,16 @@
     "subnetName": "myBackendSubnet",
     "loadBalancerName": "myLoadBalancer",
     "nicName": "myNIC1",
-    "lbsku": "Standard",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "lbrulename": "myHTTPRule",
-    "lbprobename": "myHealthProbe"
+    "lbSku": "Standard",
+    "lbFrontEndName": "loadBalancerFrontEnd",
+    "lbBackEndName": "loadBalancerBackEnd",
+    "lbRuleName": "HTTPRule",
+    "lbProbeName": "TCPPort80HealthProbe"
   },
   "resources": [
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-05-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -45,25 +53,25 @@
           "addressPrefixes": [
             "[parameters('vnetAddressPrefix')]"
           ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[parameters('subnetPrefix')]"
-            }
-          }
-        ]
+        }
       }
     },
     {
-      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2021-05-01",
+      "name": "[format('{0}/{1}', variables('virtualNetworkName'), variables('subnetName'))]",
+      "properties": {
+        "addressPrefix": "[parameters('subnetPrefix')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2021-05-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -71,56 +79,57 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), 'loadBalancerBackEnd')]"
+                  "id": "[format('{0}/backendAddressPools/{1}', resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), variables('loadBalancerName'))]"
                 }
               ]
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-05-01",
-      "name": "[variables('loadBalancerName')]",
       "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('loadBalancerName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[variables('lbSku')]"
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-      ],
       "properties": {
         "frontendIPConfigurations": [
           {
-            "name": "loadBalancerFrontEnd",
+            "name": "[variables('lbFrontEndName')]",
             "properties": {
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               }
             }
           }
         ],
         "backendAddressPools": [
           {
-            "name": "loadBalancerBackEnd"
+            "name": "[variables('lbBackEndName')]"
           }
         ],
         "loadBalancingRules": [
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadBalancerName'), 'loadBalancerFrontEnd')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadBalancerName'), variables('lbFrontEndName'))]"
               },
               "backendAddressPool": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), 'loadBalancerBackEnd')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('lbBackEndName'))]"
               },
               "probe": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), variables('lbprobename'))]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), variables('lbProbeName'))]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
@@ -129,7 +138,7 @@
               "disableOutboundSnat": true,
               "idleTimeoutInMinutes": 15
             },
-            "name": "[variables('lbrulename')]"
+            "name": "[variables('lbRuleName')]"
           }
         ],
         "probes": [
@@ -140,10 +149,13 @@
               "intervalInSeconds": 15,
               "numberOfProbes": 2
             },
-            "name": "[variables('lbprobename')]"
+            "name": "[variables('lbProbeName')]"
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+      ]
     }
   ]
 }
