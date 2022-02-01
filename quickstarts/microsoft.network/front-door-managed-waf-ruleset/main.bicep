@@ -8,11 +8,10 @@ param wafPolicyName string
 ])
 param wafMode string = 'Detection'
 
-var wafLocation = 'global'
 
 resource wafPolicy 'Microsoft.Network/FrontDoorWebApplicationFirewallPolicies@2020-11-01' = {
   name: wafPolicyName
-  location: wafLocation
+  location: 'global'
   properties: {
     policySettings: {
       mode: wafMode
