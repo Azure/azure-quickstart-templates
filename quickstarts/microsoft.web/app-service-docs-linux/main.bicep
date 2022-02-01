@@ -37,6 +37,7 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
     siteConfig: {
       linuxFxVersion: linuxFxVersion
       minTlsVersion: '1.2'
+      ftpsState: 'FtpsOnly'
     }
   }
   identity: {
