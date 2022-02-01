@@ -11,9 +11,15 @@
         },
         "virtualNetworkName": {
             "type": "String",
-            "defaultValue": "[concat('vnet', uniqueString(resourceGroup().id))]",
+            "defaultValue": "[concat('vnet-', uniqueString(resourceGroup().id))]",
             "metadata": {
-                "description": "Virtual Network name for the subnet."
+                "description": "Virtual Network name."
+            }
+        },
+        "vnetAddressPrefix": {
+            "type": "String",
+            "metadata": {
+                "description": "Virtual Network address range."
             }
         },
         "anfSubnetName": {
@@ -23,70 +29,66 @@
                 "description": "Delegated Subnet name."
             }
         },
+        "anfSubnetAddressPrefix": {
+            "type": "String",
+            "metadata": {
+                "description": "Subnet address range."
+            }
+        },
         "netappAccountName": {
-            "defaultValue": "[concat('anfacc', uniqueString(resourceGroup().id))]",
+            "defaultValue": "[concat('anfacc-', uniqueString(resourceGroup().id))]",
             "type": "String",
             "metadata": {
                 "description": "Name of Azure NetApp Files (ANF) account. The account name must be unique within the subscription"
             }
         },
         "netAppPoolName": {
-            "defaultValue": "[concat('pool', uniqueString(resourceGroup().id))]",
+            "defaultValue": "[concat('pool-', uniqueString(resourceGroup().id))]",
             "type": "String",
             "metadata": {
-                "description": "Name of Azure NetApp Files (ANF) account. The account name must be unique within the subscription"
-            }
-        },
-        "anfSubnetAddressPrefix": {
-            "type": "String",
-            "metadata": {
-                "description": "Subnet address range."
+                "description": "Name of Capacity Pool in Azure NetApp Files (ANF) account"
             }
         }
     },
     "resources": [
         {
-            "subscriptionId": "[subscription().subscriptionId]",
-            "resourceGroup": "[resourceGroup().name]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2020-06-01",
-            "name": "AddSubnet",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2021-06-01",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[parameters('location')]",
             "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "resources": [
-                        {
-                            "type": "Microsoft.Network/virtualNetworks/subnets",
-                            "apiVersion": "2020-05-01",
-                            "name": "[concat(parameters('virtualNetworkName'),'/',parameters('anfSubnetName'))]",
-                            "location": "[parameters('location')]",
-                            "properties": {
-                                "addressPrefix": "[parameters('anfSubnetAddressPrefix')]",
-                                "delegations": [
-                                    {
-                                        "name": "Microsoft.Netapp.volumes",
-                                        "properties": {
-                                            "serviceName": "Microsoft.Netapp/volumes"
-                                        }
-                                    }
-                                ]
-                            }
-                        }
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vnetAddressPrefix')]"
                     ]
-                }
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('anfSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('anfSubnetAddressPrefix')]",
+                            "delegations": [
+                                {
+                                    "name": "NetAppDelegation",
+                                    "properties": {
+                                        "serviceName": "Microsoft.NetApp/volumes"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
             }
         },
         {
             "type": "Microsoft.NetApp/netAppAccounts",
-            "apiVersion": "2020-06-01",
+            "apiVersion": "2021-06-01",
             "name": "[parameters('netAppAccountName')]",
             "location": "[parameters('location')]"
         },
         {
             "type": "Microsoft.NetApp/netAppAccounts/capacityPools",
-            "apiVersion": "2020-06-01",
+            "apiVersion": "2021-06-01",
             "name": "[concat(parameters('netAppAccountName'),'/',parameters('netAppPoolName'))]",
             "location": "[parameters('location')]",
             "dependsOn": [
