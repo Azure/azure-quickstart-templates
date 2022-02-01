@@ -14,10 +14,10 @@ param linuxFxVersion string = 'DOTNETCORE|3.0'
 @description('Optional Git Repo URL')
 param repoUrl string = ' '
 
-var appServicePlanPortalName_var = 'AppServicePlan-${webAppName}'
+var appServicePlanPortalName = 'AppServicePlan-${webAppName}'
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
-  name: appServicePlanPortalName_var
+  name: appServicePlanPortalName
   location: location
   sku: {
     name: sku
