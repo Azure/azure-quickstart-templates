@@ -52,10 +52,17 @@ resource appSvcPlan 'Microsoft.Web/serverfarms@2021-02-01' = {
 resource webApp 'Microsoft.Web/sites@2021-02-01' = {
   name: webAppName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: appSvcPlan.id
+    httpsOnly: true
+    
     siteConfig: {
+      ftpsState: 'FtpsOnly'
       phpVersion: 'off'
+      minTlsVersion: '1.2'
       appSettings: [
         {
           name: 'DOCUMENTDB_ENDPOINT'
@@ -67,5 +74,6 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         }
       ]
     }
+    
   }
 }
