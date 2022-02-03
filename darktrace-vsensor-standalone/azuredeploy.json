@@ -1,0 +1,304 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.5",
+    "parameters": {
+        "location": {
+            "defaultValue": "default",
+            "type": "String",
+            "metadata": {
+                "description": "Location for all resources. The default is the Resource Group location."
+            }
+        },
+        "virtualNetworkName": {
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Virtual Network, should be in the above Location ."
+            }
+        },
+        "virtualNetworkResourceGroup": {
+            "type": "string",
+            "defaultValue": "same_RG",
+            "metadata": {
+                "description": "The Resource Group the VNet is deployed in. Default is same RG."
+            }
+        },
+        "subnetName": {
+            "defaultValue": "default",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Subnet in the Virtual Network."
+            }
+        },
+        "networkSecurityGroupName": {
+            "type": "String",
+            "metadata": {
+                "description": "Name for the Network Security Group that the template will create. Note that a pre-existing Network Security Group with the same name will be replaced."
+            }
+        },
+        "MgmtSourceAddressOrRange": {
+            "type": "String",
+            "metadata": {
+                "description": "Provide an address range using CIDR notation (e.g. 10.1.0.0/24), or an IP address (e.g. 192.168.99.21) for Management access via ssh (port 22/TCP). You can also provide a comma-separated list of IP addresses and/or address ranges (a valid comma-separated list is 10.1.0.4,10.2.1.0/24). To allow access from any IP you can use 0.0.0.0/0."
+            }
+        },
+        "vsensorName": {
+            "type": "String",
+            "metadata": {
+                "description": "The name of the vSensor."
+            }
+        },
+        "numberOfVsensors": {
+            "type": "Int",
+            "defaultValue": 1,
+            "minValue": 1,
+            "maxValue": 4,
+             "metadata": {
+                "description": "Number of vSensors to be deployed, max is 4."
+            }
+        },
+        "diskSize": {
+            "defaultValue": 30,
+            "minValue": 30,
+            "maxValue": 1024,
+            "type": "Int",
+            "metadata": {
+                "description": "The vSensor disk size in GB between 30 and 1024. Check the Darktrace customer portal for more information."
+            }
+        },
+        "virtualMachineSize": {
+            "defaultValue": "Standard_D2s_v3",
+            "type": "String",
+            "metadata": {
+                "description": "The VM size. Check the Darktrace customer portal for more information about the vSensor Virtual Hardware requirements."
+            }
+        },
+        "adminUsername": {
+            "defaultValue": "ubuntu",
+            "type": "String",
+            "metadata": {
+                "description": "Username to be created when the vSensor is spun up. Note that password authentication over ssh for newly created VMs is disabled."
+            }
+        },
+        "adminPublicKey": {
+            "type": "String",
+            "metadata": {
+                "description": "Public key for the adminUsername user to ssh the vSensor."
+            }
+        },
+        "applianceHostName": {
+            "type": "String",
+            "metadata": {
+                "description": "The FQDN or the IP of the Darktrace master instance (virtual/physical)."
+            }
+        },
+        "appliancePort": {
+            "defaultValue": 443,
+            "type": "Int",
+            "metadata": {
+                "description": "Darktrace master instance connection port."
+            }
+        },
+        "updateKey": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Darktrace Update Key needed to install the vSensor package. Contact your Darktrace representative for more information."
+            }
+        },
+        "pushToken": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "The push token that vSensor will use to connect and register on the Darktrace master instance. Should be generated on the Darktrace master instance."
+            }
+        },
+        "osSensorHMACToken": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "TThe osSensor HMAC Token."
+            }
+        }
+    },
+    "variables": {
+        "location": "[if(equals(parameters('location'),'default'), resourceGroup().location, parameters('location'))]",
+        "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+        "nsgSourceAddressPrefix": "[split(variables('MgmtSourceAddressOrRange'), ',')]",
+        "MgmtSourceAddressOrRange": "[replace(parameters('MgmtSourceAddressOrRange'), ' ', '')]",
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "subnetRef": "[if(equals(parameters('virtualNetworkResourceGroup'),'same_RG'), concat(variables('vnetId'), '/subnets/', parameters('subnetName')), resourceId(parameters('virtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')))]",
+        "updkey": "[parameters('updateKey')]",
+        "pusht": "[parameters('PushToken')]",
+        "oshmac": "[parameters('osSensorHMACToken')]",
+        "mastername": "[parameters('applianceHostName')]",
+        "masterport": "[parameters('appliancePort')]"
+    },
+    "resources": [
+        {
+            "comments": "Create new Network Security Group.",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-08-01",
+            "name": "[parameters('networkSecurityGroupName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AllowMgmtInPorts22",
+                        "properties": {
+                            "description": "Allow Inbound traffic to TCP ports 22 from customer selected IPs/Ranges.",
+                            "direction": "Inbound",
+                            "priority": 1001,
+                            "access": "Allow",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": ["22"],
+                            "SourceAddressPrefixes": "[variables('nsgSourceAddressPrefix')]",
+                            "destinationAddressPrefix": "*"
+                        }
+                    },
+                    {
+                        "name": "AllowVnetInPorts80_443",
+                        "properties": {
+                            "description": "Allow Inbound traffic to TCP ports 80 and 443 from all VMs in the Vnet.",
+                            "direction": "Inbound",
+                            "priority": 1011,
+                            "access": "Allow",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [
+                                "80",
+                                "443"
+                            ],
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork"
+                        }
+                    },
+                    {
+                        "name": "DenyAllIn",
+                        "properties": {
+                            "description": "Deny all Inbound traffic.",
+                            "direction": "Inbound",
+                            "priority": 1021,
+                            "access": "Deny",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    }
+                ]
+            }    
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-07-01",
+            "name": "[concat(parameters('vsensorName'), '-', copyIndex(1),'-nic')]",
+            "location": "[variables('location')]",
+            "copy": {
+                "name": "nicLoop",
+                "count": "[parameters('numberOfVsensors')]"
+            },
+            "dependsOn": [
+                "[variables('nsgId')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                               "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2021-07-01",
+            "name": "[concat(parameters('vsensorName'), '-', copyIndex(1))]",
+            "location": "[variables('location')]",
+            "copy": {
+                "name": "virtualMachineLoop",
+                "count": "[parameters('numberOfVsensors')]"
+            },
+            "dependsOn": [
+                "nicLoop"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "diskSizeGB": "[int(parameters('diskSize'))]",
+                        "managedDisk": {
+                            "storageAccountType": "StandardSSD_LRS"
+                        },
+                        "deleteOption": "delete"
+                    },
+                    "imageReference": {
+                        "publisher": "canonical",
+                        "offer": "0001-com-ubuntu-server-focal",
+                        "sku": "20_04-lts-gen2",
+                        "version": "latest"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vsensorName'), '-', copyIndex(1),'-nic'))]",
+                            "properties": {
+                                 "deleteOption": "delete"
+                         }
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vsensorName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('adminPublicKey')]"
+                                }
+                            ]
+                        },
+                        "patchSettings": {
+                            "patchMode": "ImageDefault"
+                        }
+                    },
+                    "customData": "[base64(concat('#!/bin/bash\nbash <(wget https://packages.darktrace.com/install -O -) --updateKey \"', variables('updkey'), '\"\n sleep 5\n/usr/sbin/set_pushtoken.sh \"', variables('pusht'), '\" ', variables('mastername'), ':', variables('masterport'), '\nsleep 5\nset_ossensor_hmac.sh \"', variables('oshmac'), '\"'))]"
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "allowedManagementIPsAndRanges": {
+            "type": "array",
+            "value": "[variables('nsgSourceAddressPrefix')]"
+        },
+        "privateIPs": {
+            "type": "array",
+            "copy": {
+                "count": "[parameters('numberOfVsensors')]",
+                "input": "[reference(concat(parameters('vsensorName'), '-', copyIndex(1),'-nic')).ipConfigurations[0].properties.privateIPAddress]"
+            }
+        }
+    }
+}
