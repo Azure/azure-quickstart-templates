@@ -1,0 +1,180 @@
+{
+ "properties": {
+  "displayName": "Configure Azure SQL Server to enable private endpoint connections",
+  "policyType": "BuiltIn",
+  "mode": "Indexed",
+  "description": "A private endpoint connection enables private connectivity to your Azure SQL Database via a private IP address inside a virtual network. This configuration improves your security posture and supports Azure networking tools and scenarios.",
+  "metadata": {
+   "category": "SQL",
+   "version": "1.0.0"
+  },
+  "parameters": {
+   "privateEndpointSubnetId": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Subnet to use for Private Endpoints",
+     "description": "The name of the subnet within the virtual network that you would like to use for your Private Endpoint Connection deployment",
+     "strongType": "Microsoft.Network/virtualNetworks/subnets"
+    }
+   },
+   "effect": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Effect",
+     "description": "Enable or disable the execution of the policy"
+    },
+    "allowedValues": [
+     "DeployIfNotExists",
+     "Disabled"
+    ],
+    "defaultValue": "DeployIfNotExists"
+   }
+  },
+  "policyRule": {
+   "if": {
+    "allOf": [
+     {
+      "field": "type",
+      "equals": "Microsoft.Sql/servers"
+     },
+     {
+      "count": {
+       "field": "Microsoft.Sql/servers/privateEndpointConnections[*]",
+       "where": {
+        "field": "Microsoft.Sql/servers/privateEndpointConnections[*].id",
+        "exists": "false"
+       }
+      },
+      "equals": 0
+     }
+    ]
+   },
+   "then": {
+    "effect": "[parameters('effect')]",
+    "details": {
+     "type": "Microsoft.Sql/servers/privateEndpointConnections",
+     "roleDefinitionIds": [
+      "/providers/Microsoft.Authorization/roleDefinitions/4d97b98b-1d4f-4787-a291-c67834d212e7",
+      "/providers/Microsoft.Authorization/roleDefinitions/6d8ee4ec-f05a-4a1d-8b00-a9b17e38b437"
+     ],
+     "deployment": {
+      "properties": {
+       "mode": "incremental",
+       "parameters": {
+        "name": {
+         "value": "[field('name')]"
+        },
+        "serviceId": {
+         "value": "[field('id')]"
+        },
+        "privateEndpointSubnetId": {
+         "value": "[parameters('privateEndpointSubnetId')]"
+        }
+       },
+       "template": {
+        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+         "name": {
+          "type": "string"
+         },
+         "serviceId": {
+          "type": "string"
+         },
+         "privateEndpointSubnetId": {
+          "type": "string"
+         }
+        },
+        "variables": {
+         "privateEndpointName": "[concat('pe-',substring(parameters('name'),0,min(length(parameters('name')),50)),'-',uniquestring(deployment().name))]"
+        },
+        "resources": [
+         {
+          "type": "Microsoft.Resources/deployments",
+          "name": "[variables('privateEndpointName')]",
+          "apiVersion": "2020-06-01",
+          "properties": {
+           "mode": "Incremental",
+           "expressionEvaluationOptions": {
+            "scope": "inner"
+           },
+           "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+             "name": {
+              "type": "String"
+             },
+             "serviceId": {
+              "type": "String"
+             },
+             "privateEndpointSubnetId": {
+              "type": "String"
+             },
+             "subnetlocation": {
+              "type": "String"
+             }
+            },
+            "variables": {
+             "privateEndpointName": "[deployment().name]"
+            },
+            "resources": [
+             {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2020-07-01",
+              "name": "[variables('privateEndpointName')]",
+              "location": "[parameters('subnetlocation')]",
+              "properties": {
+               "privateLinkServiceConnections": [
+                {
+                 "name": "[parameters('name')]",
+                 "properties": {
+                  "privateLinkServiceId": "[parameters('serviceId')]",
+                  "groupIds": [
+                   "sqlServer"
+                  ],
+                  "privateLinkServiceConnectionState": {
+                   "status": "Approved",
+                   "description": "Auto-approved",
+                   "actionsRequired": "None"
+                  }
+                 }
+                }
+               ],
+               "manualPrivateLinkServiceConnections": [],
+               "subnet": {
+                "id": "[parameters('privateEndpointSubnetId')]"
+               },
+               "customDnsConfigs": []
+              }
+             }
+            ]
+           },
+           "parameters": {
+            "name": {
+             "value": "[parameters('name')]"
+            },
+            "privateEndpointSubnetId": {
+             "value": "[parameters('privateEndpointSubnetId')]"
+            },
+            "serviceId": {
+             "value": "[parameters('serviceId')]"
+            },
+            "subnetlocation": {
+             "value": "[reference(first(take(split(parameters('privateEndpointSubnetId'),'/subnets'),1)),'2020-07-01','Full').location]"
+            }
+           }
+          }
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "id": "/providers/Microsoft.Authorization/policyDefinitions/8e8ca470-d980-4831-99e6-dc70d9f6af87",
+ "type": "Microsoft.Authorization/policyDefinitions",
+ "name": "8e8ca470-d980-4831-99e6-dc70d9f6af87"
+}

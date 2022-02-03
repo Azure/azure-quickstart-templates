@@ -1,0 +1,197 @@
+{
+ "properties": {
+  "displayName": "Kubernetes cluster pods and containers should only run with approved user and group IDs",
+  "policyType": "BuiltIn",
+  "mode": "Microsoft.Kubernetes.Data",
+  "description": "Control the user, primary group, supplemental group and file system group IDs that pods and containers can use to run in a Kubernetes Cluster. This recommendation is part of Pod Security Policies which are intended to improve the security of your Kubernetes environments. This policy is generally available for Kubernetes Service (AKS), and preview for AKS Engine and Azure Arc enabled Kubernetes. For more information, see https://aka.ms/kubepolicydoc.",
+  "metadata": {
+   "version": "4.0.3",
+   "category": "Kubernetes"
+  },
+  "parameters": {
+   "effect": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Effect",
+     "description": "'audit' allows a non-compliant resource to be created or updated, but flags it as non-compliant. 'deny' blocks the non-compliant resource creation or update. 'disabled' turns off the policy."
+    },
+    "allowedValues": [
+     "audit",
+     "deny",
+     "disabled"
+    ],
+    "defaultValue": "audit"
+   },
+   "excludedNamespaces": {
+    "type": "Array",
+    "metadata": {
+     "displayName": "Namespace exclusions",
+     "description": "List of Kubernetes namespaces to exclude from policy evaluation. System namespaces \"kube-system\", \"gatekeeper-system\" and \"azure-arc\" are always excluded by design."
+    },
+    "defaultValue": [
+     "kube-system",
+     "gatekeeper-system",
+     "azure-arc"
+    ]
+   },
+   "namespaces": {
+    "type": "Array",
+    "metadata": {
+     "displayName": "Namespace inclusions",
+     "description": "List of Kubernetes namespaces to only include in policy evaluation. An empty list means the policy is applied to all resources in all namespaces."
+    },
+    "defaultValue": []
+   },
+   "labelSelector": {
+    "type": "Object",
+    "metadata": {
+     "displayName": "Kubernetes label selector",
+     "description": "Label query to select Kubernetes resources for policy evaluation. An empty label selector matches all Kubernetes resources."
+    },
+    "defaultValue": {}
+   },
+   "runAsUserRule": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Run as user rule",
+     "description": "The 'RunAsUser' rule that containers are allowed to run with. MustRunAs requires at least one range to be specified. MustRunAsNonRoot requires the pod be submitted with non-zero runAsUser or have USER directive defined (using a numeric UID) in the image. RunAsAny allows any runAsUser to be specified"
+    },
+    "allowedValues": [
+     "MustRunAs",
+     "MustRunAsNonRoot",
+     "RunAsAny"
+    ],
+    "defaultValue": "MustRunAsNonRoot"
+   },
+   "runAsUserRanges": {
+    "type": "Object",
+    "metadata": {
+     "displayName": "Allowed user ID ranges",
+     "description": "The user ID ranges that are allowed for containers to use."
+    },
+    "defaultValue": {
+     "ranges": []
+    }
+   },
+   "runAsGroupRule": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Run as group rule",
+     "description": "The 'RunAsGroup' rule that containers are allowed to run with. MustRunAs requires at least one range to be specified. MayRunAs does not require that 'RunAsGroup' be specified. RunAsAny allows any"
+    },
+    "allowedValues": [
+     "MustRunAs",
+     "MayRunAs",
+     "RunAsAny"
+    ],
+    "defaultValue": "RunAsAny"
+   },
+   "runAsGroupRanges": {
+    "type": "Object",
+    "metadata": {
+     "displayName": "Allowed group ID ranges",
+     "description": "The group ID ranges that are allowed for containers to use."
+    },
+    "defaultValue": {
+     "ranges": []
+    }
+   },
+   "supplementalGroupsRule": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Supplemental group rule",
+     "description": "The 'SupplementalGroups' rule that containers are allowed to run with. MustRunAs requires at least one range to be specified. MayRunAs does not require that 'SupplementalGroups' be specified. RunAsAny allows any"
+    },
+    "allowedValues": [
+     "MustRunAs",
+     "MayRunAs",
+     "RunAsAny"
+    ],
+    "defaultValue": "RunAsAny"
+   },
+   "supplementalGroupsRanges": {
+    "type": "Object",
+    "metadata": {
+     "displayName": "Allowed supplemental group ID ranges",
+     "description": "The supplemental group ID ranges that are allowed for containers to use."
+    },
+    "defaultValue": {
+     "ranges": []
+    }
+   },
+   "fsGroupRule": {
+    "type": "String",
+    "metadata": {
+     "displayName": "File system group rule",
+     "description": "The 'FSGroup' rule that containers are allowed to run with. MustRunAs requires at least one range to be specified. MayRunAs does not require that 'FSGroup' be specified. RunAsAny allows any"
+    },
+    "allowedValues": [
+     "MustRunAs",
+     "MayRunAs",
+     "RunAsAny"
+    ],
+    "defaultValue": "RunAsAny"
+   },
+   "fsGroupRanges": {
+    "type": "Object",
+    "metadata": {
+     "displayName": "Allowed file system group ID ranges",
+     "description": "The file system group ranges that are allowed for pods to use."
+    },
+    "defaultValue": {
+     "ranges": []
+    }
+   },
+   "excludedContainers": {
+    "type": "Array",
+    "metadata": {
+     "displayName": "Containers exclusions",
+     "description": "The list of InitContainers and Containers to exclude from policy evaluation. The identify is the name of container. Use an empty list to apply this policy to all containers in all namespaces."
+    },
+    "defaultValue": []
+   }
+  },
+  "policyRule": {
+   "if": {
+    "field": "type",
+    "in": [
+     "AKS Engine",
+     "Microsoft.Kubernetes/connectedClusters",
+     "Microsoft.ContainerService/managedClusters"
+    ]
+   },
+   "then": {
+    "effect": "[parameters('effect')]",
+    "details": {
+     "constraintTemplate": "https://store.policy.core.windows.net/kubernetes/allowed-users-groups/v2/template.yaml",
+     "constraint": "https://store.policy.core.windows.net/kubernetes/allowed-users-groups/v2/constraint.yaml",
+     "excludedNamespaces": "[parameters('excludedNamespaces')]",
+     "namespaces": "[parameters('namespaces')]",
+     "labelSelector": "[parameters('labelSelector')]",
+     "values": {
+      "runAsUser": {
+       "rule": "[parameters('runAsUserRule')]",
+       "ranges": "[parameters('runAsUserRanges').ranges]"
+      },
+      "runAsGroup": {
+       "rule": "[parameters('runAsGroupRule')]",
+       "ranges": "[parameters('runAsGroupRanges').ranges]"
+      },
+      "supplementalGroups": {
+       "rule": "[parameters('supplementalGroupsRule')]",
+       "ranges": "[parameters('supplementalGroupsRanges').ranges]"
+      },
+      "fsGroup": {
+       "rule": "[parameters('fsGroupRule')]",
+       "ranges": "[parameters('fsGroupRanges').ranges]"
+      },
+      "excludedContainers": "[parameters('excludedContainers')]"
+     }
+    }
+   }
+  }
+ },
+ "id": "/providers/Microsoft.Authorization/policyDefinitions/f06ddb64-5fa3-4b77-b166-acb36f7f6042",
+ "type": "Microsoft.Authorization/policyDefinitions",
+ "name": "f06ddb64-5fa3-4b77-b166-acb36f7f6042"
+}

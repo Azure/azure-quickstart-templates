@@ -1,0 +1,182 @@
+{
+ "properties": {
+  "displayName": "Deploy Diagnostic Settings for Service Bus to Log Analytics workspace",
+  "policyType": "BuiltIn",
+  "mode": "Indexed",
+  "description": "Deploys the diagnostic settings for Service Bus to stream to a regional Log Analytics workspace when any Service Bus which is missing this diagnostic settings is created or updated.",
+  "metadata": {
+   "version": "2.0.0",
+   "category": "Monitoring"
+  },
+  "parameters": {
+   "effect": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Effect",
+     "description": "Enable or disable the execution of the policy"
+    },
+    "allowedValues": [
+     "DeployIfNotExists",
+     "Disabled"
+    ],
+    "defaultValue": "DeployIfNotExists"
+   },
+   "profileName": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Profile name",
+     "description": "The diagnostic settings profile name"
+    },
+    "defaultValue": "setbypolicy_logAnalytics"
+   },
+   "logAnalytics": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Log Analytics workspace",
+     "description": "Select Log Analytics workspace from dropdown list. If this workspace is outside of the scope of the assignment you must manually grant 'Log Analytics Contributor' permissions (or similar) to the policy assignment's principal ID.",
+     "strongType": "omsWorkspace",
+     "assignPermissions": true
+    }
+   },
+   "metricsEnabled": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Enable metrics",
+     "description": "Whether to enable metrics stream to the Log Analytics workspace - True or False"
+    },
+    "allowedValues": [
+     "True",
+     "False"
+    ],
+    "defaultValue": "False"
+   },
+   "logsEnabled": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Enable logs",
+     "description": "Whether to enable logs stream to the Log Analytics workspace - True or False"
+    },
+    "allowedValues": [
+     "True",
+     "False"
+    ],
+    "defaultValue": "True"
+   }
+  },
+  "policyRule": {
+   "if": {
+    "field": "type",
+    "equals": "Microsoft.ServiceBus/namespaces"
+   },
+   "then": {
+    "effect": "[parameters('effect')]",
+    "details": {
+     "type": "Microsoft.Insights/diagnosticSettings",
+     "name": "[parameters('profileName')]",
+     "existenceCondition": {
+      "allOf": [
+       {
+        "field": "Microsoft.Insights/diagnosticSettings/logs.enabled",
+        "equals": "[parameters('logsEnabled')]"
+       },
+       {
+        "field": "Microsoft.Insights/diagnosticSettings/metrics.enabled",
+        "equals": "[parameters('metricsEnabled')]"
+       }
+      ]
+     },
+     "roleDefinitionIds": [
+      "/providers/microsoft.authorization/roleDefinitions/749f88d5-cbae-40b8-bcfc-e573ddc772fa",
+      "/providers/microsoft.authorization/roleDefinitions/92aaf0da-9dab-42b6-94a3-d43ce8d16293"
+     ],
+     "deployment": {
+      "properties": {
+       "mode": "incremental",
+       "template": {
+        "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+         "resourceName": {
+          "type": "string"
+         },
+         "location": {
+          "type": "string"
+         },
+         "logAnalytics": {
+          "type": "string"
+         },
+         "metricsEnabled": {
+          "type": "string"
+         },
+         "logsEnabled": {
+          "type": "string"
+         },
+         "profileName": {
+          "type": "string"
+         }
+        },
+        "variables": {},
+        "resources": [
+         {
+          "type": "Microsoft.ServiceBus/namespaces/providers/diagnosticSettings",
+          "apiVersion": "2017-05-01-preview",
+          "name": "[concat(parameters('resourceName'), '/', 'Microsoft.Insights/', parameters('profileName'))]",
+          "location": "[parameters('location')]",
+          "dependsOn": [],
+          "properties": {
+           "workspaceId": "[parameters('logAnalytics')]",
+           "metrics": [
+            {
+             "category": "AllMetrics",
+             "enabled": "[parameters('metricsEnabled')]",
+             "retentionPolicy": {
+              "enabled": false,
+              "days": 0
+             }
+            }
+           ],
+           "logs": [
+            {
+             "category": "OperationalLogs",
+             "enabled": "[parameters('logsEnabled')]"
+            },
+            {
+             "category": "VNetAndIPFilteringLogs",
+             "enabled": "[parameters('logsEnabled')]"
+            }
+           ]
+          }
+         }
+        ],
+        "outputs": {}
+       },
+       "parameters": {
+        "location": {
+         "value": "[field('location')]"
+        },
+        "resourceName": {
+         "value": "[field('name')]"
+        },
+        "logAnalytics": {
+         "value": "[parameters('logAnalytics')]"
+        },
+        "metricsEnabled": {
+         "value": "[parameters('metricsEnabled')]"
+        },
+        "logsEnabled": {
+         "value": "[parameters('logsEnabled')]"
+        },
+        "profileName": {
+         "value": "[parameters('profileName')]"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "id": "/providers/Microsoft.Authorization/policyDefinitions/04d53d87-841c-4f23-8a5b-21564380b55e",
+ "type": "Microsoft.Authorization/policyDefinitions",
+ "name": "04d53d87-841c-4f23-8a5b-21564380b55e"
+}

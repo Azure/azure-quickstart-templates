@@ -1,0 +1,307 @@
+{
+ "properties": {
+  "displayName": "Configure Kubernetes clusters with specified GitOps configuration using no secrets",
+  "policyType": "BuiltIn",
+  "mode": "Indexed",
+  "description": "Deploy a 'sourceControlConfiguration' to Kubernetes clusters to assure that the clusters get their source of truth for workloads and configurations from the defined git repo. This definition requires no secrets. For instructions, visit https://aka.ms/K8sGitOpsPolicy.",
+  "metadata": {
+   "version": "1.0.0",
+   "category": "Kubernetes"
+  },
+  "parameters": {
+   "configurationResourceName": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Configuration resource name",
+     "description": "The name for the sourceControlConfiguration.  Learn more about setting up GitOps configuration: https://aka.ms/AzureArcK8sUsingGitOps."
+    }
+   },
+   "operatorInstanceName": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Operator instance name",
+     "description": "Name used in the operator instances. Maximum of 23 lowercase alphanumeric characters or hyphen. Must start and end with an alphanumeric character."
+    }
+   },
+   "operatorNamespace": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Operator namespace",
+     "description": "Namespace within which the operators will be installed. Maximum of 23 lowercase alphanumeric characters or hyphen. Must start and end with an alphanumeric character."
+    }
+   },
+   "operatorScope": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Operator scope",
+     "description": "The permission scope for the operator. Possible values are 'cluster' (full access) or 'namespace' (restricted access)."
+    },
+    "allowedValues": [
+     "cluster",
+     "namespace"
+    ],
+    "defaultValue": "namespace"
+   },
+   "operatorType": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Operator type",
+     "description": "The type of operator to install. Currently, 'Flux' is supported."
+    },
+    "allowedValues": [
+     "Flux"
+    ],
+    "defaultValue": "Flux"
+   },
+   "operatorParams": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Operator parameters",
+     "description": "Parameters to set on the Flux operator, separated by spaces.  For example, --git-readonly --sync-garbage-collection.  Learn more: http://aka.ms/AzureArcK8sFluxOperatorParams."
+    },
+    "defaultValue": ""
+   },
+   "repositoryUrl": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Repository Url",
+     "description": "The URL for the source control repository. Learn more about URL formats: https://aka.ms/GitOpsRepoUrlParameters"
+    }
+   },
+   "enableHelmOperator": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Enable Helm",
+     "description": "Indicate whether to enable Helm for this instance of Flux. Learn more: http://aka.ms/AzureArcK8sGitOpsWithHelm."
+    },
+    "allowedValues": [
+     "true",
+     "false"
+    ],
+    "defaultValue": "true"
+   },
+   "chartVersion": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Helm chart version for installing Flux Helm",
+     "description": "The version of the Helm chart for installing Flux Helm. For example, 1.2.0"
+    },
+    "defaultValue": "1.2.0"
+   },
+   "chartValues": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Helm chart parameters for installing Flux Helm",
+     "description": "Parameters for the Helm chart for installing Flux Helm, separated by spaces. For example, --set helm.versions=v3"
+    },
+    "defaultValue": ""
+   },
+   "effect": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Effect",
+     "description": "Enable or disable the execution of the policy"
+    },
+    "allowedValues": [
+     "deployIfNotExists",
+     "auditIfNotExists",
+     "disabled"
+    ],
+    "defaultValue": "deployIfNotExists"
+   }
+  },
+  "policyRule": {
+   "if": {
+    "field": "type",
+    "in": [
+     "Microsoft.Kubernetes/connectedClusters",
+     "Microsoft.ContainerService/managedClusters"
+    ]
+   },
+   "then": {
+    "effect": "[parameters('effect')]",
+    "details": {
+     "type": "Microsoft.KubernetesConfiguration/sourceControlConfigurations",
+     "name": "[parameters('configurationResourceName')]",
+     "roleDefinitionIds": [
+      "/providers/microsoft.authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+     ],
+     "deploymentScope": "ResourceGroup",
+     "existenceCondition": {
+      "allOf": [
+       {
+        "field": "Microsoft.KubernetesConfiguration/sourceControlConfigurations/operatorParams",
+        "in": [
+         "[parameters('operatorParams')]",
+         "[concat('--git-readonly ',parameters('operatorParams'))]"
+        ]
+       },
+       {
+        "field": "Microsoft.KubernetesConfiguration/sourceControlConfigurations/repositoryUrl",
+        "equals": "[parameters('repositoryUrl')]"
+       },
+       {
+        "anyOf": [
+         {
+          "field": "Microsoft.KubernetesConfiguration/sourceControlConfigurations/enableHelmOperator",
+          "equals": "false"
+         },
+         {
+          "allOf": [
+           {
+            "field": "Microsoft.KubernetesConfiguration/sourceControlConfigurations/enableHelmOperator",
+            "equals": "true"
+           },
+           {
+            "field": "Microsoft.KubernetesConfiguration/sourceControlConfigurations/helmOperatorProperties.chartVersion",
+            "equals": "[parameters('chartVersion')]"
+           },
+           {
+            "field": "Microsoft.KubernetesConfiguration/sourceControlConfigurations/helmOperatorProperties.chartValues",
+            "equals": "[parameters('chartValues')]"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     "deployment": {
+      "properties": {
+       "mode": "incremental",
+       "template": {
+        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+         "configurationResourceName": {
+          "type": "string"
+         },
+         "clusterLocation": {
+          "type": "string"
+         },
+         "clusterName": {
+          "type": "string"
+         },
+         "operatorInstanceName": {
+          "type": "string"
+         },
+         "operatorNamespace": {
+          "type": "string"
+         },
+         "operatorScope": {
+          "type": "string"
+         },
+         "operatorType": {
+          "type": "string"
+         },
+         "operatorParams": {
+          "type": "string"
+         },
+         "repositoryUrl": {
+          "type": "string"
+         },
+         "enableHelmOperator": {
+          "type": "string"
+         },
+         "chartVersion": {
+          "type": "string"
+         },
+         "chartValues": {
+          "type": "string"
+         },
+         "clusterResourceType": {
+          "type": "string"
+         }
+        },
+        "resources": [
+         {
+          "condition": "[contains(toLower(parameters('clusterResourceType')), toLower('connectedclusters'))]",
+          "type": "Microsoft.Kubernetes/connectedClusters/providers/sourceControlConfigurations",
+          "name": "[concat(parameters('clusterName'), '/Microsoft.KubernetesConfiguration/', parameters('configurationResourceName'))]",
+          "apiVersion": "2021-03-01",
+          "properties": {
+           "operatorInstanceName": "[parameters('operatorInstanceName')]",
+           "operatorNamespace": "[parameters('operatorNamespace')]",
+           "operatorScope": "[parameters('operatorScope')]",
+           "operatorType": "[parameters('operatorType')]",
+           "operatorParams": "[parameters('operatorParams')]",
+           "repositoryUrl": "[parameters('repositoryUrl')]",
+           "enableHelmOperator": "[parameters('enableHelmOperator')]",
+           "helmOperatorProperties": {
+            "chartVersion": "[parameters('chartVersion')]",
+            "chartValues": "[parameters('chartValues')]"
+           }
+          }
+         },
+         {
+          "condition": "[contains(toLower(parameters('clusterResourceType')), toLower('managedclusters'))]",
+          "type": "Microsoft.ContainerService/managedClusters/providers/sourceControlConfigurations",
+          "name": "[concat(parameters('clusterName'), '/Microsoft.KubernetesConfiguration/', parameters('configurationResourceName'))]",
+          "apiVersion": "2021-03-01",
+          "properties": {
+           "operatorInstanceName": "[parameters('operatorInstanceName')]",
+           "operatorNamespace": "[parameters('operatorNamespace')]",
+           "operatorScope": "[parameters('operatorScope')]",
+           "operatorType": "[parameters('operatorType')]",
+           "operatorParams": "[parameters('operatorParams')]",
+           "repositoryUrl": "[parameters('repositoryUrl')]",
+           "enableHelmOperator": "[parameters('enableHelmOperator')]",
+           "helmOperatorProperties": {
+            "chartVersion": "[parameters('chartVersion')]",
+            "chartValues": "[parameters('chartValues')]"
+           }
+          }
+         }
+        ]
+       },
+       "parameters": {
+        "clusterLocation": {
+         "value": "[field('location')]"
+        },
+        "clusterName": {
+         "value": "[field('name')]"
+        },
+        "configurationResourceName": {
+         "value": "[parameters('configurationResourceName')]"
+        },
+        "operatorInstanceName": {
+         "value": "[parameters('operatorInstanceName')]"
+        },
+        "operatorNamespace": {
+         "value": "[parameters('operatorNamespace')]"
+        },
+        "operatorScope": {
+         "value": "[parameters('operatorScope')]"
+        },
+        "operatorType": {
+         "value": "[parameters('operatorType')]"
+        },
+        "operatorParams": {
+         "value": "[parameters('operatorParams')]"
+        },
+        "repositoryUrl": {
+         "value": "[parameters('repositoryUrl')]"
+        },
+        "enableHelmOperator": {
+         "value": "[parameters('enableHelmOperator')]"
+        },
+        "chartVersion": {
+         "value": "[parameters('chartVersion')]"
+        },
+        "chartValues": {
+         "value": "[parameters('chartValues')]"
+        },
+        "clusterResourceType": {
+         "value": "[field('type')]"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "id": "/providers/Microsoft.Authorization/policyDefinitions/1d61c4d2-aef2-432b-87fc-7f96b019b7e1",
+ "type": "Microsoft.Authorization/policyDefinitions",
+ "name": "1d61c4d2-aef2-432b-87fc-7f96b019b7e1"
+}

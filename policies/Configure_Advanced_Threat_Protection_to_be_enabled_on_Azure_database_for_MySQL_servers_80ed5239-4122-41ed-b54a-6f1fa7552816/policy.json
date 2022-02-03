@@ -1,0 +1,88 @@
+{
+ "properties": {
+  "displayName": "Configure Advanced Threat Protection to be enabled on Azure database for MySQL servers",
+  "policyType": "BuiltIn",
+  "mode": "Indexed",
+  "description": "Enable Advanced Threat Protection on your non-Basic tier Azure database for MySQL servers to detect anomalous activities indicating unusual and potentially harmful attempts to access or exploit databases.",
+  "metadata": {
+   "version": "1.0.0",
+   "category": "SQL"
+  },
+  "parameters": {
+   "effect": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Effect",
+     "description": "Enable or disable the execution of the policy"
+    },
+    "allowedValues": [
+     "DeployIfNotExists",
+     "Disabled"
+    ],
+    "defaultValue": "DeployIfNotExists"
+   }
+  },
+  "policyRule": {
+   "if": {
+    "allOf": [
+     {
+      "field": "type",
+      "equals": "Microsoft.DBforMySQL/servers"
+     },
+     {
+      "field": "Microsoft.DBforMySQL/servers/sku.tier",
+      "notContains": "basic"
+     }
+    ]
+   },
+   "then": {
+    "effect": "[parameters('effect')]",
+    "details": {
+     "type": "Microsoft.DBforMySQL/servers/securityAlertPolicies",
+     "name": "Default",
+     "existenceCondition": {
+      "field": "Microsoft.DBforMySQL/servers/securityAlertPolicies/Default.state",
+      "equals": "Enabled"
+     },
+     "roleDefinitionIds": [
+      "/providers/microsoft.authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+     ],
+     "deployment": {
+      "properties": {
+       "mode": "incremental",
+       "template": {
+        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+         "serverName": {
+          "type": "string"
+         }
+        },
+        "variables": {},
+        "resources": [
+         {
+          "name": "[concat(parameters('serverName'), '/Default')]",
+          "type": "Microsoft.DBforMySQL/servers/securityAlertPolicies",
+          "apiVersion": "2017-12-01",
+          "properties": {
+           "state": "Enabled",
+           "emailAccountAdmins": false
+          }
+         }
+        ]
+       },
+       "parameters": {
+        "serverName": {
+         "value": "[field('name')]"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "id": "/providers/Microsoft.Authorization/policyDefinitions/80ed5239-4122-41ed-b54a-6f1fa7552816",
+ "type": "Microsoft.Authorization/policyDefinitions",
+ "name": "80ed5239-4122-41ed-b54a-6f1fa7552816"
+}

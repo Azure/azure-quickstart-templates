@@ -1,0 +1,217 @@
+{
+ "properties": {
+  "displayName": "Configure AAD integrated Azure Kubernetes Service Clusters with required Admin Group Access",
+  "policyType": "BuiltIn",
+  "mode": "Indexed",
+  "description": "Ensure to improve cluster security by centrally govern Administrator access to Azure Active Directory integrated AKS clusters.",
+  "metadata": {
+   "version": "1.0.0",
+   "category": "Kubernetes"
+  },
+  "parameters": {
+   "effect": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Effect",
+     "description": "Enable or disable the execution of the policy"
+    },
+    "allowedValues": [
+     "DeployIfNotExists",
+     "Disabled"
+    ],
+    "defaultValue": "DeployIfNotExists"
+   },
+   "adminGroupObjectIDs": {
+    "type": "Array",
+    "metadata": {
+     "displayName": "AKS Administrator Group Object IDs",
+     "description": "Array of the existing AKS Administrator Group Object ID to ensure administration access to the cluster. Empty array will remove all admin access."
+    }
+   }
+  },
+  "policyRule": {
+   "if": {
+    "allOf": [
+     {
+      "field": "type",
+      "equals": "Microsoft.ContainerService/managedClusters"
+     },
+     {
+      "field": "Microsoft.ContainerService/managedClusters/aadProfile",
+      "exists": true
+     }
+    ]
+   },
+   "then": {
+    "effect": "[parameters('effect')]",
+    "details": {
+     "type": "Microsoft.ContainerService/managedClusters",
+     "name": "[field('name')]",
+     "roleDefinitionIds": [
+      "/providers/Microsoft.Authorization/roleDefinitions/ed7f3fbd-7b88-4dd4-9017-9adb7ce333f8"
+     ],
+     "existenceCondition": {
+      "allOf": [
+       {
+        "count": {
+         "field": "Microsoft.ContainerService/managedClusters/aadProfile.adminGroupObjectIDs[*]",
+         "where": {
+          "field": "Microsoft.ContainerService/managedClusters/aadProfile.adminGroupObjectIDs[*]",
+          "in": "[parameters('adminGroupObjectIDs')]"
+         }
+        },
+        "equals": "[length(parameters('adminGroupObjectIDs'))]"
+       },
+       {
+        "count": {
+         "field": "Microsoft.ContainerService/managedClusters/aadProfile.adminGroupObjectIDs[*]"
+        },
+        "equals": "[length(parameters('adminGroupObjectIDs'))]"
+       }
+      ]
+     },
+     "deployment": {
+      "properties": {
+       "mode": "incremental",
+       "template": {
+        "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+         "clusterName": {
+          "type": "string"
+         },
+         "clusterResourceGroupName": {
+          "type": "string"
+         },
+         "adminGroupObjectIDs": {
+          "type": "array"
+         }
+        },
+        "variables": {
+         "clusterGetDeploymentName": "[concat('PolicyDeployment-Get-', parameters('clusterName'))]",
+         "clusterUpdateDeploymentName": "[concat('PolicyDeployment-Update-', parameters('clusterName'))]"
+        },
+        "resources": [
+         {
+          "apiVersion": "2020-06-01",
+          "type": "Microsoft.Resources/deployments",
+          "name": "[variables('clusterGetDeploymentName')]",
+          "properties": {
+           "mode": "Incremental",
+           "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "resources": [],
+            "outputs": {
+             "aksCluster": {
+              "type": "object",
+              "value": "[reference(resourceId(parameters('clusterResourceGroupName'), 'Microsoft.ContainerService/managedClusters', parameters('clusterName')), '2021-07-01', 'Full')]"
+             }
+            }
+           }
+          }
+         },
+         {
+          "apiVersion": "2020-06-01",
+          "type": "Microsoft.Resources/deployments",
+          "name": "[variables('clusterUpdateDeploymentName')]",
+          "properties": {
+           "mode": "Incremental",
+           "expressionEvaluationOptions": {
+            "scope": "inner"
+           },
+           "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+             "aksClusterName": {
+              "type": "string"
+             },
+             "aksClusterContent": {
+              "type": "object"
+             },
+             "adminGroupObjectIDs": {
+              "type": "array"
+             }
+            },
+            "resources": [
+             {
+              "apiVersion": "2021-07-01",
+              "type": "Microsoft.ContainerService/managedClusters",
+              "name": "[parameters('aksClusterName')]",
+              "location": "[parameters('aksClusterContent').location]",
+              "sku": "[parameters('aksClusterContent').sku]",
+              "tags": "[if(contains(parameters('aksClusterContent'), 'tags'), parameters('aksClusterContent').tags, json('null'))]",
+              "properties": {
+               "kubernetesVersion": "[parameters('aksClusterContent').properties.kubernetesVersion]",
+               "dnsPrefix": "[parameters('aksClusterContent').properties.dnsPrefix]",
+               "agentPoolProfiles": "[if(contains(parameters('aksClusterContent').properties, 'agentPoolProfiles'), parameters('aksClusterContent').properties.agentPoolProfiles, json('null'))]",
+               "linuxProfile": "[if(contains(parameters('aksClusterContent').properties, 'linuxProfile'), parameters('aksClusterContent').properties.linuxProfile, json('null'))]",
+               "windowsProfile": "[if(contains(parameters('aksClusterContent').properties, 'windowsProfile'), parameters('aksClusterContent').properties.windowsProfile, json('null'))]",
+               "servicePrincipalProfile": "[if(contains(parameters('aksClusterContent').properties, 'servicePrincipalProfile'), parameters('aksClusterContent').properties.servicePrincipalProfile, json('null'))]",
+               "addonProfiles": "[if(contains(parameters('aksClusterContent').properties, 'addonProfiles'), parameters('aksClusterContent').properties.addonProfiles, json('null'))]",
+               "nodeResourceGroup": "[parameters('aksClusterContent').properties.nodeResourceGroup]",
+               "enableRBAC": "[if(contains(parameters('aksClusterContent').properties, 'enableRBAC'), parameters('aksClusterContent').properties.enableRBAC, json('null'))]",
+               "enablePodSecurityPolicy": "[if(contains(parameters('aksClusterContent').properties, 'enablePodSecurityPolicy'), parameters('aksClusterContent').properties.enablePodSecurityPolicy, json('null'))]",
+               "networkProfile": "[if(contains(parameters('aksClusterContent').properties, 'networkProfile'), parameters('aksClusterContent').properties.networkProfile, json('null'))]",
+               "aadProfile": {
+                "adminGroupObjectIds": "[parameters('adminGroupObjectIDs')]",
+                "managed": "[if(contains(parameters('aksClusterContent').properties.aadProfile, 'managed'), parameters('aksClusterContent').properties.aadProfile.managed, json('null'))]",
+                "enableAzureRBAC": "[if(contains(parameters('aksClusterContent').properties.aadProfile, 'enableAzureRBAC'), parameters('aksClusterContent').properties.aadProfile.enableAzureRBAC, json('null'))]",
+                "tenantID": "[if(contains(parameters('aksClusterContent').properties.aadProfile, 'tenantID'), parameters('aksClusterContent').properties.aadProfile.tenantID, json('null'))]",
+                "clientAppID": "[if(contains(parameters('aksClusterContent').properties.aadProfile, 'clientAppID'), parameters('aksClusterContent').properties.aadProfile.clientAppID, json('null'))]",
+                "serverAppID": "[if(contains(parameters('aksClusterContent').properties.aadProfile, 'serverAppID'), parameters('aksClusterContent').properties.aadProfile.serverAppID, json('null'))]",
+                "serverAppSecret": "[if(contains(parameters('aksClusterContent').properties.aadProfile, 'serverAppSecret'), parameters('aksClusterContent').properties.aadProfile.serverAppSecret, json('null'))]"
+               },
+               "autoScalerProfile": "[if(contains(parameters('aksClusterContent').properties, 'autoScalerProfile'), parameters('aksClusterContent').properties.autoScalerProfile, json('null'))]",
+               "autoUpgradeProfile": "[if(contains(parameters('aksClusterContent').properties, 'autoUpgradeProfile'), parameters('aksClusterContent').properties.autoUpgradeProfile, json('null'))]",
+               "apiServerAccessProfile": "[if(contains(parameters('aksClusterContent').properties, 'apiServerAccessProfile'), parameters('aksClusterContent').properties.apiServerAccessProfile, json('null'))]",
+               "diskEncryptionSetID": "[if(contains(parameters('aksClusterContent').properties, 'diskEncryptionSetID'), parameters('aksClusterContent').properties.diskEncryptionSetID, json('null'))]",
+               "disableLocalAccounts": "[if(contains(parameters('aksClusterContent').properties, 'disableLocalAccounts'), parameters('aksClusterContent').properties.disableLocalAccounts, json('null'))]",
+               "fqdnSubdomain": "[if(contains(parameters('aksClusterContent').properties, 'fqdnSubdomain'), parameters('aksClusterContent').properties.fqdnSubdomain, json('null'))]",
+               "httpProxyConfig": "[if(contains(parameters('aksClusterContent').properties, 'httpProxyConfig'), parameters('aksClusterContent').properties.httpProxyConfig, json('null'))]",
+               "podIdentityProfile": "[if(contains(parameters('aksClusterContent').properties, 'podIdentityProfile'), parameters('aksClusterContent').properties.podIdentityProfile, json('null'))]",
+               "privateLinkResources": "[if(contains(parameters('aksClusterContent').properties, 'privateLinkResources'), parameters('aksClusterContent').properties.privateLinkResources, json('null'))]",
+               "securityProfile": "[if(contains(parameters('aksClusterContent').properties, 'securityProfile'), parameters('aksClusterContent').properties.securityProfile, json('null'))]",
+               "identityProfile": "[if(contains(parameters('aksClusterContent').properties, 'identityProfile'), parameters('aksClusterContent').properties.identityProfile, json('null'))]"
+              }
+             }
+            ],
+            "outputs": {}
+           },
+           "parameters": {
+            "aksClusterName": {
+             "value": "[parameters('clusterName')]"
+            },
+            "aksClusterContent": {
+             "value": "[reference(variables('clusterGetDeploymentName')).outputs.aksCluster.value]"
+            },
+            "adminGroupObjectIDs": {
+             "value": "[parameters('adminGroupObjectIDs')]"
+            }
+           }
+          }
+         }
+        ]
+       },
+       "parameters": {
+        "clusterName": {
+         "value": "[field('name')]"
+        },
+        "clusterResourceGroupName": {
+         "value": "[resourceGroup().name]"
+        },
+        "adminGroupObjectIDs": {
+         "value": "[parameters('adminGroupObjectIDs')]"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "id": "/providers/Microsoft.Authorization/policyDefinitions/36a27de4-199b-40fb-b336-945a8475d6c5",
+ "type": "Microsoft.Authorization/policyDefinitions",
+ "name": "36a27de4-199b-40fb-b336-945a8475d6c5"
+}

@@ -1,0 +1,255 @@
+{
+ "properties": {
+  "displayName": "[Preview]: Configure Azure Kubernetes Service clusters to enable Defender profile",
+  "policyType": "BuiltIn",
+  "mode": "Indexed",
+  "description": "Microsoft Defender for Containers provides cloud-native Kubernetes security capabilities including environment hardening, workload protection, and run-time protection. When you enable the SecurityProfile.AzureDefender on your Azure Kubernetes Service cluster, an agent is deployed to your cluster to collect security event data. Learn more about Microsoft Defender for Containers: https://docs.microsoft.com/azure/security-center/defender-for-kubernetes-introduction.",
+  "metadata": {
+   "version": "1.1.0-preview",
+   "category": "Kubernetes",
+   "preview": true
+  },
+  "parameters": {
+   "effect": {
+    "type": "String",
+    "metadata": {
+     "displayName": "Effect",
+     "description": "Enable or disable the execution of the policy"
+    },
+    "allowedValues": [
+     "DeployIfNotExists",
+     "Disabled"
+    ],
+    "defaultValue": "DeployIfNotExists"
+   }
+  },
+  "policyRule": {
+   "if": {
+    "field": "type",
+    "equals": "Microsoft.ContainerService/managedClusters"
+   },
+   "then": {
+    "effect": "[parameters('effect')]",
+    "details": {
+     "type": "Microsoft.ContainerService/managedClusters",
+     "deploymentScope": "subscription",
+     "existenceCondition": {
+      "field": "Microsoft.ContainerService/managedClusters/securityProfile.azureDefender.enabled",
+      "equals": "true"
+     },
+     "roleDefinitionIds": [
+      "/providers/microsoft.authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",
+      "/providers/microsoft.authorization/roleDefinitions/92aaf0da-9dab-42b6-94a3-d43ce8d16293"
+     ],
+     "deployment": {
+      "location": "westeurope",
+      "properties": {
+       "mode": "incremental",
+       "parameters": {
+        "clusterRegion": {
+         "value": "[field('location')]"
+        },
+        "clusterResourceId": {
+         "value": "[field('id')]"
+        },
+        "clusterName": {
+         "value": "[field('name')]"
+        }
+       },
+       "template": {
+        "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+         "clusterRegion": {
+          "type": "string"
+         },
+         "clusterResourceId": {
+          "type": "string"
+         },
+         "clusterName": {
+          "type": "string"
+         }
+        },
+        "variables": {
+         "locationLongNameToShortMap": {
+          "australiacentral": "CAU",
+          "australiaeast": "EAU",
+          "australiasoutheast": "SEAU",
+          "brazilsouth": "CQ",
+          "canadacentral": "CCA",
+          "centralindia": "CIN",
+          "centralus": "CUS",
+          "eastasia": "EA",
+          "eastus": "EUS",
+          "eastus2": "EUS2",
+          "eastus2euap": "eus2p",
+          "germanywestcentral": "DEWC",
+          "francecentral": "PAR",
+          "japaneast": "EJP",
+          "koreacentral": "SE",
+          "northcentralus": "NCUS",
+          "northeurope": "NEU",
+          "norwayeast": "NOE",
+          "southafricanorth": "JNB",
+          "southcentralus": "SCUS",
+          "southeastasia": "SEA",
+          "swedencentral": "SEC",
+          "switzerlandnorth": "CHN",
+          "switzerlandwest": "CHW",
+          "uaenorth": "DXB",
+          "uksouth": "SUK",
+          "ukwest": "WUK",
+          "westcentralus": "WCUS",
+          "westeurope": "WEU",
+          "westus": "WUS",
+          "westus2": "WUS2",
+          "usgovvirginia": "USGV",
+          "usgovarizona": "USGA",
+          "usgovtexas": "USGT",
+          "chinaeast": "CNE",
+          "chinaeast2": "CNE2",
+          "chinawest": "CNW",
+          "chinawest2": "CNW2"
+         },
+         "locationCode": "[variables('locationLongNameToShortMap')[parameters('clusterRegion')]]",
+         "subscriptionId": "[subscription().subscriptionId]",
+         "defaultRGName": "[concat('DefaultResourceGroup-', variables('locationCode'))]",
+         "workspaceName": "[concat('DefaultWorkspace-', variables('subscriptionId'),'-', variables('locationCode'))]",
+         "deployDefaultAscResourceGroup": "[concat('deployDefaultAscResourceGroup-', uniqueString(deployment().name))]"
+        },
+        "resources": [
+         {
+          "type": "Microsoft.Resources/resourceGroups",
+          "name": "[variables('defaultRGName')]",
+          "apiVersion": "2019-05-01",
+          "location": "[parameters('clusterRegion')]"
+         },
+         {
+          "type": "Microsoft.Resources/deployments",
+          "name": "[variables('deployDefaultAscResourceGroup')]",
+          "apiVersion": "2020-06-01",
+          "resourceGroup": "[variables('defaultRGName')]",
+          "properties": {
+           "mode": "Incremental",
+           "expressionEvaluationOptions": {
+            "scope": "inner"
+           },
+           "parameters": {
+            "clusterRegion": {
+             "value": "[parameters('clusterRegion')]"
+            },
+            "workspaceName": {
+             "value": "[variables('workspaceName')]"
+            }
+           },
+           "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+             "clusterRegion": {
+              "type": "string"
+             },
+             "workspaceName": {
+              "type": "string"
+             }
+            },
+            "variables": {},
+            "resources": [
+             {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "name": "[parameters('workspaceName')]",
+              "apiVersion": "2015-11-01-preview",
+              "location": "[parameters('clusterRegion')]",
+              "properties": {
+               "sku": {
+                "name": "pernode"
+               },
+               "retentionInDays": 30,
+               "features": {
+                "searchVersion": 1
+               }
+              }
+             }
+            ]
+           }
+          },
+          "dependsOn": [
+           "[resourceId('Microsoft.Resources/resourceGroups', variables('defaultRGName'))]"
+          ]
+         },
+         {
+          "type": "Microsoft.Resources/deployments",
+          "name": "[concat('securityprofile-deploy-', '-',  uniqueString(parameters('clusterResourceId')))]",
+          "apiVersion": "2020-10-01",
+          "subscriptionId": "[variables('subscriptionId')]",
+          "resourceGroup": "[split(parameters('clusterResourceId'),'/')[4]]",
+          "properties": {
+           "mode": "Incremental",
+           "expressionEvaluationOptions": {
+            "scope": "inner"
+           },
+           "parameters": {
+            "workspaceResourceId": {
+             "value": "[concat('/subscriptions/', variables('subscriptionId'), '/resourcegroups/', variables('defaultRGName'), '/providers/Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]"
+            },
+            "clusterResourceId": {
+             "value": "[parameters('clusterResourceId')]"
+            },
+            "clusterName": {
+             "value": "[parameters('clusterName')]"
+            },
+            "clusterRegion": {
+             "value": "[parameters('clusterRegion')]"
+            }
+           },
+           "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+             "workspaceResourceId": {
+              "type": "string"
+             },
+             "clusterResourceId": {
+              "type": "string"
+             },
+             "clusterName": {
+              "type": "string"
+             },
+             "clusterRegion": {
+              "type": "string"
+             }
+            },
+            "resources": [
+             {
+              "type": "Microsoft.ContainerService/ManagedClusters",
+              "name": "[parameters('clusterName')]",
+              "apiVersion": "2021-07-01",
+              "location": "[parameters('clusterRegion')]",
+              "properties": {
+               "securityProfile": {
+                "azureDefender": {
+                 "enabled": true,
+                 "logAnalyticsWorkspaceResourceId": "[parameters('workspaceResourceId')]"
+                }
+               }
+              }
+             }
+            ]
+           }
+          },
+          "dependsOn": [
+           "[variables('deployDefaultAscResourceGroup')]"
+          ]
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "id": "/providers/Microsoft.Authorization/policyDefinitions/64def556-fbad-4622-930e-72d1d5589bf5",
+ "type": "Microsoft.Authorization/policyDefinitions",
+ "name": "64def556-fbad-4622-930e-72d1d5589bf5"
+}
