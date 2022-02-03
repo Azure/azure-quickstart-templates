@@ -1,0 +1,257 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.412.5873",
+      "templateHash": "12536359447865472095"
+    }
+  },
+  "parameters": {
+    "managedInstanceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter managed instance name."
+      }
+    },
+    "administratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter user name."
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Enter password."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Enter location. If you leave this field blank resource group location would be used."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "SQLMI-VNET",
+      "metadata": {
+        "description": "Enter virtual network name. If you leave this field blank name will be created by the template."
+      }
+    },
+    "addressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "Enter virtual network address prefix."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "ManagedInstance",
+      "metadata": {
+        "description": "Enter subnet name."
+      }
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Enter subnet address prefix."
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "GP_Gen5",
+      "allowedValues": [
+        "GP_Gen5",
+        "BC_Gen5"
+      ],
+      "metadata": {
+        "description": "Enter sku name."
+      }
+    },
+    "vCores": {
+      "type": "int",
+      "defaultValue": 16,
+      "allowedValues": [
+        8,
+        16,
+        24,
+        32,
+        40,
+        64,
+        80
+      ],
+      "metadata": {
+        "description": "Enter number of vCores."
+      }
+    },
+    "storageSizeInGB": {
+      "type": "int",
+      "defaultValue": 256,
+      "maxValue": 8192,
+      "minValue": 32,
+      "metadata": {
+        "description": "Enter storage size."
+      }
+    },
+    "licenseType": {
+      "type": "string",
+      "defaultValue": "LicenseIncluded",
+      "allowedValues": [
+        "BasePrice",
+        "LicenseIncluded"
+      ],
+      "metadata": {
+        "description": "Enter license type."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "networkSecurityGroupName": "[format('SQLMI-{0}-NSG', parameters('managedInstanceName'))]",
+    "routeTableName": "[format('SQLMI-{0}-Route-Table', parameters('managedInstanceName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow_tds_inbound",
+            "properties": {
+              "description": "Allow access to data",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1433",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow_redirect_inbound",
+            "properties": {
+              "description": "Allow inbound redirect traffic to Managed Instance inside the virtual network",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "11000-11999",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "deny_all_inbound",
+            "properties": {
+              "description": "Deny all other inbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 4096,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "deny_all_outbound",
+            "properties": {
+              "description": "Deny all other outbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 4096,
+              "direction": "Outbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('routeTableName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "disableBgpRoutePropagation": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]",
+              "routeTable": {
+                "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
+              },
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              },
+              "delegations": [
+                {
+                  "name": "managedInstanceDelegation",
+                  "properties": {
+                    "serviceName": "Microsoft.Sql/managedInstances"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+        "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/managedInstances",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[parameters('managedInstanceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('skuName')]"
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('administratorLogin')]",
+        "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+        "storageSizeInGB": "[parameters('storageSizeInGB')]",
+        "vCores": "[parameters('vCores')]",
+        "licenseType": "[parameters('licenseType')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    }
+  ]
+}

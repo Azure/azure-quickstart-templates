@@ -1,0 +1,125 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "omsRecoveryVaultName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Assign a name for the ASR Recovery Vault"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify the region for your Recovery Vault"
+      }
+    }
+  },
+  "variables": {
+    "recoveryStorageAccountName": "[toLower(concat('asr', uniqueString(resourceGroup().id)))]",
+    "recoveryStorageType": "Standard_LRS"
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-02-02",
+      "location": "[parameters('location')]",
+      "name": "[parameters('omsRecoveryVaultName')]",
+      "type": "Microsoft.RecoveryServices/vaults",
+      "comments": "ASR Recovery Vault for OMS",
+      "sku": {
+        "name": "RS0",
+        "tier": "Standard"
+      },
+      "properties": {},
+      "resources": [
+        {
+          "apiVersion": "2016-06-01",
+          "name": "HyperVPrimarySite",
+          "type": "replicationFabrics",
+          "id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics', parameters('omsRecoveryVaultName'), 'HyperVPrimarySite')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]"
+          ],
+          "properties": {
+            "friendlyName": "PrimarySite",
+            "fabricType": "HyperVSite"
+          }
+        },
+        {
+          "apiVersion": "2020-02-02",
+          "name": "DefaultVMwarePolicy",
+          "type": "replicationPolicies",
+          "id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('omsRecoveryVaultName'), 'DefaultVMwarePolicy')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.RecoveryServices/vaults', parameters('omsRecoveryVaultName'))]"
+          ],
+          "properties": {
+            "subscriptionid": "[subscription().subscriptionId]",
+            "friendlyName": "DefaultVMwarePolicy",
+            "providerSpecificInput": {
+              "instanceType": "InMageAzureV2",
+              "crashConsistentFrequencyInMinutes": 5,
+              "recoveryPointThresholdInMinutes": 15,
+              "recoveryPointHistory": 1440,
+              "appConsistentFrequencyInMinutes": 60,
+              "multiVmSyncStatus": "Enable"
+            }
+          }
+        },
+        {
+          "apiVersion": "2020-02-02",
+          "name": "DefaultVMwarePolicy-failback",
+          "type": "replicationPolicies",
+          "id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('omsRecoveryVaultName'), 'DefaultVMwarePolicy-failback')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.RecoveryServices/vaults', parameters('omsRecoveryVaultName'))]",
+            "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('omsRecoveryVaultName'), 'DefaultVMwarePolicy')]"
+          ],
+          "properties": {
+            "subscriptionid": "[subscription().subscriptionId]",
+            "friendlyName": "DefaultVMwarePolicy-failback",
+            "providerSpecificInput": {
+              "instanceType": "InMage",
+              "recoveryPointThresholdInMinutes": 15,
+              "recoveryPointHistory": 1440,
+              "appConsistentFrequencyInMinutes": 60,
+              "multiVmSyncStatus": "Enable"
+            }
+          }
+        },
+        {
+          "apiVersion": "2020-02-02",
+          "name": "DefaultHyperVPolicy",
+          "type": "replicationPolicies",
+          "id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('omsRecoveryVaultName'), 'DefaultHyperVPolicy')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]"
+          ],
+          "properties": {
+            "subscriptionId": "[subscription().subscriptionId]",
+            "friendlyName": "DefaultHyperVPolicy",
+            "providerSpecificInput": {
+              "instanceType": "HyperVReplicaAzure",
+              "recoveryPointHistoryDurationInHours": 2,
+              "applicationConsistentSnapshotFrequencyInHours": 0,
+              "replicationInterval": 900,
+              "activeStorageAccountId": "[reference(resourceId('Microsoft.Storage/storageAccounts/',variables('recoveryStorageAccountName')))]",
+              "encryption": "Disable"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "name": "[variables('recoveryStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "comments": "Storage account for ASR",
+      "properties": {
+        "accountType": "[variables('recoveryStorageType')]"
+      }
+    }
+  ]
+}

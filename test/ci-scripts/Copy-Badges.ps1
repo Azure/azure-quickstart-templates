@@ -8,8 +8,7 @@ Then, when the PR is merged, the CI pipeline copies the badges to the "badges" f
 
 param(
     [string]$SampleName = $ENV:SAMPLE_NAME, # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
-    [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
-    [string]$StorageAccountName = "azurequickstartsservice",
+    [string]$StorageAccountName = $ENV:STORAGE_ACCOUNT_NAME,
     [string]$TableName = "QuickStartsMetadataService",
     [string]$TableNamePRs = "QuickStartsMetadataServicePRs",
     [Parameter(mandatory = $true)]$StorageAccountKey
@@ -38,11 +37,17 @@ $blobs | Remove-AzStorageBlob -Verbose -Force
 
 # Get the row to update - can't search by rowkey only since we don't know the partition key, but row key is guaranteed unique in our scenario
 # TODO if there is no row in the PR table, this won't end well...
-Write-Host "Fetching row for: $RowKey"
+Write-Host "Fetching row for: $RowKey in Table: $cloudTablePRs"
 $r = Get-AzTableRow -table $cloudTablePRs -ColumnName "RowKey" -Value $RowKey -Operator Equal
+if ($null -eq $r) {
+    Write-Error "Could not find row with key $RowKey in table $cloudTablePRs"
+    Return
+}
+Write-Host "Result from Table: $r"
 
 # change the status before copying the row/data to the "Live" table
 if ($r.status -eq $null) {
+    Write-Host "Adding status column..."
     Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
 }
 else {
@@ -50,7 +55,7 @@ else {
 }
 
 Write-Host "Updating LIVE table with..."
-$r | fl *
+$r | Format-List *
 
 $p = @{ }
 foreach ($i in $r.PSObject.Properties) {

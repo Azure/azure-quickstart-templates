@@ -1,0 +1,155 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "eventHubNsName": {
+            "type": "String"
+        },
+        "eventHubName": {
+            "type": "String"
+        },
+        "eventHubSendPolicyName": {
+            "type": "String",
+            "defaultValue": "evt-hub-apim-send-policy"
+        },
+        "eventHubListenPolicy": {
+            "type": "String",
+            "defaultValue": "evt-hub-app-consume-policy"
+        },
+        "ehNsSkuName": {
+            "type": "String",
+            "defaultValue": "Standard"
+        },
+        "ehNsSkuTier": {
+            "type": "String",
+            "defaultValue": "Standard"
+        },
+        "ehNsSkuCapacity": {
+            "type": "String",
+            "defaultValue": "1"
+        },
+        "ehNsIsAutoInflateEnabled": {
+            "type": "String",
+            "defaultValue": "false"
+        },
+        "ehNsMaximumThroughputUnits": {
+            "type": "String",
+            "defaultValue": "0"
+        },
+        "ehNsZoneRedundant": {
+            "type": "Bool",
+            "defaultValue": false
+        },
+        "messageRetentionInDays": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Number of days to retain messages in eventhub"
+            }
+        },
+        "tags": {
+            "type": "Object",
+            "defaultValue": {}
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "variables": {
+        "ehUniqSvcName": "[concat(parameters('eventHubNsName'), '/', parameters('eventHubName'))]",
+        "ehUniqApimSendPolicyName": "[concat(variables('ehUniqSvcName'), '/', parameters('eventHubSendPolicyName'))]",
+        "ehUniqAppListenPolicyName": "[concat(parameters('eventHubNsName'), '/', parameters('eventHubListenPolicy'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.EventHub/namespaces",
+            "apiVersion": "2021-01-01-preview",
+            "name": "[parameters('eventHubNsName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "sku": {
+                "name": "[parameters('ehNsSkuName')]",
+                "tier": "[parameters('ehNsSkuTier')]",
+                "capacity": "[parameters('ehNsSkuCapacity')]"
+            },
+            "properties": {
+                "isAutoInflateEnabled": "[parameters('ehNsIsAutoInflateEnabled')]",
+                "maximumThroughputUnits": "[parameters('ehNsMaximumThroughputUnits')]",
+                "zoneRedundant": "[parameters('ehNsZoneRedundant')]"
+            }
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/eventhubs",
+            "apiVersion": "2021-01-01-preview",
+            "name": "[variables('ehUniqSvcName')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNsName'))]"
+            ],
+            "properties": {
+                "messageRetentionInDays": "[parameters('messageRetentionInDays')]",
+                "partitionCount": 2,
+                "status": "Active"
+            }
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/eventhubs/authorizationRules",
+            "apiVersion": "2021-01-01-preview",
+            "name": "[variables('ehUniqApimSendPolicyName')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNsName'), parameters('eventHubName'))]"
+            ],
+            "properties": {
+                "rights": [
+                    "Send"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/authorizationRules",
+            "apiVersion": "2021-01-01-preview",
+            "name": "[variables('ehUniqAppListenPolicyName')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNsName'))]"
+            ],
+            "properties": {
+                "rights": [
+                    "Manage",
+                    "Listen",
+                    "Send"
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "eventHubNsName": {
+            "type": "string",
+            "value": "[parameters('eventHubNsName')]"
+        },
+        "eventHubName": {
+            "type": "string",
+            "value": "[parameters('eventHubName')]"
+        },
+        "eventHubSendPolicyName": {
+            "type": "string",
+            "value": "[parameters('eventHubSendPolicyName')]"
+        },
+        "eventHubListenPolicy": {
+            "type": "string",
+            "value": "[parameters('eventHubListenPolicy')]"
+        },
+        "eventHubSendResourceId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('eventHubNsName'), parameters('eventHubName'), parameters('eventHubSendPolicyName'))]"
+        },
+        "eventHubListenResourceId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNsName'), parameters('eventHubListenPolicy'))]"
+        }
+    }
+}

@@ -1,0 +1,113 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "endpointName": "[concat('endpoint-', uniqueString(resourceGroup().id))]",
+    "serverFarmName": "ServerFarm1",
+    "profileName": "CdnProfile1",
+    "webAppName": "[concat('web-', uniqueString(resourceGroup().id))]"
+  },
+  "resources": [
+    {
+      "name": "[variables('serverFarmName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-08-01",
+      "tags": {
+        "displayName": "[variables('serverFarmName')]"
+      },
+      "sku": {
+        "name": "F1",
+        "capacity": 1
+      },
+      "properties": {
+        "name": "[variables('serverFarmName')]"
+      }
+    },
+    {
+      "name": "[variables('webAppName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-08-01",
+      "dependsOn": [
+        "[variables('serverFarmName')]"
+      ],
+      "tags": {
+        "displayName": "[variables('webAppName')]"
+      },
+      "properties": {
+        "name": "[variables('webAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]"
+      }
+    },
+    {
+      "name": "[variables('profileName')]",
+      "type": "Microsoft.Cdn/profiles",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-04-15",
+      "tags": {
+        "displayName": "[variables('profileName')]"
+      },
+      "sku": {
+        "name": "Standard_Microsoft"
+      },
+      "properties": {},
+      "resources": [
+        {
+          "name": "[variables('endpointName')]",
+          "type": "endpoints",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-04-15",
+          "dependsOn": [
+            "[variables('profileName')]",
+            "[variables('webAppName')]"
+          ],
+          "tags": {
+            "displayName": "[variables('endpointName')]"
+          },
+          "properties": {
+            "originHostHeader": "[reference(variables('webAppName')).hostNames[0]]",
+            "isHttpAllowed": true,
+            "isHttpsAllowed": true,
+            "queryStringCachingBehavior": "IgnoreQueryString",
+            "contentTypesToCompress": [
+              "text/plain",
+              "text/html",
+              "text/css",
+              "application/x-javascript",
+              "text/javascript"
+            ],
+            "isCompressionEnabled": true,
+            "origins": [
+              {
+                "name": "origin1",
+                "properties": {
+                  "hostName": "[reference(variables('webAppName')).hostNames[0]]"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "hostName": {
+      "type": "string",
+      "value": "[reference(variables('endpointName')).hostName]"
+    },
+    "originHostHeader": {
+      "type": "string",
+      "value": "[reference(variables('endpointName')).originHostHeader]"
+    }
+  }
+}

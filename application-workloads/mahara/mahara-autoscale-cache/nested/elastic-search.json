@@ -1,0 +1,368 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "maharaCommon": {
+            "metadata": {
+                "description": "Common Mahara values"
+            },
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-11-01",
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[parameters('maharaCommon').elasticNicName1]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipcfg-elastic1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[parameters('maharaCommon').elasticVm1IP]",
+                            "subnet": {
+                                "id": "[variables('subnetElasticRef')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "tags": {
+                "displayName": "Elastic NIC 1"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2020-12-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces/', parameters('maharaCommon').elasticNicName1)]"
+            ],
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[parameters('maharaCommon').elasticVmName1]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('maharaCommon').elasticVmSku]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('nicRef1')]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "adminUsername": "[parameters('maharaCommon').sshUsername]",
+                    "computerName": "[parameters('maharaCommon').elasticVmName1]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('maharaCommon').sshUsername, '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('maharaCommon').sshPublicKey]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": "[parameters('maharaCommon').osType]",
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS"
+                        },
+                        "name": "[parameters('maharaCommon').elasticVmName1]"
+                    }
+                }
+            },
+            "tags": {
+                "displayName": "Elastic Search Virtual Machine"
+            }
+        },
+        {
+            "condition": "[parameters('maharaCommon').applyScriptsSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', parameters('maharaCommon').elasticVmName1)]"
+            ],
+            "name": "[concat(parameters('maharaCommon').elasticVmName1,'-ScriptProcessor')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[parameters('maharaCommon')]"
+                    }
+
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('maharaCommon').baseTemplateUrl,'elasticconfig.json',parameters('maharaCommon').artifactsSasToken)]"
+                }
+            }
+        },
+        {
+            "condition": "[parameters('maharaCommon').azureBackupSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/',parameters('maharaCommon').elasticVmName1)]"
+            ],
+            "name": "[concat(parameters('maharaCommon').elasticVmName1,'-Backup')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[parameters('maharaCommon')]"
+                    },
+                    "vmName": {
+                        "value": "[parameters('maharaCommon').elasticVmName1]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('maharaCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('maharaCommon').artifactsSasToken)]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-11-01",
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[parameters('maharaCommon').elasticNicName2]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipcfg-elastic2",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[parameters('maharaCommon').elasticVm2IP]",
+                            "subnet": {
+                                "id": "[variables('subnetElasticRef')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "tags": {
+                "displayName": "Elastic NIC 2"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2020-12-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces/', parameters('maharaCommon').elasticNicName2)]"
+            ],
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[parameters('maharaCommon').elasticVmName2]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('maharaCommon').elasticVmSku]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('nicRef2')]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "adminUsername": "[parameters('maharaCommon').sshUsername]",
+                    "computerName": "[parameters('maharaCommon').elasticVmName2]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('maharaCommon').sshUsername, '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('maharaCommon').sshPublicKey]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": "[parameters('maharaCommon').osType]",
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS"
+                        },
+                        "name": "[parameters('maharaCommon').elasticVmName2]"
+                    }
+                }
+            },
+            "tags": {
+                "displayName": "Elastic Search Virtual Machine"
+            }
+        },
+        {
+            "condition": "[parameters('maharaCommon').applyScriptsSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', parameters('maharaCommon').elasticVmName2)]"
+            ],
+            "name": "[concat(parameters('maharaCommon').elasticVmName2,'-ScriptProcessor')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[parameters('maharaCommon')]"
+                    }
+
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('maharaCommon').baseTemplateUrl,'elasticconfig.json',parameters('maharaCommon').artifactsSasToken)]"
+                }
+            }
+        },
+        {
+            "condition": "[parameters('maharaCommon').azureBackupSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/',parameters('maharaCommon').elasticVmName2)]"
+            ],
+            "name": "[concat(parameters('maharaCommon').elasticVmName2,'-Backup')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[parameters('maharaCommon')]"
+                    },
+                    "vmName": {
+                        "value": "[parameters('maharaCommon').elasticVmName2]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('maharaCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('maharaCommon').artifactsSasToken)]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-11-01",
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[parameters('maharaCommon').elasticNicName3]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipcfg-elastic3",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[parameters('maharaCommon').elasticVm3IP]",
+                            "subnet": {
+                                "id": "[variables('subnetElasticRef')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "tags": {
+                "displayName": "Elastic NIC 2"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2020-12-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces/', parameters('maharaCommon').elasticNicName3)]"
+            ],
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[parameters('maharaCommon').elasticVmName3]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('maharaCommon').elasticVmSku]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('nicRef3')]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "adminUsername": "[parameters('maharaCommon').sshUsername]",
+                    "computerName": "[parameters('maharaCommon').elasticVmName3]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('maharaCommon').sshUsername, '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('maharaCommon').sshPublicKey]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": "[parameters('maharaCommon').osType]",
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS"
+                        },
+                        "name": "[parameters('maharaCommon').elasticVmName3]"
+                    }
+                }
+            },
+            "tags": {
+                "displayName": "Elastic Search Virtual Machine"
+            }
+        },
+        {
+            "condition": "[parameters('maharaCommon').applyScriptsSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', parameters('maharaCommon').elasticVmName3)]"
+            ],
+            "name": "[concat(parameters('maharaCommon').elasticVmName3,'-ScriptProcessor')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[parameters('maharaCommon')]"
+                    }
+
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('maharaCommon').baseTemplateUrl,'elasticconfig.json',parameters('maharaCommon').artifactsSasToken)]"
+                }
+            }
+        },
+        {
+            "condition": "[parameters('maharaCommon').azureBackupSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/',parameters('maharaCommon').elasticVmName3)]"
+            ],
+            "name": "[concat(parameters('maharaCommon').elasticVmName3,'-Backup')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[parameters('maharaCommon')]"
+                    },
+                    "vmName": {
+                        "value": "[parameters('maharaCommon').elasticVmName3]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('maharaCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('maharaCommon').artifactsSasToken)]"
+                }
+            }
+        }
+    ],
+    "variables": {
+        "nicRef1": "[resourceId('Microsoft.Network/networkInterfaces', parameters('maharaCommon').elasticNicName1)]",
+        "nicRef2": "[resourceId('Microsoft.Network/networkInterfaces', parameters('maharaCommon').elasticNicName2)]",
+        "nicRef3": "[resourceId('Microsoft.Network/networkInterfaces', parameters('maharaCommon').elasticNicName3)]",
+        "subnetElasticRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('maharaCommon').vnetName, parameters('maharaCommon').subnetElastic)]"
+    }
+}

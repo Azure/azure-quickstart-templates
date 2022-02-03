@@ -1,0 +1,128 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.412.5873",
+      "templateHash": "7604570790168177341"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual network name"
+      }
+    },
+    "accountName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 44,
+      "metadata": {
+        "description": "Cosmos DB account name (must contain only lowercase letters, digits, and hyphens)"
+      }
+    },
+    "publicNetworkAccess": {
+      "type": "string",
+      "defaultValue": "Enabled",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "metadata": {
+        "description": "Enable public network traffic to access the account; if set to Disabled, public network traffic will be blocked even before the private endpoint is created"
+      }
+    },
+    "privateEndpointName": {
+      "type": "string",
+      "metadata": {
+        "description": "Private endpoint name"
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "subnetName": "default",
+    "locations": [
+      {
+        "locationName": "[parameters('location')]",
+        "failoverPriority": 0,
+        "isZoneRedundant": false
+      }
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "172.20.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "172.20.0.0/24",
+              "privateEndpointNetworkPolicies": "Disabled"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2021-04-15",
+      "name": "[parameters('accountName')]",
+      "location": "[parameters('location')]",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Session"
+        },
+        "locations": "[variables('locations')]",
+        "databaseAccountOfferType": "Standard",
+        "enableAutomaticFailover": false,
+        "enableMultipleWriteLocations": false,
+        "publicNetworkAccess": "[parameters('publicNetworkAccess')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-07-01",
+      "name": "[parameters('privateEndpointName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/VirtualNetworks/subnets', parameters('virtualNetworkName'), variables('subnetName'))]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "MyConnection",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]",
+              "groupIds": [
+                "Sql"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]"
+      ]
+    }
+  ]
+}

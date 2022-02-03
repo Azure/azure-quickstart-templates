@@ -1,0 +1,125 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the virtual machine"
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Admin user name for the virtual machine"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Admin user password for virtual machine"
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D2s_v3",
+            "metadata": {
+                "description": "Size of VM"
+            }
+        },
+        "imagePublisher": {
+            "type": "string",
+            "defaultValue": "MicrosoftWindowsServer"
+        },
+        "imageOffer": {
+            "type": "string",
+            "defaultValue": "WindowsServer"
+        },
+        "osSku": {
+            "type": "string",
+            "defaultValue": "2012-R2-Datacenter",
+            "metadata": {
+                "description": "OS sku for VM"
+            }
+        },
+        "nicId": {
+            "type": "string",
+            "metadata": {
+                "description": "Network interface id."
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "VM deployment location."
+            }
+        },
+        "dataDiskSizeInGB": {
+            "type": "int",
+            "defaultValue": 128,
+            "metadata": {
+                "description": "Size for Data Disks."
+            }
+        },        
+        "numberOfDataDisks": {
+            "type": "int",
+            "minValue": 0,
+            "maxValue": 16,
+            "defaultValue": 1,
+            "metadata": {
+                "description": "The number of dataDisks to be returned in the output array."
+            }
+        },
+        "tags": {
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-12-01",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('vmName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[parameters('imagePublisher')]",
+                        "offer": "[parameters('imageOffer')]",
+                        "sku": "[parameters('osSku')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage"
+                    },
+                    "copy": [
+                        {
+                            "name": "dataDisks",
+                            "count": "[parameters('numberOfDataDisks')]",
+                            "input": {
+                                "diskSizeGB": "[parameters('dataDiskSizeInGB')]",
+                                "lun": "[copyIndex('dataDisks')]",
+                                "createOption": "Empty"
+                            }
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[parameters('nicId')]"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

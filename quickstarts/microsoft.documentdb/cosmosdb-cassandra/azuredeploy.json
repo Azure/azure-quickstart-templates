@@ -1,0 +1,224 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.255.40792",
+      "templateHash": "12484788747974976983"
+    }
+  },
+  "parameters": {
+    "accountName": {
+      "type": "string",
+      "defaultValue": "[format('cassandra-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Cosmos DB account name, max length 44 characters"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the Cosmos DB account."
+      }
+    },
+    "primaryRegion": {
+      "type": "string",
+      "metadata": {
+        "description": "The primary region for the Cosmos DB account."
+      }
+    },
+    "secondaryRegion": {
+      "type": "string",
+      "metadata": {
+        "description": "The secondary region for the Cosmos DB account."
+      }
+    },
+    "defaultConsistencyLevel": {
+      "type": "string",
+      "defaultValue": "Session",
+      "metadata": {
+        "description": "The default consistency level of the Cosmos DB account."
+      },
+      "allowedValues": [
+        "Eventual",
+        "ConsistentPrefix",
+        "Session",
+        "BoundedStaleness",
+        "Strong"
+      ]
+    },
+    "maxStalenessPrefix": {
+      "type": "int",
+      "defaultValue": 100000,
+      "metadata": {
+        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000."
+      },
+      "maxValue": 2147483647,
+      "minValue": 10
+    },
+    "maxIntervalInSeconds": {
+      "type": "int",
+      "defaultValue": 300,
+      "metadata": {
+        "description": "Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
+      },
+      "maxValue": 86400,
+      "minValue": 5
+    },
+    "automaticFailover": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable automatic failover for regions"
+      }
+    },
+    "keyspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the Cassandra Keyspace"
+      }
+    },
+    "tableName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the Cassandra table"
+      }
+    },
+    "throughput": {
+      "type": "int",
+      "defaultValue": 400,
+      "metadata": {
+        "description": "The throughput for Cassandra table"
+      },
+      "maxValue": 1000000,
+      "minValue": 400
+    }
+  },
+  "functions": [],
+  "variables": {
+    "accountName_var": "[toLower(parameters('accountName'))]",
+    "consistencyPolicy": {
+      "Eventual": {
+        "defaultConsistencyLevel": "Eventual"
+      },
+      "ConsistentPrefix": {
+        "defaultConsistencyLevel": "ConsistentPrefix"
+      },
+      "Session": {
+        "defaultConsistencyLevel": "Session"
+      },
+      "BoundedStaleness": {
+        "defaultConsistencyLevel": "BoundedStaleness",
+        "maxStalenessPrefix": "[parameters('maxStalenessPrefix')]",
+        "maxIntervalInSeconds": "[parameters('maxIntervalInSeconds')]"
+      },
+      "Strong": {
+        "defaultConsistencyLevel": "Strong"
+      }
+    },
+    "locations": [
+      {
+        "locationName": "[parameters('primaryRegion')]",
+        "failoverPriority": 0,
+        "isZoneRedundant": false
+      },
+      {
+        "locationName": "[parameters('secondaryRegion')]",
+        "failoverPriority": 1,
+        "isZoneRedundant": false
+      }
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2021-04-15",
+      "name": "[variables('accountName_var')]",
+      "location": "[parameters('location')]",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "capabilities": [
+          {
+            "name": "EnableCassandra"
+          }
+        ],
+        "consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
+        "locations": "[variables('locations')]",
+        "databaseAccountOfferType": "Standard",
+        "enableAutomaticFailover": "[parameters('automaticFailover')]"
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces",
+      "apiVersion": "2021-04-15",
+      "name": "[format('{0}/{1}', variables('accountName_var'), parameters('keyspaceName'))]",
+      "properties": {
+        "resource": {
+          "id": "[parameters('keyspaceName')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDb/databaseAccounts/cassandraKeyspaces/tables",
+      "apiVersion": "2021-04-15",
+      "name": "[format('{0}/{1}', format('{0}/{1}', variables('accountName_var'), parameters('keyspaceName')), parameters('tableName'))]",
+      "properties": {
+        "resource": {
+          "id": "[parameters('tableName')]",
+          "schema": {
+            "columns": [
+              {
+                "name": "loadid",
+                "type": "uuid"
+              },
+              {
+                "name": "machine",
+                "type": "uuid"
+              },
+              {
+                "name": "cpu",
+                "type": "int"
+              },
+              {
+                "name": "mtime",
+                "type": "int"
+              },
+              {
+                "name": "load",
+                "type": "float"
+              }
+            ],
+            "partitionKeys": [
+              {
+                "name": "machine"
+              },
+              {
+                "name": "cpu"
+              },
+              {
+                "name": "mtime"
+              }
+            ],
+            "clusterKeys": [
+              {
+                "name": "loadid",
+                "orderBy": "asc"
+              }
+            ]
+          },
+          "options": {
+            "throughput": "[parameters('throughput')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces', split(format('{0}/{1}', variables('accountName_var'), parameters('keyspaceName')), '/')[0], split(format('{0}/{1}', variables('accountName_var'), parameters('keyspaceName')), '/')[1])]"
+      ]
+    }
+  ]
+}

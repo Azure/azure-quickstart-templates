@@ -1,0 +1,178 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "alertName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the alert"
+      }
+    },
+    "alertDescription": {
+      "type": "string",
+      "defaultValue": "This is a metric alert",
+      "metadata": {
+        "description": "Description of alert"
+      }
+    },
+    "alertSeverity": {
+      "type": "int",
+      "defaultValue": 3,
+      "allowedValues": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "metadata": {
+        "description": "Severity of alert {0,1,2,3,4}"
+      }
+    },
+    "isEnabled": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Specifies whether the alert is enabled"
+      }
+    },
+    "resourceId": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Full Resource ID of the resource emitting the metric that will be used for the comparison. For example /subscriptions/00000000-0000-0000-0000-0000-00000000/resourceGroups/ResourceGroupName/providers/Microsoft.compute/virtualMachines/VM_xyz"
+      }
+    },
+    "metricName": {
+      "type": "string",
+      "defaultValue": "Percentage CPU",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the metric used in the comparison to activate the alert."
+      }
+    },
+    "operator": {
+      "type": "string",
+      "defaultValue": "GreaterOrLessThan",
+      "allowedValues": [
+        "GreaterThan",
+        "LessThan",
+        "GreaterOrLessThan"
+      ],
+      "metadata": {
+        "description": "Operator comparing the current value with the threshold value."
+      }
+    },
+    "alertSensitivity": {
+      "type": "string",
+      "defaultValue": "Medium",
+      "allowedValues": [
+        "High",
+        "Medium",
+        "Low"
+      ],
+      "metadata": {
+        "description": "Tunes how 'noisy' the Dynamic Thresholds alerts will be: 'High' will result in more alerts while 'Low' will result in fewer alerts."
+      }
+    },
+    "numberOfEvaluationPeriods": {
+      "type": "string",
+      "defaultValue": "4",
+      "metadata": {
+        "description": "The number of periods to check in the alert evaluation."
+      }
+    },
+    "minFailingPeriodsToAlert": {
+      "type": "string",
+      "defaultValue": "3",
+      "metadata": {
+        "description": "The number of unhealthy periods to alert on (must be lower or equal to numberOfEvaluationPeriods)."
+      }
+    },
+    "ignoreDataBefore": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Use this option to set the date from which to start learning the metric historical data and calculate the dynamic thresholds (in ISO8601 format, e.g. '2019-12-31T22:00:00Z')."
+      }
+    },
+    "timeAggregation": {
+      "type": "string",
+      "defaultValue": "Average",
+      "allowedValues": [
+        "Average",
+        "Minimum",
+        "Maximum",
+        "Total",
+        "Count"
+      ],
+      "metadata": {
+        "description": "How the data that is collected should be combined over time."
+      }
+    },
+    "windowSize": {
+      "type": "string",
+      "defaultValue": "PT5M",
+      "allowedValues": [
+        "PT5M",
+        "PT15M",
+        "PT30M",
+        "PT1H"
+      ],
+      "metadata": {
+        "description": "Period of time used to monitor alert activity based on the threshold. Must be between five minutes and one hour. ISO 8601 duration format."
+      }
+    },
+    "evaluationFrequency": {
+      "type": "string",
+      "defaultValue": "PT5M",
+      "allowedValues": [
+        "PT5M",
+        "PT15M",
+        "PT30M",
+        "PT1H"
+      ],
+      "metadata": {
+        "description": "how often the metric alert is evaluated represented in ISO 8601 duration format"
+      }
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "name": "[parameters('alertName')]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "location": "global",
+      "apiVersion": "2018-03-01",
+      "properties": {
+        "description": "[parameters('alertDescription')]",
+        "severity": "[parameters('alertSeverity')]",
+        "enabled": "[parameters('isEnabled')]",
+        "scopes": [
+          "[parameters('resourceId')]"
+        ],
+        "evaluationFrequency": "[parameters('evaluationFrequency')]",
+        "windowSize": "[parameters('windowSize')]",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "criterionType": "DynamicThresholdCriterion",
+              "name": "1st criterion",
+              "metricName": "[parameters('metricName')]",
+              "operator": "[parameters('operator')]",
+              "alertSensitivity": "[parameters('alertSensitivity')]",
+              "failingPeriods": {
+                "numberOfEvaluationPeriods": "[parameters('numberOfEvaluationPeriods')]",
+                "minFailingPeriodsToAlert": "[parameters('minFailingPeriodsToAlert')]"
+              },
+              "ignoreDataBefore": "[parameters('ignoreDataBefore')]",
+              "timeAggregation": "[parameters('timeAggregation')]"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

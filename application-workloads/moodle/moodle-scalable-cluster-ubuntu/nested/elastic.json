@@ -1,0 +1,389 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "moodleCommon": {
+      "metadata": {
+        "description": "Common Moodle values"
+      },
+      "type": "object"
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "name": "[parameters('moodleCommon').elasticNicName1]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipcfg-elastic1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('moodleCommon').elasticVm1IP]",
+              "subnet": {
+                "id": "[variables('subnetElasticRef')]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "Elastic NIC 1"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', parameters('moodleCommon').elasticNicName1)]"
+      ],
+      "location": "[parameters('location')]",
+      "name": "[parameters('moodleCommon').elasticVmName1]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('moodleCommon').elasticVmSku]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[variables('nicRef1')]"
+            }
+          ]
+        },
+        "osProfile": {
+          "adminUsername": "[parameters('moodleCommon').sshUsername]",
+          "computerName": "[parameters('moodleCommon').elasticVmName1]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', parameters('moodleCommon').sshUsername, '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('moodleCommon').sshPublicKey]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('moodleCommon').osType]",
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            },
+            "name": "[parameters('moodleCommon').elasticVmName1]"
+          }
+        }
+      },
+      "tags": {
+        "displayName": "Elastic Search Virtual Machine"
+      }
+    },
+    {
+      "condition": "[parameters('moodleCommon').applyScriptsSwitch]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('moodleCommon').elasticVmName1)]"
+      ],
+      "name": "[concat(parameters('moodleCommon').elasticVmName1,'-ScriptProcessor')]",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[parameters('moodleCommon')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'elasticconfig.json',parameters('moodleCommon').artifactsSasToken)]"
+        }
+      }
+    },
+    {
+      "condition": "[parameters('moodleCommon').azureBackupSwitch]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/',parameters('moodleCommon').elasticVmName1)]"
+      ],
+      "name": "[concat(parameters('moodleCommon').elasticVmName1,'-Backup')]",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[parameters('moodleCommon')]"
+          },
+          "vmName": {
+            "value": "[parameters('moodleCommon').elasticVmName1]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('moodleCommon').artifactsSasToken)]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "name": "[parameters('moodleCommon').elasticNicName2]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipcfg-elastic2",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('moodleCommon').elasticVm2IP]",
+              "subnet": {
+                "id": "[variables('subnetElasticRef')]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "Elastic NIC 2"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', parameters('moodleCommon').elasticNicName2)]"
+      ],
+      "location": "[parameters('location')]",
+      "name": "[parameters('moodleCommon').elasticVmName2]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('moodleCommon').elasticVmSku]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[variables('nicRef2')]"
+            }
+          ]
+        },
+        "osProfile": {
+          "adminUsername": "[parameters('moodleCommon').sshUsername]",
+          "computerName": "[parameters('moodleCommon').elasticVmName2]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', parameters('moodleCommon').sshUsername, '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('moodleCommon').sshPublicKey]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('moodleCommon').osType]",
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            },
+            "name": "[parameters('moodleCommon').elasticVmName2]"
+          }
+        }
+      },
+      "tags": {
+        "displayName": "Elastic Search Virtual Machine"
+      }
+    },
+    {
+      "condition": "[parameters('moodleCommon').applyScriptsSwitch]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('moodleCommon').elasticVmName2)]"
+      ],
+      "name": "[concat(parameters('moodleCommon').elasticVmName2,'-ScriptProcessor')]",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[parameters('moodleCommon')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'elasticconfig.json',parameters('moodleCommon').artifactsSasToken)]"
+        }
+      }
+    },
+    {
+      "condition": "[parameters('moodleCommon').azureBackupSwitch]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/',parameters('moodleCommon').elasticVmName2)]"
+      ],
+      "name": "[concat(parameters('moodleCommon').elasticVmName2,'-Backup')]",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[parameters('moodleCommon')]"
+          },
+          "vmName": {
+            "value": "[parameters('moodleCommon').elasticVmName2]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('moodleCommon').artifactsSasToken)]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "name": "[parameters('moodleCommon').elasticNicName3]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipcfg-elastic3",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('moodleCommon').elasticVm3IP]",
+              "subnet": {
+                "id": "[variables('subnetElasticRef')]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "Elastic NIC 2"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', parameters('moodleCommon').elasticNicName3)]"
+      ],
+      "location": "[parameters('location')]",
+      "name": "[parameters('moodleCommon').elasticVmName3]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('moodleCommon').elasticVmSku]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[variables('nicRef3')]"
+            }
+          ]
+        },
+        "osProfile": {
+          "adminUsername": "[parameters('moodleCommon').sshUsername]",
+          "computerName": "[parameters('moodleCommon').elasticVmName3]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', parameters('moodleCommon').sshUsername, '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('moodleCommon').sshPublicKey]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('moodleCommon').osType]",
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            },
+            "name": "[parameters('moodleCommon').elasticVmName3]"
+          }
+        }
+      },
+      "tags": {
+        "displayName": "Elastic Search Virtual Machine"
+      }
+    },
+    {
+      "condition": "[parameters('moodleCommon').applyScriptsSwitch]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('moodleCommon').elasticVmName3)]"
+      ],
+      "name": "[concat(parameters('moodleCommon').elasticVmName3,'-ScriptProcessor')]",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[parameters('moodleCommon')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'elasticconfig.json',parameters('moodleCommon').artifactsSasToken)]"
+        }
+      }
+    },
+    {
+      "condition": "[parameters('moodleCommon').azureBackupSwitch]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/',parameters('moodleCommon').elasticVmName3)]"
+      ],
+      "name": "[concat(parameters('moodleCommon').elasticVmName3,'-Backup')]",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[parameters('moodleCommon')]"
+          },
+          "vmName": {
+            "value": "[parameters('moodleCommon').elasticVmName3]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('moodleCommon').artifactsSasToken)]"
+        }
+      }
+    }
+  ],
+  "variables": {
+    "nicRef1": "[resourceId('Microsoft.Network/networkInterfaces', parameters('moodleCommon').elasticNicName1)]",
+    "nicRef2": "[resourceId('Microsoft.Network/networkInterfaces', parameters('moodleCommon').elasticNicName2)]",
+    "nicRef3": "[resourceId('Microsoft.Network/networkInterfaces', parameters('moodleCommon').elasticNicName3)]",
+    "subnetElasticRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('moodleCommon').vnetName, parameters('moodleCommon').subnetElastic)]"
+  }
+}

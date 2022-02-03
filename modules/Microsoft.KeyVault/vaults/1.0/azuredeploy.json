@@ -1,0 +1,213 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vaultName": {
+            "type": "string",
+            "defaultValue": "[concat('keyvault-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Specifies the name of the KeyVault, this value must be globally unique."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the Azure location where the key vault should be created."
+            }
+        },
+        "enabledForDeployment": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Specifies whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault."
+            }
+        },
+        "enabledForDiskEncryption": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Specifies whether Azure Disk Encryption is permitted to retrieve secrets from the vault and unwrap keys."
+            }
+        },
+        "enabledForTemplateDeployment": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Specifies whether Azure Resource Manager is permitted to retrieve secrets from the key vault."
+            }
+        },
+        "enablePurgeProtection": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Property specifying whether protection against purge is enabled for this vault.  This property does not accept false but enabled here to allow for this to be optional, if false, the property will not be set."
+            }
+        },
+        "enableRbacAuthorization": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Property that controls how data actions are authorized. When true, the key vault will use Role Based Access Control (RBAC) for authorization of data actions, and the access policies specified in vault properties will be ignored."
+            }
+        },
+        "enableSoftDelete": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Property to specify whether the 'soft delete' functionality is enabled for this key vault. If it's not set to any value(true or false) when creating new key vault, it will be set to true by default. Once set to true, it cannot be reverted to false."
+            }
+        },
+        "softDeleteRetentionInDays": {
+            "type": "int",
+            "defaultValue": 7,
+            "minValue": 7,
+            "maxValue": 90,
+            "metadata": {
+                "description": "softDelete data retention days, only used if enableSoftDelete is true. It accepts >=7 and <=90."
+            }
+        },
+        "tenantId": {
+            "type": "string",
+            "defaultValue": "[subscription().tenantId]",
+            "metadata": {
+                "description": "Specifies the Azure Active Directory tenant ID that should be used for authenticating requests to the key vault. Get it by using Get-AzSubscription cmdlet."
+            }
+        },
+        "networkRuleBypassOptions": {
+            "type": "string",
+            "defaultValue": "AzureServices",
+            "allowedValues": [
+                "None",
+                "AzureServices"
+            ],
+            "metadata": {
+                "description": "Tells what traffic can bypass network rules. This can be 'AzureServices' or 'None'. If not specified the default is 'AzureServices'."
+            }
+        },
+        "NetworkRuleAction": {
+            "type": "string",
+            "defaultValue": "Allow",
+            "allowedValues": [
+                "Allow",
+                "Deny"
+            ],
+            "metadata": {
+                "description": "The default action when no rule from ipRules and from virtualNetworkRules match. This is only used after the bypass property has been evaluated."
+            }
+        },
+        "ipRules": {
+            "type": "array",
+            "defaultValue": [
+            ],
+            "metadata": {
+                "description": "An array of IPv4 addresses or rangea in CIDR notation, e.g. '124.56.78.91' (simple IP address) or '124.56.78.0/24' (all addresses that start with 124.56.78)."
+            }
+        },
+        "accessPolicies": {
+            "type": "array",
+            "defaultValue": [
+            ],
+            "metadata": {
+                "description": "An complex object array that contains the complete definition of the access policy."
+            }
+        },
+        "virtualNetworkRules": {
+            "type": "array",
+            "defaultValue": [
+            ],
+            "metadata": {
+                "description": "An array for resourceIds for the virtualNetworks allowed to access the vault."
+            }
+        },
+        "skuName": {
+            "type": "string",
+            "defaultValue": "Standard",
+            "allowedValues": [
+                "Standard",
+                "Premium"
+            ],
+            "metadata": {
+                "description": "Specifies whether the key vault is a standard vault or a premium vault."
+            }
+        },
+        "tags": {
+            "type": "object",
+            "defaultValue": {
+            },
+            "metadata": {
+                "description": "Tags to be assigned to the KeyVault."
+            }
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "name": "[parameters('vaultName')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2019-09-01",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "tenantId": "[parameters('tenantId')]",
+                "sku": {
+                    "family": "A",
+                    "name": "[parameters('skuName')]"
+                },
+                "copy": [
+                    {
+                        "name": "accessPolicies",
+                        "count": "[length(parameters('accessPolicies'))]",
+                        "input": {
+                            "tenantId": "[parameters('accessPolicies')[copyIndex('accessPolicies')].tenantId]",
+                            "objectId": "[parameters('accessPolicies')[copyIndex('accessPolicies')].objectId]",
+                            "permissions": "[parameters('accessPolicies')[copyIndex('accessPolicies')].permissions]"
+                        }
+                    }
+                ],
+                "enabledForDeployment": "[parameters('enabledForDeployment')]",
+                "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
+                "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
+                "enableSoftDelete": "[parameters('enableSoftDelete')]",
+                "softDeleteRetentionInDays": "[if(parameters('enableSoftDelete'), parameters('softDeleteRetentionInDays'), json('null'))]",
+                "enableRbacAuthorization": "[parameters('enableRbacAuthorization')]",
+                "enablePurgeProtection": "[if(parameters('enablePurgeProtection'), parameters('enablePurgeProtection'), json('null'))]",
+                "networkAcls": {
+                    "bypass": "[parameters('networkRuleBypassOptions')]",
+                    "defaultAction": "[parameters('networkRuleAction')]",
+                    "copy": [
+                        {
+                            "name": "ipRules",
+                            "count": "[length(parameters('ipRules'))]",
+                            "input": {
+                                "value": "[parameters('ipRules')[copyIndex('ipRules')]]"
+                            }
+                        },
+                        {
+                            "name": "virtualNetworkRules",
+                            "count": "[length(parameters('virtualNetworkRules'))]",
+                            "input": {
+                                "id": "[parameters('virtualNetworkRules')[copyIndex('virtualNetworkRules')]]"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "vaultName": {
+            "type": "string",
+            "value": "[parameters('vaultName')]"
+        },
+        "vaultResourceGroup": {
+            "type": "string",
+            "value": "[resourceGroup().name]"
+        },
+        "location": {
+            "type": "string",
+            "value": "[parameters('location')]"
+        }
+    }
+}

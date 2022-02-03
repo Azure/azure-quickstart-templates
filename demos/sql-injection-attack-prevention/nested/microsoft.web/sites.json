@@ -1,0 +1,55 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "name": {
+      "type": "string"
+    },
+    "hostingPlanName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "hostingEnvironment": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "tags": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "tags": {
+      "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms',parameters('hostingPlanName')))]": "empty"
+    },
+    "combinedTags": "[union(parameters('tags'),variables('tags'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-08-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('combinedTags')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "name": "[parameters('name')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms',parameters('hostingPlanName'))]",
+        "hostingEnvironment": "[parameters('hostingEnvironment')]"
+      }
+    }
+  ],
+  "outputs": {
+    "principalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2019-08-01', 'Full').identity.principalId]"
+    },
+    "endpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites', parameters('name'))).defaultHostName]"
+    }
+  }
+}

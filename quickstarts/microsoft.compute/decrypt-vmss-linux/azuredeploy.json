@@ -1,0 +1,75 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmssName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of VMSS to be decrypted"
+      },
+      "maxLength": 61
+    },	
+    "volumeType": {
+      "type": "string",
+      "defaultValue": "Data",
+      "metadata": {
+        "description": "Type of the volume to perform encryption operation (Linux VMSS Preview only supports Data)"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Default location"
+      }
+    },
+    "forceUpdateTag": {
+      "type": "string",
+      "defaultValue": "1.0",
+      "metadata": {
+        "description": "Pass in an unique value like a GUID everytime the operation needs to be force run"
+      }
+    }	
+  },
+  "variables": {
+    "extensionName": "AzureDiskEncryptionForLinux",
+    "extensionVersion": "1.1",
+    "encryptionOperation": "DisableEncryption"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[parameters('vmssName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-12-01",
+      "sku": {
+        "name": "Standard_D2_v3",
+        "tier": "Standard",
+        "capacity": 2
+      },
+      "properties": {
+        "virtualMachineProfile": {
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "[variables('extensionName')]",
+                "properties": {
+                  "publisher": "Microsoft.Azure.Security",
+				  "type": "[variables('extensionName')]",
+                  "typeHandlerVersion": "[variables('extensionVersion')]",
+                  "autoUpgradeMinorVersion": true,
+                  "forceUpdateTag": "[parameters('forceUpdateTag')]",
+                  "settings": {
+                    "VolumeType": "[parameters('volumeType')]",
+                    "EncryptionOperation": "[variables('encryptionOperation')]"
+                  }
+                }
+              }
+            ]
+          }		  
+        }
+      }
+    }
+  ]
+}
+

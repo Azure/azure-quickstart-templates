@@ -1,0 +1,263 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storagename": {
+            "type": "string",
+            "defaultValue":"[concat('labvmstrg', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description":"Unique Storage Account name"
+            }
+        },
+        "vm-dns": {
+            "type": "string",
+            "defaultValue": "[concat('labvm-',uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "VM DNS Label prefix"
+            }
+        },
+        "adminUser": {
+            "type": "string",
+            "metadata": {
+                "description": "Admin Username for Lab VM"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for admin user"
+            }
+        },
+        "vmsize": {
+            "type": "string",
+            "defaultValue": "Standard_D8s_v3",
+            "allowedValues": [
+                "Standard_D4s_v3",
+                "Standard_D8s_v3",
+                "Standard_D8s_v4"
+            ],
+            "metadata": {
+                "description": "VM Size for lab-vm"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location to deploy current resource"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "SAS Token for accessing script path"
+            }
+        }
+    },
+    "variables":{
+        "scriptUrl": "[uri(parameters('_artifactsLocation'),concat('installscript.ps1',parameters('_artifactsLocationSasToken')))]"
+    },
+    "resources": [    
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "name": "[toLower(parameters('storagename'))]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "tags": {
+                "displayName": "VS LabVM Storage Account"
+            }
+            
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-11-01",
+            "name": "vslab-PublicIP",
+            "location": "[parameters('location')]",
+            "tags": {
+                "displayName": "PublicIPAddress"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('vm-dns')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-04-01",
+            "name": "vslab-nsg",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "nsgRule1",
+                        "properties": {
+                            "description": "description",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-04-01",
+            "name": "vslab-VirtualNetwork",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'vslab-nsg')]"
+            ],
+            "tags": {
+                "displayName": "vslab-VirtualNetwork"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "vslab-vnet-subnet",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'vslab-nsg')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-04-01",
+            "name": "vslab-nic",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', 'vslab-PublicIP')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', 'vslab-VirtualNetwork')]"
+            ],
+            "tags": {
+                "displayName": "VSLab Network Interface"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipConfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'vslab-PublicIP')]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vslab-VirtualNetwork', 'vslab-vnet-subnet')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "vsLab",
+            "location": "[parameters('location')]",
+            "dependsOn": [ 
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storagename'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', 'vslab-nic')]"
+            ],
+            "tags": {
+                "displayName": "VS2019 Lab VM"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmsize')]"
+                },
+                "osProfile": {
+                    "computerName": "LabVM",
+                    "adminUsername": "[parameters('adminUser')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftVisualStudio",
+                        "offer": "VisualStudio2019latest",
+                        "sku": "vs-2019-comm-latest-ws2019",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "LabVMOSDisk",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'vslab-nic')]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('storagename'))).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-07-01",
+            "name": "vsLab/installscript1",
+            "location": "[parameters('location')]",
+            "tags": {
+                "displayName": "Install script for LabVM"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', 'vsLab')]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.10",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[variables('scriptUrl')]"
+                    ]
+                },
+                "protectedSettings": {
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Bypass -file installscript.ps1 -UserName ',parameters('adminUser'))]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "lab-vm-dns": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses','vslab-PublicIP')).dnsSettings.fqdn]"
+        }
+    }
+}

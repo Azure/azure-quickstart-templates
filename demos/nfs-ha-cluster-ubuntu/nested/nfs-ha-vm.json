@@ -1,0 +1,263 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": ""
+        },
+        "vmIndex": {
+            "metadata": {
+                "description": "Index of the VM"
+            },
+            "type": "int"
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Azure location where this template is to be deployed"
+            }
+        },
+        "subnetId": {
+            "metadata": {
+                "description": "Azure resource ID of the subnet where this NFS-HA cluster is to be deployed"
+            },
+            "type": "string"
+        },
+        "ipAddrs": {
+            "metadata": {
+                "description": "Statically assigned private IP addresses that should be assigned to the two VMs' NICs to be deployed. Must belong to the IP range of the specified subnet"
+            },
+            "type": "array"
+        },
+        "nfsClientsIPRange": {
+            "metadata": {
+                "description": "IP range of the allowed NFS clients. E.g., 10.0.0.0/24"
+            },
+            "type": "string"
+        },
+        "enableAccelNwSwitch": {
+            "metadata": {
+                "description": "Switch to enable Azure Accelerated Networking (Note: this feature is NOT available for D1-level VM SKU)"
+            },
+            "type": "bool",
+            "defaultValue": false
+        },
+        "availSetId": {
+            "metadata": {
+                "description": "Azure resource ID of the availability set where this VM is to be deployed"
+            },
+            "type": "string"
+        },
+        "vmSku": {
+            "metadata": {
+                "description": "Azure VM SKU for the NFS HA VMs"
+            },
+            "type": "string",
+            "defaultValue": "Standard_D2s_v3"
+        },
+        "adminUserName": {
+            "metadata": {
+                "description": "VM admin user name"
+            },
+            "type": "string",
+            "defaultValue": "azureadmin"
+        },
+        "sshPublicKey": {
+            "metadata": {
+                "description": "SSH public key for the admin user"
+            },
+            "type": "string"
+        },
+        "osType": {
+            "metadata": {
+                "description": "OS type (offer/publisher/sku/version) info"
+            },
+            "type": "object"
+        },
+        "osDiskStorageType": {
+            "defaultValue": "Premium_LRS",
+            "allowedValues": [
+                "Premium_LRS",
+                "Standard_LRS"
+            ],
+            "metadata": {
+                "description": "Azure storage type for all VMs' OS disks. With htmlLocalCopySwith true, Premium_LRS (SSD) is strongly recommended, as PHP files will be served from OS disks."
+            },
+            "type": "string"
+        },
+        "dataDiskCountPerVM": {
+            "metadata": {
+                "description": "Number of data disks per VM. 2 or more disks will be configured as RAID0"
+            },
+            "defaultValue": 1,
+            "minValue": 1,
+            "maxValue": 8,
+            "type": "int"
+        },
+        "dataDiskSizeInGB": {
+            "defaultValue": 32,
+            "metadata": {
+                "description": "Size of each disk in an NFS server"
+            },
+            "type": "int"
+        },
+        "resourcesUniqueString": {
+            "metadata": {
+                "description": "Unique string of fixed length (e.g., 6) identifying related resources"
+            },
+            "type": "string",
+            "defaultValue": "[substring(uniqueString(resourceGroup().id, deployment().name), 3, 6)]"
+        },
+        "lbBeId": {
+            "metadata": {
+                "description": "Azure resource ID of the load balancer backend pool to which this VM's NIC should be added"
+            },
+            "type": "string"
+        }
+    },
+    "variables": {
+        "nicName": "[concat('nfs-ha-nic', parameters('vmIndex'), '-', parameters('resourcesUniqueString'))]",
+        "ipCfgName": "[concat('nfs-ha-ipcfg', parameters('vmIndex'))]",
+        "vmResourceName": "[concat('nfs-ha-vm', parameters('vmIndex'), '-', parameters('resourcesUniqueString'))]",
+        "vmName": "[concat('hanode', parameters('vmIndex'), '-', parameters('resourcesUniqueString'))]",
+        "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/setup_nfs_ha.sh', parameters('_artifactsLocationSasToken')))]",
+        "commonFunctionsScriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/helper_functions.sh', parameters('_artifactsLocationSasToken')))]",
+        "cmdExec": "[concat('bash -x setup_nfs_ha.sh hanode0-', parameters('resourcesUniqueString'), ' ', parameters('ipAddrs')[0], ' hanode1-', parameters('resourcesUniqueString'), ' ', parameters('ipAddrs')[1], ' ', parameters('nfsClientsIPRange'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-06-01",
+            "location": "[parameters('location')]",
+            "name": "[variables('nicName')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "[variables('ipcfgName')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[parameters('ipAddrs')[parameters('vmIndex')]]",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[parameters('lbBeId')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": "[parameters('enableAccelNwSwitch')]"
+            },
+            "tags": {
+                "displayName": "[concat('NIC for NFS-HA node', parameters('vmIndex'), ' VM')]"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-12-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+            ],
+            "location": "[parameters('location')]",
+            "name": "[variables('vmResourceName')]",
+            "properties": {
+                "availabilitySet": {
+                    "id": "[parameters('availSetId')]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSku')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "adminUsername": "[parameters('adminUserName')]",
+                    "computerName": "[variables('vmName')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('adminUserName'), '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('sshPublicKey')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": "[parameters('osType')]",
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('osDiskStorageType')]"
+                        },
+                        "name": "[concat(variables('vmResourceName'), '_osDisk')]"
+                    },
+                    "copy": [
+                        {
+                            "name": "dataDisks",
+                            "count": "[parameters('dataDiskCountPerVM')]",
+                            "input": {
+                                "managedDisk": {
+                                    "storageAccountType": "Premium_LRS"
+                                },
+                                "diskSizeGB": "[parameters('dataDiskSizeInGB')]",
+                                "lun": "[copyIndex('dataDisks')]",
+                                "createOption": "Empty"
+                            }
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "type": "extensions",
+                    "apiVersion": "2019-12-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmResourceName'))]"
+                    ],
+                    "location": "[parameters('location')]",
+                    "name": "setup_nfs_ha",
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Extensions",
+                        "settings": {
+                            "fileUris": [
+                                "[variables('scriptUri')]",
+                                "[variables('commonFunctionsScriptUri')]"
+                            ]
+                        },
+                        "protectedSettings": {
+                            "commandToExecute": "[variables('cmdExec')]"
+                        },
+                        "type": "CustomScript",
+                        "typeHandlerVersion": "2.0"
+                    },
+                    "tags": {
+                        "displayName": "NFS-HA VM setup CustomScript extension"
+                    }
+                }
+            ],
+            "tags": {
+                "displayName": "[concat('NFS-HA Virtual Machine ', variables('vmName'))]"
+            }
+        }
+    ]
+}
+

@@ -1,0 +1,150 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sqlStorageAccountName": {
+      "type": "string"
+    },
+    "dcStorageAccountName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "SqlStorageAccountType": {
+      "type": "string"
+    },
+    "DcStorageAccountType": {
+      "type": "string"
+    },
+    "virtualNetworkName": {
+      "type": "string"
+    },
+    "virtualNetworkAddressRange": {
+      "type": "string"
+    },
+    "subnets": {
+      "type": "array"
+    },
+    "rdpIPAddressName": {
+      "type": "string"
+    },
+    "rdpLBName": {
+      "type": "string"
+    },
+    "rdpLBFE": {
+      "type": "string"
+    },
+    "adLBBE": {
+      "type": "string"
+    },
+    "RDPNAT": {
+      "type": "string"
+    },
+    "rdplbFEConfigID": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('sqlStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-01-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('SqlStorageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('dcStorageAccountName')]",
+      "apiVersion": "2021-01-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('DcStorageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(uniquestring(parameters('sqlStorageAccountName')), 'fsw')]",
+      "apiVersion": "2021-01-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(uniquestring(parameters('sqlStorageAccountName')), 'diag')]",
+      "apiVersion": "2021-01-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      }
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('rdpIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "dynamic"
+      }
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "name": "[parameters('rdpLBName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses',parameters('rdpIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[parameters('rdpLBFE')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('rdpIPAddressName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[parameters('adLBBE')]"
+          }
+        ],
+        "inboundNatRules": [
+          {
+            "name": "[parameters('RDPNAT')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[parameters('rdplbFEConfigID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 3389,
+              "backendPort": 3389,
+              "enableFloatingIP": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('virtualNetworkName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-07-01",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkAddressRange')]"
+          ]
+        },
+        "subnets": "[parameters('subnets')]"
+      }
+    }
+  ],
+  "outputs": {}
+}

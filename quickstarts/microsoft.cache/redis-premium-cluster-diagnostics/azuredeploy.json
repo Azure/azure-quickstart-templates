@@ -1,0 +1,125 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "13872689946402645874"
+    }
+  },
+  "parameters": {
+    "redisCacheName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify the name of the Azure Redis Cache to create."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of all resources"
+      }
+    },
+    "redisCacheSKU": {
+      "type": "string",
+      "defaultValue": "Premium",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "Specify the pricing tier of the new Azure Redis Cache."
+      }
+    },
+    "redisCacheFamily": {
+      "type": "string",
+      "defaultValue": "P",
+      "allowedValues": [
+        "C",
+        "P"
+      ],
+      "metadata": {
+        "description": "Specify the family for the sku. C = Basic/Standard, P = Premium."
+      }
+    },
+    "redisCacheCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "allowedValues": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "metadata": {
+        "description": "Specify the size of the new Azure Redis Cache instance. Valid values: for C (Basic/Standard) family (0, 1, 2, 3, 4, 5, 6), for P (Premium) family (1, 2, 3, 4)"
+      }
+    },
+    "enableNonSslPort": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Set to true to allow access to redis on port 6379, without SSL tunneling (less secure)."
+      }
+    },
+    "diagnosticsEnabled": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Specify a boolean value that indicates whether diagnostics should be saved to the specified storage account."
+      }
+    },
+    "existingDiagnosticsStorageAccountId": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify an existing storage account for diagnostics. Must be in the same subscription."
+      }
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Cache/redis",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('redisCacheName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "enableNonSslPort": "[parameters('enableNonSslPort')]",
+        "minimumTlsVersion": "1.2",
+        "sku": {
+          "capacity": "[parameters('redisCacheCapacity')]",
+          "family": "[parameters('redisCacheFamily')]",
+          "name": "[parameters('redisCacheSKU')]"
+        }
+      }
+    },
+    {
+      "type": "microsoft.insights/diagnosticSettings",
+      "apiVersion": "2017-05-01-preview",
+      "scope": "[format('Microsoft.Cache/redis/{0}', parameters('redisCacheName'))]",
+      "name": "[parameters('redisCacheName')]",
+      "properties": {
+        "storageAccountId": "[parameters('existingDiagnosticsStorageAccountId')]",
+        "metrics": [
+          {
+            "timeGrain": "AllMetrics",
+            "enabled": "[parameters('diagnosticsEnabled')]",
+            "retentionPolicy": {
+              "days": 90,
+              "enabled": "[parameters('diagnosticsEnabled')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cache/redis', parameters('redisCacheName'))]"
+      ]
+    }
+  ]
+}

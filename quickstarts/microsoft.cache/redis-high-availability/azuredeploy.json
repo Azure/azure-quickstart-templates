@@ -1,0 +1,358 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator user name used when provisioning virtual machines"
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "redisVirtNet",
+      "metadata": {
+        "description": "The arbitrary name of the virtual network provisioned for the Redis cluster"
+      }
+    },
+    "addressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "The network address space for the virtual network"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "redisSubnet1",
+      "metadata": {
+        "description": "Subnet name for the virtual network that resources will be provisioned in to"
+      }
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Address space for the virtual network subnet"
+      }
+    },
+    "nodeAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.1",
+      "metadata": {
+        "description": "The IP address prefix that will be used for constructing a static private IP address for each node in the cluster"
+      }
+    },
+    "jumpbox": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "metadata": {
+        "description": "The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the Redis nodes"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A1_V2",
+      "metadata": {
+        "description": "Size of the VM."
+      }
+    },
+    "tshirtSize": {
+      "type": "string",
+      "defaultValue": "Small",
+      "allowedValues": [
+        "Small",
+        "Medium",
+        "Large"
+      ],
+      "metadata": {
+        "description": "T-shirt size of the Redis deployment"
+      }
+    },
+    "redisVersion": {
+      "type": "string",
+      "defaultValue": "stable",
+      "metadata": {
+        "description": "The version of the Redis package to be deployed on the cluster (or use 'stable' to pull in the latest and greatest)"
+      }
+    },
+    "redisClusterName": {
+      "type": "string",
+      "defaultValue": "redis-cluster",
+      "metadata": {
+        "description": "The arbitrary name of the Redis cluster"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+     "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "deploymentSize": {
+       "Small": {
+         "vmSizeMember": "Standard_A1",
+         "numberOfMasters": 3,
+         "numberOfSlaves": 0,
+         "totalMemberCount": 3,
+         "totalMemberCountExcludingLast": 2,
+         "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('node-resources.json', parameters('_artifactsLocationSasToken')))]"
+       },
+       "Medium": {
+         "vmSizeMember": "Standard_A2",
+         "numberOfMasters": 3,
+         "numberOfSlaves": 3,
+         "totalMemberCount": 6,
+         "totalMemberCountExcludingLast": 5,
+         "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('node-resources.json', parameters('_artifactsLocationSasToken')))]"
+       },
+       "Large": {
+         "vmSizeMember": "Standard_A5",
+         "numberOfMasters": 3,
+         "numberOfSlaves": 6,
+         "totalMemberCount": 9,
+         "totalMemberCountExcludingLast": 8,
+         "arbiter": "Enabled",
+         "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('node-resources.json', parameters('_artifactsLocationSasToken')))]"
+       }
+    },
+    "osFamilyUbuntu": {
+      "imagePublisher": "Canonical",
+      "imageOffer": "UbuntuServer",
+      "imageSKU": "14.04.5-LTS"
+    },
+    "commonSettings": {
+      "availabilitySetName": "redisAvailSet"
+    },
+    "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "jumpboxTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('jumpbox-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "networkSettings": {
+      "virtualNetworkName": "[parameters('virtualNetworkName')]",
+      "addressPrefix": "[parameters('addressPrefix')]",
+      "subnetName": "[parameters('subnetName')]",
+      "subnetPrefix": "[parameters('subnetPrefix')]",
+      "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'),  parameters('subnetName'))]",
+      "machineIpPrefix": "[parameters('nodeAddressPrefix')]"
+    },
+    "machineSettings": {
+      "adminUsername": "[parameters('adminUsername')]",
+      "machineNamePrefix": "redisnode-",
+      "osImageReference": {
+        "publisher": "[variables('osFamilyUbuntu').imagePublisher]",
+        "offer": "[variables('osFamilyUbuntu').imageOffer]",
+        "sku": "[variables('osFamilyUbuntu').imageSKU]",
+        "version": "latest"
+      }
+    },
+    "clusterSpec": "[variables('deploymentSize')[parameters('tshirtSize')]]",
+    "installCommand": "[concat('redis-cluster-install.sh -n ', parameters('redisClusterName'), ' -v ', parameters('redisVersion'), ' -c ', variables('clusterSpec').totalMemberCount, ' -m ', variables('clusterSpec').numberOfMasters, ' -s ', variables('clusterSpec').numberOfSlaves, ' -p ', variables('networkSettings').machineIpPrefix)]",
+    "vmScripts": {
+      "scriptsToDownload": [
+        "[uri(parameters('_artifactsLocation'), concat('redis-cluster-install.sh', parameters('_artifactsLocationSasToken')))]",
+        "[uri(parameters('_artifactsLocation'), concat('redis-cluster-setup.sh', parameters('_artifactsLocationSasToken')))]",
+        "[uri(parameters('_artifactsLocation'), concat('redis-sentinel-startup.sh', parameters('_artifactsLocationSasToken')))]"
+      ],
+      "installCommand": "[concat('bash ', variables('installCommand'))]",
+      "setupCommand": "[concat('bash ', variables('installCommand'), ' -l')]"
+    }
+  },
+  "resources": [
+    {
+      "name": "shared-resources",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "commonSettings": {
+            "value": "[variables('commonSettings')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[equals('Enabled', parameters('jumpbox'))]",
+      "name": "jumpbox-resources",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('jumpboxTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "machineSettings": {
+            "value": "[variables('machineSettings')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmSize": {
+              "value": "[parameters('vmSize')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "[concat('node-resources', copyindex())]",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared-resources')]"
+      ],
+      "copy": {
+        "name": "memberNodesLoop",
+        "count": "[variables('clusterSpec').totalMemberCountExcludingLast]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('clusterSpec').vmTemplate]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "commonSettings": {
+            "value": "[variables('commonSettings')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "machineSettings": {
+            "value": {
+              "adminUsername": "[variables('machineSettings').adminUsername]",
+              "machineNamePrefix": "[variables('machineSettings').machineNamePrefix]",
+              "osImageReference": "[variables('machineSettings').osImageReference]",
+              "vmSize": "[variables('clusterSpec').vmSizeMember]",
+              "machineIndex": "[copyindex()]",
+              "vmScripts": "[variables('vmScripts').scriptsToDownload]",
+              "commandToExecute": "[concat(variables('vmScripts').installCommand, ' -i ', copyindex())]"
+            }
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "lastnode-resources",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "memberNodesLoop"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('clusterSpec').vmTemplate]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "commonSettings": {
+            "value": "[variables('commonSettings')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "machineSettings": {
+            "value": {
+              "adminUsername": "[variables('machineSettings').adminUsername]",
+              "machineNamePrefix": "[variables('machineSettings').machineNamePrefix]",
+              "osImageReference": "[variables('machineSettings').osImageReference]",
+              "vmSize": "[variables('clusterSpec').vmSizeMember]",
+              "machineIndex": "[variables('clusterSpec').totalMemberCountExcludingLast]",
+              "vmScripts": "[variables('vmScripts').scriptsToDownload]",
+              "commandToExecute": "[concat(variables('vmScripts').setupCommand, ' -i ', variables('clusterSpec').totalMemberCountExcludingLast)]"
+            }
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "installCommand": {
+      "value": "[variables('vmScripts').installCommand]",
+      "type": "string"
+    },
+    "setupCommand": {
+      "value": "[variables('vmScripts').setupCommand]",
+      "type": "string"
+    }
+  }
+}

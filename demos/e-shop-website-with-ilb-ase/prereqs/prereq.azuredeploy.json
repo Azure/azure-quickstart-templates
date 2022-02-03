@@ -1,0 +1,379 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "name": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the App Service Environment."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of the App Service Environment."
+      }
+    }
+  },
+  "variables": {
+    "location": "[parameters('location')]",
+    "vnetName": "[concat(parameters('name'), '-vnet')]",
+    "vnetAddressPrefix": "192.168.250.0/23",
+    "aseSubnetName": "[concat(parameters('name'), '-subnet')]",
+    "aseSubnetAddressPrefix": "192.168.250.0/24",
+    "subnetRouteTableName": "[concat(parameters('name'), '-route-table')]",
+    "subnetNSGName": "[concat(parameters('name'), '-nsg')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-08-01",
+      "type": "Microsoft.Web/hostingEnvironments",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "kind": "ASEV2",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
+      "properties": {
+        "name": "[parameters('name')]",
+        "location": "[parameters('location')]",
+        "virtualNetwork": {
+          "Id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('aseSubnetName'))]",
+          "Subnet": "[variables('aseSubnetName')]"
+        },
+        "internalLoadBalancingMode": 3
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('subnetNSGName'))]",
+        "[resourceId('Microsoft.Network/routeTables/', variables('subnetRouteTableName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('aseSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('aseSubnetAddressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('subnetNSGName'))]"
+              },
+              "routeTable": {
+                "id": "[resourceId('Microsoft.Network/routeTables', variables('subnetRouteTableName'))]"
+              },
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Sql",
+                  "locations": [
+                    "[variables('location')]"
+                  ]
+                },
+                {
+                  "service": "Microsoft.Storage",
+                  "locations": [
+                    "[variables('location')]"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/routeTables",
+      "name": "[variables('subnetRouteTableName')]",
+      "location": "[variables('location')]",
+      "tags": {
+        "displayName": "UDR - Subnet"
+      },
+      "properties": {
+        "routes": [
+          {
+            "name": "[concat(parameters('name'), '-route')]",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "Internet"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('subnetNSGName')]",
+      "location": "[variables('location')]",
+      "tags": {
+        "displayName": "NSG - Subnet"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Inbound-management",
+            "properties": {
+              "description": "Used to manage ASE from public VIP",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "454-455",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "ASE-internal-inbound",
+            "properties": {
+              "description": "ASE-internal-inbound",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[variables('aseSubnetAddressPrefix')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Inbound-HTTP",
+            "properties": {
+              "description": "Allow HTTP",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Inbount-HTTPS",
+            "properties": {
+              "description": "Allow HTTPS",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Inbound-FTP",
+            "properties": {
+              "description": "Allow FTP over port 21",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "21",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 140,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Inbound-FTPS",
+            "properties": {
+              "description": "Allow FTPS",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "990",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 150,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Inbound-FTP-Data",
+            "properties": {
+              "description": "RDP",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "10001-10020",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 160,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Inbound-Remote-Debugging",
+            "properties": {
+              "description": "Visual Studio remote debugging",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4016-4022",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 170,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Outbound-443",
+            "properties": {
+              "description": "Azure Storage blob",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Outbound-SMB",
+            "properties": {
+              "description": "Azure Storage queue",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "445",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Outbound-DB",
+            "properties": {
+              "description": "Database",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1433",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Outbound-DB2",
+            "properties": {
+              "description": "Database 2",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "11000-11999",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Outbound-DB3",
+            "properties": {
+              "description": "Database 3",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "14000-14999",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 140,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Outbound-DNS",
+            "properties": {
+              "description": "DNS",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "53",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 150,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "ASE-internal-outbound",
+            "properties": {
+              "description": "Azure Storage queue",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "[variables('aseSubnetAddressPrefix')]",
+              "access": "Allow",
+              "priority": 160,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Outbound-80",
+            "properties": {
+              "description": "Outbound 80",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 170,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "ASE-to-VNET",
+            "properties": {
+              "description": "ASE to VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "[variables('vnetAddressPrefix')]",
+              "access": "Allow",
+              "priority": 180,
+              "direction": "Outbound"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "existingASEName": {
+      "type": "string",
+      "value": "[parameters('name')]"
+    },
+    "existingASELocation": {
+      "type": "string",
+      "value": "[parameters('location')]"
+    },
+    "existingASEDNSSuffix": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/hostingEnvironments', parameters('name')), '2019-08-01').dnsSuffix]"
+    }
+  }
+}

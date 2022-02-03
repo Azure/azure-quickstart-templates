@@ -1,0 +1,387 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "myVNET",
+      "metadata": {
+        "description": "Name of the virtual network provisioned for the cluster"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator user name used when provisioning virtual machines"
+      }
+    },
+    "mysqlPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Mysql root password used when installing MySQL Server 5.5"
+      }
+    },
+    "dnsNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Name for the publicly accessible Lap node. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+      }
+    },
+    "haproxyVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4_v3",
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning the Lap node"
+      }
+    },
+    "mysqlVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4_v3",
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning Mysql node(s)"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templatelink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    }
+  },
+  "variables": {
+    "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "haproxyTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/haproxy-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "masterTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/master-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "slaveTemplateUrl01": "[uri(parameters('_artifactsLocation'), concat('nested/slave01-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "slaveTemplateUrl02": "[uri(parameters('_artifactsLocation'), concat('nested/slave02-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "namespace": "mha-",
+    "networkSettings": {
+      "virtualNetworkName": "[parameters('virtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "dse": {
+          "name": "dse",
+          "prefix": "10.0.0.0/24",
+          "vnet": "[parameters('virtualNetworkName')]"
+        }
+      },
+      "statics": {
+        "clusterRange": {
+          "base": "10.0.0.",
+          "start": 5
+        },
+        "haproxyIp": "10.0.0.9",
+        "masterIp": "10.0.0.10",
+        "slaveIp01": "10.0.0.11",
+        "slaveIp02": "10.0.0.12"
+      }
+    },
+    "haproxyOsSettings": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.4-LTS",
+        "version": "latest"
+      },
+      "scripts": [
+        "[uri(parameters('_artifactsLocation'), concat('scripts/haproxy.sh', parameters('_artifactsLocationSasToken')))]"
+      ]
+    },
+    "masterOsSettings": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.4-LTS",
+        "version": "latest"
+      },
+      "scripts": [
+        "[uri(parameters('_artifactsLocation'), concat('scripts/master.sh', parameters('_artifactsLocationSasToken')))]"
+      ]
+    },
+    "slaveOsSettings01": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.4-LTS",
+        "version": "latest"
+      },
+      "scripts": [
+        "[uri(parameters('_artifactsLocation'), concat('scripts/slave01.sh', parameters('_artifactsLocationSasToken')))]"
+      ]
+    },
+    "slaveOsSettings02": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.4-LTS",
+        "version": "latest"
+      },
+      "scripts": [
+        "[uri(parameters('_artifactsLocation'), concat('scripts/slave02.sh', parameters('_artifactsLocationSasToken')))]"
+      ]
+    }
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "haproxyNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('haproxyTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "mysqlPassword": {
+            "value": "[parameters('mysqlPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "Haproxy"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.haproxyIp]"
+          },
+          "vmSize": {
+            "value": "[parameters('haproxyVmSize')]"
+          },
+          "osSettings": {
+            "value": "[variables('haproxyOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "masterNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'haproxyNode')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('masterTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "mysqlPassword": {
+            "value": "[parameters('mysqlPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "Master"
+          },
+          "masterNodeIp": {
+            "value": "[variables('networkSettings').statics.masterIp]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('mysqlVmSize')]"
+          },
+          "osSettings": {
+            "value": "[variables('masterOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "slaveNode01",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'haproxyNode')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'masterNode')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('slaveTemplateUrl01')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "mysqlPassword": {
+            "value": "[parameters('mysqlPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "Slave01"
+          },
+          "slaveStaticIp": {
+            "value": "[variables('networkSettings').statics.slaveIp01]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('mysqlVmSize')]"
+          },
+          "osSettings": {
+            "value": "[variables('slaveOsSettings01')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "slaveNode02",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'haproxyNode')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'masterNode')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('slaveTemplateUrl02')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "mysqlPassword": {
+            "value": "[parameters('mysqlPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "Slave02"
+          },
+          "slaveStaticIp": {
+            "value": "[variables('networkSettings').statics.slaveIp02]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('mysqlVmSize')]"
+          },
+          "osSettings": {
+            "value": "[variables('slaveOsSettings02')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          }
+        }
+      }
+    }
+  ]
+}
+

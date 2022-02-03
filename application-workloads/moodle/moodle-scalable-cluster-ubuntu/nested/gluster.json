@@ -1,0 +1,65 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "moodleCommon": {
+      "metadata": {
+        "description": "Common Moodle values"
+      },
+      "type": "object"
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "name": "[parameters('moodleCommon').gfxAvailabilitySetName]",
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      },
+      "sku": {
+        "name": "Aligned"
+      },
+      "tags": {
+        "displayName": "Gluster Availability Set"
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "copy": {
+        "count": "[parameters('moodleCommon').glusterVmCount]",
+        "name": "vmloop"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets/',parameters('moodleCommon').gfxAvailabilitySetName)]"
+      ],
+      "name": "[concat('glustervm',copyindex())]",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "counter": {
+            "value": "[copyindex()]"
+          },
+          "moodleCommon": {
+            "value": "[parameters('moodleCommon')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'glustervm.json',parameters('moodleCommon').artifactsSasToken)]"
+        }
+      }
+    }
+  ]
+}

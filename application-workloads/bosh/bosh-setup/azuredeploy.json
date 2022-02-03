@@ -1,0 +1,800 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "name of the vm, will be used as DNS Name for the Public IP used to access the Virtual Machine"
+      }
+    },
+    "ubuntuOSVersion": {
+      "type": "string",
+      "defaultValue": "16.04.0-LTS",
+      "metadata": {
+        "description": "OS version of Ubuntu"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine"
+      }
+    },
+    "sshKeyData": {
+      "type": "string",
+      "metadata": {
+        "description": "Please copy the content of your SSH RSA public key and paste it here. You can use \"ssh-keygen -t rsa -b 2048\" to generate your SSH key pairs."
+      }
+    },
+    "storageAccountKind": {
+      "type": "string",
+      "defaultValue": "v1",
+      "allowedValues": [
+        "v1",
+        "v2"
+      ],
+      "metadata": {
+        "description": "Storage Account Kind. Choose v1 for Storage (general purpose v1) and v2 for StorageV2 (general purpose v2)"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+    "type": "securestring",
+    "metadata": {
+      "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+    },
+    "defaultValue": ""
+    },
+    "environment": {
+      "type": "string",
+      "allowedValues": [
+        "AzureCloud",
+        "AzureChinaCloud",
+        "AzureUSGovernment",
+        "AzureGermanCloud",
+        "AzureStack"
+      ],
+      "metadata": {
+        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, choose AzureChinaCloud for Azure China Cloud, choose AzureUSGovernment for Azure Government, choose AzureGermanCloud for German cloud."
+      }
+    },
+    "servicePrincipalType": {
+      "type": "string",
+      "defaultValue": "Password",
+      "allowedValues": [
+        "Password",
+        "Certificate"
+      ],
+      "metadata": {
+        "description": "Service principal supports two types: with a password or with a certificate"
+      }
+    },
+    "tenantID": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "metadata": {
+        "description": "Tenant ID"
+      }
+    },
+    "clientID": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "metadata": {
+        "description": "Client ID or application ID"
+      }
+    },
+    "clientSecret": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Password of the service principal. See https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?toc=%2Fazure%2Fazure-resource-manager%2Ftoc.json&view=azure-cli-latest#create-a-service-principal-for-your-application"
+      }
+    },
+    "storageAccountKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Access key of the storage account"
+      }
+    },
+    "certificate": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Base64-encoded Certificate of the service principal. You can run \"cat <PATH_TO_YOUR_PEM_CERTIFICATE> | base64 -w 0\", and input the result. See https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?toc=%2Fazure%2Fazure-resource-manager%2Ftoc.json&view=azure-cli-latest#create-a-service-principal-for-your-application"
+      }
+    },
+    "azureStackDomain": {
+      "type": "string",
+      "defaultValue": "NotApplicableIfEnvironmentIsNotAzureStack",
+      "metadata": {
+        "description": "Azure Stack deployment domain. Please check https://github.com/cloudfoundry/bosh-azure-cpi-release/tree/master/docs/advanced/azure-stack."
+      }
+    },
+    "azureStackResource": {
+      "type": "string",
+      "defaultValue": "NotApplicableIfEnvironmentIsNotAzureStack",
+      "metadata": {
+        "description": "Azure Stack Active Directory Service Endpoint Resource ID. Please check https://github.com/cloudfoundry/bosh-azure-cpi-release/tree/master/docs/advanced/azure-stack."
+      }
+    },
+    "azureStackAuthentication": {
+      "type": "string",
+      "defaultValue": "AzureAD",
+      "allowedValues": [
+        "AzureAD",
+        "AzureChinaCloudAD",
+        "ADFS"
+      ],
+      "metadata": {
+        "description": "Azure Stack Authentication. Please check https://github.com/cloudfoundry/bosh-azure-cpi-release/tree/master/docs/advanced/azure-stack."
+      }
+    },
+    "azureStackCARootCertificate": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Azure Stack CA root certificate, which is base64 encoded. Get the Azure Stack CA root certificate from the Azure Stack operator, run \"cat <PATH_TO_YOUR_PEM_CERTIFICATE> | base64 -w 0\", and input the result. If not provided, \"/var/lib/waagent/Certificates.pem\" will be used. Please check https://github.com/cloudfoundry/bosh-azure-cpi-release/tree/master/docs/advanced/azure-stack#azure-stack-properties."
+      }
+    },
+    "loadBalancerSku": {
+      "type": "string",
+      "allowedValues": [
+        "standard",
+        "basic"
+      ],
+      "defaultValue": "standard",
+      "metadata": {
+        "description": "The sku of the load balancer to be used. Note: Standard Sku LB is not supported in Azure Stack and Azure China Cloud."
+      }
+    },
+    "useAvailabilityZones": {
+      "type": "string",
+      "allowedValues": [
+        "enabled",
+        "disabled"
+      ],
+      "defaultValue": "disabled",
+      "metadata": {
+        "description": "The flag to enable availability zones in cloud config"
+      }
+    },
+    "autoDeployBosh": {
+      "type": "string",
+      "allowedValues": [
+        "enabled",
+        "disabled"
+      ],
+      "defaultValue": "enabled",
+      "metadata": {
+        "description": "The flag allowing to deploy BOSH director automatically or not"
+      }
+    },
+    "boshVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Please check if the region support this VM size https://azure.microsoft.com/en-us/regions/#services. For more information about virtual machine sizes, see https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/"
+      }
+    },
+    "boshLogLevel": {
+      "type": "string",
+      "allowedValues": [
+        "debug",
+        "info",        
+        "warn",
+        "error",
+        "none"
+      ],
+      "defaultValue": "debug",
+      "metadata": {
+        "description": "The log level for Bosh"
+      }
+    },    
+    "autoDeployCloudFoundry": {
+      "type": "string",
+      "defaultValue": "disabled",
+      "allowedValues": [
+        "enabled",
+        "disabled"
+      ],
+      "metadata": {
+        "description": "The flag allowing to deploy Cloud Foundry automatically or not"
+      }
+    },
+    "cloudFoundrySystemDomain": {
+      "type": "string",
+      "defaultValue": "NotConfigured",
+      "metadata": {
+        "description": "The Cloud Foundry system domain. If not specified, a xip.io domain will be used."
+      }
+    },
+    "coreUriAzure": {
+      "type": "string",
+      "metadata": {
+        "description": "Core URI used for the endpoints within Azure Cloud"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "storageAccountTemplate": "[concat('nestedtemplates/storage-account-', parameters('storageAccountKind'), '.json')]",
+    "vmStorageAccountContainerName": "vhds",
+    "virtualNetworkName": "boshvnet-crp",
+    "virtualNetworkAddressSpace": "10.0.0.0/16",
+    "subnetNameForBosh": "Bosh",
+    "subnetAddressRangeForBosh": "10.0.0.0/24",
+    "subnetRefForBosh": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetNameForBosh'))]",
+    "subnetNameForCloudFoundry": "CloudFoundry",
+    "subnetAddressRangeForCloudFoundry": "10.0.16.0/20",
+    "devboxNetworkSecurityGroup": "nsg-devbox",
+    "boshNetworkSecurityGroup": "nsg-bosh",
+    "cfNetworkSecurityGroup": "nsg-cf",
+    "cfPublicIPAddressName": "[concat(parameters('vmName'), '-cf')]",
+    "loadBalancerName": "cf-lb",
+    "loadBalancerTemplate": "[concat('nestedtemplates/load-balancer-', parameters('loadBalancerSku'), '.json')]",
+    "nicName": "[parameters('vmName')]",
+    "devboxPrivateIPAddress": "10.0.0.100",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+    "baseUriAzureCloud": "[parameters('_artifactsLocation')]",
+    "filesToDownloadShared": [
+      "[uri(variables('baseUriAzureCloud'), concat('scripts/setup_env.sh', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('scripts/utils.sh', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/bosh.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/cpi.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-location.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/uaa.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/credhub.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/custom-cpi-release.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/custom-environment.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-service-principal-with-certificate.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-azure-dns.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/jumpbox-user.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/keep-failed-or-unreachable-vms.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/cloud-config.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/dns.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/cf-deployment.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/azure.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/scale-to-one-az.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-compiled-releases.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-external-blobstore.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-azure-storage-blobstore.yml', parameters('_artifactsLocationSasToken')))]",
+      "https://s3-us-west-1.amazonaws.com/cf-cli-releases/releases/v6.39.0/cf-cli-installer_6.39.0_x86-64.deb"
+    ],
+    "filesToDownloadMisc": [
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/use-managed-disks.yml', parameters('_artifactsLocationSasToken')))]",
+      "[uri(variables('baseUriAzureCloud'), concat('manifests/enable-diagnostic.yml', parameters('_artifactsLocationSasToken')))]"
+    ],
+    "filesToDownloadAzure": "[union(variables('filesToDownloadShared'), variables('filesToDownloadMisc'))]",
+    "filesToDownloadByCloud": {
+       "AzureCloud": "[variables('filesToDownloadAzure')]",
+       "AzureUSGovernment": "[variables('filesToDownloadAzure')]",
+       "AzureGermanCloud": "[variables('filesToDownloadAzure')]",
+       "AzureStack": "[union(variables('filesToDownloadShared'), createArray(uri(variables('baseUriAzureCloud'), 'manifests/azure-stack-properties.yml'), uri(variables('baseUriAzureCloud'), 'manifests/use-trusted-certs.yml'), uri(variables('baseUriAzureCloud'), 'manifests/use-azure-stack-storage-blobstore.yml')))]",
+       "AzureChinaCloud": [
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('scripts/setup_env.sh', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('scripts/utils.sh', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/bosh.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/cpi.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/use-location.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/uaa.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/credhub.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/custom-cpi-release.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/custom-environment.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/use-service-principal-with-certificate.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/use-managed-disks.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/use-azure-dns.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/jumpbox-user.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/keep-failed-or-unreachable-vms.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/use-mirror-releases-for-bosh.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/custom-ntp-server.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/cloud-config.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/dns.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/use-mirror-bosh-dns-release.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/cf-deployment.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/azure.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/scale-to-one-az.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/use-external-blobstore.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/use-azure-storage-blobstore.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/use-mirror-releases-for-cf.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloudWithVersion'), concat('manifests/use-mirror-compiled-releases.yml', parameters('_artifactsLocationSasToken')))]",
+          "[uri(variables('baseUriAzureChinaCloud'), concat('cf-cli/cf-cli-installer_6.39.0_x86-64.deb', parameters('_artifactsLocationSasToken')))]"
+       ]
+    },
+    "baseUriAzureChinaCloud": "https://cloudfoundry.blob.core.chinacloudapi.cn/bosh-setup/",
+    "templateVersion": "v6-0-0",
+    "baseUriAzureChinaCloudWithVersion": "[concat(variables('baseUriAzureChinaCloud'), variables('templateVersion'), '/')]",
+    "filesToDownload": "[variables('filesToDownloadByCloud')[parameters('environment')]]",
+    "coreUrisByCloud": {
+        "AzureCloud": "[parameters('coreUriAzure')]",
+        "AzureChinaCloud": "core.chinacloudapi.cn",
+        "AzureUSGovernment": "core.usgovcloudapi.net",
+        "AzureGermanCloud": "core.cloudapi.de",
+        "AzureStack": "[parameters('azureStackDomain')]"
+    },
+    "coreUri": "[variables('coreUrisByCloud')[parameters('environment')]]",
+    "stemcellUrlAzure": "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=170.3",
+    "stemcellSha1Azure": "1417d0a7bdbfc2b4794a4c8799231f0eeec73325",
+    "environmentAzure": {
+      "serviceHostBase": "[variables('coreUri')]",
+      "boshCliUrl": "https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-5.2.2-linux-amd64",
+      "boshAzureCPIReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/bosh-azure-cpi-release?v=35.5.0",
+      "boshAzureCPIReleaseSha1": "faebe370c143554fe471c3f6aafb523ab48c43ea",
+      "stemcellUrl": "[variables('stemcellUrlAzure')]",
+      "stemcellSha1": "[variables('stemcellSha1Azure')]"
+    },
+    "environmentsByCloud": {
+        "AzureCloud": "[variables('environmentAzure')]",
+        "AzureUSGovernment": "[variables('environmentAzure')]",
+        "AzureGermanCloud": "[variables('environmentAzure')]",
+        "AzureStack": "[variables('environmentAzure')]",
+        "AzureChinaCloud": {
+            "serviceHostBase": "[variables('coreUri')]",
+            "boshCliUrl": "[uri(variables('baseUriAzureChinaCloud'), 'bosh-cli/bosh-cli-5.2.2-linux-amd64')]",
+            "boshAzureCPIReleaseUrl": "https://cloudfoundry.blob.core.chinacloudapi.cn/bosh-setup/cpi-releases/bosh-azure-cpi-release-35.5.0.tgz",
+            "boshAzureCPIReleaseSha1": "faebe370c143554fe471c3f6aafb523ab48c43ea",
+            "stemcellUrl": "[variables('stemcellUrlAzureChina')]",
+            "stemcellSha1": "[variables('stemcellSha1AzureChina')]"
+        }
+    },
+    "environment": "[variables('environmentsByCloud')[parameters('environment')]]",
+    "stemcellUrlAzureChina": "https://cloudfoundry.blob.core.chinacloudapi.cn/bosh-setup/bosh-azure-stemcells/bosh-stemcell-170.3-azure-hyperv-ubuntu-xenial-go_agent.tgz",
+    "stemcellSha1AzureChina": "1417d0a7bdbfc2b4794a4c8799231f0eeec73325",
+    "credentialsByType": {
+        "Password": "[base64(parameters('clientSecret'))]",
+        "Certificate": "[parameters('certificate')]"
+    },
+    "credentials": "[variables('credentialsByType')[parameters('servicePrincipalType')]]",
+    "customScriptPropertiesCommon": {
+      "publisher": "Microsoft.Azure.Extensions",
+      "type": "CustomScript",
+      "typeHandlerVersion": "2.0",
+      "settings": {
+        "fileUris": "[variables('filesToDownload')]"
+      },
+      "protectedSettings": {
+        "commandToExecute": "[concat('bash -l -c \"./setup_env.sh', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' ', variables('credentials'), ' 2>&1 | tee /home/', parameters('adminUsername'), '/install.log\"')]"
+      }
+    },
+    "customScriptPropertiesByCloud": {
+        "AzureCloud": "[variables('customScriptPropertiesCommon')]",
+        "AzureUSGovernment": "[variables('customScriptPropertiesCommon')]",
+        "AzureGermanCloud": "[variables('customScriptPropertiesCommon')]",
+        "AzureChinaCloud": "[variables('customScriptPropertiesCommon')]",
+        "AzureStack": {
+          "publisher": "Microsoft.OSTCExtensions",
+          "type": "CustomScriptForLinux",
+          "typeHandlerVersion": "1.5",
+          "settings": {
+            "fileUris": "[variables('filesToDownload')]"
+          },
+          "protectedSettings": {
+            "commandToExecute": "[concat('bash -l -c \"./setup_env.sh', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' ', variables('credentials'), ' 2>&1 | tee /home/', parameters('adminUsername'), '/install.log\"')]"
+          }
+        }
+      },
+    "customScriptProperties": "[variables('customScriptPropertiesByCloud')[parameters('environment')]]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('boshNetworkSecurityGroup')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "bosh-agent",
+            "properties": {
+              "description": "Allow bosh-agent",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "6868",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "bosh-director",
+            "properties": {
+              "description": "Allow bosh-director",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "25555",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 202,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "dns",
+            "properties": {
+              "description": "Allow DNS",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "53",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 203,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('devboxNetworkSecurityGroup')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('cfNetworkSecurityGroup')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "cf-https",
+            "properties": {
+              "description": "Allow cf-https",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "cf-log",
+            "properties": {
+              "description": "Allow cf-log",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "cf-http",
+            "properties": {
+              "description": "Allow cf-http",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 202,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "cf-ssh",
+            "properties": {
+              "description": "Allow cf-ssh",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "2222",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 203,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "create-storage-account",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(variables('baseUriAzureCloud'), concat(variables('storageAccountTemplate'), parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('vmName'), '-devbox')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(toLower(parameters('vmName')), '-', uniqueString(resourceGroup().id))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('virtualNetworkAddressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetNameForBosh')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetAddressRangeForBosh')]"
+            }
+          },
+          {
+            "name": "[variables('subnetNameForCloudFoundry')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetAddressRangeForCloudFoundry')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(parameters('vmName'), '-devbox'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('devboxNetworkSecurityGroup'))]"
+      ],
+      "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('devboxNetworkSecurityGroup'))]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('devboxPrivateIPAddress')]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmName'), '-devbox'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRefForBosh')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "create-load-balancer",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(variables('baseUriAzureCloud'), concat(variables('loadBalancerTemplate'), parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "loadBalancerName": {
+            "value": "[variables('loadBalancerName')]"
+          },
+          "loadBalancerPublicIPAddressName": {
+            "value": "[variables('cfPublicIPAddressName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "generate-customdata",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/create-storage-account",
+        "Microsoft.Resources/deployments/create-load-balancer"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(variables('baseUriAzureCloud'), concat('nestedtemplates/generate-customdata.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "customData": {
+            "value": {
+              "LOCATION": "[parameters('location')]",
+              "VNET_NAME": "[variables('virtualNetworkName')]",
+              "SUBNET_NAME_FOR_BOSH": "[variables('subnetNameForBosh')]",
+              "SUBNET_ADDRESS_RANGE_FOR_BOSH": "[variables('subnetAddressRangeForBosh')]",
+              "SUBNET_NAME_FOR_CLOUD_FOUNDRY": "[variables('subnetNameForCloudFoundry')]",
+              "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY": "[variables('subnetAddressRangeForCloudFoundry')]",
+              "CLOUD_FOUNDRY_PUBLIC_IP": "[reference('Microsoft.Resources/deployments/create-load-balancer').outputs.loadBalancerPublicIPAddress.value]",
+              "LOAD_BALANCER_NAME": "[variables('loadBalancerName')]",
+              "NSG_NAME_FOR_BOSH": "[variables('boshNetworkSecurityGroup')]",
+              "NSG_NAME_FOR_CLOUD_FOUNDRY": "[variables('cfNetworkSecurityGroup')]",
+              "SUBSCRIPTION_ID": "[subscription().subscriptionId]",
+              "RESOURCE_GROUP_NAME": "[resourceGroup().name]",
+              "DEFAULT_STORAGE_ACCOUNT_NAME": "[reference('Microsoft.Resources/deployments/create-storage-account').outputs.storageAccountName.value]",
+              "DEFAULT_STORAGE_ACCESS_KEY": "[parameters('storageAccountKey')]",
+              "ADMIN_USER_NAME": "[parameters('adminUsername')]",
+              "ENVIRONMENT": "[parameters('environment')]",
+              "SERVICE_HOST_BASE": "[variables('environment').serviceHostBase]",
+              "BOSH_AZURE_CPI_RELEASE_URL": "[variables('environment').boshAzureCPIReleaseUrl]",
+              "BOSH_AZURE_CPI_RELEASE_SHA1": "[variables('environment').boshAzureCPIReleaseSha1]",
+              "STEMCELL_URL": "[variables('environment').stemcellUrl]",
+              "STEMCELL_SHA1": "[variables('environment').stemcellSha1]",
+              "BOSH_CLI_URL": "[variables('environment').boshCliUrl]",
+              "AUTO_DEPLOY_BOSH": "[parameters('autoDeployBosh')]",
+              "LOG_LEVEL_FOR_BOSH": "[parameters('boshLogLevel')]",
+              "AUTO_DEPLOY_CLOUD_FOUNDRY": "[parameters('autoDeployCloudFoundry')]",
+              "SYSTEM_DOMAIN": "[parameters('cloudFoundrySystemDomain')]",
+              "BOSH_VM_SIZE": "[parameters('boshVmSize')]",
+              "AZURE_STACK_DOMAIN": "[parameters('azureStackDomain')]",
+              "AZURE_STACK_RESOURCE": "[parameters('azureStackResource')]",
+              "AZURE_STACK_AUTHENTICATION": "[parameters('azureStackAuthentication')]",
+              "AZURE_STACK_CA_ROOT_CERTIFICATE": "[parameters('azureStackCARootCertificate')]",
+              "SERVICE_PRINCIPAL_TYPE": "[parameters('servicePrincipalType')]",
+              "USE_AVAILABILITY_ZONES": "[parameters('useAvailabilityZones')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+        "Microsoft.Resources/deployments/generate-customdata"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          },
+          "customData": "[reference('Microsoft.Resources/deployments/generate-customdata', '2015-01-01').outputs.customData.value]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference('Microsoft.Resources/deployments/create-storage-account').outputs.blobEndpoint.value, variables('vmStorageAccountContainerName'), '/', parameters('vmName'), '-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'), '/CustomScript')]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/create-load-balancer",
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+      ],
+      "properties": "[variables('customScriptProperties')]"
+    }
+  ],
+  "outputs": {
+    "sshDevBox": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(resourceId('Microsoft.Network/publicIPAddresses/', concat(parameters('vmName'), '-devbox'))).dnsSettings.fqdn)]"
+    },
+    "cloudFoundryIP": {
+      "type": "string",
+      "value": "[reference('Microsoft.Resources/deployments/create-load-balancer').outputs.loadBalancerPublicIPAddress.value]"
+    }
+  }
+}
+

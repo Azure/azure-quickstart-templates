@@ -13,15 +13,17 @@ param(
     [string] $ModuleVersion
 )
 
-Set-PSRepository -InstallationPolicy Trusted -Name PSGallery -verbose
-
 if ($InstallAzModule){
+
+    Set-PSRepository -InstallationPolicy Trusted -Name PSGallery -verbose
+
     $VersionParam = @{}
     if($ModuleVersion -ne $null){
         $VersionParam.Add("RequiredVersion", "$ModuleVersion")
     }
     Install-Module -Name Az -AllowClobber -verbose @VersionParam
     Install-Module -Name AzTable -AllowClobber -verbose # need this for updating the deployment status table
+
 }
 
 $pscredential = New-Object System.Management.Automation.PSCredential($appId, (ConvertTo-SecureString $secret -AsPlainText -Force))

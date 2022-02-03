@@ -1,0 +1,721 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": ""
+        },
+        "applyScriptsSwitch": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Switch to process or bypass all scripts/extensions"
+            },
+            "type": "bool"
+        },
+	"location": {
+		"type": "string",
+		"defaultValue": "[resourceGroup().location]",
+		"metadata": {
+		   "description": "Location for all resources"
+	 	}
+	},
+        "azureBackupSwitch": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Switch to configure AzureBackup and enlist VM's"
+            },
+            "type": "bool"
+        },
+        "vnetGwDeploySwitch": {
+            "defaultValue": false,
+            "metadata": {
+                "description": "Switch to deploy a virtual network gateway or not"
+            },
+            "type": "bool"
+        },
+        "htmlLocalCopySwitch": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Switch to create a local copy of /mahara/html or not"
+            },
+            "type": "bool"
+        },
+        "httpsTermination": {
+            "allowedValues": [
+                "VMSS",
+                "None"
+            ],
+            "defaultValue": "VMSS",
+            "metadata": {
+                "description": "Indicates where https termination occurs. 'VMSS' is for https termination at the VMSS instance VMs (using nginx https proxy). 'None' is for testing only with no https. 'None' may not be used with a separately configured https termination layer. If you want to use the 'None' option with your separately configured https termination layer, you'll need to update your Mahara config.php manually for $cfg->wwwroot and $cfg->sslproxy."
+            },
+            "type": "string"
+        },
+        "siteURL": {
+            "defaultValue": "www.example.org",
+            "metadata": {
+                "description": "URL for Mahara site"
+            },
+            "type": "string"
+        },
+        "maharaVersion": {
+            "allowedValues": [
+                "17.10_STABLE",
+                "17.04_STABLE"
+            ],
+            "defaultValue": "17.10_STABLE",
+            "metadata": {
+                "description": "The Mahara version you want to install."
+            },
+            "type": "string"
+        },
+        "sshPublicKey": {
+            "metadata": {
+                "description": "ssh public key"
+            },
+            "type": "string"
+        },
+        "sshUsername": {
+            "metadata": {
+                "description": "ssh user name"
+            },
+            "type": "string"
+        },
+        "controllerVmSku": {
+            "defaultValue": "Standard_D2s_v3",
+            "metadata": {
+                "description": "VM size for the controller VM"
+            },
+            "type": "string"
+        },
+        "webServerType": {
+            "defaultValue": "apache",
+            "allowedValues": [
+                "apache",
+                "nginx"
+            ],
+            "metadata": {
+                "description": "Web server type"
+            },
+            "type": "string"
+        },
+        "autoscaleVmSku": {
+            "defaultValue": "Standard_D2s_v3",
+            "metadata": {
+                "description": "VM size for autoscaled web VMs"
+            },
+            "type": "string"
+        },
+        "autoscaleVmCount": {
+            "defaultValue": 10,
+            "metadata": {
+                "description": "Maximum number of autoscaled web VMs"
+            },
+            "type": "int"
+        },
+        "dbServerType": {
+            "defaultValue": "mysql",
+            "allowedValues": [
+                "postgres",
+                "mysql"
+            ],
+            "metadata": {
+                "description": "Database type"
+            },
+            "type": "string"
+        },
+        "dbLogin": {
+            "metadata": {
+                "description": "Database admin username"
+            },
+            "type": "string"
+        },
+        "dbLoginPassword": {
+            "metadata": {
+                "description": "Database admin password"
+            },
+            "type": "securestring"
+        },
+        "maharaAdminPass": {
+            "metadata": {
+                "description": "Mahara admin password"
+            },
+            "type": "securestring"
+        },
+        "maharaDbPass": {
+            "metadata": {
+                "description": "Mahara database password"
+            },
+            "type": "securestring"
+        },
+        "mysqlPgresVcores": {
+            "allowedValues": [
+                1,
+                2,
+                4,
+                8,
+                16,
+                32
+            ],
+            "defaultValue": 2,
+            "metadata": {
+                "description": "MySql/Postgresql vCores. For Basic tier, only 1 & 2 are allowed. For GeneralPurpose tier, 2, 4, 8, 16, 32 are allowed. For MemoryOptimized, 2, 4, 8, 16 are allowed."
+            },
+            "type": "int"
+        },
+        "mysqlPgresStgSizeGB": {
+            "defaultValue": 125,
+            "minValue": 5,
+            "maxValue": 1024,
+            "metadata": {
+                "description": "MySql/Postgresql storage size in GB. Minimum 5GB, increase by 1GB, up to 1TB (1024 GB)"
+            },
+            "type": "int"
+        },
+        "mysqlPgresSkuTier": {
+            "allowedValues": [
+                "Basic",
+                "GeneralPurpose",
+                "MemoryOptimized"
+            ],
+            "defaultValue": "GeneralPurpose",
+            "metadata": {
+                "description": "MySql/Postgresql sku tier"
+            },
+            "type": "string"
+        },
+        "mysqlPgresSkuHwFamily": {
+            "allowedValues": [
+                "Gen4",
+                "Gen5"
+            ],
+            "defaultValue": "Gen5",
+            "metadata": {
+                "description": "MySql/Postgresql sku hardware family"
+            },
+            "type": "string"
+        },
+        "mysqlVersion": {
+            "allowedValues": [
+                "5.6",
+                "5.7"
+            ],
+            "defaultValue": "5.7",
+            "metadata": {
+                "description": "Mysql version"
+            },
+            "type": "string"
+        },
+        "postgresVersion": {
+            "allowedValues": [
+                "9.5",
+                "9.6"
+            ],
+            "defaultValue": "9.6",
+            "metadata": {
+                "description": "Postgresql version"
+            },
+            "type": "string"
+        },
+        "sslEnforcement": {
+            "allowedValues": [
+                "Disabled",
+                "Enabled"
+            ],
+            "defaultValue": "Disabled",
+            "metadata": {
+                "description": "MySql/Postgresql SSL connection"
+            },
+            "type": "string"
+        },
+        "fileServerType": {
+            "defaultValue": "nfs",
+            "allowedValues": [
+                "gluster",
+                "nfs"
+            ],
+            "metadata": {
+                "description": "File server type: GlusterFS, NFS--not yet highly available. Gluster uses premium managed disks therefore premium skus are required."
+            },
+            "type": "string"
+        },
+        "fileServerDiskSize": {
+            "defaultValue": 127,
+            "metadata": {
+                "description": "Size per disk for gluster nodes or nfs server"
+            },
+            "type": "int"
+        },
+        "fileServerDiskCount": {
+            "defaultValue": 4,
+            "minValue": 2,
+            "maxValue": 8,
+            "metadata": {
+                "description": "Number of disks in raid0 per gluster node or nfs server"
+            },
+            "type": "int"
+        },
+        "glusterVmSku": {
+            "defaultValue": "Standard_D2s_v3",
+            "metadata": {
+                "description": "VM size for the gluster nodes"
+            },
+            "type": "string"
+        },
+        "keyVaultResourceId": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Azure Resource Manager resource ID of the Key Vault in case you stored your SSL cert in an Azure Key Vault (Note that this Key Vault must have been pre-created on the same Azure region where this template is being deployed). Leave this blank if you didn't. Resource ID example: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/xxx/providers/Microsoft.KeyVault/vaults/yyy. This value can be obtained from keyvault.sh output if you used the script to store your SSL cert in your Key Vault."
+            },
+            "type": "string"
+        },
+        "sslCertKeyVaultURL": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Azure Key Vault URL for your stored SSL cert. This value can be obtained from keyvault.sh output if you used the script to store your SSL cert in your Key Vault. This parameter is ignored if the keyVaultResourceId parameter is blank."
+            },
+            "type": "string"
+        },
+        "sslCertThumbprint": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Thumbprint of your stored SSL cert. This value can be obtained from keyvault.sh output if you used the script to store your SSL cert in your Key Vault. This parameter is ignored if the keyVaultResourceId parameter is blank."
+            },
+            "type": "string"
+        },
+        "caCertKeyVaultURL": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Azure Key Vault URL for your stored CA (Certificate Authority) cert. This value can be obtained from keyvault.sh output if you used the script to store your CA cert in your Key Vault. This parameter is ignored if the keyVaultResourceId parameter is blank."
+            },
+            "type": "string"
+        },
+        "caCertThumbprint": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Thumbprint of your stored CA cert. This value can be obtained from keyvault.sh output if you used the script to store your CA cert in your Key Vault. This parameter is ignored if the keyVaultResourceId parameter is blank."
+            },
+            "type": "string"
+        },
+        "storageAccountType": {
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_ZRS"
+            ],
+            "metadata": {
+                "description": "Storage Account type"
+            },
+            "type": "string"
+        },
+        "searchType": {
+            "defaultValue": "none",
+            "allowedValues": [
+                "none",
+                "elastic"
+            ],
+            "metadata": {
+                "description": "options of mahara global search"
+            },
+            "type": "string"
+        },
+        "elasticVmSku": {
+            "defaultValue": "Standard_D2s_v3",
+            "metadata": {
+                "description": "VM size for the elastic search nodes"
+            },
+            "type": "string"
+        },
+        "vNetAddressSpace": {
+            "defaultValue": "172.31.0.0",
+            "metadata": {
+                "description": "Address range for the Mahara virtual network - presumed /16 - further subneting during vnet creation"
+            },
+            "type": "string"
+        },
+        "gatewaySubnet": {
+            "allowedValues": [
+                "GatewaySubnet",
+         		"MaharaGatewaySubnet",
+        		"MyMaharaGatewaySubnet"
+            ],
+            "defaultValue": "GatewaySubnet",
+            "metadata": {
+                "description": "name for Virtual network gateway subnet"
+            },
+            "type": "string"
+        },
+        "gatewayType": {
+            "allowedValues": [
+                "Vpn",
+                "ER"
+            ],
+            "defaultValue": "Vpn",
+            "metadata": {
+                "description": "Virtual network gateway type"
+            },
+            "type": "string"
+        },
+        "vpnType": {
+            "allowedValues": [
+                "RouteBased",
+                "PolicyBased"
+            ],
+            "defaultValue": "RouteBased",
+            "metadata": {
+                "description": "Virtual network gateway vpn type"
+            },
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/networkTemplate"
+            ],
+            "name": "dbTemplate",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[variables('maharaCommon')]"
+                    },
+                    "lbPubIp": {
+                        "value": "[reference('networkTemplate').outputs.lbPubIp.value]"
+                    },
+                    "ctlrPubIp": {
+                        "value": "[reference('networkTemplate').outputs.ctlrPubIp.value]"
+                    },
+                    "dbLoginPassword": {
+                        "value": "[parameters('dbLoginPassword')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(variables('maharaCommon').baseTemplateUrl, parameters('dbServerType'), '.json', parameters('_artifactsLocationSasToken'))]"
+                }
+            }
+        },
+        {
+            "condition": "[parameters('azureBackupSwitch')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "recoveryTemplate",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[variables('maharaCommon')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(variables('maharaCommon').baseTemplateUrl,'recoveryservices.json',parameters('_artifactsLocationSasToken'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "networkTemplate",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[variables('maharaCommon')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(variables('maharaCommon').baseTemplateUrl,'network.json',parameters('_artifactsLocationSasToken'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/networkTemplate",
+                "Microsoft.Resources/deployments/recoveryTemplate"
+            ],
+            "name": "searchTemplate",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('maharaCommon').baseTemplateUrl, parameters('searchType'), '-search.json', parameters('_artifactsLocationSasToken'))]"
+                }
+            }
+        },
+        {
+            "condition": "[equals(parameters('fileServerType'),'gluster')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/networkTemplate",
+                "Microsoft.Resources/deployments/recoveryTemplate"
+            ],
+            "name": "glusterTemplate",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[variables('maharaCommon')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(variables('maharaCommon').baseTemplateUrl,'gluster.json',parameters('_artifactsLocationSasToken'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/glusterTemplate",
+                "Microsoft.Resources/deployments/recoveryTemplate",
+                "Microsoft.Resources/deployments/networkTemplate",
+                "Microsoft.Resources/deployments/dbTemplate",
+                "Microsoft.Resources/deployments/searchTemplate",
+                "Microsoft.Resources/deployments/storageAccountTemplate"
+            ],
+            "name": "controllerTemplate",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[variables('maharaCommon')]"
+                    },
+                    "ctlrPubIpId": {
+                        "value": "[reference('networkTemplate').outputs.ctlrPubIpId.value]"
+                    },
+                    "siteFQDN": {
+                        "value": "[reference('networkTemplate').outputs.siteFQDN.value]"
+                    },
+                    "dbLoginPassword": {
+                        "value": "[parameters('dbLoginPassword')]"
+                    },
+                    "maharaDbPass": {
+                        "value": "[parameters('maharaDbPass')]"
+                    },
+                    "maharaAdminPass": {
+                        "value": "[parameters('maharaAdminPass')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(variables('maharaCommon').baseTemplateUrl,'controller.json',parameters('_artifactsLocationSasToken'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/controllerTemplate",
+                "Microsoft.Resources/deployments/networkTemplate",
+                "Microsoft.Resources/deployments/dbTemplate"
+            ],
+            "name": "scaleSetTemplate",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[variables('maharaCommon')]"
+                    },
+                    "siteFQDN": {
+                        "value": "[reference('networkTemplate').outputs.siteFQDN.value]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(variables('maharaCommon').baseTemplateUrl,'webvmss.json',parameters('_artifactsLocationSasToken'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "storageAccountTemplate",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "maharaCommon": {
+                        "value": "[variables('maharaCommon')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(variables('maharaCommon').baseTemplateUrl,'storageAccount.json',parameters('_artifactsLocationSasToken'))]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+      "siteURL": {
+        "type": "string",
+        "value": "[if(equals(variables('maharaCommon').siteURL,'www.example.org'),reference('networkTemplate').outputs.siteFQDN.value,'www.example.org')]"
+      },
+      "controllerInstanceIP": {
+        "type": "string",
+        "value": "[reference('controllerTemplate').outputs.controllerIP.value]"
+      },
+      "databaseDNS": {
+        "type": "string",
+        "value": "[variables('maharaCommon').dbDNS]"
+      },
+      "databaseAdminUsername": {
+        "type": "string",
+        "value": "[variables('maharaCommon').dbUsername]"
+      },
+      "firstFrontendVmIP": {
+        "type": "string",
+        "value": "[reference('scaleSetTemplate').outputs.webvm1IP.value]"
+      },
+      "maharaDbUsername": {
+        "type": "string",
+        "value": "[variables('maharaCommon').maharaDbUserAzure]"
+      },
+      "sshUsername": {
+        "type": "string",
+        "value": "[variables('maharaCommon').sshUsername]"
+      },
+      "loadBalancerDNS": {
+        "type": "string",
+        "value": "[reference('networkTemplate').outputs.siteFQDN.value]"
+      }
+    },
+    "variables": {
+        "maharaCommon": {
+	    "location": "[parameters('location')]",
+            "baseTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/'))]",
+            "scriptLocation": "[uri(parameters('_artifactsLocation'), concat('scripts/'))]",
+            "artifactsSasToken": "[parameters('_artifactsLocationSasToken')]",
+            "applyScriptsSwitch": "[parameters('applyScriptsSwitch')]",
+            "autoscaleVmCount": "[parameters('autoscaleVmCount')]",
+            "autoscaleVmSku": "[parameters('autoscaleVmSku')]",
+            "azureBackupSwitch": "[parameters('azureBackupSwitch')]",
+            "commonFunctionsScriptUri": "[uri(parameters('_artifactsLocation'),concat('scripts/helper_functions.sh',parameters('_artifactsLocationSasToken')))]",
+            "controllerVmSku": "[parameters('controllerVmSku')]",
+            "dbLogin": "[parameters('dbLogin')]",
+            "dbServerType": "[parameters('dbServerType')]",
+            "dbUsername": "[concat(parameters('dbLogin'), '@', parameters('dbServerType'), '-', variables('resourceprefix'))]",
+            "elasticVmSku": "[parameters('elasticVmSku')]",
+            "dbDNS": "[concat(parameters('dbServerType'), '-', variables('resourcePrefix'), '.', parameters('dbServerType'), '.database.azure.com')]",
+            "elasticAvailabilitySetName": "[concat('elastic-avset-',variables('resourceprefix'))]",
+            "elasticClusterName": "[concat('es-cluster-',variables('resourceprefix'))]",
+            "elasticNicName1": "[concat('elastic-vm-nic-01-',variables('resourceprefix'))]",
+            "elasticNicName2": "[concat('elastic-vm-nic-02-',variables('resourceprefix'))]",
+            "elasticNicName3": "[concat('elastic-vm-nic-03-',variables('resourceprefix'))]",
+            "elasticScriptFilename": "install_elastic.sh",
+            "elasticVm1IP": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),4)), '.20')]",
+            "elasticVm2IP": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),4)), '.21')]",
+            "elasticVm3IP": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),4)), '.22')]",
+            "elasticVmName": "[concat('elastic-vm-',variables('resourceprefix'))]",
+            "elasticVmName1": "[concat('elastic-vm-01-',variables('resourceprefix'))]",
+            "elasticVmName2": "[concat('elastic-vm-02-',variables('resourceprefix'))]",
+            "elasticVmName3": "[concat('elastic-vm-03-',variables('resourceprefix'))]",
+            "extBeName": "[concat('lb-backend-',variables('resourceprefix'))]",
+            "extFeName": "[concat('lb-frontend-',variables('resourceprefix'))]",
+            "extNatPool": "[concat('lb-natpool-',variables('resourceprefix'))]",
+            "extProbe": "[concat('lb-probe-',variables('resourceprefix'))]",
+            "fileServerDiskCount": "[parameters('fileServerDiskCount')]",
+            "fileServerDiskSize": "[parameters('fileServerDiskSize')]",
+            "fileServerType": "[parameters('fileServerType')]",
+            "gatewayName": "[concat('vnet-gateway-',variables('resourceprefix'))]",
+            "gatewayPublicIPName": "[concat('vnet-gw-ip-',variables('resourceprefix'))]",
+            "gatewaySubnet": "[parameters('gatewaySubnet')]",
+            "gatewaySubnetPrefix": "[concat(variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),2)))]",
+            "gatewaySubnetRange": "[concat(variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),2)), '.0/24')]",
+            "gatewayType": "[parameters('gatewayType')]",
+            "gfsNameRoot": "[concat('gluster-vm-',variables('resourceprefix'))]",
+            "gfxAvailabilitySetName": "[concat('gluster-avset-',variables('resourceprefix'))]",
+            "glusterScriptFilename": "install_gluster.sh",
+            "glusterVmCount": 2,
+            "glusterVmSku": "[parameters('glusterVmSku')]",
+            "htmlLocalCopySwitch": "[parameters('htmlLocalCopySwitch')]",
+            "httpsTermination": "[parameters('httpsTermination')]",
+            "ctlrNicName": "[concat('controller-vm-nic-',variables('resourceprefix'))]",
+            "ctlrNsgName": "[concat('controller-nsg-',variables('resourceprefix'))]",
+            "ctlrPipName": "[concat('controller-pubip-',variables('resourceprefix'))]",
+            "ctlrVmName": "[concat('controller-vm-',variables('resourceprefix'))]",
+            "ctlrVmSecrets": "[take(variables('ctlrVmSecretsArray'), if(empty(parameters('keyVaultResourceId')), 0, 1))]",
+            "lbName": "[concat('lb-',variables('resourceprefix'))]",
+            "lbPipName": "[concat('lb-pubip-',variables('resourceprefix'))]",
+            "maharaDbName": "mahara",
+            "maharaDbUser": "mahara",
+            "maharaDbUserAzure": "[concat('mahara', '@', parameters('dbServerType'), '-', variables('resourceprefix'))]",
+            "maharaInstallScriptFilename": "install_mahara.sh",
+            "maharaVersion": "[parameters('maharaVersion')]",
+            "mysqlPgresSkuHwFamily": "[parameters('mysqlPgresSkuHwFamily')]",
+            "mysqlPgresSkuName": "[concat(if(equals(parameters('mysqlPgresSkuTier'),'Basic'),'B', if(equals(parameters('mysqlPgresSkuTier'),'GeneralPurpose'),'GP', 'MO')), '_', parameters('mysqlPgresSkuHwFamily'), '_', string(parameters('mysqlPgresVcores')))]",
+            "mysqlPgresSkuTier": "[parameters('mysqlPgresSkuTier')]",
+            "mysqlPgresStgSizeGB": "[parameters('mysqlPgresStgSizeGB')]",
+            "mysqlPgresVcores": "[parameters('mysqlPgresVcores')]",
+            "mysqlVersion": "[parameters('mysqlVersion')]",
+            "osType": {
+                "offer": "UbuntuServer",
+                "publisher": "Canonical",
+                "sku": "18.04-LTS",
+                "version": "latest"
+            },
+            "policyName": "[concat('policy-',variables('resourceprefix'))]",
+            "postgresVersion": "[parameters('postgresVersion')]",
+            "resourcesPrefix": "[variables('resourceprefix')]",
+            "searchType": "[parameters('searchType')]",
+            "serverName": "[concat(parameters('dbServerType'), '-',variables('resourceprefix'))]",
+            "siteURL": "[parameters('siteURL')]",
+            "sshPublicKey": "[parameters('sshPublicKey')]",
+            "sshUsername": "[parameters('sshUsername')]",
+            "sslEnforcement": "[parameters('sslEnforcement')]",
+            "storageAccountName": "[tolower(concat('abs',variables('resourceprefix')))]",
+            "storageAccountType": "[parameters('storageAccountType')]",
+            "subnetElastic": "[concat('elastic-subnet-',variables('resourceprefix'))]",
+            "subnetElasticPrefix": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),4)))]",
+            "subnetElasticRange": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),4)), '.0/24')]",
+            "subnetSan": "[concat('san-subnet-',variables('resourceprefix'))]",
+            "subnetSanPrefix": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),1)))]",
+            "subnetSanRange": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),1)), '.0/24')]",
+            "subnetWeb": "[concat('web-subnet-',variables('resourceprefix'))]",
+            "subnetWebPrefix": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),0)))]",
+            "subnetWebRange": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),0)), '.0/24')]",
+            "thumbprintSslCert": "[if(or(empty(parameters('keyVaultResourceId')), empty(parameters('sslCertThumbprint'))), 'None', parameters('sslCertThumbprint'))]",
+            "thumbprintCaCert": "[if(or(empty(parameters('keyVaultResourceId')), empty(parameters('caCertThumbprint'))), 'None', parameters('caCertThumbprint'))]",
+            "vNetAddressSpace": "[parameters('vNetAddressSpace')]",
+            "vaultName": "[concat('vault-',variables('resourceprefix'))]",
+            "vmssName": "[concat('vmss-',variables('resourceprefix'))]",
+            "vmssdStorageAccounttName": "[concat('vmss',uniqueString(resourceGroup().id))]",
+            "vnetGwDeploySwitch": "[parameters('vnetGwDeploySwitch')]",
+            "vnetName": "[concat('vnet-',variables('resourceprefix'))]",
+            "vpnType": "[parameters('vpnType')]",
+            "webServerSetupScriptFilename": "setup_webserver.sh",
+            "webServerType": "[parameters('webServerType')]"
+        },
+        "certUrlArray": [
+            {
+                "certificateUrl": "[parameters('sslCertKeyVaultURL')]"
+            },
+            {
+                "certificateUrl": "[parameters('caCertKeyVaultURL')]"
+            }
+        ],
+        "ctlrVmSecretsArray": [
+            {
+                "sourceVault": {
+                    "id": "[parameters('keyVaultResourceId')]"
+                },
+                "vaultCertificates": "[take(variables('certUrlArray'), if(empty(parameters('caCertKeyVaultURL')), 1, 2))]"
+            }
+        ],
+        "octets": "[split(parameters('vNetAddressSpace'), '.')]",
+        "resourceprefix": "[substring(uniqueString(resourceGroup().id, deployment().name), 3, 6)]"
+    }
+}
+

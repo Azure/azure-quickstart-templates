@@ -1,0 +1,202 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appServiceName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name to be given to this new App Service. This value is used in DNS and must be unique."
+            }
+        },
+        "appServicePlanName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of an existing App Service plan for which the App Service will be created"
+            }
+        },
+        "eventHubNamespace": {
+            "type": "string",
+            "metadata": {
+                "description": "sets environment variable APIMEVENTS-EVENTHUB-NAME"
+            }
+        },
+        "eventHubName": {
+            "type": "string",
+            "metadata": {
+                "description": "Sets environment variable APIMEVENTS-EVENTHUB-NAME"
+            }
+        },
+        "eventHubListenPolicy": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of Event Hubs Namespace listen policy. Found in EventHubNamespace/Settings/Shared access policies: eg 'moesiflogaaaaaa-listen-policy'"
+            }
+        },
+        "apimEvtStorName": {
+            "type": "string",
+            "metadata": {
+                "description": "Sets environment variable APIMEVENTS-STORAGEACCOUNT-NAME"
+            }
+        },
+        "apimEvtMoesifApplicationId": {
+            "type": "string",
+            "metadata": {
+                "description": "Sets environment variable APIMEVENTS-MOESIF-APPLICATION-ID"
+            }
+        },
+        "apimEvtMoesifSessionToken": {
+            "type": "string",
+            "defaultValue": "optional",
+            "metadata": {
+                "description": "Sets environment variable APIMEVENTS-MOESIF-SESSION-TOKEN"
+            }
+        },
+        "apimEvtMoesifApiVersion": {
+            "type": "string",
+            "defaultValue": "v1",
+            "metadata": {
+                "description": "Sets environment variable APIMEVENTS-MOESIF-API-VERSION"
+            }
+        },
+        "azureWebsitesDomain": {
+            "type": "string",
+            "metadata":{
+                "description": "DNS name to use for azure webapp such as .azurewebsites.net"
+            }
+        },
+        "tags": {
+            "type": "Object",
+            "defaultValue": {}
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources. eg 'westus2'"
+            }
+        }
+    },
+    "variables": {
+        "appServiceHostName": "[concat(parameters('appServiceName'), parameters('azureWebsitesDomain'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2020-12-01",
+            "name": "[parameters('appServiceName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "kind": "app",
+            "properties": {
+                "enabled": true,
+                "hostNameSslStates": [
+                    {
+                        "name": "[variables('appServiceHostName')]",
+                        "sslState": "Disabled",
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "[concat(parameters('appServiceName'), '.scm', parameters('azureWebsitesDomain'))]",
+                        "sslState": "Disabled",
+                        "hostType": "Repository"
+                    }
+                ],
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+                "reserved": false,
+                "isXenon": false,
+                "hyperV": false,
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "APIMEVENTS-EVENTHUB-CONNECTIONSTRING",
+                            "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespace'), parameters('eventHubListenPolicy')), '2021-01-01-preview').primaryConnectionString]"
+                        },
+                        {
+                            "name": "APIMEVENTS-EVENTHUB-NAME",
+                            "value": "[parameters('eventHubName')]"
+                        },
+                        {
+                            "name": "APIMEVENTS-STORAGEACCOUNT-NAME",
+                            "value": "[parameters('apimEvtStorName')]"
+                        },
+                        {
+                            "name": "APIMEVENTS-STORAGEACCOUNT-KEY",
+                            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('apimEvtStorName')), '2021-02-01').keys[0].value]"
+                        },
+                        {
+                            "name": "APIMEVENTS-MOESIF-APPLICATION-ID",
+                            "value": "[parameters('apimEvtMoesifApplicationId')]"
+                        },
+                        {
+                            "name": "APIMEVENTS-MOESIF-SESSION-TOKEN",
+                            "value": "[parameters('apimEvtMoesifSessionToken')]"
+                        },
+                        {
+                            "name": "APIMEVENTS-MOESIF-API-VERSION",
+                            "value": "[parameters('apimEvtMoesifApiVersion')]"
+                        }
+                    ]
+                },
+                "scmSiteAlsoStopped": false,
+                "clientAffinityEnabled": true,
+                "clientCertEnabled": false,
+                "hostNamesDisabled": false,
+                "containerSize": 0,
+                "dailyMemoryTimeQuota": 0,
+                "httpsOnly": false,
+                "redundancyMode": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2020-12-01",
+            "name": "[concat(parameters('appServiceName'), '/web')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('appServiceName'))]",
+                "[resourceId('Microsoft.Web/sites/hostNameBindings', parameters('appServiceName'), variables('appServiceHostName'))]"
+            ],
+            "properties": {
+                "netFrameworkVersion": "v5.0",
+                "logsDirectorySizeLimit": 60,
+                "numberOfWorkers": 1,
+                "alwaysOn": "true",
+                "defaultDocuments": [
+                    "Default.htm",
+                    "Default.html",
+                    "Default.asp",
+                    "index.htm",
+                    "index.html",
+                    "iisstart.htm",
+                    "default.aspx",
+                    "index.php",
+                    "hostingstart.html"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/hostNameBindings",
+            "apiVersion": "2020-12-01",
+            "name": "[concat(parameters('appServiceName'), '/', variables('appServiceHostName'))]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('appServiceName'))]"
+            ],
+            "properties": {
+                "siteName": "[parameters('appServiceName')]",
+                "hostNameType": "Verified"
+            }
+        }
+    ],
+    "outputs": {
+        "appServiceName": {
+            "type": "string",
+            "value": "[parameters('appServiceName')]"
+        },
+        "appServiceHostName": {
+            "type": "string",
+            "value": "[variables('appServiceHostName')]"
+        }
+    }
+}

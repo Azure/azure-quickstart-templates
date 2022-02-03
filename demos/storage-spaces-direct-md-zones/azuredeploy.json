@@ -1,0 +1,192 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+    "type": "string",
+    "allowedValues": [
+	],
+    "metadata": {
+       "description": "Location for the VM, only certain regions support zones during, Azure Government will not use zones."
+      }
+    },
+    "namePrefix": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 8,
+      "metadata": {
+        "description": "Naming prefix for each new resource created. 3-char min, 8-char max, lowercase alphanumeric"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of the S2D VMs to be created"
+      },
+      "defaultValue": "Standard_D2_v3"
+    },
+    "vmCount": {
+      "type": "int",
+      "minValue": 2,
+      "maxValue": 3,
+      "metadata": {
+        "description": "Number of S2D VMs to be created in cluster (Min=2, Max=3)"
+      },
+      "defaultValue": 2
+    },
+    "vmDiskSize": {
+      "type": "int",
+      "minValue": 128,
+      "maxValue": 1023,
+      "metadata": {
+        "description": "Size of each data disk in GB on each S2D VM (Min=128, Max=1023)"
+      },
+      "defaultValue": 128
+    },
+    "vmDiskCount": {
+      "type": "int",
+      "minValue": 2,
+      "maxValue": 32,
+      "metadata": {
+        "description": "Number of data disks on each S2D VM (Min=2, Max=32). Ensure that the VM size you've selected will support this number of data disks."
+      },
+      "defaultValue": 2
+    },
+    "existingDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS domain name for existing Active Directory domain"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Administrator of the existing Active Directory Domain"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "minLength": 12,
+      "metadata": {
+        "description": "Password for the Administrator account of the existing Active Directory Domain"
+      }
+    },
+    "existingVirtualNetworkRGName": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource Group Name for the existing VNET."
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VNET."
+      }
+    },
+    "existingSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing subnet in the existing VNET to which the S2D VMs should be deployed"
+      }
+    },
+    "sofsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of clustered Scale-Out File Server role"
+      },
+      "defaultValue": "fs01"
+    },
+    "shareName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of shared data folder on clustered Scale-Out File Server role"
+      },
+      "defaultValue": "data"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of resources that the script is dependent on such as linked templates and DSC modules"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/demos/storage-spaces-direct-md-zones/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Not required for default location. The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "subnetRef": "[resourceId(parameters('existingVirtualNetworkRGName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSubnetName'))]",
+    "deployS2DClusterTemplateURL": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/deploy-s2d-cluster.json', parameters('_artifactsLocationSasToken')))]",
+    "deployS2DCluster": "deployS2DCluster"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "name": "[variables('deployS2DCluster')]",
+      "dependsOn": [],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('deployS2DClusterTemplateURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "namePrefix": {
+            "value": "[parameters('namePrefix')]"
+          },
+          "domainName": {
+            "value": "[parameters('existingDomainName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "nicSubnetUri": {
+            "value": "[variables('subnetRef')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "vmCount": {
+            "value": "[parameters('vmCount')]"
+          },
+          "vmDiskSize": {
+            "value": "[parameters('vmDiskSize')]"
+          },
+          "vmDiskCount": {
+            "value": "[parameters('vmDiskCount')]"
+          },
+          "sofsName": {
+            "value": "[parameters('sofsName')]"
+          },
+          "shareName": {
+            "value": "[parameters('shareName')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "sofsPath": {
+      "type": "string",
+      "value": "[concat('\\\\',reference(variables('deployS2DCluster')).outputs.sofsName.value,'\\',reference(variables('deployS2DCluster')).outputs.shareName.value)]"
+    }
+  }
+}
+

@@ -1,0 +1,230 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "moodleCommon": {
+      "metadata": {
+        "description": "Common Moodle values"
+      },
+      "type": "object"
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
+      "name": "[parameters('moodleCommon').jboxPipName]",
+      "properties": {
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('moodleCommon').jboxPipName]"
+        },
+        "publicIPAllocationMethod": "Static"
+      },
+      "tags": {
+        "displayName": "jboxpip"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
+      "name": "[parameters('moodleCommon').jboxNsgName]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Allow_SSH",
+            "properties": {
+              "access": "Allow",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "22",
+              "direction": "Inbound",
+              "priority": 1000,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*"
+            }
+          },
+          {
+            "name": "Allow_http",
+            "properties": {
+              "access": "Allow",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "80",
+              "direction": "Inbound",
+              "priority": 1005,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*"
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "JumpBox NSG"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-07-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', parameters('moodleCommon').jboxPipName)]"
+      ],
+      "location": "[parameters('location')]",
+      "name": "[parameters('moodleCommon').jboxNicName]",
+      "properties": {
+        "networkSecurityGroup": {
+          "id": "[variables('nsgRef')]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "ipcfgjbox",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[variables('pipRef')]"
+              },
+              "subnet": {
+                "id": "[variables('subnetWebRef')]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "jboxNic"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', parameters('moodleCommon').jboxNicName)]"
+      ],
+      "location": "[parameters('location')]",
+      "name": "[parameters('moodleCommon').jboxVmName]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('moodleCommon').controllerVmSku]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[variables('nicRef')]"
+            }
+          ]
+        },
+        "osProfile": {
+          "adminUsername": "[parameters('moodleCommon').sshUsername]",
+          "computerName": "[parameters('moodleCommon').jboxVmName]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', parameters('moodleCommon').sshUsername, '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('moodleCommon').sshPublicKey]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('moodleCommon').osType]",
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            },
+            "name": "[parameters('moodleCommon').jboxVmName]"
+          },
+          "dataDisks": "[take(variables('nfsDiskArray'),if(equals(parameters('moodleCommon').fileServerType,'nfs'), parameters('moodleCommon').fileServerDiskCount, 0))]"
+        }
+      },
+      "tags": {
+        "displayName": "Jumpbox (controller) Virtual Machine"
+      }
+    },
+    {
+      "condition": "[parameters('moodleCommon').applyScriptsSwitch]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('moodleCommon').jboxVmName)]"
+      ],
+      "name": "[concat(parameters('moodleCommon').jboxVmName,'-ScriptProcessor')]",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[parameters('moodleCommon')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'controllerconfig.json',parameters('moodleCommon').artifactsSasToken)]"
+        }
+      }
+    },
+    {
+      "condition": "[parameters('moodleCommon').azureBackupSwitch]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/',parameters('moodleCommon').jboxVmName)]"
+      ],
+      "name": "[concat(parameters('moodleCommon').jboxVmName,'-Backup')]",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "moodleCommon": {
+            "value": "[parameters('moodleCommon')]"
+          },
+          "vmName": {
+            "value": "[parameters('moodleCommon').jboxVmName]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "templateLink": {
+          "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('moodleCommon').artifactsSasToken)]"
+        }
+      }
+    }
+  ],
+  "variables": {
+    "nicRef": "[resourceId('Microsoft.Network/networkInterfaces', parameters('moodleCommon').jboxNicName)]",
+    "nsgRef": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('moodleCommon').jboxNsgName)]",
+    "pipRef": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').jboxPipName)]",
+    "subnetWebRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('moodleCommon').vnetName, parameters('moodleCommon').subnetWeb)]",
+    "copy": [
+      {
+        "name": "nfsDiskArray",
+        "count": 8,
+        "input": {
+          "managedDisk": {
+            "storageAccountType": "Premium_LRS"
+          },
+          "diskSizeGB": "[parameters('moodleCommon').fileServerDiskSize]",
+          "lun": "[copyIndex('nfsDiskArray')]",
+          "createOption": "Empty"
+        }
+      }
+    ]
+  },
+  "outputs": {
+    "controllerIP": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').jboxPipName), '2020-11-01').ipAddress]",
+      "type": "string"
+    }
+  }
+}

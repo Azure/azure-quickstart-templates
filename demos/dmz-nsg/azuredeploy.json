@@ -1,0 +1,489 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Username for the Virtual Machines."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machines."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "description"
+      },
+      "defaultValue": "Standard_D4_v3"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "NSGName": "myVNetNSG",
+    "VM01Name": "IIS01",
+    "VM02Name": "AppVM01",
+    "VM03Name": "AppVM02",
+    "VM04Name": "DNS01",
+    "VNetName": "VNet01",
+    "Subnet1Name": "FrontEnd",
+    "Subnet1Prefix": "10.0.1.0/24",
+    "Subnet2Name": "BackEnd",
+    "Subnet2Prefix": "10.0.2.0/24",
+    "NIC01SubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VNetName'), variables('Subnet1Name'))]",
+    "NIC02SubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VNetName'), variables('Subnet2Name'))]",
+    "NIC03SubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VNetName'), variables('Subnet2Name'))]",
+    "NIC04SubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VNetName'), variables('Subnet2Name'))]",
+    "imageOffer": "WindowsServer",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "windowsOSVersion": "2019-Datacenter"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('VNetName')]",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "VNet01"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('NSGName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('VM01Name'), '_NIC_PIP'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('Subnet1Prefix')]",
+            "[variables('Subnet2Prefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('Subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('Subnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSGName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('Subnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('Subnet2Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSGName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('VM01Name'), '_NIC_PIP' )]",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "IIS01 NIC PIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 4
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('VM01Name'), '_NIC')]",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "IIS01 NIC"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.0.1.5",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('VM01Name'), '_NIC_PIP' ))]"
+              },
+              "subnet": {
+                "id": "[variables('NIC01SubnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('VM02Name'), '_NIC')]",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "AppVM01 NIC"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.0.2.5",
+              "subnet": {
+                "id": "[variables('NIC02SubnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('VM03Name'), '_NIC')]",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "AppVM02 NIC"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.0.2.6",
+              "subnet": {
+                "id": "[variables('NIC03SubnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('VM04Name'), '_NIC')]",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "DNS01 NIC"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.0.2.4",
+              "subnet": {
+                "id": "[variables('NIC04SubnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('VM01Name')]",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "IIS01"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('VM01Name'), '_NIC'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('VM01Name')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "properties": {
+                "primary": true
+              },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('VM01Name'), '_NIC'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('VM02Name')]",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "AppVM01"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('VM02Name'), '_NIC'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('VM02Name')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "properties": {
+                "primary": true
+              },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('VM02Name'), '_NIC'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('VM03Name')]",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "AppVM02"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('VM03Name'), '_NIC'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('VM03Name')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "properties": {
+                "primary": true
+              },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('VM03Name'), '_NIC'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('VM04Name')]",
+      "apiVersion": "2019-12-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "DNS01"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('VM04Name'), '_NIC'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('VM04Name')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "properties": {
+                "primary": true
+              },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('VM04Name'), '_NIC'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('NSGName')]",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "myVNetNSG"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "enable_dns_rule",
+            "properties": {
+              "description": "Enable Internal DNS",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "53",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "10.0.2.4",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "enable_rdp_rule",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "enable_web_rule",
+            "properties": {
+              "description": "Enable Internet to [variables('VM01Name')]",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "10.0.1.5",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "enable_app_rule",
+            "properties": {
+              "description": "Enable [variables('VM01Name')] to [variables('VM02Name')]",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "10.0.1.5",
+              "destinationAddressPrefix": "10.0.2.5",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "deny_internet_rule",
+            "properties": {
+              "description": "Isolate the [variables('VNetName')] VNet from the Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Deny",
+              "priority": 140,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "deny_frontend_rule",
+            "properties": {
+              "description": "Isolate the [variables('Subnet1Name')] subnet from the [variables('Subnet2Name')] subnet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[variables('Subnet1Prefix')]",
+              "destinationAddressPrefix": "[variables('Subnet2Prefix')]",
+              "access": "Deny",
+              "priority": 150,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+

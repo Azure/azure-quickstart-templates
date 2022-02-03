@@ -1,0 +1,90 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "templateSpecName": {
+            "type": "string",
+            "defaultValue": "ManagedDisk",
+            "metadata": {
+                "description": "Name of the templateSpec"
+            }
+        },
+        "templateSpecVersion": {
+            "type": "string",
+            "defaultValue": "0.1",
+            "metadata": {
+                "description": "Version for this instance of the templateSpec"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "resources": [
+        {
+            "name": "[parameters('templateSpecName')]",
+            "type": "Microsoft.Resources/templateSpecs",
+            "apiVersion": "2021-05-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "description": "A basic templateSpec - creates a managed disk.",
+                "displayName": "Managed Disk (Standard_LRS)"
+            },
+            "resources": [
+                {
+                    "name": "[parameters('templateSpecVersion')]",
+                    "type": "versions",
+                    "apiVersion": "2021-05-01",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[parameters('templateSpecName')]"
+                    ],
+                    "properties": {
+                        "mainTemplate": {
+                            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                            "contentVersion": "1.0.0.0",
+                            "parameters": {
+                                "diskName": {
+                                    "type": "string"
+                                },
+                                "location": {
+                                    "type": "string"
+                                }
+                            },
+                            "resources": [
+                                {
+                                    "type": "Microsoft.Compute/disks",
+                                    "name": "[[parameters('diskName')]",
+                                    "apiVersion": "2020-06-30",
+                                    "location": "[[parameters('location')]",
+                                    "sku": {
+                                        "name": "Standard_LRS"
+                                    },
+                                    "properties": {
+                                        "creationData": {
+                                            "createOption": "Empty"
+                                        },
+                                        "diskSizeGB": 64
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "outputs": {
+        "id": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Resources/templateSpecs/versions', parameters('templateSpecName'), parameters('templateSpecVersion'))]"
+        },
+        "mainTemplate": {
+            "type": "object",
+            "value": "[reference(resourceId('Microsoft.Resources/templateSpecs/versions', parameters('templateSpecName'), parameters('templateSpecVersion'))).mainTemplate]"
+        }
+    }
+}

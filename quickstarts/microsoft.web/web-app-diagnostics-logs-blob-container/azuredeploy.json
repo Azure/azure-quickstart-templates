@@ -1,0 +1,159 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "[concat('storage', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name of Storage Account."
+            }
+        },
+        "blobContainerName": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('webAppName'), '-logs')]",
+            "metadata": {
+                "description": "The name of Blob Container to store diagnostics logs from Web App."
+            }
+        },
+        "storageAccountSkuName": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "metadata": {
+                "description": "The name of the App Service Plan."
+            }
+        },
+        "storageAccountKind": {
+            "type": "string",
+            "defaultValue": "StorageV2",
+            "metadata": {
+                "description": "The name of the Storage Account Type."
+            }
+        },
+        "appServicePlanName": {
+            "type": "string",
+            "defaultValue": "[concat('appServicePlan', '-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name of the App Service Plan."
+            }
+        },
+        "appServicePlanSkuName": {
+            "type": "string",
+            "defaultValue": "F1",
+            "metadata": {
+                "description": "The SKU name of the App Serivce Plan."
+            }
+        },
+        "webAppName": {
+            "type": "string",
+            "defaultValue": "[concat('webApp', '-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name of the Web App."
+            }
+        },
+        "diagnosticsLogsLevel": {
+            "type": "string",
+            "defaultValue": "Verbose",
+            "allowedValues": [
+                "Verbose",
+                "Information",
+                "Warning",
+                "Error"
+            ],
+            "metadata": {
+                "description": "The degree of severity for diagnostics logs."
+            }
+        },
+        "diagnosticsLogsRetentionInDays": {
+            "type": "int",
+            "defaultValue": 10,
+            "metadata": {
+                "description": "Number of days for which the diagnostics logs will be retained."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "variables": {
+        "blobContainerName": "[toLower(parameters('blobContainerName'))]",
+        "listAccountSasRequestContent": {
+            "signedServices": "bfqt",
+            "signedPermission": "rwdlacup",
+            "signedStart": "2018-10-01T00:00:00Z",
+            "signedExpiry": "2218-10-30T00:00:00Z",
+            "signedResourceTypes": "sco"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2021-02-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('storageAccountSkuName')]"
+            },
+            "kind": "[parameters('storageAccountKind')]",
+            "resources": [
+                {
+                    "name": "[concat('default/', variables('blobContainerName'))]",
+                    "type": "blobServices/containers",
+                    "apiVersion": "2021-02-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+                    ],
+                    "properties": {
+                        "publicAccess": "Blob"
+                    }
+                }
+            ]
+        },
+        {
+            "apiVersion": "2020-12-01",
+            "type": "Microsoft.Web/serverfarms",
+            "name": "[parameters('appServicePlanName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "Name": "[parameters('appServicePlanSkuName')]"
+            }
+        },
+        {
+            "apiVersion": "2020-12-01",
+            "type": "Microsoft.Web/sites",
+            "name": "[parameters('webAppName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "name": "[parameters('webAppName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]"
+            },
+            "resources": [
+                {
+                    "apiVersion": "2020-12-01",
+                    "type": "config",
+                    "name": "logs",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+                    ],
+                    "properties": {
+                        "applicationLogs": {
+                            "azureBlobStorage": {
+                                "level": "[parameters('diagnosticsLogsLevel')]",
+                                "sasUrl": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))).primaryEndpoints.blob, variables('blobContainerName'), '?', listAccountSas(parameters('storageAccountName'), '2018-02-01', variables('listAccountSasRequestContent')).accountSasToken)]",
+                                "retentionInDays": "[parameters('diagnosticsLogsRetentionInDays')]"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

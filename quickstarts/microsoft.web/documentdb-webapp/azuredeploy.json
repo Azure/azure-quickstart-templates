@@ -1,0 +1,110 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "databaseAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure Cosmos DB database account name."
+      }
+    },
+    "appSvcPlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the App Service Plan that will host the Web App."
+      }
+    },
+    "svcPlanSize": {
+      "type": "string",
+      "defaultValue": "F1",
+      "metadata": {
+        "description": "The instance size of the App Service Plan."
+      }
+    },
+    "svcPlanSku": {
+      "type": "string",
+      "allowedValues": [
+        "Free",
+        "Shared",
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "defaultValue": "Free",
+      "metadata": {
+        "description": "The pricing tier of the App Service plan."
+      }
+    },
+    "webAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Web App."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "databaseAccountTier": "Standard"
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-09-01",
+      "type": "Microsoft.DocumentDb/databaseAccounts",
+      "name": "[parameters('databaseAccountName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "name": "[parameters('databaseAccountName')]",
+        "databaseAccountOfferType": "[variables('databaseAccountTier')]",
+        "locations": [
+          {
+            "locationName": "[parameters('location')]",
+            "failoverPriority": 0
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2015-08-01",
+      "name": "[parameters('appSvcPlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('svcPlanSize')]",
+        "tier": "[parameters('svcPlanSku')]",
+        "capacity": 1
+      }
+    },
+    {
+      "type": "Microsoft.Web/Sites",
+      "apiVersion": "2015-08-01",
+      "name": "[parameters('webAppName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverFarms/', parameters('appSvcPlanName'))]"
+      ],
+      "properties": {
+        "name": "[parameters('webAppName')]",
+        "serverFarmId": "[parameters('appSvcPlanName')]",
+        "siteConfig": {
+          "phpVersion": "off",
+          "appSettings": [
+            {
+              "Name": "DOCUMENTDB_ENDPOINT",
+              "Value": "[reference(resourceId('Microsoft.DocumentDb/databaseAccounts/', parameters('databaseAccountName'))).documentEndpoint]"
+            },
+            {
+              "Name": "DOCUMENTDB_PRIMARY_KEY",
+              "Value": "[listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', parameters('databaseAccountName')), '2020-09-01').primaryMasterKey]"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

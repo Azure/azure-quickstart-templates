@@ -1,0 +1,555 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.451.19169",
+      "templateHash": "8462918231759969902"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location into which the resources should be deployed."
+      }
+    },
+    "functionAppName": {
+      "type": "string",
+      "defaultValue": "[format('func-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Azure Function app."
+      }
+    },
+    "functionAppPlanName": {
+      "type": "string",
+      "defaultValue": "[format('plan-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Azure Function hosting plan."
+      }
+    },
+    "functionPlanOS": {
+      "type": "string",
+      "defaultValue": "Windows",
+      "allowedValues": [
+        "Windows",
+        "Linux"
+      ],
+      "metadata": {
+        "description": "Specifies the OS used for the Azure Function hosting plan."
+      }
+    },
+    "functionAppPlanSku": {
+      "type": "string",
+      "defaultValue": "EP1",
+      "allowedValues": [
+        "EP1",
+        "EP2",
+        "EP3"
+      ],
+      "metadata": {
+        "description": "Specifies the Azure Function hosting plan SKU."
+      }
+    },
+    "functionStorageAccountName": {
+      "type": "string",
+      "defaultValue": "[format('st{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the backend Azure storage account used by the Azure Function app."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the virtual network for virtual network integration."
+      }
+    },
+    "functionSubnetName": {
+      "type": "string",
+      "defaultValue": "snet-func",
+      "metadata": {
+        "description": "The name of the virtual network subnet to be associated with the Azure Function app."
+      }
+    },
+    "privateEndpointSubnetName": {
+      "type": "string",
+      "defaultValue": "snet-pe",
+      "metadata": {
+        "description": "The name of the virtual network subnet used for allocating IP addresses for private endpoints."
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.100.0.0/16",
+      "metadata": {
+        "description": "The IP adddress space used for the virtual network."
+      }
+    },
+    "functionSubnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.100.0.0/24",
+      "metadata": {
+        "description": "The IP address space used for the Azure Function integration subnet."
+      }
+    },
+    "privateEndpointSubnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.100.1.0/24",
+      "metadata": {
+        "description": "The IP address space used for the private endpoints."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "applicationInsightsName": "[format('appi-{0}', uniqueString(resourceGroup().id))]",
+    "privateStorageFileDnsZoneName": "[format('privatelink.file.{0}', environment().suffixes.storage)]",
+    "privateEndpointStorageFileName": "[format('{0}-file-private-endpoint', parameters('functionStorageAccountName'))]",
+    "privateStorageTableDnsZoneName": "[format('privatelink.table.{0}', environment().suffixes.storage)]",
+    "privateEndpointStorageTableName": "[format('{0}-table-private-endpoint', parameters('functionStorageAccountName'))]",
+    "privateStorageBlobDnsZoneName": "[format('privatelink.blob.{0}', environment().suffixes.storage)]",
+    "privateEndpointStorageBlobName": "[format('{0}-blob-private-endpoint', parameters('functionStorageAccountName'))]",
+    "privateStorageQueueDnsZoneName": "[format('privatelink.queue.{0}', environment().suffixes.storage)]",
+    "privateEndpointStorageQueueName": "[format('{0}-queue-private-endpoint', parameters('functionStorageAccountName'))]",
+    "functionContentShareName": "function-content-share",
+    "isReserved": "[if(equals(parameters('functionPlanOS'), 'Linux'), true(), false())]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-07-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('functionSubnetName')]",
+            "properties": {
+              "privateEndpointNetworkPolicies": "Enabled",
+              "privateLinkServiceNetworkPolicies": "Enabled",
+              "delegations": [
+                {
+                  "name": "webapp",
+                  "properties": {
+                    "serviceName": "Microsoft.Web/serverFarms"
+                  }
+                }
+              ],
+              "addressPrefix": "[parameters('functionSubnetAddressPrefix')]"
+            }
+          },
+          {
+            "name": "[parameters('privateEndpointSubnetName')]",
+            "properties": {
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled",
+              "addressPrefix": "[parameters('privateEndpointSubnetAddressPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateStorageFileDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateStorageBlobDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateStorageQueueDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateStorageTableDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', variables('privateStorageFileDnsZoneName'), format('{0}-link', variables('privateStorageFileDnsZoneName')))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageFileDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', variables('privateStorageBlobDnsZoneName'), format('{0}-link', variables('privateStorageBlobDnsZoneName')))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageBlobDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', variables('privateStorageTableDnsZoneName'), format('{0}-link', variables('privateStorageTableDnsZoneName')))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageTableDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', variables('privateStorageQueueDnsZoneName'), format('{0}-link', variables('privateStorageQueueDnsZoneName')))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageQueueDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2021-02-01",
+      "name": "[format('{0}/{1}', variables('privateEndpointStorageFileName'), 'filePrivateDnsZoneGroup')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageFileDnsZoneName'))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageFileDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointStorageFileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2021-02-01",
+      "name": "[format('{0}/{1}', variables('privateEndpointStorageBlobName'), 'blobPrivateDnsZoneGroup')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageBlobDnsZoneName'))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageBlobDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointStorageBlobName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2021-02-01",
+      "name": "[format('{0}/{1}', variables('privateEndpointStorageTableName'), 'tablePrivateDnsZoneGroup')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageTableDnsZoneName'))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageTableDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointStorageTableName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2021-02-01",
+      "name": "[format('{0}/{1}', variables('privateEndpointStorageQueueName'), 'tablePrivateDnsZoneGroup')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageQueueDnsZoneName'))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageQueueDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointStorageQueueName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2021-02-01",
+      "name": "[variables('privateEndpointStorageFileName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('privateEndpointSubnetName'))]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "MyStorageFilePrivateLinkConnection",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('functionStorageAccountName'))]",
+              "groupIds": [
+                "file"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('functionStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2021-02-01",
+      "name": "[variables('privateEndpointStorageTableName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('privateEndpointSubnetName'))]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "MyStorageTablePrivateLinkConnection",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('functionStorageAccountName'))]",
+              "groupIds": [
+                "table"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('functionStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2021-02-01",
+      "name": "[variables('privateEndpointStorageQueueName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('privateEndpointSubnetName'))]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "MyStorageQueuePrivateLinkConnection",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('functionStorageAccountName'))]",
+              "groupIds": [
+                "queue"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('functionStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2021-02-01",
+      "name": "[variables('privateEndpointStorageBlobName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('privateEndpointSubnetName'))]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "MyStorageBlobPrivateLinkConnection",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('functionStorageAccountName'))]",
+              "groupIds": [
+                "blob"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('functionStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-02-01",
+      "name": "[parameters('functionStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {
+        "networkAcls": {
+          "bypass": "None",
+          "defaultAction": "Deny"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+      "apiVersion": "2021-04-01",
+      "name": "[format('{0}/default/{1}', parameters('functionStorageAccountName'), variables('functionContentShareName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('functionStorageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[variables('applicationInsightsName')]",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2021-01-01",
+      "name": "[parameters('functionAppPlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('functionAppPlanSku')]",
+        "tier": "ElasticPremium",
+        "size": "[parameters('functionAppPlanSku')]",
+        "family": "EP"
+      },
+      "kind": "elastic",
+      "properties": {
+        "maximumElasticWorkerCount": 20,
+        "reserved": "[variables('isReserved')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2021-01-01",
+      "name": "[parameters('functionAppName')]",
+      "location": "[parameters('location')]",
+      "kind": "[if(variables('isReserved'), 'functionapp,linux', 'functionapp')]",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('functionAppPlanName'))]",
+        "reserved": "[variables('isReserved')]",
+        "siteConfig": {
+          "functionsRuntimeScaleMonitoringEnabled": true,
+          "linuxFxVersion": "[if(variables('isReserved'), 'dotnet|3.1', json('null'))]",
+          "appSettings": [
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))).InstrumentationKey]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', parameters('functionStorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('functionStorageAccountName')), '2021-02-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', parameters('functionStorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('functionStorageAccountName')), '2021-02-01').keys[0].value)]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet"
+            },
+            {
+              "name": "WEBSITE_VNET_ROUTE_ALL",
+              "value": "1"
+            },
+            {
+              "name": "WEBSITE_CONTENTOVERVNET",
+              "value": "1"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[variables('functionContentShareName')]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/fileServices/shares', split(format('{0}/default/{1}', parameters('functionStorageAccountName'), variables('functionContentShareName')), '/')[0], split(format('{0}/default/{1}', parameters('functionStorageAccountName'), variables('functionContentShareName')), '/')[1], split(format('{0}/default/{1}', parameters('functionStorageAccountName'), variables('functionContentShareName')), '/')[2])]",
+        "[resourceId('Microsoft.Web/serverfarms', parameters('functionAppPlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('functionStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateStorageBlobDnsZoneName'), format('{0}-link', variables('privateStorageBlobDnsZoneName')))]",
+        "[resourceId('Microsoft.Network/privateEndpoints/privateDnsZoneGroups', variables('privateEndpointStorageBlobName'), 'blobPrivateDnsZoneGroup')]",
+        "[resourceId('Microsoft.Network/privateEndpoints/privateDnsZoneGroups', variables('privateEndpointStorageFileName'), 'filePrivateDnsZoneGroup')]",
+        "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateStorageQueueDnsZoneName'), format('{0}-link', variables('privateStorageQueueDnsZoneName')))]",
+        "[resourceId('Microsoft.Network/privateEndpoints/privateDnsZoneGroups', variables('privateEndpointStorageQueueName'), 'tablePrivateDnsZoneGroup')]",
+        "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateStorageTableDnsZoneName'), format('{0}-link', variables('privateStorageTableDnsZoneName')))]",
+        "[resourceId('Microsoft.Network/privateEndpoints/privateDnsZoneGroups', variables('privateEndpointStorageTableName'), 'tablePrivateDnsZoneGroup')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/networkConfig",
+      "apiVersion": "2021-01-01",
+      "name": "[format('{0}/{1}', parameters('functionAppName'), 'virtualNetwork')]",
+      "properties": {
+        "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('functionSubnetName'))]",
+        "swiftSupported": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    }
+  ]
+}

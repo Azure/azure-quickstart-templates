@@ -1,0 +1,315 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storagename": {
+            "type": "string",
+            "defaultValue": "[concat('storage', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Storage Account name"
+            }
+        },
+        "vm-dns": {
+            "type": "string",
+            "defaultValue": "[concat('docker-',uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "VM DNS label prefix"
+            }
+        },
+        "adminUser": {
+            "type": "string",
+            "metadata": {
+                "description": "Admin user for VM"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for admin user"
+            }
+        },
+        "vmsize": {
+            "type": "string",
+            "defaultValue": "Standard_D4_v4",
+            "metadata": {
+                "description": "VM size for VM"
+            }
+        },
+        "diskSizeGB": {
+            "type": "string",
+            "defaultValue": "256",
+            "metadata": {
+                "description": "Size of the attached data disk in GB"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Deployment location"
+            }
+        },
+        "email": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "Email address for Let's Encrypt setup in Traefik"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "[deployment().properties.templatelink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "SAS Token for accessing script path"
+            }
+        }
+    },
+    "variables": {
+        "scriptUrl": "[uri(parameters('_artifactsLocation'),concat('setup.ps1',parameters('_artifactsLocationSasToken')))]",
+        "templateUrl": "[uri(parameters('_artifactsLocation'),concat('configs/docker-compose.yml.template',parameters('_artifactsLocationSasToken')))]",
+        "sshdConfigUrl": "[uri(parameters('_artifactsLocation'),concat('configs/sshd_config_wpwd',parameters('_artifactsLocationSasToken')))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "name": "[toLower(parameters('storagename'))]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "tags": {
+                "displayName": "Storage account"
+            }
+
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-11-01",
+            "name": "publicIP",
+            "location": "[parameters('location')]",
+            "tags": {
+                "displayName": "PublicIPAddress"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('vm-dns')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-04-01",
+            "name": "nsg",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "rdp",
+                        "properties": {
+                            "description": "description",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "https",
+                        "properties": {
+                            "description": "description",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "ssh",
+                        "properties": {
+                            "description": "description",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-04-01",
+            "name": "virtualNetwork",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg')]"
+            ],
+            "tags": {
+                "displayName": "Virtual Network"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "subnet",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-04-01",
+            "name": "nic",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', 'publicIP')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', 'virtualNetwork')]"
+            ],
+            "tags": {
+                "displayName": "Network Interface"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipConfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'publicIP')]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'virtualNetwork', 'subnet')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "dockerhost",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storagename'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', 'nic')]"
+            ],
+            "tags": {
+                "displayName": "Docker host with Portainer and Traefik"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmsize')]"
+                },
+                "osProfile": {
+                    "computerName": "dockerhost",
+                    "adminUsername": "[parameters('adminUser')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "datacenter-core-2004-with-containers-smalldisk",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "osdisk",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    },
+                    "dataDisks": [
+                        {
+                            "diskSizeGB": "[parameters('diskSizeGB')]",
+                            "lun": 0,
+                            "createOption": "Empty"
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'nic')]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('storagename'))).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-07-01",
+            "name": "dockerhost/setupScript",
+            "location": "[parameters('location')]",
+            "tags": {
+                "displayName": "Setup script for portainer and Traefik"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', 'dockerhost')]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.10",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[variables('scriptUrl')]",
+                        "[variables('sshdConfigUrl')]",
+                        "[variables('templateUrl')]"
+                    ]
+                },
+                "protectedSettings": {
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Bypass -file setup.ps1 -email ', parameters('email'), ' -publicdnsname ',reference(resourceId('Microsoft.Network/publicIPAddresses','publicIP')).dnsSettings.fqdn, ' -adminPwd ', parameters('adminPassword'))]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "dockerhost-dns": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses','publicIP')).dnsSettings.fqdn]"
+        },
+        "portainer-url": {
+            "type": "string",
+            "value": "[concat('https://', reference(resourceId('Microsoft.Network/publicIPAddresses','publicIP')).dnsSettings.fqdn, '/portainer/')]"
+        }
+    }
+}

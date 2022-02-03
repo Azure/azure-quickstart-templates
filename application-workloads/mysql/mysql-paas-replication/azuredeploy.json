@@ -1,0 +1,228 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "serverName": {
+            "type": "string",
+            "defaultValue": "[uniqueString(resourceGroup().id)]",
+            "metadata": {
+                "description": "Server name for the MySQL PaaS instance and it's replicas (replicas will get a '-' attached to the end with the replica number)."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for the MySQL PaaS components to be deployed."
+            }
+        },
+        "administratorLogin": {
+            "type": "string",
+            "metadata": {
+                "description": "Administrator name for MySQL servers."
+            }
+        },
+        "administratorLoginPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the MySQL server administrator."
+            }
+        },
+        "vCPU": {
+            "type": "int",
+            "defaultValue": 2,
+            "metadata": {
+                "description": "Number of vCPUs for the MySQL Server instances to be deployed."
+            }
+        },
+        "skuFamily": {
+            "type": "string",
+            "defaultValue": "Gen5",
+            "allowedValues": [
+                "Gen4",
+                "Gen5"
+            ],
+            "metadata": {
+                "description": "Hardware generation for the MySQL Server instances to be deployed."
+            }
+        },
+        "skuSizeMB": {
+            "type": "int",
+            "defaultValue": 5120,
+            "minValue": 5120,
+            "maxValue": 10240,
+            "metadata": {
+                "description": "Storage capacity for the MySQL Server instances to be deployed."
+            }
+        },
+        "skuTier": {
+            "type": "string",
+            "defaultValue": "GeneralPurpose",
+            "allowedValues": [
+                "Basic",
+                "GeneralPurpose",
+                "MemoryOptimized"
+            ],
+            "metadata": {
+                "description": "Performance tier for the MySQL Server instances to be deployed."
+            }
+        },
+        "numberOfReplicas": {
+            "type": "int",
+            "defaultValue": 1,
+            "allowedValues": [ 0, 1, 2, 3, 4, 5 ],
+            "metadata": {
+                "description": "Number of replica instances to be deployed."
+            }
+        },
+        "version": {
+            "type": "string",
+            "defaultValue": "5.7",
+            "allowedValues": [
+                "5.6",
+                "5.7"
+            ],
+            "metadata": {
+                "description": "MySQL version for the MySQL Server instances to be deployed."
+            }
+        },
+        "enableAzureResources": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Enable Azure hosted resources to access the master instance."
+            }
+        },
+        "backupRetentionDays": {
+            "type": "int",
+            "defaultValue": 7,
+            "minvalue": 7,
+            "maxvalue": 35,
+            "metadata": {
+                "description": "Backup retention period."
+            }
+        },
+        "geoRedundantBackup": {
+            "type": "string",
+            "defaultValue": "Disabled",
+            "allowedValues": [
+                "Enabled",
+                "Disabled"
+            ],
+            "metadata": {
+                "description": "Enable or disable geo redundant backups."
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "[deployment().properties.templatelink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            }
+        }
+    },
+    "variables": {
+        "nestedtemplateMySQL": "[uri(parameters('_artifactsLocation'), concat('nested/mysql.json', parameters('_artifactsLocationSasToken')))]",
+        "nestedtemplateMySQLReplica": "[uri(parameters('_artifactsLocation'), concat('nested/mysqlReplica.json', parameters('_artifactsLocationSasToken')))]",
+        "sourceServerId": "[resourceId('Microsoft.DBforMySQL/servers', parameters('serverName'))]",
+        "skuName": "[concat(if(equals(parameters('skuTier'),'GeneralPurpose'),'GP',if(equals(parameters('skuTier'),'Basic'),'B',if(equals(parameters('skuTier'),'MemoryOptimized'),'MO',''))),'_',parameters('skuFamily'),'_',parameters('vCPU'))]",
+        "sku": {
+            "name": "[variables('skuName')]",
+            "tier": "[parameters('skuTier')]",
+            "capacity": "[parameters('vCPU')]",
+            "size": "[parameters('skuSizeMB')]",
+            "family": "[parameters('skuFamily')]"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-06-01",
+            "name": "MySQLServer",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('nestedtemplateMySQL')]"
+                },
+                "parameters": {
+                    "sku": {
+                        "value": "[variables('sku')]"
+                    },
+                    "serverName": {
+                        "value": "[parameters('serverName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "version": {
+                        "value": "[parameters('version')]"
+                    },
+                    "administratorLogin": {
+                        "value": "[parameters('administratorLogin')]"
+                    },
+                    "administratorLoginPassword": {
+                        "value": "[parameters('administratorLoginPassword')]"
+                    },
+                    "backupRetentionDays": {
+                        "value": "[parameters('backupRetentionDays')]"
+                    },
+                    "geoRedundantBackup": {
+                        "value": "[parameters('geoRedundantBackup')]"
+                    },
+                    "enableAzureResources": {
+                        "value": "[parameters('enableAzureResources')]"
+                    },
+                    "ServerId": {
+                        "value": "[variables('sourceServerId')]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2020-06-01",
+            "name": "MySQLServerReplicas",
+            "type": "Microsoft.Resources/deployments",
+            "condition": "[greater(parameters('numberOfReplicas'),0)]",
+            "dependsOn": [
+                "MySQLServer"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('nestedtemplateMySQLReplica')]"
+                },
+                "parameters": {
+                    "sku": {
+                        "value": "[variables('sku')]"
+                    },
+                    "serverName": {
+                        "value": "[parameters('serverName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "numberOfReplicas": {
+                        "value": "[parameters('numberOfReplicas')]"
+                    },
+                    "backupRetentionDays": {
+                        "value": "[parameters('backupRetentionDays')]"
+                    },
+                    "geoRedundantBackup": {
+                        "value": "[parameters('geoRedundantBackup')]"
+                    },
+                    "sourceServerId": {
+                        "value": "[variables('sourceServerId')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

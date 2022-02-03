@@ -1,0 +1,374 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the resources."
+      }
+    },
+    "imageSku": {
+      "type": "string",
+      "defaultValue": "8.0",
+      "allowedValues": [
+        "6.6",
+        "7.0",
+        "8.0"
+      ],
+      "metadata": {
+        "description": "OpenLogic CentOS version to use"
+      }
+    },
+    "vmssName": {
+      "type": "string",
+      "defaultValue": "lustre",
+      "metadata": {
+        "description": "String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended."
+      },
+      "maxLength": 9
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Admin username for the virtual machines, optional when scaling and existing vmss"
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
+      "metadata": {
+        "description": "Authentication type for the virtual machines"
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Admin password or SSH public key for the virtual machines, optional when scaling and existing vmss"
+      }
+    },
+    "clientVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Size of the Lustre client VM"
+      }
+    },
+    "clientCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 1,
+      "maxValue": 100,
+      "metadata": {
+        "description": "Number of Lustre client instances"
+      }
+    },
+    "filesystemName": {
+      "type": "string",
+      "defaultValue": "lustre",
+      "metadata": {
+        "description": "Name of the Lustre filesystem exposed by the Lustre MGS node"
+      }
+    },
+    "mgsIpAddress": {
+      "type": "string",
+      "defaultValue": "10.1.0.4",
+      "metadata": {
+        "description": "IP address of the Lustre MGS node"
+      }
+    },
+    "vnetNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Specifies whether to use a new or existing vnet"
+      }
+    },
+    "vnetResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "Existing Virtual Network Resource Group where Lustre servers are deployed"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "vnet-lustre",
+      "metadata": {
+        "description": "Existing Virtual Network name (e.g. vnet-lustre)"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "subnet-lustre-clients",
+      "metadata": {
+        "description": "Lustre clients will be deployed into this subnet within the existing Virtual Network"
+      }
+    },
+    "addressPrefixes": {
+      "type": "array",
+      "defaultValue": [
+        "10.0.0.0/16"
+      ],
+      "metadata": {
+        "description": "Address prefix of the virtual network"
+      }
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Subnet prefix of the virtual network"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "NewOrScaleExisting": {
+      "type": "string",
+      "defaultValue": "Deploy New ScaleSet",
+      "allowedValues": [
+        "Deploy New ScaleSet",
+        "Scale Existing VMSS"
+      ],
+      "metadata": {
+        "description": "Determines whether to deploy a new instance or scale and existing scale set up or down."
+      }
+    }
+  },
+  "variables": {
+    "publicIPAddressName": "[concat(parameters('vmssName'), 'pip')]",
+    "loadBalancerName": "[concat(parameters('vmssName'), 'lb')]",
+    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+    "natPoolName": "[concat(parameters('vmssName'), 'natpool')]",
+    "bePoolName": "[concat(parameters('vmssName'), 'bepool')]",
+    "natStartPort": 50000,
+    "natEndPort": 50119,
+    "natBackendPort": 22,
+    "nicName": "[concat(parameters('vmssName'), 'nic')]",
+    "ipConfigName": "[concat(parameters('vmssName'), 'ipconfig')]",
+    "frontEndIPConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerName'), 'loadBalancerFrontEnd')]",
+    "osType": {
+      "publisher": "openlogic",
+      "offer": "CentOS",
+      "sku": "[parameters('imageSku')]",
+      "version": "latest"
+    },
+    "imageReference": "[variables('osType')]",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[variables('sshKeyPath')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    },
+    "subnetClientsID": "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]",
+    "scriptUrlLustreClient": "[uri(parameters('_artifactsLocation'), concat('lustre_client.sh', parameters('_artifactsLocationSasToken')))]"
+  },
+  "resources": [
+    {
+      "condition": "[equals(parameters('vnetNewOrExisting'), 'new')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2019-11-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": "[parameters('addressPrefixes')]"
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[equals(parameters('NewOrScaleExisting'), 'Deploy New ScaleSet')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-11-01",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat('vmss-',parameters('vmssName'),'-',uniqueString(resourceGroup().id))]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('NewOrScaleExisting'), 'Deploy New ScaleSet')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('loadBalancerName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-11-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontEnd",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('publicIPAddressID')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('bePoolName')]"
+          }
+        ],
+        "inboundNatPools": [
+          {
+            "name": "[variables('natPoolName')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('frontEndIPConfigID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPortRangeStart": "[variables('natStartPort')]",
+              "frontendPortRangeEnd": "[variables('natEndPort')]",
+              "backendPort": "[variables('natBackendPort')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[equals(parameters('NewOrScaleExisting'), 'Deploy New ScaleSet')]",
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[if(equals(parameters('NewOrScaleExisting'), 'Deploy New ScaleSet'), parameters('vmssName'), 'none')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]"
+      ],
+      "sku": {
+        "name": "[parameters('clientVmSize')]",
+        "tier": "Standard",
+        "capacity": "[parameters('clientCount')]"
+      },
+      "properties": {
+        "upgradePolicy": {
+          "mode": "Automatic"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "caching": "ReadOnly",
+              "createOption": "FromImage"
+            },
+            "imageReference": "[variables('imageReference')]"
+          },
+          "osProfile": {
+            "computerNamePrefix": "[parameters('vmssName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPasswordOrKey')]",
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "[variables('nicName')]",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "[variables('ipConfigName')]",
+                      "properties": {
+                        "subnet": {
+                          "id": "[variables('subnetClientsID')]"
+                        },
+                        "loadBalancerBackendAddressPools": [
+                          {
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('bePoolName'))]"
+                          }
+                        ],
+                        "loadBalancerInboundNatPools": [
+                          {
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('loadBalancerName'), variables('natPoolName'))]"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "lustre_client",
+                "properties": {
+                  "publisher": "Microsoft.Azure.Extensions",
+                  "type": "CustomScript",
+                  "typeHandlerVersion": "2.0",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "fileUris": [
+                      "[variables('scriptUrlLustreClient')]"
+                    ],
+                    "commandToExecute": "[concat('bash lustre_client.sh', ' -n CLIENTCENTOS', parameters('imageSku'), ' -i ', '0', ' -d 0', ' -m ', parameters('mgsIpAddress'), ' -l ', '0.0.0.0', ' -f ', parameters('filesystemName'))]"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "overprovision": true
+      }
+    },
+    {
+      "condition": "[equals(parameters('NewOrScaleExisting'), 'Scale Existing VMSS')]",
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "apiVersion": "2019-12-01",
+      "name": "[if(equals(parameters('NewOrScaleExisting'), 'Scale Existing VMSS'), parameters('vmssName'), 'none')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('clientVmSize')]",
+        "tier": "Standard",
+        "capacity": "[parameters('clientCount')]"
+      }
+    }
+  ],
+  "outputs": {
+    "fqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName')), '2019-11-01').dnsSettings.fqdn]"
+    }
+  }
+}

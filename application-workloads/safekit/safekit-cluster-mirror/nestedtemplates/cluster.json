@@ -1,0 +1,640 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"OS": {
+			"type": "string",
+			"metadata": {
+				"description": "Operating System to install"
+			}
+		},
+		"clusterNodes": {
+			"type": "int",
+			"metadata": {
+				"description": "number of VM nodes to create"
+			},
+			"defaultValue": 2,
+			"allowedValues": [
+				1,
+				2,
+				3,
+				4
+			]
+		},
+		"vmSize": {
+			"type": "string",
+			"metadata": {
+				"description": "the VM size for all nodes"
+			},
+			"defaultValue": "Standard_A2_v2"
+		},
+		"adminUser": {
+			"type": "string",
+			"metadata": {
+				"description": "User for the Virtual Machines."
+			}
+		},
+		"adminPassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Password for the Virtual Machines."
+			}
+		},
+		"moduleUrl": {
+			"type": "string",
+			"metadata": {
+				"description": "url of the application module to install on all nodes (optional)"
+			},
+			"defaultValue": ""
+		},
+		"moduleName": {
+			"type": "string",
+			"metadata": {
+				"description": "name of the application module to install on all nodes (optional)"
+			},
+			"defaultValue": "mirror"
+		},
+		"VIPDnsLabel": {
+			"type": "string",
+			"metadata": {
+				"description": "Public VIP dns label (optional. If set, an additionnal Standard SKU, unassociated public IP will be created)"
+			},
+			"defaultValue": ""
+		},
+		"VMDnsPrefix": {
+			"type": "string",
+			"metadata": {
+				"description": "Public VM IP dns label prefix"
+			}
+		},
+		"Loadbalancer": {
+			"type": "string",
+			"metadata": {
+				"description": "loadbalancer (optional. If set, a loadbalancer will be created, with the VIP as frontend and the VMs in the backend pool."
+			},
+			"defaultValue": "none",
+			"allowedValues": [
+				"External",
+				"none"
+			]
+		},
+		"azurePwsh": {
+			"type": "string",
+			"metadata": {
+				"description": "install azure powershell module (optional)"
+			},
+			"defaultValue": "no",
+			"allowedValues": [
+				"yes",
+				"no"
+			]
+		},
+		"location": {
+			"type": "string",
+			"metadata": {
+				"description": "location of the resources"
+			}
+		},
+		"safekitFileUri": {
+			"type": "string",
+			"metadata": {
+				"description": "url of safekit package"
+			},
+			"defaultValue": ""
+		},
+		"_artifactsLocation": {
+			"type": "string",
+			"metadata": {
+				"description": "base URL of deployment resources (template,subtemplates,scripts)"
+			}
+		},
+		"_artifactsLocationSasToken": {
+			"type": "securestring",
+			"metadata": {
+				"description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+			}
+		}
+	},
+	"variables": {
+		"allvms": [
+			"VM1",
+			"VM2",
+			"VM3",
+			"VM4"
+		],
+		"vms": "[take(variables('allvms'),parameters('clusterNodes'))]",
+		"frontEndIPConfigName": "[concat(parameters('VIPDnsLabel'),'LBFE')]",
+		"lbPoolName": "[concat(parameters('VIPDnsLabel'),'BEP')]",
+		"lbProbeName": "[concat(parameters('VIPDnsLabel'),'LBP')]",
+		"lbName": "[concat(parameters('VIPDnsLabel'),'LB')]",
+		"NetworkContributor": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions/','4d97b98b-1d4f-4787-a291-c67834d212e7')]",
+		"ostype": "[if(equals(parameters('OS'), 'Linux CentOS'),'linux','windows')]",
+		"adminUsername": "[if(empty(parameters('adminUser')),concat('admin',resourceGroup().name),parameters('adminUser'))]",
+		"ips": [
+			"10.0.0.10",
+			"10.0.0.11",
+			"10.0.0.12",
+			"10.0.0.13"
+		],
+		"sktemplate": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/safekitdepl.json', parameters('_artifactsLocationSasToken')))]",
+		"skclustertemplate": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/installCluster.json', parameters('_artifactsLocationSasToken')))]",
+		"createviptemplate": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/createvip.json',parameters('_artifactsLocationSasToken')))]",
+		"skmoduletemplate": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/installModule.json', parameters('_artifactsLocationSasToken')))]",
+		"NSGName": "SafeKit-NSG",
+		"storageAccountName": "[concat(uniquestring(resourceGroup().id,parameters('location')), 'stor')]",
+		"lbPoolID": "[if(equals(parameters('LoadBalancer'),'none'),'',resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),variables('lbPoolName')))]",
+		"lbaddrpool1": [
+			{
+				"id": "[variables('lbPoolID')]"
+			}
+		],
+		"lbaddrpool": "[if(greater(length(variables('lbPoolID')),0),variables('lbaddrpool1'),variables('lbaddrpool0'))]",
+		"WindowsStorageProfile": {
+			"imageReference": {
+				"publisher": "MicrosoftWindowsServer",
+				"offer": "WindowsServer",
+				"sku": "[parameters('OS')]",
+				"version": "latest"
+			},
+			"osDisk": {
+				"createOption": "FromImage"
+			}
+		},
+		"CentosStorageProfile": {
+			"imageReference": {
+				"publisher": "OpenLogic",
+				"offer": "CentOS",
+				"sku": "7.5",
+				"version": "latest"
+			},
+			"osDisk": {
+				"createOption": "fromImage"
+			}
+		},
+		"linuxConfiguration": {
+			"disablePasswordAuthentication": "false"
+		},
+		"addressPrefix": "10.0.0.0/16",
+		"virtualNetworkName": "[concat(resourceGroup().name,'VNET')]",
+		"subnetName": "Subnet",
+		"subnetPrefix": "10.0.0.0/24"
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Network/virtualNetworks",
+			"apiVersion": "2020-11-01",
+			"name": "[variables('virtualNetworkName')]",
+			"location": "[parameters('location')]",
+			"properties": {
+				"addressSpace": {
+					"addressPrefixes": [
+						"[variables('addressPrefix')]"
+					]
+				},
+				"subnets": [
+					{
+						"name": "[variables('subnetName')]",
+						"properties": {
+							"addressPrefix": "[variables('subnetPrefix')]"
+						}
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2020-10-01",
+			"name": "optionalVip",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('createviptemplate')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"VIPDnsLabel": {
+						"value": "[parameters('VIPDnsLabel')]"
+					}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2020-10-01",
+			"name": "optionalLB",
+			"dependsOn": [
+				"optionalVip"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"template": {
+					"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+					"contentVersion": "1.0.0.0",
+					"resources": [
+						{
+							"condition": "[and(not(empty(parameters('VIPDnsLabel'))),not(equals(parameters('Loadbalancer'),'none')))]",
+							"type": "Microsoft.Network/loadBalancers",
+							"apiVersion": "2020-11-01",
+							"name": "[variables('lbName')]",
+							"location": "[parameters('location')]",
+							"sku": {
+								"name": "Standard"
+							},
+							"properties": {
+								"frontendIPConfigurations": [
+									{
+										"name": "[variables('frontEndIPConfigName')]",
+										"properties": {
+											"publicIPAddress": {
+												"id": "[resourceId('Microsoft.Network/publicIPAddresses',concat('pip',parameters('VIPDnsLabel')))]"
+											}
+										}
+									}
+								],
+								"backendAddressPools": [
+									{
+										"name": "[variables('lbPoolName')]"
+									}
+								],
+								"loadBalancingRules": [
+									{
+										"name": "LBRule",
+										"properties": {
+											"frontendIPConfiguration": {
+												"id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),variables('frontEndIPConfigName'))]"
+											},
+											"backendAddressPool": {
+												"id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),variables('lbPoolName'))]"
+											},
+											"protocol": "Tcp",
+											"frontendPort": 9453,
+											"backendPort": 9453,
+											"enableFloatingIP": false,
+											"idleTimeoutInMinutes": 5,
+											"probe": {
+												"id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'),variables('lbProbeName'))]"
+											}
+										}
+									}
+								],
+								"probes": [
+									{
+										"name": "[variables('lbProbeName')]",
+										"properties": {
+											"protocol": "http",
+											"port": 9010,
+											"requestPath": "[concat('/var/modules/',parameters('moduleName'),'/ready.txt')]",
+											"intervalInSeconds": 5,
+											"numberOfProbes": 2
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Storage/storageAccounts",
+			"apiVersion": "2021-02-01",
+			"name": "[variables('storageAccountName')]",
+			"location": "[parameters('location')]",
+			"sku": {
+				"name": "Standard_LRS"
+			},
+			"kind": "Storage"
+		},
+		{
+			"type": "Microsoft.Network/networkSecurityGroups",
+			"apiVersion": "2020-11-01",
+			"name": "[variables('NSGName')]",
+			"location": "[parameters('location')]",
+			"properties": {
+				"securityRules": [
+					{
+						"name": "remoteaccess",
+						"properties": {
+							"description": "Allow Remote Access",
+							"protocol": "Tcp",
+							"sourcePortRange": "*",
+							"destinationPortRange": "[if(equals(variables('ostype'),'linux'),'22','3389')]",
+							"sourceAddressPrefix": "Internet",
+							"destinationAddressPrefix": "*",
+							"access": "Allow",
+							"priority": 100,
+							"direction": "Inbound"
+						}
+					},
+					{
+						"name": "secconsole",
+						"properties": {
+							"description": "Allow Web Console Security Access",
+							"protocol": "Tcp",
+							"sourcePortRange": "*",
+							"destinationPortRange": "9001",
+							"sourceAddressPrefix": "Internet",
+							"destinationAddressPrefix": "*",
+							"access": "Allow",
+							"priority": 110,
+							"direction": "Inbound"
+						}
+					},
+					{
+						"name": "webconsole",
+						"properties": {
+							"description": "Allow Web Console Access",
+							"protocol": "Tcp",
+							"sourcePortRange": "*",
+							"destinationPortRange": "9453",
+							"sourceAddressPrefix": "Internet",
+							"destinationAddressPrefix": "*",
+							"access": "Allow",
+							"priority": 120,
+							"direction": "Inbound"
+						}
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.Network/publicIPAddresses",
+			"apiVersion": "2020-11-01",
+			"name": "[concat('pip',variables('vms')[copyIndex()])]",
+			"location": "[parameters('location')]",
+			"copy": {
+				"name": "publicIpLoop",
+				"count": "[length(variables('vms'))]"
+			},
+			"sku": {
+				"name": "Standard",
+				"tier": "Regional"
+			},
+			"properties": {
+				"publicIPAllocationMethod": "Static",
+				"dnsSettings": {
+					"domainNameLabel": "[toLower(concat(parameters('VMDnsPrefix'),variables('vms')[copyIndex()]))]"
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Network/networkInterfaces",
+			"apiVersion": "2020-11-01",
+			"name": "[concat('nic',variables('vms')[copyIndex()])]",
+			"location": "[parameters('location')]",
+			"copy": {
+				"name": "interfaceLoop",
+				"count": "[length(variables('vms'))]"
+			},
+			"dependsOn": [
+				"optionalLB",
+				"[resourceId('Microsoft.Network/publicIPAddresses/',concat('pip',variables('vms')[copyIndex()]))]",
+				"[resourceId('Microsoft.Network/networkSecurityGroups/',variables('NSGName'))]",
+				"[variables('virtualNetworkName')]"
+			],
+			"properties": {
+				"networkSecurityGroup": {
+					"id": "[resourceId('Microsoft.Network/networkSecurityGroups/',variables('NSGName'))]"
+				},
+				"ipConfigurations": [
+					{
+						"name": "ipconfig1",
+						"properties": {
+							"privateIPAllocationMethod": "Static",
+							"privateIPAddress": "[variables('ips')[copyIndex()]]",
+							"publicIPAddress": {
+								"id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat('pip',variables('vms')[copyIndex()]))]"
+							},
+							"subnet": {
+								"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('virtualNetworkName'),'Subnet')]"
+							},
+							"loadBalancerBackendAddressPools": "[variables('lbaddrpool')]"
+						}
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.Compute/virtualMachines",
+			"apiVersion": "2020-12-01",
+			"name": "[variables('vms')[copyIndex()]]",
+			"location": "[parameters('location')]",
+			"copy": {
+				"name": "vmLoop",
+				"count": "[length(variables('vms'))]"
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+				"[resourceId('Microsoft.Network/networkInterfaces/',concat('nic',variables('vms')[copyIndex()]) )]"
+			],
+			"zones": "[split(string(add(mod(copyIndex(),3),1)), ',')]",
+			"identity": {
+				"type": "SystemAssigned"
+			},
+			"properties": {
+				"hardwareProfile": {
+					"vmSize": "[parameters('vmSize')]"
+				},
+				"osProfile": {
+					"computerName": "[variables('vms')[copyIndex()]]",
+					"adminUsername": "[variables('adminUsername')]",
+					"adminPassword": "[parameters('adminPassword')]",
+					"linuxConfiguration": "[if(equals(variables('ostype'),'linux'),variables('linuxConfiguration'),'')]"
+				},
+				"storageProfile": "[if(equals(parameters('OS'),'Linux CentOS'),variables('CentosStorageProfile'),variables('windowsStorageProfile'))]",
+				"networkProfile": {
+					"networkInterfaces": [
+						{
+							"id": "[resourceId('Microsoft.Network/networkInterfaces/', concat('nic',variables('vms')[copyIndex()]))]"
+						}
+					]
+				},
+				"diagnosticsProfile": {
+					"bootDiagnostics": {
+						"enabled": true,
+						"storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
+					}
+				}
+			}
+		},
+		{
+			"condition": "[equals(parameters('azurePwsh'),'yes')]",
+			"type": "Microsoft.Authorization/roleAssignments",
+			"apiVersion": "2020-04-01-preview",
+			"name": "[guid(resourceGroup().id,variables('vms')[copyIndex()])]",
+			"copy": {
+				"name": "roleLoop",
+				"count": "[length(variables('vms'))]"
+			},
+			"dependsOn": [
+				"[variables('vms')[copyIndex()]]"
+			],
+			"properties": {
+				"roleDefinitionId": "[variables('NetworkContributor')]",
+				"principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vms')[copyIndex()])), '2020-12-01', 'Full').identity.principalId]"
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2020-10-01",
+			"name": "[concat('safekitInstall',variables('vms')[copyIndex()])]",
+			"copy": {
+				"name": "skCopy",
+				"count": "[length(variables('vms'))]"
+			},
+			"dependsOn": [
+				"[variables('vms')[copyIndex()]]"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('sktemplate')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"vmname": {
+						"value": "[variables('vms')[copyIndex()]]"
+					},
+					"ostype": {
+						"value": "[variables('ostype')]"
+					},
+					"azurePwsh": {
+						"value": "[parameters('azurePwsh')]"
+					},
+					"capassword": {
+						"value": "[parameters('AdminPassword')]"
+					},
+					"safekitFileUri": {
+						"value": "[parameters('safekitFileUri')]"
+					},
+					"_artifactsLocation": {
+						"value": "[parameters('_artifactsLocation')]"
+					},
+					"_artifactsLocationSasToken": {
+						"value": "[parameters('_artifactsLocationSasToken')]"
+					}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2020-10-01",
+			"name": "safekitClusterConfig",
+			"dependsOn": [
+				"skCopy"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('skclustertemplate')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"ostype": {
+						"value": "[variables('ostype')]"
+					},
+					"vmname": {
+						"value": "[variables('vms')[0]]"
+					},
+					"vmList": {
+						"value": "[variables('vms')]"
+					},
+					"fqdn": {
+						"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses/',concat('pip',variables('vms')[0]))).dnsSettings.fqdn]"
+					},
+					"privateIps": {
+						"value": "[variables('ips')]"
+					},
+					"VMDnsPrefix": {
+						"value": "[parameters('VMDnsPrefix')]"
+					},
+					"lblist": {
+						"value": "[if(greater(length(parameters('VIPDnsLabel')),0),reference('optionalVip').outputs.fqdn.value,'')]"
+					},
+					"capassword": {
+						"value": "[parameters('AdminPassword')]"
+					},
+					"_artifactsLocation": {
+						"value": "[parameters('_artifactsLocation')]"
+					},
+					"_artifactsLocationSasToken": {
+						"value": "[parameters('_artifactsLocationSasToken')]"
+					}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2020-10-01",
+			"name": "safekitModuleConfig",
+			"dependsOn": [
+				"safekitClusterConfig"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('skmoduletemplate')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"ostype": {
+						"value": "[variables('ostype')]"
+					},
+					"vmname": {
+						"value": "[variables('vms')[0]]"
+					},
+					"moduleUrl": {
+						"value": "[parameters('moduleUrl')]"
+					},
+					"moduleName": {
+						"value": "[parameters('moduleName')]"
+					},
+					"_artifactsLocation": {
+						"value": "[parameters('_artifactsLocation')]"
+					},
+					"_artifactsLocationSasToken": {
+						"value": "[parameters('_artifactsLocationSasToken')]"
+					}
+				}
+			}
+		}
+	],
+	"outputs": {
+		"adminUser": {
+			"type": "string",
+			"value": "[variables('adminUserName')]"
+		},
+		"fqdn": {
+			"type": "string",
+			"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses/',concat('pip',variables('vms')[0]))).dnsSettings.fqdn]"
+		},
+		"Credentials Url": {
+			"type": "string",
+			"value": "[concat('https://',reference(resourceId('Microsoft.Network/publicIPAddresses/',concat('pip',variables('vms')[0]))).dnsSettings.fqdn,':9001/adduser.html')]"
+		},
+		"Credentials Url Login": {
+			"type": "string",
+			"value": "user: CA_admin, password: the value of AdminPassword"
+		},
+		"Console Url": {
+			"type": "string",
+			"value": "[concat('https://',reference(resourceId('Microsoft.Network/publicIPAddresses/',concat('pip',variables('vms')[0]))).dnsSettings.fqdn,':9453/deploy.html')]"
+		},
+		"Mosaic URL": {
+			"type": "string",
+			"value": "[concat('https://',reference('optionalVip').outputs.fqdn.value,':9453/cgi-bin/mosaic?mode=mosaic&arg0=',parameters('moduleName'))]"
+		}
+	}
+}

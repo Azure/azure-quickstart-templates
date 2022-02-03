@@ -1,0 +1,115 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "containerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the container group"
+      }
+    },
+    "containerURI": {
+      "defaultValue": "annonator/aciudptest:latest",
+      "type": "string",
+      "metadata": {
+        "description": "Container image to deploy. Should be of the form accountName/imagename:tag for images stored in Docker Hub or a fully qualified URI for a private registry like the Azure Container Registry."
+      }
+    },
+    "osType": {
+      "defaultValue": "Linux",
+      "allowedValues": [
+        "Linux",
+        "Windows"
+      ],
+      "type": "string",
+      "metadata": {
+        "description": "The host OS needed for your container"
+      }
+    },
+    "numberCores": {
+      "defaultValue": "1",
+      "type": "string",
+      "metadata": {
+        "description": "The number of CPU cores to allocate to the container. Must be an integer."
+      }
+    },
+    "memory": {
+      "defaultValue": "1.5",
+      "type": "string",
+      "metadata": {
+        "description": "The amount of memory to allocate to the container in gigabytes."
+      }
+    },
+    "ports": {
+      "defaultValue": "1234",
+      "type": "string",
+      "metadata": {
+        "description": "The Ports that should be exposed."
+      }
+    },
+    "portProtocol": {
+      "defaultValue": "udp",
+      "type": "string",
+      "metadata": {
+        "description": "The Protocol used to expose the Port."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "containerName": "[parameters('containerName')]",
+    "containerURI": "[parameters('containerURI')]",
+    "osType": "[parameters('osType')]",
+    "numberCores": "[int(parameters('numberCores'))]",
+    "memory": "[float(parameters('memory'))]",
+    "port": "[parameters('ports')]",
+    "randomName": "[concat('-',substring(parameters('containerName'),0,3))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "name": "[concat(variables('containerName'),variables('randomName'),'1')]",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[variables('containerName')]",
+            "properties": {
+              "image": "[variables('containerURI')]",
+              "ports": [
+                {
+                  "protocol": "[parameters('portProtocol')]",
+                  "port": "[variables('port')]"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[variables('numberCores')]",
+                  "memoryInGb": "[variables('memory')]"
+                }
+              }
+            }
+          }
+        ],
+        "osType": "[variables('osType')]",
+        "ipAddress": {
+          "type": "Public",
+          "ports": [
+            {
+              "protocol": "[parameters('portProtocol')]",
+              "port": "[variables('port')]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

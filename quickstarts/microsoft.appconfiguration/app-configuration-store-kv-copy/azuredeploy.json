@@ -1,0 +1,92 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "configStoreName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the App Configuration store."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies the Azure location where the app configuration store should be created."
+      }
+    },
+    "keyData": { // Required
+      "type": "array",
+      "defaultValue": [
+        {
+          "key": "key01_name", // Required
+          "value": "key01_value", // Optional
+          "tag": { // Optional
+            "tag01_name": "tag01_value",
+            "tag02_name": "tag02_value"
+          },
+          "contentType": "key01_contentType" // Optional
+        },
+        {
+          "key": "key02_name", // Required
+          "value": "key02_value", // Optional
+          "label": "key02_label01",
+          "tag": { // Optional
+            "tag01_name": "tag01_value",
+            "tag02_name": "tag02_value"
+          },
+          "contentType": "key02_contentType" // Optional
+        },
+        {
+          "key": "key02_name", // Required
+          "value": "key02_value", // Optional
+          "label": "key02_label02",
+          "tag": { // Optional
+            "tag01_name": "tag01_value",
+            "tag02_name": "tag02_value"
+          },
+          "contentType": "key02_contentType" // Optional
+        }
+      ],
+      "metadata": { "description": "Array of Objects that contain the key name, value, tag and contentType" }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores",
+      "apiVersion": "2020-07-01-preview",
+      "name": "[parameters('configStoreName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "standard"
+      }
+    },
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+      "apiVersion": "2020-07-01-preview",
+      "name": "[concat(parameters('configStoreName'), '/', if(contains(parameters('keyData')[copyIndex()], 'label'), format('{0}${1}', parameters('keyData')[copyIndex()].key, parameters('keyData')[copyIndex()].label), parameters('keyData')[copyIndex()].key)) ]",
+      "copy": {
+        "name": "keyValueCopy",
+        "count": "[length(parameters('keyData'))]"
+      },
+      "dependsOn": [
+        "[parameters('configStoreName')]"
+      ],
+      "properties": {
+        "value": "[parameters('keyData')[copyIndex()].value]",
+        "contentType": "[if(contains(parameters('keyData')[copyIndex()], 'contentType'), parameters('keyData')[copyIndex()].contentType, json('null'))]",
+        "tags": "[if(contains(parameters('keyData')[copyIndex()], 'tag'), parameters('keyData')[copyIndex()].tag, json('null'))]"
+      }
+    }
+  ],
+  "outputs": {
+    "reference-key-value-value": {
+      "value": "[reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', parameters('configStoreName'), parameters('keyData')[0].key), '2020-07-01-preview').value]",
+      "type": "string"
+    },
+    "reference-key-value-object": {
+      "value": "[reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', parameters('configStoreName'), parameters('keyData')[0].key), '2020-07-01-preview')]",
+      "type": "object"
+    }
+  }
+}

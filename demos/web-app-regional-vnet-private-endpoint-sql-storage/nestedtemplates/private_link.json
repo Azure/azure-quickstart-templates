@@ -1,0 +1,81 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "suffix": {
+            "type": "string",
+            "metadata": {
+                "description": "naming suffix based on resource group name hash"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "location to deploy private link endpoint web app"
+            }
+        },
+        "resourceType": {
+            "type": "string",
+            "metadata": {
+                "description": " private link resource type"
+            }
+        },
+        "resourceName": {
+            "type": "string",
+            "metadata": {
+                "description": "private link resource name"
+            }
+        },
+        "groupType": {
+            "type": "string",
+            "metadata": {
+                "description": "private link resource group id"
+            }
+        },
+        "subnet": {
+            "type": "string",
+            "metadata": {
+                "description": "resource id of private link subnet"
+            }
+        }
+    },
+    "variables": {
+        "prefix": "[guid(parameters('resourceType'))]",
+        "privateEndpointName": "[concat(variables('prefix'), '-pep-', parameters('suffix'))]",
+        "privateEndpointConnectionName": "[concat(variables('prefix'), '-pep-cxn-', parameters('suffix'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-08-01",
+            "name": "[variables('privateEndpointName')]",
+            "type": "Microsoft.Network/privateEndpoints",
+            "location": "[parameters('location')]",
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('privateEndpointConnectionName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId(parameters('resourceType'), parameters('resourceName'))]",
+                            "groupIds": [
+                                "[parameters('groupType')]"
+                            ]
+                        }
+                    }
+                ],
+                "subnet": {
+                    "id": "[parameters('subnet')]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "privateLinkNicResource": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointName')), '2019-11-01').networkInterfaces[0].id]"
+        },
+        "privateEndpointName": {
+            "type": "string",
+            "value": "[variables('privateEndpointName')]"
+        }
+    }
+}

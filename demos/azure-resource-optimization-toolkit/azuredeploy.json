@@ -1,0 +1,396 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "newGuid": {
+      "type": "string",
+      "defaultValue": "[newGuid()]",
+      "metadata": {
+        "description": "Enter new GUID, you can generate one from Powershell using new-guid or get one from this site: <a target=new href=https://guidgenerator.com/online-guid-generator.aspx>GUID Generator</a>"
+      }
+    },
+    "automationAccountName": {
+      "type": "string",
+      "defaultValue": "[concat('aa-', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Assign a name for the Automation account of your choosing.  Must be a unique name as Azure Automation accounts are FQDNs"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specify the region for your Automation account"
+      }
+    },
+    "azureAdmin": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter your service admin user, ex: serviceaccount@microsoft.com.  Must be owner on the subscription you're deploying to during template deployment."
+      }
+    },
+    "azureAdminPwd": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Enter the password for the service admin user. The pwd is encrypted during runtime and in the Automation assets"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated"
+      }
+    }
+  },
+  "variables": {
+    "AzureRM.Profile": {
+      "name": "AzureRm.Profile",
+      "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.profile.2.8.0.nupkg"
+    },
+    "psModules": [
+      {
+        "name": "AzureRM.Compute",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.compute.2.9.0.nupkg"
+      },
+      {
+        "name": "AzureRm.Resources",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.resources.3.8.0.nupkg"
+      },
+      {
+        "name": "AzureRm.KeyVault",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.keyvault.2.8.0.nupkg"
+      },
+      {
+        "name": "AzureRm.Automation",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.automation.2.8.0.nupkg"
+      },
+      {
+        "name": "AzureRm.OperationalInsights",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.operationalinsights.2.8.0.nupkg"
+      },
+      {
+        "name": "AzureRm.SiteRecovery",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.siterecovery.3.7.0.nupkg"
+      },
+      {
+        "name": "AzureRm.RecoveryServices",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.recoveryservices.2.8.0.nupkg"
+      },
+      {
+        "name": "AzureRm.Backup",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.backup.2.8.0.nupkg"
+      },
+      {
+        "name": "AzureRm.Insights",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.insights.2.8.0.nupkg"
+      }
+    ],
+    "runbooks": [
+      {
+        "name": "Bootstrap_Main",
+        "version": "1.0.0.0",
+        "description": "Configurates Azure Automation account for anything we can't handle in ARM",
+        "type": "PowerShell",
+        "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/Bootstrap_Main.ps1', parameters('_artifactsLocationSasToken')))]"
+      },
+      {
+        "name": "SequencedSnooze_Parent",
+        "version": "1.0.0.0",
+        "description": "Sequenced Snooze(stop) or UnSnooze(start)",
+        "type": "PowerShell",
+        "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/SequencedSnooze/SequencedSnooze_Parent.ps1', parameters('_artifactsLocationSasToken')))]"
+      },
+      {
+        "name": "DisableAllOptimizations",
+        "version": "1.0.0.0",
+        "description": "Abort the ARO Toolkit",
+        "type": "PowerShell",
+        "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/DisableAllOptimizations.ps1',parameters('_artifactsLocationSasToken')))]"
+      },
+      {
+        "name": "AROToolkit_AutoUpdate",
+        "version": "1.0.0.0",
+        "description": "Autoupdate the ARO Toolkit",
+        "type": "PowerShell",
+        "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/AROToolkit_AutoUpdate.ps1',parameters('_artifactsLocationSasToken')))]"
+      },
+      {
+        "name": "ScheduledSnooze_Parent",
+        "version": "1.0.0.0",
+        "description": "Parallel execution of scheduled snooze actions",
+        "type": "PowerShell",
+        "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/ScheduleSnooze/ScheduledSnooze_Parent.ps1',parameters('_artifactsLocationSasToken')))]"
+      },
+      {
+        "name": "ScheduledSnooze_Child",
+        "version": "1.0.0.0",
+        "description": "Placeholder",
+        "type": "PowerShell",
+        "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/ScheduleSnooze/ScheduledSnooze_Child.ps1',parameters('_artifactsLocationSasToken')))]"
+      },
+      {
+        "name": "AutoSnooze_StopVM_Child",
+        "version": "1.0.0.0",
+        "description": "Runbook to stop indivual ARM VM, called by CreateAlertsForAzureRmVM",
+        "type": "PowerShell",
+        "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/Snooze/AutoSnooze_StopVM_Child.ps1',parameters('_artifactsLocationSasToken')))]"
+      },
+      {
+        "name": "AutoSnooze_CreateAlert_Parent",
+        "version": "1.0.0.0",
+        "description": "Runbook to create alerts for AutoSnooze",
+        "type": "PowerShell",
+        "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/Snooze/AutoSnooze_CreateAlert_Parent.ps1',parameters('_artifactsLocationSasToken')))]"
+      },
+      {
+        "name": "AutoSnooze_CreateAlert_Child",
+        "version": "1.0.0.0",
+        "description": "Runbook to create or disable alert for AutoSnooze",
+        "type": "PowerShell",
+        "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/Snooze/AutoSnooze_CreateAlert_Child.ps1',parameters('_artifactsLocationSasToken')))]"
+      },
+      {
+        "name": "AutoSnooze_Disable",
+        "version": "1.0.0.0",
+        "description": "Disable the AutoSnooze",
+        "type": "PowerShell",
+        "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/Snooze/AutoSnooze_Disable.ps1',parameters('_artifactsLocationSasToken')))]"
+      },
+      {
+        "name": "DeleteResourceGroups_Parent",
+        "version": "1.0.0.0",
+        "description": "This runbook will delete resource groups",
+        "type": "PowerShell",
+        "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/DeleteRG/DeleteResourceGroups_Parent.ps1',parameters('_artifactsLocationSasToken')))]"
+      },
+      {
+        "name": "DeleteResourceGroup_Child",
+        "version": "1.0.0.0",
+        "description": "This runbook will delete resource groups",
+        "type": "PowerShell",
+        "scriptUri": "[uri(parameters('_artifactsLocation'), concat('scripts/DeleteRG/DeleteResourceGroup_Child.ps1',parameters('_artifactsLocationSasToken')))]"
+      }
+    ],
+    "internalAzureSubscriptionId": {
+      "name": "Internal_AzureSubscriptionId",
+      "description": "Azure Subscription Id",
+      "value": "[concat('\"',subscription().subscriptionId,'\"')]"
+    },
+    "automationVariables": [
+      {
+        "name": "Internal_AROAutomationAccountName",
+        "description": "OMS Azure Automation Account Name",
+        "value": "[concat('\"',parameters('automationAccountName'),'\"')]"
+      },
+      {
+        "name": "Internal_AROResourceGroupName",
+        "description": "ARO Azure Automation Account resource group name",
+        "value": "[concat('\"',resourceGroup().name,'\"')]"
+      },
+      {
+        "name": "External_ExcludeVMNames",
+        "description": "Excluded VMs as comma separated list: vm1,vm2,vm3",
+        "value": "[concat('\"','\"')]"
+      },
+      {
+        "name": "External_ResourceGroupNames",
+        "description": "Resource groups (as comma seperated) targeted for Snooze actions: rg1,rg2,rg3",
+        "value": "[concat('\"','\"')]"
+      },
+      {
+        "name": "External_AutoSnooze_Condition",
+        "description": "This is the conditional operator required for configuring the condition before triggering an alert. Possible values are [GreaterThan, GreaterThanOrEqual, LessThan, LessThanOrEqual]",
+        "value": "[concat('\"','LessThan','\"')]"
+      },
+      {
+        "name": "External_AutoSnooze_Description",
+        "description": "Alert to stop the VM if the CPU % exceed the threshold",
+        "value": "[concat('\"','Alert to stop the VM if the CPU % exceed the threshold','\"')]"
+      },
+      {
+        "name": "External_AutoSnooze_MetricName",
+        "description": "Name of the metric the Azure Alert rule is to be configured for",
+        "value": "[concat('\"','Percentage CPU','\"')]"
+      },
+      {
+        "name": "External_AutoSnooze_Threshold",
+        "description": "Threshold for the Azure Alert rule. Possible percentage values ranging from 1 to 100",
+        "value": "[concat('\"','5','\"')]"
+      },
+      {
+        "name": "External_AutoSnooze_TimeAggregationOperator",
+        "description": "The time aggregation operator which will be applied to the selected window size to evaluate the condition. Possible values are [Average, Minimum, Maximum, Total, Last]",
+        "value": "[concat('\"','Average','\"')]"
+      },
+      {
+        "name": "External_AutoSnooze_TimeWindow",
+        "description": "The window size over which Azure will analyze selected metric for triggering an alert. This parameter accepts input in timespan format. Possible values are from 5 mins to 6 hours.",
+        "value": "[concat('\"','06:00:00','\"')]"
+      }
+      ],
+    "azureCredentials": "AzureCredentials",
+    "AROToolkitVersion": "1.0.0.0"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Automation/automationAccounts",
+      "apiVersion": "2021-04-01",
+      "location": "[parameters('location')]",
+      "name": "[parameters('automationAccountName')]",
+      "tags": {
+        "AROToolkitVersion": "[variables('AROToolkitVersion')]"
+      },
+      "comments": "Automation account",
+      "properties": {
+        "sku": {
+          "name": "Basic"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Automation/automationAccounts/variables",
+      "apiVersion": "2021-04-01",
+      "name": "[concat(parameters('automationAccountName'), '/', variables('automationVariables')[copyIndex()].name)]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]"
+      ],
+      "copy": {
+        "name": "variableLoop",
+        "count": "[length(variables('automationVariables'))]"
+      },
+      "properties": {
+        "description": "[variables('automationVariables')[copyIndex()].description]",
+        "value": "[variables('automationVariables')[copyIndex()].value]"
+      }
+    },
+    {
+      "type": "Microsoft.Automation/automationAccounts/variables",
+      "apiVersion": "2021-04-01",
+      "name": "[concat(parameters('automationAccountName'), '/', variables('internalAzureSubscriptionId').name)]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]"
+      ],
+      "properties": {
+        "description": "[variables('internalAzureSubscriptionId').description]",
+        "isEncrypted": true,
+        "type": "string",
+        "value": "[variables('internalAzureSubscriptionId').value]"
+      }
+    },
+    {
+      "name": "[concat(parameters('automationAccountName'), '/', variables('azureCredentials'))]",
+      "type": "Microsoft.Automation/automationAccounts/credentials",
+      "apiVersion": "2021-04-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]"
+      ],
+      "properties": {
+        "description": "Azure Subscription Credentials",
+        "password": "[parameters('azureAdminPwd')]",
+        "userName": "[parameters('azureAdmin')]"
+      }
+    },
+    {
+      "comments": "provision the AzureRM.Profile module first since others are depenedent on it",
+      "name": "[concat(parameters('automationAccountName'), '/', variables('AzureRM.Profile').name)]",
+      "type": "Microsoft.Automation/automationAccounts/modules",
+      "apiVersion": "2021-04-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]"
+      ],
+      "properties": {
+        "contentLink": {
+          "uri": "[variables('AzureRM.Profile').url]"
+        }
+      }
+    },
+    {
+      "name": "[concat(parameters('automationAccountName'), '/', variables('psModules')[copyIndex()].name)]",
+      "type": "Microsoft.Automation/automationAccounts/modules",
+      "apiVersion": "2021-04-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]",
+        "[variables('AzureRM.Profile').name]"
+      ],
+      "copy": {
+        "name": "modulesLoop",
+        "count": "[length(variables('psModules'))]"
+      },
+      "properties": {
+        "contentLink": {
+          "uri": "[variables('psModules')[copyIndex()].url]"
+        }
+      }
+    },
+    {
+      "name": "[concat(parameters('automationAccountName'), '/', variables('runbooks')[copyIndex()].name)]",
+      "type": "Microsoft.Automation/automationAccounts/runbooks",
+      "apiVersion": "2020-01-13-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]",
+        "[variables('AzureRM.Profile').name]",
+        "modulesLoop"
+      ],
+      "tags": {
+        "version": "[variables('runbooks')[copyIndex()].version]"
+      },
+      "copy": {
+        "name": "runbooksLoop",
+        "count": "[length(variables('runbooks'))]"
+      },
+      "properties": {
+        "runbookType": "[variables('runbooks')[copyIndex()].type]",
+        "logProgress": false,
+        "logVerbose": false,
+        "description": "[variables('runbooks')[copyIndex()].description]",
+        "publishContentLink": {
+          "uri": "[variables('runbooks')[copyIndex()].scriptUri]",
+          "version": "[variables('runbooks')[copyIndex()].version]"
+        }
+      }
+    },
+    {
+      "name": "[concat(parameters('automationAccountName'), '/', 'startBootstrap')]",
+      "type": "Microsoft.Automation/automationAccounts/schedules",
+      "apiVersion": "2021-04-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]",
+        "[variables('runbooks')[0].name]"
+      ],
+      "properties": {
+        "description": "Starts the bootstrap runbooks",
+        "expiryTime": "9999-12-31T17:59:00-06:00",
+        "isEnabled": true,
+        "frequency": "OneTime"
+      }
+    },
+    {
+      "name": "[concat(parameters('automationAccountName'), '/', parameters('newGuid'))]",
+      "type": "Microsoft.Automation/automationAccounts/jobSchedules",
+      "apiVersion": "2021-04-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]",
+        "startBootstrap",
+        "modulesLoop"
+      ],
+      "properties": {
+        "schedule": {
+          "name": "startBootstrap"
+        },
+        "runbook": {
+          "name": "Bootstrap_Main"
+        }
+      }
+    }
+  ]
+}

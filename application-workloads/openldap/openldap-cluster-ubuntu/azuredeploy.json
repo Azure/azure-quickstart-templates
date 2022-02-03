@@ -1,0 +1,471 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine administrator. Do not use simple names such as 'admin'."
+      }
+    },
+    "vmAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine administrator."
+      }
+    },
+    "directoryAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the OpenLDAP directory administrator."
+      }
+    },
+    "organization": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the organization for which the directory is being created."
+      }
+    },
+    "namePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique name that will be used to generate various other names including the name of the Public IP used to access the Virtual Machine."
+      }
+    },
+    "vmCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "allowedValues": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "metadata": {
+        "description": "Number of VMs in the cluster."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A0",
+      "allowedValues": [
+        "Standard_A0",
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A9",
+        "Standard_A10",
+        "Standard_A11",
+        "Standard_D2_v3",
+        "Standard_D2_v3",
+        "Standard_D4_v3",
+        "Standard_D8_v3",
+        "Standard_D4_v3",
+        "Standard_D4_v3",
+        "Standard_D8_v3",
+        "Standard_D16_v3"
+      ],
+      "metadata": {
+        "description": "The size of the VM."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'olc')]",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "ubuntuOSVersion": "14.04.5-LTS",
+    "nicName": "[concat(parameters('namePrefix'),'Nic')]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.1.0/24",
+    "privateIPAddressPrefix": "10.0.1.1",
+    "storageAccountType": "Standard_LRS",
+    "publicIPAddressName": "[concat(parameters('namePrefix'),'IP')]",
+    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+    "publicIPAddressType": "Dynamic",
+    "vmName": "[concat(parameters('namePrefix'),'VM')]",
+    "virtualNetworkName": "[concat(parameters('namePrefix'),'VNet')]",
+    "availabilitySetName": "[concat(parameters('namePrefix'),'AvSet')]",
+    "lbName": "[concat(parameters('namePrefix'),'LB')]",
+    "installScriptName": "install_openldap.sh",
+    "installCommand": "[concat('bash ', variables('installScriptName'), ' ', parameters('vmAdminUsername'), ' ', parameters('vmAdminPassword'), ' ', parameters('directoryAdminPassword'), ' ', parameters('namePrefix'), ' ', parameters('location'), ' ', parameters('organization'), ' ',variables('privateIPAddressPrefix'), ' ', parameters('vmCount'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2021-01-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('newStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitySetName')]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Aligned"
+          },
+        "properties": { 
+            "platformFaultDomainCount": 2,
+            "platformUpdateDomainCount": 5
+            }
+        
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('namePrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'),copyIndex())]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/',variables('lbName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(variables('privateIPAddressPrefix'), copyindex())]",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),'LoadBalancerBackend')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('lbName'),concat('SSH-VM',copyindex()))]"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "copy": {
+        "name": "networkInterfacesCopy",
+        "count": "[parameters('vmCount')]"
+      }
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "name": "[variables('lbName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontend",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('publicIPAddressID')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "LoadBalancerBackend"
+          }
+        ],
+        "inboundNatRules": [
+          {
+            "name": "SSH-VM0",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 2200,
+              "backendPort": 22,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "SSH-VM1",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 2201,
+              "backendPort": 22,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "SSH-VM2",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 2202,
+              "backendPort": 22,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "SSH-VM3",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 2203,
+              "backendPort": 22,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "SSH-VM4",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 2204,
+              "backendPort": 22,
+              "enableFloatingIP": false
+            }
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "HTTPRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),'LoadBalancerBackend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "loadDistribution": "SourceIP",
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'),'tcpProbe')]"
+              }
+            }
+          },
+          {
+            "name": "HTTPSRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),'LoadBalancerBackend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 443,
+              "backendPort": 443,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "loadDistribution": "SourceIP",
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'),'tcpProbe')]"
+              }
+            }
+          },
+          {
+            "name": "LDAPRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),'loadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),'LoadBalancerBackend')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 389,
+              "backendPort": 389,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "loadDistribution": "SourceIP",
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'),'tcpProbe')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "tcpProbe",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion":"2020-12-01", 
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmName'),copyIndex())]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/',concat(variables('nicName'),copyIndex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/',variables('availabilitySetName'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('vmName'),copyIndex())]",
+          "adminUsername": "[parameters('vmAdminUsername')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmName'),copyIndex(),'_OSDisk')]",  
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'),copyIndex()))]"
+            }
+          ]
+        }
+      },
+      "copy": {
+        "name": "virtualMachinesCopy",
+        "count": "[parameters('vmCount')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(concat(variables('vmName'),copyIndex()),'/newuserscript')]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/',concat(variables('vmName'),copyIndex()))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), concat('scripts/',variables('installScriptName'), parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'forceTLS.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'setTLSConfig.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'config_1_loadSyncProvModule.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'config_2_setServerID.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'config_3_setConfigPW.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'config_3a_addOlcRootDN.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'config_4_addConfigReplication.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'config_5_addSyncProv.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'config_6_addSyncRepl.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'config_7_testConfigReplication.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'hdb_1_addSyncProvToHDB.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'hdb_2_addOlcSuffix.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'hdb_3_addOlcRootDN.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'hdb_4_addOlcRootPW.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'hdb_5_addOlcSyncRepl.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'hdb_6_addOlcMirrorMode.ldif', parameters('_artifactsLocationSasToken')))]",
+            "[uri(parameters('_artifactsLocation'), concat('ldif/', 'hdb_7_addIndexHDB.ldif', parameters('_artifactsLocationSasToken')))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat(variables('installCommand'), ' ', copyIndex())]"
+        }
+      },
+      "copy": {
+        "name": "extensionsCopy",
+        "count": "[parameters('vmCount')]"
+      }
+    }
+  ]
+}
+

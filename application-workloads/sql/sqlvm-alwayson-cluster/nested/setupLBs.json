@@ -1,0 +1,94 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "sqlLBName": {
+      "type": "string"
+    },
+    "sqlLBFE": {
+      "type": "string"
+    },
+    "sqlLBIPAddress": {
+      "type": "string"
+    },
+    "staticSubnetRef": {
+      "type": "string"
+    },
+    "sqlLBBE": {
+      "type": "string"
+    },
+    "sqlLBBEID": {
+      "type": "string"
+    },
+    "sqllbFEConfigID": {
+      "type": "string"
+    },
+    "sqllbProbeID": {
+      "type": "string"
+    },
+    "SQLAOProbe": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-07-01",
+      "name": "[parameters('sqlLBName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[parameters('location')]",
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[parameters('sqlLBFE')]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('sqlLBIPAddress')]",
+              "subnet": {
+                "id": "[parameters('staticSubnetRef')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[parameters('sqlLBBE')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "SQLAlwaysOnEndPointListener",
+            "properties": {
+              "backendAddressPool": {
+                "id": "[parameters('sqlLBBEID')]"
+              },
+              "frontendIPConfiguration": {
+                "id": "[parameters('sqllbFEConfigID')]"
+              },
+              "probe": {
+                "id": "[parameters('sqllbProbeID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 1433,
+              "backendPort": 1433,
+              "enableFloatingIP": true
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[parameters('SQLAOProbe')]",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 59999,
+              "intervalInSeconds": "5",
+              "numberOfProbes": "2"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,370 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username for VM"
+      }
+    },
+    "vmSize": {
+      "defaultValue": "Standard_A1",
+      "metadata": {
+        "description": "Size of the Virtual Machine."
+      },
+      "type": "string",
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_D2_v3",
+        "Standard_D2_v3",
+        "Standard_D4_v3"
+      ]
+    },
+    "appPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix for each component (VMs, networks, etc)"
+      },
+      "maxLength": 13
+    },
+    "existingAtlasToken": {
+      "type": "string",
+      "metadata": {
+        "description": "Your existing access token from Atlas"
+      }
+    },
+    "existingAtlasInfraName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of your existing infrastructure in Atlas (username/infraName)"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "imagePublisher": "Canonical",
+    "subnet1Name": "Subnet-1",
+    "customScriptFilePath": "[uri(parameters('_artifactsLocation'), concat('install-consul.sh', parameters('_artifactsLocationSasToken')))]",
+    "addressPrefix": "10.0.0.0/16",
+    "numberOfInstances": 3,
+    "customScriptCommandToExecute": "bash install-consul.sh",
+    "subnet1Prefix": "10.0.0.0/24",
+    "publicIPAddressType": "Dynamic",
+    "imageSKU": "14.04.5-LTS",
+    "vnetIDRef": "[concat(parameters('appPrefix'),'_VNET')]",
+    "imageOffer": "UbuntuServer",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), parameters('appPrefix'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
+  "resources": [
+    {
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[parameters('location')]",
+      "apiVersion": "2021-04-01",
+      "name": "[variables('storageAccountName')]"
+    },
+    {
+      "name": "[concat('publicIP', copyindex())]",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "count": "[variables('numberOfInstances')]",
+        "name": "ipLoop"
+      },
+      "type": "Microsoft.Network/publicIPAddresses",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-12-01",
+      "name": "[concat(parameters('appPrefix'),'_AS')]",
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
+    },
+    {
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh_rule",
+            "properties": {
+              "priority": 100,
+              "direction": "Inbound",
+              "protocol": "Tcp",
+              "description": "Allow external SSH",
+              "access": "Allow",
+              "destinationPortRange": "22",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "sourceAddressPrefix": "Internet"
+            }
+          }
+        ]
+      },
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-07-01",
+      "name": "[concat(parameters('appPrefix'),'_SG')]"
+    },
+    {
+      "name": "[concat(parameters('appPrefix'),'_VNET')]",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups/',concat(parameters('appPrefix'),'_SG'))]"
+      ],
+      "type": "Microsoft.Network/virtualNetworks",
+      "properties": {
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]"
+            }
+          }
+        ],
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        }
+      }
+    },
+    {
+      "name": "[concat(parameters('appPrefix'),'_LB')]",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/', concat(parameters('appPrefix'),'_VNET'))]"
+      ],
+      "type": "Microsoft.Network/loadBalancers",
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "loadBalancerFrontEnd",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetIDRef'),variables('subnet1Name'))]"
+              }
+            }
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "lbrule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', concat(parameters('appPrefix'),'_LB'), 'loadBalancerFrontEnd')]"
+              },
+              "backendPort": 8500,
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', concat(parameters('appPrefix'),'_LB'), 'lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendaddresspools', concat(parameters('appPrefix'),'_LB'), 'loadBalancerBackEnd')]"
+              },
+              "frontendPort": 8500,
+              "idleTimeoutInMinutes": 15
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "loadBalancerBackEnd"
+          }
+        ],
+        "probes": [
+          {
+            "name": "lbprobe",
+            "properties": {
+              "protocol": "Tcp",
+              "numberOfProbes": 2,
+              "intervalInSeconds": 15,
+              "port": 8500
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat(parameters('appPrefix'),'_nic1', copyindex())]",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat('publicIP', copyindex()))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', concat(parameters('appPrefix'),'_VNET'))]",
+        "[resourceId('Microsoft.Network/loadBalancers/', concat(parameters('appPrefix'),'_LB'))]"
+      ],
+      "copy": {
+        "count": "[variables('numberOfInstances')]",
+        "name": "nicLoop"
+      },
+      "type": "Microsoft.Network/networkInterfaces",
+      "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('appPrefix'),'_SG'))]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetIDRef'),variables('subnet1Name'))]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', concat(parameters('appPrefix'),'_LB'),'loadBalancerBackEnd')]"
+                }
+              ],
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', concat('publicIP', copyindex()))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat(parameters('appPrefix'), '_vm', copyIndex())]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('appPrefix'),'_nic1', copyIndex()))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets/', concat(parameters('appPrefix'),'_AS'))]"
+      ],
+      "copy": {
+        "count": "[variables('numberOfInstances')]",
+        "name": "virtualMachineLoop"
+      },
+      "type": "Microsoft.Compute/virtualMachines",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "adminUsername": "[parameters('adminUsername')]",
+          "computerName": "[concat('vm', copyIndex())]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('appPrefix'),'_AS'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "sku": "[variables('imageSKU')]",
+            "publisher": "[variables('imagePublisher')]",
+            "version": "latest",
+            "offer": "[variables('imageOffer')]"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "name": "[concat(parameters('appPrefix'), '_vm', copyIndex(),'_OSDisk')]",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('appPrefix'),'_nic1', copyindex()))]",
+              "properties": {
+                "primary": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "[concat(parameters('appPrefix'), '_vm', copyIndex(), '/extension')]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('appPrefix'), '_vm', copyIndex()))]"
+      ],
+      "copy": {
+        "count": "[variables('numberOfInstances')]",
+        "name": "virtualMachineLoop"
+      },
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('customScriptFilePath')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat(variables('customScriptCommandToExecute'),' ', parameters('existingAtlasInfraName'), ' ', parameters('existingAtlasToken'))]"
+        }
+      }
+    }
+  ]
+}
+

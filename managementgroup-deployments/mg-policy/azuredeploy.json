@@ -1,0 +1,70 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "2350252618174097128"
+    }
+  },
+  "parameters": {
+    "targetMG": {
+      "type": "string",
+      "metadata": {
+        "description": "Target Management Group"
+      }
+    },
+    "allowedLocations": {
+      "type": "array",
+      "defaultValue": [
+        "australiaeast",
+        "australiasoutheast",
+        "australiacentral"
+      ],
+      "metadata": {
+        "description": "An array of the allowed locations, all other locations will be denied by the created policy."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "mgScope": "[tenantResourceId('Microsoft.Management/managementGroups', parameters('targetMG'))]",
+    "policyDefinitionName": "LocationRestriction"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/policyDefinitions",
+      "apiVersion": "2020-03-01",
+      "name": "[variables('policyDefinitionName')]",
+      "properties": {
+        "policyType": "Custom",
+        "mode": "All",
+        "parameters": {},
+        "policyRule": {
+          "if": {
+            "not": {
+              "field": "location",
+              "in": "[parameters('allowedLocations')]"
+            }
+          },
+          "then": {
+            "effect": "deny"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/policyAssignments",
+      "apiVersion": "2020-03-01",
+      "name": "location-lock",
+      "properties": {
+        "scope": "[variables('mgScope')]",
+        "policyDefinitionId": "[extensionResourceId(variables('mgScope'), 'Microsoft.Authorization/policyDefinitions', variables('policyDefinitionName'))]"
+      },
+      "dependsOn": [
+        "[format('Microsoft.Authorization/policyDefinitions/{0}', variables('policyDefinitionName'))]"
+      ]
+    }
+  ]
+}

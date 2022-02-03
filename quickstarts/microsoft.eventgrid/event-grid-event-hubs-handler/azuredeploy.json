@@ -1,0 +1,103 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "topicName": {
+            "type": "string",
+            "defaultValue": "[concat('topic', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name of the Event Grid custom topic."
+            }
+        },
+        "subscriptionName": {
+            "type": "string",
+            "defaultValue": "subSendToEventHubs",
+            "metadata": {
+                "description": "The name of the Event Grid custom topic's subscription."
+            }
+        },
+        "eventHubNamespace": {
+            "type": "string",
+            "defaultValue": "[concat('namespace', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name of the Event Hubs namespace."
+            }
+        },
+        "eventHubName": {
+            "type": "string",
+            "defaultValue": "eventhub",
+            "metadata": {
+                "description": "The name of the event hub."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location in which the Event Grid resources should be deployed."
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.EventGrid/topics",
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('topicName')]",
+            "location": "[parameters('location')]"
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces",
+            "apiVersion": "2018-01-01-preview",
+            "name": "[parameters('eventHubNamespace')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "isAutoInflateEnabled": true,
+                "maximumThroughputUnits": 7
+            },
+            "resources": [
+                {
+                    "type": "EventHubs",
+                    "apiVersion": "2017-04-01",
+                    "name": "[parameters('eventHubName')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNamespace'))]"
+                    ],
+                    "properties": {
+                        "messageRetentionInDays": 1,
+                        "partitionCount": 2
+                    }
+                }
+            ]
+        },
+        {
+            "scope": "[format('Microsoft.EventGrid/topics/{0}', parameters('topicName'))]",
+            "type": "Microsoft.EventGrid/eventSubscriptions",
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('subscriptionName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventGrid/topics', parameters('topicName'))]",
+                "[resourceId('Microsoft.EventHub/namespaces/eventHubs', parameters('eventHubNamespace'), parameters('eventHubName'))]"
+            ],
+            "properties": {
+                "destination": {
+                    "endpointType": "EventHub",
+                    "properties": {
+                        "resourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespace'), parameters('eventHubName'))]"
+                    }
+                },
+                "filter": {
+                    "isSubjectCaseSensitive": false
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "endpoint": {
+            "type": "string",
+            "value": "[reference(parameters('topicName')).endpoint]"
+        }
+    }
+}

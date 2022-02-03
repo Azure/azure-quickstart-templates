@@ -1,0 +1,157 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "databaseAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for DB Admin"
+      }
+    },
+    "databaseAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for DB Admin"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
+    "storageAccountType": "Standard_LRS",
+    "vNetName": "vNet",
+    "vNetPrefix": "10.0.0.0/16",
+    "SubnetName": "Subnet-1",
+    "SubnetPrefix": "10.0.0.0/24",
+    "serverName": "[concat('server', uniqueString(resourceGroup().id))]",
+    "dataBaseName": "DB",
+    "dataBaseCollation": "SQL_Latin1_General_CP1_CI_AS",
+    "dataBaseEdition": "Basic",
+    "dataBaseRequestedServiceObjectiveName": "Basic"
+  },
+  "resources": [
+    {
+      "name": "[variables('storageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[parameters('location')]",
+      "apiVersion": "2021-01-01",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "tags": {
+        "displayName": "storageAccount"
+      },
+      "kind": "StorageV2"
+    },
+    {
+      "name": "[variables('vNetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-11-01",
+      "tags": {
+        "displayName": "vNet"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vNetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('SubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('SubnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('serverName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-08-01-preview",
+      "tags": {
+        "displayName": "server"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('databaseAdminUsername')]",
+        "administratorLoginPassword": "[parameters('databaseAdminPassword')]"
+      },
+      "resources": [
+        {
+          "name": "AllowAllWindowsAzureIps",
+          "type": "firewallrules",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-08-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('serverName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        },
+        {
+          "name": "[variables('dataBaseName')]",
+          "type": "databases",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-08-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('serverName'))]"
+          ],
+          "tags": {
+            "displayName": "dataBase"
+          },
+          "properties": {
+            "collation": "[variables('dataBaseCollation')]",
+            "edition": "[variables('dataBaseEdition')]",
+            "maxSizeBytes": 1073741824,
+            "requestedServiceObjectiveName": "[variables('dataBaseRequestedServiceObjectiveName')]"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "existingClusterStorageResourceGroup": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "existingClusterStorageAccountName": {
+      "type": "string",
+      "value": "[variables('storageAccountName')]"
+    },
+    "existingSQLServerResourceGroup": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "existingSQLServerName": {
+      "type": "string",
+      "value": "[variables('serverName')]"
+    },
+    "existingSQLServerUsername": {
+      "type": "string",
+      "value": "[parameters('databaseAdminUsername')]"
+    },
+    "existingVirtualNetworkResourceGroup": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "value": "[variables('vNetName')]"
+    },    
+    "existingVirtualNetworkSubnetName": {
+      "type": "string",
+      "value": "[variables('SubnetName')]"
+    }
+  }
+}

@@ -1,0 +1,887 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "eastus",
+        "westus2",
+        "southcentralus"
+      ],
+      "metadata": {
+        "description": "The location into which the Azure Storage resources should be deployed. When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details."
+      }
+    },
+    "vnetIPPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "The IP address prefix (CIDR range) to use when deploying the virtual network."
+      }
+    },
+    "vmSubnetIPPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "The IP address prefix (CIDR range) to use when deploying the VM subnet within the virtual network."
+      }
+    },
+    "privateLinkServiceSubnetIPPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24",
+      "metadata": {
+        "description": "The IP address prefix (CIDR range) to use when deploying the Private Link service subnet within the virtual network."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "The name of the SKU to use when creating the virtual machine."
+      }
+    },
+    "vmOSName": {
+      "type": "string",
+      "defaultValue": "Windows2019Datacenter",
+      "allowedValues": [
+        "Windows2016Datacenter",
+        "Windows2019Datacenter"
+      ],
+      "metadata": {
+        "description": "The name of the operating system to deploy on the virtual machine."
+      }
+    },
+    "vmOSDiskStorageAccountType": {
+      "type": "string",
+      "defaultValue": "StandardSSD_LRS",
+      "metadata": {
+        "description": "The type of disk and storage account to use for the virtual machine's OS disk."
+      }
+    },
+    "vmAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The administrator username to use for the virtual machine."
+      }
+    },
+    "vmAdminPassword": {
+      "type": "secureString",
+      "metadata": {
+        "description": "The administrator password to use for the virtual machine."
+      }
+    },
+    "frontDoorEndpointName": {
+      "type": "string",
+      "defaultValue": "[format('afd-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Front Door endpoint to create. This must be globally unique."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "vmImageReference": {
+      "Windows2019Datacenter": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2019-Datacenter",
+        "version": "latest"
+      },
+      "Windows2016Datacenter": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2016-Datacenter",
+        "version": "latest"
+      }
+    },
+    "frontDoorSkuName": "Premium_AzureFrontDoor"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "network",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vnetIPPrefix": {
+            "value": "[parameters('vnetIPPrefix')]"
+          },
+          "vmSubnetIPPrefix": {
+            "value": "[parameters('vmSubnetIPPrefix')]"
+          },
+          "privateLinkServiceSubnetIPPrefix": {
+            "value": "[parameters('privateLinkServiceSubnetIPPrefix')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the virtual network resources should be deployed."
+              }
+            },
+            "vnetIPPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "The IP address prefix (CIDR range) to use when deploying the virtual network."
+              }
+            },
+            "vmSubnetIPPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "The IP address prefix (CIDR range) to use when deploying the VM subnet within the virtual network."
+              }
+            },
+            "privateLinkServiceSubnetIPPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "The IP address prefix (CIDR range) to use when deploying the Private Link service environment subnet within the virtual network."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "vnetName": "VNet",
+            "vmSubnetName": "VMs",
+            "privateLinkServiceSubnetName": "PrivateLinkService"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('vnetName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vnetIPPrefix')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "[variables('vmSubnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('vmSubnetIPPrefix')]"
+                    }
+                  },
+                  {
+                    "name": "[variables('privateLinkServiceSubnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('privateLinkServiceSubnetIPPrefix')]",
+                      "privateLinkServiceNetworkPolicies": "Disabled"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "vnetName": {
+              "type": "string",
+              "value": "[variables('vnetName')]"
+            },
+            "vmSubnetResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('vmSubnetName'))]"
+            },
+            "privateLinkServiceSubnetResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('privateLinkServiceSubnetName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "load-balancer",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "subnetResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'network'), '2019-10-01').outputs.vmSubnetResourceId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the load balancer resources should be deployed."
+              }
+            },
+            "subnetResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the virtual network subnet that the load balancer should be deployed into."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "loadBalancerName": "MyLoadBalancer",
+            "frontendIPConfigurationName": "MyFrontendIPConfiguration",
+            "healthProbeName": "MyHealthProbe",
+            "backendAddressPoolName": "MyBackendAddressPool"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/loadBalancers",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('loadBalancerName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard"
+              },
+              "properties": {
+                "frontendIPConfigurations": [
+                  {
+                    "name": "[variables('frontendIPConfigurationName')]",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                        "id": "[parameters('subnetResourceId')]"
+                      }
+                    }
+                  }
+                ],
+                "backendAddressPools": [
+                  {
+                    "name": "[variables('backendAddressPoolName')]"
+                  }
+                ],
+                "probes": [
+                  {
+                    "name": "[variables('healthProbeName')]",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "port": 80,
+                      "intervalInSeconds": 15,
+                      "numberOfProbes": 2
+                    }
+                  }
+                ],
+                "loadBalancingRules": [
+                  {
+                    "name": "HttpRule",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "frontendPort": 80,
+                      "backendPort": 80,
+                      "idleTimeoutInMinutes": 15,
+                      "frontendIPConfiguration": {
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadBalancerName'), variables('frontendIPConfigurationName'))]"
+                      },
+                      "backendAddressPool": {
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('backendAddressPoolName'))]"
+                      },
+                      "probe": {
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), variables('healthProbeName'))]"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "frontendIPAddress": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))).frontendIPConfigurations[0].properties.privateIPAddress]"
+            },
+            "frontendIPConfigurationResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('loadBalancerName'), variables('frontendIPConfigurationName'))]"
+            },
+            "backendAddressPoolResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('backendAddressPoolName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'network')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "vm",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "subnetResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'network'), '2019-10-01').outputs.vmSubnetResourceId.value]"
+          },
+          "vmImageReference": {
+            "value": "[variables('vmImageReference')[parameters('vmOSName')]]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "vmOSDiskStorageAccountType": {
+            "value": "[parameters('vmOSDiskStorageAccountType')]"
+          },
+          "vmAdminUsername": {
+            "value": "[parameters('vmAdminUsername')]"
+          },
+          "vmAdminPassword": {
+            "value": "[parameters('vmAdminPassword')]"
+          },
+          "loadBalancerBackendAddressPoolResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'load-balancer'), '2019-10-01').outputs.backendAddressPoolResourceId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the Private Link service resources should be deployed."
+              }
+            },
+            "subnetResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the virtual network subnet that the VM should be deployed into."
+              }
+            },
+            "vmSize": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the SKU to use when creating the virtual machine."
+              }
+            },
+            "vmImageReference": {
+              "type": "object",
+              "metadata": {
+                "description": "The details of the image to deploy on the virtual machine."
+              }
+            },
+            "vmOSDiskStorageAccountType": {
+              "type": "string",
+              "metadata": {
+                "description": "The type of disk and storage account to use for the virtual machine's OS disk."
+              }
+            },
+            "vmAdminUsername": {
+              "type": "string",
+              "metadata": {
+                "description": "The administrator username to use for the virtual machine."
+              }
+            },
+            "vmAdminPassword": {
+              "type": "secureString",
+              "metadata": {
+                "description": "The administrator password to use for the virtual machine."
+              }
+            },
+            "loadBalancerBackendAddressPoolResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the load balancer's backend address pool, which this virtual machine's NIC will be added to."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "vmName": "MyVM",
+            "vmNicName": "MyVM-NIC",
+            "vmOSDiskName": "MyVM-OSDisk"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', variables('vmName'), 'InstallCustomScript')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.0",
+                "autoUpgradeMinorVersion": true,
+                "protectedSettings": {
+                  "commandToExecute": "powershell -ExecutionPolicy Unrestricted Install-WindowsFeature -Name Web-Server"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('vmNicName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipConfig",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                        "id": "[parameters('subnetResourceId')]"
+                      },
+                      "loadBalancerBackendAddressPools": [
+                        {
+                          "id": "[parameters('loadBalancerBackendAddressPoolResourceId')]"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('vmName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                  "computerName": "[variables('vmName')]",
+                  "adminUsername": "[parameters('vmAdminUsername')]",
+                  "adminPassword": "[parameters('vmAdminPassword')]"
+                },
+                "storageProfile": {
+                  "imageReference": "[parameters('vmImageReference')]",
+                  "osDisk": {
+                    "name": "[variables('vmOSDiskName')]",
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "[parameters('vmOSDiskStorageAccountType')]"
+                    },
+                    "diskSizeGB": 128
+                  }
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'load-balancer')]",
+        "[resourceId('Microsoft.Resources/deployments', 'network')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "private-link-service",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "subnetResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'network'), '2019-10-01').outputs.privateLinkServiceSubnetResourceId.value]"
+          },
+          "loadBalancerFrontendIpConfigurationResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'load-balancer'), '2019-10-01').outputs.frontendIPConfigurationResourceId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the Private Link service resources should be deployed."
+              }
+            },
+            "subnetResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the virtual network subnet that the Private Link service should be deployed into."
+              }
+            },
+            "loadBalancerFrontendIpConfigurationResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the load balancer's frontend IP configuration that should be associated with this Private Link service."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "privateLinkServiceName": "MyPrivateLinkService"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/privateLinkServices",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('privateLinkServiceName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "enableProxyProtocol": false,
+                "loadBalancerFrontendIpConfigurations": [
+                  {
+                    "id": "[parameters('loadBalancerFrontendIpConfigurationResourceId')]"
+                  }
+                ],
+                "ipConfigurations": [
+                  {
+                    "name": "application-configuration",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "privateIPAddressVersion": "IPv4",
+                      "subnet": {
+                        "id": "[parameters('subnetResourceId')]"
+                      },
+                      "primary": false
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "privateLinkServiceResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/privateLinkServices', variables('privateLinkServiceName'))]"
+            },
+            "privateLinkServiceLocation": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/privateLinkServices', variables('privateLinkServiceName')), '2020-06-01', 'full').location]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'load-balancer')]",
+        "[resourceId('Microsoft.Resources/deployments', 'network')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "front-door",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "skuName": {
+            "value": "[variables('frontDoorSkuName')]"
+          },
+          "endpointName": {
+            "value": "[parameters('frontDoorEndpointName')]"
+          },
+          "originHostName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'load-balancer'), '2019-10-01').outputs.frontendIPAddress.value]"
+          },
+          "originForwardingProtocol": {
+            "value": "HttpOnly"
+          },
+          "privateEndpointResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'private-link-service'), '2019-10-01').outputs.privateLinkServiceResourceId.value]"
+          },
+          "privateLinkResourceType": {
+            "value": ""
+          },
+          "privateEndpointLocation": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "originHostName": {
+              "type": "string",
+              "metadata": {
+                "description": "The host name that should be used when connecting to the origin."
+              }
+            },
+            "originPath": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "The path that should be used when connecting to the origin."
+              }
+            },
+            "endpointName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Front Door endpoint to create. This must be globally unique."
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "allowedValues": [
+                "Standard_AzureFrontDoor",
+                "Premium_AzureFrontDoor"
+              ],
+              "metadata": {
+                "description": "The name of the SKU to use when creating the Front Door profile. If you use Private Link this must be set to `Premium_AzureFrontDoor`."
+              }
+            },
+            "originForwardingProtocol": {
+              "type": "string",
+              "defaultValue": "HttpsOnly",
+              "allowedValues": [
+                "HttpOnly",
+                "HttpsOnly",
+                "MatchRequest"
+              ],
+              "metadata": {
+                "description": "The protocol that should be used when connecting from Front Door to the origin."
+              }
+            },
+            "privateEndpointResourceId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the resource ID of the Private Link resource (e.g. an App Service application, Azure Storage account, etc). If you are not using Private Link then this should be empty."
+              }
+            },
+            "privateLinkResourceType": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the resource type of the Private Link resource. The allowed value will depend on the specific Private Link resource type you are using. If you are not using Private Link then this should be empty."
+              }
+            },
+            "privateEndpointLocation": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "If you are using Private Link to connect to the origin, this should specify the location of the Private Link resource. If you are not using Private Link then this should be empty."
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "isPrivateLinkOrigin": "[not(equals(parameters('privateEndpointResourceId'), ''))]",
+            "privateLinkOriginDetails": {
+              "privateLink": {
+                "id": "[parameters('privateEndpointResourceId')]"
+              },
+              "groupId": "[if(not(equals(parameters('privateLinkResourceType'), '')), parameters('privateLinkResourceType'), null())]",
+              "privateLinkLocation": "[parameters('privateEndpointLocation')]",
+              "requestMessage": "Please approve this connection."
+            },
+            "profileName": "MyFrontDoor",
+            "originGroupName": "MyOriginGroup",
+            "originName": "MyOrigin",
+            "routeName": "MyRoute"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Cdn/profiles",
+              "apiVersion": "2020-09-01",
+              "name": "[variables('profileName')]",
+              "location": "global",
+              "sku": {
+                "name": "[parameters('skuName')]"
+              }
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints",
+              "apiVersion": "2020-09-01",
+              "name": "[format('{0}/{1}', variables('profileName'), parameters('endpointName'))]",
+              "location": "global",
+              "properties": {
+                "originResponseTimeoutSeconds": 240,
+                "enabledState": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups",
+              "apiVersion": "2020-09-01",
+              "name": "[format('{0}/{1}', variables('profileName'), variables('originGroupName'))]",
+              "properties": {
+                "loadBalancingSettings": {
+                  "sampleSize": 4,
+                  "successfulSamplesRequired": 3
+                },
+                "healthProbeSettings": {
+                  "probePath": "/",
+                  "probeRequestType": "HEAD",
+                  "probeProtocol": "Http",
+                  "probeIntervalInSeconds": 100
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups/origins",
+              "apiVersion": "2020-09-01",
+              "name": "[format('{0}/{1}/{2}', variables('profileName'), variables('originGroupName'), variables('originName'))]",
+              "properties": {
+                "hostName": "[parameters('originHostName')]",
+                "httpPort": 80,
+                "httpsPort": 443,
+                "originHostHeader": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))).hostName]",
+                "priority": 1,
+                "weight": 1000,
+                "sharedPrivateLinkResource": "[if(variables('isPrivateLinkOrigin'), variables('privateLinkOriginDetails'), null())]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]",
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+              "apiVersion": "2020-09-01",
+              "name": "[format('{0}/{1}/{2}', variables('profileName'), parameters('endpointName'), variables('routeName'))]",
+              "properties": {
+                "originGroup": {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]"
+                },
+                "originPath": "[if(not(equals(parameters('originPath'), '')), parameters('originPath'), null())]",
+                "supportedProtocols": [
+                  "Http",
+                  "Https"
+                ],
+                "patternsToMatch": [
+                  "/*"
+                ],
+                "compressionSettings": {
+                  "contentTypesToCompress": [
+                    "application/eot",
+                    "application/font",
+                    "application/font-sfnt",
+                    "application/javascript",
+                    "application/json",
+                    "application/opentype",
+                    "application/otf",
+                    "application/pkcs7-mime",
+                    "application/truetype",
+                    "application/ttf",
+                    "application/vnd.ms-fontobject",
+                    "application/xhtml+xml",
+                    "application/xml",
+                    "application/xml+rss",
+                    "application/x-font-opentype",
+                    "application/x-font-truetype",
+                    "application/x-font-ttf",
+                    "application/x-httpd-cgi",
+                    "application/x-javascript",
+                    "application/x-mpegurl",
+                    "application/x-opentype",
+                    "application/x-otf",
+                    "application/x-perl",
+                    "application/x-ttf",
+                    "font/eot",
+                    "font/ttf",
+                    "font/otf",
+                    "font/opentype",
+                    "image/svg+xml",
+                    "text/css",
+                    "text/csv",
+                    "text/html",
+                    "text/javascript",
+                    "text/js",
+                    "text/plain",
+                    "text/richtext",
+                    "text/tab-separated-values",
+                    "text/xml",
+                    "text/x-script",
+                    "text/x-component",
+                    "text/x-java-source"
+                  ],
+                  "isCompressionEnabled": true
+                },
+                "queryStringCachingBehavior": "IgnoreQueryString",
+                "forwardingProtocol": "[parameters('originForwardingProtocol')]",
+                "linkToDefaultDomain": "Enabled",
+                "httpsRedirect": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', variables('profileName'), variables('originGroupName'), variables('originName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('originGroupName'))]",
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "frontDoorEndpointHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('endpointName'))).hostName]"
+            },
+            "frontDoorId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles', variables('profileName'))).frontdoorId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'load-balancer')]",
+        "[resourceId('Microsoft.Resources/deployments', 'private-link-service')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "frontDoorEndpointHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door'), '2019-10-01').outputs.frontDoorEndpointHostName.value]"
+    }
+  },
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.126.58533",
+      "templateHash": "11026282578573497498"
+    }
+  }
+}
+

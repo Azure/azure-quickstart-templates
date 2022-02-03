@@ -1,0 +1,416 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "projectName": {
+            "type": "string",
+            "metadata": {
+              "description": "Specifies a name for generating resource names."
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for the Virtual Machine."
+            }
+        },
+        "authenticationType": {
+            "type": "string",
+            "defaultValue": "password",
+            "allowedValues": [
+                "sshPublicKey",
+                "password"
+            ],
+            "metadata": {
+                "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+            }
+        },
+        "adminPasswordOrKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+            }
+        },
+        "virtualMachineSize": {
+            "type": "string",
+            "defaultValue": "Standard_D2_v3",
+            "metadata": {
+                "description": "The virtual machine size."
+            }
+        },
+        "pipelineProvider": {
+            "type": "string",
+            "defaultValue": "None",
+            "allowedValues": [
+                "None",
+                "AzurePipelines",
+                "GitHubRunner"
+            ],
+            "metadata": {
+                "description": "The continuous integration provider to register."
+            }
+        },
+        "vstsAccount": {
+            "type": "string",
+            "metadata": {
+                "description": "The Visual Studio Team Services account name, that is, the first part of your VSTSAccount.visualstudio.com"
+            },
+            "defaultValue": ""
+        },
+        "vstsPersonalAccessToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The personal access token to connect to VSTS"
+            },
+            "defaultValue": ""
+        },
+        "vstsPoolName": {
+            "type": "string",
+            "defaultValue": "Default",
+            "metadata": {
+                "description": "The Visual Studio Team Services build agent pool for this build agent to join. Use 'Default' if you don't have a separate pool."
+            }
+        },
+        "githubRepo": {
+            "type": "string",
+            "metadata": {
+                "description": "The github account and repo alias."
+            },
+            "defaultValue": ""
+        },
+        "githubPersonalAccessToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The personal access token to connect to GitHub."
+            },
+            "defaultValue": ""
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+              "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            },
+            "defaultValue": "[deployment().properties.templatelink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "location": "[parameters('location')]",
+        "networkInterfaceName": "[concat(parameters('projectName'), '-nic')]",
+        "networkSecurityGroupName": "[concat(parameters('projectName'), '-nsg')]",
+        "virtualNetworkName": "[concat(parameters('projectName'), '-vnet')]",
+        "publicIpAddressName": "[concat(parameters('projectName'), '-ip')]",
+        "virtualMachineName": "[concat(parameters('projectName'), '-vm')]",
+        "ciAgentName": "[concat(parameters('projectName'), '-agent')]",
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'default')]",
+        "ubuntuOSVersion": "18.04-LTS",
+        "osDiskType": "StandardSSD_LRS",
+        "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+                "publicKeys": [
+                    {
+                        "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                        "keyData": "[parameters('adminPasswordOrKey')]"
+                    }
+                ]
+            }
+        },
+        "addressPrefixes": [
+            "10.0.0.0/24"
+        ],
+        "subnets": [
+            {
+                "name": "default",
+                "properties": {
+                    "addressPrefix": "10.0.0.0/24"
+                }
+            }
+        ],
+        "nvidiaGpuDriverLinuxUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/nvidiaGpuDriverLinux.json', parameters('_artifactsLocationSasToken')))]",
+        "extensionUrl": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/customScriptExtension.json', parameters('_artifactsLocationSasToken')))]",
+        "vstsScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/install-vsts.sh', parameters('_artifactsLocationSasToken')))]",
+        "rosScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/install-ros.sh', parameters('_artifactsLocationSasToken')))]",
+        "vstsParameters": "[concat(variables('ciAgentName'), ' ', parameters('vstsAccount'), ' ', parameters('vstsPersonalAccessToken'),' ', parameters('vstsPoolName'))]",
+        "githubScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/install-github.sh', parameters('_artifactsLocationSasToken')))]",
+        "githubParameters": "[concat(variables('ciAgentName'), ' ', parameters('githubRepo'), ' ', parameters('githubPersonalAccessToken'), ' ', parameters('adminUsername'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-07-01",
+            "name": "[variables('networkInterfaceName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-07-01",
+            "name": "[variables('networkSecurityGroupName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "priority": 1000,
+                            "protocol": "Tcp",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "22"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-07-01",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[variables('addressPrefixes')]"
+                },
+                "subnets": "[variables('subnets')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2020-07-01",
+            "name": "[variables('publicIpAddressName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "publicIpAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[concat('ros-vm-', uniqueString(resourceGroup().id))]"
+                }
+            },
+            "sku": {
+                "name": "Basic"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2020-12-01",
+            "name": "[variables('virtualMachineName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[variables('osDiskType')]"
+                        }
+                    },
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "[variables('ubuntuOSVersion')]",
+                        "version": "latest"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('virtualMachineName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPasswordOrKey')]",
+                    "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+                }
+            }
+        },
+        {
+            "condition": "[contains(parameters('virtualMachineSize'), 'Standard_NV')]",
+            "name": "nvidia-gpu-driver-linux",
+            "apiVersion": "2021-04-01",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', concat(variables('virtualMachineName'), '-ROSInstall'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('nvidiaGpuDriverLinuxUri')]"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "[variables('virtualMachineName')]"
+                    },
+                    "location": {
+                        "value": "[variables('location')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('virtualMachineName'), '-ROSInstall')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('extensionUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[variables('location')]"
+                    },
+                    "extensionName": {
+                        "value": "cse"
+                    },
+                    "vmName": {
+                        "value": "[variables('virtualMachineName')]"
+                    },
+                    "fileUris": {
+                        "value": [
+                            "[variables('rosScriptFileUri')]"
+                        ]
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('bash ', 'install-ros.sh')]"
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[contains(parameters('pipelineProvider'), 'AzurePipelines')]",
+            "name": "[concat(variables('virtualMachineName'), '-VSTSAgentInstall')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', concat(variables('virtualMachineName'), '-ROSInstall'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('extensionUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[variables('location')]"
+                    },
+                    "extensionName": {
+                        "value": "cse"
+                    },
+                    "vmName": {
+                        "value": "[variables('virtualMachineName')]"
+                    },
+                    "fileUris": {
+                        "value": [
+                            "[variables('vstsScriptFileUri')]"
+                        ]
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('bash ', 'install-vsts.sh ', variables('vstsParameters'))]"
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[contains(parameters('pipelineProvider'), 'GitHubRunner')]",
+            "name": "[concat(variables('virtualMachineName'), '-GitHubAgentInstall')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', concat(variables('virtualMachineName'), '-ROSInstall'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('extensionUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[variables('location')]"
+                    },
+                    "extensionName": {
+                        "value": "cse"
+                    },
+                    "vmName": {
+                        "value": "[variables('virtualMachineName')]"
+                    },
+                    "fileUris": {
+                        "value": [
+                            "[variables('githubScriptFileUri')]"
+                        ]
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('bash ', 'install-github.sh ', variables('githubParameters'))]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "string",
+            "value": "[parameters('adminUsername')]"
+        },
+        "hostname": {
+            "type": "string",
+            "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+        },
+        "sshCommand": {
+            "type": "string",
+            "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+        }
+    }
+}
+

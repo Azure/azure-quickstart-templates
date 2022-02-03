@@ -1,0 +1,400 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"_artifactsLocation": {
+			"type": "string",
+			"metadata": {
+				"description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+			},
+			"defaultValue": "[deployment().properties.templateLink.uri]"
+		},
+		"_artifactsLocationSasToken": {
+			"type": "securestring",
+			"metadata": {
+				"description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+			},
+			"defaultValue": ""
+		},
+		"vmName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of your VM master node."
+			}
+		},
+		"vmssName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of your VMSS cluster."
+			}
+		},
+		"location": {
+			"type": "string",
+			"defaultValue": "[resourceGroup().location]",
+			"metadata": {
+				"description": "Location for all resources."
+			}
+		},
+		"adminUsername": {
+			"type": "string",
+			"metadata": {
+				"description": "Username for the Virtual Machine."
+			}
+		},
+		"adminKey": {
+			"type": "securestring",
+			"metadata": {
+				"description": "SSH Key for the Virtual Machine."
+			}
+		},
+		"defaultNodeCount": {
+			"type": "int",
+			"defaultValue": 1,
+			"metadata": {
+				"description": "The initial node size of your VMSS cluster."
+			}
+		},
+		"minNodeCount": {
+			"type": "int",
+			"defaultValue": 1,
+			"metadata": {
+				"description": "The min node size of your VMSS cluster."
+			}
+		},
+		"maxNodeCount": {
+			"type": "int",
+			"defaultValue": 20,
+			"metadata": {
+				"description": "The max node size of your VMSS cluster."
+			}
+		},
+		"spClientId": {
+			"type": "string",
+			"metadata": {
+				"description": "ServicePrincipal ClientID"
+			}
+		},
+		"spClientSecret": {
+			"type": "securestring",
+			"metadata": {
+				"description": "ServicePrincipal Secret"
+			}
+		},
+		"dnsLabelPrefix": {
+			"type": "string",
+			"defaultValue": "[toLower(concat('k8s-cluster-', uniqueString(resourceGroup().id)))]",
+			"metadata": {
+				"description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+			}
+		},
+		"vmssDnsLabelPrefix": {
+			"type": "string",
+			"defaultValue": "[toLower(concat('k8s-vmss-cluster-', uniqueString(resourceGroup().id)))]",
+			"metadata": {
+				"description": "Unique DNS Name for the Public IP used to access the VMSS."
+			}
+		},
+		"vmSize": {
+			"type": "string",
+			"defaultValue": "Standard_D2s_v3",
+			"metadata": {
+				"description": "The size of the VM"
+			}
+		},
+		"virtualNetworkName": {
+			"type": "string",
+			"defaultValue": "vNet",
+			"metadata": {
+				"description": "Name of the VNET"
+			}
+		},
+		"subnetName": {
+			"type": "string",
+			"defaultValue": "Subnet",
+			"metadata": {
+				"description": "Name of the subnet in the virtual network"
+			}
+		},
+		"vmssSubnetName": {
+			"type": "string",
+			"defaultValue": "VMSSSubnet",
+			"metadata": {
+				"description": "Name of the VMSS subnet in the virtual network"
+			}
+		}
+	},
+	"variables": {
+		"publicIpAddressName": "[concat(parameters('vmName'), 'PublicIP' )]",
+		"vmssPublicIpAddressName": "[concat(parameters('vmssName'), 'PublicIP' )]",
+		"networkInterfaceName": "[concat(parameters('vmName'),'NetInt')]",
+		"subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+		"vmssSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('vmssSubnetName'))]",
+		"osDiskType": "Standard_LRS",
+		"scriptsDir": "scripts",
+		"masterScriptFileName": "cloud-init-master.sh",
+		"vmssScriptFileName": "cloud-init-vmss.sh",
+		"subscriptionId": "[subscription().subscriptionId]",
+		"tenantId": "[subscription().tenantId]"
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Network/networkInterfaces",
+			"apiVersion": "2020-08-01",
+			"name": "[variables('networkInterfaceName')]",
+			"location": "[parameters('location')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+				"[resourceId('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
+			],
+			"properties": {
+				"ipConfigurations": [
+					{
+						"name": "ipconfig1",
+						"properties": {
+							"subnet": {
+								"id": "[variables('subnetRef')]"
+							},
+							"privateIPAllocationMethod": "Dynamic",
+							"publicIpAddress": {
+								"id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+							}
+						}
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.Network/virtualNetworks",
+			"apiVersion": "2020-08-01",
+			"name": "[parameters('virtualNetworkName')]",
+			"location": "[parameters('location')]",
+			"properties": {
+				"addressSpace": {
+					"addressPrefixes": [
+						"10.0.0.0/16"
+					]
+				},
+				"subnets": [
+					{
+						"name": "[parameters('vmssSubnetName')]",
+						"properties": {
+							"addressPrefix": "10.0.0.0/24"
+						}
+					},
+					{
+						"name": "[parameters('subnetName')]",
+						"properties": {
+							"addressPrefix": "10.0.1.0/24"
+						}
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.Network/publicIPAddresses",
+			"apiVersion": "2020-08-01",
+			"name": "[variables('publicIpAddressName')]",
+			"location": "[parameters('location')]",
+			"properties": {
+				"publicIPAllocationMethod": "Dynamic",
+				"publicIPAddressVersion": "IPv4",
+				"dnsSettings": {
+					"domainNameLabel": "[parameters('dnsLabelPrefix')]"
+				},
+				"idleTimeoutInMinutes": 10
+			}
+		},
+		{
+			"type": "Microsoft.Compute/virtualMachines",
+			"apiVersion": "2020-12-01",
+			"name": "[parameters('vmName')]",
+			"location": "[parameters('location')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
+			],
+			"properties": {
+				"hardwareProfile": {
+					"vmSize": "[parameters('vmSize')]"
+				},
+				"storageProfile": {
+					"osDisk": {
+						"createOption": "FromImage",
+						"managedDisk": {
+							"storageAccountType": "[variables('osDiskType')]"
+						}
+					},
+					"imageReference": {
+						"publisher": "Canonical",
+						"offer": "UbuntuServer",
+						"sku": "18.04-LTS",
+						"version": "latest"
+					}
+				},
+				"networkProfile": {
+					"networkInterfaces": [
+						{
+							"id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+						}
+					]
+				},
+				"osProfile": {
+					"computerName": "[parameters('vmName')]",
+					"adminUsername": "[parameters('adminUsername')]",
+					"adminPassword": "[parameters('adminKey')]",
+					"linuxConfiguration": {
+						"disablePasswordAuthentication": true,
+						"ssh": {
+							"publicKeys": [
+								{
+									"path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+									"keyData": "[parameters('adminKey')]"
+								}
+							]
+						}
+					}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"name": "[concat(parameters('vmName'),'/customScript')]",
+			"location": "[parameters('location')]",
+			"apiVersion": "2020-12-01",
+			"dependsOn": [
+				"[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+			],
+			"properties": {
+				"publisher": "Microsoft.Azure.Extensions",
+				"type": "CustomScript",
+				"typeHandlerVersion": "2.0",
+				"autoUpgradeMinorVersion": true,
+				"protectedSettings": {
+					"commandToExecute": "[concat('bash ', variables('masterScriptFileName'), ' ', parameters('spClientId'), ' ', parameters('spClientSecret'), ' ', resourceGroup().name, ' ', variables('subscriptionId'), ' ', variables('tenantId'))]",
+					"fileUris": [
+						"[uri(parameters('_artifactsLocation'), concat(variables('scriptsDir'), '/', variables('masterScriptFileName'), parameters('_artifactsLocationSasToken')))]"
+					]
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Compute/virtualMachineScaleSets",
+			"apiVersion": "2020-12-01",
+			"name": "[parameters('vmssName')]",
+			"tags": {
+				"cluster-autoscaler-enabled": "true",
+				"cluster-autoscaler-name": "[resourceGroup().name]",
+				"min": "[parameters('minNodeCount')]",
+				"max": "[parameters('maxNodeCount')]",
+				"poolName": "[parameters('vmssName')]"
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
+			],
+			"location": "[parameters('location')]",
+			"sku": {
+				"name": "[parameters('vmSize')]",
+				"tier": "Standard",
+				"capacity": "[parameters('defaultNodeCount')]"
+			},
+			"properties": {
+				"overprovision": false,
+				"upgradePolicy": {
+					"mode": "Manual"
+				},
+				"virtualMachineProfile": {
+					"storageProfile": {
+						"osDisk": {
+							"createOption": "FromImage",
+							"caching": "ReadWrite"
+						},
+						"imageReference": {
+							"publisher": "Canonical",
+							"offer": "UbuntuServer",
+							"sku": "18.04-LTS",
+							"version": "latest"
+						}
+					},
+					"osProfile": {
+						"computerNamePrefix": "[parameters('vmssName')]",
+						"adminUsername": "[parameters('adminUsername')]",
+						"adminPassword": "[parameters('adminKey')]",
+						"linuxConfiguration": {
+							"disablePasswordAuthentication": true,
+							"ssh": {
+								"publicKeys": [
+									{
+										"path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+										"keyData": "[parameters('adminKey')]"
+									}
+								]
+							}
+						}
+					},
+					"networkProfile": {
+						"networkInterfaceConfigurations": [
+							{
+								"name": "[concat('nic', parameters('vmssName'))]",
+								"properties": {
+									"primary": true,
+									"ipConfigurations": [
+										{
+											"name": "[concat('ipconfigVmss', parameters('vmssName'))]",
+											"properties": {
+												"subnet": {
+													"id": "[variables('vmssSubnetRef')]"
+												},
+												"publicIPAddressConfiguration": {
+													"name": "[variables('vmssPublicIpAddressName')]",
+													"properties": {
+														"idleTimeoutInMinutes": 10,
+														"dnsSettings": {
+															"domainNameLabel": "[parameters('vmssDnsLabelPrefix')]"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						]
+					},
+					"extensionProfile": {
+						"extensions": [
+							{
+								"name": "customVmssScript",
+								"properties": {
+									"publisher": "Microsoft.Azure.Extensions",
+									"type": "CustomScript",
+									"typeHandlerVersion": "2.0",
+									"autoUpgradeMinorVersion": true,
+									"protectedSettings": {
+										"commandToExecute": "[concat('bash ', variables('vmssScriptFileName'), ' ', parameters('spClientId'), ' ', parameters('spClientSecret'), ' ', resourceGroup().name, ' ', variables('subscriptionId'), ' ', variables('tenantId'), ' ', parameters('location'), ' ', parameters('vmssSubnetName'), ' ', parameters('virtualNetworkName'))]",
+										"fileUris": [
+											"[uri(parameters('_artifactsLocation'), concat(variables('scriptsDir'), '/', variables('vmssScriptFileName'), parameters('_artifactsLocationSasToken')))]"
+										]
+									}
+								}
+							}
+						]
+					}
+				}
+			}
+		}
+	],
+	"outputs": {
+		"adminUsername": {
+			"type": "string",
+			"value": "[parameters('adminUsername')]"
+		},
+		"hostname": {
+			"type": "string",
+			"value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+		},
+		"sshCommand": {
+			"type": "string",
+			"value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+		}
+	}
+}
+

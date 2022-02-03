@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "existingApiMgmtName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of existing Api Management service. eg: 'blue-api-mgmt-v2'"
+            }
+        },
+        "logToEventhubLoggerName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of log-to-eventhub 'logger-id' referred to in policy xml"
+            }
+        },
+        "eventHubNS": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of Eventhub Namespace"
+            }
+        },
+        "eventHubName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Eventhub"
+            }
+        },
+        "eventHubSendPolicyName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of Eventhub Send Policy"
+            }
+        },
+        "tags": {
+            "type": "Object"
+        }
+    },
+    "functions": [],
+    "variables": {
+        "credentialsName": "[concat('credentials-', parameters('logToEventhubLoggerName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ApiManagement/service/loggers",
+            "apiVersion": "2020-12-01",
+            "name": "[concat(parameters('existingApiMgmtName'), '/', parameters('logToEventhubLoggerName'))]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "loggerType": "azureEventHub",
+                "description": "This logger logs to event hub",
+                "credentials": {
+                    "name": "[variables('credentialsName')]",
+                    "connectionString": "[listKeys(resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('eventHubNS'), parameters('eventHubName'), parameters('eventHubSendPolicyName')), '2021-01-01-preview').primaryConnectionString]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "logToEventhubLoggerName": {
+            "type": "string",
+            "value": "[parameters('logToEventhubLoggerName')]"
+        },
+        "resourceId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.ApiManagement/service/loggers', parameters('existingApiMgmtName'), parameters('logToEventhubLoggerName'))]"
+        }
+    }
+}

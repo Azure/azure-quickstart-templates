@@ -1,0 +1,129 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "12341853913869812535"
+    }
+  },
+  "parameters": {
+    "responseTimeThreshold": {
+      "type": "int",
+      "defaultValue": 3,
+      "maxValue": 10000,
+      "minValue": 1,
+      "metadata": {
+        "description": "Enter response time threshold in seconds."
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": "myWorkspace",
+      "metadata": {
+        "description": "Name of the workspace where the data will be stored."
+      }
+    },
+    "applicationInsightsName": {
+      "type": "string",
+      "defaultValue": "myApplicationInsights",
+      "metadata": {
+        "description": "Name of the application insights resource."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "responseAlertName": "[format('ResponseTime-{0}', toLower(parameters('applicationInsightsName')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2020-10-01",
+      "name": "[parameters('workspaceName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "Free"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[parameters('applicationInsightsName')]",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "[variables('responseAlertName')]",
+      "location": "global",
+      "properties": {
+        "description": "Response time alert",
+        "severity": 0,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
+        ],
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "1st criterion",
+              "metricName": "requests/duration",
+              "operator": "GreaterThan",
+              "threshold": "[parameters('responseTimeThreshold')]",
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[resourceId('microsoft.insights/actionGroups', 'emailActionGroup')]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]",
+        "[resourceId('microsoft.insights/actionGroups', 'emailActionGroup')]"
+      ]
+    },
+    {
+      "type": "microsoft.insights/actionGroups",
+      "apiVersion": "2019-06-01",
+      "name": "emailActionGroup",
+      "location": "global",
+      "properties": {
+        "groupShortName": "string",
+        "enabled": true,
+        "emailReceivers": [
+          {
+            "name": "Example",
+            "emailAddress": "example@test.com",
+            "useCommonAlertSchema": true
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {        
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the name of the Azure Machine Learning Workspace which will contain this compute."
+            }
+        },
+        "clusterName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the name of the Azure Machine Learning Compute cluster."
+            }
+        },        
+        "minNodeCount": {
+            "defaultValue": 0,
+            "type": "int",
+            "metadata": {
+                "description": "The minimum number of nodes to use on the cluster. If not specified, defaults to 0"
+            }
+        },        
+        "maxNodeCount": {
+            "defaultValue": 1,
+            "type": "int",
+            "metadata": {
+                "description": " The maximum number of nodes to use on the cluster. If not specified, defaults to 4."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue":"[resourceGroup().location]",
+            "metadata": {
+                "description": "The location of the Azure Machine Learning Workspace."
+            }
+        },
+        "adminUserName": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The name of the administrator user account which can be used to SSH into nodes. It must only contain lower case alphabetic characters [a-z]."
+            }
+        },
+        "adminUserPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password of the administrator user account."
+            }
+        },
+        "vmSize": {
+            "defaultValue": "Standard_D4s_v3",
+            "type": "string",
+            "metadata": {
+                "description": " The size of agent VMs. More details can be found here: https://aka.ms/azureml-vm-details."
+            }
+        },
+        "vnetResourceGroupName": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Name of the resource group which holds the VNET to which you want to inject your compute in."
+            }
+        },
+        "vnetName": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Name of the vnet which you want to inject your compute in."
+            }
+        },
+        "subnetName": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Name of the subnet inside the VNET which you want to inject your compute in."
+            }
+        } 
+    },
+    "variables": {
+        "subnet": {
+            "id" : "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+        }
+    },
+    "resources": [        
+        {
+            "type": "Microsoft.MachineLearningServices/workspaces/computes",
+            "name": "[concat(parameters('workspaceName'), '/', parameters('clusterName'))]",
+            "apiVersion": "2021-01-01",
+            "location" : "[parameters('location')]",
+            "properties": {
+                "computeType": "AmlCompute",
+                "properties":
+                {
+                    "vmSize" : "[parameters('vmSize')]",
+                    "scaleSettings":
+                    {
+                        "minNodeCount" : "[parameters('minNodeCount')]",
+                        "maxNodeCount" : "[parameters('maxNodeCount')]"
+                    },
+                    "userAccountCredentials" : 
+                    {
+                        "adminUserName" : "[parameters('adminUserName')]",
+                        "adminUserPassword" : "[parameters('adminUserPassword')]"
+                    },
+                    "subnet" : "[if(and(not(empty(parameters('vnetResourceGroupName'))),not(empty(parameters('vnetName'))),not(empty(parameters('subnetName')))), variables('subnet'), json('null'))]"
+                }                
+            }
+        }
+    ]
+}
+

@@ -1,0 +1,360 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location of the primary virtual network."
+            }
+        },
+        "primaryVirtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the new primary virtual network."
+            }
+        },
+        "primaryCacheSubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the new primary cache subnet."
+            }
+        },
+        "primaryVirtualNetworkAddressSpace": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "The address space of the new primary virtual network."
+            }
+        },
+        "primaryCacheSubnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "description": "The address prefix of the new primary cache subnet."
+            }
+        },
+        "primaryGatewaySubnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.255.224/27",
+            "metadata": {
+                "description": "The address prefix of the new primary gateway subnet. Must be at least /29"
+            }
+        },
+        "primaryGatewayPublicIPAddressName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the new primary gateway public IP address."
+            }
+        },
+        "primaryGatewayName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the new primary gateway."
+            }
+        },
+        "primaryGatewayConnectionName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the new primary gateway connection."
+            }
+        },
+        "secondaryLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The location of the secondary virtual network."
+            }
+        },
+        "secondaryVirtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the new secondary virtual network."
+            }
+        },
+        "secondaryCacheSubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the new secondary cache subnet."
+            }
+        },
+        "secondaryVirtualNetworkAddressSpace": {
+            "type": "string",
+            "defaultValue": "10.1.0.0/16",
+            "metadata": {
+                "description": "The address space of the new secondary virtual network."
+            }
+        },
+        "secondaryCacheSubnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.1.0.0/24",
+            "metadata": {
+                "description": "The address prefix of the new secondary cache subnet."
+            }
+        },
+        "secondaryGatewaySubnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.1.255.224/27",
+            "metadata": {
+                "description": "The address prefix of the new secondary gateway subnet. Must be at least /29"
+            }
+        },
+        "secondaryGatewayPublicIPAddressName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the new secondary gateway public IP address."
+            }
+        },
+        "secondaryGatewayName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the new secondary gateway."
+            }
+        },
+        "secondaryGatewayConnectionName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the new secondary gateway connection."
+            }
+        },
+        "gatewaySharedKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "A mixture of letters and numbers. The shared key (PSK) is used to establish encryption for the virtual network gateway connection."
+            }
+        }
+    },
+    "variables": {
+        "gatewaySubnetName": "GatewaySubnet"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-08-01",
+            "name": "[parameters('primaryVirtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "comments": "Create a virtual network in the primary location.",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('primaryVirtualNetworkAddressSpace')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('primaryCacheSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('primaryCacheSubnetAddressPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('gatewaySubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('primaryGatewaySubnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2018-08-01",
+            "name": "[parameters('secondaryVirtualNetworkName')]",
+            "location": "[parameters('secondaryLocation')]",
+            "comments": "Create a virtual network in the secondary location.",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('secondaryVirtualNetworkAddressSpace')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('secondaryCacheSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('secondaryCacheSubnetAddressPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('gatewaySubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('secondaryGatewaySubnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-08-01",
+            "name": "[parameters('primaryGatewayPublicIPAddressName')]",
+            "location": "[parameters('location')]",
+            "comments": "Create a public IP address for the primary virtual network gateway.",
+            "sku": {
+                "name": "Basic"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "publicIPAddressVersion": "IPv4"
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-08-01",
+            "name": "[parameters('secondaryGatewayPublicIPAddressName')]",
+            "location": "[parameters('secondaryLocation')]",
+            "comments": "Create a public IP address for the secondary virtual network gateway.",
+            "sku": {
+                "name": "Basic"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "publicIPAddressVersion": "IPv4"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "apiVersion": "2018-08-01",
+            "name": "[parameters('primaryGatewayName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[parameters('primaryVirtualNetworkName')]",
+                "[parameters('primaryGatewayPublicIPAddressName')]"
+            ],
+            "comments": "Create a virtual network gateway for the primary virtual network.",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "default",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('primaryVirtualNetworkName'), variables('gatewaySubnetName'))]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('primaryGatewayPublicIPAddressName'))]"
+                            }
+                        }
+                    }
+                ],
+                "gatewayType": "Vpn",
+                "vpnType": "RouteBased",
+                "sku": {
+                    "name": "VpnGw1",
+                    "tier": "VpnGw1"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "apiVersion": "2018-08-01",
+            "name": "[parameters('secondaryGatewayName')]",
+            "location": "[parameters('secondaryLocation')]",
+            "dependsOn": [
+                "[parameters('secondaryVirtualNetworkName')]",
+                "[parameters('secondaryGatewayPublicIPAddressName')]"
+            ],
+            "comments": "Create a virtual network gateway for the secondary virtual network.",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "default",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('secondaryVirtualNetworkName'), variables('gatewaySubnetName'))]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('secondaryGatewayPublicIPAddressName'))]"
+                            }
+                        }
+                    }
+                ],
+                "gatewayType": "Vpn",
+                "vpnType": "RouteBased",
+                "sku": {
+                    "name": "VpnGw1",
+                    "tier": "VpnGw1"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/connections",
+            "apiVersion": "2018-08-01",
+            "name": "[parameters('primaryGatewayConnectionName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[parameters('primaryGatewayName')]",
+                "[parameters('secondaryGatewayName')]"
+            ],
+            "comments": "Create a virtual network gateway connection from the primary gateway to the secondary gateway.",
+            "properties": {
+                "virtualNetworkGateway1": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('primaryGatewayName'))]"
+                },
+                "virtualNetworkGateway2": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('secondaryGatewayName'))]"
+                },
+                "connectionType": "Vnet2Vnet",
+                "connectionProtocol": "IKEv2",
+                "sharedKey": "[parameters('gatewaySharedKey')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/connections",
+            "apiVersion": "2018-08-01",
+            "name": "[parameters('secondaryGatewayConnectionName')]",
+            "location": "[parameters('secondaryLocation')]",
+            "dependsOn": [
+                "[parameters('primaryGatewayName')]",
+                "[parameters('secondaryGatewayName')]"
+            ],
+            "comments": "Create a virtual network gateway connection from the secondary gateway to the primary gateway.",
+            "properties": {
+                "virtualNetworkGateway1": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('secondaryGatewayName'))]"
+                },
+                "virtualNetworkGateway2": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('primaryGatewayName'))]"
+                },
+                "connectionType": "Vnet2Vnet",
+                "connectionProtocol": "IKEv2",
+                "sharedKey": "[parameters('gatewaySharedKey')]"
+            }
+        }
+    ],
+    "outputs": {
+        "existingPrimaryVirtualNetworkLocation": {
+            "type": "string",
+            "value": "[parameters('location')]"
+        },
+        "existingPrimaryVirtualNetworkResourceGroupName": {
+            "type": "string",
+            "value": "[resourceGroup().name]"
+        },
+        "existingPrimaryVirtualNetworkName": {
+            "type": "string",
+            "value": "[parameters('primaryVirtualNetworkName')]"
+        },
+        "existingPrimaryCacheSubnetName": {
+            "type": "string",
+            "value": "[parameters('primaryCacheSubnetName')]"
+        },
+        "existingSecondaryVirtualNetworkLocation": {
+            "type": "string",
+            "value": "[parameters('secondaryLocation')]"
+        },
+        "existingSecondaryVirtualNetworkResourceGroupName": {
+            "type": "string",
+            "value": "[resourceGroup().name]"
+        },
+        "existingSecondaryVirtualNetworkName": {
+            "type": "string",
+            "value": "[parameters('secondaryVirtualNetworkName')]"
+        },
+        "existingSecondaryCacheSubnetName": {
+            "type": "string",
+            "value": "[parameters('secondaryCacheSubnetName')]"
+        }
+    }
+}

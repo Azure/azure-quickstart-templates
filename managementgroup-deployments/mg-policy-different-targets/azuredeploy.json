@@ -1,0 +1,137 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "6347895830126627671"
+    }
+  },
+  "parameters": {
+    "targetMGs": {
+      "type": "array",
+      "metadata": {
+        "description": "An Array of Target Management Group"
+      }
+    },
+    "allowedLocations": {
+      "type": "array",
+      "defaultValue": [
+        "australiaeast",
+        "australiasoutheast",
+        "australiacentral"
+      ],
+      "metadata": {
+        "description": "An array of the allowed locations, all other locations will be denied by the created policy."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "policyDefinitionName": "LocationRestriction"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/policyDefinitions",
+      "apiVersion": "2020-09-01",
+      "name": "[variables('policyDefinitionName')]",
+      "properties": {
+        "policyType": "Custom",
+        "mode": "All",
+        "parameters": {},
+        "policyRule": {
+          "if": {
+            "not": {
+              "field": "location",
+              "in": "[parameters('allowedLocations')]"
+            }
+          },
+          "then": {
+            "effect": "deny"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "getManagementGroupName",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1.14562",
+              "templateHash": "10298276120160485756"
+            }
+          },
+          "functions": [],
+          "resources": []
+        }
+      }
+    },
+    {
+      "copy": {
+        "name": "assignmentLoop",
+        "count": "[length(parameters('targetMGs'))]"
+      },
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "[format('deploy-assignment-to-{0}', parameters('targetMGs')[copyIndex()])]",
+      "scope": "[format('Microsoft.Management/managementGroups/{0}', parameters('targetMGs')[copyIndex()])]",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "policyDefinitionId": {
+            "value": "[extensionResourceId(tenantResourceId('Microsoft.Management/managementGroups', split(reference('getManagementGroupName', '2020-10-01', 'Full').scope, '/')[2]), 'Microsoft.Authorization/policyDefinitions', variables('policyDefinitionName'))]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1.14562",
+              "templateHash": "1317475483625831382"
+            }
+          },
+          "parameters": {
+            "policyDefinitionId": {
+              "type": "string",
+              "metadata": {
+                "description": "Policy definition unique identifier"
+              }
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/policyAssignments",
+              "apiVersion": "2020-09-01",
+              "name": "location-lock",
+              "properties": {
+                "policyDefinitionId": "[parameters('policyDefinitionId')]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[format('Microsoft.Resources/deployments/{0}', 'getManagementGroupName')]"
+      ]
+    }
+  ]
+}

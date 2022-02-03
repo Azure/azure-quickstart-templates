@@ -1,0 +1,102 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "uniqueDeployPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The unique prefix used for the nodes & dns. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "The size of the virtual machine used for the deployment"
+      },
+      "defaultValue": "Standard_A2_v2"
+    },
+    "deploymentType": {
+      "type": "string",
+      "defaultValue": "Server",
+      "allowedValues": [
+        "Nodes",
+        "Server"
+      ],
+      "metadata": {
+        "description": "Choose if you want to add nodes to an existing server or deploy a server without any nodes."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. For example, if stored on a public GitHub repo, you'd use the following URI: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/demos/docker-rancher/."
+      },
+      "defaultValue": "[deployment().properties.templatelink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  If your artifacts are stored on a public repo or public storage account you can leave this blank."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "deployTypeParam": {
+      "Nodes": "nodes.json",
+      "Server": "server.json"
+    },
+    "deployTypeParamValue": "[variables('deployTypeParam')[parameters('deploymentType')]]",
+    "templateDeployUrl": "[uri(parameters('_artifactsLocation'), concat(variables('deployTypeParamValue'), parameters('_artifactsLocationSasToken')))]"
+  },
+  "resources": [
+    {
+      "name": "rancherdeploy",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('templateDeployUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "rancherName": {
+            "value": "[parameters('uniqueDeployPrefix')]"
+          },
+          "rancherVmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "location":{
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    }
+  ]
+}

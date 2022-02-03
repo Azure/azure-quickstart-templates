@@ -1,0 +1,167 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": "[concat('workspace', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specifies the name of the Azure Machine Learning service workspace."
+      }
+    },
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "australiaeast",
+        "brazilsouth",
+        "canadacentral",
+        "centralus",
+        "eastasia",
+        "eastus",
+        "eastus2",
+        "francecentral",
+        "japaneast",
+        "koreacentral",
+        "northcentralus",
+        "northeurope",
+        "southeastasia",
+        "southcentralus",
+        "uksouth",
+        "westcentralus",
+        "westus",
+        "westus2",
+        "westeurope"
+      ],
+      "metadata": {
+        "description": "Specifies the location for all resources."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4_v3",
+      "metadata": {
+        "description": "Specifies the VM size of the agents."
+      }
+    },
+    "agentCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "Specifies the agent count."
+      }
+    }
+  },
+  "variables": {
+    "storageAccountName": "[concat('sa',uniqueString(resourceGroup().id))]",
+    "storageAccountType": "Standard_LRS",
+    "keyVaultName": "[concat('kv',uniqueString(resourceGroup().id))]",
+    "tenantId": "[subscription().tenantId]",
+    "applicationInsightsName": "[concat('ai',uniqueString(resourceGroup().id))]",
+    "containerRegistryName": "[concat('cr',uniqueString(resourceGroup().id))]"
+  },
+    "resources": [
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "2021-02-01",
+        "name": "[variables('storageAccountName')]",
+        "location": "[parameters('location')]",
+        "sku": {
+          "name": "[variables('storageAccountType')]"
+        },
+        "kind": "StorageV2",
+        "properties": {
+          "encryption": {
+            "services": {
+              "blob": {
+                "enabled": true
+              },
+              "file": {
+                "enabled": true
+              }
+            },
+            "keySource": "Microsoft.Storage"
+          },
+          "supportsHttpsTrafficOnly": true
+        }
+      },
+      {
+        "type": "Microsoft.KeyVault/vaults",
+        "apiVersion": "2019-09-01",
+        "name": "[variables('keyVaultName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "tenantId": "[variables('tenantId')]",
+          "sku": {
+            "name": "standard",
+            "family": "A"
+          },
+          "accessPolicies": [
+          ]
+        }
+      },
+      {
+        "type": "Microsoft.Insights/components",
+        "apiVersion": "2020-02-02-preview",
+        "name": "[variables('applicationInsightsName')]",
+        "location": "[if(or(equals(parameters('location'),'eastus2'),equals(parameters('location'),'westcentralus')),'southcentralus',parameters('location'))]",
+        "kind": "web",
+        "properties": {
+          "Application_Type": "web"
+        }
+      },
+      {
+        "type": "Microsoft.ContainerRegistry/registries",
+        "apiVersion": "2019-05-01",
+        "name": "[variables('containerRegistryName')]",
+        "location": "[parameters('location')]",
+        "sku": {
+          "name": "Standard"
+        },
+        "properties": {
+          "adminUserEnabled": true
+        }
+      },
+      {
+        "type": "Microsoft.MachineLearningServices/workspaces",
+        "apiVersion": "2021-04-01",
+        "name": "[parameters('workspaceName')]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+          "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+          "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
+          "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))]"
+        ],
+        "identity": {
+          "type": "systemAssigned"
+        },
+        "properties": {
+          "friendlyName": "[parameters('workspaceName')]",
+          "keyVault": "[resourceId('Microsoft.KeyVault/vaults',variables('keyVaultName'))]",
+          "applicationInsights": "[resourceId('Microsoft.Insights/components',variables('applicationInsightsName'))]",
+          "containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries',variables('containerRegistryName'))]",
+          "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts/',variables('storageAccountName'))]"
+        }
+      },
+      {
+          "type": "Microsoft.MachineLearningServices/workspaces/computes",
+          "apiVersion": "2021-04-01",
+          "name": "[concat(parameters('workspaceName'),'/compute-with-ilb')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+          "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]"
+          ],
+          "properties": {
+              "computeType": "AKS",
+              "computeLocation": "[parameters('location')]",
+              "properties":
+              {
+                  "agentVMSize": "[parameters('vmSize')]",
+                  "agentCount": "[parameters('agentCount')]",
+                  "loadBalancerType": "InternalLoadBalancer"
+              }
+          }
+      }
+  ]
+}
+

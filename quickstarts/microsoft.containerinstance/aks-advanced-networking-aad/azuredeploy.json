@@ -1,0 +1,275 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceName": {
+            "type": "string",
+            "defaultValue": "aksadcluster",
+            "metadata": {
+                "description": "The name of the Managed Cluster resource."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The Azure location of the AKS resource."
+            }
+        },
+        "dnsPrefix": {
+            "type": "string",
+            "defaultValue": "aksadcluster",
+            "metadata": {
+                "description": "Optional DNS prefix to use with hosted Kubernetes API server FQDN."
+            }
+        },
+        "osDiskSizeGB": {
+            "defaultValue": 500,
+            "minValue": 0,
+            "maxValue": 1023,
+            "type": "int",
+            "metadata": {
+                "description": "Disk size (in GB) to provision for each of the agent pool nodes. This value ranges from 0 to 1023. Specifying 0 will apply the default disk size for that agentVMSize."
+            }
+        },
+        "agentCount": {
+            "defaultValue": 3,
+            "minValue": 1,
+            "maxValue": 50,
+            "type": "int",
+            "metadata": {
+                "description": "The number of agent nodes for the cluster. Production workloads have a recommended minimum of 3."
+            }
+        },
+        "agentVMSize": {
+            "defaultValue": "Standard_D2_v3",
+            "type": "string",
+            "metadata": {
+                "description": "The size of the Virtual Machine."
+            }
+        },
+        "existingServicePrincipalObjectId": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Oject ID against which the Network Contributor roles will be assigned on the subnet"
+            }
+        },
+        "existingServicePrincipalClientId": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Client ID (used by cloudprovider)"
+            }
+        },
+        "existingServicePrincipalClientSecret": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The Service Principal Client Secret."
+            }
+        },
+        "osType": {
+            "defaultValue": "Linux",
+            "allowedValues": [
+                "Linux"
+            ],
+            "type": "string",
+            "metadata": {
+                "description": "The type of operating system."
+            }
+        },
+        "kubernetesVersion": {
+            "defaultValue": "1.12.6",
+            "type": "string",
+            "metadata": {
+                "description": "The version of Kubernetes."
+            }
+        },
+        "enableHttpApplicationRouting": {
+            "defaultValue": false,
+            "type": "bool",
+            "metadata": {
+                "description": "boolean flag to turn on and off of http application routing"
+            }
+        },
+        "networkPlugin": {
+            "allowedValues": [
+                "azure",
+                "kubenet"
+            ],
+            "defaultValue": "azure",
+            "type": "string",
+            "metadata": {
+                "description": "Network plugin used for building Kubernetes network."
+            }
+        },
+        "maxPods": {
+            "defaultValue": 30,
+            "type": "int",
+            "metadata": {
+                "description": "Maximum number of pods that can run on a node."
+            }
+        },
+        "enableRBAC": {
+            "defaultValue": true,
+            "type": "bool",
+            "metadata": {
+                "description": "boolean flag to turn on and off of RBAC"
+            }
+        },
+        "existingVirtualNetworkName": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of an existing VNET that will contain this AKS deployment."
+            }
+        },
+        "existingVirtualNetworkResourceGroup": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of the existing VNET resource group"
+            }
+        },
+        "existingSubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Subnet name that will contain the App Service Environment"
+            }
+        },
+        "existingSubnetRoleAssignmentName":{
+            "type": "string",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "Name of the Role Assignment created for the Service Principal in the existing Subnet"
+            }
+        },
+        "serviceCidr": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "A CIDR notation IP range from which to assign service cluster IPs."
+            }
+        },
+        "dnsServiceIP": {
+            "type": "string",
+            "defaultValue": "10.0.0.10",
+            "metadata": {
+                "description": "Containers DNS server IP address."
+            }
+        },
+        "dockerBridgeCidr": {
+            "type": "string",
+            "defaultValue": "172.17.0.1/16",
+            "metadata": {
+                "description": "A CIDR notation IP for Docker bridge."
+            }
+        },
+        "AAD_ClientAppID":{
+            "type":"securestring",
+            "metadata": {
+                "description": "The Application ID for the Client App Service Principal"
+            }
+        },
+        "AAD_ServerAppID":{
+            "type":"securestring",
+            "metadata": {
+                "description": "The Application ID for the Server App Service Principal"
+            }
+        },
+        "AAD_TenantID":{
+            "type":"securestring",
+            "metadata": {
+                "description": "The Azure AD Tenant where the cluster will reside"
+            }
+        },
+        "AAD_ServerAppSecret":{
+            "type":"securestring",
+            "metadata": {
+                "description": "The Service Principal Secret for the Client App Service Principal"
+            }
+        }
+    },
+    "variables": {
+        "vnetSubnetId": "[resourceId(parameters('existingVirtualNetworkResourceGroup'),'Microsoft.Network/virtualNetworks/subnets',parameters('existingVirtualNetworkName'),parameters('existingSubnetName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ContainerService/managedClusters",
+            "name": "[parameters('resourceName')]",
+            "apiVersion": "2018-03-31",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/', 'ClusterSubnetRoleAssignmentDeployment')]"
+            ],
+            "properties": {
+                "kubernetesVersion": "[parameters('kubernetesVersion')]",
+                "enableRBAC": "[parameters('enableRBAC')]",
+                "dnsPrefix": "[parameters('dnsPrefix')]",
+                "aadProfile": {
+                    "clientAppID": "[parameters('AAD_ClientAppID')]",
+                    "serverAppID": "[parameters('AAD_ServerAppID')]",
+                    "tenantID": "[parameters('AAD_TenantID')]",
+                    "serverAppSecret": "[parameters('AAD_ServerAppSecret')]"
+                },
+                "addonProfiles": {
+                    "httpApplicationRouting": {
+                        "enabled": "[parameters('enableHttpApplicationRouting')]"
+                    }
+                },
+                "agentPoolProfiles": [
+                    {
+                        "name": "agentpool",
+                        "osDiskSizeGB": "[parameters('osDiskSizeGB')]",
+                        "count": "[parameters('agentCount')]",
+                        "vmSize": "[parameters('agentVMSize')]",
+                        "osType": "[parameters('osType')]",
+                        "storageProfile": "ManagedDisks",
+                        "vnetSubnetID": "[variables('vnetSubnetID')]",
+                        "maxPods": "[parameters('maxPods')]"
+                    }
+                ],
+                "servicePrincipalProfile": {
+                    "clientId": "[parameters('existingServicePrincipalClientId')]",
+                    "secret": "[parameters('existingServicePrincipalClientSecret')]"
+                },
+                "networkProfile": {
+                    "networkPlugin": "[parameters('networkPlugin')]",
+                    "serviceCidr": "[parameters('serviceCidr')]",
+                    "dnsServiceIP": "[parameters('dnsServiceIP')]",
+                    "dockerBridgeCidr": "[parameters('dockerBridgeCidr')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "name": "ClusterSubnetRoleAssignmentDeployment",
+            "apiVersion": "2017-05-10",
+            "resourceGroup": "[parameters('existingVirtualNetworkResourceGroup')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Network/virtualNetworks/subnets/providers/roleAssignments",
+                            "apiVersion": "2017-05-01",
+                            "name": "[parameters('existingSubnetRoleAssignmentName')]",
+                            "properties": {
+                                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '4d97b98b-1d4f-4787-a291-c67834d212e7')]",
+                                "principalId": "[parameters('existingServicePrincipalObjectId')]",
+                                "scope": "[variables('vnetSubnetId')]"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "controlPlaneFQDN": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.ContainerService/managedClusters/', parameters('resourceName'))).fqdn]"
+        }
+    }
+}
+

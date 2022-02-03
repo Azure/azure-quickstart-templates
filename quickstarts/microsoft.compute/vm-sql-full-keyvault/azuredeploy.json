@@ -1,0 +1,443 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualMachineName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Name"
+      }
+    },
+    "virtualMachineSize": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Size"
+      },
+      "defaultValue": "Standard_D2s_v3"
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Administrator User Name"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Administrator Password"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Storage Account Type"
+      },
+      "allowedValues": [
+        "Premium_LRS",
+        "Standard_LRS"
+      ],
+      "defaultValue": "Premium_LRS"
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Virtual Network Name"
+      }
+    },
+    "networkInterfaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Network Interface Name"
+      }
+    },
+    "networkSecurityGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Network Security Group Name"
+      }
+    },
+    "addressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Subnet Name"
+      },
+      "defaultValue": "10.0.0.0/16"
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Subnet Name"
+      },
+      "defaultValue": "default"
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Subnet Name"
+      },
+      "defaultValue": "10.0.0.0/24"
+    },
+    "publicIpAddressName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Public IP Address Name"
+      }
+    },
+    "publicIpAddressType": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Public IP Address Type"
+      },
+      "defaultValue": "Dynamic"
+    },
+    "sqlConnectivityType": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine SQL Connectivity Type"
+      },
+      "defaultValue": "Public"
+    },
+    "sqlPortNumber": {
+      "type": "int",
+      "metadata": {
+        "description": "SQL Server Virtual Machine SQL Port Number"
+      },
+      "defaultValue": 1579
+    },
+    "sqlStorageDisksCount": {
+      "type": "int",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Data Disk Count"
+      },
+      "defaultValue": 2
+    },
+    "sqlStorageWorkloadType": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Workload Type: GENERAL - general work load; DW - datawear house work load; OLTP - Transactional processing work load"
+      },
+      "allowedValues": [
+        "GENERAL",
+        "OLTP",
+        "DW"
+      ],
+      "defaultValue": "GENERAL"
+    },
+    "sqlAkvCredentialName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL credential name to create on the SQL Server virtual machine"
+      }
+    },
+    "sqlAkvName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Key Vault Name"
+      }
+    },
+    "sqlAkvPrincipalName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Key Vault principal name or id"
+      }
+    },
+    "sqlAkvPrincipalSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Azure Key Vault principal secret"
+      }
+    },
+    "sqlAuthenticationLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Authentication Login Account Name"
+      },
+      "defaultValue": "mysa"
+    },
+    "sqlAuthenticationPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SQL Server Authentication Login Account Password"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'),  parameters('subnetName'))]",
+    "sqlAkvUrl": "[concat('https://', parameters('sqlAkvName'), environment().suffixes.keyVaultDns)]"
+  },
+  "resources": [
+    {
+      "name": "[parameters('virtualMachineName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+      ],
+      "properties": {
+        "osProfile": {
+          "computerName": "[parameters('virtualMachineName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": true
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftSQLServer",
+            "offer": "sql2014sp3-ws2012r2",
+            "sku": "Enterprise",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('virtualMachineName'), '_OSDisk')]",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('storageAccountType')]"
+            }
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(parameters('virtualMachineName'), '_DataDisk-1')]",
+              "createOption": "Empty",
+              "lun": 0,
+              "diskSizeGB": 1023,
+              "caching": "ReadOnly"
+            },
+            {
+              "name": "[concat(parameters('virtualMachineName'), '_DataDisk-2')]",
+              "createOption": "Empty",
+              "lun": 1,
+              "diskSizeGB": 1023,
+              "caching": "ReadOnly"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('virtualMachineName'), '/SqlIaasExtension')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
+      ],
+      "properties": {
+        "type": "SqlIaaSAgent",
+        "publisher": "Microsoft.SqlServer.Management",
+        "typeHandlerVersion": "1.2",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "AutoTelemetrySettings": {
+            "Region": "[parameters('location')]"
+          },
+          "KeyVaultCredentialSettings": {
+            "Enable": true,
+            "CredentialName": "[parameters('sqlAkvCredentialName')]"
+          }
+        },
+        "protectedSettings": {
+          "PrivateKeyVaultCredentialSettings": {
+            "AzureKeyVaultUrl": "[variables('sqlAkvUrl')]",
+            "ServicePrincipalName": "[parameters('sqlAkvPrincipalName')]",
+            "ServicePrincipalSecret": "[parameters('sqlAkvPrincipalSecret')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "prepareSqlVmDeployment",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'SqlIaasExtension')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/preparingSqlServerSa.json', parameters('_artifactsLocationSasToken')))]"
+        },
+        "parameters": {
+          "sqlVMName": {
+            "value": "[parameters('virtualMachineName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "sqlUsername": {
+            "value": "[parameters('sqlAuthenticationLogin')]"
+          },
+          "sqlPassword": {
+            "value": "[parameters('sqlAuthenticationPassword')]"
+          },
+          "disksCount": {
+            "value": "[parameters('sqlStorageDisksCount')]"
+          },
+          "diskSizeInGB": {
+            "value": 1023
+          },
+          "sqlEnginePort": {
+            "value": "[parameters('sqlPortNumber')]"
+          },
+          "workloadType": {
+            "value": "[parameters('sqlStorageWorkloadType')]"
+          },
+          "connectionType": {
+            "value": "[parameters('sqlConnectivityType')]"
+          },
+          "sqlVMPrepareModulesURL": {
+            "value": "[uri(parameters('_artifactsLocation'), concat('scripts/PrepareSqlServer.ps1.zip', parameters('_artifactsLocationSasToken')))]"
+          },
+          "sqlVMPrepareConfigurationFunction": {
+            "value": "PrepareSqlServerSa.ps1\\PrepareSqlServerSa"
+          }
+        }
+      }
+    },
+    {
+      "name": "[parameters('virtualNetworkName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('networkInterfaceName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIpAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+        }
+      }
+    },
+    {
+      "name": "[parameters('publicIpAddressName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
+      "sku":{
+        "name": "Basic"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIpAddressType')]"
+      }
+    },
+    {
+      "name": "[parameters('networkSecurityGroupName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "priority": 1000,
+              "sourceAddressPrefix": "*",
+              "protocol": "Tcp",
+              "destinationPortRange": "3389",
+              "access": "Allow",
+              "direction": "inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-sql",
+            "properties": {
+              "priority": 1500,
+              "sourceAddressPrefix": "*",
+              "protocol": "Tcp",
+              "destinationPortRange": "1433",
+              "access": "Allow",
+              "direction": "inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "adminUsername": {
+      "type": "string",
+      "value": "[parameters('adminUsername')]"
+    }
+  }
+}
+

@@ -1,0 +1,367 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "modules": {
+      "type": "array",
+      "metadata": {
+        "description": "Enter the Module(s) to install including the Version"
+      },
+      "defaultValue": [
+        {
+          "name": "AzureRM",
+          "version": "5.6.0"
+        },
+        {
+          "name": "AzureAD",
+          "version": "2.0.1.3"
+        },
+        {
+          "name": "Bitbucket.v2",
+          "version": "1.1.2"
+        },
+        {
+          "name": "GetPassword",
+          "version": "1.0.0.0"
+        },
+        {
+          "name": "posh-git",
+          "version": "0.7.1"
+        }
+      ]
+    },
+    "publicIPDnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter a DNS name to resolve to the Public IP Address"
+      }
+    },
+    "vmAdminUser": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Administrator Account to be created"
+      }
+    },
+    "vmAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the Admin Account. Must be at least 12 characters long"
+      },
+      "minLength": 12
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifiy the size of VM required for the VM(s)"
+      },
+      "defaultValue": "Standard_D2_v3"
+    },
+    "vstsAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The Visual Studio Team Services account name, that is, the first part of your VSTSAccount.visualstudio.com"
+      }
+    },
+    "vstsAgentCount": {
+      "type": "int",
+      "metadata": {
+        "description": "The number of Visual Studio Team Services agents to be configured on the Virtual Machine. Default is 3"
+      },
+      "allowedValues": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "defaultValue": 3
+    },
+    "vstsPersonalAccessToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The personal access token to connect to VSTS"
+      }
+    },
+    "vstsPoolName": {
+      "type": "string",
+      "defaultValue": "Default",
+      "metadata": {
+        "description": "The Visual Studio Team Services build agent pool for this build agent to join. Use 'Default' if you don't have a separate pool."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "[deployment().properties.templatelink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifiy the publisher of the vm image"
+      },
+      "defaultValue": "MicrosoftVisualStudio"
+    },
+    "imageOffer": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifiy the Offer of the vm image"
+      },
+      "allowedValues": [
+        "VisualStudio",
+        "visualstudio2019"
+      ],
+      "defaultValue": "VisualStudio"
+    },
+    "imageSKU": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifiy the Offer of the vm image"
+      },
+      "allowedValues": [
+        "VS-2017-Ent-WS2016",
+        "vs-2019-ent-ws2019"
+      ],
+      "defaultValue": "VS-2017-Ent-WS2016"
+    }
+  },
+  "variables": {
+    "names": {
+      "avs": "[concat('avs-vsts-', uniqueString(resourceGroup().id))]",
+      "nic": "[concat('nic-vsts-', uniqueString(resourceGroup().id))]",
+      "pip": "[concat('pip-vsts-', uniqueString(resourceGroup().id))]",
+      "vm": "[concat('vm-vsts-', substring(uniqueString(resourceGroup().id), 0, 6))]",
+      "vnet": {
+        "name": "[concat('vn-vsts-', uniqueString(resourceGroup().id))]",
+        "addressPrefix": "10.0.0.0/16",
+        "subnet": "subnet-0",
+        "subnetPrefix": "10.0.0.0/24"
+      },
+      "vsts": "[concat('agent-', uniqueString(resourceGroup().id))]"
+    },
+    "powerShell": {
+      "script": "InstallVstsAgent.ps1",
+      "folder": "scripts",
+      "parameters": "[concat('-vstsAccount ', parameters('vstsAccount'), ' -personalAccessToken ', parameters('vstsPersonalAccessToken'), ' -AgentName ', variables('names').vsts,' -PoolName ', parameters('vstsPoolName'), ' -AgentCount ', parameters('vstsAgentCount'), ' -AdminUser ', parameters('vmAdminUser'), ' -Modules ', variables('modules'))]"
+    },
+    "singleQuote": "'",
+    "modules": "[replace(replace(replace(replace(replace(string(parameters('modules')), '[{\"', '@(@{'), '\":\"', concat(' = ', variables('singleQuote'))), '\",\"', concat(variables('singleQuote'), '; ')), '\"},{\"', concat(variables('singleQuote'), '}, @{')), '\"}]', concat(variables('singleQuote'), '})'))]",
+    "networkSecurityGroupName": "default-NSG"
+  },
+  "resources": [
+    {
+      "name": "[variables('names').avs]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-12-01",
+      "tags": {
+        "displayName": "availabilitySets"
+      },
+      "properties": {
+        "platformUpdateDomainCount": 5,
+        "platformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      }
+    },
+    {
+      "name": "[variables('names').pip]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
+      "tags": {
+        "displayName": "publicIP"
+      },
+      "properties": {
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('publicIPDnsName')]"
+        },
+        "idleTimeoutInMinutes": 4,
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "comments": "Default Network Security Group for template",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('names').vnet.name]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
+      "tags": {
+        "displayName": "virtualNetwork"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('names').vnet.addressPrefix]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('names').vnet.subnet]",
+            "properties": {
+              "addressPrefix": "[variables('names').vnet.subnetPrefix]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('names').nic]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
+      "dependsOn": [
+        "[variables('names').pip]",
+        "[variables('names').vnet.name]"
+      ],
+      "tags": {
+        "displayName": "networkInterfaces"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('names').pip)]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('names').vnet.name, variables('names').vnet.subnet)]"
+              }
+            }
+          }
+        ],
+        
+        "enableIPForwarding": false
+      }
+    },
+    {
+      "name": "[variables('names').vm]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-12-01",
+      "dependsOn": [
+        "[variables('names').avs]",
+        "[variables('names').nic]"
+      ],
+      "tags": {
+        "displayName": "virtualMachines"
+      },
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('names').avs)]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('names').vm]",
+          "adminUsername": "[parameters('vmAdminUser')]",
+          "adminPassword": "[parameters('vmAdminPassword')]",
+          "windowsConfiguration": {
+            "provisionVMAgent": true,
+            "enableAutomaticUpdates": true
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('names').nic)]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "vstsAgent",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2017-12-01",
+          "dependsOn": [
+            "[variables('names').vm]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.9",
+            "settings": {
+              "fileUris": [
+                "[uri(parameters('_artifactsLocation'), concat(variables('powerShell').folder, '/', variables('powerShell').script, parameters('_artifactsLocationSasToken')))]"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -Command \"& {', './', variables('powerShell').script, ' ', variables('powerShell').parameters, '}\"')]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "Modules": {
+      "type": "string",
+      "value": "[variables('modules')]"
+    }
+  }
+}
+

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "blueprintName": {
+      "defaultValue": "sample-blueprint",
+      "type": "String",
+      "metadata": {
+        "description": "The name of the blueprint definition."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Blueprint/blueprints",
+      "apiVersion": "2018-11-01-preview",
+      "name": "[parameters('blueprintName')]",
+      "properties": {
+        "targetScope": "subscription",
+        "description": "Blueprint with a policy assignment artifact.",
+        "resourceGroups": {
+          "sampleRg": {
+            "description": "Resource group to add the assignment to."
+          }
+        },
+        "parameters": {
+          "listOfResourceTypesNotAllowed": {
+            "type": "array",
+            "metadata": {
+              "displayName": "Resource types to pass to the policy assignment artifact."
+            },
+            "defaultValue": [
+              "Citrix.Cloud/accounts"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Blueprint/blueprints/artifacts",
+      "apiVersion": "2018-11-01-preview",
+      "name": "[concat(parameters('blueprintName'), '/policyArtifact')]",
+      "kind": "policyAssignment",
+      "dependsOn": [
+        "[parameters('blueprintName')]"
+      ],
+      "properties": {
+        "displayName": "Blocked Resource Types policy definition",
+        "description": "Block certain resource types",
+        "policyDefinitionId": "[tenantResourceId('Microsoft.Authorization/policyDefinitions', '6c112d4e-5bc7-47ae-a041-ea2d9dccd749')]",
+        "resourceGroup": "sampleRg",
+        "parameters": {
+          "listOfResourceTypesNotAllowed": {
+            "value": "[[parameters('listOfResourceTypesNotAllowed')]"
+          }
+        }
+      }
+    }
+  ]
+}

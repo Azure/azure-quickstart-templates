@@ -1,0 +1,4027 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "SASApplicationName": {
+            "minLength": 2,
+            "maxLength": 6,
+            "type": "String",
+            "defaultValue": "sasapp",
+            "metadata": {
+                "description": "This tag will be used as a prefix for the hostname of the SAS servers and Azure resources"
+            }
+        },
+        "adminIngressLocation": {
+            "type": "String",
+            "metadata": {
+                "description": "Allow inbound SSH traffic to the Ansible Controller-Bastion Host from this CIDR block or IP address range. Must be a valid IP or CIDR range of the form x.x.x.x or x.x.x.x/x"
+            }
+        },
+        "vnetAddressCIDR": {
+            "defaultValue": "10.10.0.0/16",
+            "type": "String",
+            "metadata": {
+                "description": "Virtual Network CIDR, ex. 10.10.0.0/16"
+            }
+        },
+        "ansibleBastionPublicSubnetCIDR": {
+            "defaultValue": "10.10.1.0/24",
+            "type": "String",
+            "metadata": {
+                "description": "Virtual Network Public Subnet CIDR, ex. 10.10.1.0/24 which should allign with VNET CIDR"
+            }
+        },
+        "SASPrivateSubnetCIDR": {
+            "defaultValue": "10.10.2.0/24",
+            "type": "String",
+            "metadata": {
+                "description": "Virtual Network Private Subnet CIDR, ex. 10.10.2.0/24 which should allign with VNET CIDR"
+            }
+        },
+        "ansibleVMSize": {
+            "defaultValue": "Standard_D4s_v3",
+            "type": "String",
+            "metadata": {
+                "description": "This is the SKU for the Ansible VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks. For details: https://azure.microsoft.com/en-in/pricing/details/virtual-machines/red-hat/"
+            }
+        },
+        "windowsRdpVMSize": {
+            "defaultValue": "Standard_D8S_v3",
+            "type": "String",
+            "metadata": {
+                "description": "This is the SKU for the Windows Server VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks"
+            }
+        },
+        "SASMetaVMSize": {
+            "defaultValue": "Standard_D4s_v3",
+            "type": "String",
+            "metadata": {
+                "description": "This is the SKU for the Meta VM.The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks. For details: https://azure.microsoft.com/en-in/pricing/details/virtual-machines/red-hat/"
+            }
+        },
+        "SASComputeVMSize": {
+            "defaultValue": "Standard_E8s_v3",
+            "type": "String",
+            "metadata": {
+                "description": "This is the SKU for the Compute VM.The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks. For details: https://azure.microsoft.com/en-in/pricing/details/virtual-machines/red-hat/"
+            }
+        },
+        "SASMidVMSize": {
+            "defaultValue": "Standard_E8s_v3",
+            "type": "String",
+            "metadata": {
+                "description": "This is the SKU for the Mid VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks. For details: https://azure.microsoft.com/en-in/pricing/details/virtual-machines/red-hat/"
+            }
+        },
+        "SASDataStorage": {
+            "defaultValue": 100,
+            "minValue": 100,
+            "maxValue": 32767,
+            "type": "Int",
+            "metadata": {
+                "description": "The SAS data volume size for SAS 94"
+            }
+        },
+        "primaryUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for the Virtual Machine."
+            }
+        },
+        "SASExternalPassword": {
+            "minLength": 12,
+            "maxLength": 255,
+            "type": "SecureString",
+            "metadata": {
+                "description": "Password for RDP login & SAS admin account in SAS servers"
+            }
+        },
+        "SASInternalPassword": {
+            "minLength": 8,
+            "maxLength": 255,
+            "type": "SecureString",
+            "metadata": {
+                "description": "Password for SAS Internal Accounts(Metadata & WIP)"
+            }
+        },
+        "viyaPrivateSubnetCIDR": {
+            "defaultValue": "10.10.3.0/24",
+            "type": "String",
+            "metadata": {
+                "description": "Virtual Network Private Subnet CIDR, ex. 10.10.3.0/24 which should allign with VNET CIDR"
+            }
+        },
+        "viyaMicroservicesVMSize": {
+            "defaultValue": "Standard_E16s_v3",
+            "type": "String",
+            "metadata": {
+                "description": "This is the SKU for the MicroServices VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks. For details: https://azure.microsoft.com/en-in/pricing/details/virtual-machines/red-hat/"
+            }
+        },
+        "viyaSpreVMSize": {
+            "defaultValue": "Standard_E8s_v3",
+            "type": "String",
+            "metadata": {
+                "description": "This is the SKU for the SPRE VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks. For details: https://azure.microsoft.com/en-in/pricing/details/virtual-machines/red-hat/"
+            }
+        },
+        "viyaCASControllerVMSize": {
+            "defaultValue": "Standard_E8s_v3",
+            "type": "String",
+            "metadata": {
+                "description": "This is the SKU for the CASController VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disk. For details: https://azure.microsoft.com/en-in/pricing/details/virtual-machines/red-hat/"
+            }
+        },
+        "viyaCASWorkerVMSize": {
+            "defaultValue": "Standard_E8s_v3",
+            "type": "String",
+            "metadata": {
+                "description": "This is the SKU for the CAS Worker VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks. For details: https://azure.microsoft.com/en-in/pricing/details/virtual-machines/red-hat/"
+            }
+        },
+        "numberOfViyaCASNodes": {
+            "defaultValue": 1,
+            "minValue": 1,
+            "maxValue": 100,
+            "type": "Int",
+            "metadata": {
+                "description": "The number of CAS Worker Nodes to create."
+            }
+        },
+        "SASViyaDataStorage": {
+            "defaultValue": 100,
+            "minValue": 100,
+            "maxValue": 32767,
+            "type": "Int",
+            "metadata": {
+                "description": "The SAS data volume size for SAS Viya."
+            }
+        },
+        "storageAccountName": {
+            "type": "String",
+            "metadata": {
+                "description": "Storage AccountName where SAS Depot is located"
+            }
+        },
+        "storageAccountKey": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Storage Account Key"
+            }
+        },
+        "fileShareName": {
+            "type": "String",
+            "metadata": {
+                "description": "File Share Name where SASDepot is located"
+            }
+        },
+        "SASDepotFolder": {
+            "type": "String",
+            "metadata": {
+                "description": "Folder Name in Azure File share where SAS94 depot is located"
+            },
+            "defaultValue": "sasdepot"
+        },
+        "viyaRepoFolder": {
+            "type": "String",
+            "metadata": {
+                "description": "Folder Name in Azure File share where SAS Viya Repo is located"
+            },
+            "defaultValue": "viyarepo"
+        },
+        "SASServerLicenseFile": {
+            "type": "String",
+            "metadata": {
+                "description": "Name of SAS Application Server License file.You will find this file inside the SAS Software Depot. It should be inside the folder sid_file."
+            }
+        },
+        "keyVaultOwnerID": {
+            "type": "String",
+            "metadata": {
+                "description": "Key Vault Owner Object ID,Specifies the object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault.Get it by using Get-AzADUser or Get-AzADServicePrincipal cmdlets. e.g.In Azure Cloud PowerShell type PS> Get-AzADUser -UserPrincipalName user@domain.com | grep Id"
+            }
+        },
+        "SSHPublicKey": {
+            "type": "String",
+            "metadata": {
+                "description": "The full ssh public key that will be added to the servers."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Azure Resources location, where all the SAS 94 and Viya resources should be created. e.g. servers, disks, IP's etc."
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sas9.4-viya/",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            }
+        }
+    },
+    "variables": {
+        "access_policy_template": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/access_policy.json', parameters('_artifactsLocationSasToken')))]",
+        "ansible_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('ansible_vm_name'),'_nic')]",
+        "ansible_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('ansible_vm_name'),'_nsg')]",
+        "ansible_pub_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('ansible_vm_name'),'_pub_nic')]",
+        "ansible_vm_name": "ansible",
+        "cascontroller_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('cascontroller_vm_name'),'_nic')]",
+        "cascontroller_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('cascontroller_vm_name'),'_nsg')]",
+        "cascontroller_vm_name": "cascontroller",
+        "casworker_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('casworker_vm_name'),'_nsg')]",
+        "casworker_vm_name": "casworker",
+        "certificatesPermissions": [
+            "import",
+            "get",
+            "list"
+        ],
+        "compute_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('compute_vm_name'),'_nic')]",
+        "compute_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('compute_vm_name'),'_nsg')]",
+        "compute_vm_name": "compute",
+        "custom_data_cas": "#cloud-config\n mounts:\n   - [ ephemeral0, /cascache]",
+        "custom_data_sas": "#cloud-config\n mounts:\n   - [ ephemeral0, /saswork]",
+        "diagnostic_storagegroup_name": "[toLower(concat(parameters('SASApplicationName'),'diag', variables('resourceGroupUniqueString')))]",
+        "domain_name": "internal.cloudapp.net",
+        "key_vault_name": "[concat(parameters('SASApplicationName'),'KeyVault')]",
+        "key_vault_secretname_pubkey": "ansible-pubkey",
+        "key_vault_secretname_pvtkey": "ansible-pvtkey",
+        "key_vault_secretname_sasext": "sasextpw",
+        "key_vault_secretname_sasinst": "sasintpw",
+        "key_vault_secretname_stgacc": "stgacckey",
+        "keysPermissions": [
+            "get",
+            "list",
+            "import"
+        ],
+        "linux_extension_template": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vm_linux_extension.json', parameters('_artifactsLocationSasToken')))]",
+        "meta_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('meta_vm_name'),'_nic')]",
+        "meta_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('meta_vm_name'),'_nsg')]",
+        "meta_vm_name": "meta",
+        "microservices_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('microservices_vm_name'),'_nic')]",
+        "microservices_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('microservices_vm_name'),'_nsg')]",
+        "microservices_vm_name": "microservices",
+        "mid_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('mid_vm_name'),'_nic')]",
+        "mid_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('mid_vm_name'),'_nsg')]",
+        "mid_vm_name": "mid",
+        "ppg_name": "[concat(parameters('SASApplicationName'),'_ppg_',variables('resourceGroupUniqueString'))]",
+        "storage_account_uri": "[concat(parameters('storageAccountName'),'.file.',environment().suffixes.storage)]",
+        "pub_sub_nw_sg": "[concat(parameters('SASApplicationName'), '_subnet_pub1_nsg')]",
+        "pvt_sub_nw_sg": "[concat(parameters('SASApplicationName'), '_subnet_pvt1_nsg')]",
+        "rbacPrincipalID": "[parameters('keyVaultOwnerID')]",
+        "rdp_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('rdp_vm_name'),'_nic')]",
+        "rdp_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('rdp_vm_name'),'_nsg')]",
+        "rdp_os_version": "2019-Datacenter",
+        "rdp_vm_name": "rdp",
+        "reader_role": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+        "resourceGroupUniqueString": "[uniqueString(resourceGroup().id)]",
+        "role_assignment_template": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/role_assignments.json', parameters('_artifactsLocationSasToken')))]",
+        "sas_opt_sas_disk_size": 128,
+        "sas_osdisk_size": 128,
+        "sas_viya_backup_size": 100,
+        "sas94vm_tags": {
+            "Application": "[parameters('SASApplicationName')]",
+            "Component": "SAS94NonGrid"
+        },
+        "sasviyavm_tags": {
+            "Application": "[parameters('SASApplicationName')]",
+            "Component": "SASViya"
+        },
+        "secretsPermissions": [
+            "get",
+            "list",
+            "set"
+        ],
+        "skuName": "standard",
+        "spre_nw_interface": "[concat(parameters('SASApplicationName'),'_',variables('spre_vm_name'),'_nic')]",
+        "spre_nw_sg": "[concat(parameters('SASApplicationName'),'_',variables('spre_vm_name'),'_nsg')]",
+        "spre_vm_name": "spre",
+        "tenantId": "[subscription().tenantId]",
+        "vnet_name": "[concat(parameters('SASApplicationName'),'_vnet')]",
+        "vnet_pub_subnt": "[concat(parameters('SASApplicationName'),'_vnet_pub1_subnet')]",
+        "vnet_pvt_subnt": "[concat(parameters('SASApplicationName'), '_vnet_pvt1_subnet')]",
+        "vnet_viya_pvt_subnt": "[concat(parameters('SASApplicationName'), '_vnet_pvt2_subnet')]",
+        "windows_extension_template": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vm_windows_extension.json', parameters('_artifactsLocationSasToken')))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-12-01",
+            "type": "Microsoft.Compute/proximityPlacementGroups",
+            "name": "[variables('ppg_name')]",
+            "location": "[parameters('location')]"
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('vnet_name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups',variables('pub_sub_nw_sg'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups',variables('pvt_sub_nw_sg'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vnetAddressCIDR')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('vnet_pvt_subnt')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('SASPrivateSubnetCIDR')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('pvt_sub_nw_sg'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('vnet_viya_pvt_subnt')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('viyaPrivateSubnetCIDR')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('pvt_sub_nw_sg'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('vnet_pub_subnt')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('ansibleBastionPublicSubnetCIDR')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('pub_sub_nw_sg'))]"
+                            }
+                        }
+                    }
+                ],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('pub_sub_nw_sg')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "allow-ssh",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "[parameters('adminIngressLocation')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    }
+                ],
+                "defaultSecurityRules": [
+                    {
+                        "name": "AllowVnetInBound",
+                        "properties": {
+                            "description": "Allow inbound traffic from all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80,443",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllInBound",
+                        "properties": {
+                            "description": "Deny all inbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowVnetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AllowInternetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to Internet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllOutBound",
+                        "properties": {
+                            "description": "Deny all outbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('pvt_sub_nw_sg')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "defaultSecurityRules": [
+                    {
+                        "name": "AllowVnetInBound",
+                        "properties": {
+                            "description": "Allow inbound traffic from all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80,443",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllInBound",
+                        "properties": {
+                            "description": "Deny all inbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowVnetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AllowInternetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to Internet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllOutBound",
+                        "properties": {
+                            "description": "Deny all outbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('key_vault_name')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "enabledForDeployment": true,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": true,
+                "enableSoftDelete": false,
+                "tenantId": "[variables('tenantId')]",
+                "accessPolicies": [
+                    {
+                        "objectId": "[parameters('keyVaultOwnerID')]",
+                        "tenantId": "[variables('tenantId')]",
+                        "permissions": {
+                            "keys": "[variables('keysPermissions')]",
+                            "secrets": "[variables('secretsPermissions')]"
+                        }
+                    }
+                ],
+                "sku": {
+                    "name": "[variables('skuName')]",
+                    "family": "A"
+                },
+                "networkAcls": {
+                    "defaultAction": "Allow",
+                    "bypass": "AzureServices"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "apiVersion": "2019-09-01",
+            "name": "[concat(variables('key_vault_name'), '/', variables('key_vault_secretname_sasinst'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', variables('key_vault_name'))]"
+            ],
+            "properties": {
+                "value": "[parameters('SASInternalPassword')]"
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "apiVersion": "2019-09-01",
+            "name": "[concat(variables('key_vault_name'), '/', variables('key_vault_secretname_sasext'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', variables('key_vault_name'))]"
+            ],
+            "properties": {
+                "value": "[parameters('SASExternalPassword')]"
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "apiVersion": "2019-09-01",
+            "name": "[concat(variables('key_vault_name'), '/', variables('key_vault_secretname_stgacc'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', variables('key_vault_name'))]"
+            ],
+            "properties": {
+                "value": "[parameters('storageAccountKey')]"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-04-01",
+            "name": "[variables('diagnostic_storagegroup_name')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": false,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "enabled": true
+                        },
+                        "blob": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('ansible_nw_sg')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "allow-ssh",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "[parameters('adminIngressLocation')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    }
+                ],
+                "defaultSecurityRules": [
+                    {
+                        "name": "AllowVnetInBound",
+                        "properties": {
+                            "description": "Allow inbound traffic from all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80,443",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllInBound",
+                        "properties": {
+                            "description": "Deny all inbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowVnetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AllowInternetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to Internet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllOutBound",
+                        "properties": {
+                            "description": "Deny all outbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('meta_nw_sg')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "defaultSecurityRules": [
+                    {
+                        "name": "AllowVnetInBound",
+                        "properties": {
+                            "description": "Allow inbound traffic from all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllInBound",
+                        "properties": {
+                            "description": "Deny all inbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowVnetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AllowInternetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to the Internet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllOutBound",
+                        "properties": {
+                            "description": "Deny all outbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('mid_nw_sg')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "defaultSecurityRules": [
+                    {
+                        "name": "AllowVnetInBound",
+                        "properties": {
+                            "description": "Allow inbound traffic from all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllInBound",
+                        "properties": {
+                            "description": "Deny all inbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowVnetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AllowInternetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to the Internet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllOutBound",
+                        "properties": {
+                            "description": "Deny all outbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('compute_nw_sg')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "defaultSecurityRules": [
+                    {
+                        "name": "AllowVnetInBound",
+                        "properties": {
+                            "description": "Allow inbound traffic from all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllInBound",
+                        "properties": {
+                            "description": "Deny all inbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowVnetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AllowInternetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to the Internet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllOutBound",
+                        "properties": {
+                            "description": "Deny all outbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('rdp_nw_sg')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "defaultSecurityRules": [
+                    {
+                        "name": "AllowVnetInBound",
+                        "properties": {
+                            "description": "Allow inbound traffic from all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllInBound",
+                        "properties": {
+                            "description": "Deny all inbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowVnetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AllowInternetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to the Internet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllOutBound",
+                        "properties": {
+                            "description": "Deny all outbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('microservices_nw_sg')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "defaultSecurityRules": [
+                    {
+                        "name": "AllowVnetInBound",
+                        "properties": {
+                            "description": "Allow inbound traffic from all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllInBound",
+                        "properties": {
+                            "description": "Deny all inbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowVnetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AllowInternetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to the Internet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllOutBound",
+                        "properties": {
+                            "description": "Deny all outbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('spre_nw_sg')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "defaultSecurityRules": [
+                    {
+                        "name": "AllowVnetInBound",
+                        "properties": {
+                            "description": "Allow inbound traffic from all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllInBound",
+                        "properties": {
+                            "description": "Deny all inbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowVnetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AllowInternetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to the Internet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllOutBound",
+                        "properties": {
+                            "description": "Deny all outbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('cascontroller_nw_sg')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "defaultSecurityRules": [
+                    {
+                        "name": "AllowVnetInBound",
+                        "properties": {
+                            "description": "Allow inbound traffic from all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllInBound",
+                        "properties": {
+                            "description": "Deny all inbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowVnetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AllowInternetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to the Internet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllOutBound",
+                        "properties": {
+                            "description": "Deny all outbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('casworker_nw_sg')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "defaultSecurityRules": [
+                    {
+                        "name": "AllowVnetInBound",
+                        "properties": {
+                            "description": "Allow inbound traffic from all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllInBound",
+                        "properties": {
+                            "description": "Deny all inbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "AllowVnetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "AllowInternetOutBound",
+                        "properties": {
+                            "description": "Allow outbound traffic from all VMs to the Internet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "DenyAllOutBound",
+                        "properties": {
+                            "description": "Deny all outbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('ansible_pub_nw_interface')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Basic",
+                "tier": "Regional"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('ansible_nw_interface')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('ansible_pub_nw_interface'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('ansible_nw_sg'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnet_name'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('ansible_pub_nw_interface'))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet_name'), variables('vnet_pub_subnt'))]"
+                            },
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('ansible_nw_sg'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[variables('ansible_vm_name')]",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('ansible_nw_interface'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnostic_storagegroup_name'))]",
+                "[resourceId('Microsoft.KeyVault/vaults',variables('key_vault_name'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('ansibleVMSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "RedHat",
+                        "offer": "RHEL",
+                        "sku": "7.7",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(variables('ansible_vm_name'),'-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "diskSizeGB": 64
+                    },
+                    "dataDisks": [
+                        {
+                            "name": "[concat(variables('ansible_vm_name'),'-playbook')]",
+                            "diskSizeGB": 50,
+                            "lun": 0,
+                            "createOption": "Empty"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('ansible_vm_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('SSHPublicKey')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('ansible_nw_interface'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(variables('diagnostic_storagegroup_name')).primaryEndpoints.blob]"
+                    }
+                },
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppg_name'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "AnsibleRoleAssignment",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('ansible_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','AnsibleAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('role_assignment_template')]"
+                },
+                "parameters": {
+                    "roleAssignmentName": {
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('ansible_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
+                    },
+                    "roleDefinitionID": {
+                        "value": "[variables('reader_role')]"
+                    },
+                    "principalId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('ansible_vm_name')),'2019-07-01','Full').identity.principalId]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "AnsibleAccessPolicy",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('ansible_vm_name'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('key_vault_name'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('access_policy_template')]"
+                },
+                "parameters": {
+                    "keyVaultName": {
+                        "value": "[variables('key_vault_name')]"
+                    },
+                    "tenantId": {
+                        "value": "[variables('tenantId')]"
+                    },
+                    "objectId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('ansible_vm_name')),'2019-12-01', 'Full').identity.principalId]"
+                    },
+                    "secretsPermissions": {
+                        "value": "[variables('secretsPermissions')]"
+                    },
+                    "keysPermissions": {
+                        "value": "[variables('keysPermissions')]"
+                    },
+                    "certificatesPermissions": {
+                        "value": "[variables('certificatesPermissions')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase1-AnsibleHostSetup",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('ansible_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','AnsibleAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('ansible_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./ansible_setup.sh',' ',parameters('storageAccountName'),' ',parameters('fileShareName'),' ',parameters('viyaRepoFolder'),' ',parameters('SASApplicationName'),' ',variables('domain_name'),' ',variables('ansible_vm_name'),' ',variables('microservices_vm_name'),' ',variables('cascontroller_vm_name'),' ',variables('spre_vm_name'),' ',variables('casworker_vm_name'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',parameters('numberOfViyaCASNodes'),' ',variables('mid_vm_name'),' ',parameters('_artifactsLocation'),' ',variables('compute_vm_name'),' ',variables('meta_vm_name'),' ',variables('key_vault_secretname_stgacc'),' ',variables('storage_account_uri'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/ansible_setup.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase2-AnsibleSSLCopy",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('ansible_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','Phase2-MetaInstall')]",
+                "[resourceId('Microsoft.Resources/deployments','Phase2-MidInstall')]",
+                "[resourceId('Microsoft.Resources/deployments','Phase2-ComputeInstall')]",
+                "[resourceId('Microsoft.Resources/deployments','Phase4-ViyaInstallpart2')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('ansible_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;./ansible_ssl.sh 2>&1 | tee /var/log/sas/install/runPhase2AnsibleSSLCopy.log;')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/ansible_ssl.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase3-ViyaInstallpart1",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'Phase1-AnsibleHostSetup')]",
+                "[resourceId('Microsoft.Resources/deployments', 'Phase2-MicroServicesViyaARK')]",
+                "[resourceId('Microsoft.Resources/deployments', 'Phase2-SpreViyaARK')]",
+                "[resourceId('Microsoft.Resources/deployments', 'Phase2-CASControllerViyaARK')]",
+                "casworkerviyaarkcopy"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('ansible_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./viyainstall.sh',' ', '1',' ','2>&1 | tee /var/log/sas/install/runPhase3_viyainstallpart1.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/viyainstall.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase4-ViyaInstallpart2",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'Phase3-ViyaInstallpart1')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('ansible_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./viyainstall.sh',' ', '2',' ','2>&1 | tee /var/log/sas/install/runPhase4_viyainstallpart2.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/viyainstall.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase5-ViyaInstallpart3",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'Phase2-AnsibleSSLCopy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('ansible_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./viyainstall.sh',' ', '3',' ','2>&1 | tee /var/log/sas/install/runPhase5_viyainstallpart3.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/viyainstall.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase6-ViyaPostInstall",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'Phase5-ViyaInstallpart3')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('ansible_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./viyainstall.sh',' ', '4',' ','2>&1 | tee /var/log/sas/install/runPhase6_viyapostinstall.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/viyainstall.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('rdp_nw_interface')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('rdp_nw_sg'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnet_name'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet_name'), variables('vnet_pvt_subnt'))]"
+                            },
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('rdp_nw_sg'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[variables('rdp_vm_name')]",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('rdp_nw_interface'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnostic_storagegroup_name'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('windowsRdpVMSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "[variables('rdp_os_version')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage"
+                    }
+                },
+                "osProfile": {
+                    "computerName": "[variables('rdp_vm_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
+                    "adminPassword": "[parameters('SASExternalPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('rdp_nw_interface'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(variables('diagnostic_storagegroup_name')).primaryEndpoints.blob]"
+                    }
+                },
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppg_name'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "RDPContentFileDownload",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('rdp_vm_name'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('windows_extension_template')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('rdp_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "powershell.exe Expand-Archive -LiteralPath client_install.zip -Destination C:\\WindowsAzure\\client_install"
+                    },
+                    "filepath": {
+                        "value": "client_install.zip"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase1-SASClientInstall",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'RDPContentFileDownload')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('windows_extension_template')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('rdp_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('powershell -ExecutionPolicy Unrestricted -File sas_client_install.ps1 ','-stg_acc_name ',parameters('storageAccountName'),' -stg_key ',parameters('storageAccountKey'),' -file_share_name ',parameters('fileShareName'),' -depot_folder_name ',parameters('SASDepotFolder'),' -clients_sid ',parameters('SASServerLicenseFile'),' -app_name ',parameters('SASApplicationName'),' -mid_name ',variables('mid_vm_name'),' -domain_name ',variables('domain_name'),' -artifact_loc ',parameters('_artifactsLocation'),' -storageuri ',variables('storage_account_uri'))]"
+                    },
+                    "filepath": {
+                        "value": "sas_client_install.ps1"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('meta_nw_interface')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('meta_nw_sg'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnet_name'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet_name'), variables('vnet_pvt_subnt'))]"
+                            },
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('meta_nw_sg'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[variables('meta_vm_name')]",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('meta_nw_interface'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnostic_storagegroup_name'))]"
+            ],
+            "tags": "[variables('sas94vm_tags')]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('SASMetaVMSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "RedHat",
+                        "offer": "RHEL",
+                        "sku": "7.7",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(variables('meta_vm_name'),'-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "diskSizeGB": "[variables('sas_osdisk_size')]"
+                    },
+                    "dataDisks": [
+                        {
+                            "name": "[concat(variables('meta_vm_name'),'-opt-sas')]",
+                            "diskSizeGB": "[variables('sas_opt_sas_disk_size')]",
+                            "lun": 0,
+                            "createOption": "Empty"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('meta_vm_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('SSHPublicKey')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('meta_nw_interface'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(variables('diagnostic_storagegroup_name')).primaryEndpoints.blob]"
+                    }
+                },
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppg_name'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "MetaRoleAssignment",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('meta_vm_name'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('role_assignment_template')]"
+                },
+                "parameters": {
+                    "roleAssignmentName": {
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('meta_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
+                    },
+                    "roleDefinitionID": {
+                        "value": "[variables('reader_role')]"
+                    },
+                    "principalId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('meta_vm_name')),'2019-07-01','Full').identity.principalId]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "MetaAccessPolicy",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('meta_vm_name'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('key_vault_name'))]",
+                "[resourceID('Microsoft.Resources/deployments','AnsibleAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('access_policy_template')]"
+                },
+                "parameters": {
+                    "keyVaultName": {
+                        "value": "[variables('key_vault_name')]"
+                    },
+                    "tenantId": {
+                        "value": "[variables('tenantId')]"
+                    },
+                    "objectId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('meta_vm_name')),'2019-12-01', 'Full').identity.principalId]"
+                    },
+                    "secretsPermissions": {
+                        "value": "[variables('secretsPermissions')]"
+                    },
+                    "keysPermissions": {
+                        "value": "[variables('keysPermissions')]"
+                    },
+                    "certificatesPermissions": {
+                        "value": "[variables('certificatesPermissions')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase1-MetaHostSetup",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',variables('meta_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','MetaAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('meta_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./sasapp_prereq.sh',' ',parameters('SASApplicationName'),' ',parameters('SASDepotFolder'),' ',parameters('fileShareName'),' ',parameters('storageAccountName'),' ',variables('domain_name'),' ',parameters('location'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',variables('mid_vm_name'),' ',variables('meta_vm_name'),' ',variables('compute_vm_name'),' ',parameters('SASServerLicenseFile'),' ','meta',' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ',variables('storage_account_uri'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/sasapp_prereq.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "MetaContentFileDownload",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',variables('meta_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','Phase1-MetaHostSetup')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('meta_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "cp response-properties.tar.gz /tmp"
+                    },
+                    "filepath": {
+                        "value": "properties/response-properties.tar.gz"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase2-MetaInstall",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',variables('meta_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','MetaContentFileDownload')]",
+                "[resourceId('Microsoft.Resources/deployments','Phase1-AnsibleHostSetup')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('meta_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./meta_install.sh 2>&1 | tee /var/log/sas/install/meta_install.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/meta_install.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase3-MetaConfig",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',variables('meta_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','Phase2-MetaInstall')]",
+                "[resourceId('Microsoft.Resources/deployments','Phase2-AnsibleSSLCopy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('meta_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./meta_config.sh 2>&1 | tee /var/log/sas/install/meta_config.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/meta_config.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('compute_nw_interface')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('compute_nw_sg'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnet_name'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet_name'), variables('vnet_pvt_subnt'))]"
+                            },
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('compute_nw_sg'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[variables('compute_vm_name')]",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('compute_nw_interface'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnostic_storagegroup_name'))]"
+            ],
+            "tags": "[variables('sas94vm_tags')]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('SASComputeVMSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "RedHat",
+                        "offer": "RHEL",
+                        "sku": "7.7",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(variables('compute_vm_name'),'-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "diskSizeGB": "[variables('sas_osdisk_size')]"
+                    },
+                    "dataDisks": [
+                        {
+                            "name": "[concat(variables('compute_vm_name'),'-opt-sas')]",
+                            "diskSizeGB": "[variables('sas_opt_sas_disk_size')]",
+                            "lun": 0,
+                            "createOption": "Empty"
+                        },
+                        {
+                            "name": "[concat(variables('compute_vm_name'),'-sasdata')]",
+                            "diskSizeGB": "[parameters('SASDataStorage')]",
+                            "lun": 1,
+                            "createOption": "Empty"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('compute_vm_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
+                    "customData": "[base64(variables('custom_data_sas'))]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('SSHPublicKey')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('compute_nw_interface'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(variables('diagnostic_storagegroup_name')).primaryEndpoints.blob]"
+                    }
+                },
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppg_name'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "ComputeRoleAssignment",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('compute_vm_name'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('role_assignment_template')]"
+                },
+                "parameters": {
+                    "roleAssignmentName": {
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('compute_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
+                    },
+                    "roleDefinitionID": {
+                        "value": "[variables('reader_role')]"
+                    },
+                    "principalId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('compute_vm_name')),'2019-07-01','Full').identity.principalId]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "ComputeAccessPolicy",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('compute_vm_name'))]",
+                "[resourceID('Microsoft.Resources/deployments','MetaAccessPolicy')]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('key_vault_name'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('access_policy_template')]"
+                },
+                "parameters": {
+                    "keyVaultName": {
+                        "value": "[variables('key_vault_name')]"
+                    },
+                    "tenantId": {
+                        "value": "[variables('tenantId')]"
+                    },
+                    "objectId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('compute_vm_name')),'2019-12-01', 'Full').identity.principalId]"
+                    },
+                    "secretsPermissions": {
+                        "value": "[variables('secretsPermissions')]"
+                    },
+                    "keysPermissions": {
+                        "value": "[variables('keysPermissions')]"
+                    },
+                    "certificatesPermissions": {
+                        "value": "[variables('certificatesPermissions')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase1-ComputeHostSetup",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('compute_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','ComputeAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('compute_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./sasapp_prereq.sh',' ',parameters('SASApplicationName'),' ',parameters('SASDepotFolder'),' ',parameters('fileShareName'),' ',parameters('storageAccountName'),' ',variables('domain_name'),' ',parameters('location'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',variables('mid_vm_name'),' ',variables('meta_vm_name'),' ',variables('compute_vm_name'),' ',parameters('SASServerLicenseFile'),' ','compute',' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ',variables('storage_account_uri'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/sasapp_prereq.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "ComputeContentFileDownload",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',variables('compute_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','Phase1-ComputeHostSetup')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('compute_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "cp response-properties.tar.gz /tmp"
+                    },
+                    "filepath": {
+                        "value": "properties/response-properties.tar.gz"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase2-ComputeInstall",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',variables('compute_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','ComputeContentFileDownload')]",
+                "[resourceId('Microsoft.Resources/deployments','Phase1-AnsibleHostSetup')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('compute_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./compute_install.sh 2>&1 | tee /var/log/sas/install/compute_install.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/compute_install.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase3-ComputeConfig",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments','Phase2-ComputeInstall')]",
+                "[resourceId('Microsoft.Resources/deployments','Phase3-MetaConfig')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('compute_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./compute_config.sh 2>&1 | tee /var/log/sas/install/compute_config.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/compute_config.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('mid_nw_interface')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('mid_nw_sg'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnet_name'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet_name'), variables('vnet_pvt_subnt'))]"
+                            },
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('mid_nw_sg'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[variables('mid_vm_name')]",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('mid_nw_interface'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnostic_storagegroup_name'))]"
+            ],
+            "tags": "[variables('sas94vm_tags')]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('SASMidVMSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "RedHat",
+                        "offer": "RHEL",
+                        "sku": "7.7",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(variables('mid_vm_name'),'-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "diskSizeGB": "[variables('sas_osdisk_size')]"
+                    },
+                    "dataDisks": [
+                        {
+                            "name": "[concat(variables('mid_vm_name'),'-opt-sas')]",
+                            "diskSizeGB": "[variables('sas_opt_sas_disk_size')]",
+                            "lun": 0,
+                            "createOption": "Empty"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('mid_vm_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('SSHPublicKey')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('mid_nw_interface'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(variables('diagnostic_storagegroup_name')).primaryEndpoints.blob]"
+                    }
+                },
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppg_name'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "MidRoleAssignment",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('mid_vm_name'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('role_assignment_template')]"
+                },
+                "parameters": {
+                    "roleAssignmentName": {
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('mid_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
+                    },
+                    "roleDefinitionID": {
+                        "value": "[variables('reader_role')]"
+                    },
+                    "principalId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('mid_vm_name')),'2019-07-01','Full').identity.principalId]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "MidAccessPolicy",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('mid_vm_name'))]",
+                "[resourceID('Microsoft.Resources/deployments','ComputeAccessPolicy')]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('key_vault_name'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('access_policy_template')]"
+                },
+                "parameters": {
+                    "keyVaultName": {
+                        "value": "[variables('key_vault_name')]"
+                    },
+                    "tenantId": {
+                        "value": "[variables('tenantId')]"
+                    },
+                    "objectId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('mid_vm_name')),'2019-12-01', 'Full').identity.principalId]"
+                    },
+                    "secretsPermissions": {
+                        "value": "[variables('secretsPermissions')]"
+                    },
+                    "keysPermissions": {
+                        "value": "[variables('keysPermissions')]"
+                    },
+                    "certificatesPermissions": {
+                        "value": "[variables('certificatesPermissions')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase1-MidHostSetup",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('mid_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','MidAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('mid_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./sasapp_prereq.sh',' ',parameters('SASApplicationName'),' ',parameters('SASDepotFolder'),' ',parameters('fileShareName'),' ',parameters('storageAccountName'),' ',variables('domain_name'),' ',parameters('location'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',variables('mid_vm_name'),' ',variables('meta_vm_name'),' ',variables('compute_vm_name'),' ',parameters('SASServerLicenseFile'),' ','mid',' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ',variables('storage_account_uri'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/sasapp_prereq.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "MidContentFileDownload",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',variables('mid_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','Phase1-MidHostSetup')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('mid_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "cp response-properties.tar.gz /tmp"
+                    },
+                    "filepath": {
+                        "value": "properties/response-properties.tar.gz"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase2-MidInstall",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',variables('mid_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','MidContentFileDownload')]",
+                "[resourceId('Microsoft.Resources/deployments','Phase1-AnsibleHostSetup')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('mid_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./mid_install.sh 2>&1 | tee /var/log/sas/install/mid-install.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/mid_install.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase3-MidConfig",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',variables('mid_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','Phase2-MidInstall')]",
+                "[resourceId('Microsoft.Resources/deployments','Phase3-ComputeConfig')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('mid_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./mid_config.sh 2>&1 | tee /var/log/sas/install/mid_config.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/mid_config.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('microservices_nw_interface')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('microservices_nw_sg'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnet_name'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet_name'), variables('vnet_viya_pvt_subnt'))]"
+                            },
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('microservices_nw_sg'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[variables('microservices_vm_name')]",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('microservices_nw_interface'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnostic_storagegroup_name'))]"
+            ],
+            "tags": "[variables('sasviyavm_tags')]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('viyaMicroservicesVMSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "RedHat",
+                        "offer": "RHEL",
+                        "sku": "7.7",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(variables('microservices_vm_name'),'-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "diskSizeGB": "[variables('sas_osdisk_size')]"
+                    },
+                    "dataDisks": [
+                        {
+                            "name": "[concat(variables('microservices_vm_name'),'-opt-sas')]",
+                            "diskSizeGB": "[variables('sas_opt_sas_disk_size')]",
+                            "lun": 0,
+                            "createOption": "Empty"
+                        },
+                        {
+                            "name": "[concat(variables('microservices_vm_name'),'-sasbackup')]",
+                            "diskSizeGB": "[variables('sas_viya_backup_size')]",
+                            "lun": 1,
+                            "createOption": "Empty"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('microservices_vm_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('SSHPublicKey')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('microservices_nw_interface'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(variables('diagnostic_storagegroup_name')).primaryEndpoints.blob]"
+                    }
+                },
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppg_name'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "MicroServicesRoleAssignment",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('microservices_vm_name'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('role_assignment_template')]"
+                },
+                "parameters": {
+                    "roleAssignmentName": {
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('microservices_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
+                    },
+                    "roleDefinitionID": {
+                        "value": "[variables('reader_role')]"
+                    },
+                    "principalId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('microservices_vm_name')),'2019-07-01','Full').identity.principalId]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "MicroServicesAccessPolicy",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('microservices_vm_name'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('key_vault_name'))]",
+                "[resourceID('Microsoft.Resources/deployments','MidAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('access_policy_template')]"
+                },
+                "parameters": {
+                    "keyVaultName": {
+                        "value": "[variables('key_vault_name')]"
+                    },
+                    "tenantId": {
+                        "value": "[variables('tenantId')]"
+                    },
+                    "objectId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('microservices_vm_name')),'2019-12-01', 'Full').identity.principalId]"
+                    },
+                    "secretsPermissions": {
+                        "value": "[variables('secretsPermissions')]"
+                    },
+                    "keysPermissions": {
+                        "value": "[variables('keysPermissions')]"
+                    },
+                    "certificatesPermissions": {
+                        "value": "[variables('certificatesPermissions')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase1-MicroServicesHostSetup",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('microservices_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','MicroServicesAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('microservices_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./viya_prereq.sh',' ',parameters('storageAccountName'),' ',parameters('fileShareName'),' ',parameters('viyaRepoFolder'),' ',parameters('SASApplicationName'),' ',variables('domain_name'),' ',variables('ansible_vm_name'),' ',variables('microservices_vm_name'),' ',variables('cascontroller_vm_name'),' ',variables('spre_vm_name'),' ',variables('casworker_vm_name'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',parameters('numberOfViyaCASNodes'),' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ',variables('storage_account_uri'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/viya_prereq.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "MicroServicesContentFileDownload",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',variables('microservices_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','Phase1-MicroServicesHostSetup')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('microservices_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "cp viya-ark.tar.gz /tmp"
+                    },
+                    "filepath": {
+                        "value": "properties/viya-ark.tar.gz"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase2-MicroServicesViyaARK",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'MicroServicesContentFileDownload')]",
+                "[resourceId('Microsoft.Resources/deployments', 'Phase1-AnsibleHostSetup')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('microservices_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./viya_ark.sh 2>&1 | tee /var/log/sas/install/runPhase2_viyaark.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/viya_ark.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('spre_nw_interface')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('spre_nw_sg'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnet_name'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet_name'), variables('vnet_viya_pvt_subnt'))]"
+                            },
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('spre_nw_sg'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[variables('spre_vm_name')]",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('spre_nw_interface'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnostic_storagegroup_name'))]"
+            ],
+            "tags": "[variables('sasviyavm_tags')]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('viyaSpreVMSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "RedHat",
+                        "offer": "RHEL",
+                        "sku": "7.7",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(variables('spre_vm_name'),'-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "diskSizeGB": "[variables('sas_osdisk_size')]"
+                    },
+                    "dataDisks": [
+                        {
+                            "name": "[concat(variables('spre_vm_name'),'-opt-sas')]",
+                            "diskSizeGB": "[variables('sas_opt_sas_disk_size')]",
+                            "lun": 0,
+                            "createOption": "Empty"
+                        },
+                        {
+                            "name": "[concat(variables('spre_vm_name'),'-sasbackup')]",
+                            "diskSizeGB": "[variables('sas_viya_backup_size')]",
+                            "lun": 1,
+                            "createOption": "Empty"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('spre_vm_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
+                    "customData": "[base64(variables('custom_data_sas'))]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('SSHPublicKey')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('spre_nw_interface'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(variables('diagnostic_storagegroup_name')).primaryEndpoints.blob]"
+                    }
+                },
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppg_name'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "SpreRoleAssignment",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('spre_vm_name'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('role_assignment_template')]"
+                },
+                "parameters": {
+                    "roleAssignmentName": {
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('spre_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
+                    },
+                    "roleDefinitionID": {
+                        "value": "[variables('reader_role')]"
+                    },
+                    "principalId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('spre_vm_name')),'2019-07-01','Full').identity.principalId]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "SpreAccessPolicy",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('spre_vm_name'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('key_vault_name'))]",
+                "[resourceID('Microsoft.Resources/deployments','CAScontrollerAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('access_policy_template')]"
+                },
+                "parameters": {
+                    "keyVaultName": {
+                        "value": "[variables('key_vault_name')]"
+                    },
+                    "tenantId": {
+                        "value": "[variables('tenantId')]"
+                    },
+                    "objectId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('spre_vm_name')),'2019-12-01', 'Full').identity.principalId]"
+                    },
+                    "secretsPermissions": {
+                        "value": "[variables('secretsPermissions')]"
+                    },
+                    "keysPermissions": {
+                        "value": "[variables('keysPermissions')]"
+                    },
+                    "certificatesPermissions": {
+                        "value": "[variables('certificatesPermissions')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase1-SpreHostSetup",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',  variables('spre_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','SpreAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('spre_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./viya_prereq.sh',' ',parameters('storageAccountName'),' ',parameters('fileShareName'),' ',parameters('fileShareName'),' ',parameters('SASApplicationName'),' ',variables('domain_name'),' ',variables('ansible_vm_name'),' ',variables('microservices_vm_name'),' ',variables('cascontroller_vm_name'),' ',variables('spre_vm_name'),' ',variables('casworker_vm_name'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',parameters('numberOfViyaCASNodes'),' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ',variables('storage_account_uri'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/viya_prereq.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "SpreContentFileDownload",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',variables('spre_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','Phase1-SpreHostSetup')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('spre_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "cp viya-ark.tar.gz /tmp"
+                    },
+                    "filepath": {
+                        "value": "properties/viya-ark.tar.gz"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase2-SpreViyaARK",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments','SpreContentFileDownload')]",
+                "[resourceId('Microsoft.Resources/deployments', 'Phase1-AnsibleHostSetup')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('spre_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./viya_ark.sh 2>&1 | tee /var/log/sas/install/runPhase2_viyaark.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/viya_ark.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('cascontroller_nw_interface')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('cascontroller_nw_sg'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnet_name'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet_name'), variables('vnet_viya_pvt_subnt'))]"
+                            },
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('cascontroller_nw_sg'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[variables('Cascontroller_vm_name')]",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('cascontroller_nw_interface'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnostic_storagegroup_name'))]"
+            ],
+            "tags": "[variables('sasviyavm_tags')]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('viyaCASControllerVMSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "RedHat",
+                        "offer": "RHEL",
+                        "sku": "7.7",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(variables('cascontroller_vm_name'),'-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "diskSizeGB": "[variables('sas_osdisk_size')]"
+                    },
+                    "dataDisks": [
+                        {
+                            "name": "[concat(variables('cascontroller_vm_name'),'-opt-sas')]",
+                            "diskSizeGB": "[variables('sas_opt_sas_disk_size')]",
+                            "lun": 0,
+                            "createOption": "Empty"
+                        },
+                        {
+                            "name": "[concat(variables('cascontroller_vm_name'),'-sasbackup')]",
+                            "diskSizeGB": "[variables('sas_viya_backup_size')]",
+                            "lun": 1,
+                            "createOption": "Empty"
+                        },
+                        {
+                            "name": "[concat(variables('cascontroller_vm_name'),'-sasdata')]",
+                            "diskSizeGB": "[parameters('SASViyaDataStorage')]",
+                            "lun": 2,
+                            "createOption": "Empty"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('Cascontroller_vm_name')]",
+                    "adminUsername": "[parameters('primaryUserName')]",
+                    "customData": "[base64(variables('custom_data_cas'))]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('SSHPublicKey')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('cascontroller_nw_interface'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(variables('diagnostic_storagegroup_name')).primaryEndpoints.blob]"
+                    }
+                },
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppg_name'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "CASControllerRoleAssignment",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('Cascontroller_vm_name'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('role_assignment_template')]"
+                },
+                "parameters": {
+                    "roleAssignmentName": {
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', variables('Cascontroller_vm_name')), variables('reader_role'), variables('rbacPrincipalID'))]"
+                    },
+                    "roleDefinitionID": {
+                        "value": "[variables('reader_role')]"
+                    },
+                    "principalId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('Cascontroller_vm_name')),'2019-07-01','Full').identity.principalId]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "CASControllerAccessPolicy",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('Cascontroller_vm_name'))]",
+                "[resourceID('Microsoft.Resources/deployments','MicroServicesAccessPolicy')]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('key_vault_name'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('access_policy_template')]"
+                },
+                "parameters": {
+                    "keyVaultName": {
+                        "value": "[variables('key_vault_name')]"
+                    },
+                    "tenantId": {
+                        "value": "[variables('tenantId')]"
+                    },
+                    "objectId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',variables('Cascontroller_vm_name')),'2019-12-01', 'Full').identity.principalId]"
+                    },
+                    "secretsPermissions": {
+                        "value": "[variables('secretsPermissions')]"
+                    },
+                    "keysPermissions": {
+                        "value": "[variables('keysPermissions')]"
+                    },
+                    "certificatesPermissions": {
+                        "value": "[variables('certificatesPermissions')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase1-CASControllerHostSetup",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',  variables('Cascontroller_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','CAScontrollerAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('Cascontroller_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./viya_prereq.sh',' ',parameters('storageAccountName'),' ',parameters('fileShareName'),' ',parameters('fileShareName'),' ',parameters('SASApplicationName'),' ',variables('domain_name'),' ',variables('ansible_vm_name'),' ',variables('microservices_vm_name'),' ',variables('cascontroller_vm_name'),' ',variables('spre_vm_name'),' ',variables('casworker_vm_name'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',parameters('numberOfViyaCASNodes'),' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ',variables('storage_account_uri'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/viya_prereq.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "CASContentFileDownload",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines',variables('Cascontroller_vm_name'))]",
+                "[resourceId('Microsoft.Resources/deployments','Phase1-CASControllerHostSetup')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('Cascontroller_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "cp viya-ark.tar.gz /tmp"
+                    },
+                    "filepath": {
+                        "value": "properties/viya-ark.tar.gz"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Phase2-CASControllerViyaARK",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'CASContentFileDownload')]",
+                "[resourceId('Microsoft.Resources/deployments', 'Phase1-AnsibleHostSetup')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[variables('Cascontroller_vm_name')]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./viya_ark.sh 2>&1 | tee /var/log/sas/install/runPhase2_viyaark.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/viya_ark.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-09-01",
+            "name": "[concat(parameters('SASApplicationName'),'_',variables('casworker_vm_name'),copyIndex(),'_nic')]",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "casworkernicLoop",
+                "count": "[parameters('numberOfViyaCASNodes')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('casworker_nw_sg'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks',variables('vnet_name'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet_name'), variables('vnet_viya_pvt_subnt'))]"
+                            },
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('casworker_nw_sg'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[concat(variables('casworker_vm_name'), copyIndex())]",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "copy": {
+                "name": "casworkervmLoop",
+                "count": "[parameters('numberOfViyaCASNodes')]"
+            },
+            "dependsOn": [
+                "casworkernicLoop"
+            ],
+            "tags": "[variables('sasviyavm_tags')]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('viyaCASWorkerVMSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "RedHat",
+                        "offer": "RHEL",
+                        "sku": "7.7",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(variables('casworker_vm_name'), copyIndex(),'-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "diskSizeGB": "[variables('sas_osdisk_size')]"
+                    },
+                    "dataDisks": [
+                        {
+                            "name": "[concat(variables('casworker_vm_name'), copyIndex(),'-opt-sas')]",
+                            "diskSizeGB": "[variables('sas_opt_sas_disk_size')]",
+                            "lun": 0,
+                            "createOption": "Empty"
+                        },
+                        {
+                            "name": "[concat(variables('casworker_vm_name'), copyIndex(),'-sasbackup')]",
+                            "diskSizeGB": "[variables('sas_viya_backup_size')]",
+                            "lun": 1,
+                            "createOption": "Empty"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[concat(variables('casworker_vm_name'), copyIndex())]",
+                    "adminUsername": "[parameters('primaryUserName')]",
+                    "customData": "[base64(variables('custom_data_cas'))]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('primaryUserName'), '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('SSHPublicKey')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('SASApplicationName'),'_',variables('casworker_vm_name'),copyIndex(),'_nic'))]"
+                        }
+                    ]
+                },
+                "proximityPlacementGroup": {
+                    "id": "[resourceId('Microsoft.Compute/proximityPlacementGroups',variables('ppg_name'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[concat(variables('casworker_vm_name'), copyIndex(),'roleassignment')]",
+            "copy": {
+                "name": "casworkerrolecopy",
+                "count": "[parameters('numberOfViyaCASNodes')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('casworker_vm_name'), copyIndex()))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('role_assignment_template')]"
+                },
+                "parameters": {
+                    "roleAssignmentName": {
+                        "value": "[guid(resourceId('Microsoft.Compute/virtualMachines', concat(variables('casworker_vm_name'), copyIndex())), variables('reader_role'), variables('rbacPrincipalID'))]"
+                    },
+                    "roleDefinitionID": {
+                        "value": "[variables('reader_role')]"
+                    },
+                    "principalId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',concat(variables('casworker_vm_name'), copyIndex())),'2019-07-01','Full').identity.principalId]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[concat(variables('casworker_vm_name'), copyIndex(),'accesspolicy')]",
+            "copy": {
+                "name": "casworkerpolicycopy",
+                "count": "[parameters('numberOfViyaCASNodes')]",
+                "mode": "serial",
+                "batchSize": 1
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('casworker_vm_name'), copyIndex()))]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('key_vault_name'))]",
+                "[resourceID('Microsoft.Resources/deployments','SpreAccessPolicy')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('access_policy_template')]"
+                },
+                "parameters": {
+                    "keyVaultName": {
+                        "value": "[variables('key_vault_name')]"
+                    },
+                    "tenantId": {
+                        "value": "[variables('tenantId')]"
+                    },
+                    "objectId": {
+                        "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',concat(variables('casworker_vm_name'), copyIndex())),'2019-07-01','Full').identity.principalId]"
+                    },
+                    "secretsPermissions": {
+                        "value": "[variables('secretsPermissions')]"
+                    },
+                    "keysPermissions": {
+                        "value": "[variables('keysPermissions')]"
+                    },
+                    "certificatesPermissions": {
+                        "value": "[variables('certificatesPermissions')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[concat('Phase1-',variables('casworker_vm_name'), copyIndex(),'Hostsetup')]",
+            "copy": {
+                "name": "casworkerextensioncopy",
+                "count": "[parameters('numberOfViyaCASNodes')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('casworker_vm_name'), copyIndex()))]",
+                "casworkerpolicycopy"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[concat(variables('casworker_vm_name'), copyIndex())]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('mkdir -p /var/log/sas/install && set -o pipefail; ./viya_prereq.sh',' ',parameters('storageAccountName'),' ',parameters('fileShareName'),' ',parameters('fileShareName'),' ',parameters('SASApplicationName'),' ',variables('domain_name'),' ',variables('ansible_vm_name'),' ',variables('microservices_vm_name'),' ',variables('cascontroller_vm_name'),' ',variables('spre_vm_name'),' ',variables('casworker_vm_name'),' ',variables('key_vault_secretname_sasinst'),' ',variables('key_vault_secretname_sasext'),' ',variables('key_vault_name'),' ',variables('key_vault_secretname_pvtkey'),' ',variables('key_vault_secretname_pubkey'),' ',parameters('numberOfViyaCASNodes'),' ',parameters('_artifactsLocation'),' ',variables('key_vault_secretname_stgacc'),' ',variables('storage_account_uri'),' ','2>&1 | tee /var/log/sas/install/runPhase1_HostSetup.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/viya_prereq.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[concat('WorkerContentFileDownload', copyIndex())]",
+            "copy": {
+                "name": "casworkerdownloadextensioncopy",
+                "count": "[parameters('numberOfViyaCASNodes')]",
+                "mode": "serial",
+                "batchSize": 1
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', concat('Phase1-',variables('casworker_vm_name'), copyIndex(),'Hostsetup'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[concat(variables('casworker_vm_name'), copyIndex())]"
+                    },
+                    "commandToExecute": {
+                        "value": "cp viya-ark.tar.gz /tmp"
+                    },
+                    "filepath": {
+                        "value": "properties/viya-ark.tar.gz"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[concat('Phase2-',variables('casworker_vm_name'), copyIndex(),'ViyaARK')]",
+            "copy": {
+                "name": "casworkerviyaarkcopy",
+                "count": "[parameters('numberOfViyaCASNodes')]"
+            },
+            "dependsOn": [
+                "casworkerdownloadextensioncopy",
+                "[resourceId('Microsoft.Resources/deployments', 'Phase1-AnsibleHostSetup')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('linux_extension_template')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "[concat(variables('casworker_vm_name'), copyIndex())]"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail;','./viya_ark.sh 2>&1 | tee /var/log/sas/install/runPhase2_viyaark.log')]"
+                    },
+                    "filepath": {
+                        "value": "scripts/viya_ark.sh"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "AnsibleJumpHostServerIP": {
+            "type": "String",
+            "value": "[concat(reference(resourceId('Microsoft.Compute/virtualMachines',variables('ansible_vm_name'))).osProfile.adminUsername,'@',reference(resourceId('Microsoft.Network/publicIPAddresses',variables('ansible_pub_nw_interface'))).IpAddress)]"
+        },
+        "SASRdpServerIP": {
+            "type": "String",
+            "value": "[reference(resourceId('Microsoft.Network/networkInterfaces',variables('rdp_nw_interface'))).ipConfigurations[0].properties.privateIPAddress]"
+        },
+        "SASStudioMidTier": {
+            "type": "String",
+            "value": "[concat('https://',parameters('SASApplicationName'),variables('mid_vm_name'),'.',variables('domain_name'),':8343/SASStudio')]"
+        },
+        "SASInstallUser": {
+            "type": "String",
+            "value": "sasinst"
+        },
+        "viyaSASDrive": {
+            "type": "String",
+            "value": "[concat('https://',parameters('SASApplicationName'),variables('microservices_vm_name'),'.',variables('domain_name'),'/SASDrive')]"
+        },
+        "viyaSASStudio": {
+            "type": "String",
+            "value": "[concat('https://',parameters('SASApplicationName'),variables('microservices_vm_name'),'.',variables('domain_name'),'/SASStudioV')]"
+        },
+        "viyaUserLogon": {
+            "type": "String",
+            "value": "[concat('https://',parameters('SASApplicationName'),variables('microservices_vm_name'),'.',variables('domain_name'),'/SASLogon/reset_password?code=',json(split(reference('Phase6-ViyaPostInstall').outputs.instanceView.value.statuses[0].message, '#SASBOOT#')[1]).SAS_BOOT)]"
+        }
+    }
+}

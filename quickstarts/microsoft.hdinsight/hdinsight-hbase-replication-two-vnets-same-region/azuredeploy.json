@@ -1,0 +1,430 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The prefix of the HDInsight cluster name."
+      }
+    },
+    "clusterLoginUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+      }
+    },
+    "clusterLoginPassword": {
+      "type": "securestring",
+      "minLength": 10,
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one upper case letter, one lower case letter, and one non-alphanumeric character except (single-quote, double-quote, backslash, right-bracket, full-stop). Also, the password must not contain 3 consecutive characters from the cluster username or SSH username."
+      }
+    },
+    "sshUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "These credentials can be used to remotely access the cluster."
+      }
+    },
+    "sshPassword": {
+      "type": "securestring",
+      "minLength": 6,
+      "maxLength": 72,
+      "metadata": {
+        "description": "SSH password must be 6-72 characters long and must contain at least one digit, one upper case letter, and one lower case letter.  It must not contain any 3 consecutive characters from the cluster login name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "HeadNodeVirtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_E4_v3",
+      "allowedValues": [
+        "Standard_A4_v2",
+        "Standard_A8_v2",
+        "Standard_E2_v3",
+        "Standard_E4_v3",
+        "Standard_E8_v3",
+        "Standard_E16_v3",
+        "Standard_E20_v3",
+        "Standard_E32_v3",
+        "Standard_E48_v3"
+      ],
+      "metadata": {
+        "description": "This is the headnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
+      }
+    },
+    "WorkerNodeVirtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_E4_v3",
+      "allowedValues": [
+        "Standard_A4_v2",
+        "Standard_A8_v2",
+        "Standard_E2_v3",
+        "Standard_E4_v3",
+        "Standard_E8_v3",
+        "Standard_E16_v3",
+        "Standard_E20_v3",
+        "Standard_E32_v3",
+        "Standard_E48_v3"
+      ],
+      "metadata": {
+        "description": "This is the workerdnode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
+      }
+    },
+    "ZookeeperNodeVirtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_E4_v3",
+      "allowedValues": [
+        "Standard_A4_v2",
+        "Standard_A8_v2",
+        "Standard_E2_v3",
+        "Standard_E4_v3",
+        "Standard_E8_v3",
+        "Standard_E16_v3",
+        "Standard_E20_v3",
+        "Standard_E32_v3",
+        "Standard_E48_v3"
+      ],
+      "metadata": {
+        "description": "This is the Zookeepernode Azure Virtual Machine size, and will affect the cost. If you don't know, just leave the default value."
+      }    
+    }    
+  },
+  "variables": {
+    "clusterNode1": {
+      "name": "[concat(parameters('clusterNamePrefix'),'1')]",
+      "defaultStorageAccount": {
+        "name": "[uniqueString(resourceGroup().id)]",
+        "type": "Standard_LRS"
+      }
+    },
+    "clusterNode2": {
+      "name": "[concat(parameters('clusterNamePrefix'),'2')]",
+      "defaultStorageAccount": {
+        "name": "[uniqueString(resourceGroup().id, deployment().name)]",
+        "type": "Standard_LRS"
+      }
+    },
+    "vNet1": {
+      "name": "[concat(parameters('clusterNamePrefix'),'-vnet1')]",
+      "addressSpacePrefix": "10.1.0.0/16",
+      "subnetName": "subnet1",
+      "subnetPrefix": "10.1.0.0/24",
+      "peeringName": "[concat(parameters('clusterNamePrefix'),'-vnet1/PeeringToVNet2')]"
+    },
+    "vNet2": {
+      "name": "[concat(parameters('clusterNamePrefix'),'-vnet2')]",
+      "addressSpacePrefix": "10.2.0.0/16",
+      "subnetName": "subnet1",
+      "subnetPrefix": "10.2.0.0/24",
+      "peeringName": "[concat(parameters('clusterNamePrefix'),'-vnet2/PeeringToVNet1')]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vNet1').name]",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vNet1').addressSpacePrefix]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vNet1').subnetName]",
+            "properties": {
+              "addressPrefix": "[variables('vNet1').subnetPrefix]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vNet2').name]",
+      "apiVersion": "2020-07-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vNet2').addressSpacePrefix]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vNet2').subnetName]",
+            "properties": {
+              "addressPrefix": "[variables('vNet2').subnetPrefix]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[variables('vNet1').peeringName]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-07-01", 
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/',variables('vNet1').name)]",
+        "[resourceId('Microsoft.Network/virtualNetworks/',variables('vNet2').name)]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": false,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNet2').name)]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[variables('vNet2').peeringName]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-07-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/',variables('vNet1').name)]",
+        "[resourceId('Microsoft.Network/virtualNetworks/',variables('vNet2').name)]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": false,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNet1').name)]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('clusterNode1').defaultStorageAccount.name]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-06-01",
+      "sku": {
+        "name": "[variables('clusterNode1').defaultStorageAccount.type]"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "name": "[variables('clusterNode1').name]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-06-01-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/',variables('clusterNode1').defaultStorageAccount.name)]",
+        "[resourceId('Microsoft.Network/virtualNetworks/',variables('vNet1').name)]"
+      ],
+      "properties": {
+        "clusterVersion": "4.0",
+        "osType": "Linux",
+        "clusterDefinition": {
+          "kind": "hbase",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+              "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('clusterNode1').defaultStorageAccount.name), '2019-06-01').primaryEndpoints.blob,'https://',''),'/','')]",
+              "isDefault": true,
+              "container": "[variables('clusterNode1').name]",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterNode1').defaultStorageAccount.name), '2019-06-01').keys[0].value]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": 2,
+              "hardwareProfile": {
+              "vmSize": "[parameters('HeadNodeVirtualMachineSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNet1').name)]",
+                "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNet1').name, variables('vNet1').subnetName)]"
+              }
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": 2,
+              "hardwareProfile": {
+              "vmSize": "[parameters('WorkerNodeVirtualMachineSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNet1').name)]",
+                "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNet1').name, variables('vNet1').subnetName)]"
+              }
+            },
+            {
+              "name": "zookeepernode",
+              "targetInstanceCount": 3,
+              "hardwareProfile": {
+              "vmSize": "[parameters('ZookeeperNodeVirtualMachineSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNet1').name)]",
+                "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNet1').name, variables('vNet1').subnetName)]"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('clusterNode2').defaultStorageAccount.name]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-06-01",
+      "sku": {
+        "name": "[variables('clusterNode2').defaultStorageAccount.type]"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "name": "[variables('clusterNode2').name]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-06-01-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/',variables('clusterNode2').defaultStorageAccount.name)]",
+        "[resourceId('Microsoft.Network/virtualNetworks/',variables('vNet2').name)]"
+      ],
+      "properties": {
+        "clusterVersion": "4.0",
+        "osType": "Linux",
+        "clusterDefinition": {
+          "kind": "hbase",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+              "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('clusterNode2').defaultStorageAccount.name), '2019-06-01').primaryEndpoints.blob,'https://',''),'/','')]",
+              "isDefault": true,
+              "container": "[variables('clusterNode2').name]",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterNode2').defaultStorageAccount.name), '2019-06-01').keys[0].value]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": 2,
+              "hardwareProfile": {
+              "vmSize": "[parameters('HeadNodeVirtualMachineSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNet2').name)]",
+                "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNet2').name, variables('vNet2').subnetName)]"
+              }
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": 2,
+              "hardwareProfile": {
+              "vmSize": "[parameters('WorkerNodeVirtualMachineSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNet2').name)]",
+                "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNet2').name, variables('vNet2').subnetName)]"
+              }
+            },
+            {
+              "name": "zookeepernode",
+              "targetInstanceCount": 3,
+              "hardwareProfile": {
+              "vmSize": "[parameters('ZookeeperNodeVirtualMachineSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNet2').name)]",
+                "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNet2').name, variables('vNet2').subnetName)]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "vnet1": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Network/virtualNetworks',variables('vNet1').name))]"
+    },
+    "vnet2": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Network/virtualNetworks',variables('vNet2').name))]"
+    },
+    "cluster1": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters',variables('clusterNode1').name))]"
+    },
+    "cluster2": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters',variables('clusterNode2').name))]"
+    }
+  }
+}

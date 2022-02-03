@@ -1,0 +1,1474 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "A valid log analytics workspace name (solution will be added) or provide a name for the new workspace."
+            }
+        },
+        "workspaceRegionId": {
+            "type": "string",
+            "metadata": {
+                "description": "Region of the Log Analytics workspace"
+            }
+        },
+        "pricingTier": {
+            "type": "string",
+            "defaultValue": "Standalone",
+            "allowedValues": [
+                "Free",
+                "Standalone",
+                "PerNode"
+            ],
+            "metadata": {
+                "description": "Service Tier: Free, Standalone, or PerNode"
+            }
+        }
+    },
+    "variables": {
+        "omsSolutions": {
+            "customSolution": {
+                "name": "SCOM ACS Dashboards",
+                "solutionName": "[concat('SCOMACSDashboards', '[', parameters('workspaceName'), ']')]",
+                "publisher": "Adin.Ermie@outlook.com",
+                "displayName": "SCOM ACS Dashboards",
+                "description": "This is a pre-built solution for Microsoft OMS (www.microsoft.com/oms).This solution was built from following Wei Ho Lim's 2 articles. This solution requires the OMS Security and Audit solution to be enabled first, as it leverages this collected data.",
+                "author": "Adin.Ermie@outlook.com"
+            }
+        },
+        "SecurityAndAuditSolution": {
+            "Name": "[Concat('Security', '(', parameters('workspaceName'), ')')]",
+            "GalleryName": "Security"
+        }
+    },
+    "resources": [
+        {
+            "name": "[parameters('workspaceName')]",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2020-08-01",
+            "location": "[parameters('workspaceRegionId')]",
+            "properties": {
+                "sku": {
+                    "name": "[parameters('pricingTier')]"
+                }
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-11-01-preview",
+                    "location": "[parameters('workspaceRegionId')]",
+                    "name": "[variables('SecurityAndAuditSolution').Name]",
+                    "type": "Microsoft.OperationsManagement/solutions",
+                    "id": "[resourceId('Microsoft.OperationsManagement/solutions',variables('SecurityAndAuditSolution').Name)]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    },
+                    "plan": {
+                        "name": "[variables('SecurityAndAuditSolution').Name]",
+                        "publisher": "Microsoft",
+                        "product": "[Concat('OMSGallery/', variables('SecurityAndAuditSolution').GalleryName)]",
+                        "promotionCode": ""
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "[variables('omsSolutions').customSolution.name]",
+                    "type": "views",
+                    "id": "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('workspaceName'), variables('omsSolutions').customSolution.name)]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Name": "[variables('omsSolutions').customSolution.name]",
+                        "DisplayName": "[variables('omsSolutions').customSolution.displayName]",
+                        "Description": "[variables('omsSolutions').customSolution.description]",
+                        "Author": "[variables('omsSolutions').customSolution.author]",
+                        "Source": "Local",
+                        "Dashboard": [
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+
+                                        "NewGroup": false,
+                                        "Color": "#0072c6"
+                                    },
+                                    "Header": {
+                                        "Image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAztJREFUeNrUmktoE1EUhqexKj4zJWoaqIpVaVGxKr6ogsaNbhS0YKkKFeKmriwFEaXYnY+FYjeCbmtRRBeuXIlLMe1CXGlduBOt0rS1FaF2/A+ciWMy0yT3njvN/PBtMuHc8899zJ1zp8ZxHEtAKXAE7AdNYBOwGVKO+QQ+gDfgFfii23CNhoHV4CyzWzHGEBgEA2BUKQIZqJAG0A+mHTn9AvfB2krzqeTPi8AVMOWYE92UPrBY2kAzeOeEp/fcZsncYmWMsjaQBdut8LSN22zTnQMXwYwzf5rhHJSGUJdTPeoKyjNoGT0JnoIFCt1/GXwOuNYIbirE/APawbNyhlATmNS4W4fm6NW0Rlxa/baWmsQLwROwXGMC2orXSmkpeMw55lVooAe0aK4gcUMG3NWpJ8hAA+gVWAJtRXPlqpdzLTJwlbvJpAFbID7leK3QwCpwXughFDdsgNTJOecN0A9LhIKbHkIW59rpNdAhuA2wQ+gB0hnXQBLsiqCBnaCeDKTpxUYwcDwkA5TzYTLQKryTDGMOuDoQ44eDFcEhRNpCBtYJB42HaGC9O4klVRuwl1opPNdIa2KaG7dK7nSdgXZWxCwzskOYwPmtxISBuPEQxj9pnAx8NRC4LiQDo2RgJMI98DHGtUpppbgXvNSbMEAv9af5NTKKaicDtK/+ZmCNNi0qpyRpCH3nKnHUNOROYtIj4eDTXP9JMzfAlHAbg966UEKwXE71m70+NSH67bdgFTvhrQv9AA+E7sw98Nbnd/rtjlAbDznn/ypzKc2KnKuDc1TmWgXiT3KuRZU5Oq+6LrQ6BGlWIH6f5TlbK9zM9YNhzQaOKV4rR8M8RD23q7ibG0FOo4snwA6fuC18TVWU08Zyy+snwHNLrbxu8ZJ5F7zkIXUUdNP+XTEelddPgRfFAzZ4wmXAbBUcblAOF1QP+TJVcMSU0T2lPA7G5iH5HLctcsy6AWRDTD7LbYoedNeCS2DcYOK0SnVzW+In9S5JcEtzSfRL/DbHrigfnY896C2LPvQ4B/b4PBRLiZ7KdJg9wLvhMaUCqdDnNgkqtIJ9oBlspqITWMYvSj/5pWnE+ve5zev8hkxDfwUYAP0NkvYTPlJVAAAAAElFTkSuQmCC",
+                                        "Label": "Mapping ACS Reports to OMS Search Queries",
+                                        "Link": {
+                                            "Label": "More info",
+                                            "Url": "https://blogs.msdn.microsoft.com/wei_out_there_with_system_center/2016/07/25/mapping-acs-reports-to-oms-search-queries/"
+                                        }
+                                    },
+                                    "List": [
+                                        {
+                                            "Title": "Summary",
+                                            "Content": "This post features a table that shows the mapping between Audit Collection Services (ACS) SSRS reports and search queries used in OMS Log Analytics. \n\nMost of the OMS search queries listed in this post are used to drive the views in this ACS Dashboard in OMS Log Analytics."
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Forensic",
+                                        "newGroup": false,
+                                        "preselectedFilters": "Type, Computer",
+                                        "renderMode": "grid"
+                                    },
+                                    "queries": [
+                                        {
+                                            "query": "Type=SecurityEvent Computer=\"<<Computer Name>>\"",
+                                            "displayName": "All Events For Specified Computer"
+                                        },
+                                        {
+                                            "query": "All Events For Specified Computer grouped by Activity",
+                                            "displayName": "All Events For Specified Computer grouped by Activity"
+                                        },
+                                        {
+                                            "query": "Type=SecurityEvent Account=\"<<User Domain\\\\Account Name>>\"",
+                                            "displayName": "All Events For Specified User"
+                                        },
+                                        {
+                                            "query": "Type=SecurityEvent Account=\"<<User Domain\\\\Account Name>>\" | measure count() by Activity",
+                                            "displayName": "All Events For Specified User grouped by Activity"
+                                        },
+                                        {
+                                            "query": "Type=SecurityEvent Account=\"<<User Domain\\\\Account Name>>\" | measure count() by Activity",
+                                            "displayName": "All Events With Specified Event ID"
+                                        },
+                                        {
+                                            "query": "Type=SecurityEvent EventID=\"<<Event Id>>\" | measure count() by Computer",
+                                            "displayName": "All Events With Specified Event ID grouped by Computer"
+                                        },
+                                        {
+                                            "query": "Type=SecurityEvent EventID=\"<<Event Id>>\" | measure count() by Account",
+                                            "displayName": "All Events With Specified Event ID grouped by Account"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "PLANNING: Event Counts and Hourly Distribution",
+                                        "newGroup": false,
+
+                                        "useIcon": false
+                                    },
+                                    "Header": {
+                                        "Title": "Hourly Event Distribution"
+
+                                    },
+                                    "LineChart": {
+                                        "Query": "Type=SecurityEvent EventID!=0 | measure count() AS Count by TimeGenerated Interval 1Hour",
+                                        "Callout": {
+                                            "Title": "Avg per hour",
+
+                                            "Operation": "Average"
+                                        },
+                                        "yAxis": {
+                                            "isLogarithmic": false
+
+                                        }
+                                    },
+                                    "List": {
+                                        "Query": "Type=SecurityEvent EventID!=0 | measure count() AS Count by Activity",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Event Id - Activity",
+                                            "Value": "Count"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+
+                                        "NavigationQuery": "Type=SecurityEvent EventID!=0 | measure count() AS Count by Computer"
+                                    }
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Planning: Logon Counts of Privilege Users",
+                                        "newGroup": false,
+
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Query": "Type=SecurityEvent EventID=576 OR EventID=4672 AND SubjectDomainName!=\"NT AUTHORITY\" AND AccountType!=\"Machine\"",
+                                        "Legend": "Logon Counts"
+                                    },
+                                    "List": {
+                                        "Query": "Type=SecurityEvent EventID=576 OR EventID=4672 AND SubjectDomainName!=\"NT AUTHORITY\" AND AccountType!=\"Machine\" | Measure Count() by SubjectAccount",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "User Account",
+                                            "Value": "Count"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+
+                                        "NavigationQuery": "Type=SecurityEvent EventID=576 OR EventID=4672 AND SubjectDomainName!=\"NT AUTHORITY\" AND AccountType!=\"Machine\" | Select SubjectAccount, PrivilegeList"
+                                    }
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "System Integrity Check",
+                                        "newGroup": false,
+
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Legend": "Audit Failure",
+                                        "Query": "Type=SecurityEvent EventID=516 OR EventID=4612 | Select TimeGenerated, Activity, Computer"
+                                    },
+                                    "SecondTile": {
+                                        "Legend": "Audit Log Cleared",
+                                        "Query": "Type=SecurityEvent EventID=517 OR EventID=1102 | Select TimeGenerated, Activity, Computer"
+                                    },
+                                    "List": {
+                                        "Query": "Type=SecurityEvent EventID=517 OR EventID=1102 | measure count() AS EventPerHour interval 1Hour",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Date Audit Log Cleared",
+                                            "Value": "Count (Hourly Interval)"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+
+                                        "NavigationQuery": "Type=SecurityEvent EventID=517 OR EventID=516 OR EventID=1102 OR EventID=4612 | Select TimeGenerated, Activity, Computer"
+                                    }
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Access Violation Related Activities",
+                                        "newGroup": false,
+
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Legend": "Account Locked",
+                                        "Query": "Type=SecurityEvent EventID=539 OR EventID=644 OR EventID=4740 OR EventID=6279"
+                                    },
+                                    "SecondTile": {
+                                        "Legend": "Unsuccessful Logon Attempts",
+                                        "Query": "Type=SecurityEvent EventID:[529..537] OR EventID=539 OR (EventID=4625 AND Status=0xc000006d)  | Select TargetAccount, IpAddress, Computer, LogonProcessName, AuthenticationPackageName, LogonTypeName"
+                                    },
+                                    "List": {
+                                        "Query": "Type=SecurityEvent EventID:[529..537] OR EventID=539 OR (EventID=4625 AND Status=0xc000006d) | measure count() by TargetAccount",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Account Failed to Logon",
+                                            "Value": "Count"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+
+                                        "NavigationQuery": "Type=SecurityEvent EventID=624 OR EventID=4720 OR EventID=630 OR EventID=4726 | Select TimeGenerated, TargetAccount, Activity, Computer"
+                                    }
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Account Management: User Accounts Created Or Deleted",
+                                        "newGroup": false,
+
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Legend": "User Accounts Created",
+                                        "Query": "Type=SecurityEvent (EventID=624 OR EventID=4720) | EXTEND SubjectAccount AS CreatedBy | Select TimeGenerated, TargetAccount, CreatedBy, Computer"
+                                    },
+                                    "SecondTile": {
+                                        "Legend": "User Accounts Deleted",
+                                        "Query": "Type=SecurityEvent (EventID=630 OR EventID=4726) | EXTEND SubjectAccount AS DeletedBy | Select TimeGenerated, TargetAccount, DeletedBy, Computer"
+                                    },
+                                    "List": {
+                                        "Query": "Type=SecurityEvent EventID=624 OR EventID=4720 OR EventID=630 OR EventID=4726 | Measure Count() by Activity",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Event Id - Activity",
+                                            "Value": "Count"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+
+                                        "NavigationQuery": "Type=SecurityEvent EventID=539 OR EventID=644 OR EventID=4740 OR EventID=6279"
+                                    }
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Account Management: Domain and Built-in Administrators Membership Changes",
+                                        "newGroup": false,
+
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Legend": "Member Added",
+                                        "Query": "Type=SecurityEvent EventID=4728 OR EventID=4732 OR EventID=4756 OR EventID=632 OR EventID=636 OR EventID=660 AND (\"*512\" OR \"S-1-5-32-544\") | Extend \"Add Member\" AS Action | Select Action, TargetUserName, Activity, SubjectAccount, MemberName, TimeGenerated, Computer"
+                                    },
+                                    "SecondTile": {
+                                        "Legend": "Member Removed",
+                                        "Query": "Type=SecurityEvent EventID=4729 OR EventID=4733 OR EventID=4757 OR EventID=633 OR EventID=637 OR EventID=661 AND (\"*512\" OR \"S-1-5-32-544\")  Extend \"Remove Member\" AS Action | Select Action, TargetUserName, Activity, SubjectAccount, MemberName, TimeGenerated, Computer"
+                                    },
+                                    "List": {
+                                        "Query": "Type=SecurityEvent EventID:[4728..4729] OR EventID:[4732..4733] OR EventID:[4756..4757] OR EventID:[632..633] OR EventID:[636..637] OR EventID:[660..661] AND (\"*512\" OR \"S-1-5-32-544\") | measure Count() by Activity",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Event Id - Activity",
+                                            "Value": "Count"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+
+                                        "NavigationQuery": "Type=SecurityEvent EventID:[4728..4729] OR EventID:[4732..4733] OR EventID:[4756..4757] OR EventID:[632..633] OR EventID:[636..637] OR EventID:[660..661] AND (\"*512\" OR \"S-1-5-32-544\") | Select TargetUserName, Activity, SubjectAccount, MemberName, TimeGenerated, Computer"
+                                    }
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Account Management: Password Change Attempts by Non-Owner",
+                                        "newGroup": false,
+
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Query": "Type=SecurityEvent (EventID=4723 OR EventID=4724 OR EventID:[627..628]) AND SubjectAccount!=\"ANONYMOUS LOGON\" TargetAccount NOT IN {Type=SecurityEvent (EventID=4723 OR EventID=4724 OR EventID:[627..628]) AND SubjectAccount!=\"ANONYMOUS LOGON\" | measure count() by SubjectAccount}",
+                                        "Legend": "Password Change Attempts"
+                                    },
+                                    "List": {
+                                        "Query": "Type=SecurityEvent (EventID=4723 OR EventID=4724 OR EventID:[627..628]) AND SubjectAccount!=\"ANONYMOUS LOGON\" TargetAccount NOT IN {Type=SecurityEvent (EventID=4723 OR EventID=4724 OR EventID:[627..628]) AND SubjectAccount!=\"ANONYMOUS LOGON\" | measure count() by SubjectAccount} | Measure Count() by SubjectAccount",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Changed By",
+                                            "Value": "Count"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+
+                                        "NavigationQuery": "Type=SecurityEvent (EventID=4723 OR EventID=4724 OR EventID:[627..628]) AND SubjectAccount!=\"ANONYMOUS LOGON\" TargetAccount NOT IN {Type=SecurityEvent (EventID=4723 OR EventID=4724 OR EventID:[627..628]) AND SubjectAccount!=\"ANONYMOUS LOGON\" | measure count() by SubjectAccount} | EXTEND SubjectAccount AS ChangedBy | Select  TimeGenerated, Computer, TargetAccount, ChangedBy"
+                                    }
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Policy: Account and Audit Policy Changed",
+                                        "newGroup": false,
+
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Legend": "Account Policy Changed",
+                                        "Query": "Type=SecurityEvent EventID=643 OR EventID=4739 | Select Computer, Activity, TimeGenerated, EventData"
+                                    },
+                                    "SecondTile": {
+                                        "Legend": "Audit Policy Changed",
+                                        "Query": "Type=SecurityEvent EventID=612 OR EventID=4719 | Select Computer, Activity, TimeGenerated, EventData"
+                                    },
+                                    "List": {
+                                        "Query": "Type=SecurityEvent EventID=612 OR EventID=643 OR EventID=4719 OR EventID=4739 | measure count() by Activity",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Event Id - Activity",
+                                            "Value": "Count"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+
+                                        "NavigationQuery": "Type=SecurityEvent EventID=612 OR EventID=643 OR EventID=4719 OR EventID=4739 | Select Computer, Activity, TimeGenerated, EventData"
+                                    }
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Policy: Object Permissions Changed",
+                                        "newGroup": false,
+
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Query": "Type=SecurityEvent EventID=4670 | Select TimeGenerated, Activity, Computer, EventData",
+                                        "Legend": "Object Permissions Changed"
+                                    },
+                                    "List": {
+                                        "Query": "Type=SecurityEvent EventID=4670 | measure count() by Computer",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Computer",
+                                            "Value": "Count"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+
+                                        "NavigationQuery": "Type=SecurityEvent EventID=4670 | Select TimeGenerated, Activity, Computer, EventData"
+                                    }
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Policy: Privilege Added Or Removed",
+                                        "newGroup": false,
+
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Query": "Type=SecurityEvent EventID:[608..609] OR EventID:[621..622] OR EventID:[4704..4705] | Select TimeGenerated, Activity, Computer, EventData",
+                                        "Legend": "Privilege Added Or Removed"
+                                    },
+                                    "List": {
+                                        "Query": "Type=SecurityEvent EventID:[608..609] OR EventID:[621..622] OR EventID:[4704..4705] | measure count() by Computer",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Computer",
+                                            "Value": "Count"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+
+                                        "NavigationQuery": "Type=SecurityEvent EventID:[608..609] OR EventID:[621..622] OR EventID:[4704..4705] | Select TimeGenerated, Activity, Computer, EventData"
+                                    }
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Usage: User and Privileged Logons",
+                                        "newGroup": false,
+
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Legend": "User Logon",
+                                        "Query": "Type=SecurityEvent EventID=528 OR EventID=540 OR EventID=4624 | Select TimeGenerated, Activity, Computer, IpAddress, AuthenticationPackageName, LogonProcessName, LogonTypeName, TargetAccount"
+                                    },
+                                    "SecondTile": {
+                                        "Legend": "Privileged Logon",
+                                        "Query": "Type=SecurityEvent EventID=576 OR EventID=4672 | Select TimeGenerated, Activity, Computer, SubjectAccount, PrivilegeList"
+                                    },
+                                    "List": {
+                                        "Query": "Type=SecurityEvent EventID=576 OR EventID=4672 OR EventID=528 OR EventID=540 OR EventID=4624 | measure count() by Activity",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Event Id - Activity",
+                                            "Value": "Count"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+
+                                        "NavigationQuery": "Type=SecurityEvent EventID=576 OR EventID=4672 OR EventID=528 OR EventID=540 OR EventID=4624"
+                                    }
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Usage: Sensitive Security Groups Changes",
+                                        "newGroup": false,
+
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Query": "Type=SecurityEvent EventID:[4727..4735] OR EventID=4737 OR EventID:[4754..4758] OR EventID:[631..639] OR EventID=641 OR EventID:[658..662] | EXTEND TargetUserName As GroupName | Select Activity, GroupName, SubjectAccount, MemberName, TimeGenerated",
+                                        "Legend": "Sensitive Security Groups Changes"
+                                    },
+                                    "List": {
+                                        "Query": "Type=SecurityEvent EventID:[4727..4735] OR EventID=4737 OR EventID:[4754..4758] OR EventID:[631..639] OR EventID=641 OR EventID:[658..662] | measure count() by Activity",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Event Id - Activity",
+                                            "Value": "Count"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+
+                                        "NavigationQuery": "Type=SecurityEvent EventID:[4727..4735] OR EventID=4737 OR EventID:[4754..4758] OR EventID:[631..639] OR EventID=641 OR EventID:[658..662] | EXTEND TargetUserName As GroupName | Select Activity, GroupName, SubjectAccount, MemberName, TimeGenerated"
+                                    }
+                                }
+                            },
+                            {
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Usage: Object Access",
+                                        "newGroup": false,
+
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Query": "Type=SecurityEvent EventID=560 OR EventID=567 OR EventID=4656 OR EventID=4663 | Select Computer, Activity, TimeGenerated, EventData",
+                                        "Legend": "All Object Access Related Audit Event"
+                                    },
+                                    "List": {
+                                        "Query": "Type=SecurityEvent EventID=560 OR EventID=567 OR EventID=4656 OR EventID=4663 | measure count() AS EventPerHour interval 1Hour | sort TimeGenerated desc",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Date Event Logged",
+                                            "Value": "Count (Hourly Interval)"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+
+                                        "NavigationQuery": "Type=SecurityEvent EventID=560 OR EventID=567 OR EventID=4656 OR EventID=4663 | Select Computer, Activity, TimeGenerated, EventData"
+                                    }
+                                }
+                            }
+                        ],
+                        "OverviewTile": {
+                            "Type": "OverviewTile",
+                            "Version": 0,
+                            "Configuration": {
+                                "Trend1": {
+                                    "Legend": "ALL SEC EVENTS",
+                                    "LegendColor": "#00188f",
+                                    "ChartQuery": "Type=SecurityEvent EventID!=0",
+                                    "Calculation": {
+                                        "Operation": "Sum"
+                                    }
+                                },
+                                "Trend2": {
+                                    "Legend": "ACS SEC EVENTS",
+                                    "LegendColor": "#0072c6",
+                                    "ChartQuery": "Type=SecurityEvent EventID=539 OR EventID=644 OR EventID=4740 OR EventID=6279 OR EventID:[529..537] OR EventID=539 OR EventID=4625 OR EventID=4728 OR EventID=4732 OR EventID=4756 OR EventID=632 OR EventID=636 OR EventID=660 OR EventID=4729 OR EventID=4733 OR EventID=4757 OR EventID=633 OR EventID=637 OR EventID=661 OR EventID=4723 OR EventID=4724 OR EventID:[627..628] OR EventID=624 OR EventID=630 OR EventID=4726 OR EventID=4720 OR EventID=576 OR EventID=4672 OR EventID=643 OR EventID=4739 OR EventID=612 OR EventID=4719 OR EventID=4670 OR EventID:[608..609] OR EventID:[621..622] OR EventID:[4704..4705] OR EventID=516 OR EventID=4612 OR EventID=517 OR EventID=1102 OR EventID=560 OR EventID=567 OR EventID=4656 OR EventID=4663 OR EventID=576 OR EventID=4672 OR EventID:[4727..4735] OR EventID=4737 OR EventID:[4754..4758] OR EventID:[631..639] OR EventID=641 OR EventID:[658..662] OR EventID=528 OR EventID=540 OR EventID=4624",
+                                    "Calculation": {
+                                        "Operation": "Sum"
+                                    }
+                                },
+                                "Advanced": {
+                                    "DataFlowVerification": {
+                                        "Enabled": false,
+                                        "Query": "*"
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch01",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Access Violation: Account Locked (Details)",
+                        "Query": "Type=SecurityEvent EventID=539 OR EventID=644 OR EventID=4740 OR EventID=6279",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch02",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Access Violation: Account Locked (Events Count)",
+                        "Query": "Type=SecurityEvent EventID=539 OR EventID=644 OR EventID=4740 OR EventID=6279 | measure count() by EventID",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch03",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Access Violation: Unsuccessful Logon Attempts (Details)",
+                        "Query": "Type=SecurityEvent EventID:[529..537] OR EventID=539 OR (EventID=4625 AND Status=0xc000006d) | Select TargetAccount, IpAddress, Computer, LogonProcessName, AuthenticationPackageName, LogonTypeName",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch04",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Access Violation: Unsuccessful Logon Attempts (Target Account Count)",
+                        "Query": "Type=SecurityEvent EventID:[529..537] OR EventID=539 OR (EventID=4625 AND Status=0xc000006d) | measure count() by TargetAccount",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch05",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Account Management: Domain and Built-in Administrators Membership Changes (Member Added)",
+                        "Query": "Type=SecurityEvent EventID=4728 OR EventID=4732 OR EventID=4756 OR EventID=632 OR EventID=636 OR EventID=660 AND (\"*512\" OR \"S-1-5-32-544\") | Extend \"Add Member\" AS Action | Select Action, TargetUserName, Activity, SubjectAccount, MemberName, TimeGenerated, Computer",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch06",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Account Management: Domain and Built-in Administrators Membership Changes (Member Removed)",
+                        "Query": "Type=SecurityEvent EventID=4729 OR EventID=4733 OR EventID=4757 OR EventID=633 OR EventID=637 OR EventID=661 AND (\"*512\" OR \"S-1-5-32-544\") | Extend \"Remove Member\" AS Action | Select Action, TargetUserName, Activity, SubjectAccount, MemberName, TimeGenerated, Computer",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch07",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Account Management: Passwords Change Attempts by Non-Owner",
+                        "Query": "Type=SecurityEvent (EventID=4723 OR EventID=4724 OR EventID:[627..628]) AND SubjectAccount!=\"ANONYMOUS LOGON\" TargetAccount NOT IN {Type=SecurityEvent (EventID=4723 OR EventID=4724 OR EventID:[627..628]) AND SubjectAccount!=\"ANONYMOUS LOGON\" | measure count() by SubjectAccount} | EXTEND SubjectAccount AS ChangedBy | Select TimeGenerated, Computer, TargetAccount, ChangedBy",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch08",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Account Management: User Accounts Created",
+                        "Query": "Type=SecurityEvent (EventID=624 OR EventID=4720) | EXTEND SubjectAccount AS CreatedBy | Select TimeGenerated, TargetAccount, CreatedBy, Computer",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch09",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Account Management: User Accounts Deleted",
+                        "Query": "Type=SecurityEvent (EventID=630 OR EventID=4726) | EXTEND SubjectAccount AS DeletedBy | Select TimeGenerated, TargetAccount, DeletedBy, Computer",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch10",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Forensic: All Events For Specified Computer (Detail)",
+                        "Query": "Type=SecurityEvent Computer=\"<<Computer Name>>\"",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch11",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Forensic: All Events For Specified Computer (Activity)",
+                        "Query": "Type=SecurityEvent Computer=\"<<Computer Name>>\" | measure count() by Activity",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch12",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Forensic: All Events For Specified User (Details)",
+                        "Query": "Type=SecurityEvent Account=\"<<User Domain\\Account Name>>\"",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch13",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Forensic: All Events For Specified User (Activity)",
+                        "Query": "Type=SecurityEvent Account=\"<<User Domain\\Account Name>>\" | measure count() by Activity",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch14",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Forensic: All Events With Specified Event ID (Details)",
+                        "Query": "Type=SecurityEvent EventID=\"<<Event Id>>\"",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch15",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Forensic: All Events With Specified Event ID (Computer)",
+                        "Query": "Type=SecurityEvent EventID=\"<<Event Id>>\" | measure count() by Computer",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch16",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Forensic: All Events With Specified Event ID (Account)",
+                        "Query": "Type=SecurityEvent EventID=\"<<Event Id>>\" | measure count() by Account",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch17",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Planning: Event Counts",
+                        "Query": "Type=SecurityEvent EventID!=0 | measure count() AS Count by Activity",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch18",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Planning: Event Counts by Computer (Activity)",
+                        "Query": "Type=SecurityEvent Computer=\"<<Computer Name>>\" | measure count() by Activity",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch19",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Planning: Event Counts by Computer (Events)",
+                        "Query": "Type=SecurityEvent Computer=\"<<Computer Name>>\" | measure count() by EventID",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch20",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Planning: Hourly Event Distribution (Time)",
+                        "Query": "Type=SecurityEvent EventID!=0 | measure count() AS Count by TimeGenerated Interval 1Hour",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch21",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Planning: Hourly Event Distribution (Activity)",
+                        "Query": "Type=SecurityEvent EventID!=0 AND EventID:[xx..yy] | measure count() AS Count by Activity Interval 1Hour",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch22",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Planning: Logon Counts of Privileged Users",
+                        "Query": "Type=SecurityEvent EventID=576 OR EventID=4672 AND SubjectDomainName!=\"NT AUTHORITY\" AND AccountType!=\"Machine\" | Select SubjectAccount, PrivilegeList",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch23",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Planning: Logon Counts of Privileged Users",
+                        "Query": "Type=SecurityEvent EventID=576 OR EventID=4672 AND SubjectDomainName!=\"NT AUTHORITY\" AND AccountType!=\"Machine\" | Measure Count() by SubjectAccount",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch24",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Policy: Account Policy Changed",
+                        "Query": "Type=SecurityEvent EventID=643 OR EventID=4739 | Select Computer, Activity, TimeGenerated, EventData",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch25",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Policy: Audit Policy Changed",
+                        "Query": "Type=SecurityEvent EventID=612 OR EventID=4719 | Select Computer, Activity, TimeGenerated, EventData",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch26",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Policy: Object Permissions Changed",
+                        "Query": "Type=SecurityEvent EventID=4670 | Select TimeGenerated, Activity, Computer, EventData",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch27",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Policy: Privilege Added Or Removed",
+                        "Query": "Type=SecurityEvent EventID:[608..609] OR EventID:[621..622] OR EventID:[4704..4705] | Select TimeGenerated, Activity, Computer, EventData",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch28",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "System Integrity: Audit Failure",
+                        "Query": "Type=SecurityEvent EventID=516 OR EventID=4612 | Select TimeGenerated, Activity, Computer",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch29",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "System Integrity: Audit Log Cleared",
+                        "Query": "Type=SecurityEvent EventID=517 OR EventID=1102 | Select Activity, Computer, TimeGenerated, EventData",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch30",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Usage: Object Access",
+                        "Query": "Type=SecurityEvent EventID=560 OR EventID=567 OR EventID=4656 OR EventID=4663 | Select Computer, Activity, TimeGenerated, EventData",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch31",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Usage: Privileged logon",
+                        "Query": "Type=SecurityEvent EventID=576 OR EventID=4672 | Select TimeGenerated, Activity, Computer, SubjectAccount, PrivilegeList",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch32",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Usage: Sensitive Security Groups Changes",
+                        "Query": "Type=SecurityEvent EventID:[4727..4735] OR EventID=4737 OR EventID:[4754..4758] OR EventID:[631..639] OR EventID=641 OR EventID:[658..662] | EXTEND TargetUserName As GroupName | Select Activity, GroupName, SubjectAccount, MemberName, TimeGenerated",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch33",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "Usage: User Logon",
+                        "Query": "Type=SecurityEvent EventID=528 OR EventID=540 OR EventID=4624 | Select TimeGenerated, Activity, Computer, IpAddress, AuthenticationPackageName, LogonProcessName, LogonTypeName, TargetAccount",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch34",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "DAC: File Resource Property Changes",
+                        "Query": "Type=SecurityEvent EventID=4911 | Select Computer, Activity, TimeGenerated, SubjectAccount, EventData",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch35",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "DAC: Central Access Policy For File Changes",
+                        "Query": "Type=SecurityEvent EventID=4913 | Select Computer, Activity, TimeGenerated, SubjectAccount, EventData",
+                        "Version": 1
+                    }
+                },
+                {
+                    "apiVersion": "2020-08-01",
+                    "name": "ACSSavedSearch36",
+                    "type": "savedSearches",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                    ],
+                    "properties": {
+                        "Category": "ACS Report Queries",
+                        "ETag": "*",
+                        "DisplayName": "DAC: Object Attribute Changes",
+                        "Query": "Type=SecurityEvent EventID=5136 OR EventID=5137 | Select Computer, Activity, TimeGenerated, SubjectAccount, EventData",
+                        "Version": 1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "[variables('omsSolutions').customSolution.solutionName]",
+            "type": "Microsoft.OperationsManagement/solutions",
+            "apiVersion": "2015-11-01-preview",
+            "location": "[parameters('workspaceRegionId')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
+                "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('workspaceName'), variables('omsSolutions').customSolution.name)]"
+            ],
+            "plan": {
+                "name": "[variables('omsSolutions').customSolution.solutionName]",
+                "product": "[variables('omsSolutions').customSolution.name]",
+                "publisher": "[variables('omsSolutions').customSolution.publisher]",
+                "promotionCode": ""
+            },
+            "properties": {
+                "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
+                "containedResources": [
+                    "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('workspaceName'), variables('omsSolutions').customSolution.name)]"
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "LogAnalyticsworkspacename": {
+            "value": "[concat('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
+            "type": "string"
+        }
+    }
+}

@@ -1,0 +1,231 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Same Location of resource group for all resources in the same deployment."
+      }
+    },
+    "netAppAccountName": {
+      "defaultValue": "[concat('anfacc', uniqueString(resourceGroup().id))]",
+      "type": "String",
+      "metadata": {
+        "description": "Name for the Account. The account name must be unique within the subscription"
+      }
+    },
+    "netAppPoolName": {
+      "defaultValue": "[concat('pool', uniqueString(resourceGroup().id))]",
+      "type": "String",
+      "metadata": {
+        "description": "Name for the capacity pool. The capacity pool name must be unique for each NetApp account."
+      }
+    },
+    "poolSizeBytes": {
+      "type": "int",
+      "defaultValue": 4398046511104,
+      "minValue": 4398046511104,
+      "maxValue": 549755813888000,
+      "metadata": {
+        "description": "Size of the capacity pool. The minimum  size is 4 TiB."
+      }
+    },
+    "netAppVolumeName": {
+      "defaultValue": "[concat('volume', uniqueString(resourceGroup().id))]",
+      "type": "String",
+      "metadata": {
+        "description": "Name for the NFS Volume. A volume name must be unique within each capacity pool. It must be at aleast three characters long and you can use any alphanumeric characters."
+      }
+    },
+    "volSizeBytes": {
+      "type": "int",
+      "defaultValue": 107374182400,
+      "minValue": 107374182400,
+      "maxValue": 109951162777600,
+      "metadata": {
+        "description": "Amount of logical storage that is allocated to the volume."
+      }
+    },
+    "virtualNetworkName": {
+      "defaultValue": "[concat('anfvnet', uniqueString(resourceGroup().id))]",
+      "type": "String",
+      "metadata": {
+        "description": "Name of the Virtual Network (VNet) from which you want to access the volume. The VNet must have a subnet delegated to Azure NetApp Files."
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "String",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "Virtual Network address range."
+      }
+    },
+    "allowedClients": {
+      "type": "string",
+      "defaultValue": "0.0.0.0/0",
+      "metadata": {
+        "description": "Root Access to the volume."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "[concat('anfsubnet', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Subnet name that you want to use for the volume. The subnet must be delegated to Azure NetApp Files."
+      }
+    },
+    "subnetAddressPrefix": {
+      "type": "String",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Subnet address range."
+      }
+    },
+    "serviceLevel": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Premium",
+        "Ultra",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "Target performance for the capacity pool. Service level: Ultra, Premium, or Standard."
+      }
+    },
+    "protocolTypes": {
+      "type": "string",
+      "defaultValue": "NFSv3",
+      "allowedValues": [
+        "NFSv3",
+        "NFSv4.1"
+      ],
+      "metadata": {
+        "description": "NFS version (NFSv3 or NFSv4.1) for the volume."
+      }
+    },
+    "unixReadOnly": {
+      "type": "bool",
+      "defaultValue": false,
+      "allowedValues": [
+        false,
+        true
+      ],
+      "metadata": {
+        "description": "Read only flag."
+      }
+    },
+    "unixReadWrite": {
+      "type": "bool",
+      "defaultValue": true,
+      "allowedValues": [
+        false,
+        true
+      ],
+      "metadata": {
+        "description": "Read/write flag."
+      }
+    },
+    "snapshotDirectoryVisible": {
+      "type": "bool",
+      "defaultValue": false,
+      "allowedValues": [
+        false,
+        true
+      ],
+      "metadata": {
+        "description": "Snapshot directory visible flag."
+      }
+    }
+  },
+  "variables": {
+    "capacityPoolName": "[concat(parameters('netAppAccountName'), '/',parameters('netAppPoolName'))]",
+    "volumeName": "[concat(parameters('netAppAccountName'), '/',parameters('netAppPoolName'),'/', parameters('netAppVolumeName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetAddressPrefix')]",
+              "delegations": [
+                {
+                  "name": "NetAppDelegation",
+                  "properties": {
+                    "serviceName": "Microsoft.NetApp/volumes"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.NetApp/netAppAccounts",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('netAppAccountName')]",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.NetApp/netAppAccounts/capacityPools",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('capacityPoolName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.NetApp/netAppAccounts', parameters('netAppAccountName'))]"
+      ],
+      "properties": {
+        "serviceLevel": "[parameters('serviceLevel')]",
+        "size": "[parameters('poolSizeBytes')]"
+      }
+    },
+    {
+      "type": "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('volumeName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.NetApp/netAppAccounts/capacityPools', parameters('netAppAccountName'), parameters('netAppPoolName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "serviceLevel": "[parameters('serviceLevel')]",
+        "creationToken": "[parameters('netAppVolumeName')]",
+        "usageThreshold": "[parameters('volSizeBytes')]",
+        "exportPolicy": {
+          "rules": [
+            {
+              "ruleIndex": 1,
+              "unixReadOnly": "[parameters('unixReadOnly')]",
+              "unixReadWrite": "[parameters('unixReadWrite')]",
+              "cifs": false,
+              "nfsv3": "[if(equals( parameters('protocolTypes'), 'NFSv3'),bool('true'),bool('false'))]",
+              "nfsv41": "[if(equals(parameters('protocolTypes'), 'NFSv4.1'),bool('true'),bool('false'))]",
+              "allowedClients": "[parameters('allowedClients')]"
+            }
+          ]
+        },
+        "protocolTypes": [
+          "[parameters('protocolTypes')]"
+        ],
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+        "snapshotDirectoryVisible": "[parameters('snapshotDirectoryVisible')]"
+      }
+    }
+  ]
+}

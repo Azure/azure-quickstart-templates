@@ -1,0 +1,399 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccountNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique name of the new storage account that will be created to store virtual machine VHDs."
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain name of the public jumpbox"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azureuser",
+      "metadata": {
+        "description": "Virtual machine administrator username"
+      }
+    },
+    "tshirtSize": {
+      "type": "string",
+      "defaultValue": "Small",
+      "allowedValues": [
+        "Small",
+        "Medium",
+        "Large",
+        "XLarge"
+      ],
+      "metadata": {
+        "description": "T-shirt size of the Kafka deployment"
+      }
+    },
+    "jumpbox": {
+      "type": "string",
+      "defaultValue": "Enabled",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "metadata": {
+        "description": "The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the Kafka environment"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet",
+      "metadata": {
+        "description": "Virtual network name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templatelink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "sharedModulesLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the shared modules."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    }
+  },
+  "variables": {
+    "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "tshirtSizeTypes": {
+        "Small": {
+          "vmSize": "Standard_A1",
+          "diskSize": 1023,
+          "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-2disk-resources.json', parameters('_artifactsLocationSasToken')))]",
+          "zookeeperCount": 1,
+          "brokerCount": 3,
+          "storage": {
+            "name": "[parameters('storageAccountNamePrefix')]",
+            "count": 1,
+            "pool": "db",
+            "map": [
+              0,
+              0,
+              0
+            ],
+            "jumpbox": 0
+          }
+        },
+        "Medium": {
+          "vmSize": "Standard_A3",
+          "diskSize": 1023,
+          "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-8disk-resources.json', parameters('_artifactsLocationSasToken')))]",
+          "zookeeperCount": 3,
+          "brokerCount": 5,
+          "storage": {
+            "name": "[parameters('storageAccountNamePrefix')]",
+            "count": 2,
+            "pool": "db",
+            "map": [
+              0,
+              0,
+              0,
+              1,
+              1
+            ],
+            "jumpbox": 0
+          }
+        },
+        "Large": {
+          "vmSize": "Standard_A4",
+          "diskSize": 1023,
+          "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-16disk-resources.json', parameters('_artifactsLocationSasToken')))]",
+          "zookeeperCount": 3,
+          "brokerCount": 5,
+          "storage": {
+            "name": "[parameters('storageAccountNamePrefix')]",
+            "count": 3,
+            "pool": "db",
+            "map": [
+              0,
+              0,
+              1,
+              1,
+              2
+            ],
+            "jumpbox": 0
+          }
+        },
+        "XLarge": {
+          "vmSize": "Standard_A7",
+          "diskSize": 1023,
+          "vmTemplate": "[uri(parameters('_artifactsLocation'), concat('datastore-16disk-resources.json', parameters('_artifactsLocationSasToken')))]",
+          "zookeeperCount": 5,
+          "brokerCount": 8,
+          "storage": {
+            "name": "[parameters('storageAccountNamePrefix')]",
+            "count": 4,
+            "pool": "db",
+            "map": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2,
+              3,
+              3
+            ],
+            "jumpbox": 0
+          }
+        }
+      },
+    "tshirtSize": "[variables('tshirtSizeTypes')[parameters('tshirtSize')]]",
+    "jumpboxTemplate": {
+        "Enabled": "jumpbox-resources.json",
+        "Disabled": "empty-resources.json"
+    },
+    "vmTemplatezookeeper": "[uri(parameters('_artifactsLocation'), concat('zookeeper-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "jumpboxTemplateUrl": "[uri(parameters('_artifactsLocation'), concat(variables('jumpboxTemplate')[parameters('jumpbox')], parameters('_artifactsLocationSasToken')))]",
+    "osSettings": {
+      "scripts": [
+        "[uri(parameters('_artifactsLocation'), concat('kafka-cluster-install.sh', parameters('_artifactsLocationSasToken')))]",
+        "[parameters('sharedModulesLocation')]"
+      ],
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.5-LTS",
+        "version": "latest"
+      }
+    },
+    "networkSettings": {
+      "vnetName": "[parameters('virtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnets": {
+        "dmz": {
+          "name": "dmz",
+          "prefix": "10.0.0.0/24",
+          "vnet": "[parameters('virtualNetworkName')]"
+        },
+        "zookeeper": {
+          "name": "zookeeper",
+          "prefix": "10.0.1.0/24",
+          "addprefix": "10.0.1.1",
+          "vnet": "[parameters('virtualNetworkName')]"
+        },
+        "data": {
+          "name": "data",
+          "prefix": "10.0.2.0/24",
+          "addprefix": "10.0.2.1",
+          "vnet": "[parameters('virtualNetworkName')]"
+        }
+      }
+    },
+    "availabilitySetSettings": {
+      "name": "kafkaAvailabilitySet",
+      "fdCount": 2,
+      "udCount": 5
+    }
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageSettings": {
+            "value": "[variables('tshirtSize').storage]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "availabilitySetSettings": {
+            "value": "[variables('availabilitySetSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "zookeeper-node",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vmTemplatezookeeper')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnets.zookeeper]"
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          },
+          "commonSettings": {
+            "value": {
+              "adminUsername": "[parameters('adminUsername')]",
+              "namespace": "zk"
+            }
+          },
+          "machineSettings": {
+            "value": {
+              "vmSize": "[variables('tshirtSize').vmSize]",
+              "diskSize": "[variables('tshirtSize').diskSize]",
+              "vmCount": "[variables('tshirtSize').zookeeperCount]",
+              "availabilitySet": "[variables('availabilitySetSettings').name]",
+              "addprefix": "[variables('networkSettings').subnets.zookeeper.addprefix]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "broker-node",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'zookeeper-node')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('tshirtSize').vmTemplate]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+              "value": "[parameters('location')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnets.data]"
+          },
+          "commonSettings": {
+            "value": {
+              "adminUsername": "[parameters('adminUsername')]",
+              "namespace": "bk"
+            }
+          },
+          "machineSettingsbroker": {
+            "value": {
+              "vmSize": "[variables('tshirtSize').vmSize]",
+              "diskSize": "[variables('tshirtSize').diskSize]",
+              "zookeeperCount": "[variables('tshirtSize').zookeeperCount]",
+              "vmCount": "[variables('tshirtSize').brokerCount]",
+              "availabilitySet": "[variables('availabilitySetSettings').name]",
+              "zookeeperSubnet": "[variables('networkSettings').subnets.zookeeper.addprefix]",
+              "addprefix": "[variables('networkSettings').subnets.data.addprefix]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "jumpbox",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('jumpboxTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "dnsName": {
+            "value": "[parameters('domainName')]"
+          },
+          "commonSettings": {
+            "value": {
+              "adminUsername": "[parameters('adminUsername')]",
+              "namespace": "jumpbox"
+            }
+          },
+          "location": {
+              "value": "[parameters('location')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnets.dmz]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          }
+        }
+      }
+    }
+  ]
+}

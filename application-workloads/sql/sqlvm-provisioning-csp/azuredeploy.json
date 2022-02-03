@@ -1,0 +1,263 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL IaaS VM machine name"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL IaaS VM size. Use Azure VM size name from MSDN"
+      }
+    },
+    "sqlImageOffer": {
+      "type": "string",
+      "defaultValue": "sql2019-ws2019",
+      "allowedValues": [
+        "sql2019-ws2019",
+        "sql2019-ws2016"
+      ],
+      "metadata": {
+        "description": "SQL Server Gallery Image Offer"
+      }
+    },
+    "sqlImageSku": {
+      "type": "string",
+      "defaultValue": "Enterprise",
+      "allowedValues": [
+        "Enterprise",
+        "Standard",
+        "Web"
+      ],
+      "metadata": {
+        "description": "SQL Server Gallery Image SKU"
+      }
+    },
+    "sqlImageVersion": {
+      "type": "string",
+      "defaultValue": "latest",
+      "metadata": {
+        "description": "SQL Server Gallery Image Published Version"
+      }
+    },
+    "username": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL IaaS VM local administrator username"
+      }
+    },
+    "password": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SQL IaaS VM local administrator password"
+      }
+    },
+    "storageName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL IaaS VM data and OS disks storage service"
+      }
+    },
+    "storageType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS"
+      ],
+      "metadata": {
+        "description": "SQL IaaS VM data and OS disks storage type"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL IaaS VM virtual network name"
+      }
+    },
+    "networkAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.10.0.0/26",
+      "metadata": {
+        "description": "SQL IaaS VM virtual network IPv4 address space"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL IaaS VM virtual network subnet name"
+      }
+    },
+    "subnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.10.0.0/28",
+      "metadata": {
+        "description": "SQL IaaS VM virtual network subnet IPv4 address prefix"
+      }
+    },
+    "publicDnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS name for the VM"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "vmnic": "[concat(parameters('vmName'), 'devnic')]",
+    "vmosdisk": "[concat(parameters('vmName'), 'osdisk')]",
+    "vnetSubNetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]",
+    "networkSecurityGroupName": "[concat(parameters('subnetName'), '-nsg')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageName')]",
+      "apiVersion": "2021-01-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-07-01",
+      "name": "[parameters('publicDnsName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('publicDnsName')]"
+        }
+      }
+    },
+    {
+      "comments": "Simple Network Security Group for subnet [parameters('subnetName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-07-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-07-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('networkAddressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetAddressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-07-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('vmnic')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', parameters('publicDnsName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "devipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicDnsName'))]"
+              },
+              "subnet": {
+                "id": "[variables('vnetSubNetID')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-12-01",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/', parameters('storageName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('vmnic'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('username')]",
+          "adminPassword": "[parameters('password')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftSQLServer",
+            "offer": "[parameters('sqlImageOffer')]",
+            "sku": "[parameters('sqlImageSku')]",
+            "version": "[parameters('sqlImageVersion')]"
+          },
+          "osDisk": {
+            "name": "[variables('vmosdisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmnic'))]"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

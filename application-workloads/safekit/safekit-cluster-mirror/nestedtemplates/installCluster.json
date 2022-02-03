@@ -1,0 +1,131 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"vmname": {
+			"type": "string",
+			"metadata": {
+				"description": "vm name"
+			}
+		},
+		"ostype": {
+			"type": "string",
+			"metadata": {
+				"description": "OS type (windows, linux)"
+			},
+			"defaultValue": "windows"
+		},
+		"vmList": {
+			"type": "array",
+			"metadata": {
+				"description": "vm names"
+			}
+		},
+		"fqdn": {
+			"type": "string",
+			"metadata": {
+				"description": "first vm public ip name"
+			}
+		},
+		"privateIps": {
+			"type": "array",
+			"metadata": {
+				"description": "vm private ip list"
+			}
+		},
+		"VMDnsPrefix":{
+			"type": "string",
+			"metadata": {
+				"description": "Public VM IP dns label prefix"
+			}
+		},
+		"lblist": {
+			"type": "string",
+			"metadata": {
+				"description": "dns name of loadbalancer"
+			},
+			"defaultValue": ""
+		},
+		"capassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "password for CA server access"
+			}
+		},
+		"location": {
+			"type": "string",
+			"metadata": {
+				"description": "location of the resources"
+			}
+		},
+		"_artifactsLocation": {
+			"type": "string",
+			"metadata": {
+				"description": "base URL of deployment resources (template,subtemplates,scripts)"
+			}
+		},
+		"_artifactsLocationSasToken": {
+			"type": "securestring",
+			"metadata": {
+				"description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+			}
+		}
+	},
+	"variables": {
+		"pwconfscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/configCluster.ps1', parameters('_artifactsLocationSasToken')))]",
+		"pwcertscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/uploadcerts.ps1', parameters('_artifactsLocationSasToken')))]",
+		"pwiscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/installCluster.ps1', parameters('_artifactsLocationSasToken')))]",
+		"shelliscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/installCluster.sh', parameters('_artifactsLocationSasToken')))]",
+		"domain": "[skip(parameters('fqdn'),indexOf(parameters('fqdn'),'.'))]",
+		"publicipfmt": "[concat(parameters('VMDnsPrefix'),'%VM%',variables('domain'))]",
+		"privateiplistarg": "[replace(string(parameters('privateIps')),'\"','')]",
+		"vmlistarg": "[replace(string(parameters('vmList')),'\"','')]",
+		"windowsfileuris": [
+			"[variables('pwcertscripturi')]",
+			"[variables('pwconfscripturi')]",
+			"[variables('pwiscripturi')]"
+		],
+		"linuxfileuris": [
+			"[variables('pwcertscripturi')]",
+			"[variables('pwconfscripturi')]",
+			"[variables('shelliscripturi')]"
+		],
+		"properties": {
+			"windows": {
+				"publisher": "Microsoft.Compute",
+				"type": "CustomScriptExtension",
+				"typeHandlerVersion": "1.9",
+				"autoUpgradeMinorVersion": true,
+				"settings": {
+					"fileUris": "[variables('windowsfileuris')]"
+				},
+				"protectedSettings": {
+					"commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File scripts/InstallCluster.ps1 -vmlist ', variables('vmlistarg'),' -publicipfmt ', variables('publicipfmt'),' -privateiplist ', variables('privateiplistarg'), ' -lblist ', parameters('lblist'),' -Passwd ', parameters('capassword'))]"
+				}
+			},
+			"linux": {
+				"publisher": "Microsoft.Azure.Extensions",
+				"type": "CustomScript",
+				"typeHandlerVersion": "2.0",
+				"autoUpgradeMinorVersion": true,
+				"settings": {
+					"skipDos2Unix": false,
+					"timestamp": 1,
+					"fileUris": "[variables('linuxfileuris')]"
+				},
+				"protectedSettings": {
+					"commandToExecute": "[concat('sh installCluster.sh ', variables('vmlistarg'), ' ', variables('publicipfmt'),' ', variables('privateiplistarg'),' ', parameters('lblist'),' ', parameters('capassword'))]"
+				}
+			}
+		}
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('vmname'),'/safekit')]",
+			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"apiVersion": "2020-12-01",
+			"location": "[parameters('location')]",
+			"properties": "[variables('properties')[parameters('ostype')]]"
+		}
+	]
+}

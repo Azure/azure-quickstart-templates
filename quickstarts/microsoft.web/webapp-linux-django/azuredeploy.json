@@ -1,0 +1,92 @@
+{
+    "contentVersion": "1.0.0.0",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "parameters": {
+        "webAppName": {
+            "type": "string",
+            "defaultValue": "[concat('Django-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "That name is the name of our application. It has to be unique.Type a name followed by your resource group name. (<name>-<resourceGroupName>)"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "variables": {
+        "sku": "Free",
+        "skuCode": "F1",
+        "workerSize": "0",
+        "appInsights": "[concat(parameters('webAppName'), '-insights')]",
+        "hostingPlanName": "[concat( 'hpn-', resourceGroup().name)]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('webAppName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+                "[resourceId('microsoft.insights/components', variables('appInsights'))]"
+            ],
+            "properties": {
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+                            "value": "false"
+                        },
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsights'))).InstrumentationKey]"
+                        },
+                        {
+                            "name": "XDT_MicrosoftApplicationInsights_Mode",
+                            "value": "default"
+                        },
+                        {
+                            "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
+                            "value": "~2"
+                        }
+                    ],
+                    "linuxFxVersion": "DOCKER|appsvcorg/django-python:0.1"
+                },
+                "name": "[parameters('webAppName')]",
+                "clientAffinityEnabled": false,
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2020-06-01",
+            "name": "[variables('hostingPlanName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "Tier": "[variables('sku')]",
+                "Name": "[variables('skuCode')]"
+            },
+            "kind": "linux",
+            "properties": {
+                "name": "[variables('hostingPlanName')]",
+                "workerSizeId": "[variables('workerSize')]",
+                "reserved": true,
+                "numberOfWorkers": "1"
+            }
+        },
+        {
+            "type": "microsoft.insights/components",
+            "apiVersion": "2020-02-02-preview",
+            "name": "[variables('appInsights')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "ApplicationId": "[parameters('webAppName')]",
+                "Application_Type": "web"
+            }
+        }
+    ]
+}

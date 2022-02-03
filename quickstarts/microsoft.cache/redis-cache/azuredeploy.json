@@ -1,0 +1,132 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.63.48766",
+      "templateHash": "15185429886065480175"
+    }
+  },
+  "parameters": {
+    "redisCacheName": {
+      "type": "string",
+      "defaultValue": "[format('redisCache-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Specify the name of the Azure Redis Cache to create."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of all resources"
+      }
+    },
+    "redisCacheSKU": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "Specify the pricing tier of the new Azure Redis Cache."
+      }
+    },
+    "redisCacheFamily": {
+      "type": "string",
+      "defaultValue": "C",
+      "allowedValues": [
+        "C",
+        "P"
+      ],
+      "metadata": {
+        "description": "Specify the family for the sku. C = Basic/Standard, P = Premium."
+      }
+    },
+    "redisCacheCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "allowedValues": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "metadata": {
+        "description": "Specify the size of the new Azure Redis Cache instance. Valid values: for C (Basic/Standard) family (0, 1, 2, 3, 4, 5, 6), for P (Premium) family (1, 2, 3, 4)"
+      }
+    },
+    "enableNonSslPort": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Specify a boolean value that indicates whether to allow access via non-SSL ports."
+      }
+    },
+    "diagnosticsEnabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Specify a boolean value that indicates whether diagnostics should be saved to the specified storage account."
+      }
+    },
+    "existingDiagnosticsStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify the name of an existing storage account for diagnostics."
+      }
+    },
+    "existingDiagnosticsStorageAccountResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify the resource group name of an existing storage account for diagnostics."
+      }
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Cache/redis",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('redisCacheName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "enableNonSslPort": "[parameters('enableNonSslPort')]",
+        "minimumTlsVersion": "1.2",
+        "sku": {
+          "capacity": "[parameters('redisCacheCapacity')]",
+          "family": "[parameters('redisCacheFamily')]",
+          "name": "[parameters('redisCacheSKU')]"
+        }
+      }
+    },
+    {
+      "type": "microsoft.insights/diagnosticSettings",
+      "apiVersion": "2017-05-01-preview",
+      "scope": "[format('Microsoft.Cache/redis/{0}', parameters('redisCacheName'))]",
+      "name": "[parameters('redisCacheName')]",
+      "properties": {
+        "storageAccountId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('existingDiagnosticsStorageAccountResourceGroup')), 'Microsoft.Storage/storageAccounts', parameters('existingDiagnosticsStorageAccountName'))]",
+        "metrics": [
+          {
+            "timeGrain": "AllMetrics",
+            "enabled": "[parameters('diagnosticsEnabled')]",
+            "retentionPolicy": {
+              "days": 90,
+              "enabled": "[parameters('diagnosticsEnabled')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cache/redis', parameters('redisCacheName'))]"
+      ]
+    }
+  ]
+}

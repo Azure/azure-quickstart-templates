@@ -1,0 +1,169 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username used when provisioning virtual machines"
+      }
+    },
+    "authSet": {
+      "type": "object",
+      "metadata": {
+        "description": "Authentication information"
+      }
+    },
+    "storageSettings": {
+      "type": "object",
+      "metadata": {
+        "description": "Storage Account Settings"
+      }
+    },
+    "subnet": {
+      "type": "object",
+      "metadata": {
+        "description": "The VNET and Subnet to deploy the nodes in to"
+      }
+    },
+    "masterNodesIpPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "IP Prefix used to append index for static addresses"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Size of the Elasticsearch master nodes"
+      }
+    },
+    "osSettings": {
+      "type": "object",
+      "metadata": {
+        "description": "Elasticsearch deployment platform settings"
+      }
+    },
+    "namespace": {
+      "type": "string",
+      "metadata": {
+        "description": "Namespace for resources created by this template"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('subnet').vnet, parameters('subnet').name)]",
+    "storageAccountNameAFS": "[parameters('storageSettings').afs]",
+    "vmName": "[concat(parameters('namespace'), '-vm')]",
+    "nicName": "[concat(parameters('namespace'), '-nic')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "es-master-set",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformUpdateDomainCount": 3,
+        "platformFaultDomainCount": 3
+      }
+    },
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), copyindex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "masterNodesNicLoop",
+        "count": 3
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(parameters('masterNodesIpPrefix'), copyindex())]",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmName'), copyindex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "masterVmLoop",
+        "count": 3
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets', 'es-master-set')]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'es-master-set')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat('master-vm', copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('authSet').password]",
+          "linuxConfiguration": "[parameters('osSettings').linuxConfiguration]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('osSettings').imageReference]",
+          "osDisk": {
+            "name": "[concat(variables('vmName'), copyindex(),'_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex()))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "installelasticsearch",
+          "apiVersion": "2020-12-01",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'), copyindex()))]"
+          ],
+          "properties": {
+            "publisher": "[parameters('osSettings').extensionSettings.master.publisher]",
+            "type": "[parameters('osSettings').extensionSettings.master.type]",
+            "typeHandlerVersion": "[parameters('osSettings').extensionSettings.master.typeHandlerVersion]",
+            "settings": {
+              "fileUris": "[parameters('osSettings').extensionSettings.master.settings.fileUris]",
+              "commandToExecute": "[concat(parameters('osSettings').extensionSettings.master.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2021-01-01').keys[0].value)]"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

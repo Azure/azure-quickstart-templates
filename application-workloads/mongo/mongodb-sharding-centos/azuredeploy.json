@@ -1,0 +1,1002 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator user name used when provisioning virtual machines"
+      }
+    },
+    "mongoAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "MongoDB Administrator user name used when provisioning MongoDB sharding cluster"
+      }
+    },
+    "mongoAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "MongoDB Administrator password used when provisioning MongoDB sharding cluster"
+      }
+    },
+    "dnsNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Name for the publicly accessible router nodes. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+      }
+    },
+    "centOsVersion": {
+      "type": "string",
+      "defaultValue": "7.7",
+      "allowedValues": [
+        "6.5",
+        "6.6",
+        "6.7",
+        "6.8",
+        "6.9",
+        "6.10",
+        "7.0",
+        "7.1",
+        "7.2",
+        "7.3",
+        "7.4",
+        "7.5",
+        "7.6",
+        "7.7"
+      ],
+      "metadata": {
+        "description": "The CentOS version for the VM. This will pick a fully patched image of this given CentOS version."
+      }
+    },
+    "environment": {
+      "type": "string",
+      "allowedValues": [
+        "AzureCloud",
+        "AzureChinaCloud"
+      ],
+      "metadata": {
+        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, and choose AzureChinaCloud for Mooncake (Azure China Cloud)."
+      }
+    },
+    "numDataDisks": {
+      "type": "string",
+      "defaultValue": "4",
+      "allowedValues": [
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "32"
+      ],
+      "metadata": {
+        "description": "The number of data disks on each shard node. We will use Raid0 for the data disks to improve performance. On each shard."
+      }
+    },
+    "sizeOfDataDiskInGB": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 1023,
+      "defaultValue": 20,
+      "metadata": {
+        "description": "The size of each data disk, the value is between 1 and 1023."
+      }
+    },
+    "routerNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning the router nodes"
+      }
+    },
+    "configNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning config nodes"
+      }
+    },
+    "replicaNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning replica set nodes"
+      }
+    },
+    "zabbixServerIPAddress": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The zabbix server IP which will monitor the mongodb nodes' mongodb status. Null means no zabbix server."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "[deployment().properties.templateLink.uri]"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    },
+    "_artifactsChinaLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "http://msmirrors.blob.core.chinacloudapi.cn/mongodb/mongodb-sharding-centos/"
+    },
+    "_artifactsChinaLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "environmentType": { 
+        "AzureCloud": {
+          "serviceEndPoint": "[environment().suffixes.storage]",
+          "artifactsLocation": "[parameters('_artifactsLocation')]",
+          "artifactsLocationSasToken": "[parameters('_artifactsLocationSasToken')]",
+          "configPrimaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/config_primary.sh', parameters('_artifactsLocationSasToken')))]",
+          "configSecondaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/config_secondary.sh', parameters('_artifactsLocationSasToken')))]",
+          "router1NodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/router1.sh', parameters('_artifactsLocationSasToken')))]",
+          "router2NodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/router2.sh', parameters('_artifactsLocationSasToken')))]",
+          "replicaPrimaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/replica_primary.sh', parameters('_artifactsLocationSasToken')))]",
+          "replicaSecondaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/replica_secondary.sh', parameters('_artifactsLocationSasToken')))]"
+        },
+        "AzureChinaCloud": {
+          "serviceEndPoint": "core.chinacloudapi.cn",
+          "artifactsLocation": "[parameters('_artifactsChinaLocation')]",
+          "artifactsLocationSasToken": "[parameters('_artifactsChinaLocationSasToken')]",
+          "configPrimaryNodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/config_primary.sh', parameters('_artifactsChinaLocationSasToken')))]",
+          "configSecondaryNodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/config_secondary.sh', parameters('_artifactsChinaLocationSasToken')))]",
+          "router1NodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/router1.sh', parameters('_artifactsChinaLocationSasToken')))]",
+          "router2NodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/router2.sh', parameters('_artifactsChinaLocationSasToken')))]",
+          "replicaPrimaryNodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/replica_primary.sh', parameters('_artifactsChinaLocationSasToken')))]",
+          "replicaSecondaryNodeScript": "[uri(parameters('_artifactsChinaLocation'), concat('scripts/replica_secondary.sh', parameters('_artifactsChinaLocationSasToken')))]"
+        }
+    },
+    "environment": "[variables('environmentType')[parameters('environment')]]",
+    "templateBaseUrl": "[variables('environment').artifactsLocation]",
+    "sharedTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/shared-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "configPrimaryTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/config-primary-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "configSecondaryTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/config-secondary-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "router1TemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/router1-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "router2TemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/router2-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "replicaPrimaryTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/replica-primary-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "replicaSecondaryTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/replica-secondary-resources.json', variables('environment').artifactsLocationSasToken))]",
+    "namespace": "mongodb-",
+    "virtualNetworkName": "myVNET",
+    "networkSettings": {
+      "virtualNetworkName": "[variables('virtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "dse": {
+          "name": "dse",
+          "prefix": "10.0.0.0/24",
+          "vnet": "[variables('virtualNetworkName')]"
+        }
+      },
+      "statics": {
+        "clusterRange": {
+          "base": "10.0.0.",
+          "start": 5
+        },
+        "configPrimaryIp": "10.0.0.240",
+        "configSecondaryIp1": "10.0.0.241",
+        "configSecondaryIp2": "10.0.0.242",
+        "routerIp1": "10.0.0.230",
+        "routerIp2": "10.0.0.231",
+        "replicaPrimaryIp1": "10.0.0.100",
+        "replicaPrimaryIp2": "10.0.0.110"
+      }
+    },
+    "configPrimaryOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('environment').configPrimaryNodeScript]"
+      ]
+    },
+    "configSecondaryOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('environment').configSecondaryNodeScript]"
+      ]
+    },
+    "router1OsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('environment').router1NodeScript]"
+      ]
+    },
+    "router2OsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('environment').router2NodeScript]"
+      ]
+    },
+    "replicaPrimaryOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('environment').replicaPrimaryNodeScript]"
+      ]
+    },
+    "replicaSecondaryOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('environment').replicaSecondaryNodeScript]"
+      ]
+    }
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "zabbixServerIPAddress": {
+            "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "configSecondaryNode1",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('configSecondaryTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "[concat('configSecondary', '1')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('configNodeVmSize')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.configSecondaryIp1]"
+          },
+          "zabbixServerIPAddress": {
+            "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('configSecondaryOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "configSecondaryNode2",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'configSecondaryNode1')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('configSecondaryTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "[concat('configSecondary', '2')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('configNodeVmSize')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.configSecondaryIp2]"
+          },
+          "zabbixServerIPAddress": {
+            "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('configSecondaryOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "configPrimaryNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'configSecondaryNode2')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('configPrimaryTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "mongoAdminUsername": {
+            "value": "[parameters('mongoAdminUsername')]"
+          },
+          "mongoAdminPassword": {
+            "value": "[parameters('mongoAdminPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "configPrimary"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.configPrimaryIp]"
+          },
+          "vmSize": {
+            "value": "[parameters('configNodeVmSize')]"
+          },
+          "zabbixServerIPAddress": {
+            "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('configPrimaryOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('aReplicaSecondaryNode', '0')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('replicaSecondaryTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "replSetName": {
+            "value": "repset1"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "[concat('aReplicaSecondary', '0')]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[parameters('numDataDisks')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('templateBaseUrl')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('replicaNodeVmSize')]"
+          },
+          "zabbixServerIPAddress": {
+            "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('replicaSecondaryOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('environment').artifactsLocationSasToken]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('aReplicaSecondaryNode', '1')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'aReplicaSecondaryNode0')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('replicaSecondaryTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "replSetName": {
+            "value": "repset1"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "[concat('aReplicaSecondary', '1')]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[parameters('numDataDisks')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('templateBaseUrl')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('replicaNodeVmSize')]"
+          },
+          "zabbixServerIPAddress": {
+            "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('replicaSecondaryOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('environment').artifactsLocationSasToken]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "aReplicaPrimaryNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'aReplicaSecondaryNode1')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('replicaPrimaryTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "mongoAdminUsername": {
+            "value": "[parameters('mongoAdminUsername')]"
+          },
+          "mongoAdminPassword": {
+            "value": "[parameters('mongoAdminPassword')]"
+          },
+          "replSetName": {
+            "value": "repset1"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "aReplicaPrimary"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('replicaNodeVmSize')]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[parameters('numDataDisks')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('templateBaseUrl')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.replicaPrimaryIp1]"
+          },
+          "zabbixServerIPAddress": {
+            "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('replicaPrimaryOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('environment').artifactsLocationSasToken]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('bReplicaSecondaryNode', '0')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'aReplicaPrimaryNode')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('replicaSecondaryTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "replSetName": {
+            "value": "repset2"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "[concat('bReplicaSecondary', '0')]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[parameters('numDataDisks')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('templateBaseUrl')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('replicaNodeVmSize')]"
+          },
+          "zabbixServerIPAddress": {
+            "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('replicaSecondaryOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('environment').artifactsLocationSasToken]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('bReplicaSecondaryNode', '1')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'bReplicaSecondaryNode0')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('replicaSecondaryTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "replSetName": {
+            "value": "repset2"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "[concat('bReplicaSecondary', '1')]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[parameters('numDataDisks')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('templateBaseUrl')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('replicaNodeVmSize')]"
+          },
+          "zabbixServerIPAddress": {
+            "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('replicaSecondaryOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('environment').artifactsLocationSasToken]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "bReplicaPrimaryNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'bReplicaSecondaryNode1')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('replicaPrimaryTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "mongoAdminUsername": {
+            "value": "[parameters('mongoAdminUsername')]"
+          },
+          "mongoAdminPassword": {
+            "value": "[parameters('mongoAdminPassword')]"
+          },
+          "replSetName": {
+            "value": "repset2"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "bReplicaPrimary"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[parameters('numDataDisks')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('templateBaseUrl')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('replicaNodeVmSize')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.replicaPrimaryIp2]"
+          },
+          "zabbixServerIPAddress": {
+            "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('replicaPrimaryOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[variables('environment').artifactsLocationSasToken]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "routerNode1",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'configPrimaryNode')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'bReplicaPrimaryNode')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('router1TemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "mongoAdminUsername": {
+            "value": "[parameters('mongoAdminUsername')]"
+          },
+          "mongoAdminPassword": {
+            "value": "[parameters('mongoAdminPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "router1"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('routerNodeVmSize')]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.routerIp1]"
+          },
+          "zabbixServerIPAddress": {
+            "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('router1OsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "routerNode2",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'routerNode1')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('router2TemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "router2"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('routerNodeVmSize')]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.routerIp2]"
+          },
+          "zabbixServerIPAddress": {
+            "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('router2OsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
+

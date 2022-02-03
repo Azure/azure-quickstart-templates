@@ -1,0 +1,174 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.412.5873",
+      "templateHash": "1558977717465604389"
+    }
+  },
+  "parameters": {
+    "aseName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the App Service Environment"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the vnet"
+      }
+    },
+    "vnetResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource group name that contains the vnet"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet name that will contain the App Service Environment"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the resources"
+      }
+    },
+    "internalLoadBalancingMode": {
+      "type": "string",
+      "defaultValue": "Web, Publishing",
+      "allowedValues": [
+        "None",
+        "Publishing",
+        "Web",
+        "Web, Publishing"
+      ],
+      "metadata": {
+        "description": "None: public VIP only. Publishing: only ports 80/443 are mapped to ILB VIP. Web: only FTP ports are mapped to ILB VIP:  Web,Publishing: ports 80/443 and FTP ports are mapped to an ILB VIP."
+      }
+    },
+    "dnsSuffix": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Used when deploying an ILB enabled ASE.  Set this to the root domain associated with the ASE.  For example: contoso.com"
+      }
+    },
+    "siteName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the web app that will be created."
+      }
+    },
+    "appServicePlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the App Service plan to use for hosting the web app."
+      }
+    },
+    "owner": {
+      "type": "string",
+      "metadata": {
+        "description": "The owner of the resource will be used for tagging."
+      }
+    },
+    "numberOfWorkers": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Defines the number of workers from the worker pool that will be used by the app service plan."
+      }
+    },
+    "workerPool": {
+      "type": "string",
+      "defaultValue": "1",
+      "allowedValues": [
+        "1",
+        "2",
+        "3"
+      ],
+      "metadata": {
+        "description": "Defines which worker pool's (WP1, WP2 or WP3) resources will be used for the app service plan."
+      }
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Web/hostingEnvironments",
+      "apiVersion": "2020-12-01",
+      "name": "[parameters('aseName')]",
+      "kind": "ASEV2",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "ASE Environment",
+        "usage": "Hosting PaaS applications",
+        "category": "Environment",
+        "owner": "[parameters('owner')]"
+      },
+      "properties": {
+        "ipsslAddressCount": 0,
+        "internalLoadBalancingMode": "[parameters('internalLoadBalancingMode')]",
+        "dnsSuffix": "[parameters('dnsSuffix')]",
+        "virtualNetwork": {
+          "id": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vnetResourceGroupName')), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-12-01",
+      "name": "[parameters('appServicePlanName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "ASE Hosting Plan",
+        "usage": "Hosting Plan within ASE",
+        "category": "Hosting",
+        "owner": "[parameters('owner')]"
+      },
+      "properties": {
+        "hostingEnvironmentProfile": {
+          "id": "[resourceId('Microsoft.Web/hostingEnvironments', parameters('aseName'))]"
+        }
+      },
+      "sku": {
+        "name": "[format('I{0}', parameters('workerPool'))]",
+        "tier": "Isolated",
+        "size": "[format('I{0}', parameters('workerPool'))]",
+        "family": "I",
+        "capacity": "[parameters('numberOfWorkers')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/hostingEnvironments', parameters('aseName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-12-01",
+      "name": "[parameters('siteName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "ASE Web App",
+        "usage": "Web App Hosted within ASE",
+        "category": "Web App",
+        "owner": "[parameters('owner')]"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+        "hostingEnvironmentProfile": {
+          "id": "[resourceId('Microsoft.Web/hostingEnvironments', parameters('aseName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/hostingEnvironments', parameters('aseName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+      ]
+    }
+  ]
+}

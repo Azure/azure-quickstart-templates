@@ -1,0 +1,168 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Region where you resources are located"
+      }
+    },
+    "NetworkWatcherName": {
+      "type": "string",
+      "defaultValue": "[concat('NetworkWatcher_', parameters('location'))]",
+      "metadata": {
+        "description": "Name of the Network Watcher attached to your subscription. Format: NetworkWatcher_<region_name>"
+      }
+    },
+    "FlowLogName": {
+      "type": "string",
+      "defaultValue": "FlowLog1",
+      "metadata": {
+        "description": "Chosen name of your Flow log resource"
+      }
+    },
+    "existingNSG": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the target NSG"
+      }
+    },
+    "RetentionDays": {
+      "type": "int",
+      "defaultValue": 0,
+      "minValue": 0,
+      "maxValue": 365,
+      "metadata": {
+        "description": "Retention period in days. Default is zero which stands for permanent retention. Can be any Integer from 0 to 365"
+      }
+    },
+    "FlowLogsversion": {
+      "type": "string",
+      "defaultValue": "2",
+      "allowedValues": [
+        "1",
+        "2"
+      ],
+      "metadata": {
+        "description": "FlowLogs Version. Correct values are 1 or 2 (default)"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    }
+  },
+  "variables": {
+    "storageAccountName": "[concat('flowlogs', uniquestring(resourceGroup().id))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "StorageV2",
+      "properties": {
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "deployFlowLogs",
+      "resourceGroup": "NetworkWatcherRG",
+      "dependsOn": [
+        "[variables('storageAccountName')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "NetworkWatcherName": {
+              "type": "string"
+            },
+            "FlowLogName": {
+              "type": "string"
+            },
+            "existingNSG": {
+              "type": "string"
+            },
+            "RetentionDays": {
+              "type": "int"
+            },
+            "FlowLogsversion": {
+              "type": "string"
+            },
+            "storageAccountResourceId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkWatchers/flowLogs",
+              "apiVersion": "2020-06-01",
+              "name": "[concat(parameters('NetworkWatcherName'), '/', parameters('FlowLogName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "targetResourceId": "[parameters('existingNSG')]",
+                "storageId": "[parameters('storageAccountResourceId')]",
+                "enabled": true,
+                "retentionPolicy": {
+                  "days": "[parameters('RetentionDays')]",
+                  "enabled": true
+                },
+                "format": {
+                  "type": "JSON",
+                  "version": "[parameters('FlowLogsversion')]"
+                }
+              }
+            }
+          ]
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "NetworkWatcherName": {
+            "value": "[parameters('NetworkWatcherName')]"
+          },
+          "FlowLogName": {
+            "value": "[parameters('FlowLogName')]"
+          },
+          "existingNSG": {
+            "value": "[parameters('existingNSG')]"
+          },
+          "RetentionDays": {
+            "value": "[parameters('RetentionDays')]"
+          },
+          "FlowLogsversion": {
+            "value": "[parameters('FlowLogsversion')]"
+          },
+          "storageAccountResourceId": {
+            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+          }
+        }
+      }
+    }
+  ]
+}

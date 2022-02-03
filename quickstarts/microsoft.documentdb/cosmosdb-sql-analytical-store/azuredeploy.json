@@ -1,0 +1,157 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.539.46024",
+      "templateHash": "11300717876297274128"
+    }
+  },
+  "parameters": {
+    "accountName": {
+      "type": "string",
+      "defaultValue": "[toLower(uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Cosmos DB account name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the Cosmos DB account."
+      }
+    },
+    "databaseName": {
+      "type": "string",
+      "defaultValue": "database1",
+      "metadata": {
+        "description": "The name for the database"
+      }
+    },
+    "containerName": {
+      "type": "string",
+      "defaultValue": "container1",
+      "metadata": {
+        "description": "The name for the container"
+      }
+    },
+    "partitionKeyPath": {
+      "type": "string",
+      "defaultValue": "/partitionKey",
+      "metadata": {
+        "description": "The partition key for the container"
+      }
+    },
+    "throughputPolicy": {
+      "type": "string",
+      "defaultValue": "Autoscale",
+      "allowedValues": [
+        "Manual",
+        "Autoscale"
+      ],
+      "metadata": {
+        "description": "The throughput policy for the container"
+      }
+    },
+    "manualProvisionedThroughput": {
+      "type": "int",
+      "defaultValue": 400,
+      "maxValue": 1000000,
+      "minValue": 400,
+      "metadata": {
+        "description": "Throughput value when using Manual Throughput Policy for the container"
+      }
+    },
+    "autoscaleMaxThroughput": {
+      "type": "int",
+      "defaultValue": 4000,
+      "maxValue": 1000000,
+      "minValue": 4000,
+      "metadata": {
+        "description": "Maximum throughput when using Autoscale Throughput Policy for the container"
+      }
+    },
+    "analyticalStoreTTL": {
+      "type": "int",
+      "defaultValue": -1,
+      "maxValue": 2147483647,
+      "minValue": -1,
+      "metadata": {
+        "description": "Time to Live for data in analytical store. (-1 no expiry)"
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "locations": [
+      {
+        "locationName": "[parameters('location')]",
+        "failoverPriority": 0,
+        "isZoneRedundant": false
+      }
+    ],
+    "throughput_Policy": {
+      "Manual": {
+        "Throughput": "[parameters('manualProvisionedThroughput')]"
+      },
+      "Autoscale": {
+        "autoscaleSettings": {
+          "maxThroughput": "[parameters('autoscaleMaxThroughput')]"
+        }
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2021-04-15",
+      "name": "[parameters('accountName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Session"
+        },
+        "databaseAccountOfferType": "Standard",
+        "locations": "[variables('locations')]",
+        "enableAnalyticalStorage": true
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+      "apiVersion": "2021-04-15",
+      "name": "[format('{0}/{1}', parameters('accountName'), parameters('databaseName'))]",
+      "properties": {
+        "resource": {
+          "id": "[parameters('databaseName')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+      "apiVersion": "2021-04-15",
+      "name": "[format('{0}/{1}/{2}', parameters('accountName'), parameters('databaseName'), parameters('containerName'))]",
+      "properties": {
+        "resource": {
+          "id": "[parameters('containerName')]",
+          "partitionKey": {
+            "paths": [
+              "[parameters('partitionKeyPath')]"
+            ],
+            "kind": "Hash"
+          },
+          "analyticalStorageTtl": "[parameters('analyticalStoreTTL')]"
+        },
+        "options": "[variables('throughput_Policy')[parameters('throughputPolicy')]]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('accountName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('accountName'), parameters('databaseName'))]"
+      ]
+    }
+  ]
+}

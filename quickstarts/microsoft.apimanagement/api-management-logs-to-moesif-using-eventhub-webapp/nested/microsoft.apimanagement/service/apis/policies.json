@@ -1,0 +1,47 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "existingApiManagementResourceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of existing Api Management service"
+            }
+        },
+        "apiName": {
+            "type": "string",
+            "metadata": {
+                "description": "The Api Name within the Api Management to apply policy to. eg: 'my-billing-apis'. This template does not apply policy globally"
+            }
+        },
+        "logToEventhubLoggerName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of 'log-to-eventhub' logger"
+            }
+        },
+        "log2EHPolicyXml": {
+            "type": "string",
+            "defaultValue": "[concat('<policies>\r\n  <inbound>\r\n    <set-variable name=\"message-id\" value=\"@(Guid.NewGuid())\" />\r\n    <log-to-eventhub logger-id=\"', parameters('logToEventhubLoggerName'), '\" partition-id=\"0\">@{\r\n          var body = context.Request.Body?.As&lt;string&gt;(true);\r\n          var MAX_BODY_SIZE_FOR_EH = 145000;\r\n          var origBodyLen = (null != body) ? body.Length : 0;\r\n          if (MAX_BODY_SIZE_FOR_EH &lt; origBodyLen){\r\n              body = body.Remove(MAX_BODY_SIZE_FOR_EH);\r\n          }\r\n          var headers = context.Request.Headers\r\n                               .Where(h =&gt; h.Key != \"Ocp-Apim-Subscription-Key\")\r\n                               .Select(h =&gt; string.Format(\"{0}: {1}\", h.Key, String.Join(\", \", h.Value).Replace(\"\\\"\", \"\\\\\\\"\")))\r\n                               .ToArray&lt;string&gt;();\r\n          var headerString = (headers.Any()) ? string.Join(\";;\", headers) : string.Empty;\r\n          var messageId = context.Variables[\"message-id\"];\r\n          var jwtToken = context.Request.Headers.GetValueOrDefault(\"Authorization\",\"\").AsJwt();\r\n          var userId = (context.User != null &amp;&amp; context.User.Id != null) ? context.User.Id : (jwtToken != null &amp;&amp; jwtToken.Subject != null ? jwtToken.Subject : null);\r\n          var companyId = \"\";\r\n          var cru = new JObject();\r\n          if (context.User != null) {\r\n            cru.Add(\"Email\", context.User.Email);\r\n            cru.Add(\"Id\", context.User.Id);\r\n            cru.Add(\"FirstName\", context.User.FirstName);\r\n            cru.Add(\"LastName\", context.User.LastName);\r\n          }\r\n          var crus = System.Convert.ToBase64String(Encoding.UTF8.GetBytes(cru.ToString()));\r\n          var requestBody = (body != null ? System.Convert.ToBase64String(Encoding.UTF8.GetBytes(body)) : null);\r\n          string metadata = $@\"\";\r\n          var request = $@\"\r\n                    \"\"event_type\"\": \"\"request\"\",\r\n                    \"\"message-id\"\": \"\"{messageId}\"\",\r\n                    \"\"method\"\": \"\"{context.Request.Method}\"\",\r\n                    \"\"ip_address\"\": \"\"{context.Request.IpAddress}\"\",\r\n                    \"\"uri\"\": \"\"{context.Request.OriginalUrl}\"\",\r\n                    \"\"user_id\"\": \"\"{userId}\"\",\r\n                    \"\"contextRequestUser\"\": \"\"{crus}\"\",\r\n                    \"\"company_id\"\": \"\"{companyId}\"\",\r\n                    \"\"request_headers\"\": \"\"{headerString}\"\",\r\n                    \"\"request_body\"\": \"\"{requestBody}\"\",\r\n                    \"\"metadata\"\": \"\"{metadata}\"\"\r\n                \";\r\n            return \"{\" + request + \"}\";\r\n      }</log-to-eventhub>\r\n  </inbound>\r\n  <backend>\r\n    <forward-request follow-redirects=\"true\" />\r\n  </backend>\r\n  <outbound>\r\n    <log-to-eventhub logger-id=\"', parameters('logToEventhubLoggerName'), '\" partition-id=\"1\">@{\r\n          var body = context.Response.Body?.As&lt;string&gt;(true);\r\n          var MAX_BODY_SIZE_FOR_EH = 145000;\r\n          var origBodyLen = (null != body) ? body.Length : 0;\r\n          if (MAX_BODY_SIZE_FOR_EH &lt; origBodyLen){\r\n              body = body.Remove(MAX_BODY_SIZE_FOR_EH);\r\n          }\r\n          var headers = context.Response.Headers\r\n                                          .Select(h =&gt; string.Format(\"{0}: {1}\", h.Key, String.Join(\", \", h.Value).Replace(\"\\\"\", \"\\\\\\\"\")))\r\n                                          .ToArray&lt;string&gt;();\r\n          var headerString = (headers.Any()) ? string.Join(\";;\", headers): string.Empty;\r\n          var messageId = context.Variables[\"message-id\"];\r\n          var responseBody = (body != null ? System.Convert.ToBase64String(Encoding.UTF8.GetBytes(body)) : null);\r\n          var response = $@\"\r\n                    \"\"event_type\"\": \"\"response\"\",\r\n                    \"\"orig_body_len\"\": \"\"{origBodyLen}\"\",\r\n                    \"\"message-id\"\": \"\"{messageId}\"\",\r\n                    \"\"status_code\"\": \"\"{context.Response.StatusCode}\"\",\r\n                    \"\"response_headers\"\": \"\"{headerString}\"\",\r\n                    \"\"response_body\"\": \"\"{responseBody}\"\"\r\n                    \";\r\n          return \"{\" + response + \"}\";\r\n     }</log-to-eventhub>\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>')]",
+            "metadata": {
+                "description": "The <policies> xml blob that will completely overwrite existing value"
+            }
+        },
+        "tags": {
+            "type": "Object"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.ApiManagement/service/apis/policies",
+            "apiVersion": "2020-12-01",
+            "name": "[concat(parameters('existingApiManagementResourceName'), '/', parameters('apiName'), '/policy')]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "value": "[parameters('log2EHPolicyXml')]",
+                "format": "xml"
+            }
+        }
+    ]
+}

@@ -1,0 +1,329 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "hostingPlanLivesite": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the App Service hosting plan for the Web App used to host the live site application."
+      }
+    },
+    "pricingTierLivesite": {
+      "type": "string",
+      "defaultValue": "B1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "metadata": {
+        "description": "Pricing tier of the created App Service hosting plan for the live site application. See the Microsoft Azure App Service documentation for details on pricing."
+      }
+    },
+    "livesiteName": {
+      "type": "string",
+      "defaultValue": "[concat('kentico', uniqueString(resourceGroup().id))]",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the Web App hosting the live site application. By default, the deployed Web App will be available at livesiteName.azurewebsites.net. Keep in mind that the name must be unique across the entire Azure environment, not only within your hosting plan."
+      }
+    },
+    "hostingPlanAdministration": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the App Service hosting plan for the Web App used to host the Kentico Xperience administration application."
+      }
+    },
+    "pricingTierAdministration": {
+      "type": "string",
+      "defaultValue": "B1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "metadata": {
+        "description": "Pricing tier of the created App Service hosting plan for the Kentico Xperience administration project. See the Microsoft Azure App Service documentation for details on pricing."
+      }
+    },
+    "administrationSiteName": {
+      "type": "string",
+      "defaultValue": "[concat('kenticoadmin', uniqueString(resourceGroup().id))]",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the Web App hosting the Kentico Xperience administration project. By default, the deployed Web App will be available at AdministrationSiteName.azurewebsites.net. Keep in mind that the name must be unique across the entire Azure environment, not only within your hosting plan."
+      }
+    },
+    "sqlAdministratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "Login for the Azure SQL server administrator. "
+      }
+    },
+    "sqlAdministratorPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Azure SQL server administrator account. The password is case-sensitive and may contain lower case, upper case, numbers and special characters. The default Azure password complexity rules: minimum length of 8 characters, minimum of 1 uppercase character, minimum of 1 lowercase character, minimum of 1 number. Moreover, the password cannot contain the account name of the user account performing the deployment. The password can be up to 128 characters long."
+      }
+    },
+    "sqlServerName": {
+      "type": "string",
+      "defaultValue": "[uniqueString('kenticoserver', resourceGroup().id)]",
+      "metadata": {
+        "description": "Server name of the deployed Azure SQL server. The server name can contain only lowercase letters, numbers, and '-', but can't start or end with '-' or have more than 63 characters. Keep in mind that the server name must be unique across the entire Azure environment, not only within your hosting plan."
+      }
+    },
+    "connectionStringDatabaseName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Database name substituted in the 'Initial Catalog' parameter of the administration and website Web App connection strings. If left empty, the Web Apps are deployed without preconfigured connection strings."
+      }
+    },
+    "location": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The geographical location to which the resources will be deployed."
+      }
+    }
+  },
+  "variables": {
+    "InstrumentationKey" : "[concat('microsoft.insights/components/', parameters('livesiteName'))]" 
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-09-01",
+      "name": "pid-e3ec0034-3eaf-47a7-bf36-21bcf341b4dd",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/Microsoft.Resources.json",
+          "contentVersion": "1.0.0.0",
+          "resources": []
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2020-08-01-preview",
+      "name": "[parameters('sqlServerName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "SqlServer"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdministratorPassword')]"
+      },
+      "resources": [
+        {
+          "type": "firewallrules",
+          "apiVersion": "2020-08-01-preview",
+          "name": "AllowAllWindowsAzureIps",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+          ],
+          "properties": {
+            "endIpAddress": "0.0.0.0",
+            "startIpAddress": "0.0.0.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('hostingPlanLivesite')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "HostingPlan"
+      },
+      "sku": {
+        "name": "[parameters('pricingTierLivesite')]",
+        "capacity": 1
+      },
+      "properties": {
+        "name": "[parameters('hostingPlanLivesite')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('livesiteName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverFarms', parameters('hostingPlanLivesite'))]",
+        "[resourceId('microsoft.insights/components', parameters('livesiteName'))]"
+      ],
+      "tags": {
+        "[format('{0}:{1}', 'hidden-related', resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanLivesite')))]": "empty",
+        "displayName": "Website"
+      },
+      "properties": {
+        "name": "[parameters('livesiteName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanLivesite'))]",
+        "minTlsVersion": "1.2",
+        "siteConfig": {
+          "connectionStrings": [
+            {
+              "name": "CMSConnectionString",
+              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', parameters('sqlServerName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
+              "type": "SQLServer"
+            }
+          ],
+          "appSettings": [
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(variables('InstrumentationKey')).InstrumentationKey]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/autoscalesettings",
+      "apiVersion": "2015-04-01",
+      "name": "[concat(parameters('hostingPlanLivesite'), '-', resourceGroup().name)]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanLivesite'))]"
+      ],
+      "tags": {
+        "[format('{0}:{1}', 'hidden-related', resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanLivesite')))]": "Resource",
+        "displayName": "AutoScaleSettings"
+      },
+      "properties": {
+        "profiles": [
+          {
+            "name": "Default",
+            "capacity": {
+              "minimum": 1,
+              "maximum": 2,
+              "default": 1
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanLivesite'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": 80.0
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "ChangeCount",
+                  "value": 1,
+                  "cooldown": "PT10M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanLivesite'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT1H",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": 60.0
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "ChangeCount",
+                  "value": 1,
+                  "cooldown": "PT1H"
+                }
+              }
+            ]
+          }
+        ],
+        "enabled": false,
+        "name": "[concat(parameters('hostingPlanLivesite'), '-', resourceGroup().name)]",
+        "targetResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanLivesite'))]"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[parameters('livesiteName')]",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "tags": {
+        "[format('{0}:{1}', 'hidden-related', resourceId('Microsoft.Web/sites', parameters('livesiteName')))]": "Resource",
+        "displayName": "AppInsightsComponent"
+      },
+      "properties": {
+        "Application_Type": "web"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('hostingPlanAdministration')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('pricingTierAdministration')]",
+        "capacity": 1
+      },
+      "tags": {
+        "displayName": "HostingPlan"
+      },
+      "properties": {
+        "name": "[parameters('hostingPlanAdministration')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('administrationSiteName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanAdministration'))]"
+      ],
+      "tags": {
+        "[format('{0}:{1}', 'hidden-related', resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanAdministration')))]": "Resource",
+        "displayName": "Administration"
+      },
+      "properties": {
+        "name": "[parameters('administrationSiteName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanAdministration'))]",
+        "minTlsVersion": "1.2",
+        "siteConfig": {
+          "connectionStrings": [
+            {
+              "name": "CMSConnectionString",
+              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', parameters('sqlServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', parameters('sqlServerName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
+              "type": "SQLServer"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

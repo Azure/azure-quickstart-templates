@@ -1,0 +1,292 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1.14562",
+      "templateHash": "11655401541265786166"
+    }
+  },
+  "parameters": {
+    "existingVNETName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VNET to inject Cloud Shell into."
+      }
+    },
+    "relayNamespaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Azure Relay Namespace."
+      }
+    },
+    "azureContainerInstanceOID": {
+      "type": "string",
+      "metadata": {
+        "description": "Object Id of Azure Container Instance Service Principal. We have to grant this permission to create hybrid connections in the Azure Relay you specify. To get it: Get-AzADServicePrincipal -DisplayNameBeginsWith 'Azure Container Instance'"
+      }
+    },
+    "containerSubnetName": {
+      "type": "string",
+      "defaultValue": "cloudshellsubnet",
+      "metadata": {
+        "description": "Name of the subnet to use for cloud shell containers."
+      }
+    },
+    "containerSubnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Address space of the subnet to add for cloud shell. e.g. 10.0.1.0/26"
+      }
+    },
+    "relaySubnetName": {
+      "type": "string",
+      "defaultValue": "relaysubnet",
+      "metadata": {
+        "description": "Name of the subnet to use for private link of relay namespace."
+      }
+    },
+    "relaySubnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Address space of the subnet to add for relay. e.g. 10.0.2.0/26"
+      }
+    },
+    "storageSubnetName": {
+      "type": "string",
+      "defaultValue": "storagesubnet",
+      "metadata": {
+        "description": "Name of the subnet to use for storage account."
+      }
+    },
+    "storageSubnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Address space of the subnet to add for storage. e.g. 10.0.3.0/26"
+      }
+    },
+    "privateEndpointName": {
+      "type": "string",
+      "defaultValue": "cloudshellRelayEndpoint",
+      "metadata": {
+        "description": "Name of Private Endpoint for Azure Relay."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "networkProfileName": "[format('aci-networkProfile-{0}', parameters('location'))]",
+    "contributorRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+    "networkRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7')]",
+    "privateDnsZoneName": "[if(equals(toLower(environment().name), 'azureusgovernment'), 'privatelink.servicebus.usgovcloudapi.net', 'privatelink.servicebus.windows.net')]",
+    "vnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('existingVNETName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2020-04-01",
+      "name": "[format('{0}/{1}', parameters('existingVNETName'), parameters('containerSubnetName'))]",
+      "properties": {
+        "addressPrefix": "[parameters('containerSubnetAddressPrefix')]",
+        "serviceEndpoints": [
+          {
+            "service": "Microsoft.Storage",
+            "locations": [
+              "[parameters('location')]"
+            ]
+          }
+        ],
+        "delegations": [
+          {
+            "name": "CloudShellDelegation",
+            "properties": {
+              "serviceName": "Microsoft.ContainerInstance/containerGroups"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkProfiles",
+      "apiVersion": "2019-11-01",
+      "name": "[variables('networkProfileName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containerNetworkInterfaceConfigurations": [
+          {
+            "name": "[format('eth-{0}', parameters('containerSubnetName'))]",
+            "properties": {
+              "ipConfigurations": [
+                {
+                  "name": "[format('ipconfig-{0}', parameters('containerSubnetName'))]",
+                  "properties": {
+                    "subnet": {
+                      "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('containerSubnetName'))]"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('containerSubnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "scope": "[format('Microsoft.Network/networkProfiles/{0}', variables('networkProfileName'))]",
+      "name": "[guid(variables('networkRoleDefinitionId'), parameters('azureContainerInstanceOID'), variables('networkProfileName'))]",
+      "properties": {
+        "roleDefinitionId": "[variables('networkRoleDefinitionId')]",
+        "principalId": "[parameters('azureContainerInstanceOID')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkProfiles', variables('networkProfileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Relay/namespaces",
+      "apiVersion": "2018-01-01-preview",
+      "name": "[parameters('relayNamespaceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "scope": "[format('Microsoft.Relay/namespaces/{0}', parameters('relayNamespaceName'))]",
+      "name": "[guid(variables('contributorRoleDefinitionId'), parameters('azureContainerInstanceOID'), parameters('relayNamespaceName'))]",
+      "properties": {
+        "roleDefinitionId": "[variables('contributorRoleDefinitionId')]",
+        "principalId": "[parameters('azureContainerInstanceOID')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Relay/namespaces', parameters('relayNamespaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2020-04-01",
+      "name": "[format('{0}/{1}', parameters('existingVNETName'), parameters('relaySubnetName'))]",
+      "properties": {
+        "addressPrefix": "[parameters('relaySubnetAddressPrefix')]",
+        "privateEndpointNetworkPolicies": "Disabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('containerSubnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-04-01",
+      "name": "[parameters('privateEndpointName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[parameters('privateEndpointName')]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Relay/namespaces', parameters('relayNamespaceName'))]",
+              "groupIds": [
+                "namespace"
+              ]
+            }
+          }
+        ],
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('relaySubnetName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Relay/namespaces', parameters('relayNamespaceName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('relaySubnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2020-04-01",
+      "name": "[format('{0}/{1}', parameters('existingVNETName'), parameters('storageSubnetName'))]",
+      "properties": {
+        "addressPrefix": "[parameters('storageSubnetAddressPrefix')]",
+        "serviceEndpoints": [
+          {
+            "service": "Microsoft.Storage",
+            "locations": [
+              "[parameters('location')]"
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('relaySubnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-01-01",
+      "name": "[variables('privateDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/A",
+      "apiVersion": "2020-01-01",
+      "name": "[format('{0}/{1}', variables('privateDnsZoneName'), parameters('relayNamespaceName'))]",
+      "properties": {
+        "ttl": 3600,
+        "aRecords": [
+          {
+            "ipv4Address": "[first(first(reference(resourceId('Microsoft.Network/privateEndpoints', parameters('privateEndpointName'))).customDnsConfigs).ipAddresses)]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', parameters('privateEndpointName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-01-01",
+      "name": "[format('{0}/{1}', variables('privateDnsZoneName'), parameters('relayNamespaceName'))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[variables('vnetResourceId')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "vnetId": {
+      "type": "string",
+      "value": "[variables('vnetResourceId')]"
+    },
+    "containerSubnetId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('containerSubnetName'))]"
+    },
+    "storageSubnetId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('storageSubnetName'))]"
+    }
+  }
+}

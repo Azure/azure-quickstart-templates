@@ -1,0 +1,83 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "maharaCommon": {
+            "metadata": {
+                "description": "Common Mahara values"
+            },
+            "type": "object"
+        },
+        "lbPubIp": {
+            "metadata": {
+                "description": "Public IP address of the deployed load balancer"
+            },
+            "type": "string"
+        },
+        "ctlrPubIp": {
+            "metadata": {
+                "description": "Public IP address of the deployed controller VM"
+            },
+            "type": "string"
+        },
+        "dbLoginPassword": {
+            "metadata": {
+                "description": "Database admin password"
+            },
+            "type": "securestring"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.DBforPostgreSQL/servers",
+            "apiVersion": "2017-12-01",
+            "location": "[parameters('maharaCommon').location]",
+            "name": "[parameters('maharaCommon').serverName]",
+            "properties": {
+                "administratorLogin": "[parameters('maharaCommon').dbLogin]",
+                "administratorLoginPassword": "[parameters('dbLoginPassword')]",
+                "sslEnforcement": "[parameters('maharaCommon').sslEnforcement]",
+                "storageProfile": {
+                    "storageMB": "[mul(parameters('maharaCommon').mysqlPgresStgSizeGB, 1024)]",
+                    "backupRetentionDays": 35,
+                    "geoRedundantBackup": "Enabled"
+                },
+                "version": "[parameters('maharaCommon').postgresVersion]"
+            },
+            "sku": {
+                "capacity": "[parameters('maharaCommon').mysqlPgresVcores]",
+                "name": "[parameters('maharaCommon').mysqlPgresSkuName]",
+                "tier": "[parameters('maharaCommon').mysqlPgresSkuTier]",
+                "family": "[parameters('maharaCommon').mysqlPgresSkuHwFamily]"
+            },
+            "resources": [
+                {
+                    "apiVersion": "2017-12-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DBforPostgreSQL/servers/', parameters('maharaCommon').serverName)]"
+                    ],
+                    "location": "[parameters('maharaCommon').location]",
+                    "name": "postgres-firewall-allow-lb",
+                    "properties": {
+                        "startIpAddress": "[parameters('lbPubIp')]",
+                        "endIpAddress": "[parameters('lbPubIp')]"
+                    },
+                    "type": "firewallRules"
+                },
+                {
+                    "apiVersion": "2017-12-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DBforPostgreSQL/servers/', parameters('maharaCommon').serverName)]"
+                    ],
+                    "location": "[parameters('maharaCommon').location]",
+                    "name": "postgres-firewall-allow-ctlr",
+                    "properties": {
+                        "startIpAddress": "[parameters('ctlrPubIp')]",
+                        "endIpAddress": "[parameters('ctlrPubIp')]"
+                    },
+                    "type": "firewallRules"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,175 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "profileName": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the CDN Profile"
+        }
+      },
+      "endpointName": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the CDN Endpoint"
+        }
+      },
+      "originUrl": {
+        "type": "string",
+        "metadata": {
+          "description": "Url of the origin"
+        }
+      },
+      "CDNSku": {
+        "type": "string",
+        "metadata": {
+          "description": "CDN SKU names"
+        },
+        "defaultValue": "Standard_Microsoft",
+        "allowedValues": [
+          "Standard_Akamai",
+          "Standard_Verizon",
+          "Premium_Verizon",
+          "Standard_Microsoft"
+        ]
+      },
+      "location": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "Location for all resources."
+        }
+      }
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Cdn/profiles",
+        "apiVersion": "2020-09-01",
+        "name": "[parameters('profileName')]",
+        "location": "[parameters('location')]",
+        "sku": {
+          "name": "[parameters('CDNSku')]"
+        },
+        "resources": [
+          {
+            "type": "endpoints",
+            "apiVersion": "2019-04-15",
+            "name": "[parameters('endpointName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+              "[resourceId('Microsoft.Cdn/profiles', parameters('profileName'))]"
+            ],
+            "properties": {
+              "originHostHeader": "[parameters('originUrl')]",
+              "isHttpAllowed": true,
+              "isHttpsAllowed": true,
+              "queryStringCachingBehavior": "IgnoreQueryString",
+              "contentTypesToCompress": [
+                "text/plain",
+                "text/html",
+                "text/css",
+                "application/x-javascript",
+                "text/javascript"
+              ],
+              "isCompressionEnabled": true,
+              "origins": [
+                {
+                  "name": "origin1",
+                  "properties": {
+                    "hostName": "[parameters('originUrl')]"
+                  }
+                }
+              ],          
+              "deliveryPolicy": {
+                "description": "Add Response Headers",
+                "rules": [
+                    {
+                        "name" :  "GeoMatchCondition",
+                        "order": "1",
+                        "conditions": [
+                          {
+                            "name": "RemoteAddress",
+                            "parameters": {
+                                "@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleRemoteAddressConditionParameters",
+                                "operator": "GeoMatch",
+                                "matchValues": [
+                                    "US"
+                                ]
+                            }
+                          }
+                        ],
+                        "actions": [
+                          {
+                            "name": "ModifyResponseHeader",
+                            "parameters": {
+                              "@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleHeaderActionParameters",
+                              "headerAction": "Overwrite",
+                              "headerName": "X-CLIENT-COUNTRY",
+                              "value": "US"
+                            }
+                          }
+                        ]
+                    },
+                    {
+                      "name" :  "IPv4Match",
+                      "order": "2",
+                      "conditions": [
+                        {
+                          "name": "RemoteAddress",
+                          "parameters": {
+                              "@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleRemoteAddressConditionParameters",
+                              "operator": "IPMatch",
+                              "matchValues": [
+                                  "0.0.0.0/0"
+                              ]
+                          }
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "name": "ModifyResponseHeader",
+                          "parameters": {
+                            "@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleHeaderActionParameters",
+                            "headerAction": "Overwrite",
+                            "headerName": "X-CLIENT-IP-VERSION",
+                            "value": "IPv4"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "name" :  "IPv6Match",
+                      "order": "3",
+                      "conditions": [
+                        {
+                          "name": "RemoteAddress",
+                          "parameters": {
+                              "@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleRemoteAddressConditionParameters",
+                              "operator": "IPMatch",
+                              "matchValues": [
+                                  "::0/0"
+                              ]
+                          }
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "name": "ModifyResponseHeader",
+                          "parameters": {
+                            "@odata.type": "#Microsoft.Azure.Cdn.Models.DeliveryRuleHeaderActionParameters",
+                            "headerAction": "Overwrite",
+                            "headerName": "X-CLIENT-IP-VERSION",
+                            "value": "IPv6"
+                          }
+                        }
+                      ]
+                    }                                  
+                ]
+              }           
+            }
+          }
+        ]
+      }
+    ]
+  }
+  

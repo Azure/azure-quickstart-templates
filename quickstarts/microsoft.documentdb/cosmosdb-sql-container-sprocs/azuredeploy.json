@@ -1,0 +1,249 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.539.46024",
+      "templateHash": "18052294765505030836"
+    }
+  },
+  "parameters": {
+    "accountName": {
+      "type": "string",
+      "defaultValue": "[format('cosmos-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Cosmos DB account name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the Cosmos DB account."
+      }
+    },
+    "primaryRegion": {
+      "type": "string",
+      "metadata": {
+        "description": "The primary replica region for the Cosmos DB account."
+      }
+    },
+    "secondaryRegion": {
+      "type": "string",
+      "metadata": {
+        "description": "The secondary replica region for the Cosmos DB account."
+      }
+    },
+    "defaultConsistencyLevel": {
+      "type": "string",
+      "defaultValue": "Session",
+      "allowedValues": [
+        "Eventual",
+        "ConsistentPrefix",
+        "Session",
+        "BoundedStaleness",
+        "Strong"
+      ],
+      "metadata": {
+        "description": "The default consistency level of the Cosmos DB account."
+      }
+    },
+    "maxStalenessPrefix": {
+      "type": "int",
+      "defaultValue": 100000,
+      "maxValue": 2147483647,
+      "minValue": 10,
+      "metadata": {
+        "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000."
+      }
+    },
+    "maxIntervalInSeconds": {
+      "type": "int",
+      "defaultValue": 300,
+      "maxValue": 86400,
+      "minValue": 5,
+      "metadata": {
+        "description": "Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
+      }
+    },
+    "automaticFailover": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable automatic failover for regions"
+      }
+    },
+    "databaseName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name for the Core (SQL) database"
+      }
+    },
+    "containerName": {
+      "type": "string",
+      "defaultValue": "container1",
+      "metadata": {
+        "description": "The name for the Core (SQL) API container"
+      }
+    },
+    "throughput": {
+      "type": "int",
+      "defaultValue": 400,
+      "maxValue": 1000000,
+      "minValue": 400,
+      "metadata": {
+        "description": "The throughput for the container"
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "accountName_var": "[toLower(parameters('accountName'))]",
+    "consistencyPolicy": {
+      "Eventual": {
+        "defaultConsistencyLevel": "Eventual"
+      },
+      "ConsistentPrefix": {
+        "defaultConsistencyLevel": "ConsistentPrefix"
+      },
+      "Session": {
+        "defaultConsistencyLevel": "Session"
+      },
+      "BoundedStaleness": {
+        "defaultConsistencyLevel": "BoundedStaleness",
+        "maxStalenessPrefix": "[parameters('maxStalenessPrefix')]",
+        "maxIntervalInSeconds": "[parameters('maxIntervalInSeconds')]"
+      },
+      "Strong": {
+        "defaultConsistencyLevel": "Strong"
+      }
+    },
+    "locations": [
+      {
+        "locationName": "[parameters('primaryRegion')]",
+        "failoverPriority": 0,
+        "isZoneRedundant": false
+      },
+      {
+        "locationName": "[parameters('secondaryRegion')]",
+        "failoverPriority": 1,
+        "isZoneRedundant": false
+      }
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2021-04-15",
+      "name": "[variables('accountName_var')]",
+      "location": "[parameters('location')]",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
+        "locations": "[variables('locations')]",
+        "databaseAccountOfferType": "Standard",
+        "enableAutomaticFailover": "[parameters('automaticFailover')]"
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+      "apiVersion": "2021-04-15",
+      "name": "[format('{0}/{1}', variables('accountName_var'), parameters('databaseName'))]",
+      "properties": {
+        "resource": {
+          "id": "[parameters('databaseName')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+      "apiVersion": "2021-04-15",
+      "name": "[format('{0}/{1}/{2}', variables('accountName_var'), parameters('databaseName'), parameters('containerName'))]",
+      "properties": {
+        "resource": {
+          "id": "[parameters('containerName')]",
+          "partitionKey": {
+            "paths": [
+              "/myPartitionKey"
+            ],
+            "kind": "Hash"
+          },
+          "indexingPolicy": {
+            "indexingMode": "consistent",
+            "includedPaths": [
+              {
+                "path": "/*"
+              }
+            ],
+            "excludedPaths": [
+              {
+                "path": "/myPathToNotIndex/*"
+              }
+            ]
+          }
+        },
+        "options": {
+          "throughput": "[parameters('throughput')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName_var'), parameters('databaseName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/storedProcedures",
+      "apiVersion": "2021-04-15",
+      "name": "[format('{0}/{1}/{2}/{3}', variables('accountName_var'), parameters('databaseName'), parameters('containerName'), 'myStoredProcedure')]",
+      "properties": {
+        "resource": {
+          "id": "myStoredProcedure",
+          "body": "function () { var context = getContext(); var response = context.getResponse(); response.setBody('Hello, World'); }"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName_var'), parameters('databaseName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('accountName_var'), parameters('databaseName'), parameters('containerName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/triggers",
+      "apiVersion": "2021-04-15",
+      "name": "[format('{0}/{1}/{2}/{3}', variables('accountName_var'), parameters('databaseName'), parameters('containerName'), 'myPreTrigger')]",
+      "properties": {
+        "resource": {
+          "id": "myPreTrigger",
+          "triggerType": "Pre",
+          "triggerOperation": "Create",
+          "body": "function validateToDoItemTimestamp(){var context=getContext();var request=context.getRequest();var itemToCreate=request.getBody();if(!('timestamp'in itemToCreate)){var ts=new Date();itemToCreate['timestamp']=ts.getTime();}request.setBody(itemToCreate);}"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName_var'), parameters('databaseName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('accountName_var'), parameters('databaseName'), parameters('containerName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/userDefinedFunctions",
+      "apiVersion": "2021-04-15",
+      "name": "[format('{0}/{1}/{2}/{3}', variables('accountName_var'), parameters('databaseName'), parameters('containerName'), 'myUserDefinedFunction')]",
+      "properties": {
+        "resource": {
+          "id": "myUserDefinedFunction",
+          "body": "function tax(income){if(income==undefined)throw'no input';if(income<1000)return income*0.1;else if(income<10000)return income*0.2;else return income*0.4;}"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName_var'), parameters('databaseName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('accountName_var'), parameters('databaseName'), parameters('containerName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName_var'))]"
+      ]
+    }
+  ]
+}

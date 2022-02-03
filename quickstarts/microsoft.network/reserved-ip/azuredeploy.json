@@ -1,0 +1,134 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "existingRIPResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the resource group containing your existing reserved IP."
+      }
+    },
+    "existingRIPName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of your existing reserved IP."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "network_LB_Public_Name": "publicLB",
+    "network_LB_Public_FEName": "publicLBFE",
+    "network_LB_Public_FEId": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('network_LB_Public_Name'), variables('network_LB_Public_FEName'))]",
+    "network_LB_Public_BEPoolName": "publicLBBEPool",
+    "network_LB_Public_NatRule_SSH_vm_Name": "fg1SSHNat",
+    "network_LB_Public_NatRule_SSH_vm_PublicPort": "50101",
+    "network_LB_Public_Name2": "publicLB2",
+    "network_LB_Public_FEName2": "publicLBFE2",
+    "network_LB_Public_FEId2": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('network_LB_Public_Name2'), variables('network_LB_Public_FEName2'))]",
+    "network_LB_Public_BEPoolName2": "publicLBBEPool2",
+    "network_LB_Public_NatRule_SSH_vm_Name2": "fg1SSHNat2",
+    "network_LB_Public_NatRule_SSH_vm_PublicPort2": "50101",
+    "network_PIP_Reserved_Name": "goliveARMPIP",
+    "network_PIP_Reserved_Id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('network_PIP_Reserved_Name'))]",
+    "network_PIP_Reserved_FQDN": "golivereservedip",
+    "network_PIP_Reserved_Id2": "[resourceId(parameters('existingRIPResourceGroupName'),'Microsoft.Network/publicIPAddresses/',parameters('existingRIPName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('network_PIP_Reserved_Name')]",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('network_PIP_Reserved_FQDN')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('network_LB_Public_Name')]",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('network_PIP_Reserved_Id')]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('network_LB_Public_FEName')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('network_PIP_Reserved_Id')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('network_LB_Public_BEPoolName')]"
+          }
+        ],
+        "inboundNatRules": [
+          {
+            "name": "[variables('network_LB_Public_NatRule_SSH_vm_Name')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('network_LB_Public_FEId')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": "[variables('network_LB_Public_NatRule_SSH_vm_PublicPort')]",
+              "backendPort": 22,
+              "enableFloatingIP": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('network_LB_Public_Name2')]",
+      "apiVersion": "2020-11-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('network_LB_Public_FEName2')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('network_PIP_Reserved_Id2')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('network_LB_Public_BEPoolName2')]"
+          }
+        ],
+        "inboundNatRules": [
+          {
+            "name": "[variables('network_LB_Public_NatRule_SSH_vm_Name2')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('network_LB_Public_FEId2')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": "[variables('network_LB_Public_NatRule_SSH_vm_PublicPort2')]",
+              "backendPort": 22,
+              "enableFloatingIP": false
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

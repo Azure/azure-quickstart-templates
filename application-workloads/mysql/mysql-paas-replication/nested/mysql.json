@@ -1,0 +1,108 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sku": {
+            "type": "object",
+            "metadata": {
+                "description": "SKU for the MySQL PaaS instance to be deployed."
+            }
+        },
+        "serverName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the MySQL PaaS instance to be deployed."
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location where the instance should be deployed."
+            }
+        },
+        "version": {
+            "type": "string",
+            "metadata": {
+                "description": "MySQL version for the MySQL Server instances to be deployed."
+            }
+        },
+        "administratorLogin": {
+            "type": "string",
+            "metadata": {
+                "description": "Administrator name for MySQL servers."
+            }
+        },
+        "administratorLoginPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the MySQL server administrator."
+            }
+        },
+        "backupRetentionDays": {
+            "type": "int",
+            "metadata": {
+                "description": "Backup retention period."
+            }
+        },
+        "geoRedundantBackup": {
+            "type": "string",
+            "metadata": {
+                "description": "Enable or disable geo redundant backups."
+            }
+        },
+        "enableAzureResources": {
+            "type": "bool",
+            "metadata": {
+                "description": "Enable Azure hosted resources to access the master instance."
+            }
+        },
+        "ServerId": {
+            "type": "string",
+            "metadata": {
+                "description": "Reference ID of the MySQL PaaS instance being deployed."
+            }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.DBforMySQL/servers",
+            "sku": "[parameters('sku')]",
+            "name": "[parameters('serverName')]",
+            "apiVersion": "2017-12-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "version": "[parameters('version')]",
+                "administratorLogin": "[parameters('administratorLogin')]",
+                "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+                "storageProfile": {
+                    "storageMB": "[parameters('sku').size]",
+                    "backupRetentionDays": "[parameters('backupRetentionDays')]",
+                    "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
+                }
+            },
+            "resources": [
+                {
+                    "condition": "[parameters('enableAzureResources')]",
+                    "apiVersion": "2017-12-01",
+                    "type": "firewallRules",
+                    "location": "[parameters('location')]",
+                    "name": "AllowAzureResources",
+                    "dependsOn": [
+                        "[parameters('ServerId')]"
+                    ],
+                    "properties": {
+                        "startIpAddress": "0.0.0.0",
+                        "endIpAddress": "0.0.0.0"
+                    }
+                }
+            ]
+        }
+    ],
+    "outputs": {
+        "MySQLDetails": {
+            "type": "object",
+            "value": "[reference(parameters('serverName'))]"
+        }
+    }
+}

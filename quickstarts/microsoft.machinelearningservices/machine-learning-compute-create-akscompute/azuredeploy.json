@@ -1,0 +1,170 @@
+{
+   "$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+   "contentVersion":"1.0.0.0",
+   "parameters":{
+      "computeName":{
+         "type":"string",
+         "metadata":{
+            "description":"The exposed port for the compute instance."
+         }
+      },
+      "dnsServiceIP":{
+         "defaultValue":"",
+         "type":"string",
+         "metadata":{
+            "description":"The exposed port for the compute instance."
+         }
+      },
+      "vnetResourceGroupName":{
+         "defaultValue":"",
+         "type":"string",
+         "metadata":{
+            "description":"Name of the resource group which holds the VNET to which you want to inject your compute in."
+         }
+      },
+      "vnetName":{
+         "defaultValue":"",
+         "type":"string",
+         "metadata":{
+            "description":"Name of the vnet which you want to inject your compute in."
+         }
+      },
+      "subnetName":{
+         "defaultValue":"",
+         "type":"string",
+         "metadata":{
+            "description":"Name of the subnet inside the VNET which you want to inject your compute in."
+         }
+      },
+      "location":{
+         "type":"string",
+         "defaultValue":"[resourceGroup().location]",
+         "metadata":{
+            "description":"The exposed port for the compute instance."
+         }
+      },
+      "dockerBridgeCidr":{
+         "defaultValue":"",
+         "type":"string",
+         "metadata":{
+            "description":"The exposed port for the compute instance."
+         }
+      },
+      "serviceCidr":{
+         "defaultValue":"",
+         "type":"string",
+         "metadata":{
+            "description":"The exposed port for the compute instance."
+         }
+      },
+      "agentVmSize":{
+         "defaultValue":"Standard_D4_v3",
+         "type":"string",
+         "metadata":{
+            "description":"The Azure VM size of the agent VM nodes. This cannot be changed once the cluster is created."
+         }
+      },
+      "agentCount":{
+         "defaultValue":6,
+         "type":"Int",
+         "metadata":{
+            "description":"The number of agent nodes in the Container Service.."
+         }
+      },
+      "cert":{
+         "defaultValue":"",
+         "type":"string",
+         "metadata":{
+            "description":"The SSL cert data in PEM format encoded as base64 string"
+         }
+      },
+      "key":{
+         "defaultValue":"",
+         "type":"string",
+         "metadata":{
+            "description":"The SSL key data in PEM format encoded as base64 string."
+         }
+      },
+      "cname":{
+         "defaultValue":"",
+         "type":"string",
+         "metadata":{
+            "description":"The CName of the cert."
+         }
+      },
+      "leafDomainLabel":{
+         "defaultValue":"",
+         "type":"string",
+         "metadata":{
+            "description":"The leaf domain label of public endpoint."
+         }
+      },
+      "overwriteExistingDomain":{
+         "defaultValue":false,
+         "type":"Bool",
+         "metadata":{
+            "description":"Value indicating whether to overwrite existing domain label."
+         }
+      },
+      "renew":{
+         "defaultValue":false,
+         "type":"Bool",
+         "metadata":{
+            "description":"Value indicating whether to renew certificate."
+         }
+      },
+      "sslStatus":{
+         "defaultValue":"Disabled",
+         "allowedValues":[
+            "Enabled",
+            "Disabled",
+            "Auto"
+         ],
+         "type":"string",
+         "metadata":{
+            "description":"SSL status. Allowed values are Enabled and Disabled."
+         }
+      },
+      "workspaceName":{
+         "type":"string",
+         "metadata":{
+            "description":"The exposed port for the compute instance."
+         }
+      }
+   },
+   "variables":{
+      "aksNetworkingConfiguration":{
+         "subnetId":"[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]",
+         "serviceCidr":"[parameters('serviceCidr')]",
+         "dnsServiceIP":"[parameters('dnsServiceIP')]",
+         "dockerBridgeCidr":"[parameters('dockerBridgeCidr')]"
+      },
+      "sslConfiguration":{
+         "status":"[parameters('sslStatus')]",
+         "cert":"[parameters('cert')]",
+         "key":"[parameters('key')]",
+         "cname":"[parameters('cname')]",
+         "leafDomainLabel":"[parameters('leafDomainLabel')]",
+         "overwriteExistingDomain":"[parameters('overwriteExistingDomain')]",
+         "renew":"[parameters('renew')]"
+      }
+   },
+   "resources":[
+      {
+         "type":"Microsoft.MachineLearningServices/workspaces/computes",
+         "apiVersion":"2021-01-01",
+         "name":"[concat(parameters('workspaceName'), '/', parameters('computeName'))]",
+         "location":"[parameters('location')]",
+         "properties":{
+            "computeType":"AKS",
+            "properties":{
+               "agentVmSize":"[parameters('agentVmSize')]",
+               "agentCount":"[parameters('agentCount')]",
+               "sslConfiguration":"[if(equals(parameters('sslStatus'),'Disabled'), json('null'), variables('sslConfiguration'))]",
+               "aksNetworkingConfiguration":"[if(and(not(empty(parameters('vnetResourceGroupName'))),not(empty(parameters('vnetName'))),not(empty(parameters('subnetName'))),not(empty(parameters('serviceCidr'))),not(empty(parameters('dnsServiceIP'))),not(empty(parameters('dockerBridgeCidr')))), variables('aksNetworkingConfiguration'), json('null'))]"
+            }
+         }
+      }
+   ]
+}
+

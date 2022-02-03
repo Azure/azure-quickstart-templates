@@ -1,0 +1,461 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "namePrefix": {
+      "type": "string"
+    },
+    "domainName": {
+      "type": "string"
+    },
+    "dnsServerName": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "sqlServerServiceAccountUserName": {
+      "type": "string"
+    },
+    "sqlServerServiceAccountPassword": {
+      "type": "securestring"
+    },
+    "diskType": {
+      "type": "string"
+    },
+    "nicSubnetUri": {
+      "type": "string"
+    },
+    "lbSubnetUri": {
+      "type": "string"
+    },
+    "sqlLBIPAddress": {
+      "type": "string"
+    },
+    "sqlVMSize": {
+      "type": "string"
+    },
+    "sqlWitnessVMSize": {
+      "type": "string"
+    },
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring"
+    },
+    "windowsImagePublisher": {
+      "type": "string",
+      "defaultValue": "MicrosoftSQLServer"
+    },
+    "windowsImageOffer": {
+      "type": "string",
+      "defaultValue": "SQL2014SP2-WS2012R2"
+    },
+    "windowsImageSKU": {
+      "type": "string",
+      "defaultValue": "Enterprise"
+    },
+    "windowsImageVersion": {
+      "type": "string",
+      "defaultValue": "latest"
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "sqlDiskSize": 1000,
+    "sqlWitnessDiskSize": 128,
+    "sqlNamePrefix": "[concat(parameters('namePrefix'),'-sql-')]",
+    "sqlAvailabilitySetName": "[concat(variables('sqlNamePrefix'),'as')]",
+    "sqlLBName": "[concat(variables('sqlNamePrefix'),'ilb')]",
+    "lbFE1": "[concat(variables('sqlNamePrefix'),'ilbfe1')]",
+    "lbBE": "[concat(variables('sqlNamePrefix'),'ilbbe')]",
+    "sqlLBFEConfigID1": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('sqlLBName'), variables('lbFE1'))]",
+    "sqlLBBEAddressPoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('sqlLBName'), variables('lbBE'))]",
+    "sqlAOProbe1": "[concat(variables('sqlNamePrefix'),'ilbp1')]",
+    "sqlLBProbeID1": "[resourceId('Microsoft.Network/loadBalancers/probes/',variables('sqlLBName'), variables('sqlAOProbe1'))]",
+    "deploySqlWitnessShare": "deploySqlWitnessShare",
+    "deploySqlWitnessShareId": "[concat('Microsoft.Resources/deployments/', variables('deploySqlWitnessShare'))]",
+    "deploySqlWitnessShareTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/deploy-sql-witness.json',parameters('_artifactsLocationSasToken')))]",
+    "sqlWitnessSharePath": "[concat(parameters('namePrefix'),'-fsw')]",
+    "sqlWitnessVMName": "[concat(variables('sqlNamePrefix'),'w')]",
+    "deploySqlAlwaysOn": "deploySqlAlwaysOn",
+    "deploySqlAlwaysOnTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/deploy-sql-alwayson.json',parameters('_artifactsLocationSasToken')))]",
+    "sqlAOEPName": "[concat(parameters('namePrefix'),'-agep')]",
+    "sqlAOAGName1": "[concat(parameters('namePrefix'),'-ag1')]",
+    "sqlAOListener1": "[concat(parameters('namePrefix'),'-agl1')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('sqlAvailabilitySetName')]",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "PlatformUpdateDomainCount": 20,
+        "PlatformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      }
+    },
+    {
+      "apiVersion": "2020-11-01",
+      "name": "[variables('sqlLBName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[parameters('location')]",
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('lbFE1')]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('sqlLBIPAddress')]",
+              "subnet": {
+                "id": "[parameters('lbSubnetUri')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('lbBE')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "[variables('sqlAOListener1')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('sqlLBFEConfigID1')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('sqlLBBEAddressPoolID')]"
+              },
+              "probe": {
+                "id": "[variables('sqlLBProbeID1')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 1433,
+              "backendPort": 1433,
+              "enableFloatingIP": true
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('sqlAOProbe1')]",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 59999,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat(variables('sqlNamePrefix'), copyindex(), '-nic')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-11-01",
+      "copy": {
+        "name": "nicLoop",
+        "count": 2
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('sqlLBName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('nicSubnetUri')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('sqlLBBEAddressPoolID')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat(variables('sqlWitnessVMName'), '-nic')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-11-01",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('nicSubnetUri')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('sqlNamePrefix'), copyindex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": 2
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('sqlNamePrefix'), copyindex(), '-nic'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('SqlVMSize')]"
+        },
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('sqlNamePrefix'), copyindex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('windowsImagePublisher')]",
+            "offer": "[parameters('windowsImageOffer')]",
+            "sku": "[parameters('windowsImageSKU')]",
+            "version": "[parameters('windowsImageVersion')]"
+          },
+          "osDisk": {
+            "name": "[concat(variables('sqlNamePrefix'), copyindex(), '_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('diskType')]"
+            }
+          },
+          "dataDisks": [
+            {
+              "lun": 0,
+              "name": "[concat(variables('sqlNamePrefix'), copyindex(), '_datadisk1')]",
+              "createOption": "Empty",
+              "diskSizeGB": "[variables('sqlDiskSize')]",
+              "caching": "None",
+              "managedDisk": {
+                "storageAccountType": "[parameters('diskType')]"
+              }
+            },
+            {
+              "lun": 1,
+              "name": "[concat(variables('sqlNamePrefix'), copyindex(), '_logdisk1')]",
+              "createOption": "Empty",
+              "diskSizeGB": "[variables('sqlDiskSize')]",
+              "caching": "None",
+              "managedDisk": {
+                "storageAccountType": "[parameters('diskType')]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('sqlNamePrefix'), copyindex(), '-nic'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('sqlWitnessVMName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('sqlWitnessVMName'), '-nic'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('SqlWitnessVMSize')]"
+        },
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]"
+        },
+        "osProfile": {
+          "computerName": "[variables('sqlWitnessVMName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('windowsImagePublisher')]",
+            "offer": "[parameters('windowsImageOffer')]",
+            "sku": "[parameters('windowsImageSKU')]",
+            "version": "[parameters('windowsImageVersion')]"
+          },
+          "osDisk": {
+            "name": "[concat(variables('sqlWitnessVMName'), '_OSDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('diskType')]"
+            }
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(variables('sqlWitnessVMName'), '_datadisk1')]",
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": "[variables('sqlWitnessDiskSize')]",
+              "lun": 0,
+              "managedDisk": {
+                "storageAccountType": "[parameters('diskType')]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('sqlWitnessVMName'), '-nic'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "[variables('deploySqlWitnessShare')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines',variables('sqlWitnessVMName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('deploySqlWitnessShareTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "sqlWitnessVMName": {
+            "value": "[variables('sqlWitnessVMName')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "sharePath": {
+            "value": "[variables('sqlWitnessSharePath')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[variables('deploySqlAlwaysOn')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines',concat(variables('sqlNamePrefix'),'0'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines',concat(variables('sqlNamePrefix'),'1'))]",
+        "[variables('deploySqlWitnessShareId')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('deploySqlAlwaysOnTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "sqlNamePrefix": {
+            "value": "[variables('sqlNamePrefix')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "namePrefix": {
+            "value": "[parameters('namePrefix')]"
+          },
+          "sharePath": {
+            "value": "[variables('sqlWitnessSharePath')]"
+          },
+          "sqlWitnessVMName": {
+            "value": "[variables('sqlWitnessVMName')]"
+          },
+          "sqlLBName": {
+            "value": "[variables('sqlLBName')]"
+          },
+          "sqlLBIPAddress": {
+            "value": "[parameters('sqlLBIPAddress')]"
+          },
+          "dnsServerName": {
+            "value": "[parameters('dnsServerName')]"
+          },
+          "sqlServerServiceAccountUserName": {
+            "value": "[parameters('sqlServerServiceAccountUserName')]"
+          },
+          "sqlServerServiceAccountPassword": {
+            "value": "[parameters('sqlServerServiceAccountPassword')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "sqlAlwaysOnEndpointName": {
+            "value": "[variables('sqlAOEPName')]"
+          },
+          "sqlAlwaysOnAvailabilityGroupName1": {
+            "value": "[variables('sqlAOAGName1')]"
+          },
+          "sqlAlwaysOnAvailabilityGroupListenerName1": {
+            "value": "[variables('sqlAOListener1')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    }
+  ]
+}

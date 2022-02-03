@@ -1,0 +1,123 @@
+{
+  "contentVersion": "1.0.0.0",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "parameters": {
+    "dataFactoryName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the data factory. Must be globally unique."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of the data factory."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of your Azure virtual network."
+      }
+    },
+    "subNetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the subnet in the virtual network."
+      }
+    },
+    "nodeSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Location of the data factory."
+      }
+    },
+    "nodeNumber": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of nodes in the cluster."
+      }
+    },
+    "maximumParallelExecutionsPerNode": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Maximum number of parallel executions per node in the cluster."
+      }
+    },
+    "azureSqlServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure SQL server that hosts the SSISDB database (SSIS Catalog)."
+      }
+    },
+    "databaseAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure SQL database user."
+      }
+    },
+    "databaseAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the database user."
+      }
+    },
+    "catalogPricingTier": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "metadata": {
+        "description": "Pricing tier of the SSIS Catalog (SSISDB datbase)"
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('dataFactoryName')]",
+      "apiVersion": "2018-06-01",
+      "type": "Microsoft.DataFactory/factories",
+      "location": "[parameters('location')]",
+      "properties": {
+      },
+      "resources": [
+        {
+          "name": "[concat(parameters('dataFactoryName'), '/SPAzureSsisIR')]",
+          "type": "Microsoft.DataFactory/factories/integrationRuntimes",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "type": "Managed",
+            "typeProperties": {
+              "computeProperties": {
+                "location": "[parameters('location')]",
+                "nodeSize": "[parameters('nodeSize')]",
+                "numberOfNodes": "[parameters('nodeNumber')]",
+                "maxParallelExecutionsPerNode": "[parameters('maximumParallelExecutionsPerNode')]",
+                "vNetProperties": {
+                  "vNetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+                  "subnet": "[parameters('subNetName')]"
+                }
+              },
+              "ssisProperties": {
+                "catalogInfo": {
+                  "catalogServerEndpoint": "[parameters('azureSqlServerName')]",
+                  "catalogAdminUserName": "[parameters('databaseAdminUsername')]",
+                  "catalogAdminPassword": {
+                    "type": "SecureString",
+                    "value": "[parameters('databaseAdminPassword')]"
+                  },
+                  "catalogPricingTier": "[parameters('catalogPricingTier')]"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
