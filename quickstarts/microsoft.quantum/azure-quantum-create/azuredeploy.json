@@ -1,0 +1,111 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1124.51302",
+      "templateHash": "7692970140494302547"
+    }
+  },
+  "parameters": {
+    "appName": {
+      "type": "string",
+      "metadata": {
+        "description": "Application name used as prefix for the Azure Quantum workspace and its associated Storage account."
+      }
+    },
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "eastus",
+        "japaneast",
+        "japanwest",
+        "northeurope",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westeurope",
+        "westus",
+        "westus2"
+      ],
+      "metadata": {
+        "description": "Location of the Azure Quantum workspace and its associated Storage account."
+      }
+    }
+  },
+  "variables": {
+    "quantumWorkspaceName": "[format('{0}-ws', parameters('appName'))]",
+    "storageAccountName": "[format('{0}{1}', parameters('appName'), substring(uniqueString(resourceGroup().id), 0, 5))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-06-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2"
+    },
+    {
+      "type": "Microsoft.Quantum/workspaces",
+      "apiVersion": "2019-11-04-preview",
+      "name": "[variables('quantumWorkspaceName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "providers": [
+          {
+            "providerId": "Microsoft",
+            "providerSku": "DZH3178M639F",
+            "applicationName": "[format('{0}-Microsoft', variables('quantumWorkspaceName'))]"
+          }
+        ],
+        "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageAccountName'))]",
+      "name": "[guid(resourceId('Microsoft.Quantum/workspaces', variables('quantumWorkspaceName')), format('/subscriptions/{0}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c', subscription().subscriptionId), resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')))]",
+      "properties": {
+        "roleDefinitionId": "[format('/subscriptions/{0}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c', subscription().subscriptionId)]",
+        "principalId": "[reference(resourceId('Microsoft.Quantum/workspaces', variables('quantumWorkspaceName')), '2019-11-04-preview', 'full').identity.principalId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Quantum/workspaces', variables('quantumWorkspaceName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "subscription_id": {
+      "type": "string",
+      "value": "[subscription().subscriptionId]"
+    },
+    "resource_group": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "name": {
+      "type": "string",
+      "value": "[variables('quantumWorkspaceName')]"
+    },
+    "location": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Quantum/workspaces', variables('quantumWorkspaceName')), '2019-11-04-preview', 'full').location]"
+    },
+    "tenant_id": {
+      "type": "string",
+      "value": "[subscription().tenantId]"
+    }
+  }
+}
