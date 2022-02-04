@@ -15,17 +15,13 @@
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-windows-baseline%2Fazuredeploy.json)
 
-This template allows you to deploy a Windows VM with the Azure secure baseline applied. For details about the settings in the baseline,
-review the reference documentation.
-
-[Windows secure baseline](https://docs.microsoft.com/en-us/azure/governance/policy/samples/guest-configuration-baseline-windows)
-
-General information about how configurations are assigned to machines in Azure is available in documentation.
-
+This template allows you to deploy a Windows VM with a custom configuration assignment. General information about how configurations are assigned to machines in Azure is available in documentation.
 [Understand the guest configuration feature of Azure Policy](https://docs.microsoft.com/en-us/azure/governance/policy/concepts/guest-configuration)
 
-A detailed how to document about assigning configurations to machines, and how to customize configurations from ARM,
-is also available.
+After the initial application of baseline settings, Guest Configuration will continue to monitor for changes in the server configuration and report compliance back to Azure but will not prevent or correct any changes.
+
+A detailed how to document about assigning configurations to machines, and how to customize
+configurations from ARM, is also available.
 
 ## Required prerequisites
 
@@ -33,24 +29,18 @@ Before testing this quickstart template, you must create a Windows machine
 (virtual or physical) outside of Azure and install the Arc agent
 to project it into Azure.
 
-The simplest approach to building this prereq is to follow the docs page
-for Azure Arc-enabled servers.
+Options to simplify building and connecting a server:
+- Follow the docs page for Azure Arc-enabled servers.<br>
+  [Enable Arc-enabled servers agent](https://docs.microsoft.com/en-us/azure/azure-arc/servers/learn/quick-enable-hybrid-vm)
+- Follow the jumpstart exercise.<br>
+  [Deploy a Windows Azure Virtual Machine and connect it to Azure Arc using an ARM Template](https://azurearcjumpstart.io/azure_arc_jumpstart/azure_arc_servers/azure/azure_arm_template_win/)
 
-[Enable Arc-enabled servers agent](https://docs.microsoft.com/en-us/azure/azure-arc/servers/learn/quick-enable-hybrid-vm)
-
-After you have an Arc-enabled machine ready, you can deploy this sample
+After you have an Arc-enabled server ready, you can deploy this sample
 in to the same resource group and use the "machineName" parameter to specify
 the machine where the configuration will be applied.
 
 
 ---
-
-**Common administration ports to log in to the VM directly, are not opened in this template.**
-After deploying this machine, it is expected that you will
-[deploy applications](https://docs.microsoft.com/azure/devops/pipelines/release/deployment-groups/deploying-azure-vms-deployment-groups)
-using a service such as Azure DevOps.
-
-- [Provision agents for deployment groups](https://docs.microsoft.com/azure/devops/pipelines/release/deployment-groups/howto-provision-deployment-group-agents)
 
 To provide ongoing operations for the machine, it is expected you will use the available
 Azure management services. You can also view the
@@ -62,14 +52,7 @@ for more information about best practices.
 - [Azure Update Management](https://docs.microsoft.com/azure/automation/update-management/overview)
 - [Azure Automation inventory feature](https://docs.microsoft.com/azure/automation/change-tracking/manage-inventory-vms)
 - [Azure Policy's guest configuration feature](https://docs.microsoft.com/azure/governance/policy/concepts/guest-configuration)
-- [Azure Backup](https://docs.microsoft.com/azure/backup/)
 - [Azure Custom Script extension for Windows](https://docs.microsoft.com/azure/virtual-machines/extensions/custom-script-windows)
-- [Azure Run Commands for Windows](https://docs.microsoft.com/azure/virtual-machines/windows/run-command)
-
-If you would prefer to open common ports, modify rules in the network security group
-associated with the network adapter for the machine.
-
-- [Network security groups](https://docs.microsoft.com/azure/virtual-network/network-security-groups-overview)
 
 ---
 
@@ -81,7 +64,6 @@ If you're new to Azure virtual machines, see:
 - [Azure Linux Virtual Machines documentation](https://docs.microsoft.com/azure/virtual-machines/linux/)
 - [Azure Windows Virtual Machines documentation](https://docs.microsoft.com/azure/virtual-machines/windows/)
 - [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
-- [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular)
 
 If you're new to template deployment, see:
 
