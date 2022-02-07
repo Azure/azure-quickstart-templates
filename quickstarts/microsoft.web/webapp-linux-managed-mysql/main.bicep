@@ -1,4 +1,4 @@
-@description('The unique name of your Web Site.')
+@description('main.bicep')
 param siteName string = 'MySQL-${uniqueString(resourceGroup().name)}'
 
 @description('Database administrator login name')
