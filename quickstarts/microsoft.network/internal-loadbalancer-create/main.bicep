@@ -51,7 +51,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
           }
           loadBalancerBackendAddressPools: [
             {
-              id: '${lb.id}/backendAddressPools/${lbBackEndName}' //resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, 'loadBalancerBackEnd')
+              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lb.name, lbBackEndName)
             }
           ]
         }
