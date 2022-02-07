@@ -45,7 +45,7 @@ param diagnosticStorageAccountResourceGroup string = ''
 var lockName = '${logAnalyticsWorkspace.name}-lck'
 var diagnosticsName = '${logAnalyticsWorkspace.name}-dgs'
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' = {
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   name: name
   location: location
   properties: {
