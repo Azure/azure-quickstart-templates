@@ -104,7 +104,6 @@ resource mysqlserver 'Microsoft.DBforMySQL/servers@2017-12-01' = {
     name: dbSkuName
     tier: dbSkuTier
     capacity: dbSkucapacity
-    size: null
     family: databaseskuFamily
   }
   properties: {
