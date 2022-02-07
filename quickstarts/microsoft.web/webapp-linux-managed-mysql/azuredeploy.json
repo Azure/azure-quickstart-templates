@@ -1,12 +1,19 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1124.51302",
+      "templateHash": "1389152693721810475"
+    }
+  },
   "parameters": {
     "siteName": {
       "type": "string",
-      "defaultValue": "[concat('MySQL-', uniqueString(resourceGroup().name))]",
+      "defaultValue": "[format('{0}', uniqueString(resourceGroup().name))]",
       "metadata": {
-        "description": "The unique name of your Web Site."
+        "description": "main.bicep"
       }
     },
     "administratorLogin": {
@@ -17,7 +24,7 @@
       }
     },
     "administratorLoginPassword": {
-      "type": "securestring",
+      "type": "secureString",
       "minLength": 8,
       "metadata": {
         "description": "Database administrator password"
@@ -105,9 +112,9 @@
     }
   },
   "variables": {
-    "databaseName": "[concat('database', uniqueString(resourceGroup().id))]",
-    "serverName": "[concat('mysql-',  uniqueString(resourceGroup().id))]",
-    "hostingPlanName": "[concat('hpn-',  uniqueString(resourceGroup().id))]"
+    "databaseName": "[format('{0}', uniqueString(resourceGroup().id))]",
+    "mysqlserverName": "[format('{0}', uniqueString(resourceGroup().id))]",
+    "hostingPlanName": "[format('{0}', uniqueString(resourceGroup().id))]"
   },
   "resources": [
     {
@@ -116,15 +123,12 @@
       "name": "[variables('hostingPlanName')]",
       "location": "[parameters('location')]",
       "sku": {
-        "Tier": "Standard",
-        "Name": "S1"
+        "tier": "Standard",
+        "name": "S1"
       },
       "kind": "linux",
       "properties": {
-        "name": "[variables('hostingPlanName')]",
-        "workerSizeId": "1",
-        "reserved": true,
-        "numberOfWorkers": "1"
+        "reserved": true
       }
     },
     {
@@ -132,35 +136,35 @@
       "apiVersion": "2020-06-01",
       "name": "[parameters('siteName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[variables('hostingPlanName')]"
-      ],
       "properties": {
         "siteConfig": {
           "linuxFxVersion": "php|7.0",
           "connectionStrings": [
             {
               "name": "defaultConnection",
-              "ConnectionString": "[concat('Database=', variables('databaseName'), ';Data Source=', reference(resourceId('Microsoft.DBforMySQL/servers',variables('serverName'))).fullyQualifiedDomainName,';User Id=',parameters('administratorLogin'),'@',variables('serverName') ,';Password=',parameters('administratorLoginPassword'))]",
+              "connectionString": "[format('Database={0};Data Source={1};User Id={2}@{3};Password={4}', variables('databaseName'), reference(resourceId('Microsoft.DBforMySQL/servers', variables('mysqlserverName'))).fullyQualifiedDomainName, parameters('administratorLogin'), variables('mysqlserverName'), parameters('administratorLoginPassword'))]",
               "type": "MySql"
             }
           ]
         },
-        "name": "[parameters('siteName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "[resourceId('Microsoft.DBforMySQL/servers', variables('mysqlserverName'))]"
+      ]
     },
     {
       "type": "Microsoft.DBforMySQL/servers",
       "apiVersion": "2017-12-01",
-      "name": "[variables('serverName')]",
+      "name": "[variables('mysqlserverName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('dbSkuName')]",
         "tier": "[parameters('dbSkuTier')]",
         "capacity": "[parameters('dbSkucapacity')]",
-        "size": "[parameters('dbSkuSizeMB')]",
-        "family": "[parameters('databaseSkuFamily')]"
+        "size": null,
+        "family": "[parameters('databaseskuFamily')]"
       },
       "properties": {
         "createMode": "Default",
@@ -173,34 +177,31 @@
           "geoRedundantBackup": "Disabled"
         },
         "sslEnforcement": "Disabled"
+      }
+    },
+    {
+      "type": "Microsoft.DBforMySQL/servers/firewallRules",
+      "apiVersion": "2017-12-01",
+      "name": "[format('{0}/{1}', variables('mysqlserverName'), 'AllowAzureIPs')]",
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "255.255.255.255"
       },
-      "resources": [
-        {
-          "type": "firewallrules",
-          "apiVersion": "2017-12-01",
-          "name": "AllowAzureIPs",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.DBforMySQL/servers/databases', variables('serverName'), variables('databaseName'))]",
-            "[resourceId('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
-          ],
-          "properties": {
-            "startIpAddress": "0.0.0.0",
-            "endIpAddress": "255.255.255.255"
-          }
-        },
-        {
-          "type": "databases",
-          "apiVersion": "2017-12-01",
-          "name": "[variables('databaseName')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
-          ],
-          "properties": {
-            "charset": "utf8",
-            "collation": "utf8_general_ci"
-          }
-        }
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforMySQL/servers', variables('mysqlserverName'))]",
+        "[resourceId('Microsoft.DBforMySQL/servers/databases', variables('mysqlserverName'), variables('databaseName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DBforMySQL/servers/databases",
+      "apiVersion": "2017-12-01",
+      "name": "[format('{0}/{1}', variables('mysqlserverName'), variables('databaseName'))]",
+      "properties": {
+        "charset": "utf8",
+        "collation": "utf8_general_ci"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforMySQL/servers', variables('mysqlserverName'))]"
       ]
     }
   ]
