@@ -203,10 +203,10 @@ Note: all parameters are necessary.
 | Subscription | Choose the Subscription to use for this deployment. |
 | Resource Group | Choose a pre-existing RG or create a new RG; all metadata for the resources created as part of this deployment will be stored in this RG. |
 | Region | This should be set to the the RG’s region. |
-| Location | Where the new resources will reside. Default is the same as the RG Region. <br><br> _Default value_: **default** |
+| Location | Where the new resources will reside. Default is the same as the RG Region. <br><br> _Default value_: **[resourceGroup().location]** |
 | virtualNetworkName | Name of the Virtual Network, should be in the above **Location** otherwise the deployment will fail. |
-| virtualNetworkResourceGroup | The Resource Group the VNet is deployed in. Default is same RG. <br><br> _Default value_: **same_RG** |
-| subnetName | Name of the Subnet in the Virtual Network (parameter **virtualNetworkName**). <br><br> _Default value_: **default** |
+| virtualNetworkResourceGroup | The Resource Group the VNet is deployed in.|
+| subnet1Name | Name of the Subnet in the Virtual Network (parameter **virtualNetworkName**).|
 | networkSecurityGroupName | Name for the Network Security Group that the template will create. Note that a pre-existing Network Security Group with the same name **will be replaced**. |
 | MgmtSourceAddressOrRange | An address range using CIDR notation (e.g. 10.1.0.0/24), or an IP address (e.g. 192.168.99.21) for Management access via ssh (port 22/TCP). A comma-separated list of IP addresses and/or address ranges is also accepted (a valid comma-separated list would be 10.1.0.4,10.2.1.0/24). To allow access from any IP use 0.0.0.0/0. |
 | vsensorName | The name of the vSensor. The VM names will have suffix ‘-N’ where N is a number from 1 to _**numberOfVsensors**_ (see below). |
@@ -254,7 +254,7 @@ Once the deployment has completed the template outputs will be shown in the foll
 | Output | Description |
 | ------ | ------ |
 | allowedManagementIPsAndRanges | IPs / IP Ranges allowed to ssh to the vSensors on port 22/TCP. |
-| privateIPs | The private IPs of the created vSensors. |
+
 
 Outputs example in **[Appendix A](#appendix-a-examples)**.
 
