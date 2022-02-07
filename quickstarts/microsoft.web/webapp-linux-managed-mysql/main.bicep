@@ -1,5 +1,5 @@
 @description('main.bicep')
-param siteName string = 'MySQL-${uniqueString(resourceGroup().name)}'
+param siteName string = '${uniqueString(resourceGroup().name)}'
 
 @description('Database administrator login name')
 @minLength(1)
@@ -63,7 +63,7 @@ param location string = resourceGroup().location
 param databaseskuFamily string = 'Gen5'
 
 var databaseName = '${uniqueString(resourceGroup().id)}'
-var serverName = '${uniqueString(resourceGroup().id)}'
+var mysqlserverName = '${uniqueString(resourceGroup().id)}'
 var hostingPlanName = '${uniqueString(resourceGroup().id)}'
 
 resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
@@ -75,7 +75,6 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
   }
   kind: 'linux'
   properties: {
-    name: hostingPlanName
     reserved: true
   }
 }
@@ -89,13 +88,12 @@ resource site 'Microsoft.Web/sites@2020-06-01' = {
       connectionStrings: [
         {
           name: 'defaultConnection'
-          connectionString: 'Database=${databaseName};Data Source=${serverName.properties.fullyQualifiedDomainName};User Id=${administratorLogin}@${serverName};Password=${administratorLoginPassword}'
+          connectionString: 'Database=${databaseName};Data Source=${mysqlserver.properties.fullyQualifiedDomainName};User Id=${administratorLogin}@${mysqlserverName};Password=${administratorLoginPassword}'
           type: 'MySql'
         }
       ]
     }
-    name: siteName
-    serverFarmId: hostingPlanName.id
+    serverFarmId: hostingPlan.id
   }
 }
 
@@ -106,7 +104,7 @@ resource mysqlserver 'Microsoft.DBforMySQL/servers@2017-12-01' = {
     name: dbSkuName
     tier: dbSkuTier
     capacity: dbSkucapacity
-    size: dbSkuSizeMB
+    size: null
     family: databaseskuFamily
   }
   properties: {
@@ -124,15 +122,22 @@ resource mysqlserver 'Microsoft.DBforMySQL/servers@2017-12-01' = {
 }
 
 resource serverName_AllowAzureIPs 'Microsoft.DBforMySQL/servers/firewallrules@2017-12-01' = {
-  parent: serverName
+  parent: mysqlserver
   name: 'AllowAzureIPs'
-  location: location
   properties: {
     startIpAddress: '0.0.0.0'
     endIpAddress: '255.255.255.255'
   }
   dependsOn: [
-    serverName_databaseName
+    mysqlserverName_databaseName
   ]
 }
 
+resource mysqlserverName_databaseName 'Microsoft.DBforMySQL/servers/databases@2017-12-01' = {
+  parent: mysqlserver
+  name: databaseName
+  properties: {
+    charset: 'utf8'
+    collation: 'utf8_general_ci'
+  }
+}
