@@ -62,12 +62,12 @@ param location string = resourceGroup().location
 @description('Azure database for mySQL sku family')
 param databaseskuFamily string = 'Gen5'
 
-var databaseName = 'database${uniqueString(resourceGroup().id)}'
-var serverName_var = 'mysql-${uniqueString(resourceGroup().id)}'
-var hostingPlanName_var = 'hpn-${uniqueString(resourceGroup().id)}'
+databaseName = 'database${uniqueString(resourceGroup().id)}'
+serverName = 'mysql-${uniqueString(resourceGroup().id)}'
+hostingPlanName = 'hpn-${uniqueString(resourceGroup().id)}'
 
-resource hostingPlanName 'Microsoft.Web/serverfarms@2020-06-01' = {
-  name: hostingPlanName_var
+resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
+  name: hostingPlanName
   location: location
   sku: {
     tier: 'Standard'
@@ -75,12 +75,12 @@ resource hostingPlanName 'Microsoft.Web/serverfarms@2020-06-01' = {
   }
   kind: 'linux'
   properties: {
-    name: hostingPlanName_var
+    name: hostingPlanName
     reserved: true
   }
 }
 
-resource siteName_resource 'Microsoft.Web/sites@2020-06-01' = {
+resource site 'Microsoft.Web/sites@2020-06-01' = {
   name: siteName
   location: location
   properties: {
@@ -89,7 +89,7 @@ resource siteName_resource 'Microsoft.Web/sites@2020-06-01' = {
       connectionStrings: [
         {
           name: 'defaultConnection'
-          connectionString: 'Database=${databaseName};Data Source=${serverName.properties.fullyQualifiedDomainName};User Id=${administratorLogin}@${serverName_var};Password=${administratorLoginPassword}'
+          connectionString: 'Database=${databaseName};Data Source=${serverName.properties.fullyQualifiedDomainName};User Id=${administratorLogin}@${serverName};Password=${administratorLoginPassword}'
           type: 'MySql'
         }
       ]
@@ -99,8 +99,8 @@ resource siteName_resource 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-resource serverName 'Microsoft.DBforMySQL/servers@2017-12-01' = {
-  name: serverName_var
+resource mysqlserver 'Microsoft.DBforMySQL/servers@2017-12-01' = {
+  name: mysqlserverName
   location: location
   sku: {
     name: dbSkuName
@@ -136,11 +136,3 @@ resource serverName_AllowAzureIPs 'Microsoft.DBforMySQL/servers/firewallrules@20
   ]
 }
 
-resource serverName_databaseName 'Microsoft.DBforMySQL/servers/databases@2017-12-01' = {
-  parent: serverName
-  name: '${databaseName}'
-  properties: {
-    charset: 'utf8'
-    collation: 'utf8_general_ci'
-  }
-}
