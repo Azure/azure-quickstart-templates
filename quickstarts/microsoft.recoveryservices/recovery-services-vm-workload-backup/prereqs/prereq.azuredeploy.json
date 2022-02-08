@@ -1,6 +1,13 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "metadata": {
+      "_generator": {
+        "name": "bicep",
+        "version": "0.4.1124.51302",
+        "templateHash": "6708429595345686497"
+      }
+    },
     "parameters": {
         "virtualMachineName": {
             "type": "string"
@@ -21,7 +28,7 @@
             "type": "string"
         },
         "adminPassword": {
-            "type": "securestring"
+            "type": "secureString"
         },
         "addressPrefix": {
             "type": "string"
@@ -72,11 +79,15 @@
             "type": "string"
         },
         "sqlAuthenticationPassword": {
-            "type": "securestring"
+            "type": "secureString"
         },
         "rServicesEnabled": {
             "type": "string"
-        }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+          }
     },
     "variables": {
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
@@ -86,9 +97,9 @@
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[parameters('virtualMachineName')]",
             "apiVersion": "2018-06-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
             ],
             "properties": {
                 "osProfile": {
@@ -96,7 +107,7 @@
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
                     "windowsConfiguration": {
-                        "provisionVmAgent": "true"
+                        "provisionVMAgent": true
                     }
                 },
                 "hardwareProfile": {
@@ -110,16 +121,16 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "createOption": "fromImage",
+                        "createOption": "FromImage",
                         "managedDisk": {
                             "storageAccountType": "Premium_LRS"
                         }
                     },
                     "dataDisks": [
                         {
-                            "createOption": "empty",
+                            "createOption": "Empty",
                             "lun": 0,
-                            "diskSizeGB": "1023",
+                            "diskSizeGB": 1023,
                             "caching": "ReadOnly",
                             "managedDisk": {
                                 "storageAccountType": "Premium_LRS"
@@ -137,43 +148,41 @@
             }
         },
         {
-            "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachines",
+            "type": "Microsoft.SqlVirtualMachine/sqlVirtualMachines",
             "name": "[parameters('virtualMachineName')]",
             "apiVersion": "2017-03-01-preview",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
-                "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
             ],
             "properties": {
                 "virtualMachineResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
-                "AutoPatchingSettings": {
-                    "Enable": true,
-                    "DayOfWeek": "[parameters('sqlAutopatchingDayOfWeek')]",
-                    "MaintenanceWindowStartingHour": "[parameters('sqlAutopatchingStartHour')]",
-                    "MaintenanceWindowDuration": "[parameters('sqlAutopatchingWindowDuration')]"
+                "autoPatchingSettings": {
+                    "enable": true,
+                    "dayOfWeek": "[parameters('sqlAutopatchingDayOfWeek')]",
+                    "maintenanceWindowStartingHour": "[parameters('sqlAutopatchingStartHour')]",
+                    "maintenanceWindowDuration": "[parameters('sqlAutopatchingWindowDuration')]"
                 },
-                "KeyVaultCredentialSettings": {
-                    "Enable": false,
-                    "CredentialName": ""
+                "keyVaultCredentialSettings": {
+                    "enable": false
                 },
-                "ServerConfigurationsManagementSettings": {
-                    "SQLConnectivityUpdateSettings": {
-                        "ConnectivityType": "[parameters('sqlConnectivityType')]",
-                        "Port": "[parameters('sqlPortNumber')]",
-                        "SQLAuthUpdateUserName": "[parameters('sqlAuthenticationLogin')]",
-                        "SQLAuthUpdatePassword": "[parameters('sqlAuthenticationPassword')]"
+                "serverConfigurationsManagementSettings": {
+                    "sqlConnectivityUpdateSettings": {
+                        "connectivityType": "[parameters('sqlConnectivityType')]",
+                        "port": "[parameters('sqlPortNumber')]",
+                        "sqlAuthUpdateUserName": "[parameters('sqlAuthenticationLogin')]",
+                        "sqlAuthUpdatePassword": "[parameters('sqlAuthenticationPassword')]"
                     },
-                    "SQLWorkloadTypeUpdateSettings": {
-                        "SQLWorkloadType": "[parameters('sqlStorageWorkloadType')]"
+                    "sqlWorkloadTypeUpdateSettings": {
+                        "sqlWorkloadType": "[parameters('sqlStorageWorkloadType')]"
                     },
-                    "SQLStorageUpdateSettings": {
-                        "DiskCount": "[parameters('sqlStorageDisksCount')]",
-                        "DiskConfigurationType": "[parameters('sqlStorageDisksConfigurationType')]",
-                        "StartingDeviceID": "[parameters('sqlStorageStartingDeviceId')]"
+                    "sqlStorageUpdateSettings": {
+                        "diskCount": "[parameters('sqlStorageDisksCount')]",
+                        "diskConfigurationType": "[parameters('sqlStorageDisksConfigurationType')]",
+                        "startingDeviceId": "[parameters('sqlStorageStartingDeviceId')]"
                     },
-                    "AdditionalFeaturesServerConfigurations": {
-                        "IsRServicesEnabled": "[parameters('rServicesEnabled')]"
+                    "additionalFeaturesServerConfigurations": {
+                        "isRServicesEnabled": "[parameters('rServicesEnabled')]"
                     }
                 }
             }
@@ -182,7 +191,7 @@
             "name": "[parameters('virtualNetworkName')]",
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2018-08-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -203,11 +212,11 @@
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[parameters('networkInterfaceName')]",
             "apiVersion": "2018-10-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-                "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]",
-                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpAddressName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -218,8 +227,8 @@
                                 "id": "[variables('subnetRef')]"
                             },
                             "privateIPAllocationMethod": "Dynamic",
-                            "publicIpAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpAddressName'))]"
                             }
                         }
                     }
@@ -230,29 +239,29 @@
             }
         },
         {
-            "type": "Microsoft.Network/publicIpAddresses",
+            "type": "Microsoft.Network/publicIPAddresses",
             "sku": {
                 "name": "[parameters('publicIpAddressSku')]"
             },
             "name": "[parameters('publicIpAddressName')]",
             "apiVersion": "2018-08-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
-                "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+                "publicIPAllocationMethod": "[parameters('publicIpAddressType')]"
             }
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "[parameters('networkSecurityGroupName')]",
             "apiVersion": "2018-08-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "securityRules": [
                     {
                         "name": "RDP",
                         "properties": {
                             "priority": 300,
-                            "protocol": "TCP",
+                            "protocol": "Tcp",
                             "access": "Allow",
                             "direction": "Inbound",
                             "sourceAddressPrefix": "*",
@@ -265,7 +274,7 @@
                         "name": "default-allow-sql",
                         "properties": {
                             "priority": 1500,
-                            "protocol": "TCP",
+                            "protocol": "Tcp",
                             "access": "Allow",
                             "direction": "Inbound",
                             "sourceAddressPrefix": "*",
