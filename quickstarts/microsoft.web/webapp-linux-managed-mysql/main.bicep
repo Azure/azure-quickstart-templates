@@ -79,12 +79,15 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
   }
 }
 
-resource site 'Microsoft.Web/sites@2020-06-01' = {
+resource site 'Microsoft.Web/sites@2021-02-01' = {
   name: siteName
   location: location
   properties: {
     siteConfig: {
       linuxFxVersion: 'php|7.0'
+      ftpsState: 'FtpsOnly'
+      minTlsVersion: '1.2'
+      scmMinTlsVersion: '1.2'
       connectionStrings: [
         {
           name: 'defaultConnection'
@@ -94,6 +97,10 @@ resource site 'Microsoft.Web/sites@2020-06-01' = {
       ]
     }
     serverFarmId: hostingPlan.id
+    httpsOnly: true
+  }     
+   identity: {
+    type: 'SystemAssigned'
   }
 }
 
