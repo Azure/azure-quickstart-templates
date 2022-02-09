@@ -41,6 +41,7 @@ $TemplateArgs = New-Object -TypeName Hashtable
 $ArtifactStagingDirectory = ($ArtifactStagingDirectory.TrimEnd('/')).TrimEnd('\')
 
 # if the bicep switch is set, and the templateFile arg was the default, swap .json for .bicep
+# Testing
 $isBicep = ($bicep -or $TemplateFile.EndsWith('.bicep'))
 if ($isBicep){
     $defaultTemplateFile = '\main.bicep'
