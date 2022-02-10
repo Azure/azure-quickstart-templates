@@ -95,9 +95,9 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
   labels:
-    app.kubernetes.io/instance:  ibm-cpd-wkc-operator
+    app.kubernetes.io/instance:  ibm-cpd-wkc-operator-catalog-subscription
     app.kubernetes.io/managed-by: ibm-cpd-wkc-operator
-    app.kubernetes.io/name:  ibm-cpd-wkc-operator
+    app.kubernetes.io/name:  ibm-cpd-wkc-operator-catalog-subscription
   name: ibm-cpd-wkc-operator
   namespace: ibm-common-services
 spec:
