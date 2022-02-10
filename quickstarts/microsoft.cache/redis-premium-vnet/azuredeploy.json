@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "2.0.0.0",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "7605655404309623089"
+    }
+  },
   "parameters": {
     "location": {
       "type": "string",
@@ -17,15 +24,16 @@
     },
     "redisCacheCapacity": {
       "type": "int",
+      "defaultValue": 1,
       "allowedValues": [
         1,
         2,
         3,
-        4
+        4,
+        5
       ],
-      "defaultValue": 1,
       "metadata": {
-        "description": "The size of the new Azure Redis Cache instance. Valid family and capacity combinations are (C0..C6, P1..P4)."
+        "description": "The size of the new Azure Redis Cache instance. Valid capacity combinations are (P1..P5)."
       }
     },
     "existingVirtualNetworkResourceGroupName": {
@@ -53,25 +61,36 @@
       "metadata": {
         "description": "Set to true to allow access to redis on port 6379, without SSL tunneling (less secure)."
       }
+    },
+    "minimumTlsVersion": {
+      "type": "string",
+      "defaultValue": "1.2",
+      "allowedValues": [
+        "1.0",
+        "1.1",
+        "1.2"
+      ],
+      "metadata": {
+        "description": "The minimum allowed TLS version."
+      }
     }
   },
-  "variables": {
-    "subnetId": "[resourceId(parameters('existingVirtualNetworkResourceGroupName'),'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSubnetName'))]"
-  },
+  "functions": [],
   "resources": [
     {
-      "apiVersion": "2019-07-01",
+      "type": "Microsoft.Cache/redis",
+      "apiVersion": "2020-12-01",
       "name": "[parameters('redisCacheName')]",
-      "type": "Microsoft.Cache/Redis",
       "location": "[parameters('location')]",
       "properties": {
         "enableNonSslPort": "[parameters('enableNonSslPort')]",
+        "minimumTlsVersion": "[parameters('minimumTlsVersion')]",
         "sku": {
           "capacity": "[parameters('redisCacheCapacity')]",
           "family": "P",
           "name": "Premium"
         },
-        "subnetId": "[variables('subnetId')]"
+        "subnetId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('existingVirtualNetworkResourceGroupName')), 'Microsoft.Network/virtualNetworks/subnets', split(format('{0}/{1}', parameters('existingVirtualNetworkName'), parameters('existingSubnetName')), '/')[0], split(format('{0}/{1}', parameters('existingVirtualNetworkName'), parameters('existingSubnetName')), '/')[1])]"
       }
     }
   ]

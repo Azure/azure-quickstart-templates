@@ -1,10 +1,17 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "270720347454094462"
+    }
+  },
   "parameters": {
     "storageAccountName": {
       "type": "string",
-      "defaultValue": "[concat('atpstorage', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('store{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name must be unique across all existing storage account names in Azure. It must be 3 to 24 characters long, and can contain only lowercase letters and numbers."
       }
@@ -16,25 +23,18 @@
         "description": "Storage account location, default is same as resource group location."
       }
     },
-    "storageAccountKind": {
-      "type": "string",
-      "defaultValue": "StorageV2",
-      "allowedValues": [
-        "StorageV2",
-        "Storage"
-      ],
-      "metadata": {
-        "description": "Storage account type, for more info see 'https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview'."
-      }
-    },
     "storageAccountReplication": {
       "type": "string",
       "defaultValue": "Standard_LRS",
       "allowedValues": [
-        "Standard_LRS",
+        "Premium_LRS",
+        "Premium_ZRS",
         "Standard_GRS",
-        "Standard_ZRS",
-        "Premium_LRS"
+        "Standard_GZRS",
+        "Standard_LRS",
+        "Standard_RAGRS",
+        "Standard_RAGZRS",
+        "Standard_ZRS"
       ],
       "metadata": {
         "description": "Storage account replication, for more info see 'https://docs.microsoft.com/en-us/azure/storage/common/storage-redundancy'."
@@ -48,30 +48,30 @@
       }
     }
   },
+  "functions": [],
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-04-01",
       "name": "[parameters('storageAccountName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-08-01-preview",
       "sku": {
         "name": "[parameters('storageAccountReplication')]"
       },
-      "kind": "[parameters('storageAccountKind')]",
-      "properties": {},
-      "resources": [
-        {
-          "condition": "[parameters('advancedThreatProtectionEnabled')]",
-          "type": "providers/advancedThreatProtectionSettings",
-          "name": "Microsoft.Security/current",
-          "apiVersion": "2019-01-01",
-          "dependsOn": [
-            "[resourceId('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
-          ],
-          "properties": {
-            "isEnabled": true
-          }
-        }
+      "kind": "StorageV2",
+      "properties": {}
+    },
+    {
+      "condition": "[parameters('advancedThreatProtectionEnabled')]",
+      "type": "Microsoft.Security/advancedThreatProtectionSettings",
+      "apiVersion": "2019-01-01",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
+      "name": "current",
+      "properties": {
+        "isEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
       ]
     }
   ],
@@ -79,6 +79,10 @@
     "storageAccountName": {
       "type": "string",
       "value": "[parameters('storageAccountName')]"
+    },
+    "storageAccountId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
     }
   }
 }
