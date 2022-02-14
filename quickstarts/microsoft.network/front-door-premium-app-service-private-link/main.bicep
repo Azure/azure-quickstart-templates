@@ -1,9 +1,4 @@
-@description('The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource. When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details.')
-@allowed([
-  'eastus'
-  'westus2'
-  'southcentralus'
-])
+@description('The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource.')
 param location string
 
 @description('The name of the App Service application to create. This must be globally unique.')
