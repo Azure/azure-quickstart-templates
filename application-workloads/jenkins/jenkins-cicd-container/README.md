@@ -32,6 +32,8 @@ By setting up a continuous build to produce your container images and orchestrat
 
 1. Install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) if you have not.
 
+   > Note: Alternatively, you can also use Azure Cloud Shell from the Azure Portal.
+
 2. Open terminal, then execute:
 
    ```sh
@@ -40,10 +42,12 @@ By setting up a continuous build to produce your container images and orchestrat
 
    Follow the guide to sign in.
 
+   > Note: If you use Azure Cloud Shell from the Azure Portal, you are automatically authenticated. Therefore there is no need to ``az login`` again.
+
 3. Execute the command below to create service principal, with the role ``Contributor`` and under the current subscription by default.
 
    ```sh
-   az ad sp create-for-rbac --name <AppName>
+   az ad sp create-for-rbac --name <AppName> --role Contributor
    ```
 
    > Note: please replate the \<AppName> placeholder.
@@ -52,11 +56,10 @@ By setting up a continuous build to produce your container images and orchestrat
 
    ```json
    {
-     "appId": "8e897eb4-069d-40c2-9563-b20fb0ac3c14",
-     "displayName": "<AppName>",
-     "name": "http://<AppName>",
-     "password": "4309f67d-1719-44e3-bd47-12ab0409b13a",
-     "tenant": "cc8ae42e-e3ba-44c6-97ba-2d7645d0a885"
+      "appId": "8e897eb4-069d-40c2-9563-000000003c14",
+      "displayName": "<AppName>",
+      "password": "xxxxxvJgeKZoRAfxxxx0SitnANH8Kxxxx",
+      "tenant": "000088bf-0000-0000-0000-2d7cd0100000"
    }
    ```
 
@@ -64,20 +67,43 @@ By setting up a continuous build to produce your container images and orchestrat
 
    > Note: for more details about creating an Azure service principal, please refer to [Create an Azure service principal with Azure CLI 2.0](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest)
 
+### Create a SSH Key for Linux VMs
+
+1. Navigate to [Azure Portal](https://portal.azure.com/).
+
+2. At the top of the page, type SSH to search. Under **Services**, select SSH keys.
+
+3. On the **SSH Key** page, select **Create**.
+
+   ![](images/portal-sshkey.png)
+
+4. In **Resource group** select **Create new** to create a new resource group to store your keys. Type a name for your resource group and select **OK**.
+
+5. In **Region** select a region to store your keys. You can use the keys in any region, this is just the region where they will be stored.
+
+6. Type a name for your key in **Key pair name**.
+
+7. In **SSH public key source**, select **Generate public key pair**.
+
+8. When you are done, select **Review + create**.
+
+9. After it passes validation, select Create.
+
+10. You will then get a pop-up window to, select **Download private key and create resource**. This will download the SSH key as a .pem file.
+
+      ![](images/download-key.png)
+
+11. Once the .pem file is downloaded, you might want to move it somewhere on your computer where it is easy to point to from your SSH client.
+
 ### Deploy
 
 1. Click **Deploy to Azure** to start the deployment.
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cicd-container%2Fazuredeploy.json)  
-[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cicd-container%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cicd-container%2Fazuredeploy.json)
+   [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cicd-container%2Fazuredeploy.json)
 
-   
-   
+   [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cicd-container%2Fazuredeploy.json)
 
-   
-   
-   
+   [![Visualize](https://raw.githubusercontent.com/Azre/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fjenkins%2Fjenkins-cicd-container%2Fazuredeploy.json)
 
 2. Fill the form:
 
@@ -87,16 +113,17 @@ By setting up a continuous build to produce your container images and orchestrat
 
    * Input the settings.
 
-     > Note: 
+     > Note:
      >
-     > - The names and DNS prefixes should be unique. To avoid naming conflicting, we strongly recommend you to add some suffix. For example, the Cosmos Db name could be **cosmos-180130-1512**.
-     > - ACR (Azure Container Registry) names may contain alpha numeric characters only. A valid name is **acr1801301512**.
+     > * The names and DNS prefixes should be unique. To avoid naming conflicting, we strongly recommend you to add some suffix. For example, the Cosmos Db name could be **cosmos-180130-1512**.
+     > * ACR (Azure Container Registry) names may contain alpha numeric characters only. A valid name is **acr1801301512**.
+     > * Plesae select the **SSH Key** created in last step, rather than generate a new one.
 
    * Check **I agree to the terms and conditions stated above**.
 
 3. Click **Purchase**.
 
-   > Note: It will take about 13 minutes to finish the deployment. 
+   > Note: It will take about 13 minutes to finish the deployment.
 
 ### Deployment output
 
@@ -118,15 +145,14 @@ This Jenkins instance does not support https, so logging in through a public IP 
 
 #### Connect to the Jenkins instance using SSH port forwarding
 
-1. Copy the JENKINSSSH value from the Outputs section of the deployment.
+1. Find out the SSH Key pem file path and replace the `<keyfile>` of below command.
 
 2. Open terminal, then paste and execute it.
 
    ```Sh
-   $ ssh -L 8080:localhost:8080 azureuser@jenkins-180131-1520.eastus.cloudapp.azure.com
-   The authenticity of host 'jenkins-180131-1520.eastus.cloudapp.azure.com (40.71.20.174)' can't be established.
-   ECDSA key fingerprint is SHA256:DCjXdLBLpeugm3eWG/xywT4xKYR/0QpVQaTnLwxB4Hk.
-   Are you sure you want to continue connecting (yes/no)?
+   $ ssh -i <keyfile> -L 8080:localhost:8080 azureuser@jenkins-180131-1520.eastus.cloudapp.azure.com
+   ECDSA key fingerprint is SHA256:ky3f+1oqa/nHzzLWZGf5TqiyZbJahoztoODcbobBGS8.
+   Are you sure you want to continue connecting (yes/no/[fingerprint])?
    ```
 
 3. Input **yes** and press **Enter** key to accept and add the ECDSA to the list of known hosts.
@@ -141,7 +167,7 @@ This Jenkins instance does not support https, so logging in through a public IP 
    If your pass work is correct, you will get the welcome message:
 
    ```Sh
-   Welcome to Ubuntu 16.04.3 LTS (GNU/Linux 4.13.0-1007-azure x86_64) 
+   Welcome to Ubuntu 18.04.6 LTS (GNU/Linux 5.4.0-1067-azure x86_64)
    ...
    ```
 
@@ -160,6 +186,8 @@ This Jenkins instance does not support https, so logging in through a public IP 
    ```Sh
    77a6d3183ad24f9ca7df6181c81400d0
    ```
+
+3. Follow the Jenkins **Getting Started** wizard to finalise the setup. You just need to install default recommended plugins.
 
 #### Log into Jenkins
 
@@ -208,7 +236,11 @@ After logged in, you will see the **Hello World Build & Deploy** pipline job. Pl
 
 #### Get Kubenetes service
 
-1. Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) if you have not.
+1. Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) if you have not. Or, you can install `kubectl` locally using the [az aks install-cli](https://docs.microsoft.com/en-us/cli/azure/aks#az-aks-install-cli) command:
+
+   ```sh
+   az aks install-cli
+   ```
 
 2. Execute the command below:
 
@@ -258,3 +290,8 @@ After logged in, you will see the **Hello World Build & Deploy** pipline job. Pl
 
    ![](images/grafana-03.png)
 
+5. If you want to SSH to Grafana host machine, you can open terminal, then paste and execute a command like below.
+
+   ```Sh
+   ssh -i <private_ssh_key>  <username>@<GRAFANAURL>
+   ```
