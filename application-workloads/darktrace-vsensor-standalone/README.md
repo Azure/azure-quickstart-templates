@@ -213,7 +213,7 @@ Note: all parameters are necessary.
 | numberOfVsensors | Number of vSensors to be deployed, max is 4. <br><br> _Default value_: **1** |
 | diskSize | The vSensor OS disk size in GB between 30 and 1024. <br><br> _Default value_: **30** |
 | virtualMachineSize | vSensor VM Size. For more information regarding the Virtual Hardware Requirements please visit https://customerportal.darktrace.com/product-guides/main/vsensor-requirements <br><br> _Default value_: **Standard_D2s_v3** |
-| adminUsername | Username to be created when the vSensor is spun up. Note that password authentication over ssh for newly created VMs is disabled. <br><br> _Default value_: **ubuntu** |
+| adminUsername | Username to be created when the vSensor is spun up. Note that password authentication over ssh for newly created VMs is disabled. |
 | adminPublicKey | Public key for the adminUsername user to ssh the vSensor. |
 | applianceHostName | The FQDN or the IP of the Darktrace master instance (virtual/physical). |
 | appliancePort | Darktrace master instance connection port. <br><br> _Default value_: **443** |
