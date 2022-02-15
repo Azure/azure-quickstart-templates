@@ -75,7 +75,7 @@ resource dataSet 'Microsoft.DataShare/accounts/shares/dataSets@2021-08-01' = {
   properties: {
     subscriptionId: subscription().subscriptionId
     resourceGroup: resourceGroup().name
-    storageAccountName: storageAccountName
+    storageAccountName: sa.name
     containerName: containerName
   }
 }
