@@ -55,17 +55,16 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
   }
 }
 
-resource endpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
+resource endpoint 'Microsoft.Cdn/profiles/afdEndpoints@2021-06-01' = {
   name: endpointName
   parent: profile
   location: 'global'
   properties: {
-    originResponseTimeoutSeconds: 240
     enabledState: 'Enabled'
   }
 }
 
-resource originGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
+resource originGroup 'Microsoft.Cdn/profiles/originGroups@2021-06-01' = {
   name: originGroupName
   parent: profile
   properties: {
@@ -82,21 +81,21 @@ resource originGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
   }
 }
 
-resource origin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
+resource origin 'Microsoft.Cdn/profiles/originGroups/origins@2021-06-01' = {
   name: originName
   parent: originGroup
   properties: {
     hostName: originHostName
     httpPort: 80
     httpsPort: 443
-    originHostHeader: endpoint.properties.hostName // For the purposes of this sample, the 'Host' header value sent from Front Door to the origin must be the Front Door endpoint's hostname. In most real-world scenarios, you will need to set this to the originHostName value or a custom domain name, as described here: https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin#hostheader
+    originHostHeader: originHostName
     priority: 1
     weight: 1000
     sharedPrivateLinkResource: isPrivateLinkOrigin ? privateLinkOriginDetails : null
   }
 }
 
-resource route 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
+resource route 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
   name: routeName
   parent: endpoint
   dependsOn: [
@@ -114,53 +113,9 @@ resource route 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
     patternsToMatch: [
       '/*'
     ]
-    compressionSettings: {
-      contentTypesToCompress: [
-        'application/eot'
-        'application/font'
-        'application/font-sfnt'
-        'application/javascript'
-        'application/json'
-        'application/opentype'
-        'application/otf'
-        'application/pkcs7-mime'
-        'application/truetype'
-        'application/ttf'
-        'application/vnd.ms-fontobject'
-        'application/xhtml+xml'
-        'application/xml'
-        'application/xml+rss'
-        'application/x-font-opentype'
-        'application/x-font-truetype'
-        'application/x-font-ttf'
-        'application/x-httpd-cgi'
-        'application/x-javascript'
-        'application/x-mpegurl'
-        'application/x-opentype'
-        'application/x-otf'
-        'application/x-perl'
-        'application/x-ttf'
-        'font/eot'
-        'font/ttf'
-        'font/otf'
-        'font/opentype'
-        'image/svg+xml'
-        'text/css'
-        'text/csv'
-        'text/html'
-        'text/javascript'
-        'text/js'
-        'text/plain'
-        'text/richtext'
-        'text/tab-separated-values'
-        'text/xml'
-        'text/x-script'
-        'text/x-component'
-        'text/x-java-source'
-      ]
-      isCompressionEnabled: true
+    cacheConfiguration: {
+      queryStringCachingBehavior: 'IgnoreQueryString'
     }
-    queryStringCachingBehavior: 'IgnoreQueryString'
     forwardingProtocol: originForwardingProtocol
     linkToDefaultDomain: 'Enabled'
     httpsRedirect: 'Enabled'
