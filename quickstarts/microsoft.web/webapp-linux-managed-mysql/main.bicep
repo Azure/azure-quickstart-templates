@@ -1,5 +1,5 @@
-@description('main.bicep')
-param siteName string = '${uniqueString(resourceGroup().name)}'
+@description('The unique name of your website.')
+param siteName string = uniqueString(resourceGroup().id)
 
 @description('Database administrator login name')
 @minLength(1)
@@ -62,9 +62,9 @@ param location string = resourceGroup().location
 @description('Azure database for mySQL sku family')
 param databaseskuFamily string = 'Gen5'
 
-var databaseName = '${uniqueString(resourceGroup().id)}'
-var mysqlserverName = '${uniqueString(resourceGroup().id)}'
-var hostingPlanName = '${uniqueString(resourceGroup().id)}'
+var databaseName = uniqueString(resourceGroup().id)
+var mysqlserverName = uniqueString(resourceGroup().id)
+var hostingPlanName = uniqueString(resourceGroup().id)
 
 resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
   name: hostingPlanName
@@ -82,6 +82,9 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
 resource site 'Microsoft.Web/sites@2021-02-01' = {
   name: siteName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     siteConfig: {
       linuxFxVersion: 'php|7.0'
@@ -99,9 +102,6 @@ resource site 'Microsoft.Web/sites@2021-02-01' = {
     serverFarmId: hostingPlan.id
     httpsOnly: true
   }     
-   identity: {
-    type: 'SystemAssigned'
-  }
 }
 
 resource mysqlserver 'Microsoft.DBforMySQL/servers@2017-12-01' = {
@@ -134,9 +134,6 @@ resource serverName_AllowAzureIPs 'Microsoft.DBforMySQL/servers/firewallrules@20
     startIpAddress: '0.0.0.0'
     endIpAddress: '255.255.255.255'
   }
-  dependsOn: [
-    mysqlserverName_databaseName
-  ]
 }
 
 resource mysqlserverName_databaseName 'Microsoft.DBforMySQL/servers/databases@2017-12-01' = {
