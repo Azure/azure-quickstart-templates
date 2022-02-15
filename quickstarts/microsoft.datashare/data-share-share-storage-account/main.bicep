@@ -72,6 +72,11 @@ resource dataSet 'Microsoft.DataShare/accounts/shares/dataSets@2021-08-01' = {
   parent: dataShare
   name: containerName
   kind: 'Container'
+  dependsOn: [ // this is used to delay this resource until the roleAssignment replicates
+    container
+    invitation
+    synchronizationSetting
+  ]
   properties: {
     subscriptionId: subscription().subscriptionId
     resourceGroup: resourceGroup().name
