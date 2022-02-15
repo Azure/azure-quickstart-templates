@@ -1,21 +1,21 @@
-# Front Door Standard/Premium (Preview) with VM origin and Private Link service
+# Front Door Standard/Premium with VM origin and Private Link service
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-premium-vm-private-link/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-premium-vm-private-link/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-premium-vm-private-link/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-premium-vm-private-link/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-premium-vm-private-link/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-premium-vm-private-link/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-premium-vm-private-link/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-premium-vm-private-link/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-premium-vm-private-link/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-premium-vm-private-link/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-premium-vm-private-link/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-premium-vm-private-link/CredScanResult.svg)
 
-![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/front-door-premium-vm-private-link/BicepVersion.svg)
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cdn/front-door-premium-vm-private-link/BicepVersion.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Ffront-door-premium-vm-private-link%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Ffront-door-premium-vm-private-link%2Fazuredeploy.json)
 
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Ffront-door-premium-vm-private-link%2Fazuredeploy.json)    
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Ffront-door-premium-vm-private-link%2Fazuredeploy.json)    
 
-This template deploys a Front Door Standard/Premium (Preview) with a virtual machine web server origin. Front Door uses a private endpoint, configured with Private Link service, to access the web application.
+This template deploys a Front Door Standard/Premium with a virtual machine web server origin. Front Door uses a private endpoint, configured with Private Link service, to access the web application.
 
 ## Sample overview and deployed resources
 
@@ -32,7 +32,7 @@ The following resources are deployed as part of the solution:
 - Virtual machine, added to the load balancer.
 - Virtual machine extension to deploy and enable IIS.
 
-### Front Door Standard/Premium (Preview)
+### Front Door Standard/Premium
 - Front Door profile, endpoint, origin group, origin, and route to direct traffic to the VM.
   - This sample must be deployed using the premium Front Door SKU, since this is required for Private Link integration.
 
@@ -61,8 +61,5 @@ You cannot access the VM directly because it is not exposed to the internet.
 
 ## Notes
 
-- Front Door Standard/Premium is currently in preview.
-- When using Private Link origins with Front Door Premium during the preview period, [there is a limited set of regions available for use](https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-private-link#limitations). These have been enforced in the template. Once the service is generally available this restriction will likely be removed.
-- Front Door Standard/Premium is not currently available in the US Government regions.
 - In this sample, HTTPS connections terminate at Front Door, and connections from Front Door through to the virtual machine are made using HTTP.
 - In this sample, the `Host` header of requests from Front Door will be the hostname of the Front Door endpoint. With a default website on IIS this works successfully since the `Host` header is effectively ignored. In more complex scenarios you may need to send specific `Host` header values based on what the web server expects or understands.
