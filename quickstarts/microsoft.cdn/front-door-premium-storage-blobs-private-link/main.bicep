@@ -1,9 +1,4 @@
-@description('The location into which the Azure Storage resources should be deployed. When using Private Link origins with Front Door Premium during the preview period, there is a limited set of regions available for use. See https://docs.microsoft.com/en-us/azure/frontdoor/standard-premium/concept-private-link#limitations for more details.')
-@allowed([
-  'eastus'
-  'westus2'
-  'southcentralus'
-])
+@description('The location into which the Azure Storage resources should be deployed.')
 param location string
 
 @description('The name of the Azure Storage account to create. This must be globally unique.')
