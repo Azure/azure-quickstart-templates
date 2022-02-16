@@ -19,12 +19,11 @@ var storageAccountName = 'fnstor${uniqueString(resourceGroup().id, appName)}'
 var functionPlanKind = (functionPlanSkuName == 'Y1') ? 'functionapp' : 'elastic'
 var functionName = 'MyHttpTriggeredFunction'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   name: storageAccountName
   location: location
   sku: {
     name: 'Standard_LRS'
-    tier: 'Standard'
   }
   kind: 'StorageV2'
   properties: {
@@ -46,7 +45,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   }
 }
 
-resource appInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: appInsightsName
   location: location
   kind: 'web'
@@ -123,7 +122,7 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
+resource function 'Microsoft.Web/sites/functions@2021-03-01' = {
   name: functionName
   parent: functionApp
   properties: {
@@ -147,28 +146,7 @@ resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
       ]
     }
     files: {
-      'run.csx': '''
-        #r "Newtonsoft.Json"
-        using System.Net;
-        using Microsoft.AspNetCore.Mvc;
-        using Microsoft.Extensions.Primitives;
-        using Newtonsoft.Json;
-        
-        public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
-        {
-            log.LogInformation("C# HTTP trigger function processed a request.");
-            string name = req.Query["name"];
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
-            
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
-            
-            return new OkObjectResult(responseMessage);
-        }
-      '''
+      'run.csx': loadTextContent('../scripts/run.csx')
     }
   }
 }
