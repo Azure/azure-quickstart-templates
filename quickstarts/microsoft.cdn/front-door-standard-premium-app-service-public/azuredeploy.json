@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1272.37030",
+      "templateHash": "9708615437742194950"
+    }
+  },
   "parameters": {
     "location": {
       "type": "string",
@@ -49,7 +56,6 @@
       }
     }
   },
-  "functions": [],
   "variables": {
     "appServicePlanName": "AppServicePlan",
     "frontDoorProfileName": "MyFrontDoor",
@@ -60,7 +66,7 @@
   "resources": [
     {
       "type": "Microsoft.Cdn/profiles",
-      "apiVersion": "2020-09-01",
+      "apiVersion": "2021-06-01",
       "name": "[variables('frontDoorProfileName')]",
       "location": "global",
       "sku": {
@@ -84,10 +90,18 @@
       "name": "[parameters('appName')]",
       "location": "[parameters('location')]",
       "kind": "app",
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
         "httpsOnly": true,
         "siteConfig": {
+          "detailedErrorLoggingEnabled": true,
+          "httpLoggingEnabled": true,
+          "requestTracingEnabled": true,
+          "ftpsState": "Disabled",
+          "minTlsVersion": "1.2",
           "ipSecurityRestrictions": [
             {
               "tag": "ServiceTag",
@@ -96,7 +110,7 @@
               "priority": 100,
               "headers": {
                 "x-azure-fdid": [
-                  "[reference(resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))).frontdoorId]"
+                  "[reference(resourceId('Microsoft.Cdn/profiles', variables('frontDoorProfileName'))).frontDoorId]"
                 ]
               },
               "name": "Allow traffic from Front Door"
@@ -111,11 +125,10 @@
     },
     {
       "type": "Microsoft.Cdn/profiles/afdEndpoints",
-      "apiVersion": "2020-09-01",
+      "apiVersion": "2021-06-01",
       "name": "[format('{0}/{1}', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'))]",
       "location": "global",
       "properties": {
-        "originResponseTimeoutSeconds": 240,
         "enabledState": "Enabled"
       },
       "dependsOn": [
@@ -124,7 +137,7 @@
     },
     {
       "type": "Microsoft.Cdn/profiles/originGroups",
-      "apiVersion": "2020-09-01",
+      "apiVersion": "2021-06-01",
       "name": "[format('{0}/{1}', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'))]",
       "properties": {
         "loadBalancingSettings": {
@@ -144,7 +157,7 @@
     },
     {
       "type": "Microsoft.Cdn/profiles/originGroups/origins",
-      "apiVersion": "2020-09-01",
+      "apiVersion": "2021-06-01",
       "name": "[format('{0}/{1}/{2}', variables('frontDoorProfileName'), variables('frontDoorOriginGroupName'), variables('frontDoorOriginName'))]",
       "properties": {
         "hostName": "[reference(resourceId('Microsoft.Web/sites', parameters('appName'))).defaultHostName]",
@@ -162,7 +175,7 @@
     },
     {
       "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
-      "apiVersion": "2020-09-01",
+      "apiVersion": "2021-06-01",
       "name": "[format('{0}/{1}/{2}', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'), variables('frontDoorRouteName'))]",
       "properties": {
         "originGroup": {
@@ -175,53 +188,6 @@
         "patternsToMatch": [
           "/*"
         ],
-        "compressionSettings": {
-          "contentTypesToCompress": [
-            "application/eot",
-            "application/font",
-            "application/font-sfnt",
-            "application/javascript",
-            "application/json",
-            "application/opentype",
-            "application/otf",
-            "application/pkcs7-mime",
-            "application/truetype",
-            "application/ttf",
-            "application/vnd.ms-fontobject",
-            "application/xhtml+xml",
-            "application/xml",
-            "application/xml+rss",
-            "application/x-font-opentype",
-            "application/x-font-truetype",
-            "application/x-font-ttf",
-            "application/x-httpd-cgi",
-            "application/x-javascript",
-            "application/x-mpegurl",
-            "application/x-opentype",
-            "application/x-otf",
-            "application/x-perl",
-            "application/x-ttf",
-            "font/eot",
-            "font/ttf",
-            "font/otf",
-            "font/opentype",
-            "image/svg+xml",
-            "text/css",
-            "text/csv",
-            "text/html",
-            "text/javascript",
-            "text/js",
-            "text/plain",
-            "text/richtext",
-            "text/tab-separated-values",
-            "text/xml",
-            "text/x-script",
-            "text/x-component",
-            "text/x-java-source"
-          ],
-          "isCompressionEnabled": true
-        },
-        "queryStringCachingBehavior": "IgnoreQueryString",
         "forwardingProtocol": "HttpsOnly",
         "linkToDefaultDomain": "Enabled",
         "httpsRedirect": "Enabled"
@@ -242,13 +208,6 @@
     "frontDoorEndpointHostName": {
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('frontDoorProfileName'), parameters('frontDoorEndpointName'))).hostName]"
-    }
-  },
-  "metadata": {
-    "_generator": {
-      "name": "bicep",
-      "version": "0.3.126.58533",
-      "templateHash": "13450059783872220843"
     }
   }
 }
