@@ -25,7 +25,7 @@ var storageAccountStorageBlobDataContributorRoleDefinitionId = subscriptionResou
 var managedIdentityName = 'StorageStaticWebsiteEnabler'
 var deploymentScriptName = 'EnableStorageStaticWebsite'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   name: accountName
   location: location
   kind: 'StorageV2'
@@ -39,7 +39,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-
   location: location
 }
 
-resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
   scope: storageAccount
   name: guid(resourceGroup().id, managedIdentity.id, storageAccountContributorRoleDefinitionId)
   properties: {
@@ -49,7 +49,7 @@ resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2020
   }
 }
 
-resource roleAssignmentStorageBlobDataContributor 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource roleAssignmentStorageBlobDataContributor 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
   scope: storageAccount
   name: guid(resourceGroup().id, managedIdentity.id, storageAccountStorageBlobDataContributorRoleDefinitionId)
   properties: {
