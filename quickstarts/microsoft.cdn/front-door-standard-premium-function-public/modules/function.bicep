@@ -19,12 +19,11 @@ var storageAccountName = 'fnstor${uniqueString(resourceGroup().id, appName)}'
 var functionPlanKind = (functionPlanSkuName == 'Y1') ? 'functionapp' : 'elastic'
 var functionName = 'MyHttpTriggeredFunction'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   name: storageAccountName
   location: location
   sku: {
     name: 'Standard_LRS'
-    tier: 'Standard'
   }
   kind: 'StorageV2'
   properties: {
@@ -46,7 +45,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   }
 }
 
-resource appInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: appInsightsName
   location: location
   kind: 'web'
@@ -123,7 +122,7 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-resource function 'Microsoft.Web/sites/functions@2020-06-01' = {
+resource function 'Microsoft.Web/sites/functions@2021-03-01' = {
   name: functionName
   parent: functionApp
   properties: {
