@@ -49,10 +49,18 @@ resource app 'Microsoft.Web/sites@2020-06-01' = {
   name: appName
   location: location
   kind: 'app'
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
     siteConfig: {
+      detailedErrorLoggingEnabled: true
+      httpLoggingEnabled: true
+      requestTracingEnabled: true
+      ftpsState: 'Disabled'
+      minTlsVersion: '1.2'
       ipSecurityRestrictions: [
         {
           tag: 'ServiceTag'
