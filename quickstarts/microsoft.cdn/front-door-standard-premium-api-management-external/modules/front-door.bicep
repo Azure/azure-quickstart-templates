@@ -25,7 +25,7 @@ var developerPortalOriginName = 'ApiManagementDeveloperPortal'
 var proxyRouteName = 'ProxyRoute'
 var developerPortalRouteName = 'DeveloperPortalRoute'
 
-resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
+resource profile 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: profileName
   location: 'global'
   sku: {
@@ -33,17 +33,16 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
   }
 }
 
-resource proxyEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
+resource proxyEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2021-06-01' = {
   name: proxyEndpointName
   parent: profile
   location: 'global'
   properties: {
-    originResponseTimeoutSeconds: 240
     enabledState: 'Enabled'
   }
 }
 
-resource proxyOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
+resource proxyOriginGroup 'Microsoft.Cdn/profiles/originGroups@2021-06-01' = {
   name: proxyOriginGroupName
   parent: profile
   properties: {
@@ -60,7 +59,7 @@ resource proxyOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
   }
 }
 
-resource proxyOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
+resource proxyOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2021-06-01' = {
   name: proxyOriginName
   parent: proxyOriginGroup
   properties: {
@@ -73,7 +72,7 @@ resource proxyOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = 
   }
 }
 
-resource proxyRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
+resource proxyRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
   name: proxyRouteName
   parent: proxyEndpoint
   dependsOn: [
@@ -90,24 +89,22 @@ resource proxyRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
     patternsToMatch: [
       '/*'
     ]
-    queryStringCachingBehavior: 'NotSet'
     forwardingProtocol: 'HttpsOnly'
     linkToDefaultDomain: 'Enabled'
     httpsRedirect: 'Enabled'
   }
 }
 
-resource developerPortalEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2020-09-01' = {
+resource developerPortalEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2021-06-01' = {
   name: developerPortalEndpointName
   parent: profile
   location: 'global'
   properties: {
-    originResponseTimeoutSeconds: 240
     enabledState: 'Enabled'
   }
 }
 
-resource developerPortalOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09-01' = {
+resource developerPortalOriginGroup 'Microsoft.Cdn/profiles/originGroups@2021-06-01' = {
   name: developerPortalOriginGroupName
   parent: profile
   properties: {
@@ -124,7 +121,7 @@ resource developerPortalOriginGroup 'Microsoft.Cdn/profiles/originGroups@2020-09
   }
 }
 
-resource developerPortalOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020-09-01' = {
+resource developerPortalOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2021-06-01' = {
   name: developerPortalOriginName
   parent: developerPortalOriginGroup
   properties: {
@@ -137,7 +134,7 @@ resource developerPortalOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2020
   }
 }
 
-resource developerPortalRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-09-01' = {
+resource developerPortalRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2021-06-01' = {
   name: developerPortalRouteName
   parent: developerPortalEndpoint
   dependsOn: [
@@ -154,59 +151,12 @@ resource developerPortalRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2020-0
     patternsToMatch: [
       '/*'
     ]
-    compressionSettings: {
-      contentTypesToCompress: [
-        'application/eot'
-        'application/font'
-        'application/font-sfnt'
-        'application/javascript'
-        'application/json'
-        'application/opentype'
-        'application/otf'
-        'application/pkcs7-mime'
-        'application/truetype'
-        'application/ttf'
-        'application/vnd.ms-fontobject'
-        'application/xhtml+xml'
-        'application/xml'
-        'application/xml+rss'
-        'application/x-font-opentype'
-        'application/x-font-truetype'
-        'application/x-font-ttf'
-        'application/x-httpd-cgi'
-        'application/x-javascript'
-        'application/x-mpegurl'
-        'application/x-opentype'
-        'application/x-otf'
-        'application/x-perl'
-        'application/x-ttf'
-        'font/eot'
-        'font/ttf'
-        'font/otf'
-        'font/opentype'
-        'image/svg+xml'
-        'text/css'
-        'text/csv'
-        'text/html'
-        'text/javascript'
-        'text/js'
-        'text/plain'
-        'text/richtext'
-        'text/tab-separated-values'
-        'text/xml'
-        'text/x-script'
-        'text/x-component'
-        'text/x-java-source'
-      ]
-      isCompressionEnabled: true
-    }
-    queryStringCachingBehavior: 'IgnoreQueryString'
     forwardingProtocol: 'HttpsOnly'
     linkToDefaultDomain: 'Enabled'
     httpsRedirect: 'Enabled'
   }
 }
 
-output frontDoorId string = profile.properties.frontdoorId
+output frontDoorId string = profile.properties.frontDoorId
 output frontDoorProxyEndpointHostName string = proxyEndpoint.properties.hostName
 output frontDoorDeveloperPortalEndpointHostName string = developerPortalEndpoint.properties.hostName
