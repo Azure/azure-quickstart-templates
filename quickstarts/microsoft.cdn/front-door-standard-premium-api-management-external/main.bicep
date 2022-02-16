@@ -76,7 +76,7 @@ module frontDoor 'modules/front-door.bicep' = {
   }
 }
 
-resource apiManagementService 'Microsoft.ApiManagement/service@2020-12-01' existing = {
+resource apiManagementService 'Microsoft.ApiManagement/service@2021-08-01' existing = {
   name: apiManagementServiceName
 
   resource frontDoorIdNamedValue 'namedValues' = {
