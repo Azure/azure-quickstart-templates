@@ -28,6 +28,10 @@ param publicIpSku string = 'Basic'
 
 @description('The Windows version for the VM. This will pick a fully patched Gen2 image of this given Windows version.')
 @allowed([
+  '2022-datacenter-azure-edition'
+  '2022-datacenter-azure-edition-core'
+  '2022-datacenter-azure-edition-core-smalldisk'
+  '2022-datacenter-azure-edition-smalldisk'
   '2022-datacenter-g2'
   '2022-datacenter-core-g2'
   '2022-datacenter-core-smalldisk-g2'
@@ -42,7 +46,7 @@ param publicIpSku string = 'Basic'
   '2019-datacenter-with-containers-smalldisk-g2'
   '2016-datacenter-gensecond'
 ])
-param OSVersion string = '2022-datacenter-g2'
+param OSVersion string = '2022-datacenter-azure-edition'
 
 @description('Size of the virtual machine.')
 param vmSize string = 'Standard_D2s_v3'
