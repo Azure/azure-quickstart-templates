@@ -1,0 +1,646 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1272.37030",
+      "templateHash": "5139847304178732747"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location into which the Azure Storage resources should be deployed."
+      }
+    },
+    "digitalTwinsInstanceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Digital Twins instance name"
+      }
+    },
+    "functionName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Function name"
+      },
+      "maxLength": 16
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network name"
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/22",
+      "metadata": {
+        "description": "Virtual Network Address Prefix"
+      }
+    },
+    "functionAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Function Subnet Address Prefix"
+      }
+    },
+    "privateLinkAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24",
+      "metadata": {
+        "description": "Private Link Subnet Address Prefix"
+      }
+    }
+  },
+  "variables": {
+    "privateLinkSubnetName": "PrivateLinkSubnet",
+    "functionSubnetName": "FunctionSubnet",
+    "roleId": "bcd981a7-7f74-457b-83e1-cceb9e632ffe"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2021-04-01-preview",
+      "name": "[format('{0}', guid(uniqueString('roleAssignment-', parameters('digitalTwinsInstanceName'), '-', 'function', '-', variables('roleId'))))]",
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.Resources/deployments', 'function')).outputs.functionIdentityPrincipalId.value]",
+        "roleDefinitionId": "[format('/subscriptions/{0}/providers/Microsoft.Authorization/roleDefinitions/{1}', subscription().subscriptionId, variables('roleId'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'function')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "digitaltwins",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "digitalTwinsInstanceName": {
+            "value": "[parameters('digitalTwinsInstanceName')]"
+          },
+          "digitalTwinsInstanceLocation": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1272.37030",
+              "templateHash": "3760225172593974891"
+            }
+          },
+          "parameters": {
+            "digitalTwinsInstanceName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Digital Twins instance"
+              }
+            },
+            "digitalTwinsInstanceLocation": {
+              "type": "string",
+              "metadata": {
+                "description": "Location of the Digital Twins instance"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DigitalTwins/digitalTwinsInstances",
+              "apiVersion": "2020-12-01",
+              "name": "[parameters('digitalTwinsInstanceName')]",
+              "location": "[parameters('digitalTwinsInstanceLocation')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "publicNetworkAccess": "Disabled"
+              }
+            }
+          ],
+          "outputs": {
+            "id": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.DigitalTwins/digitalTwinsInstances', parameters('digitalTwinsInstanceName'))]"
+            },
+            "endpoint": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.DigitalTwins/digitalTwinsInstances', parameters('digitalTwinsInstanceName'))).hostName]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "network",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "virtualNetworkLocation": {
+            "value": "[parameters('location')]"
+          },
+          "virtualNetworkAddressPrefix": {
+            "value": "[parameters('vnetAddressPrefix')]"
+          },
+          "functionSubnetName": {
+            "value": "[variables('functionSubnetName')]"
+          },
+          "functionSubnetPrefix": {
+            "value": "[parameters('functionAddressPrefix')]"
+          },
+          "privateLinkSubnetName": {
+            "value": "[variables('privateLinkSubnetName')]"
+          },
+          "privateLinkSubnetPrefix": {
+            "value": "[parameters('privateLinkAddressPrefix')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1272.37030",
+              "templateHash": "12533940436947311122"
+            }
+          },
+          "parameters": {
+            "virtualNetworkName": {
+              "type": "string",
+              "metadata": {
+                "description": "Virtual Network Name"
+              }
+            },
+            "virtualNetworkLocation": {
+              "type": "string",
+              "metadata": {
+                "description": "Virtual Network location"
+              }
+            },
+            "virtualNetworkAddressPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Virtual Network address prefix"
+              }
+            },
+            "functionSubnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "Function Subnet Name"
+              }
+            },
+            "functionSubnetPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Function Subnet address prefix"
+              }
+            },
+            "privateLinkSubnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "PrivateLink Subnet Name"
+              }
+            },
+            "privateLinkSubnetPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "PrivateLink Subnet address prefix"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2019-11-01",
+              "name": "[parameters('virtualNetworkName')]",
+              "location": "[parameters('virtualNetworkLocation')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('virtualNetworkAddressPrefix')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "[parameters('functionSubnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('functionSubnetPrefix')]",
+                      "delegations": [
+                        {
+                          "name": "webapp",
+                          "properties": {
+                            "serviceName": "Microsoft.Web/serverFarms"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "[parameters('privateLinkSubnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('privateLinkSubnetPrefix')]",
+                      "privateEndpointNetworkPolicies": "Disabled"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "privatelink",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "privateLinkName": {
+            "value": "PrivateLinkToDigitalTwins"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "privateLinkServiceResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'digitaltwins')).outputs.id.value]"
+          },
+          "groupId": {
+            "value": "API"
+          },
+          "privateLinkSubnetName": {
+            "value": "[variables('privateLinkSubnetName')]"
+          },
+          "privateDnsZoneName": {
+            "value": "privatelink.digitaltwins.azure.net"
+          },
+          "virtualNetworkResourceName": {
+            "value": "[parameters('virtualNetworkName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1272.37030",
+              "templateHash": "2678596280590456215"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "PrivateLink location"
+              }
+            },
+            "privateLinkName": {
+              "type": "string",
+              "metadata": {
+                "description": "PrivateLink name"
+              }
+            },
+            "privateDnsZoneName": {
+              "type": "string",
+              "metadata": {
+                "description": "The PrivateLink zone name for Digital Twins"
+              }
+            },
+            "virtualNetworkResourceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Virtual Network resource name"
+              }
+            },
+            "privateLinkSubnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "PrivateLink Subnet Name"
+              }
+            },
+            "privateLinkServiceResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "ResourceId of the service PrivateLink is connecting to"
+              }
+            },
+            "groupId": {
+              "type": "string",
+              "metadata": {
+                "description": "Group Id of the service PrivateLink is connecting to"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "[parameters('privateDnsZoneName')]",
+              "location": "global"
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', parameters('privateDnsZoneName'), format('{0}-link', parameters('privateDnsZoneName')))]",
+              "location": "global",
+              "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkResourceName'))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2021-05-01",
+              "name": "[parameters('privateLinkName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "subnet": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkResourceName'), parameters('privateLinkSubnetName'))]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "privatelinkconnection",
+                    "properties": {
+                      "privateLinkServiceId": "[parameters('privateLinkServiceResourceId')]",
+                      "groupIds": [
+                        "[parameters('groupId')]"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2021-05-01",
+              "name": "[format('{0}/{1}', parameters('privateLinkName'), 'privateDnsZoneGroup')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "config",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', parameters('privateLinkName'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'digitaltwins')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "function",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "storageAccoutName": {
+            "value": "[format('{0}stg', toLower(parameters('functionName')))]"
+          },
+          "functionAppName": {
+            "value": "[format('{0}func', parameters('functionName'))]"
+          },
+          "serverFarmName": {
+            "value": "[parameters('functionName')]"
+          },
+          "functionsSubnetName": {
+            "value": "[variables('functionSubnetName')]"
+          },
+          "applicationInsightsName": {
+            "value": "[format('{0}ai', parameters('functionName'))]"
+          },
+          "digitalTwinsEndpoint": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'digitaltwins')).outputs.endpoint.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1272.37030",
+              "templateHash": "6210553110336843132"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location of Azure Function"
+              }
+            },
+            "virtualNetworkName": {
+              "type": "string",
+              "metadata": {
+                "description": "Virtual Network Name"
+              }
+            },
+            "storageAccoutName": {
+              "type": "string",
+              "metadata": {
+                "description": "Storage Account name"
+              }
+            },
+            "functionAppName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the function app"
+              }
+            },
+            "serverFarmName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the server farm"
+              }
+            },
+            "functionsSubnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the subnet to connect the function to"
+              }
+            },
+            "digitalTwinsEndpoint": {
+              "type": "string",
+              "metadata": {
+                "description": "Digital Twins endpoint"
+              }
+            },
+            "applicationInsightsName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of application insights instance"
+              }
+            },
+            "functionAppPlanSku": {
+              "type": "string",
+              "defaultValue": "EP1",
+              "allowedValues": [
+                "EP1",
+                "EP2",
+                "EP3"
+              ],
+              "metadata": {
+                "description": "Specifies the Azure Function hosting plan SKU."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2021-08-01",
+              "name": "[parameters('storageAccoutName')]",
+              "location": "[parameters('location')]",
+              "kind": "StorageV2",
+              "sku": {
+                "name": "Standard_LRS"
+              }
+            },
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2021-03-01",
+              "name": "[parameters('serverFarmName')]",
+              "location": "[parameters('location')]",
+              "kind": "elastic",
+              "sku": {
+                "name": "[parameters('functionAppPlanSku')]",
+                "tier": "ElasticPremium",
+                "size": "[parameters('functionAppPlanSku')]",
+                "family": "EP"
+              },
+              "properties": {
+                "maximumElasticWorkerCount": 4,
+                "reserved": false
+              }
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "[parameters('applicationInsightsName')]",
+              "location": "[parameters('location')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web"
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2021-03-01",
+              "name": "[parameters('functionAppName')]",
+              "location": "[parameters('location')]",
+              "kind": "functionapp",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverFarmName'))]",
+                "siteConfig": {
+                  "appSettings": [
+                    {
+                      "name": "AzureWebJobsDashboard",
+                      "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', parameters('storageAccoutName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccoutName')), '2021-08-01').keys[0].value)]"
+                    },
+                    {
+                      "name": "AzureWebJobsStorage",
+                      "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', parameters('storageAccoutName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccoutName')), '2021-08-01').keys[0].value)]"
+                    },
+                    {
+                      "name": "FUNCTIONS_EXTENSION_VERSION",
+                      "value": "~3"
+                    },
+                    {
+                      "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                      "value": "[reference(format('{0}', resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))), '2015-05-01').InstrumentationKey]"
+                    },
+                    {
+                      "name": "FUNCTIONS_WORKER_RUNTIME",
+                      "value": "dotnet"
+                    },
+                    {
+                      "name": "ADT_ENDPOINT",
+                      "value": "[format('https://{0}', parameters('digitalTwinsEndpoint'))]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]",
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverFarmName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccoutName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites/networkConfig",
+              "apiVersion": "2021-03-01",
+              "name": "[format('{0}/{1}', parameters('functionAppName'), 'virtualNetwork')]",
+              "properties": {
+                "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('functionsSubnetName'))]",
+                "swiftSupported": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "functionIdentityPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2021-03-01', 'full').identity.principalId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'digitaltwins')]"
+      ]
+    }
+  ]
+}
