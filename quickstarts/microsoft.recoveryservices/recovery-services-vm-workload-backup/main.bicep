@@ -53,7 +53,7 @@ resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2020-10-01' = 
   properties: {}
 }
 
-resource protectionContainer 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers@2020-10-01' = {
+resource protectionContainer 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers@2021-03-01' = {
   name: '${vaultName}/${backupFabric}/${containerType};compute;${vmResourceGroup};${vmName}'
   properties: {
     containerType: containerType
@@ -68,7 +68,7 @@ resource protectionContainer 'Microsoft.RecoveryServices/vaults/backupFabrics/pr
   ]
 }
 
-resource backupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2020-10-01' = if (isNewPolicy) {
+resource backupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2021-03-01' = if (isNewPolicy) {
   parent: recoveryServicesVault
   name: policyName
   properties: {
@@ -121,7 +121,7 @@ resource backupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2020-10-
   }
 }
 
-resource protectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2020-10-01' = {
+resource protectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2021-03-01' = {
   parent: protectionContainer
   name: '${workloadType};${databaseInstanceName};${databaseName}'
   properties: {

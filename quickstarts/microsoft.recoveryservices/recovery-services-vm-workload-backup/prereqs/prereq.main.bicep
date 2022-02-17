@@ -31,7 +31,7 @@ param rServicesEnabled string
 
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2018-06-01' = {
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   name: virtualMachineName
   location: location
   properties: {
@@ -81,7 +81,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2018-06-01' = {
   }
 }
 
-resource SqlVirtualMachine 'Microsoft.SqlVirtualMachine/SqlVirtualMachines@2017-03-01-preview' = {
+resource SqlVirtualMachine 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2017-03-01-preview' = {
   name: virtualMachineName
   location: location
   properties: {
@@ -117,7 +117,7 @@ resource SqlVirtualMachine 'Microsoft.SqlVirtualMachine/SqlVirtualMachines@2017-
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2018-08-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -137,7 +137,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2018-08-01' = {
   }
 }
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2018-10-01' = {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2020-11-01' = {
   name: networkInterfaceName
   location: location
   properties: {
@@ -164,7 +164,7 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2018-10-01' = {
   ]
 }
 
-resource publicIpAddress 'Microsoft.Network/publicIpAddresses@2018-08-01' = {
+resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2020-11-01' = {
   sku: {
     name: publicIpAddressSku
   }
@@ -175,7 +175,7 @@ resource publicIpAddress 'Microsoft.Network/publicIpAddresses@2018-08-01' = {
   }
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2018-08-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-11-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
