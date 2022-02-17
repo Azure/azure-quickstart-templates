@@ -1,0 +1,343 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1124.51302",
+      "templateHash": "9324169281090844206"
+    }
+  },
+  "parameters": {
+    "storagename": {
+      "type": "string",
+      "defaultValue": "[format('storage{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Storage Account name"
+      }
+    },
+    "vm_dns": {
+      "type": "string",
+      "defaultValue": "[format('winssh-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "VM DNS label prefix"
+      }
+    },
+    "adminUser": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin user for VM"
+      }
+    },
+    "adminPassword": {
+      "type": "secureString",
+      "defaultValue": "[newGuid()]"
+    },
+    "publicSshKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Your public SSH key"
+      }
+    },
+    "vmsize": {
+      "type": "string",
+      "defaultValue": "Standard_D4_v5",
+      "metadata": {
+        "description": "VM size for VM"
+      }
+    },
+    "vmSku": {
+      "type": "string",
+      "defaultValue": "2022-datacenter-core-smalldisk-g2",
+      "allowedValues": [
+        "2019-datacenter-core-g2",
+        "2019-datacenter-core-smalldisk-g2",
+        "2022-datacenter-core-g2",
+        "2022-datacenter-core-smalldisk-g2",
+        "2022-datacenter-azure-edition-core",
+        "2022-datacenter-azure-edition-core-smalldisk"
+      ],
+      "metadata": {
+        "description": "SKU of the Windows Server"
+      }
+    },
+    "diskSku": {
+      "type": "string",
+      "defaultValue": "StandardSSD_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "StandardSSD_LRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "SKU of the attached data disk (Standard HDD, Standard SSD or Premium SSD)"
+      }
+    },
+    "diskSizeGB": {
+      "type": "int",
+      "defaultValue": 256,
+      "metadata": {
+        "description": "Size of the attached data disk in GB"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Deployment location"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "SAS Token for accessing script path"
+      }
+    }
+  },
+  "variables": {
+    "initScriptUrl": "[uri(parameters('_artifactsLocation'), format('initialize.ps1{0}', parameters('_artifactsLocationSasToken')))]",
+    "sshdConfigUrl": "[uri(parameters('_artifactsLocation'), format('configs/sshd_config_wopwd{0}', parameters('_artifactsLocationSasToken')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-06-01",
+      "name": "[toLower(parameters('storagename'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "tags": {
+        "displayName": "Storage account"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-11-01",
+      "name": "publicIP",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "PublicIPAddress"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('vm_dns')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-04-01",
+      "name": "nsg",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "rdp",
+            "properties": {
+              "description": "description",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "description",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-04-01",
+      "name": "virtualNetwork",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "Virtual Network"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "subnet",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg')]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-04-01",
+      "name": "nic",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "Network Interface"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipConfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'publicIP')]"
+              },
+              "subnet": {
+                "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', 'virtualNetwork')).subnets[0].id]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'publicIP')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', 'virtualNetwork')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2020-09-30",
+      "name": "datadisk",
+      "location": "[parameters('location')]",
+      "properties": {
+        "diskSizeGB": "[parameters('diskSizeGB')]",
+        "creationData": {
+          "createOption": "Empty"
+        }
+      },
+      "sku": {
+        "name": "[parameters('diskSku')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2021-07-01",
+      "name": "sshhost",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "Windows Server with SSH"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmsize')]"
+        },
+        "osProfile": {
+          "computerName": "sshhost",
+          "adminUsername": "[parameters('adminUser')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "[parameters('vmSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "createOption": "Attach",
+              "lun": 0,
+              "managedDisk": {
+                "id": "[resourceId('Microsoft.Compute/disks', 'datadisk')]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'nic')]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storagename')))).primaryEndpoints.blob]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/disks', 'datadisk')]",
+        "[resourceId('Microsoft.Network/networkInterfaces', 'nic')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', toLower(parameters('storagename')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2021-07-01",
+      "name": "[format('{0}/{1}', 'sshhost', 'setupScript')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "Setup script for SSH"
+      },
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.10",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('initScriptUrl')]",
+            "[variables('sshdConfigUrl')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[format('powershell -ExecutionPolicy Bypass -file initialize.ps1 -publicSshKey \"{0}\"', parameters('publicSshKey'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', 'sshhost')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "sshhost_connect": {
+      "type": "string",
+      "value": "[format('ssh {0}@{1}', parameters('adminUser'), reference(resourceId('Microsoft.Network/publicIPAddresses', 'publicIP')).dnsSettings.fqdn)]"
+    }
+  }
+}

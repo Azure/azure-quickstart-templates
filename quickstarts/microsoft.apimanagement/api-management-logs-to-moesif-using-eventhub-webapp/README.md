@@ -57,79 +57,89 @@ More info on editing APIM policies is available on the [Azure docs](https://docs
 ```xml
 <policies>
     <inbound>
-        <set-variable name="message-id" value="@(Guid.NewGuid())" />
+        <base />
+        <set-variable name="moesif-message-id" value="@(Guid.NewGuid())" />
         <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="0">@{
-          var body = context.Request.Body?.As<string>(true);
-          var MAX_BODY_SIZE_FOR_EH = 145000;
-          var origBodyLen = (null != body) ? body.Length : 0;
-          if (MAX_BODY_SIZE_FOR_EH < origBodyLen){
-              body = body.Remove(MAX_BODY_SIZE_FOR_EH);
-          }
-          var headers = context.Request.Headers
-                               .Where(h => h.Key != "Ocp-Apim-Subscription-Key")
-                               .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value).Replace("\"", "\\\"")))
-                               .ToArray<string>();
-          var headerString = (headers.Any()) ? string.Join(";;", headers) : string.Empty;
-          var messageId = context.Variables["message-id"];
-          var jwtToken = context.Request.Headers.GetValueOrDefault("Authorization","").AsJwt();
-          var userId = (context.User != null && context.User.Id != null) ? context.User.Id : (jwtToken != null && jwtToken.Subject != null ? jwtToken.Subject : null);
-          var companyId = "";
-          var cru = new JObject();
-          if (context.User != null) {
-            cru.Add("Email", context.User.Email);
-            cru.Add("Id", context.User.Id);
-            cru.Add("FirstName", context.User.FirstName);
-            cru.Add("LastName", context.User.LastName);
-          }
-          var crus = System.Convert.ToBase64String(Encoding.UTF8.GetBytes(cru.ToString()));
-          var requestBody = (body != null ? System.Convert.ToBase64String(Encoding.UTF8.GetBytes(body)) : null);
-          string metadata = $@"";
-          var request = $@"
-                    ""event_type"": ""request"",
-                    ""message-id"": ""{messageId}"",
-                    ""method"": ""{context.Request.Method}"",
-                    ""ip_address"": ""{context.Request.IpAddress}"",
-                    ""uri"": ""{context.Request.OriginalUrl}"",
-                    ""user_id"": ""{userId}"",
-                    ""contextRequestUser"": ""{crus}"",
-                    ""company_id"": ""{companyId}"",
-                    ""request_headers"": ""{headerString}"",
-                    ""request_body"": ""{requestBody}"",
-                    ""metadata"": ""{metadata}""
-                ";
-            return "{" + request + "}";
-      }</log-to-eventhub>
+var body = context.Request.Body?.As<string>(true);
+var MAX_BODY_EH = 145000;
+var origBodyLen = (null != body) ? body.Length : 0;
+if (MAX_BODY_EH < origBodyLen){ body = body.Remove(MAX_BODY_EH); }
+var headers = context.Request.Headers
+    .Where(h => h.Key != "Ocp-Apim-Subscription-Key")
+    .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value).Replace("\"", "\\\""))).ToArray<string>();
+var jwtToken = context.Request.Headers.GetValueOrDefault("Authorization","").AsJwt();
+var userId = (context.User != null && context.User.Id != null) ? context.User.Id : (jwtToken != null && jwtToken.Subject != null ? jwtToken.Subject : string.Empty);
+var cru = new JObject();
+if (context.User != null) {
+  cru.Add("Email", context.User.Email);
+  cru.Add("Id", context.User.Id);
+  cru.Add("FirstName", context.User.FirstName);
+  cru.Add("LastName", context.User.LastName);}
+var crus = System.Convert.ToBase64String(Encoding.UTF8.GetBytes(cru.ToString()));
+var requestBody = (body != null ? System.Convert.ToBase64String(Encoding.UTF8.GetBytes(body)) : string.Empty);
+return new JObject(
+  new JProperty("event_type", "request"),
+  new JProperty("message-id", context.Variables["moesif-message-id"]),
+  new JProperty("method", context.Request.Method),
+  new JProperty("ip_address", context.Request.IpAddress),
+  new JProperty("uri", context.Request.OriginalUrl.ToString()),
+  new JProperty("user_id", userId),
+  new JProperty("contextRequestUser", crus),
+  new JProperty("company_id", ""),
+  new JProperty("request_headers", string.Join(";;", headers)),
+  new JProperty("request_body", requestBody),
+  new JProperty("metadata", $@"")
+  ).ToString();}</log-to-eventhub>
+        <set-variable name="sent-moesif-request" value="@(true)" />
     </inbound>
     <backend>
         <forward-request follow-redirects="true" />
     </backend>
     <outbound>
-        <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">@{
-          var body = context.Response.Body?.As<string>(true);
-          var MAX_BODY_SIZE_FOR_EH = 145000;
-          var origBodyLen = (null != body) ? body.Length : 0;
-          if (MAX_BODY_SIZE_FOR_EH < origBodyLen){
-              body = body.Remove(MAX_BODY_SIZE_FOR_EH);
-          }
-          var headers = context.Response.Headers
-                                          .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value).Replace("\"", "\\\"")))
-                                          .ToArray<string>();
-          var headerString = (headers.Any()) ? string.Join(";;", headers): string.Empty;
-          var messageId = context.Variables["message-id"];
-          var responseBody = (body != null ? System.Convert.ToBase64String(Encoding.UTF8.GetBytes(body)) : null);
-          var response = $@"
-                    ""event_type"": ""response"",
-                    ""orig_body_len"": ""{origBodyLen}"",
-                    ""message-id"": ""{messageId}"",
-                    ""status_code"": ""{context.Response.StatusCode}"",
-                    ""response_headers"": ""{headerString}"",
-                    ""response_body"": ""{responseBody}""
-                    ";
-          return "{" + response + "}";
-     }</log-to-eventhub>
+        <base />
+        <choose>
+            <when condition="@(context.Variables.ContainsKey("sent-moesif-request") && !context.Variables.ContainsKey("sent-moesif-response"))">
+                <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">@{
+var body = context.Response.Body?.As<string>(true);
+var MAX_BODY_EH = 145000;
+var origBodyLen = (null != body) ? body.Length : 0;
+if (MAX_BODY_EH < origBodyLen){ body = body.Remove(MAX_BODY_EH);}
+var headers = context.Response.Headers.Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value).Replace("\"", "\\\""))).ToArray<string>();
+var responseBody = (body != null ? System.Convert.ToBase64String(Encoding.UTF8.GetBytes(body)) : string.Empty);
+return new JObject(
+  new JProperty("event_type", "response"),
+  new JProperty("orig_body_len", origBodyLen),
+  new JProperty("message-id", context.Variables["moesif-message-id"]),
+  new JProperty("status_code", context.Response.StatusCode),
+  new JProperty("response_headers", string.Join(";;", headers)),
+  new JProperty("response_body", responseBody)
+  ).ToString();}</log-to-eventhub>
+                <set-variable name="sent-moesif-response" value="@(true)" />
+            </when>
+        </choose>
     </outbound>
     <on-error>
         <base />
+        <choose>
+            <when condition="@(context.Variables.ContainsKey("sent-moesif-request") && !context.Variables.ContainsKey("sent-moesif-response"))">
+                <log-to-eventhub logger-id="moesif-log-to-event-hub" partition-id="1">@{
+var body = context.Response.Body?.As<string>(true);
+var MAX_BODY_EH = 145000;
+var origBodyLen = (null != body) ? body.Length : 0;
+if (MAX_BODY_EH < origBodyLen){ body = body.Remove(MAX_BODY_EH);}
+var headers = context.Response.Headers.Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value).Replace("\"", "\\\""))).ToArray<string>();
+var responseBody = (body != null ? System.Convert.ToBase64String(Encoding.UTF8.GetBytes(body)) : string.Empty);
+return new JObject(
+  new JProperty("event_type", "response"),
+  new JProperty("orig_body_len", origBodyLen),
+  new JProperty("message-id", context.Variables["moesif-message-id"]),
+  new JProperty("status_code", context.Response.StatusCode),
+  new JProperty("response_headers", string.Join(";;", headers)),
+  new JProperty("response_body", responseBody)
+  ).ToString();}</log-to-eventhub>
+                <set-variable name="sent-moesif-response" value="@(true)" />
+            </when>
+        </choose>
     </on-error>
 </policies>
 ```
