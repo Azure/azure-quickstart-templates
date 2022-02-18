@@ -81,7 +81,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   }
 }
 
-resource SqlVirtualMachine 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2017-03-01-preview' = {
+resource sqlVirtualMachine 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2017-03-01-preview' = {
   name: virtualMachineName
   location: location
   properties: {

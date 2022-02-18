@@ -131,7 +131,4 @@ resource protectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/protecti
     friendlyName: databaseName
     policyId: backupPolicy.id
   }
-  dependsOn: [
-    recoveryServicesVault
-  ]
 }
