@@ -212,3 +212,4 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-11-0
 
 output adminUsername string = adminUsername
 output virtualMachineName string = virtualMachineName
+output resourceGroupName string = resourceGroup().name
