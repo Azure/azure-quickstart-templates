@@ -2,7 +2,7 @@
 param vaultName string = 'SqlBackupDemoVault'
 
 @description('Resource group of Compute VM containing the workload')
-param vmResourceGroup string = '${resourceGroup().name}-prereqs'
+param vmResourceGroup string
 
 @description('Name of the Compute VM containing the workload')
 param vmName string = 'sqlvmbackupdemo'
