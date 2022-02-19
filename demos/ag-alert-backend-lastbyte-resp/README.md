@@ -1,4 +1,4 @@
-# Setup alert for Backend Response 5xx for your Azure Application Gateway 
+# Setup alert for Backend-Last-Byte-Response time for your Azure Application Gateway 
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-alert-backend-5xx/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ag-alert-backend-5xx/PublicDeployment.svg)
