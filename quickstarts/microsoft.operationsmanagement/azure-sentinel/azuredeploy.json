@@ -4,49 +4,83 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1.14562",
-      "templateHash": "14574378311890430918"
+      "version": "0.4.1272.37030",
+      "templateHash": "4806443633956866385"
     }
   },
   "parameters": {
-    "workspaceName": {
-      "type": "string"
-    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]"
+    },
+    "sentinelName": {
+      "type": "string",
+      "defaultValue": "sentinel"
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "PerGB2018"
+    },
+    "retentionInDays": {
+      "type": "int",
+      "defaultValue": 90
     }
   },
-  "functions": [],
+  "variables": {
+    "workspaceName": "[format('{0}-{1}', parameters('location'), parameters('sentinelName'))]",
+    "solutionName": "[format('SecurityInsights({0})', variables('workspaceName'))]"
+  },
   "resources": [
     {
       "type": "Microsoft.OperationalInsights/workspaces",
       "apiVersion": "2020-08-01",
-      "name": "[parameters('workspaceName')]",
+      "name": "[variables('workspaceName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "retentionInDays": 7,
         "sku": {
-          "name": "Free"
-        }
+          "name": "[parameters('sku')]"
+        },
+        "retentionInDays": "[parameters('retentionInDays')]"
       }
     },
     {
       "type": "Microsoft.OperationsManagement/solutions",
       "apiVersion": "2015-11-01-preview",
-      "name": "[format('SecurityInsights({0})', parameters('workspaceName'))]",
+      "name": "[variables('solutionName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
       },
       "plan": {
-        "name": "[format('SecurityInsights({0})', parameters('workspaceName'))]",
-        "product": "OMSGallery/SecurityInsights",
+        "name": "[variables('solutionName')]",
         "publisher": "Microsoft",
+        "product": "OMSGallery/SecurityInsights",
         "promotionCode": ""
       },
       "dependsOn": [
-        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.SecurityInsights/sourcecontrols",
+      "apiVersion": "2021-09-01-preview",
+      "scope": "[format('Microsoft.OperationsManagement/solutions/{0}', variables('solutionName'))]",
+      "name": "defaultRepository",
+      "properties": {
+        "contentTypes": [
+          "AnalyticRule"
+        ],
+        "description": "Default repository for Microsoft Sentinel",
+        "displayName": "defaultSolution",
+        "repository": {
+          "branch": "main",
+          "displayUrl": "test",
+          "url": "https://github.com/KostaS10/MicrosoftSentinelTest"
+        },
+        "repoType": "Github"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationsManagement/solutions', variables('solutionName'))]"
       ]
     }
   ]
