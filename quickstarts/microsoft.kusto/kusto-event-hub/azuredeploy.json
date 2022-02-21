@@ -1,151 +1,146 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1272.37030",
+      "templateHash": "4367523611305304370"
+    }
+  },
   "parameters": {
-    "clusterName": {
-      "type": "string",
-      "defaultValue": "[concat('kusto', uniqueString(resourceGroup().id))]"
-    },
-    "dataManagementPublicIpName": {
-      "type": "string",
-      "defaultValue": "dm-pip"
-    },
-    "enginePublicIpName": {
-      "type": "string",
-      "defaultValue": "engine-pip"
-    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for all resources."
+        "description": "Location for all resources"
       }
     },
-    "skuName": {
+    "clusterName": {
       "type": "string",
-      "defaultValue": "Standard_D8_v3"
+      "defaultValue": "[format('kusto{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the cluster"
+      }
     },
-    "skuTier": {
+    "databaseName": {
       "type": "string",
-      "defaultValue": "Standard"
+      "defaultValue": "kustodb",
+      "metadata": {
+        "description": "Name of the database"
+      }
     },
-    "subnetName": {
+    "eventHubNamespaceName": {
       "type": "string",
-      "defaultValue": "subnet"
+      "defaultValue": "[format('eventHub{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of Event Hub's namespace"
+      }
     },
-    "virtualNetworkName": {
+    "eventHubName": {
       "type": "string",
-      "defaultValue": "vnet"
+      "defaultValue": "kustoHub",
+      "metadata": {
+        "description": "Name of Event Hub"
+      }
     }
-  },
-  "variables": {
-    "dataManagementPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dataManagementPublicIpName'))]",
-    "enginePublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('enginePublicIpName'))]",
-    "nsgName": "azureDataExplorerNsg",
-    "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
-    "routeTableName": "azureDataExplorerRt",
-    "routeTableId": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]",
-    "publicIpAllocationMethod": "Static",
-    "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'),parameters('subnetName'))]",
-    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]"
   },
   "resources": [
     {
-      "type": "Microsoft.Kusto/Clusters",
-      "sku": {
-        "name": "[parameters('skuName')]",
-        "tier": "[parameters('skuTier')]"
-      },
-      "name": "[parameters('clusterName')]",
-      "apiVersion": "2020-06-14",
+      "type": "Microsoft.EventHub/namespaces/eventhubs/consumergroups",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}/{1}/{2}', parameters('eventHubNamespaceName'), parameters('eventHubName'), 'kustoConsumerGroup')]",
+      "properties": {},
       "dependsOn": [
-        "[variables('enginePublicIpId')]",
-        "[variables('dataManagementPublicIpId')]",
-        "[variables('vnetId')]"
-      ],
-      "location": "[parameters('location')]",
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
+        "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNamespaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces/eventhubs",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}/{1}', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
       "properties": {
-        "virtualNetworkConfiguration": {
-          "subnetId": "[variables('subnetId')]",
-          "enginePublicIpId": "[variables('enginePublicIpId')]",
-          "dataManagementPublicIpId": "[variables('dataManagementPublicIpId')]"
-        }
-      }
-    },
-    {
-      "apiVersion": "2020-05-01",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('nsgName')]",
-      "location": "[parameters('location')]"
-    },
-    {
-      "apiVersion": "2020-05-01",
-      "type": "Microsoft.Network/routeTables",
-      "name": "[variables('routeTableName')]",
-      "location": "[parameters('location')]"
-    },
-    {
-      "apiVersion": "2020-05-01",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[parameters('dataManagementPublicIpName')]",
-      "sku": {
-        "name": "Standard"
+        "messageRetentionInDays": 2,
+        "partitionCount": 2
       },
-      "location": "[parameters('location')]",
-      "properties": {
-        "publicIPAllocationMethod": "[variables('publicIpAllocationMethod')]",
-        "publicIPAddressVersion": "IPv4"
-      }
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces', parameters('eventHubNamespaceName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-05-01",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[parameters('enginePublicIpName')]",
-      "sku": {
-        "name": "Standard"
+      "type": "Microsoft.Kusto/clusters/databases/scripts",
+      "apiVersion": "2022-02-01",
+      "name": "[format('{0}/{1}/{2}', parameters('clusterName'), parameters('databaseName'), 'db-script')]",
+      "properties": {
+        "scriptContent": "//  Create a landing table for Event Hub's events\r\n.create table RawEvents(document:dynamic)\r\n\r\n//  Create mapping from JSON ingestion to landing table\r\n.create table RawEvents ingestion json mapping 'DirectJson' '[{\"column\":\"document\",\"path\":\"$\",\"datatype\":\"dynamic\"}]'\r\n\r\n//  We modify the ingestion batching policy to make it easy to see records coming ingestion\r\n//  THIS CONFIGURATION SHOULDN'T BE USED IN PRODUCTION:  MaximumBatchingTimeSpan SHOULD BE AT LEAST 1 MINUTE\r\n.alter table RawEvents policy ingestionbatching \"{'MaximumBatchingTimeSpan': '0:0:10', 'MaximumNumberOfItems': 10000}\"",
+        "continueOnErrors": false
       },
-      "location": "[parameters('location')]",
-      "properties": {
-        "publicIPAllocationMethod": "[variables('publicIpAllocationMethod')]",
-        "publicIPAddressVersion": "IPv4"
-      }
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]",
+        "[resourceId('Microsoft.Kusto/clusters/databases', parameters('clusterName'), parameters('databaseName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-05-01",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[parameters('virtualNetworkName')]",
+      "type": "Microsoft.Kusto/clusters/databases/dataConnections",
+      "apiVersion": "2022-02-01",
+      "name": "[format('{0}/{1}/{2}', parameters('clusterName'), parameters('databaseName'), 'eventConnection')]",
       "location": "[parameters('location')]",
-      "dependsOn": [ "[variables('nsgName')]", "[variables('routeTableName')]"],
+      "kind": "EventHub",
       "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "10.0.0.0/16"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[parameters('subnetName')]",
-            "properties": {
-              "addressPrefix": "10.0.0.0/20",
-              "networkSecurityGroup": {
-                "id": "[variables('nsgId')]"
-              },
-              "routeTable" :{
-                  "id": "[variables('routeTableId')]"
-              },
-              "delegations": [
-                  {
-                      "name": "AzureDataExplorer",
-                      "properties": {
-                          "serviceName" : "Microsoft.Kusto/clusters"
-                      }
-                  }
-              ]
-            }
-          }
-        ]
+        "compression": "None",
+        "consumerGroup": "kustoConsumerGroup",
+        "dataFormat": "MULTIJSON",
+        "eventHubResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
+        "eventSystemProperties": [
+          "x-opt-enqueued-time"
+        ],
+        "mappingRuleName": "DirectJson",
+        "tableName": "RawEvents"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]",
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs/consumergroups', parameters('eventHubNamespaceName'), parameters('eventHubName'), 'kustoConsumerGroup')]",
+        "[resourceId('Microsoft.Kusto/clusters/databases', parameters('clusterName'), parameters('databaseName'))]",
+        "[resourceId('Microsoft.Kusto/clusters/databases/scripts', parameters('clusterName'), parameters('databaseName'), 'db-script')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Kusto/clusters/databases",
+      "apiVersion": "2022-02-01",
+      "name": "[format('{0}/{1}', parameters('clusterName'), parameters('databaseName'))]",
+      "location": "[parameters('location')]",
+      "kind": "ReadWrite",
+      "dependsOn": [
+        "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces",
+      "apiVersion": "2021-11-01",
+      "name": "[parameters('eventHubNamespaceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "capacity": 1,
+        "name": "Standard",
+        "tier": "Standard"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Kusto/clusters",
+      "apiVersion": "2022-02-01",
+      "name": "[parameters('clusterName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_D12_v2",
+        "tier": "Standard",
+        "capacity": 2
+      },
+      "identity": {
+        "type": "SystemAssigned"
       }
     }
   ]
 }
-

@@ -16,4 +16,4 @@
 
 This template allows you deploy a cluster with System Assigned Identity, a database, an Azure Event Hub and a data connection between the Event Hub and the database (using the system assigned identity).
 
-This template was authored in bicep (see [bicep template](main.bicep)) then transpiled into [JSON template](azuredeploy.json).
+This template was authored in bicep (see [bicep template](main.bicep)), referring a [KQL script](script.kql) and then transpiled into [JSON template](azuredeploy.json).

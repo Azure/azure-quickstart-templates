@@ -19,7 +19,7 @@ resource eventHubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' = {
   }
   properties: {}
 
-  resource hubNamespace 'eventhubs' = {
+  resource eventHub 'eventhubs' = {
     name: eventHubName
     properties: {
       messageRetentionInDays: 2
@@ -45,11 +45,12 @@ resource cluster 'Microsoft.Kusto/clusters@2022-02-01' = {
     type: 'SystemAssigned'
   }
 
-  resource perfTestDbs 'databases' = {
+  resource kustoDb 'databases' = {
     name: databaseName
+    location: location
     kind: 'ReadWrite'
 
-    resource perfTestDbs 'scripts' = {
+    resource kustoScript 'scripts' = {
       name: 'db-script'
       properties: {
         scriptContent: loadTextContent('script.kql')
@@ -59,19 +60,20 @@ resource cluster 'Microsoft.Kusto/clusters@2022-02-01' = {
 
     resource eventConnection 'dataConnections' = {
       name: 'eventConnection'
+      location: location
       dependsOn: [
-        perfTestDbs
+        kustoScript
       ]
       kind: 'EventHub'
       properties: {
         compression: 'None'
-        consumerGroup: kustoConsumerGroup.name
+        consumerGroup:  eventHubNamespace::eventHub::kustoConsumerGroup.name
         dataFormat: 'MULTIJSON'
-        eventHubResourceId: eventHub.Id
+        eventHubResourceId: eventHubNamespace::eventHub.id
         eventSystemProperties: [
-          // 'string'
+          'x-opt-enqueued-time'
         ]
-        managedIdentityResourceId: 'system'
+        // managedIdentityResourceId: cluster.identity.principalId
         mappingRuleName: 'DirectJson'
         tableName: 'RawEvents'
       }
