@@ -74,11 +74,15 @@ Manual post-checks are currently recommended to mitigate this.
 
 ##### Admin user public key for ssh authentication
 
-The Azure Portal offers three options:
+On Azure Portal it may or may not appear `SSH pubic key source` field that offers three options:
 
 ![alt text](images/admin-ssh-public-key.png "Admin user ssh public key")
 
-At the time of writing, the first option "Generate new key pair" does not work as expected and should not be used. Azure support have been notified.
+At the time of writing, the first option "Generate new key pair" does not work as expected and should not be used.
+
+If that field does not appear there will be `Admin Public Key` field with a text box where you can copy/paste your exisitng ssh public key.
+
+Azure support have been notified.
 
 
 Pre-deployment requirements
