@@ -39,13 +39,10 @@ The Default Azure Firewall Policy allows inbound RDP from the P2S VPN Client Add
 List of input parameters has been kept at the very minimum.
 IP addressing scheme can be changed modifying the variables inside the template.
 
-[!NOTE]
-The solution configures P2S Gateways using a P2S Configuration that enables Azure AD Authentication using the OpenVPN Tunnel Protocol. For the solution to deploy successfully consent for the Azure VPN app registration must be granted by a Global Administrator. See steps [here](https://docs.microsoft.com/en-us/azure/virtual-wan/openvpn-azure-ad-tenant#enable-authentication)
+**NOTE:** The solution configures P2S Gateways using a P2S Configuration that enables Azure AD Authentication using the OpenVPN Tunnel Protocol. For the solution to deploy successfully consent for the Azure VPN app registration must be granted by a Global Administrator. See steps [here](https://docs.microsoft.com/en-us/azure/virtual-wan/openvpn-azure-ad-tenant#enable-authentication)
 
-[!NOTE]
-This template will create all the vWAN resources listed above, but will not create the customer side resources required for hybrid connectivity. After template deployment will be completed, user will need to install P2S VPN clients, create VPN branches (Local Sites) and connect Express Route circuits.
+**NOTE:** This template will create all the vWAN resources listed above, but will not create the customer side resources required for hybrid connectivity. After template deployment will be completed, user will need to install P2S VPN clients, create VPN branches (Local Sites) and connect Express Route circuits.
 
-[!NOTE]
-Private IP filtering is enabled but the use of two secure hubs does not currently support filtering inter-hub traffic. Branch to Virtual Network (B2V) or Virtual Network to Virtual Network (V2V) using the same regional hub is unaffected. More on known issues available [here](https://docs.microsoft.com/en-us/azure/firewall-manager/overview#known-issues). However, hub to hub communication still works if private traffic filtering via Azure Firewall isn't enabled.
+**NOTE:** Private IP filtering is enabled but the use of two secure hubs does not currently support filtering inter-hub traffic. Branch to Virtual Network (B2V) or Virtual Network to Virtual Network (V2V) using the same regional hub is unaffected. More on known issues available [here](https://docs.microsoft.com/en-us/azure/firewall-manager/overview#known-issues). However, hub to hub communication still works if private traffic filtering via Azure Firewall isn't enabled.
 
 `Tags: Virtual WAN, vWAN, Hub, ExpressRoute, VPN, S2S, P2S, Routing`
