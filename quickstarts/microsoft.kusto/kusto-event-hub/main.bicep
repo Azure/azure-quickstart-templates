@@ -62,8 +62,13 @@ resource cluster 'Microsoft.Kusto/clusters@2022-02-01' = {
     resource eventConnection 'dataConnections' = {
       name: 'eventConnection'
       location: location
+      //  Here we need to explicitely declare dependencies
+      //  Since we do not use those resources in the event connection
+      //  but we do need them to be deployed first
       dependsOn: [
+        //  We need the table to be present in the database
         kustoScript
+        //  We need the cluster to be receiver on the Event Hub
         clusterEventHubAuthorization
       ]
       kind: 'EventHub'
