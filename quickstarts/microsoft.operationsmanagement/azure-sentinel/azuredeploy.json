@@ -1,58 +1,65 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {
-    "location": {
-      "defaultValue": "[resourceGroup().location]",
-      "type": "string"
-    },
-    "retentionInDays": {
-      "defaultValue": 90,
-      "type": "int"
-    },
-    "sentinelName": {
-      "defaultValue": "sentinel",
-      "type": "string"
-    },
-    "sku": {
-      "defaultValue": "PerGB2018",
-      "type": "string"
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1272.37030",
+      "templateHash": "15827696504997945564"
     }
   },
-"resources": [
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "sentinelName": {
+      "type": "string",
+      "defaultValue": "sentinel"
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "PerGB2018"
+    },
+    "retentionInDays": {
+      "type": "int",
+      "defaultValue": 90
+    }
+  },
+  "variables": {
+    "workspaceName": "[format('{0}-{1}', parameters('location'), parameters('sentinelName'))]",
+    "solutionName": "[format('SecurityInsights({0})', variables('workspaceName'))]"
+  },
+  "resources": [
     {
+      "type": "Microsoft.OperationalInsights/workspaces",
       "apiVersion": "2020-08-01",
-      "location": "[parameters('location')]",
       "name": "[variables('workspaceName')]",
+      "location": "[parameters('location')]",
       "properties": {
-        "retentionInDays": "[parameters('retentionInDays')]",
         "sku": {
           "name": "[parameters('sku')]"
-        }
-      },
-      "type": "Microsoft.OperationalInsights/workspaces"
+        },
+        "retentionInDays": "[parameters('retentionInDays')]"
+      }
     },
     {
+      "type": "Microsoft.OperationsManagement/solutions",
       "apiVersion": "2015-11-01-preview",
-      "dependsOn": [
-        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
-      ],
-      "location": "[parameters('location')]",
       "name": "[variables('solutionName')]",
-      "plan": {
-        "promotionCode": "",
-        "name": "[variables('solutionName')]",
-        "product": "OMSGallery/SecurityInsights",
-        "publisher": "Microsoft"
-      },
+      "location": "[parameters('location')]",
       "properties": {
         "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
       },
-      "type": "Microsoft.OperationsManagement/solutions"
+      "plan": {
+        "name": "[variables('solutionName')]",
+        "publisher": "Microsoft",
+        "product": "OMSGallery/SecurityInsights",
+        "promotionCode": ""
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+      ]
     }
-  ],
-"variables": {
-    "solutionName": "[format('SecurityInsights({0})', variables('workspaceName'))]",
-    "workspaceName": "[format('{0}-{1}-{2}', parameters('location'), parameters('sentinelName'), uniqueString(resourceGroup().id))]"
-  }
+  ]
 }
