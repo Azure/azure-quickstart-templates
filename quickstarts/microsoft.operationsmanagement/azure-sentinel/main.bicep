@@ -1,6 +1,8 @@
 param location string = resourceGroup().location
 param sentinelName string = 'sentinel'
-param sku string = 'PerGB2018'
+
+@minValue(30)
+@maxValue(730)
 param retentionInDays int = 90
 
 var workspaceName = '${location}-${sentinelName}-${uniqueString(resourceGroup().id)}'
@@ -11,7 +13,7 @@ resource sentinelWorkspace 'Microsoft.OperationalInsights/workspaces@2020-08-01'
   location: location
   properties: {
     sku: {
-      name: sku
+      name: 'PerGB2018'
     }
     retentionInDays: retentionInDays
   }
