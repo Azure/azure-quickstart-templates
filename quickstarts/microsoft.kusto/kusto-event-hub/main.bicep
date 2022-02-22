@@ -54,6 +54,7 @@ resource cluster 'Microsoft.Kusto/clusters@2022-02-01' = {
       name: 'db-script'
       properties: {
         scriptContent: loadTextContent('script.kql')
+        forceUpdateTag:  'abc'
         continueOnErrors: false
       }
     }
@@ -63,6 +64,7 @@ resource cluster 'Microsoft.Kusto/clusters@2022-02-01' = {
       location: location
       dependsOn: [
         kustoScript
+        clusterEventHubAuthorization
       ]
       kind: 'EventHub'
       properties: {
@@ -73,10 +75,32 @@ resource cluster 'Microsoft.Kusto/clusters@2022-02-01' = {
         eventSystemProperties: [
           'x-opt-enqueued-time'
         ]
-        // managedIdentityResourceId: cluster.identity.principalId
+        managedIdentityResourceId: cluster.id
         mappingRuleName: 'DirectJson'
         tableName: 'RawEvents'
       }
     }
+  }
+}
+
+
+//  We need to authorize the cluster to read the event hub by assigning the role
+//  "Azure Event Hubs Data Receiver"
+//  Role list:  https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
+var dataReceiverId = 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde'
+var fullDataReceiverId = '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${dataReceiverId}'
+var eventHubRoleAssignmentName = '${resourceGroup().id}${cluster.name}${dataReceiverId}${eventHubNamespace::eventHub.name}'
+
+resource clusterEventHubAuthorization 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
+  name: '${guid(eventHubRoleAssignmentName)}'
+  //  See https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/scope-extension-resources
+  //  for scope for extension
+  scope: eventHubNamespace::eventHub
+  properties: {
+    description: 'Give "Azure Event Hubs Data Receiver" to the cluster'
+    principalId: cluster.identity.principalId
+    //  Required in case principal not ready when deploying the assignment
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: fullDataReceiverId
   }
 }
