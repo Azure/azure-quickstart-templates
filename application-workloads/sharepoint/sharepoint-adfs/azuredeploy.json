@@ -15,11 +15,12 @@
     },
     "sharePointVersion": {
       "type": "string",
-      "defaultValue": "2019",
+      "defaultValue": "Subscription",
       "allowedValues": [
         "2013",
         "2016",
-        "2019"
+        "2019",
+        "Subscription"
       ],
       "metadata": {
         "description": "Version of SharePoint farm to create."
@@ -67,7 +68,7 @@
     "RDPTrafficAllowed": {
       "type": "string",
       "defaultValue": "No",
-	  "minLength": 1,
+      "minLength": 1,
       "metadata": {
         "description": "Specify if RDP traffic is allowed to connect to the VMs:<br>- If 'No' (default): Firewall denies all incoming RDP traffic from Internet.<br>- If '*' or 'Internet': Firewall accepts all incoming RDP traffic from Internet.<br>- If 'ServiceTagName': Firewall accepts all incoming RDP traffic from the specified 'ServiceTagName'.<br>- If 'xx.xx.xx.xx': Firewall accepts incoming RDP traffic only from the IP 'xx.xx.xx.xx'."
       }
@@ -281,7 +282,7 @@
     },
     "vmDCStorageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "StandardSSD_LRS",
       "allowedValues": [
         "Standard_LRS",
         "StandardSSD_LRS",
@@ -303,7 +304,7 @@
     },
     "vmSQLStorageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "StandardSSD_LRS",
       "allowedValues": [
         "Standard_LRS",
         "StandardSSD_LRS",
@@ -420,7 +421,7 @@
     "vmDC": {
       "vmImagePublisher": "MicrosoftWindowsServer",
       "vmImageOffer": "WindowsServer",
-      "vmImageSKU": "2019-Datacenter",
+      "vmImageSKU": "2022-datacenter-azure-edition-smalldisk",
       "vmOSDiskName": "Disk-DC-OS",
       "vmVmSize": "[parameters('vmDCSize')]",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmDCName, '-0')]",
@@ -430,7 +431,7 @@
     },
     "vmSQL": {
       "vmImagePublisher": "MicrosoftSQLServer",
-      "vmImageOffer": "sql2019-ws2019",
+      "vmImageOffer": "sql2019-ws2022",
       "vmImageSKU": "sqldev",
       "vmOSDiskName": "Disk-SQL-OS",
       "vmVmSize": "[parameters('vmSQLSize')]",
@@ -440,9 +441,9 @@
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmSQLName)]"
     },
     "vmSP": {
-      "vmImagePublisher": "MicrosoftSharePoint",
-      "vmImageOffer": "MicrosoftSharePointServer",
-      "vmImageSKU": "[concat('sp', parameters('sharePointVersion'))]",
+      "vmImagePublisher": "[if(equals(toLower(parameters('sharePointVersion')), 'subscription'), 'MicrosoftWindowsServer', 'MicrosoftSharePoint')]",
+      "vmImageOffer": "[if(equals(toLower(parameters('sharePointVersion')), 'subscription'), 'WindowsServer', 'MicrosoftSharePointServer')]",
+      "vmImageSKU": "[if(equals(toLower(parameters('sharePointVersion')), 'subscription'), '2022-datacenter-azure-edition', concat('sp', parameters('sharePointVersion')))]",
       "vmOSDiskName": "Disk-SP-OS",
       "vmDataDiskName": "Disk-SP-Data",
       "vmVmSize": "[parameters('vmSPSize')]",
@@ -656,7 +657,7 @@
             "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]",
             "provisionVMAgent": true,
             "patchSettings": {
-              "patchMode": "[if(parameters('enableAutomaticUpdates'), 'AutomaticByPlatform', 'Manual')]",
+              "patchMode": "[if(parameters('enableAutomaticUpdates'), 'AutomaticByOS', 'Manual')]",
               "assessmentMode": "ImageDefault"
             }
           }
@@ -673,7 +674,7 @@
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
-            "diskSizeGB": 128,
+            "diskSizeGB": 32,
             "managedDisk": {
               "storageAccountType": "[parameters('vmDCStorageAccountType')]"
             }
