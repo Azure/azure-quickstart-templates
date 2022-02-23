@@ -55,7 +55,7 @@ resource omsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   location: workspaceLocation
   properties: {
     sku: {
-      name: 'PerNode'
+      name: 'PerGB2018'
     }
   }
 }
