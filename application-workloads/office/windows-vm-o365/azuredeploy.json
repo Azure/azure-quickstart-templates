@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.1",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1124.51302",
+      "templateHash": "12185542509204579084"
+    }
+  },
   "parameters": {
     "vmName": {
       "type": "string",
@@ -16,23 +23,16 @@
       }
     },
     "vmAdminPassword": {
-      "type": "securestring",
+      "type": "secureString",
       "metadata": {
         "description": "VM admin password. The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
       }
     },
     "vmSize": {
       "type": "string",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Desired Size of the VM."
-      },
-      "defaultValue": "Standard_D2s_v3"
-    },
-    "vmVersion": {
-      "type": "string",
-      "defaultValue": "latest",
-      "metadata": {
-        "description": "Which version of Windows would like to deploy"
       }
     },
     "vmSku": {
@@ -66,19 +66,19 @@
         "description": "PowerShell script name to execute"
       }
     },
-    "_artifactsLocation": {
+    "artifactsLocation": {
       "type": "string",
       "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
     },
-    "_artifactsLocationSasToken": {
-      "type": "securestring",
+    "artifactsLocationSasToken": {
+      "type": "secureString",
+      "defaultValue": "",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-      },
-      "defaultValue": ""
+      }
     },
     "location": {
       "type": "string",
@@ -92,21 +92,25 @@
     "vnet01Prefix": "10.0.0.0/16",
     "vnet01Subnet1Name": "Subnet-1",
     "vnet01Subnet1Prefix": "10.0.0.0/24",
-    "vmImagePublisher": "MicrosoftVisualStudio",
-    "vmImageOffer": "visualstudio2019latest",
-    "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('Vnet01Subnet1Name'))]",
-    "vmNicName": "[concat(parameters('VMName'), 'NetworkInterface')]",
-    "vmIP01Name": "VMIP01",
-    "vnetName": "VNet01"
+    "vmImageReference": {
+      "publisher": "MicrosoftVisualStudio",
+      "offer": "visualstudio2019latest",
+      "sku": "[parameters('vmSku')]",
+      "version": "latest"
+    },
+    "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName_var'), variables('vnet01Subnet1Name'))]",
+    "vmNicName_var": "[format('{0}NetworkInterface', parameters('vmName'))]",
+    "vmIP01Name_var": "VMIP01",
+    "vnetName_var": "VNet01"
   },
   "resources": [
     {
-      "name": "[variables('vnetName')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[parameters('location')]",
       "apiVersion": "2020-07-01",
+      "name": "[variables('vnetName_var')]",
+      "location": "[parameters('location')]",
       "tags": {
-        "displayName": "[variables('vnetName')]"
+        "displayName": "[variables('vnetName_var')]"
       },
       "properties": {
         "addressSpace": {
@@ -125,14 +129,10 @@
       }
     },
     {
-      "name": "[variables('vmNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[parameters('location')]",
       "apiVersion": "2020-07-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmIP01Name'))]"
-      ],
+      "name": "[variables('vmNicName_var')]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "VMNic01"
       },
@@ -146,21 +146,22 @@
                 "id": "[variables('vmSubnetRef')]"
               },
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmIP01Name'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmIP01Name_var'))]"
               }
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmIP01Name_var'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName_var'))]"
+      ]
     },
     {
-      "name": "[parameters('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-12-01",
+      "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
-      "apiVersion":  "2020-12-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
-      ],
       "tags": {
         "displayName": "VM01"
       },
@@ -170,18 +171,13 @@
         },
         "osProfile": {
           "computerName": "[parameters('vmName')]",
-          "adminUsername": "[parameters('vmAdminUsername')]",
+          "adminUsername": "[parameters('vmAdminUserName')]",
           "adminPassword": "[parameters('vmAdminPassword')]"
         },
         "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('vmImagePublisher')]",
-            "offer": "[variables('vmImageOffer')]",
-            "sku": "[parameters('vmSku')]",
-            "version": "[parameters('vmVersion')]"
-          },
+          "imageReference": "[variables('vmImageReference')]",
           "osDisk": {
-            "name": "[concat(parameters('vmName'),'_OSDisk')]",
+            "name": "[format('{0}_OSDisk', parameters('vmName'))]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -189,49 +185,50 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName_var'))]"
             }
           ]
         }
       },
-      "resources": [
-        {
-          "name": "SetupOffice",
-          "type": "extensions",
-          "location": "[parameters('location')]",
-          "apiVersion": "2020-12-01",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
-          ],
-          "tags": {
-            "displayName": "SetupOffice"
-          },
-          "properties": {
-            "publisher": "Microsoft.Compute",
-            "type": "CustomScriptExtension",
-            "typeHandlerVersion": "1.9",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "fileUris": [
-                "[uri(parameters('_artifactsLocation'), concat('scripts/', parameters('setupOfficeScriptFileName'), parameters('_artifactsLocationSasToken')))]",
-                "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/DefaultConfiguration.xml",
-                "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Office2013Setup.exe",
-                "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Office2016Setup.exe",
-                "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Edit-OfficeConfigurationFile.ps1",
-                "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Generate-ODTConfigurationXML.ps1",
-                "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Install-OfficeClickToRun.ps1"
-              ],
-              "commandToExecute": "[concat('powershell -ExecutionPolicy bypass -File scripts/', parameters('setupOfficeScriptFileName'),' -OfficeVersion ', parameters('officeVersion'))]"
-            }
-          }
-        }
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName_var'))]"
       ]
     },
     {
-      "name": "[variables('vmIP01Name')]",
-      "type": "Microsoft.Network/publicIPAddresses",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2020-12-01",
+      "name": "[format('{0}/{1}', parameters('vmName'), 'SetupOffice')]",
       "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "SetupOffice"
+      },
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.9",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('artifactsLocation'), format('scripts/{0}{1}', parameters('setupOfficeScriptFileName'), parameters('artifactsLocationSasToken')))]",
+            "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/DefaultConfiguration.xml",
+            "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Office2013Setup.exe",
+            "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Office2016Setup.exe",
+            "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Edit-OfficeConfigurationFile.ps1",
+            "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Generate-ODTConfigurationXML.ps1",
+            "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Install-OfficeClickToRun.ps1"
+          ],
+          "commandToExecute": "[format('powershell -ExecutionPolicy bypass -File scripts/{0} -OfficeVersion {1}', parameters('setupOfficeScriptFileName'), parameters('officeVersion'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2020-07-01",
+      "name": "[variables('vmIP01Name_var')]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "VMIP01"
       },
@@ -244,4 +241,3 @@
     }
   ]
 }
-
