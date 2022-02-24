@@ -167,7 +167,7 @@ resource SetupOffice 'Microsoft.Compute/virtualMachines/extensions@2021-07-01' =
         'https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Generate-ODTConfigurationXML.ps1'
         'https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Install-OfficeClickToRun.ps1'
       ]
-      commandToExecute: 'powershell -ExecutionPolicy bypass -File scripts/${setupOfficeScriptFileName} -OfficeVersion ${officeVersion}'
+      commandToExecute: 'powershell -ExecutionPolicy bypass -File ${setupOfficeScriptFileName} -OfficeVersion ${officeVersion}'
     }
   }
 }
