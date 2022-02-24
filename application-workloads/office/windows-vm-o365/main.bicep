@@ -159,7 +159,7 @@ resource SetupOffice 'Microsoft.Compute/virtualMachines/extensions@2021-07-01' =
     autoUpgradeMinorVersion: true
     settings: {
       fileUris: [
-        uri(_artifactsLocation, 'scripts/${setupOfficeScriptFileName}${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, '${setupOfficeScriptFileName}${_artifactsLocationSasToken}')
         'https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/DefaultConfiguration.xml'
         'https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Office2013Setup.exe'
         'https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Office2016Setup.exe'
