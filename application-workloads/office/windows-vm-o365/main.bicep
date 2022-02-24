@@ -46,16 +46,16 @@ var vmImageReference = {
   sku: vmSku
   version: 'latest'
 }
-var vmSubnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName_var, vnet01Subnet1Name)
-var vmNicName_var = '${vmName}NetworkInterface'
-var vmIP01Name_var = 'VMIP01'
-var vnetName_var = 'VNet01'
+var vmSubnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, vnet01Subnet1Name)
+var vmNicName = '${vmName}_NIC'
+var vmIPName = 'VM_IP'
+var vnetName = 'VNet01'
 
-resource vnetName 'Microsoft.Network/virtualNetworks@2020-07-01' = {
-  name: vnetName_var
+resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+  name: vnetName
   location: location
   tags: {
-    displayName: vnetName_var
+    displayName: vnetName
   }
   properties: {
     addressSpace: {
@@ -74,11 +74,25 @@ resource vnetName 'Microsoft.Network/virtualNetworks@2020-07-01' = {
   }
 }
 
-resource vmNicName 'Microsoft.Network/networkInterfaces@2020-07-01' = {
-  name: vmNicName_var
+resource pip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+  name: vmIPName
   location: location
   tags: {
-    displayName: 'VMNic01'
+    displayName: 'VMIP'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Dynamic'
+    dnsSettings: {
+      domainNameLabel: dnsLabelPrefix
+    }
+  }
+}
+
+resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
+  name: vmNicName
+  location: location
+  tags: {
+    displayName: 'VMNIC'
   }
   properties: {
     ipConfigurations: [
@@ -90,18 +104,15 @@ resource vmNicName 'Microsoft.Network/networkInterfaces@2020-07-01' = {
             id: vmSubnetRef
           }
           publicIPAddress: {
-            id: vmIP01Name.id
+            id: pip.id
           }
         }
       }
     ]
   }
-  dependsOn: [
-    vnetName
-  ]
 }
 
-resource vmName_resource 'Microsoft.Compute/virtualMachines@2020-12-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2021-07-01' = {
   name: vmName
   location: location
   tags: {
@@ -127,15 +138,15 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2020-12-01' = {
     networkProfile: {
       networkInterfaces: [
         {
-          id: vmNicName.id
+          id: nic.id
         }
       ]
     }
   }
 }
 
-resource vmName_SetupOffice 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' = {
-  parent: vmName_resource
+resource SetupOffice 'Microsoft.Compute/virtualMachines/extensions@2021-07-01' = {
+  parent: vm
   name: 'SetupOffice'
   location: location
   tags: {
@@ -161,16 +172,4 @@ resource vmName_SetupOffice 'Microsoft.Compute/virtualMachines/extensions@2020-1
   }
 }
 
-resource vmIP01Name 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
-  name: vmIP01Name_var
-  location: location
-  tags: {
-    displayName: 'VMIP01'
-  }
-  properties: {
-    publicIPAllocationMethod: 'Dynamic'
-    dnsSettings: {
-      domainNameLabel: dnsLabelPrefix
-    }
-  }
-}
+

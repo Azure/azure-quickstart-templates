@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "12185542509204579084"
+      "templateHash": "9758931928164752727"
     }
   },
   "parameters": {
@@ -98,19 +98,19 @@
       "sku": "[parameters('vmSku')]",
       "version": "latest"
     },
-    "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName_var'), variables('vnet01Subnet1Name'))]",
-    "vmNicName_var": "[format('{0}NetworkInterface', parameters('vmName'))]",
-    "vmIP01Name_var": "VMIP01",
-    "vnetName_var": "VNet01"
+    "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('vnet01Subnet1Name'))]",
+    "vmNicName": "[format('{0}_NIC', parameters('vmName'))]",
+    "vmIPName": "VM_IP",
+    "vnetName": "VNet01"
   },
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-07-01",
-      "name": "[variables('vnetName_var')]",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('vnetName')]",
       "location": "[parameters('location')]",
       "tags": {
-        "displayName": "[variables('vnetName_var')]"
+        "displayName": "[variables('vnetName')]"
       },
       "properties": {
         "addressSpace": {
@@ -129,12 +129,27 @@
       }
     },
     {
-      "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2020-07-01",
-      "name": "[variables('vmNicName_var')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('vmIPName')]",
       "location": "[parameters('location')]",
       "tags": {
-        "displayName": "VMNic01"
+        "displayName": "VMIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('vmNicName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "VMNIC"
       },
       "properties": {
         "ipConfigurations": [
@@ -146,20 +161,20 @@
                 "id": "[variables('vmSubnetRef')]"
               },
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmIP01Name_var'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmIPName'))]"
               }
             }
           }
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmIP01Name_var'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName_var'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmIPName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
       ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2020-12-01",
+      "apiVersion": "2021-07-01",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -185,18 +200,18 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName_var'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
             }
           ]
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName_var'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
       ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2020-12-01",
+      "apiVersion": "2021-07-01",
       "name": "[format('{0}/{1}', parameters('vmName'), 'SetupOffice')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -223,21 +238,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ]
-    },
-    {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-07-01",
-      "name": "[variables('vmIP01Name_var')]",
-      "location": "[parameters('location')]",
-      "tags": {
-        "displayName": "VMIP01"
-      },
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
-        }
-      }
     }
   ]
 }
