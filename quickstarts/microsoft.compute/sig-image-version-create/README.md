@@ -17,5 +17,5 @@ This template creates an Image Version for an Image Definition.
 
 ## Prerequisites
 The prerequisites for this template are: 
-- 1 Shared Image Gallery Image Definition
+- 1 Azure Compute Gallery Image Definition
 - 1 Managed Image
