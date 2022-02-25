@@ -72,7 +72,7 @@ module function 'modules/function.bicep' = {
   }
 }
 
-resource roleassignment 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
+resource roleassignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
   name: '${guid(uniqueString('roleAssignment-', digitalTwinsInstanceName, '-', function.name, '-', roleId))}'
   properties: {
     principalId: function.outputs.functionIdentityPrincipalId
