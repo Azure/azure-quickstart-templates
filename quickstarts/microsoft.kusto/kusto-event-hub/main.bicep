@@ -1,11 +1,23 @@
 @description('Location for all resources')
 param location string = resourceGroup().location
+
 @description('Name of the cluster')
 param clusterName string = 'kusto${uniqueString(resourceGroup().id)}'
+
+@description('Name of the sku')
+param skuName string = 'Standard_D12_v2'
+
+@description('# of nodes')
+@minValue(2)
+@maxValue(1000)
+param skuCapacity int = 2
+
 @description('Name of the database')
 param databaseName string = 'kustodb'
+
 @description('Name of Event Hub\'s namespace')
 param eventHubNamespaceName string = 'eventHub${uniqueString(resourceGroup().id)}'
+
 @description('Name of Event Hub')
 param eventHubName string = 'kustoHub'
 
@@ -37,9 +49,9 @@ resource cluster 'Microsoft.Kusto/clusters@2022-02-01' = {
   name: clusterName
   location: location
   sku: {
-    'name': 'Standard_D12_v2'
+    'name': skuName
     'tier': 'Standard'
-    'capacity': 2
+    'capacity': skuCapacity
   }
   identity: {
     type: 'SystemAssigned'
@@ -54,7 +66,6 @@ resource cluster 'Microsoft.Kusto/clusters@2022-02-01' = {
       name: 'db-script'
       properties: {
         scriptContent: loadTextContent('script.kql')
-        forceUpdateTag:  'abc'
         continueOnErrors: false
       }
     }
@@ -93,11 +104,12 @@ resource cluster 'Microsoft.Kusto/clusters@2022-02-01' = {
 //  "Azure Event Hubs Data Receiver"
 //  Role list:  https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
 var dataReceiverId = 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde'
-var fullDataReceiverId = '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${dataReceiverId}'
+var fullDataReceiverId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', dataReceiverId)
 var eventHubRoleAssignmentName = '${resourceGroup().id}${cluster.name}${dataReceiverId}${eventHubNamespace::eventHub.name}'
+var roleAssignmentName='${guid(eventHubRoleAssignmentName, eventHubName, dataReceiverId, clusterName)}'
 
 resource clusterEventHubAuthorization 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
-  name: '${guid(eventHubRoleAssignmentName)}'
+  name: roleAssignmentName
   //  See https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/scope-extension-resources
   //  for scope for extension
   scope: eventHubNamespace::eventHub
