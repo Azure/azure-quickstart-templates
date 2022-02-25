@@ -3,6 +3,9 @@
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.digitaltwins/digitaltwins-with-function-private-link/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.digitaltwins/digitaltwins-with-function-private-link/PublicDeployment.svg)
 
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.digitaltwins/digitaltwins-with-function-private-link/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.digitaltwins/digitaltwins-with-function-private-link/FairfaxDeployment.svg)
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.digitaltwins/digitaltwins-with-function-private-link/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.digitaltwins/digitaltwins-with-function-private-link/CredScanResult.svg)
 
