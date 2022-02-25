@@ -4,8 +4,8 @@ param location string = resourceGroup().location
 @description('Azure Digital Twins instance name')
 param digitalTwinsInstanceName string
 
-@maxLength(16)
 @description('Azure Function name')
+@maxLength(16)
 param functionName string
 
 @description('Virtual Network name')

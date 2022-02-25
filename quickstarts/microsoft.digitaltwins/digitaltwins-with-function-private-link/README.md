@@ -1,13 +1,10 @@
 # Azure Digital Twins with Azure Function and Private Link
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.digitaltwins/digitaltwins-with-function-private-link/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.digitaltwins/digitaltwins-with-function-private-link/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/FairfaxDeployment.svg)
-
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.digitaltwins/digitaltwins-with-function-private-link/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.digitaltwins/digitaltwins-with-function-private-link/CredScanResult.svg)
 
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.digitaltwins/digitaltwins-with-function-private-link/BicepVersion.svg)
 
@@ -16,6 +13,8 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.digitaltwinsn%2Fdigitaltwins-with-function-private-link%2Fazuredeploy.json)
 
 This template creates an Azure Digital Twins service configured with a Virtual Network connected Azure Function that can communicate through a Private Link Endpoint to Digital Twins. It also creates a Private DNS Zone to allow seamless hostname resolution of the Digital Twins Endpoint from the Virtual Network to the Private Endpoint internal subnet IP address. The hostname is stored as a setting to the Azure Function with name 'ADT_ENDPOINT'.
+
+Tags: `Azure Digital Twins, Private Link, Azure Functions, Virtual Network, Managed Identities, MSI, Role-based Access Control, RBAC`
 
 ## Sample overview and deployed resources
 
@@ -38,7 +37,7 @@ The following resources are deployed as part of the solution:
 
 The following diagram illustrates the components of this sample.
 
-![Architecture diagram showing traffic going from the Azure Function via Private Link service to Digital Twins.](images/diagram.png)
+![Architecture diagram showing traffic going from the Azure Function via Private Link service to Digital Twins.](images/diagram.png "Diagram highlighting the architecture of the deployed resources")
 
 ## Deployment steps
 
