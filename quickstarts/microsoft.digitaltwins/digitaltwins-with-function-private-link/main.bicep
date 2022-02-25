@@ -2,7 +2,7 @@
 param location string = resourceGroup().location
 
 @description('Azure Digital Twins instance name')
-param digitalTwinsInstanceName string
+param digitalTwinsInstanceName string = 'digitaltwins-${uniqueString(resourceGroup().name)}'
 
 @description('Azure Function name')
 @maxLength(16)
