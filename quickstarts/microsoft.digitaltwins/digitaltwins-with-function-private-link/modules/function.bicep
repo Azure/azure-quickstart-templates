@@ -90,7 +90,7 @@ resource function 'Microsoft.Web/sites@2021-02-01' = {
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: reference('${appinsights.id}', '2015-05-01').InstrumentationKey
+          value: reference('${appinsights.id}', '2020-02-02').InstrumentationKey
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
