@@ -63,7 +63,7 @@ var scheduleRunTimes = [
   '2020-01-01T${scheduleRunTime}:00Z'
 ]
 
-resource vault 'Microsoft.RecoveryServices/vaults@2020-02-02' = if (isNewVault) {
+resource vault 'Microsoft.RecoveryServices/vaults@2021-12-01' = if (isNewVault) {
   name: vaultName
   location: location
   sku: {
@@ -73,7 +73,7 @@ resource vault 'Microsoft.RecoveryServices/vaults@2020-02-02' = if (isNewVault) 
   properties: {}
 }
 
-resource backupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2020-02-02' = if (isNewPolicy) {
+resource backupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2021-12-01' = if (isNewPolicy) {
   parent: vault
   name: policyName
   properties: {
@@ -139,7 +139,7 @@ resource backupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2020-02-
   }
 }
 
-resource protectionContainer 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers@2020-02-02' = if (registerStorageAccount) {
+resource protectionContainer 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers@2021-12-01' = if (registerStorageAccount) {
   name: '${vaultName}/${backupFabric}/storagecontainer;Storage;${existingResourceGroupName};${existingStorageAccountName}'
   properties: {
     backupManagementType: backupManagementType
@@ -151,7 +151,7 @@ resource protectionContainer 'Microsoft.RecoveryServices/vaults/backupFabrics/pr
   ]
 }
 
-resource protectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2020-02-02' = {
+resource protectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2021-12-01' = {
   parent: protectionContainer
   name: 'AzureFileShare;${existingFileShareName}'
   properties: {

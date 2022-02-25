@@ -32,7 +32,7 @@ The Microsoft.RecoveryServices resource provider is used to create resources of 
 
 ## Prerequisites
 
-Users need to have an existing storage account with an existing file share present in it. For creating a new storage account and file share, use the template provided in the prereqs folder, or refer to the [create an Azure storage account with file share](https://github.com/Azure/azure-quickstart-templates/tree/master/101-storage-file-share) template.
+Users need to have an existing storage account with an existing file share present in it. For creating a new storage account and file share, use the template provided in the prereqs folder, or refer to the [create an Azure storage account with file share](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.storage/storage-file-share) template.
 
 ## Deployment steps
 
