@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1272.37030",
-      "templateHash": "5451790338238297798"
+      "templateHash": "12533930791522209999"
     }
   },
   "parameters": {
@@ -21,6 +21,22 @@
       "defaultValue": "[format('kusto{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Name of the cluster"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Standard_D12_v2",
+      "metadata": {
+        "description": "Name of the sku"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "defaultValue": 2,
+      "maxValue": 1000,
+      "minValue": 2,
+      "metadata": {
+        "description": "# of nodes"
       }
     },
     "databaseName": {
@@ -47,8 +63,9 @@
   },
   "variables": {
     "dataReceiverId": "a638d3c7-ab3a-418d-83e6-5f17a39d4fde",
-    "fullDataReceiverId": "[format('/subscriptions/{0}/providers/Microsoft.Authorization/roleDefinitions/{1}', subscription().subscriptionId, variables('dataReceiverId'))]",
-    "eventHubRoleAssignmentName": "[format('{0}{1}{2}{3}', resourceGroup().id, parameters('clusterName'), variables('dataReceiverId'), parameters('eventHubName'))]"
+    "fullDataReceiverId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('dataReceiverId'))]",
+    "eventHubRoleAssignmentName": "[format('{0}{1}{2}{3}', resourceGroup().id, parameters('clusterName'), variables('dataReceiverId'), parameters('eventHubName'))]",
+    "roleAssignmentName": "[format('{0}', guid(variables('eventHubRoleAssignmentName'), parameters('eventHubName'), variables('dataReceiverId'), parameters('clusterName')))]"
   },
   "resources": [
     {
@@ -79,7 +96,6 @@
       "name": "[format('{0}/{1}/{2}', parameters('clusterName'), parameters('databaseName'), 'db-script')]",
       "properties": {
         "scriptContent": "//  Create a landing table for Event Hub's events\r\n.create-merge table RawEvents(document:dynamic)\r\n\r\n//  Create mapping from JSON ingestion to landing table\r\n.create-or-alter table RawEvents ingestion json mapping 'DirectJson' '[{\"column\":\"document\",\"path\":\"$\",\"datatype\":\"dynamic\"}]'\r\n\r\n//  We modify the ingestion batching policy to make it easy to see records coming ingestion\r\n//  THIS CONFIGURATION SHOULDN'T BE USED IN PRODUCTION:  MaximumBatchingTimeSpan SHOULD BE AT LEAST 1 MINUTE\r\n.alter table RawEvents policy ingestionbatching \"{'MaximumBatchingTimeSpan': '0:0:10', 'MaximumNumberOfItems': 10000}\"",
-        "forceUpdateTag": "abc",
         "continueOnErrors": false
       },
       "dependsOn": [
@@ -107,7 +123,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Kusto/clusters', parameters('clusterName'))]",
-        "[extensionResourceId(resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName')), 'Microsoft.Authorization/roleAssignments', format('{0}', guid(variables('eventHubRoleAssignmentName'))))]",
+        "[extensionResourceId(resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName')), 'Microsoft.Authorization/roleAssignments', variables('roleAssignmentName'))]",
         "[resourceId('Microsoft.EventHub/namespaces/eventhubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
         "[resourceId('Microsoft.EventHub/namespaces/eventhubs/consumergroups', parameters('eventHubNamespaceName'), parameters('eventHubName'), 'kustoConsumerGroup')]",
         "[resourceId('Microsoft.Kusto/clusters/databases', parameters('clusterName'), parameters('databaseName'))]",
@@ -142,9 +158,9 @@
       "name": "[parameters('clusterName')]",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Standard_D12_v2",
+        "name": "[parameters('skuName')]",
         "tier": "Standard",
-        "capacity": 2
+        "capacity": "[parameters('skuCapacity')]"
       },
       "identity": {
         "type": "SystemAssigned"
@@ -154,7 +170,7 @@
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2021-04-01-preview",
       "scope": "[format('Microsoft.EventHub/namespaces/{0}/eventhubs/{1}', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
-      "name": "[format('{0}', guid(variables('eventHubRoleAssignmentName')))]",
+      "name": "[variables('roleAssignmentName')]",
       "properties": {
         "description": "Give \"Azure Event Hubs Data Receiver\" to the cluster",
         "principalId": "[reference(resourceId('Microsoft.Kusto/clusters', parameters('clusterName')), '2022-02-01', 'full').identity.principalId]",
