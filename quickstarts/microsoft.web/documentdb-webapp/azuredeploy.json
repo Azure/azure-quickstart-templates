@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1124.51302",
+      "templateHash": "405309202801534146"
+    }
+  },
   "parameters": {
     "databaseAccountName": {
       "type": "string",
@@ -23,6 +30,7 @@
     },
     "svcPlanSku": {
       "type": "string",
+      "defaultValue": "Free",
       "allowedValues": [
         "Free",
         "Shared",
@@ -30,7 +38,6 @@
         "Standard",
         "Premium"
       ],
-      "defaultValue": "Free",
       "metadata": {
         "description": "The pricing tier of the App Service plan."
       }
@@ -54,12 +61,11 @@
   },
   "resources": [
     {
-      "apiVersion": "2020-09-01",
-      "type": "Microsoft.DocumentDb/databaseAccounts",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2021-10-15",
       "name": "[parameters('databaseAccountName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "name": "[parameters('databaseAccountName')]",
         "databaseAccountOfferType": "[variables('databaseAccountTier')]",
         "locations": [
           {
@@ -71,7 +77,7 @@
     },
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2021-02-01",
       "name": "[parameters('appSvcPlanName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -81,30 +87,36 @@
       }
     },
     {
-      "type": "Microsoft.Web/Sites",
-      "apiVersion": "2015-08-01",
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2021-02-01",
       "name": "[parameters('webAppName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverFarms/', parameters('appSvcPlanName'))]"
-      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "properties": {
-        "name": "[parameters('webAppName')]",
-        "serverFarmId": "[parameters('appSvcPlanName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appSvcPlanName'))]",
+        "httpsOnly": true,
         "siteConfig": {
+          "ftpsState": "FtpsOnly",
           "phpVersion": "off",
+          "minTlsVersion": "1.2",
           "appSettings": [
             {
-              "Name": "DOCUMENTDB_ENDPOINT",
-              "Value": "[reference(resourceId('Microsoft.DocumentDb/databaseAccounts/', parameters('databaseAccountName'))).documentEndpoint]"
+              "name": "DOCUMENTDB_ENDPOINT",
+              "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountName'))).documentEndpoint]"
             },
             {
-              "Name": "DOCUMENTDB_PRIMARY_KEY",
-              "Value": "[listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', parameters('databaseAccountName')), '2020-09-01').primaryMasterKey]"
+              "name": "DOCUMENTDB_PRIMARY_KEY",
+              "value": "[listKeys(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountName')), '2021-10-15').primaryMasterKey]"
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appSvcPlanName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountName'))]"
+      ]
     }
   ]
 }
