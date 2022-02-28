@@ -5,35 +5,6 @@ param vaultName string
 param location string = resourceGroup().location
 
 @description('Specify the workspace region')
-@allowed([
-  'centralus'
-  'eastus'
-  'eastus2'
-  'northcentralus'
-  'northeurope'
-  'southcentralus'
-  'westcentralus'
-  'westeurope'
-  'westus'
-  'westus2'
-  'uaenorth'
-  'switzerlandnorth'
-  'uksouth'
-  'francecentral'
-  'norwayeast'
-  'koreacentral'
-  'australiasoutheast'
-  'australiaeast'
-  'japaneast'
-  'centralindia'
-  'southeastasia'
-  'eastasia'
-  'chinaeast2'
-  'canadacentral'
-  'brazilsouth'
-  'usgovarizona'
-  'usgovvirginia'
-])
 param workspaceLocation string
 
 var omsWorkspaceName = '${uniqueString(resourceGroup().id)}ws'
