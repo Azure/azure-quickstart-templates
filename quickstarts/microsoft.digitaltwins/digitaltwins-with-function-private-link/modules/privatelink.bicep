@@ -61,7 +61,7 @@ resource privatelink 'Microsoft.Network/privateEndpoints@2021-03-01' = {
   }
 }
 
-resource privatednszonegroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-02-01' = {
+resource privatednszonegroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-03-01' = {
   parent: privatelink
   name: 'privateDnsZoneGroup'
   properties: {
