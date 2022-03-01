@@ -27,7 +27,7 @@ The following resources are deployed as part of the solution:
 
 ### Networking
 
-- Virtual Network, with subnets for the Azure Ffunction and and for Private Link service.
+- Virtual Network, with subnets for the Azure function and and for Private Link service.
 - Private Link service to make the Azure Digital Twins instance accessible to the Azure function through a private endpoint.
 
 ### Azure function
