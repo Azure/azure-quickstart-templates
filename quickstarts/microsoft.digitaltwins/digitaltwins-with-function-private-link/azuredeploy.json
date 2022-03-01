@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1272.37030",
-      "templateHash": "15639715698830467992"
+      "templateHash": "17968259993207744437"
     }
   },
   "parameters": {
@@ -25,13 +25,15 @@
     },
     "functionName": {
       "type": "string",
+      "defaultValue": "[format('{0}', uniqueString(resourceGroup().name))]",
       "maxLength": 16,
       "metadata": {
-        "description": "Azure Function name"
+        "description": "Azure function name"
       }
     },
     "virtualNetworkName": {
       "type": "string",
+      "defaultValue": "[format('vnet-{0}', uniqueString(resourceGroup().name))]",
       "metadata": {
         "description": "Virtual Network name"
       }
@@ -60,23 +62,9 @@
   },
   "variables": {
     "privateLinkSubnetName": "PrivateLinkSubnet",
-    "functionSubnetName": "FunctionSubnet",
-    "roleId": "bcd981a7-7f74-457b-83e1-cceb9e632ffe"
+    "functionSubnetName": "FunctionSubnet"
   },
   "resources": [
-    {
-      "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2020-08-01-preview",
-      "name": "[format('{0}', guid(uniqueString('roleAssignment-', parameters('digitalTwinsInstanceName'), '-', 'function', '-', variables('roleId'))))]",
-      "properties": {
-        "principalId": "[reference(resourceId('Microsoft.Resources/deployments', 'function')).outputs.functionIdentityPrincipalId.value]",
-        "principalType": "ServicePrincipal",
-        "roleDefinitionId": "[format('/subscriptions/{0}/providers/Microsoft.Authorization/roleDefinitions/{1}', subscription().subscriptionId, variables('roleId'))]"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'function')]"
-      ]
-    },
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-10-01",
@@ -448,7 +436,7 @@
             "value": "[format('{0}stg', toLower(parameters('functionName')))]"
           },
           "functionAppName": {
-            "value": "[format('{0}func', parameters('functionName'))]"
+            "value": "[parameters('functionName')]"
           },
           "serverFarmName": {
             "value": "[parameters('functionName')]"
@@ -470,7 +458,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1272.37030",
-              "templateHash": "10832370794874650194"
+              "templateHash": "13315624796966181569"
             }
           },
           "parameters": {
@@ -494,6 +482,7 @@
             },
             "functionAppName": {
               "type": "string",
+              "maxLength": 16,
               "metadata": {
                 "description": "Name of the function app"
               }
@@ -642,6 +631,79 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'digitaltwins')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "roleassignment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "principalId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function')).outputs.functionIdentityPrincipalId.value]"
+          },
+          "roleId": {
+            "value": "bcd981a7-7f74-457b-83e1-cceb9e632ffe"
+          },
+          "digitalTwinsInstanceName": {
+            "value": "[parameters('digitalTwinsInstanceName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1272.37030",
+              "templateHash": "4060391475579410857"
+            }
+          },
+          "parameters": {
+            "principalId": {
+              "type": "string",
+              "metadata": {
+                "description": "The AAD principal id of for the role-assignment."
+              }
+            },
+            "roleId": {
+              "type": "string",
+              "allowedValues": [
+                "bcd981a7-7f74-457b-83e1-cceb9e632ffe",
+                "d57506d4-4c8d-48b1-8587-93c323f6a5a3"
+              ],
+              "metadata": {
+                "description": "The role id for the role-assignment."
+              }
+            },
+            "digitalTwinsInstanceName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Digital Twins instance."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-08-01-preview",
+              "scope": "[format('Microsoft.DigitalTwins/digitalTwinsInstances/{0}', parameters('digitalTwinsInstanceName'))]",
+              "name": "[format('{0}', guid(uniqueString('roleAssignment-', parameters('principalId'), '-', parameters('roleId'), '-', resourceId('Microsoft.DigitalTwins/digitalTwinsInstances', parameters('digitalTwinsInstanceName')))))]",
+              "properties": {
+                "principalId": "[parameters('principalId')]",
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefintions', parameters('roleId'))]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'function')]"
       ]
     }
   ]

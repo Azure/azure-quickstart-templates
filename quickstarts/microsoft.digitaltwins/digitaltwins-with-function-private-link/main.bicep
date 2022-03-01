@@ -4,12 +4,12 @@ param location string = resourceGroup().location
 @description('Azure Digital Twins instance name')
 param digitalTwinsInstanceName string = 'digitaltwins-${uniqueString(resourceGroup().name)}'
 
-@description('Azure Function name')
+@description('Azure function name')
 @maxLength(16)
-param functionName string
+param functionName string ='${uniqueString(resourceGroup().name)}'
 
 @description('Virtual Network name')
-param virtualNetworkName string
+param virtualNetworkName string = 'vnet-${uniqueString(resourceGroup().name)}'
 
 @description('Virtual Network Address Prefix')
 param vnetAddressPrefix string = '10.0.0.0/22'
@@ -22,7 +22,6 @@ param privateLinkAddressPrefix string = '10.0.1.0/24'
 
 var privateLinkSubnetName = 'PrivateLinkSubnet'
 var functionSubnetName = 'FunctionSubnet'
-var roleId = 'bcd981a7-7f74-457b-83e1-cceb9e632ffe'
 
 module digitaltwins 'modules/digitaltwins.bicep' = {
   name: 'digitaltwins'
@@ -64,7 +63,7 @@ module function 'modules/function.bicep' = {
     location: location
     virtualNetworkName: virtualNetworkName
     storageAccoutName: '${toLower(functionName)}stg'
-    functionAppName: '${functionName}func'
+    functionAppName: functionName
     serverFarmName: functionName
     functionsSubnetName: functionSubnetName
     applicationInsightsName: '${functionName}ai'
@@ -72,11 +71,11 @@ module function 'modules/function.bicep' = {
   }
 }
 
-resource roleassignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
-  name: '${guid(uniqueString('roleAssignment-', digitalTwinsInstanceName, '-', function.name, '-', roleId))}'
-  properties: {
+module roleassignment 'modules/roleassignment.bicep' = {
+  name: 'roleassignment'
+  params: {
     principalId: function.outputs.functionIdentityPrincipalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${roleId}'
+    roleId: 'bcd981a7-7f74-457b-83e1-cceb9e632ffe'
+    digitalTwinsInstanceName: digitalTwinsInstanceName
   }
 }

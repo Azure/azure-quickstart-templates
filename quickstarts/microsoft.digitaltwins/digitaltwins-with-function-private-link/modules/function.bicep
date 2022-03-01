@@ -8,6 +8,7 @@ param virtualNetworkName string
 param storageAccoutName string
 
 @description('Name of the function app')
+@maxLength(16)
 param functionAppName string
 
 @description('Name of the server farm')
