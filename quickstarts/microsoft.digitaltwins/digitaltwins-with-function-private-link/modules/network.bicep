@@ -19,7 +19,7 @@ param privateLinkSubnetName string
 @description('PrivateLink Subnet address prefix')
 param privateLinkSubnetPrefix string
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-03-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-03-01' = {
   name: virtualNetworkName
   location: virtualNetworkLocation
   properties: {
