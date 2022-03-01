@@ -2,6 +2,18 @@
 param digitalTwinsInstanceName string
 
 @description('Location of the Digital Twins instance')
+@allowed([
+  'westcentralus'
+  'westus2'
+  'northeurope'
+  'australiaeast'
+  'westeurope'
+  'eastus'
+  'southcentralus'
+  'southeastasia'
+  'uksouth'
+  'eastus2'
+])
 param digitalTwinsInstanceLocation string
 
 resource digitalTwinsInstance 'Microsoft.DigitalTwins/digitalTwinsInstances@2020-12-01' = {
