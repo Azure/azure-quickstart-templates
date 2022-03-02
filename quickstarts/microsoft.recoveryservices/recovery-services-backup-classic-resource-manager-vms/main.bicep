@@ -19,7 +19,7 @@ param location string = resourceGroup().location
 var backupFabric = 'Azure'
 var protectedItemType = 'Microsoft.ClassicCompute/virtualMachines'
 
-resource protectableItems 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2016-06-01' = [for (item, i) in existingProtectableItems: {
+resource protectedItems 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2016-06-01' = [for (item, i) in existingProtectableItems: {
   name: '${existingRecoveryServicesVaultName}/${backupFabric}/${existingProtectionContainers[i]}/${item}'
   location: location
   properties: {
