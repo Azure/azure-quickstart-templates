@@ -23,3 +23,5 @@ The Backup service is Microsoft's born in the cloud backup solution to backup da
 To know more about Azure Backup Reporting feature refer [this documentation](https://docs.microsoft.com/en-us/azure/backup/backup-azure-configure-reports)
 
 This template creates new storage account and oms workspace as part of deployment where diagnostic data gets pushed. If you want to use existing storage account and workspace, skip those resources from template and supply appropriate resource ids of existing storage account and oms workspace.
+
+
