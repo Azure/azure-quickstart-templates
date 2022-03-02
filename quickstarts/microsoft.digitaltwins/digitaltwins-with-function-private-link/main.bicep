@@ -1,5 +1,17 @@
 @description('The location into which the Azure Storage resources should be deployed.')
-param location string = resourceGroup().location
+@allowed([
+  'westcentralus'
+  'westus2'
+  'northeurope'
+  'australiaeast'
+  'westeurope'
+  'eastus'
+  'southcentralus'
+  'southeastasia'
+  'uksouth'
+  'eastus2'
+])
+param location string
 
 @description('Azure Digital Twins instance name')
 param digitalTwinsInstanceName string = 'digitaltwins-${uniqueString(resourceGroup().name)}'
