@@ -88,6 +88,7 @@ return new JObject(
   new JProperty("company_id", ""),
   new JProperty("request_headers", string.Join(";;", headers)),
   new JProperty("request_body", requestBody),
+  new JProperty("contextTimestamp", context.Timestamp.ToString("o")),
   new JProperty("metadata", $@"")
   ).ToString();}</log-to-eventhub>
         <set-variable name="sent-moesif-request" value="@(true)" />
@@ -112,6 +113,7 @@ return new JObject(
   new JProperty("message-id", context.Variables["moesif-message-id"]),
   new JProperty("status_code", context.Response.StatusCode),
   new JProperty("response_headers", string.Join(";;", headers)),
+  new JProperty("contextTimestamp", context.Timestamp.Add(context.Elapsed).ToString("o")),
   new JProperty("response_body", responseBody)
   ).ToString();}</log-to-eventhub>
                 <set-variable name="sent-moesif-response" value="@(true)" />
@@ -135,6 +137,7 @@ return new JObject(
   new JProperty("message-id", context.Variables["moesif-message-id"]),
   new JProperty("status_code", context.Response.StatusCode),
   new JProperty("response_headers", string.Join(";;", headers)),
+  new JProperty("contextTimestamp", context.Timestamp.Add(context.Elapsed).ToString("o")),
   new JProperty("response_body", responseBody)
   ).ToString();}</log-to-eventhub>
                 <set-variable name="sent-moesif-response" value="@(true)" />
