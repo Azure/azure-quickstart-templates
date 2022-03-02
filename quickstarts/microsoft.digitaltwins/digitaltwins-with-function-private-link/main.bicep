@@ -14,14 +14,14 @@
 param location string
 
 @description('Azure Digital Twins instance name')
-param digitalTwinsInstanceName string = 'digitaltwins-${uniqueString(resourceGroup().name)}'
+param digitalTwinsInstanceName string = 'digitaltwins-${uniqueString(resourceGroup().id)}'
 
 @description('Azure function name')
 @maxLength(16)
-param functionName string ='${uniqueString(resourceGroup().name)}'
+param functionName string ='${uniqueString(resourceGroup().id)}'
 
 @description('Virtual Network name')
-param virtualNetworkName string = 'vnet-${uniqueString(resourceGroup().name)}'
+param virtualNetworkName string = 'vnet-${uniqueString(resourceGroup().id)}'
 
 @description('Virtual Network Address Prefix')
 param vnetAddressPrefix string = '10.0.0.0/22'
@@ -74,7 +74,7 @@ module function 'modules/function.bicep' = {
   params: {
     location: location
     virtualNetworkName: virtualNetworkName
-    storageAccoutName: '${toLower(functionName)}stg'
+    storageAccountName: '${uniqueString(resourceGroup().id)}stg'
     functionAppName: functionName
     serverFarmName: functionName
     functionsSubnetName: functionSubnetName

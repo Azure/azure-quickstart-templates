@@ -17,7 +17,7 @@ resource digitalTwinsInstance 'Microsoft.DigitalTwins/digitalTwinsInstances@2020
 }
 
 resource roleassignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
-  name: '${guid(uniqueString('roleAssignment-', principalId, '-', roleId, '-', digitalTwinsInstance.id))}'
+  name: '${guid(uniqueString(principalId, roleId, digitalTwinsInstance.id))}'
   scope: digitalTwinsInstance
   properties: {
     principalId: principalId

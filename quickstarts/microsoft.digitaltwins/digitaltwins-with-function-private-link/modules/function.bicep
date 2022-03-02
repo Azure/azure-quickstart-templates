@@ -5,7 +5,7 @@ param location string
 param virtualNetworkName string
 
 @description('Storage Account name')
-param storageAccoutName string
+param storageAccountName string
 
 @description('Name of the function app')
 @maxLength(16)
@@ -33,7 +33,7 @@ param functionAppPlanSku string = 'EP1'
 
 
 resource storageaccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
-  name: storageAccoutName
+  name: storageAccountName
   location: location
   kind: 'StorageV2'
   sku: {
