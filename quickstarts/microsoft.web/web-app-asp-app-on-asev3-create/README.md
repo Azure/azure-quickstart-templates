@@ -1,21 +1,16 @@
 # Create an App Service Plan and an App in an App Service Environment v3
 
 ![](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-asp-app-on-asev3-create/PublicLastTestDate.svg)
-
 ![](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-asp-app-on-asev3-create/PublicDeployment.svg)
 
 ![](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-asp-app-on-asev3-create/FairfaxLastTestDate.svg)
-
 ![](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-asp-app-on-asev3-create/FairfaxDeployment.svg)
 
 ![](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-asp-app-on-asev3-create/BestPracticeResult.svg)
-
 ![](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-asp-app-on-asev3-create/CredScanResult.svg)
-
 ![](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-asp-app-on-asev3-create/BicepVersion.svg)
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fweb-app-asp-app-on-asev3-create%2Fazuredeploy.json)
-
 [![](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fweb-app-asp-app-on-asev3-create%2Fazuredeploy.json)
 
 This template deploys an **App Service Environment v3 (ASEv3).** 
@@ -74,59 +69,6 @@ In this template, an application service environment will be created in the App 
 - **phpVersion (string)**: Required. Enable php of App service. Default value is **"OFF"**.
 - **netFrameworkVersion (string)**: Required. .NET Framework version of App service, Default value is **"v5.0"**
 - **alwaysOn (bool)**: Required. Enable Always-on of App service. Default value is **true**.  
-
-## Prerequisites
-
-The prerequisites for the deployment is creating a resource group that ASEv3 is available. Be aware that zone redundant is available in some region. If you don't have any resource group exist, you can use following PowerShell or Az cli to create one.
-
-**PowerShell:**
-
-```powershell
-New-AzResourceGroup -Name "rg-asev3-templates-demo" -location "West US 2"
-```
-
-**Az cli:**
-
-```bash
-az group create --name rg-asev3-templates-demo --location westus2
-```
-
-## Usage
-
-### From Az cli
-- ARM
-
-```bash
-az deployment group create --name asev3-deployment-2021081102 -f azuredeploy.json --parameters azuredeploy.parameters.json -g rg-asev3-templates-demo
-
-az deployment group create --name asev3-appserviceplan-deployment-2021081106 -f nested/azuredeploy.site.json --parameters nested/azuredeploy.site.parameters.json -g rg-asev3-templates-demo
-```
-
-- Bicep
-
-```bash
-az deployment group create --name bicep-asev3-deployment-2021081104 -f main.bicep --parameters azuredeploy.parameters.json -g rg-asev3-templates-demo
-
-az deployment group create --name bicep-asev3-appserviceplan-deployment-2021081108 -f modules/site.bicep --parameters nested/azuredeploy.site.parameters.json -g rg-asev3-templates-demo
-```
-
-### From PowerShell
-
-- ARM
-
-```powershell
-New-AzResourceGroupDeployment -Name "asev3-deployment-2021081101" -ResourceGroupName "rg-asev3-templates-demo" -TemplateFile ".\azuredeploy.json" -TemplateParameterFile ".\azuredeploy.parameters.json"
-
-New-AzResourceGroupDeployment -Name "asev3-appserviceplan-deployment-2021081105" -ResourceGroupName "rg-asev3-templates-demo" -TemplateFile ".\nested\azuredeploy.site.json" -TemplateParameterFile ".\nested\azuredeploy.site.parameters.json"
-```
-
-- Bicep
-
-```powershell
-New-AzResourceGroupDeployment -Name "bicep-asev3-deployment-2021081103" -ResourceGroupName "rg-asev3-templates-demo" -TemplateFile ".\main.bicep" -TemplateParameterFile ".\azuredeploy.parameters.json"
-
-New-AzResourceGroupDeployment -Name "bicep-asev3-appserviceplan-deployment-2021081107" -ResourceGroupName "rg-asev3-templates-demo" -TemplateFile ".\modules\site.bicep" -TemplateParameterFile ".\nested\azuredeploy.site.parameters.json"
-```
 
 ------
 
