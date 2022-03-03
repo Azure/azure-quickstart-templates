@@ -12,7 +12,7 @@ param skuName string = 'Standard_AzureFrontDoor'
 param originHostName string
 
 @description('The name of the DNS zone to create.')
-param dnsZoneName string
+param dnsZoneName string = '${uniqueString(resourceGroup().id)}.azurequickstart.org'
 
 @description('The name of the CNAME record to create within the DNS zone. The record will be an alias to your Front Door endpoint.')
 param cnameRecordName string = 'www'
