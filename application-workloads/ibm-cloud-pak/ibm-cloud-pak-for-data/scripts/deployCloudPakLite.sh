@@ -369,7 +369,7 @@ echo "$CRNAME Installation Finished!!!!"
 echo "*************************************"
 
 # Enable CSV injector patch
-# Can be removed later if this is no longer required. 
+
 oc patch namespacescope common-service --type='json' -p='[{"op":"replace", "path": "/spec/csvInjector/enable", "value":true}]' -n $OPERATORNAMESPACE
 
 
