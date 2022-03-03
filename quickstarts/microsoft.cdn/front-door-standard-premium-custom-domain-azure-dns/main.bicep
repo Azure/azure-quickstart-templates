@@ -9,7 +9,7 @@ param endpointName string = 'afd-${uniqueString(resourceGroup().id)}'
 param skuName string = 'Standard_AzureFrontDoor'
 
 @description('The host name that should be used when connecting from Front Door to the origin.')
-param originHostName string = 'jodownsll.azurewebsites.net'
+param originHostName string
 
 @description('The name of the DNS zone to create.')
 param dnsZoneName string
