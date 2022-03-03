@@ -1,7 +1,7 @@
-@description('Name of alert')
+@description('Specify the name of alert')
 param alertName string
 
-@description('Description of alert')
+@description('Specify a description of alert')
 @allowed([
   'Active'
   'InProgress'
@@ -9,10 +9,10 @@ param alertName string
 ])
 param status string = 'Active'
 
-@description('Email address where the alerts are sent.')
+@description('Specify the email address where the alerts are sent to.')
 param emailAddress string = 'email@example.com'
 
-@description('Email address where the alerts are sent.')
+@description('Specify the email address name where the alerts are sent to.')
 param emailName string = 'Example'
 
 resource emailActionGroup 'microsoft.insights/actionGroups@2021-09-01' = {
