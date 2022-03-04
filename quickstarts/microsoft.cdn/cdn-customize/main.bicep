@@ -55,7 +55,7 @@ param originUrl string
 @description('Location for all resources.')
 param location string = 'global'
 
-resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
+resource profile 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: profileName
   location: location
   properties: {}
@@ -64,7 +64,7 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
   }
 }
 
-resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
+resource endpoint 'Microsoft.Cdn/profiles/endpoints@2021-06-01' = {
   parent: profile
   location: location
   name: endpointName
