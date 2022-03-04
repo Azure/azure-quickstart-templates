@@ -247,8 +247,6 @@
     "updateSubnetSharedTemplateName": "update-subnet-shared-resources.json",
     "updateSubnetSharedTemplateUri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesLocation'), variables('updateSubnetSharedTemplateName'), parameters('_artifactsLocationSasToken')))]",
     "solaceWorkspaceName": "SolaceWorkspace.Template",
-    "workspaceEnabledSharedTemplateName": "workspace-enabled-shared-resources.json",
-    "workspaceEnabledSharedTemplateUri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesLocation'), variables('workspaceEnabledSharedTemplateName'), parameters('_artifactsLocationSasToken')))]",
     "scriptsLocation": "scripts/",
     "solaceInstallScriptName": "install-solace.sh",
     "solaceInstallScriptFileUri": "[uri(parameters('_artifactsLocation'), concat(variables('scriptsLocation'), variables('solaceInstallScriptName'), parameters('_artifactsLocationSasToken')))]",
@@ -259,11 +257,13 @@
     "publicIPAddressType": "Dynamic",
     "virtualNetworkName": "[if(not(empty(parameters('existingVirtualNetworkName'))), parameters('existingVirtualNetworkName'), 'solace-vnet')]",
     "subnetName": "[if(not(empty(parameters('existingSubnetName'))), parameters('existingSubnetName'), 'solace-subnet')]",
-    "nicName": "Nicd",
-    "deploymentModelHighAvailability": { "numberOfNodes": 3 },
-    "deploymentModelSingleNode": { "numberOfNodes": 1 },
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "numberOfInstances": "[variables(concat('deploymentModel', parameters('deploymentModel'))).numberOfNodes]",
+    "nicName": "Nicd",
+    "numberOfNodes": {
+      "HighAvailability": 3,
+      "SingleNode": 1
+    },
+    "numberOfInstances": "[variables('numberOfNodes')[parameters('deploymentModel')]]",
     "monitorNodeIndex": 2,
     "lbName" : "solace-ha-group-loadbalancer",
     "lbPoolName": "solace-ha-group",
@@ -292,12 +292,14 @@
             "storageAccountType": "StandardSSD_LRS"
           }
         }
-      ],
-      "2": [ ]
+      ]
     },
     "adminPasswordDir" : "/mnt/resource/secrets",
     "adminPasswordFile" : "[concat(variables('adminPasswordDir'),'/solOSpasswd')]",
-    "vmExtension" : "[if(empty(parameters('workspaceName')),'DockerExtension','OmsAgentExtension')]"
+    "vmExtension" : "[if(empty(parameters('workspaceName')),'DockerExtension','OmsAgentExtension')]",
+    "workspaceTier": "Free",
+    "containersMarketplaceName": "Containers",
+    "syslogFacilities": [ "kern", "user", "daemon", "auth", "syslog", "uucp", "authpriv", "ftp", "cron", "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7" ]
   },
   "resources": [
     {
@@ -363,23 +365,81 @@
     },
     {
       "condition": "[not(empty(parameters('workspaceName')))]",
-      "apiVersion": "2021-04-01",
-      "type": "Microsoft.Resources/deployments",
-      "name": "[variables('solaceWorkspaceName')]",
+      "apiVersion": "2021-06-01",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "name": "[parameters('workspaceName')]",
+      "location": "[parameters('workspaceRegion')]",
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('workspaceEnabledSharedTemplateUri')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "workspaceName": {
-            "value": "[parameters('workspaceName')]"
-          },
-          "workspaceRegion": {
-            "value": "[parameters('workspaceRegion')]"
+        "sku": {
+          "name": "[variables('workspaceTier')]"
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2020-08-01",
+          "type": "Microsoft.OperationalInsights/workspaces/datasources",
+          "name": "[concat(parameters('workspaceName'), '/syslogCollection')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+          ],
+          "kind": "LinuxSyslogCollection",
+          "properties": {
+            "state": "Enabled"
           }
         }
+      ]
+    },
+    {
+      "condition": "[not(empty(parameters('workspaceName')))]",
+      "apiVersion": "2020-08-01",
+      "type": "Microsoft.OperationalInsights/workspaces/datasources",
+      "name": "[concat(parameters('workspaceName'), '/syslog', copyindex())]",
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+      ],
+      "copy": {
+        "name": "SyslogFacilityLoop",
+        "count": "[length(variables('syslogFacilities'))]"
+      },
+      "kind": "LinuxSyslog",
+      "properties": {
+        "syslogName": "[variables('syslogFacilities')[copyindex()]]",
+        "syslogSeverities": [
+          {
+            "severity": "emerg"
+          },
+          {
+            "severity": "alert"
+          },
+          {
+            "severity": "crit"
+          },
+          {
+            "severity": "err"
+          },
+          {
+            "severity": "warning"
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[not(empty(parameters('workspaceName')))]",
+      "apiVersion": "2015-11-01-preview",
+      "type": "Microsoft.OperationsManagement/solutions",
+      "name": "[concat(variables('containersMarketplaceName'), '(', parameters('workspaceName'), ')')]",
+      "location": "[parameters('workspaceRegion')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+      ],
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+      },
+      "plan": {
+        "name": "[concat(variables('containersMarketplaceName'), '(', parameters('workspaceName'), ')')]",
+        "publisher": "Microsoft",
+        "product": "[concat('OMSGallery/', variables('containersMarketplaceName'))]",
+        "promotionCode": ""
       }
     },
     {
@@ -580,7 +640,7 @@
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
-          "dataDisks": "[variables('dataDisksChoices')[if(or(equals(parameters('dataDiskSize'), '0'), equals(copyindex(), variables('monitorNodeIndex'))), '2', string(copyindex()))]]"
+          "dataDisks": "[if( or(equals(parameters('dataDiskSize'), '0'), equals(copyindex(), variables('monitorNodeIndex'))), json('null'), variables('dataDisksChoices')[string(copyindex())] )]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -608,7 +668,7 @@
         "type": "DockerExtension",
         "typeHandlerVersion": "1.0",
         "autoUpgradeMinorVersion": true,
-        "settings": {}
+        "settings": "[null()]"
       }
     },
     {
@@ -622,18 +682,18 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('dnsLabelForVmIp'), copyindex(), '/extensions/DockerExtension')]",
-        "[resourceId('Microsoft.Resources/deployments/', variables('solaceWorkspaceName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('dnsLabelForVmIp'), copyindex()), 'DockerExtension')]",
+        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.EnterpriseCloud.Monitoring",
         "type": "OmsAgentForLinux",
         "typeHandlerVersion": "1.4",
         "settings": {
-          "workspaceId": "[if(empty(parameters('workspaceName')),  '', reference(variables('solaceWorkspaceName')).outputs.workspaceId.value)]"
+          "workspaceId": "[if(empty(parameters('workspaceName')),  '', reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2021-06-01').customerId)]"
         },
         "protectedSettings": {
-          "workspaceKey": "[if(empty(parameters('workspaceName')),  '', reference(variables('solaceWorkspaceName')).outputs.workspaceKey.value)]"
+          "workspaceKey": "[if(empty(parameters('workspaceName')),  '', listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2021-06-01').primarySharedKey)]"
         }
       }
     },
@@ -647,7 +707,7 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('dnsLabelForVmIp'), copyindex(), '/extensions/', variables('vmExtension'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('dnsLabelForVmIp'), copyindex()), variables('vmExtension'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -661,7 +721,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('mkdir -p -m 770 ', variables('adminPasswordDir'), '; echo ', parameters('solaceAdminPassword'), ' > ', variables('adminPasswordFile'), '; bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -d ', parameters('dnsLabelForVmIp'), ' -i ', variables('numberOfInstances'), ' -p ', variables('adminPasswordFile'), ' -n ', parameters('maxNumberOfClientConnections'), ' -q ', parameters('maxNumberOfQueueMessages'), ' -s ', if(equals(copyindex(), variables('monitorNodeIndex')), '0', parameters('dataDiskSize')), if(empty(parameters('workspaceName')), '', concat(' -w ', reference(variables('solaceWorkspaceName')).outputs.workspaceId.value)), ' -u ', parameters('brokerDockerImageReference'))]"
+          "commandToExecute": "[concat('mkdir -p -m 770 ', variables('adminPasswordDir'), '; echo ', parameters('solaceAdminPassword'), ' > ', variables('adminPasswordFile'), '; bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -d ', parameters('dnsLabelForVmIp'), ' -i ', variables('numberOfInstances'), ' -p ', variables('adminPasswordFile'), ' -n ', parameters('maxNumberOfClientConnections'), ' -q ', parameters('maxNumberOfQueueMessages'), ' -s ', if(equals(copyindex(), variables('monitorNodeIndex')), '0', parameters('dataDiskSize')), if(empty(parameters('workspaceName')), '', concat(' -w ', reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2021-06-01').customerId)), ' -u ', parameters('brokerDockerImageReference'))]"
         }
       }
     }
