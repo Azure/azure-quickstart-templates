@@ -2,22 +2,6 @@
 param profileName string
 
 @description('Pricing tier of the CDN Profile.')
-@allowed([
-  'Standard_Verizon'
-  'Premium_Verizon'
-  'Custom_Verizon'
-  'Standard_Akamai'
-  'Standard_ChinaCdn'
-  'Standard_Microsoft'
-  'Premium_ChinaCdn'
-  'Standard_AzureFrontDoor'
-  'Premium_AzureFrontDoor'
-  'Standard_955BandWidth_ChinaCdn'
-  'Standard_AvgBandWidth_ChinaCdn'
-  'StandardPlus_ChinaCdn'
-  'StandardPlus_955BandWidth_ChinaCdn'
-  'StandardPlus_AvgBandWidth_ChinaCdn'
-])
 param sku string = 'Standard_Microsoft'
 
 @description('Name of the CDN Endpoint.')
