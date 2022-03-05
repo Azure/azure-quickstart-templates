@@ -73,6 +73,9 @@ resource asp 'Microsoft.Web/serverfarms@2021-03-01' = {
 resource webApp 'Microsoft.Web/sites@2021-03-01' = {
   name: webAppName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     siteConfig: union(configReference[language],{
       minTlsVersion: '1.2'
