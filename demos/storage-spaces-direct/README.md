@@ -17,7 +17,7 @@ This template creates the following resources by default:
 +	A Windows Server 2016 cluster for storage nodes, provisioned for Storage Spaces Direct (S2D) and the Scale-Out File Server (SOFS) role
 +	One Availability Set for the cluster nodes
 
-To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template to deploy the prerequisite infrastructure. 
+To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/12cdcf0f43514151b9cda1519dc4555e70dde978/application-workloads/active-directory/active-directory-new-domain-ha-2-dc-zones">this template to deploy the prerequisite infrastructure. 
 
 Click the button below to deploy from the portal:
 
