@@ -246,7 +246,6 @@
     "solaceUpdateSubnetName": "SolaceUpdateSubnet.Template",
     "updateSubnetSharedTemplateName": "update-subnet-shared-resources.json",
     "updateSubnetSharedTemplateUri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesLocation'), variables('updateSubnetSharedTemplateName'), parameters('_artifactsLocationSasToken')))]",
-    "solaceWorkspaceName": "SolaceWorkspace.Template",
     "scriptsLocation": "scripts/",
     "solaceInstallScriptName": "install-solace.sh",
     "solaceInstallScriptFileUri": "[uri(parameters('_artifactsLocation'), concat(variables('scriptsLocation'), variables('solaceInstallScriptName'), parameters('_artifactsLocationSasToken')))]",
@@ -296,7 +295,9 @@
     },
     "adminPasswordDir" : "/mnt/resource/secrets",
     "adminPasswordFile" : "[concat(variables('adminPasswordDir'),'/solOSpasswd')]",
-    "vmExtension" : "[if(empty(parameters('workspaceName')),'DockerExtension','OmsAgentExtension')]",
+    "useLogAnalytics": "[not(empty(parameters('workspaceName')))]",
+    "logAnalyticsResourceName": "[if(variables('useLogAnalytics'), parameters('workspaceName'), 'ignored')]",
+    "vmExtension" : "[if(variables('useLogAnalytics'),'OmsAgentExtension','DockerExtension')]",
     "workspaceTier": "Free",
     "containersMarketplaceName": "Containers",
     "syslogFacilities": [ "kern", "user", "daemon", "auth", "syslog", "uucp", "authpriv", "ftp", "cron", "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7" ]
@@ -364,10 +365,10 @@
       }
     },
     {
-      "condition": "[not(empty(parameters('workspaceName')))]",
+      "condition": "[variables('useLogAnalytics')]",
       "apiVersion": "2021-06-01",
       "type": "Microsoft.OperationalInsights/workspaces",
-      "name": "[parameters('workspaceName')]",
+      "name": "[variables('logAnalyticsResourceName')]",
       "location": "[parameters('workspaceRegion')]",
       "properties": {
         "sku": {
@@ -376,11 +377,12 @@
       },
       "resources": [
         {
+          "condition": "[variables('useLogAnalytics')]",
           "apiVersion": "2020-08-01",
           "type": "Microsoft.OperationalInsights/workspaces/datasources",
-          "name": "[concat(parameters('workspaceName'), '/syslogCollection')]",
+          "name": "[concat(variables('logAnalyticsResourceName'), '/syslogCollection')]",
           "dependsOn": [
-            "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+            "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsResourceName'))]"
           ],
           "kind": "LinuxSyslogCollection",
           "properties": {
@@ -390,12 +392,12 @@
       ]
     },
     {
-      "condition": "[not(empty(parameters('workspaceName')))]",
+      "condition": "[variables('useLogAnalytics')]",
       "apiVersion": "2020-08-01",
       "type": "Microsoft.OperationalInsights/workspaces/datasources",
-      "name": "[concat(parameters('workspaceName'), '/syslog', copyindex())]",
+      "name": "[concat(variables('logAnalyticsResourceName'), '/syslog', copyindex())]",
       "dependsOn": [
-        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+        "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsResourceName'))]"
       ],
       "copy": {
         "name": "SyslogFacilityLoop",
@@ -424,19 +426,19 @@
       }
     },
     {
-      "condition": "[not(empty(parameters('workspaceName')))]",
+      "condition": "[variables('useLogAnalytics')]",
       "apiVersion": "2015-11-01-preview",
       "type": "Microsoft.OperationsManagement/solutions",
-      "name": "[concat(variables('containersMarketplaceName'), '(', parameters('workspaceName'), ')')]",
+      "name": "[concat(variables('containersMarketplaceName'), '(', variables('logAnalyticsResourceName'), ')')]",
       "location": "[parameters('workspaceRegion')]",
       "dependsOn": [
-        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+        "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsResourceName'))]"
       ],
       "properties": {
-        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsResourceName'))]"
       },
       "plan": {
-        "name": "[concat(variables('containersMarketplaceName'), '(', parameters('workspaceName'), ')')]",
+        "name": "[concat(variables('containersMarketplaceName'), '(', variables('logAnalyticsResourceName'), ')')]",
         "publisher": "Microsoft",
         "product": "[concat('OMSGallery/', variables('containersMarketplaceName'))]",
         "promotionCode": ""
@@ -672,7 +674,7 @@
       }
     },
     {
-      "condition": "[not(empty(parameters('workspaceName')))]",
+      "condition": "[variables('useLogAnalytics')]",
       "apiVersion": "2021-07-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('dnsLabelForVmIp'), copyindex(), '/OmsAgentExtension')]",
@@ -683,17 +685,17 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('dnsLabelForVmIp'), copyindex()), 'DockerExtension')]",
-        "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+        "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsResourceName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.EnterpriseCloud.Monitoring",
         "type": "OmsAgentForLinux",
         "typeHandlerVersion": "1.4",
         "settings": {
-          "workspaceId": "[if(empty(parameters('workspaceName')),  '', reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2021-06-01').customerId)]"
+          "workspaceId": "[if(not(variables('useLogAnalytics')),  '', reference(resourceId('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsResourceName')), '2021-06-01').customerId)]"
         },
         "protectedSettings": {
-          "workspaceKey": "[if(empty(parameters('workspaceName')),  '', listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2021-06-01').primarySharedKey)]"
+          "workspaceKey": "[if(not(variables('useLogAnalytics')),  '', listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsResourceName')), '2021-06-01').primarySharedKey)]"
         }
       }
     },
@@ -721,7 +723,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('mkdir -p -m 770 ', variables('adminPasswordDir'), '; echo ', parameters('solaceAdminPassword'), ' > ', variables('adminPasswordFile'), '; bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -d ', parameters('dnsLabelForVmIp'), ' -i ', variables('numberOfInstances'), ' -p ', variables('adminPasswordFile'), ' -n ', parameters('maxNumberOfClientConnections'), ' -q ', parameters('maxNumberOfQueueMessages'), ' -s ', if(equals(copyindex(), variables('monitorNodeIndex')), '0', parameters('dataDiskSize')), if(empty(parameters('workspaceName')), '', concat(' -w ', reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2021-06-01').customerId)), ' -u ', parameters('brokerDockerImageReference'))]"
+          "commandToExecute": "[concat('mkdir -p -m 770 ', variables('adminPasswordDir'), '; echo ', parameters('solaceAdminPassword'), ' > ', variables('adminPasswordFile'), '; bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -d ', parameters('dnsLabelForVmIp'), ' -i ', variables('numberOfInstances'), ' -p ', variables('adminPasswordFile'), ' -n ', parameters('maxNumberOfClientConnections'), ' -q ', parameters('maxNumberOfQueueMessages'), ' -s ', if(equals(copyindex(), variables('monitorNodeIndex')), '0', parameters('dataDiskSize')), if(not(variables('useLogAnalytics')), '', concat(' -w ', reference(resourceId('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsResourceName')), '2021-06-01').customerId)), ' -u ', parameters('brokerDockerImageReference'))]"
         }
       }
     }

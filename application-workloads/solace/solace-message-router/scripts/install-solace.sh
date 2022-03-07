@@ -84,7 +84,7 @@ echo "###############################################################"
 # Determine first if solace_uri is a valid docker registry uri
 ## First make sure Docker is actually up
 docker_running=""
-loop_guard=10
+loop_guard=20
 loop_count=0
 while [ ${loop_count} != ${loop_guard} ]; do
   docker_running=`service docker status | grep -o running`
@@ -92,11 +92,20 @@ while [ ${loop_count} != ${loop_guard} ]; do
     ((loop_count++))
     echo "`date` WARN: Tried to launch Solace but Docker in state ${docker_running}"
     sleep 5
+  elif ! docker ps | grep IMAGE; then
+    ((loop_count++))
+    echo "`date` WARN: Docker is not ready yet - trial count: ${loop_count}"
+    sleep 5
   else
     echo "`date` INFO: Docker in state ${docker_running}"
     break
   fi
 done
+if [ ${loop_count} == ${loop_guard} ]; then
+  echo "`date` ERROR: Docker failed to start on VM, exiting" | tee /dev/stderr
+  exit 1
+fi
+
 ## Remove any existing solace image
 if [ "`docker images | grep solace-`" ] ; then
   echo "`date` INFO: Removing existing Solace images from local docker repo"
