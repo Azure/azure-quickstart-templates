@@ -20,9 +20,11 @@ var PolicySigningCertificates_var = {
   }
 }
 
-resource attestationProviderName_resource 'Microsoft.Attestation/attestationProviders@2021-06-01-preview' = {
+resource attestationProvider 'Microsoft.Attestation/attestationProviders@2021-06-01-preview' = {
   name: attestationProviderName
   location: location
   tags: tags
   properties: (empty(policySigningCertificates) ? json('{}') : PolicySigningCertificates_var)
 }
+
+output attestationName string = attestationProviderName
