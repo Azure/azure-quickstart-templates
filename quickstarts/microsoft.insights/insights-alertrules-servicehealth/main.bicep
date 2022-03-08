@@ -16,7 +16,7 @@ param emailAddress string = 'email@example.com'
 param emailName string = 'Example'
 
 resource emailActionGroup 'microsoft.insights/actionGroups@2021-09-01' = {
-  name: 'emailActionGroup'
+  name: 'emailActionGroupName'
   location: 'global'
   properties: {
     groupShortName: 'string'
@@ -31,7 +31,7 @@ resource emailActionGroup 'microsoft.insights/actionGroups@2021-09-01' = {
   }
 }
 
-resource alertName_resource 'Microsoft.Insights/activityLogAlerts@2020-10-01' = {
+resource alert 'Microsoft.Insights/activityLogAlerts@2020-10-01' = {
   name: alertName
   location: 'global'
   properties: {
