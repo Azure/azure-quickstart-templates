@@ -3,27 +3,31 @@ param batchAccountName string = '${toLower(uniqueString(resourceGroup().id))}bat
 
 @description('Storage Account type')
 @allowed([
-  'Standard_LRS'
-  'Standard_GRS'
-  'Standard_ZRS'
   'Premium_LRS'
+  'Premium_ZRS'
+  'Standard_GRS'
+  'Standard_GZRS'
+  'Standard_LRS'
+  'Standard_RAGRS'
+  'Standard_RAGZRS'
+  'Standard_ZRS'
 ])
 param storageAccountsku string = 'Standard_LRS'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-var storageAccount_var = '${uniqueString(resourceGroup().id)}storage'
+var storageAccountName = '${uniqueString(resourceGroup().id)}storage'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
-  name: storageAccount_var
+  name: storageAccountName
   location: location
   sku: {
     name: storageAccountsku
   }
   kind: 'StorageV2'
   tags: {
-    ObjectName: storageAccount_var
+    ObjectName: storageAccountName
   }
   properties: {}
 }
@@ -41,5 +45,5 @@ resource batchAccount 'Microsoft.Batch/batchAccounts@2021-06-01' = {
   }
 }
 
-output storageAccount string = storageAccount_var
+output storageAccountName string = storageAccountName
 output batchAccountName string = batchAccountName
