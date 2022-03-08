@@ -3,14 +3,16 @@ param workspaceName string
 
 @description('Pricing tier: perGB2018 or legacy tiers (Free, Standalone, PerNode, Standard or Premium), which are not available to all customers.')
 @allowed([
-  'pergb2018'
+  'CapacityReservation'
   'Free'
-  'Standalone'
+  'LACluster'
+  'PerGB2018'
   'PerNode'
-  'Standard'
   'Premium'
+  'Standalone'
+  'Standard'
 ])
-param sku string = 'pergb2018'
+param sku string = 'PerGB2018'
 
 @description('Number of days to retain data.')
 @minValue(7)
@@ -62,19 +64,16 @@ resource automationAccount 'Microsoft.Automation/automationAccounts@2021-06-22' 
       name: 'Basic'
     }
   }
-  dependsOn: [
-    workspace
-  ]
 }
 
-resource runbook1 'Microsoft.Automation/automationAccounts/runbooks@2020-01-13-preview' = {
+resource runbook1 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' = {
   parent: automationAccount
-  name: '${sampleGraphicalRunbookName}'
+  name: sampleGraphicalRunbookName
   location: location
   properties: {
     runbookType: 'GraphPowerShell'
-    logProgress: 'false'
-    logVerbose: 'false'
+    logProgress: false
+    logVerbose: false
     description: sampleGraphicalRunbookDescription
     publishContentLink: {
       uri: uri(artifactsLocation, 'scripts/AzureAutomationTutorial.graphrunbook${artifactsLocationSasToken}')
@@ -83,14 +82,14 @@ resource runbook1 'Microsoft.Automation/automationAccounts/runbooks@2020-01-13-p
   }
 }
 
-resource runbook2 'Microsoft.Automation/automationAccounts/runbooks@2020-01-13-preview' = {
+resource runbook2 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' = {
   parent: automationAccount
-  name: '${samplePowerShellRunbookName}'
+  name: samplePowerShellRunbookName
   location: location
   properties: {
     runbookType: 'PowerShell'
-    logProgress: 'false'
-    logVerbose: 'false'
+    logProgress: false
+    logVerbose: false
     description: samplePowerShellRunbookDescription
     publishContentLink: {
       uri: uri(artifactsLocation, 'scripts/AzureAutomationTutorial.ps1${artifactsLocationSasToken}')
@@ -99,14 +98,14 @@ resource runbook2 'Microsoft.Automation/automationAccounts/runbooks@2020-01-13-p
   }
 }
 
-resource runbook3 'Microsoft.Automation/automationAccounts/runbooks@2020-01-13-preview' = {
+resource runbook3 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' = {
   parent: automationAccount
-  name: '${samplePython2RunbookName}'
+  name: samplePython2RunbookName
   location: location
   properties: {
-    runbookType: 'Python2'
-    logProgress: 'false'
-    logVerbose: 'false'
+    runbookType: 'Script'
+    logProgress: false
+    logVerbose: false
     description: samplePython2RunbookDescription
     publishContentLink: {
       uri: uri(artifactsLocation, 'scripts/AzureAutomationTutorialPython2.py${artifactsLocationSasToken}')
@@ -118,7 +117,6 @@ resource runbook3 'Microsoft.Automation/automationAccounts/runbooks@2020-01-13-p
 resource linkedService 'Microsoft.OperationalInsights/workspaces/linkedServices@2020-08-01' = {
   parent: workspace
   name: 'Automation'
-  location: location
   properties: {
     resourceId: automationAccount.id
   }
