@@ -16,6 +16,8 @@ param publicIpAddressName string
 param publicIpAddressType string
 param publicIpAddressSku string
 
+param vmSize string = 'Standard_DS1'
+
 resource RecoveryServicesVault 'Microsoft.RecoveryServices/vaults@2021-03-01' = {
   name: recoveryServicesName
   location: location
@@ -31,7 +33,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i 
   location: location
   properties: {
     hardwareProfile: {
-      vmSize: 'Standard_DS1'
+      vmSize: vmSize
     }
     osProfile: {
       computerName: '${virtualMachineName}${i}'
@@ -172,4 +174,4 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-11-0
 }]
 
 output adminUsername string = adminUsername
-output resourceGroupName string = 'resourceGroup().name'
+output resourceGroupName string = resourceGroup().name

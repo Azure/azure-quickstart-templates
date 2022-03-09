@@ -18,7 +18,7 @@ var v2VmType = 'Microsoft.Compute/virtualMachines'
 var v2VmContainer = 'iaasvmcontainer;iaasvmcontainerv2;'
 var v2Vm = 'vm;iaasvmcontainerv2;'
 
-resource backupProtectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2021-07-01' = [for item in existingVirtualMachines: {
+resource backupProtectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2021-03-01' = [for item in existingVirtualMachines: {
   name: '${existingRecoveryServicesVault}/${backupFabric}/${v2VmContainer}${existingVirtualMachinesResourceGroup};${item}/${v2Vm}${existingVirtualMachinesResourceGroup};${item}'
   location: location
   properties: {
