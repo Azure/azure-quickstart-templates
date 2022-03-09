@@ -6,7 +6,7 @@ param location string = resourceGroup().location
 
 param policySigningCertificates string = ''
 
-var PolicySigningCertificates_var = {
+var PolicySigningCertificates = {
   PolicySigningCertificates: {
     keys: [
       {
@@ -23,7 +23,7 @@ var PolicySigningCertificates_var = {
 resource attestationProvider 'Microsoft.Attestation/attestationProviders@2021-06-01-preview' = {
   name: attestationProviderName
   location: location
-  properties: (empty(policySigningCertificates) ? json('{}') : PolicySigningCertificates_var)
+  properties: (empty(policySigningCertificates) ? json('{}') : PolicySigningCertificates)
 }
 
 output attestationName string = attestationProviderName
