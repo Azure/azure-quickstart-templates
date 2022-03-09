@@ -24,7 +24,7 @@ param agentCount int = 3
 param agentVMSize string = 'Standard_D2s_v3'
 
 @description('The authorized IP ranges.')
-param authorizedIPRange string = ''
+param authorizedIPRange string
 
 @description('User name for the Linux Virtual Machines.')
 param linuxAdminUsername string
