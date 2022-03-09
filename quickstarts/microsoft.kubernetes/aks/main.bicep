@@ -33,13 +33,13 @@ param linuxAdminUsername string
 param sshRSAPublicKey string
 
 @description('Specifies whether enabling AAD integration.')
-param aadEnabled bool = false
+param aadEnabled bool = true
 
 @description('Specifies whether to enable managed AAD integration.')
 param aadProfileManaged bool = false
 
 @description('Specifies whether to  to enable Azure RBAC for Kubernetes authorization.')
-param aadProfileEnableAzureRBAC bool = false
+param aadProfileEnableAzureRBAC bool = true
 
 @description('Specifies the AAD group object IDs that will have admin role of the cluster.')
 param aadProfileAdminGroupObjectIDs array = []
