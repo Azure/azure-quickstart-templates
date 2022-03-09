@@ -3,6 +3,7 @@
 @maxLength(60)
 param name string
 
+@description('The pricing tier of the search service you want to create (for example, basic or standard).')
 @allowed([
   'free'
   'basic'
@@ -12,7 +13,6 @@ param name string
   'storage_optimized_l1'
   'storage_optimized_l2'
 ])
-@description('The pricing tier of the search service you want to create (for example, basic or standard).')
 param sku string = 'standard'
 
 @description('Replicas distribute search workloads across the service. You need at least two replicas to support high availability of query workloads (not applicable to the free tier).')
@@ -41,7 +41,7 @@ param hostingMode string = 'default'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-resource search 'Microsoft.Search/searchServices@2020-08-01' = {
+resource searchService 'Microsoft.Search/searchServices@2021-04-01' = {
   name: name
   location: location
   sku: {
