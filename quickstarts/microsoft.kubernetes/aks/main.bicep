@@ -5,7 +5,7 @@ param clusterName string = 'aks101cluster'
 param location string = resourceGroup().location
 
 @description('Specifies the version of Kubernetes specified when creating the managed cluster.')
-param aksClusterKubernetesVersion string = '1.19.7'
+param aksClusterKubernetesVersion string = '1.22.4'
 
 @description('Optional DNS prefix to use with hosted Kubernetes API server FQDN.')
 param dnsPrefix string
