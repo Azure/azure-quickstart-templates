@@ -1,0 +1,252 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "metadata": {
+      "_generator": {
+        "name": "bicep",
+        "version": "0.4.1272.37030",
+        "templateHash": "12420013644131801827"
+      }
+    },
+    "parameters": {
+        "numberOfInstances": {
+            "type": "int"
+        },
+        "recoveryServicesName":{
+            "type": "string"
+        },
+        "virtualMachineName": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "string"
+        },
+        "virtualNetworkName": {
+            "type": "string"
+        },
+        "networkInterfaceName": {
+            "type": "string"
+        },
+        "networkSecurityGroupName": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "adminPassword": {
+            "type": "secureString"
+        },
+        "addressPrefix": {
+            "type": "string"
+        },
+        "subnetName": {
+            "type": "string"
+        },
+        "subnetPrefix": {
+            "type": "string"
+        },
+        "publicIpAddressName": {
+            "type": "string"
+        },
+        "publicIpAddressType": {
+            "type": "string"
+        },
+        "publicIpAddressSku": {
+            "type": "string"
+        }
+    },
+    "resources": [
+      {
+      "type": "Microsoft.RecoveryServices/vaults",
+      "apiVersion": "2021-03-01",
+      "name": "[parameters('recoveryServicesName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "RS0",
+        "tier": "Standard"
+      },
+      "properties": {}
+    },
+     {
+        "copy": {
+         "name": "virtualMachine",
+          "count": "[length(range(0, parameters('numberOfInstances')))]"
+        },
+        "type": "Microsoft.Compute/virtualMachines",
+        "apiVersion": "2021-03-01",
+        "name": "[format('{0}{1}', parameters('virtualMachineName'), range(0, parameters('numberOfInstances'))[copyIndex()])]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "hardwareProfile": {
+            "vmSize": "Standard_DS1"
+          },
+          "osProfile": {
+            "computerName": "[format('{0}{1}', parameters('virtualMachineName'), range(0, parameters('numberOfInstances'))[copyIndex()])]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "MicrosoftWindowsServer",
+              "offer": "WindowsServer",
+              "sku": "2012-R2-Datacenter",
+              "version": "latest"
+            },
+            "osDisk": {
+              "createOption": "FromImage",
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              }
+            },
+            "dataDisks": [
+              {
+                "createOption": "Empty",
+                "lun": 0,
+                "diskSizeGB": 1023,
+                "caching": "ReadOnly",
+                "managedDisk": {
+                  "storageAccountType": "Premium_LRS"
+                }
+              }
+            ]
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}{1}', parameters('networkInterfaceName'), range(0, parameters('numberOfInstances'))[copyIndex()]))]"
+              }
+            ]
+          }
+        },
+        "dependsOn": [
+          "networkInterface"
+        ]
+      },
+      {
+      "copy": {
+        "name": "virtualNetwork",
+        "count": "[length(range(0, parameters('numberOfInstances')))]"
+      },
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-11-01",
+      "name": "[format('{0}{1}', parameters('virtualNetworkName'), range(0, parameters('numberOfInstances'))[copyIndex()])]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "copy": {
+        "name": "networkInterface",
+        "count": "[length(range(0, parameters('numberOfInstances')))]"
+      },
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-11-01",
+      "name": "[format('{0}{1}', parameters('networkInterfaceName'), range(0, parameters('numberOfInstances'))[copyIndex()])]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('{0}{1}', parameters('virtualNetworkName'), range(0, parameters('numberOfInstances'))[copyIndex()]), parameters('subnetName'))]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', format('{0}{1}', parameters('publicIpAddressName'), range(0, parameters('numberOfInstances'))[copyIndex()]))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}{1}', parameters('networkSecurityGroupName'), range(0, parameters('numberOfInstances'))[copyIndex()]))]"
+        }
+      },
+      "dependsOn": [
+        "networkSecurityGroup",
+        "publicIpAddress",
+        "virtualNetwork"
+      ]
+    },
+    {
+      "copy": {
+        "name": "publicIpAddress",
+        "count": "[length(range(0, parameters('numberOfInstances')))]"
+      },
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-11-01",
+      "name": "[format('{0}{1}', parameters('publicIpAddressName'), range(0, parameters('numberOfInstances'))[copyIndex()])]",
+      "sku": {
+        "name": "[parameters('publicIpAddressSku')]"
+      },
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIpAddressType')]"
+      }
+    },
+    {
+      "copy": {
+        "name": "networkSecurityGroup",
+        "count": "[length(range(0, parameters('numberOfInstances')))]"
+      },
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-11-01",
+      "name": "[format('{0}{1}', parameters('networkSecurityGroupName'), range(0, parameters('numberOfInstances'))[copyIndex()])]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "RDP",
+            "properties": {
+              "priority": 300,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "3389"
+            }
+          },
+          {
+            "name": "default-allow-sql",
+            "properties": {
+              "priority": 1500,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "1433"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "adminUsername": {
+      "type": "string",
+      "value": "[parameters('adminUsername')]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "resourceGroup().name"
+    }
+  }
+}
