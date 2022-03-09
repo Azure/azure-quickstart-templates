@@ -3,7 +3,7 @@ param attestationProviderName string = uniqueString(resourceGroup().name, deploy
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
-param tags object = {}
+
 param policySigningCertificates string = ''
 
 var PolicySigningCertificates_var = {
@@ -23,7 +23,6 @@ var PolicySigningCertificates_var = {
 resource attestationProvider 'Microsoft.Attestation/attestationProviders@2021-06-01-preview' = {
   name: attestationProviderName
   location: location
-  tags: tags
   properties: (empty(policySigningCertificates) ? json('{}') : PolicySigningCertificates_var)
 }
 
