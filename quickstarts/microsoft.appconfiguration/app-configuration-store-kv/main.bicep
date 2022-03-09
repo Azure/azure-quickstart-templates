@@ -34,7 +34,8 @@ resource configStore 'Microsoft.AppConfiguration/configurationStores@2021-10-01-
 }
 
 resource configStoreKeyValue 'Microsoft.AppConfiguration/configurationStores/keyValues@2021-10-01-preview' = [for (item, i) in keyValueNames: {
-  name: '${configStoreName}/${item}'
+  parent: configStore
+  name: item
   properties: {
     value: keyValueValues[i]
     contentType: contentType
