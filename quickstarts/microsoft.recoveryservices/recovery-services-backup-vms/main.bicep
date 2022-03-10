@@ -1,5 +1,5 @@
 @description('Resource group where the virtual machines are located. This can be different than resource group of the vault. ')
-param existingVirtualMachinesResourceGroup string 
+param existingVirtualMachinesResourceGroup string
 
 @description('Array of Azure virtual machines. e.g. ["vm1","vm2","vm3"]')
 param existingVirtualMachines array
