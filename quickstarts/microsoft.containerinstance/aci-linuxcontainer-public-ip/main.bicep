@@ -24,7 +24,7 @@ param memoryInGb int = 2
 ])
 param restartPolicy string = 'Always'
 
-resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-10-01' = {
+resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
   name: name
   location: location
   properties: {
