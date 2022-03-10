@@ -23,7 +23,7 @@ resource backupProtectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/pr
   location: location
   properties: {
     protectedItemType: v2VmType
-    policyId: resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', existingRecoveryServicesVault, existingBackupPolicy)
+    policyId: resourceId(subscription().subscriptionId, existingVirtualMachinesResourceGroup,'Microsoft.RecoveryServices/vaults/backupPolicies', existingRecoveryServicesVault, existingBackupPolicy)
     sourceResourceId: resourceId(subscription().subscriptionId, existingVirtualMachinesResourceGroup, 'Microsoft.Compute/virtualMachines', item)
   }
 }]
