@@ -16,7 +16,7 @@ param publicIpAddressName string
 param publicIpAddressType string
 param publicIpAddressSku string
 
-param vmSize string = 'Standard_DS1'
+param virtualMachineSize string = 'Standard_B1s'
 
 resource RecoveryServicesVault 'Microsoft.RecoveryServices/vaults@2021-03-01' = {
   name: recoveryServicesName
@@ -33,7 +33,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i 
   location: location
   properties: {
     hardwareProfile: {
-      vmSize: vmSize
+      vmSize: virtualMachineSize
     }
     osProfile: {
       computerName: '${virtualMachineName}${i}'
