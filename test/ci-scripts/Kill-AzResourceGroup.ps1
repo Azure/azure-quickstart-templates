@@ -47,7 +47,7 @@ foreach ($vault in $vaults) {
         Write-Host "Recovery Services Vault Disable (storage)..."
         $bi = Get-AzRecoveryServicesBackupItem -VaultId $vault.ID -Container $c -WorkloadType AzureFiles -Verbose
         Disable-AzRecoveryServicesBackupProtection -VaultId $vault.ID -Item $bi -RemoveRecoveryPoints -Verbose -Force
-        Unregister-AzRecoveryServicesBackupContainer -VaultId $vault.ID -Container $c -Verbose
+        Unregister-AzRecoveryServicesBackupContainer -VaultId $vault.ID -Container $c -Verbose -Force
     }
     
     #VM Backups
@@ -56,10 +56,20 @@ foreach ($vault in $vaults) {
         Write-Host "Recovery Services Vault Disable (AzureVM)..."
         $bi = Get-AzRecoveryServicesBackupItem -VaultId $vault.ID -Container $c -WorkloadType AzureVM -Verbose
         Disable-AzRecoveryServicesBackupProtection -VaultId $vault.ID -Item $bi -RemoveRecoveryPoints -Verbose -Force
-        Unregister-AzRecoveryServicesBackupContainer -VaultId $vault.ID -Container $c -Verbose
+        Unregister-AzRecoveryServicesBackupContainer -VaultId $vault.ID -Container $c -Verbose -Force
     }
 
-
+    #VMApp Backups (SQL AO)
+    $rcs = Get-AzRecoveryServicesBackupContainer -VaultId $vault.ID -ContainerType AzureVMAppContainer -Verbose
+    foreach ($c in $rcs) {
+        Write-Host "Recovery Services Vault Disable (AzureVMAppContainer)..."
+        
+        # Note the WorkloadType here is MSSQL, I think we may need another loop to go through all the different
+        # workload types for VM Apps - IDK if we can enumerate the workload types or we'd have to hardcode them
+        $bi = Get-AzRecoveryServicesBackupItem -VaultId $vault.ID -Container $c -WorkloadType MSSQL -Verbose
+        Disable-AzRecoveryServicesBackupProtection -VaultId $vault.ID -Item $bi -RemoveRecoveryPoints -Verbose -Force
+        Unregister-AzRecoveryServicesBackupContainer -VaultId $vault.ID -Container $c -Verbose -Force
+    }
 
     #Remove-AzRecoveryServicesVault -Vault $vault -Verbose
 }
