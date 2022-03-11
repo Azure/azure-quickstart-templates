@@ -15,7 +15,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-create-vm-and-configure-backup%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-create-vm-and-configure-backup%2Fazuredeploy.json)
 
-This template allows you to deploy Windows VM and Recovery Services Vault configured with the `DefaultPolicy` for Protection. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/backup/quick-backup-vm-template) article.
+This JSON and Bicep template allows you to deploy Windows VM and Recovery Services Vault configured with the `DefaultPolicy` for Protection. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/backup/quick-backup-vm-template) article.
 
 If you're new to Azure Backup service, see:
 
@@ -32,3 +32,9 @@ If you're new to the template development, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
 Tags: Azure Backup, Backup, Resource Manager, Resource Manager templates, ARM templates
+
+### Deployment steps
+#### ARM
+You can click the Deploy to Azure button at the beginning of this document. You may alternatively download the template and deploy it using [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deploy-powershell#deploy-local-template), [CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deploy-cli) or use your preferred method of ARM template deployment.
+#### Bicep
+Download the Bicep template and deploy it using [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-powershell), [CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cli) or use your preferred method of Bicep template deployment.
