@@ -4,7 +4,7 @@ targetScope = 'subscription'
 param budgetName string = 'MyBudget'
 
 @description('The total amount of cost or usage to track with the budget')
-param amount string = '1000'
+param amount int = 1000
 
 @description('The time covered by a budget. Tracking of the amount will be reset based on the time grain.')
 @allowed([
@@ -21,10 +21,10 @@ param startDate string
 param endDate string
 
 @description('Threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It is always percent and has to be between 0.01 and 1000.')
-param firstThreshold string = '90'
+param firstThreshold int = 90
 
 @description('Threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It is always percent and has to be between 0.01 and 1000.')
-param secondThreshold string = '110'
+param secondThreshold int = 110
 
 @description('The list of email addresses to send the budget notification to when the threshold is exceeded.')
 param contactEmails array
@@ -32,7 +32,7 @@ param contactEmails array
 @description('The set of values for the resource group filter.')
 param resourceGroupFilterValues array
 
-resource budgetName_resource 'Microsoft.Consumption/budgets@2021-10-01' = {
+resource budget 'Microsoft.Consumption/budgets@2021-10-01' = {
   name: budgetName
   properties: {
     timePeriod: {
