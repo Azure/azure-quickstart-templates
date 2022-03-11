@@ -63,19 +63,19 @@ $pvtendpoints = Get-AzPrivateEndpointConnection -PrivateLinkResourceId $VaultToD
 #this was not in the original script, and was manually added
 foreach($item in $protectableItemsSQL)
 	{
-		Disable-AzRecoveryServicesBackupProtection -Item $item -VaultId $VaultToDelete.ID -RemoveRecoveryPoints -Force 
+		Disable-AzRecoveryServicesBackupProtection -Verbose -Item $item -VaultId $VaultToDelete.ID -RemoveRecoveryPoints -Force 
 	}
 
 
 foreach($item in $backupItemsVM)
     {
-        Disable-AzRecoveryServicesBackupProtection -Item $item -VaultId $VaultToDelete.ID -RemoveRecoveryPoints -Force #stop backup and delete Azure VM backup items
+        Disable-AzRecoveryServicesBackupProtection -Verbose -Item $item -VaultId $VaultToDelete.ID -RemoveRecoveryPoints -Force #stop backup and delete Azure VM backup items
     }
 Write-Host "Disabled and deleted Azure VM backup items"
 
 foreach($item in $backupItemsSQL)
     {
-        Disable-AzRecoveryServicesBackupProtection -Item $item -VaultId $VaultToDelete.ID -RemoveRecoveryPoints -Force #stop backup and delete SQL Server in Azure VM backup items
+        Disable-AzRecoveryServicesBackupProtection -Verbose -Item $item -VaultId $VaultToDelete.ID -RemoveRecoveryPoints -Force #stop backup and delete SQL Server in Azure VM backup items
     }
 Write-Host "Disabled and deleted SQL Server backup items"
 
@@ -87,49 +87,49 @@ Write-Host "Disabled auto-protection and deleted SQL protectable items"
 
 foreach($item in $backupContainersSQL)
     {
-        Unregister-AzRecoveryServicesBackupContainer -Container $item -Force -VaultId $VaultToDelete.ID #unregister SQL Server in Azure VM protected server
+        Unregister-AzRecoveryServicesBackupContainer -Verbose -Container $item -Force -VaultId $VaultToDelete.ID #unregister SQL Server in Azure VM protected server
     }
 Write-Host "Deleted SQL Servers in Azure VM containers"
 
 foreach($item in $backupItemsSAP)
     {
-        Disable-AzRecoveryServicesBackupProtection -Item $item -VaultId $VaultToDelete.ID -RemoveRecoveryPoints -Force #stop backup and delete SAP HANA in Azure VM backup items
+        Disable-AzRecoveryServicesBackupProtection -Verbose -Item $item -VaultId $VaultToDelete.ID -RemoveRecoveryPoints -Force #stop backup and delete SAP HANA in Azure VM backup items
     }
 Write-Host "Disabled and deleted SAP HANA backup items"
 
 foreach($item in $backupContainersSAP)
     {
-        Unregister-AzRecoveryServicesBackupContainer -Container $item -Force -VaultId $VaultToDelete.ID #unregister SAP HANA in Azure VM protected server
+        Unregister-AzRecoveryServicesBackupContainer -Verbose -Container $item -Force -VaultId $VaultToDelete.ID #unregister SAP HANA in Azure VM protected server
     }
 Write-Host "Deleted SAP HANA in Azure VM containers"
 
 foreach($item in $backupItemsAFS)
     {
-        Disable-AzRecoveryServicesBackupProtection -Item $item -VaultId $VaultToDelete.ID -RemoveRecoveryPoints -Force #stop backup and delete Azure File Shares backup items
+        Disable-AzRecoveryServicesBackupProtection -Verbose -Item $item -VaultId $VaultToDelete.ID -RemoveRecoveryPoints -Force #stop backup and delete Azure File Shares backup items
     }
 Write-Host "Disabled and deleted Azure File Share backups"
 
 foreach($item in $StorageAccounts)
     {
-        Unregister-AzRecoveryServicesBackupContainer -container $item -Force -VaultId $VaultToDelete.ID #unregister storage accounts
+        Unregister-AzRecoveryServicesBackupContainer -Verbose -container $item -Force -VaultId $VaultToDelete.ID #unregister storage accounts
     }
 Write-Host "Unregistered Storage Accounts"
 
 foreach($item in $backupServersMARS)
     {
-    	Unregister-AzRecoveryServicesBackupContainer -Container $item -Force -VaultId $VaultToDelete.ID #unregister MARS servers and delete corresponding backup items
+    	Unregister-AzRecoveryServicesBackupContainer -Verbose -Container $item -Force -VaultId $VaultToDelete.ID #unregister MARS servers and delete corresponding backup items
     }
 Write-Host "Deleted MARS Servers"
 
 foreach($item in $backupServersMABS)
     {
-	    Unregister-AzRecoveryServicesBackupManagementServer -AzureRmBackupManagementServer $item -VaultId $VaultToDelete.ID #unregister MABS servers and delete corresponding backup items
+	    Unregister-AzRecoveryServicesBackupManagementServer -Verbose -AzureRmBackupManagementServer $item -VaultId $VaultToDelete.ID #unregister MABS servers and delete corresponding backup items
     }
 Write-Host "Deleted MAB Servers"
 
 foreach($item in $backupServersDPM)
     {
-	    Unregister-AzRecoveryServicesBackupManagementServer -AzureRmBackupManagementServer $item -VaultId $VaultToDelete.ID #unregister DPM servers and delete corresponding backup items
+	    Unregister-AzRecoveryServicesBackupManagementServer -Verbose -AzureRmBackupManagementServer $item -VaultId $VaultToDelete.ID #unregister DPM servers and delete corresponding backup items
     }
 Write-Host "Deleted DPM Servers"
 Write-Host "Ensure that you stop protection and delete backup items from the respective MARS, MAB and DPM consoles as well. Visit https://go.microsoft.com/fwlink/?linkid=2186234 to learn more." -ForegroundColor Yellow
