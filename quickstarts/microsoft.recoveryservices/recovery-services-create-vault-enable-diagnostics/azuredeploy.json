@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1272.37030",
+      "templateHash": "17777279779787949213"
+    }
+  },
   "parameters": {
     "vaultName": {
       "type": "string",
@@ -16,51 +23,21 @@
       }
     },
     "workspaceLocation": {
-            "type": "string",
-            "defaultValue": "",
-            "allowedValues": [
-                "centralus",
-                "eastus",
-                "eastus2",
-                "northcentralus",
-                "northeurope",
-                "southcentralus",
-                "westcentralus",
-                "westeurope",
-                "westus",
-                "westus2",
-                "uaenorth",
-                "switzerlandnorth",
-                "uksouth",
-                "francecentral",
-                "norwayeast",
-                "koreacentral",
-                "australiasoutheast",
-                "australiaeast",
-                "japaneast",
-                "centralindia",
-                "southeastasia",
-                "eastasia",
-                "chinaeast2",
-                "canadacentral",
-                "brazilsouth",
-                "usgovarizona",
-                "usgovvirginia"
-            ],
-            "metadata": {
-                "description": "Specify the workspace region"
-            }
-       }
+      "type": "string",
+      "metadata": {
+        "description": "Specify the workspace region"
+      }
+    }
   },
   "variables": {
-    "omsWorkspaceName": "[concat(uniqueString(resourceGroup().id),'ws')]",
-    "storageAccountName": "[concat(uniqueString(resourceGroup().id),'storage')]",
+    "omsWorkspaceName": "[format('{0}ws', uniqueString(resourceGroup().id))]",
+    "storageAccountName": "[format('{0}storage', uniqueString(resourceGroup().id))]",
     "storageAccountType": "Standard_LRS"
   },
   "resources": [
     {
       "type": "Microsoft.RecoveryServices/vaults",
-      "apiVersion": "2021-02-01",
+      "apiVersion": "2021-07-01",
       "name": "[parameters('vaultName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -71,18 +48,18 @@
     },
     {
       "type": "Microsoft.OperationalInsights/workspaces",
-      "apiVersion": "2015-11-01-preview",
+      "apiVersion": "2021-06-01",
       "name": "[variables('omsWorkspaceName')]",
       "location": "[parameters('workspaceLocation')]",
       "properties": {
         "sku": {
-          "name": "Free"
+          "name": "PerGB2018"
         }
       }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2021-06-01",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -93,12 +70,12 @@
     },
     {
       "type": "Microsoft.RecoveryServices/vaults/providers/diagnosticSettings",
-      "name": "[concat(parameters('vaultName'), '/microsoft.insights/', variables('omsWorkspaceName'))]",
-      "apiVersion": "2017-05-01-preview",
+      "apiVersion": "2021-05-01-preview",
+      "name": "[format('{0}/microsoft.insights/{1}', parameters('vaultName'), variables('omsWorkspaceName'))]",
       "properties": {
         "name": "[variables('omsWorkspaceName')]",
-        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "workspaceId": "[resourceId('microsoft.operationalinsights/workspaces/', variables('omsWorkspaceName'))]",
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('omsWorkspaceName'))]",
         "logs": [
           {
             "category": "AzureBackupReport",
@@ -111,9 +88,9 @@
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[resourceId('microsoft.operationalinsights/workspaces/', variables('omsWorkspaceName'))]"
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('omsWorkspaceName'))]",
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ]
     }
   ]
