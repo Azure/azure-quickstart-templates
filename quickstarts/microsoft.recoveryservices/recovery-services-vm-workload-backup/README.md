@@ -14,7 +14,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vm-workload-backup%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vm-workload-backup%2Fazuredeploy.json)
 
-### This template creates a Recovery Services Vault and a Workload specific Backup Policy. Registers VM with Azure Backup service and Configures Protection.
+### This JSON and Bicep template creates a Recovery Services Vault and a Workload specific Backup Policy. Registers VM with Azure Backup service and Configures Protection.
 
 The Backup service is Microsoft's born in the cloud backup solution to backup data that's located on-premises and in Azure. It replaces your existing on-premises or offsite backup solution with a reliable, secure and cost competitive cloud backup solution. It also provides the flexibility of protecting your assets running in the cloud. You can backup Windows Servers, Windows Clients, Hyper-V VMs, Microsoft workloads, Azure Virtual Machines (Windows and Linux) with its in-built resilience and high SLAs. [Learn more](http://aka.ms/backup-learn-more/).
 
@@ -46,4 +46,9 @@ In order to delete the recovery services vault, you first need to stop protectio
 
 To know more about Azure Backup for SQL Server in Azure Virtual Machines [Click Here](https://azure.microsoft.com/en-us/blog/azure-backup-for-sql-server-in-azure-virtual-machines-now-generally-available/)
 
+### Deployment steps
+#### ARM
+You can click the Deploy to Azure button at the beginning of this document. You may alternatively download the template and deploy it using [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deploy-powershell#deploy-local-template), [CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deploy-cli) or use your preferred method of ARM template deployment.
+#### Bicep
+Download the Bicep template and deploy it using [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-powershell), [CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cli) or use your preferred method of Bicep template deployment.
 
