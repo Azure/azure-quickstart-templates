@@ -19,7 +19,7 @@ param CDNSku string = 'Standard_Microsoft'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
+resource profile 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: profileName
   location: location
   sku: {
@@ -27,7 +27,7 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
   }
 }
 
-resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
+resource endpoint 'Microsoft.Cdn/profiles/endpoints@2021-06-01' = {
   parent: profile
   location: location
   name: endpointName
@@ -62,7 +62,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
             {
               name: 'UrlPath'
               parameters: {
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleUrlPathMatchConditionParameters'
+                typeName: 'DeliveryRuleUrlPathMatchConditionParameters'
                 operator: 'BeginsWith'
                 matchValues: [
                   '/images/'
@@ -74,7 +74,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
             {
               name: 'CacheExpiration'
               parameters: {
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleCacheExpirationActionParameters'
+                typeName: 'DeliveryRuleCacheExpirationActionParameters'
                 cacheBehavior: 'Override'
                 cacheType: 'All'
                 cacheDuration: '00:00:30'
