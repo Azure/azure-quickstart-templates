@@ -80,12 +80,12 @@ You need to fill in the following fields (* marks the mandatory ones):
 | VM and Loadbalancer exposure | Specify the type of access to the broker VMs for SSH and to the Load Balancer for broker services. 'Internal' will make them accessible only from the local virtual network. Default is "Public". |
 | DNS Label for LB IP        | Used for the public DNS name of the Load Balancer. Name must satisfy regular expression ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ |
 | DNS Label for VM IP        | Used for the public DNS name of each Virtual Machine. Do not use '-'. The default offers to generate a unique name. |
-| CentOS Version             | The CentOS version for deploying the Docker containers. Use CentOS 7.2, 7.3, or 7.4. |
+| CentOS Version             | The CentOS version for deploying the Docker containers. Use CentOS 7.9. |
 | Max Number of Client Connections | Broker system scaling: the maximum supported number of client connections |
 | Max Number of Queue Messages | Broker system scaling: the maximum number of queue messages, in millions of messages |
-| Message Routing VM Size    | The size of a PubSub+ broker message routing node VM. Important: ensure adequate CPU and Memory resources are available to support the selected broker system scaling parameters. For requirements, check the [Solace documentation](//docs.solace.com/Configuring-and-Managing/SW-Broker-Specific-Config/System-Scaling-Parameters.htm). |
-| Monitor VM Size            | The size of the PubSub+ monitor node VM in a High Availabity deployment. For requirements, check [https://docs.solace.com](//docs.solace.com/Configuring-and-Managing/SW-Broker-Specific-Config/System-Resource-Requirements.htm#res-req-container) |
-| Data Disk Size             | The size of the data disk in GB for diagnostics and message spooling on the Solace Message Routing Nodes. For requirements check https://docs.solace.com. |
+| Message Routing VM Size    | The size of a PubSub+ broker message routing node VM. Important: ensure adequate CPU and Memory resources are available to support the selected broker system scaling parameters. For requirements, check the [Resource calculator](https://docs.solace.com/Assistance-Tools/Resource-Calculator/pubsubplus-resource-calculator.html). |
+| Monitor VM Size            | The size of the PubSub+ monitor node VM in a High Availabity deployment. For requirements, check the [Resource calculator](https://docs.solace.com/Assistance-Tools/Resource-Calculator/pubsubplus-resource-calculator.html) |
+| Data Disk Size             | The size of the data disk in GB for diagnostics and message spooling on the Solace Message Routing Nodes. For requirements, check the [Resource calculator](https://docs.solace.com/Assistance-Tools/Resource-Calculator/pubsubplus-resource-calculator.html). |
 | Broker Docker Image Reference | A reference to the Solace PubSub+ event broker Docker image, from step 1. Either the image name with optional tag in an accessible Docker registry or a download URL. The download URL can be obtained from http://dev.solace.com/downloads/ or it can be a URL to a remotely hosted image version. The default value is `solace/solace-pubsub-standard:latest` |
 | Deployment Model*          | High Availability or Single Node. |
 | Existing Virtual Network Name | Only used if deploying into an existing virtual network and subnet. Specify the Existing Virtual Network Name together with the Existing Subnet Name, otherwise leave it at default blank. |
@@ -132,10 +132,10 @@ The [connect] button at the upper left of the `solacetestvm0`, `solacetestvm1`, 
 
 ![alt text](images/remote_access.png "console with PubSub+ cli")
 
-Use the specified "Admin Username" and "Admin Password" to log in. Once you have access to the base OS command line you can access the PubSub+ CLI with the following command:
+The simplest way is to [create an Azure Bastion first, then use the specified "Admin Username" and "Admin Password" to log in](https://docs.microsoft.com/en-us/azure/bastion/bastion-connect-vm-ssh-linux#username). Once you have access to the base OS command line you can access the PubSub+ CLI with the following command:
 
 ```
-sudo docker exec -it solace /usr/sw/loads/currentload/bin/cli -A
+sudo docker exec -it solace cli
 ```
 
 # Testing data access to the event broker
