@@ -37,10 +37,14 @@ $vaults = Get-AzRecoveryServicesVault -ResourceGroupName $ResourceGroupName -Ver
 
 foreach ($vault in $vaults) {
     Write-Host "Recovery Services Vaults..."
-    #Set-AzRecoveryServicesVaultContext -Vault $vault -Verbose - this is being deprecated use vaultId
-    # disable softDelete
+
+    & "$PSScriptRoot\Kill-AzRecoveryServicesVault.ps1" -ResourceGroup $ResourceGroupName -VaultName $vault.Name
+
+<#
+    Set-AzRecoveryServicesVaultContext -Vault $vault -Verbose - this is being deprecated use vaultId
+    disable softDelete
+
     Set-AzRecoveryServicesVaultProperty -VaultId $vault.ID -SoftDeleteFeatureState disable
-    
     # Storage Backups
     $rcs = Get-AzRecoveryServicesBackupContainer -VaultId $vault.ID -ContainerType AzureStorage -Verbose
     foreach ($c in $rcs) {
@@ -59,9 +63,9 @@ foreach ($vault in $vaults) {
         Unregister-AzRecoveryServicesBackupContainer -VaultId $vault.ID -Container $c -Verbose
     }
 
-
-
     #Remove-AzRecoveryServicesVault -Vault $vault -Verbose
+#>
+
 }
 
 #Note that for SQL Backup vaults the sequence of steps are different and not supported in the AzureRM cmdlets - see the remove-vaults.ps1 script for these steps until we can rewrite this
