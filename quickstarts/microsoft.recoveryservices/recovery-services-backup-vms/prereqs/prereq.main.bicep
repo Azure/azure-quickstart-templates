@@ -1,5 +1,4 @@
 param numberOfInstances int
-param recoveryServicesName string
 param virtualMachineName string
 param adminUsername string
 param virtualNetworkName string
@@ -15,28 +14,17 @@ param subnetPrefix string
 param publicIpAddressName string
 param publicIpAddressType string
 param publicIpAddressSku string
-
 param virtualMachineSize string = 'Standard_B1s'
 
-resource RecoveryServicesVault 'Microsoft.RecoveryServices/vaults@2021-03-01' = {
-  name: recoveryServicesName
-  location: location
-  sku: {
-    name: 'RS0'
-    tier: 'Standard'
-  }
-  properties: {}
-}
-
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i in range(0, numberOfInstances): {
-  name: '${virtualMachineName}${i}'
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i in range(0, length(range(0, numberOfInstances))): {
+  name: '${virtualMachineName}${range(0, numberOfInstances)[i]}'
   location: location
   properties: {
     hardwareProfile: {
       vmSize: virtualMachineSize
     }
     osProfile: {
-      computerName: '${virtualMachineName}${i}'
+      computerName: '${virtualMachineName}${range(0, numberOfInstances)[i]}'
       adminUsername: adminUsername
       adminPassword: adminPassword
     }
@@ -68,7 +56,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i 
     networkProfile: {
       networkInterfaces: [
         {
-          id: resourceId('Microsoft.Network/networkInterfaces', '${networkInterfaceName}${i}')
+          id: resourceId('Microsoft.Network/networkInterfaces', '${networkInterfaceName}${range(0, numberOfInstances)[i]}')
         }
       ]
     }
@@ -78,8 +66,8 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i 
   ]
 }]
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = [for i in range(0, numberOfInstances): {
-  name: '${virtualNetworkName}${i}'
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = [for i in range(0, length(range(0, numberOfInstances))): {
+  name: '${virtualNetworkName}${range(0, numberOfInstances)[i]}'
   location: location
   properties: {
     addressSpace: {
@@ -98,8 +86,8 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = [for i 
   }
 }]
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2020-11-01' = [for i in range(0, numberOfInstances): {
-  name: '${networkInterfaceName}${i}'
+resource networkInterface 'Microsoft.Network/networkInterfaces@2020-11-01' = [for i in range(0, length(range(0, numberOfInstances))): {
+  name: '${networkInterfaceName}${range(0, numberOfInstances)[i]}'
   location: location
   properties: {
     ipConfigurations: [
@@ -107,39 +95,39 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2020-11-01' = [fo
         name: 'ipconfig1'
         properties: {
           subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', '${virtualNetworkName}${i}', subnetName)
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', '${virtualNetworkName}${range(0, numberOfInstances)[i]}', subnetName)
           }
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: resourceId('Microsoft.Network/publicIpAddresses', '${publicIpAddressName}${i}')
+            id: resourceId('Microsoft.Network/publicIpAddresses', '${publicIpAddressName}${range(0, numberOfInstances)[i]}')
           }
         }
       }
     ]
     networkSecurityGroup: {
-      id: resourceId('Microsoft.Network/networkSecurityGroups', '${networkSecurityGroupName}${i}')
+      id: resourceId('Microsoft.Network/networkSecurityGroups', '${networkSecurityGroupName}${range(0, numberOfInstances)[i]}')
     }
   }
   dependsOn: [
-    virtualNetwork
-    publicIpAddress
     networkSecurityGroup
+    publicIpAddress
+    virtualNetwork
   ]
 }]
 
-resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2020-11-01' = [for i in range(0, numberOfInstances): {
+resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2020-11-01' = [for i in range(0, length(range(0, numberOfInstances))): {
+  name: '${publicIpAddressName}${range(0, numberOfInstances)[i]}'
   sku: {
     name: publicIpAddressSku
   }
-  name: '${publicIpAddressName}${i}'
   location: location
   properties: {
     publicIPAllocationMethod: publicIpAddressType
   }
 }]
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-11-01' = [for i in range(0, numberOfInstances): {
-  name: '${networkSecurityGroupName}${i}'
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-11-01' = [for i in range(0, length(range(0, numberOfInstances))): {
+  name: '${networkSecurityGroupName}${range(0, numberOfInstances)[i]}'
   location: location
   properties: {
     securityRules: [

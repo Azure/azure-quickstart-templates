@@ -21,10 +21,18 @@
         "description": "Array of Azure virtual machines. e.g. [\"vm1\",\"vm2\",\"vm3\"]"
       }
     },
-    "existingRecoveryServicesVault": {
-      "type": "string",
+    "vaultName":{
+        "type": "string",
+        "defaultValue":"RecoveryServicesVault",
+        "metadata": {
+          "description": "Name of the Recovery Services Vault"
+      }
+    },
+    "isNewVault": {
+      "type": "bool",
+      "defaultValue": false,
       "metadata": {
-        "description": "Recovery services vault name where the VMs will be backed up to. "
+        "description": "Conditional parameter for New or Existing Vault"
       }
     },
     "existingBackupPolicy": {
@@ -49,6 +57,18 @@
     "v2Vm": "vm;iaasvmcontainerv2;"
   },
   "resources": [
+      {
+      "condition":"[parameters('isNewVault')]",
+      "type": "Microsoft.RecoveryServices/vaults",
+      "apiVersion": "2021-03-01",
+      "name": "[parameters('vaultName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "RS0",
+        "tier": "Standard"
+      },
+      "properties": {}
+    },
     {
       "copy": {
         "name": "backupProtectedItem",
@@ -56,11 +76,14 @@
       },
       "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
       "apiVersion": "2021-03-01",
-      "name": "[format('{0}/{1}/{2}{3};{4}/{5}{6};{7}', parameters('existingRecoveryServicesVault'), variables('backupFabric'), variables('v2VmContainer'), parameters('existingVirtualMachinesResourceGroup'), parameters('existingVirtualMachines')[copyIndex()], variables('v2Vm'), parameters('existingVirtualMachinesResourceGroup'), parameters('existingVirtualMachines')[copyIndex()])]",
+      "name": "[format('{0}/{1}/{2}{3};{4}/{5}{6};{7}', parameters('vaultName'), variables('backupFabric'), variables('v2VmContainer'), parameters('existingVirtualMachinesResourceGroup'), parameters('existingVirtualMachines')[copyIndex()], variables('v2Vm'), parameters('existingVirtualMachinesResourceGroup'), parameters('existingVirtualMachines')[copyIndex()])]",
       "location": "[parameters('location')]",
+      "dependsOn":[
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+      ],
       "properties": {
         "protectedItemType": "[variables('v2VmType')]",
-        "policyId": "[resourceId(subscription().subscriptionId, parameters('existingVirtualMachinesResourceGroup'), 'Microsoft.RecoveryServices/vaults/backupPolicies', parameters('existingRecoveryServicesVault'), parameters('existingBackupPolicy'))]",
+        "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), parameters('existingBackupPolicy'))]",
         "sourceResourceId": "[resourceId(subscription().subscriptionId, parameters('existingVirtualMachinesResourceGroup'), 'Microsoft.Compute/virtualMachines', parameters('existingVirtualMachines')[copyIndex()])]"
       }
     }
