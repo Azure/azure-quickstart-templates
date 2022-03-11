@@ -25,35 +25,35 @@ param simPolicyName string = 'Default-policy'
 @description('The name of the slice')
 param sliceName string = 'slice-1'
 
-@description('The logical name for the packet core instance N2 signalling interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
-param n2Name string = ''
+@description('The name of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
+param controlPlaneAccessInterfaceName string = ''
 
-@description('The IP address for the packet core instance N2 signaling interface')
-param n2IpAddress string
+@description('The IP address of the control plane interface on the access network. In 5G networks this is called the N2 interface whereas in 4G networks this is called the S1-MME interface.')
+param controlPlaneAccessIpAddress string
 
-@description('The logical name for the packet core instance N3 signalling interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
-param n3Name string = ''
+@description('The logical name of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
+param dataPlaneAccessInterfaceName string = ''
 
-@description('The IP address for the packet core instance N3 interface')
-param n3IpAddress string
+@description('The IP address of the user plane interface on the access network. In 5G networks this is called the N3 interface whereas in 4G networks this is called the S1-U interface.')
+param dataPlaneAccessInterfaceIpAddress string
 
 @description('The network address of the access subnet in CIDR notation')
-param n2N3Subnet string
+param accessSubnet string
 
 @description('The access subnet default gateway')
-param n2N3Gateway string
+param accessGateway string
 
-@description('The logical name for the packet core instance N6 signalling interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
-param n6Name string = ''
+@description('The logical name of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface. This should match one of the interfaces configured on your Azure Stack Edge machine.')
+param userPlaneDataInterfaceName string = ''
 
-@description('The IP address for the packet core instance N6 interface')
-param n6IpAddress string
+@description('The IP address of the user plane interface on the data network. In 5G networks this is called the N6 interface whereas in 4G networks this is called the SGi interface.')
+param userPlaneDataInterfaceIpAddress string
 
 @description('The network address of the data subnet in CIDR notation')
-param n6Subnet string
+param userPlaneDataInterfaceSubnet string
 
 @description('The data subnet default gateway')
-param n6Gateway string
+param userPlaneDataInterfaceGateway string
 
 @description('The network address of the subnet from which IP addresses must be allocated to UEs, given in CIDR notation')
 param ueIpPoolPrefix string
@@ -216,11 +216,11 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     }
     coreNetworkTechnology: coreNetworkTechnology
     customLocation: customLocation
-    n2Interface: {
-      ipv4Address: n2IpAddress
-      ipv4Subnet: n2N3Subnet
-      ipv4Gateway: n2N3Gateway
-      name: n2Name
+    controlPlaneAccessInterface: {
+      ipv4Address: controlPlaneAccessIpAddress
+      ipv4Subnet: accessSubnet
+      ipv4Gateway: accessGateway
+      name: controlPlaneAccessInterfaceName
     }
   }
 
@@ -228,11 +228,11 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
     name: siteName
     location: location
     properties: {
-      n3Interface: {
-        ipv4Address: n3IpAddress
-        ipv4Subnet: n2N3Subnet
-        ipv4Gateway: n2N3Gateway
-        name: n3Name
+      dataPlaneAccessInterface: {
+        ipv4Address: dataPlaneAccessInterfaceIpAddress
+        ipv4Subnet: accessSubnet
+        ipv4Gateway: accessGateway
+        name: dataPlaneAccessInterfaceName
       }
     }
 
@@ -240,11 +240,11 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       name: dataNetworkName
       location: location
       properties: {
-        n6Interface: {
-          ipv4Address: n6IpAddress
-          ipv4Subnet: n6Subnet
-          ipv4Gateway: n6Gateway
-          name: n6Name
+        userPlaneDataInterface: {
+          ipv4Address: userPlaneDataInterfaceIpAddress
+          ipv4Subnet: userPlaneDataInterfaceSubnet
+          ipv4Gateway: userPlaneDataInterfaceGateway
+          name: userPlaneDataInterfaceName
         }
         userEquipmentAddressPoolPrefix: [
           ueIpPoolPrefix
