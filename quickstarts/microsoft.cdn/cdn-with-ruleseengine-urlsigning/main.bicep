@@ -40,7 +40,7 @@ param CDNSku string = 'Standard_Microsoft'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
+resource profile 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: profileName
   location: location
   sku: {
@@ -48,7 +48,7 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
   }
 }
 
-resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
+resource endpoint 'Microsoft.Cdn/profiles/endpoints@2021-06-01' = {
   parent: profile
   location: location
   name: endpointName
@@ -77,7 +77,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
       {
         keyId: 'key1'
         keySourceParameters: {
-          '@odata.type': '#Microsoft.Azure.Cdn.Models.KeyVaultSigningKeyParameters'
+          typeName: 'KeyVaultSigningKeyParameters'
           subscriptionId: urlSigningKeysSubId
           resourceGroupName: urlSigningKeysResourceGroup
           vaultName: urlSigningKeysVaultName
@@ -88,7 +88,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
       {
         keyId: 'key2'
         keySourceParameters: {
-          '@odata.type': '#Microsoft.Azure.Cdn.Models.KeyVaultSigningKeyParameters'
+          typeName: 'KeyVaultSigningKeyParameters'
           subscriptionId: urlSigningKeysSubId
           resourceGroupName: urlSigningKeysResourceGroup
           vaultName: urlSigningKeysVaultName
@@ -111,7 +111,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
                 matchValues: [
                   '/urlsigning/test'
                 ]
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleUrlPathMatchConditionParameters'
+                typeName: 'DeliveryRuleUrlPathMatchConditionParameters'
               }
             }
           ]
@@ -121,7 +121,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
               parameters: {
                 keyId: 'key1'
                 algorithm: 'SHA256'
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleUrlSigningActionParameters'
+                typeName: 'DeliveryRuleUrlSigningActionParameters'
               }
             }
             {
@@ -129,7 +129,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
               parameters: {
                 queryStringBehavior: 'Exclude'
                 queryParameters: 'expires,keyid,signature'
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleCacheKeyQueryStringBehaviorActionParameters'
+                typeName: 'DeliveryRuleCacheKeyQueryStringBehaviorActionParameters'
               }
             }
           ]
@@ -145,7 +145,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
                 matchValues: [
                   '/urlsigning/test2'
                 ]
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleUrlPathMatchConditionParameters'
+                typeName: 'DeliveryRuleUrlPathMatchConditionParameters'
               }
             }
           ]
@@ -169,7 +169,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
                     paramName: 'osignature'
                   }
                 ]
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleUrlSigningActionParameters'
+                typeName: 'DeliveryRuleUrlSigningActionParameters'
               }
             }
             {
@@ -177,7 +177,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
               parameters: {
                 queryStringBehavior: 'Exclude'
                 queryParameters: 'oexpires,okeyid,osignature'
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleCacheKeyQueryStringBehaviorActionParameters'
+                typeName: 'DeliveryRuleCacheKeyQueryStringBehaviorActionParameters'
               }
             }
           ]

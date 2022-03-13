@@ -45,7 +45,7 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
   }
 }
 
-resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
+resource profile 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: profileName
   location: location
   tags: {
@@ -57,7 +57,7 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
   properties: {}
 }
 
-resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
+resource endpoint 'Microsoft.Cdn/profiles/endpoints@2021-06-01' = {
   parent: profile
   name: endpointName
   location: location
