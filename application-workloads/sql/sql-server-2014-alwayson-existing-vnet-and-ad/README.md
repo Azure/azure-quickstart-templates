@@ -1,6 +1,6 @@
 # Create a SQL Server 2014 Always On Availability Group in an existing Azure VNET and an existing Active Directory instance
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sql-server-2014-alwayson-existing-vnet-and-ad/PublicLastTestDate.svg)
+![Azure Public Test Date](https://portal.azure.com/#create/Microsoft.Template/uri/https://raw.githubusercontent.com/mbhayes0813/azure-quickstart-templates/master/application-workloads/sql/sqlvm-alwayson-cluster/azuredeploy.json)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sql-server-2014-alwayson-existing-vnet-and-ad/PublicDeployment.svg)
 
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sql-server-2014-alwayson-existing-vnet-and-ad/FairfaxLastTestDate.svg)
