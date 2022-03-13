@@ -22,6 +22,8 @@ resource configStore 'Microsoft.AppConfiguration/configurationStores@2020-07-01-
   sku: {
     name: 'standard'
   }
+  properties: {
+  }
 }
 
 resource configStoreFeatureflag 'Microsoft.AppConfiguration/configurationStores/keyValues@2020-07-01-preview' = {
