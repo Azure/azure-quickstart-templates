@@ -26,13 +26,12 @@ param disableGatewayInAdditionalLocation bool = false
 
 @description('Minimum Api-Version to allow on all clients to Control Plane to prevent users with read-only permissions from accessing service secrets.')
 @allowed([
-  '2019-01-01'
-  '2019-12-01'
-  '2020-06-01-preview'
+  '2021-08-01'
+  '2021-04-01-preview'
 ])
-param minApiVersionToAllowOnControlPlane string = '2019-12-01'
+param minApiVersionToAllowOnControlPlane string = '2021-08-01'
 
-resource apiManagementService 'Microsoft.ApiManagement/service@2020-12-01' = {
+resource apiManagementServiceName_resource 'Microsoft.ApiManagement/service@2021-08-01' = {
   name: apiManagementServiceName
   location: location
   sku: {
@@ -40,6 +39,14 @@ resource apiManagementService 'Microsoft.ApiManagement/service@2020-12-01' = {
     capacity: skuCount
   }
   properties: {
+    additionalLocations: [for item in additionalLocations: {
+      location: item
+      sku: {
+        name: 'Premium'
+        capacity: skuCount
+      }
+      disableGateway: disableGatewayInAdditionalLocation
+    }]
     publisherEmail: publisherEmail
     publisherName: publisherName
     apiVersionConstraint: {
@@ -64,13 +71,5 @@ resource apiManagementService 'Microsoft.ApiManagement/service@2020-12-01' = {
       'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30': 'false'
       'Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2': 'true'
     }
-    additionalLocations: [for item in additionalLocations: {
-      location: item
-      sku: {
-        name: 'Premium'
-        capacity: skuCount
-      }
-      disableGateway: disableGatewayInAdditionalLocation
-    }]
   }
 }
