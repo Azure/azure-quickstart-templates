@@ -7,7 +7,7 @@ param namespaceName string
 @description('Specifies the Azure location for all resources.')
 param location string = resourceGroup().location
 
-resource cluster 'Microsoft.EventHub/clusters@2018-01-01-preview' = {
+resource cluster 'Microsoft.EventHub/clusters@2021-11-01' = {
   name: clusterName
   location: location
   sku: {
@@ -16,7 +16,7 @@ resource cluster 'Microsoft.EventHub/clusters@2018-01-01-preview' = {
   }
 }
 
-resource namespace 'Microsoft.EventHub/namespaces@2021-01-01-preview' = {
+resource namespace 'Microsoft.EventHub/namespaces@2021-11-01' = {
   name: namespaceName
   location: location
   sku: {
