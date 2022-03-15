@@ -3,14 +3,10 @@ param batchAccountName string = '${toLower(uniqueString(resourceGroup().id))}bat
 
 @description('Storage Account type')
 @allowed([
-  'Premium_LRS'
-  'Premium_ZRS'
-  'Standard_GRS'
-  'Standard_GZRS'
   'Standard_LRS'
-  'Standard_RAGRS'
-  'Standard_RAGZRS'
+  'Standard_GRS'
   'Standard_ZRS'
+  'Premium_LRS'
 ])
 param storageAccountsku string = 'Standard_LRS'
 
