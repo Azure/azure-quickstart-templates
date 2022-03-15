@@ -81,7 +81,7 @@ var locations = [
   }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
+resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
   name: accountName_var
   location: location
   kind: 'GlobalDocumentDB'
@@ -93,7 +93,7 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-04-15'
   }
 }
 
-resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
+resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-10-15' = {
   name: '${accountName_resource.name}/${databaseName}'
   properties: {
     resource: {
@@ -102,7 +102,7 @@ resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlData
   }
 }
 
-resource accountName_databaseName_containerName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-04-15' = {
+resource accountName_databaseName_containerName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-10-15' = {
   name: '${accountName_databaseName.name}/${containerName}'
   properties: {
     resource: {
