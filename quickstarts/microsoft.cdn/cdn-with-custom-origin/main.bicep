@@ -19,7 +19,7 @@ param CDNSku string = 'Standard_Microsoft'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-resource profile 'Microsoft.Cdn/profiles@2020-04-15' = {
+resource profile 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: profileName
   location: location
   sku: {
@@ -27,7 +27,7 @@ resource profile 'Microsoft.Cdn/profiles@2020-04-15' = {
   }
 }
 
-resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-04-15' = {
+resource endpoint 'Microsoft.Cdn/profiles/endpoints@2021-06-01' = {
   parent: profile
   name: endpointName
   location: location
