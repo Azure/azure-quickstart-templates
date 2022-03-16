@@ -48,7 +48,6 @@ param containerName string = 'myContainer'
 @description('The throughput for the container')
 param throughput int = 400
 
-var accountName_var = toLower(accountName)
 var consistencyPolicy = {
   Eventual: {
     defaultConsistencyLevel: 'Eventual'
@@ -81,8 +80,8 @@ var locations = [
   }
 ]
 
-resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
-  name: accountName_var
+resource account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
+  name: toLower(accountName)
   location: location
   kind: 'GlobalDocumentDB'
   properties: {
@@ -93,8 +92,8 @@ resource accountName_resource 'Microsoft.DocumentDB/databaseAccounts@2021-10-15'
   }
 }
 
-resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-10-15' = {
-  name: '${accountName_resource.name}/${databaseName}'
+resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-10-15' = {
+  name: '${account.name}/${databaseName}'
   properties: {
     resource: {
       id: databaseName
@@ -102,8 +101,8 @@ resource accountName_databaseName 'Microsoft.DocumentDB/databaseAccounts/sqlData
   }
 }
 
-resource accountName_databaseName_containerName 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-10-15' = {
-  name: '${accountName_databaseName.name}/${containerName}'
+resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-10-15' = {
+  name: '${database.name}/${containerName}'
   properties: {
     resource: {
       id: containerName
