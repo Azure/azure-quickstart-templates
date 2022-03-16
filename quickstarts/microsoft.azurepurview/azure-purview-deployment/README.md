@@ -1,5 +1,14 @@
 # Deploy Azure Purview with Azure Resource Manager (ARM)
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.batch/batch-with-keyvault-pfx-password/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.batch/batch-with-keyvault-pfx-password/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.batch/batch-with-keyvault-pfx-password/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.batch/batch-with-keyvault-pfx-password/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.batch/batch-with-keyvault-pfx-password/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.batch/batch-with-keyvault-pfx-password/CredScanResult.svg)
+
 This template deploys an Azure Purview account using an Azure Resource Manager (ARM) template.
 
 For more information about Azure Purview, [see our overview page](/azure/purview/overview). For more information about deploying Azure Purview across your organization, [see our deployment best practices](/azure/purview/deployment-best-practices).
@@ -28,6 +37,10 @@ The following resources are defined in the template:
 The template performs the following tasks:
 
 * Creates an Azure Purview account in the specified resource group.
+
+## Visualize
+
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.azurepurview%2Fazure-purview-deployment%2Fazuredeploy.json)
 
 ## Open Azure Purview Studio
 
