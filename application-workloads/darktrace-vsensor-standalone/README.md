@@ -74,11 +74,15 @@ Manual post-checks are currently recommended to mitigate this.
 
 ##### Admin user public key for ssh authentication
 
-The Azure Portal offers three options:
+On Azure Portal it may or may not appear `SSH pubic key source` field that offers three options:
 
 ![alt text](images/admin-ssh-public-key.png "Admin user ssh public key")
 
-At the time of writing, the first option "Generate new key pair" does not work as expected and should not be used. Azure support have been notified.
+At the time of writing, the first option "Generate new key pair" does not work as expected and should not be used.
+
+If that field does not appear there will be `Admin Public Key` field with a text box where you can copy/paste your exisitng ssh public key.
+
+Azure support have been notified.
 
 
 Pre-deployment requirements
@@ -131,67 +135,16 @@ If there is a virtual firewall on your network, please ensure access is granted 
 
 
 
-How to deploy the template with Azure Portal
+Provide values for the required parameters
 -------------------
 
-#### Step 1	
-
-Log in the Azure Portal and go to ‘Build your own template in the editor’
-
-* Log into portal.azure.com with the appropriate subscription.
-* Click on ‘Create a resource’:
-
-![alt text](images/create-a-resource.png "Create a resource")
-
-* Then in the search bar type ‘template deployment’ and choose ‘Template deployment (deploy using custom templates)’:
-
-![alt text](images/template-deployment.png "Template deployment")
-
-* On the next screen click on ‘Create’:
-
-![alt text](images/deploy-using-custom-templates.png "Deploy using custom templates")
-
-* Then select ‘Build your own template in the editor’:
-
-![alt text](images/build-your-own-template.png "Build your own template")
-
-* The following screen will be shown:
-
-![alt text](images/edit-template.png "Edit template")
-
-
-#### Step 2
-
-Upload the template as below:  
-
-
-* Click on ‘Load file’
-
-![alt text](images/load-the-template.png "Load the template")
-
-* Select the template file stored locally on your device:
-
-![alt text](images/select-the-template.png "Select the template")
-
-* Then click ‘Save’:
-
-![alt text](images/click-save.png "Click save")
-
-  
-This should not return any errors.
-
-
-
-#### Step 3	
-**Provide values for required parameters**
-
-
-* The template should appear as a form (with some pre-populated values) that expects values for input parameters:
+* The template should appear as a form that expects values for input parameters (with some pre-populated):
 
 ![alt text](images/template-form.png "Template form")
 
 
-* Parameter description  
+* Parameters description  
+
 
 Note: all parameters are necessary.
 
@@ -221,43 +174,8 @@ Note: all parameters are necessary.
 
 There is an example in **[Appendix A](#appendix-a-examples)**. 
 
-
-#### Step 4
-**Deploy**
-
-Once all the parameters have been provided the template can be deployed.
-
-* Click on ‘Next: Review + create >’
-
-Details in **[Appendix A](#appendix-a-examples)**.
-
-* The template and parameters will be validated. If validation is successful, the screen will display “Validation Passed” and the deployment can start by clicking ‘Create’:
-
-Details in **[Appendix A](#appendix-a-examples)**.
-
-The time taken to complete the deployment varies based on the number of VMs.
-
-* When all have completed successfully a report of the following form will be shown:
-
-Details in **[Appendix A](#appendix-a-examples)**.
-
-
-#### Step 5
-**Template outputs**
-
-Once the deployment has completed the template outputs will be shown in the following form:
-
-
-| Output | Description |
-| ------ | ------ |
-| allowedManagementIPsAndRanges | IPs / IP Ranges allowed to ssh to the vSensors on port 22/TCP. |
-
-
-Outputs example in **[Appendix A](#appendix-a-examples)**.
-
-
-#### Step 6
-**Post checks**
+Post deployment checks
+-------------------
 
 As stated under the Considerations section – it is recommended to perform a health check on successful template deployment.  
 Once the deployment has completed successfully, connect to the vSensor(s) and verify the vSensor configuration and health by running:
