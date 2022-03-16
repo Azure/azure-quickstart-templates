@@ -15,7 +15,7 @@ var dataFactoryDataSetInName = 'ArmtemplateTestDatasetIn'
 var dataFactoryDataSetOutName = 'ArmtemplateTestDatasetOut'
 var pipelineName = 'ArmtemplateSampleCopyPipeline'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -24,7 +24,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   kind: 'StorageV2'
 }
 
-resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-04-01' = {
+resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = {
   name: '${storageAccount.name}/default/${blobContainerName}'
 }
 
