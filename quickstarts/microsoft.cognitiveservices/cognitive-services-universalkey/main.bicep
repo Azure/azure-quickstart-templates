@@ -9,7 +9,7 @@ param location string = resourceGroup().location
 ])
 param sku string = 'S0'
 
-resource cognitiveServiceName_resource 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
+resource cognitiveService 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
   name: cognitiveServiceName
   location: location
   sku: {
