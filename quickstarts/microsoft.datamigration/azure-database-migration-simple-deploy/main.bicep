@@ -10,7 +10,7 @@ param vnetName string
 @description('Name of the new subnet associated with the virtual network.')
 param subnetName string
 
-resource vnetName_resource 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: vnetName
   location: location
   properties: {
@@ -22,15 +22,15 @@ resource vnetName_resource 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource vnetName_subnetName 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
-  parent: vnetName_resource
-  name: '${subnetName}'
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+  parent: vnet
+  name: subnetName
   properties: {
     addressPrefix: '10.0.0.0/24'
   }
 }
 
-resource serviceName_resource 'Microsoft.DataMigration/services@2021-10-30-preview' = {
+resource dataMigration 'Microsoft.DataMigration/services@2021-10-30-preview' = {
   name: serviceName
   location: location
   sku: {
@@ -39,6 +39,6 @@ resource serviceName_resource 'Microsoft.DataMigration/services@2021-10-30-previ
     name: 'Standard_1vCores'
   }
   properties: {
-    virtualSubnetId: vnetName_subnetName.id
+    virtualSubnetId: subnet.id
   }
 }
