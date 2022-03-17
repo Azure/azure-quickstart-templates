@@ -1,0 +1,382 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1318.3566",
+      "templateHash": "8048179489567656006"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location into which regionally scoped resources should be deployed. Note that Front Door is a global resource."
+      }
+    },
+    "apiManagementServiceName": {
+      "type": "string",
+      "defaultValue": "[format('apim-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the API Management service instance to create. This must be globally unique."
+      }
+    },
+    "apiManagementPublisherName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the API publisher. This information is used by API Management."
+      }
+    },
+    "apiManagementPublisherEmail": {
+      "type": "string",
+      "metadata": {
+        "description": "The email address of the API publisher. This information is used by API Management."
+      }
+    },
+    "apiManagementSkuName": {
+      "type": "string",
+      "defaultValue": "Developer",
+      "allowedValues": [
+        "Premium",
+        "Standard",
+        "Basic",
+        "Developer"
+      ],
+      "metadata": {
+        "description": "The name of the SKU to use when creating the API Management service instance. This must be a SKU that supports private endpoints."
+      }
+    },
+    "apiManagementSkuCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "The number of worker instances of your API Management service that should be provisioned."
+      }
+    },
+    "frontDoorProxyEndpointName": {
+      "type": "string",
+      "defaultValue": "[format('afd-proxy-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Front Door endpoint to create for the API Management proxy gateway. This must be globally unique."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "api-management",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "serviceName": {
+            "value": "[parameters('apiManagementServiceName')]"
+          },
+          "publisherName": {
+            "value": "[parameters('apiManagementPublisherName')]"
+          },
+          "publisherEmail": {
+            "value": "[parameters('apiManagementPublisherEmail')]"
+          },
+          "skuName": {
+            "value": "[parameters('apiManagementSkuName')]"
+          },
+          "skuCount": {
+            "value": "[parameters('apiManagementSkuCount')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1318.3566",
+              "templateHash": "5531340209601364324"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location into which the API Management resources should be deployed."
+              }
+            },
+            "serviceName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the API Management service instance to create. This must be globally unique."
+              }
+            },
+            "publisherName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the API publisher. This information is used by API Management."
+              }
+            },
+            "publisherEmail": {
+              "type": "string",
+              "metadata": {
+                "description": "The email address of the API publisher. This information is used by API Management."
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "allowedValues": [
+                "Premium",
+                "Standard",
+                "Basic",
+                "Developer"
+              ],
+              "metadata": {
+                "description": "The name of the SKU to use when creating the API Management service instance. This must be a SKU that supports private endpoints."
+              }
+            },
+            "skuCount": {
+              "type": "int",
+              "metadata": {
+                "description": "The number of worker instances of your API Management service that should be provisioned."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service",
+              "apiVersion": "2021-08-01",
+              "name": "[parameters('serviceName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "[parameters('skuName')]",
+                "capacity": "[parameters('skuCount')]"
+              },
+              "properties": {
+                "publisherName": "[parameters('publisherName')]",
+                "publisherEmail": "[parameters('publisherEmail')]",
+                "publicNetworkAccess": "Disabled"
+              }
+            }
+          ],
+          "outputs": {
+            "apiManagementProxyHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('serviceName'))).hostnameConfigurations[0].hostName]"
+            },
+            "apiManagementDeveloperPortalHostName": {
+              "type": "string",
+              "value": "[replace(reference(resourceId('Microsoft.ApiManagement/service', parameters('serviceName'))).developerPortalUrl, 'https://', '')]"
+            },
+            "apiManagementResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ApiManagement/service', parameters('serviceName'))]"
+            },
+            "apiManagementLocation": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('serviceName')), '2021-08-01', 'full').location]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "front-door",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "proxyEndpointName": {
+            "value": "[parameters('frontDoorProxyEndpointName')]"
+          },
+          "proxyOriginHostName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management')).outputs.apiManagementProxyHostName.value]"
+          },
+          "apiManagementResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management')).outputs.apiManagementResourceId.value]"
+          },
+          "apiManagementLocation": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management')).outputs.apiManagementLocation.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1318.3566",
+              "templateHash": "10508049391965974838"
+            }
+          },
+          "parameters": {
+            "proxyOriginHostName": {
+              "type": "string",
+              "metadata": {
+                "description": "The host name that should be used when connecting to the origin for the API Management proxy gateway."
+              }
+            },
+            "proxyEndpointName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Front Door endpoint to create for the API Management proxy gateway. This must be globally unique."
+              }
+            },
+            "apiManagementResourceId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "The resource ID of the API Management instance."
+              }
+            },
+            "apiManagementLocation": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "The location of the API Management instance."
+              }
+            }
+          },
+          "variables": {
+            "skuName": "Premium_AzureFrontDoor",
+            "profileName": "FrontDoor",
+            "proxyOriginGroupName": "Proxy",
+            "proxyOriginName": "ApiManagementProxy",
+            "proxyOriginPrivateLinkGroupId": "Gateway",
+            "proxyRouteName": "ProxyRoute"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Cdn/profiles",
+              "apiVersion": "2021-06-01",
+              "name": "[variables('profileName')]",
+              "location": "global",
+              "sku": {
+                "name": "[variables('skuName')]"
+              }
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}', variables('profileName'), parameters('proxyEndpointName'))]",
+              "location": "global",
+              "properties": {
+                "enabledState": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}', variables('profileName'), variables('proxyOriginGroupName'))]",
+              "properties": {
+                "loadBalancingSettings": {
+                  "sampleSize": 4,
+                  "successfulSamplesRequired": 3
+                },
+                "healthProbeSettings": {
+                  "probePath": "/",
+                  "probeRequestType": "HEAD",
+                  "probeProtocol": "Http",
+                  "probeIntervalInSeconds": 100
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups/origins",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}/{2}', variables('profileName'), variables('proxyOriginGroupName'), variables('proxyOriginName'))]",
+              "properties": {
+                "hostName": "[parameters('proxyOriginHostName')]",
+                "httpPort": 80,
+                "httpsPort": 443,
+                "originHostHeader": "[parameters('proxyOriginHostName')]",
+                "priority": 1,
+                "weight": 1000,
+                "sharedPrivateLinkResource": {
+                  "privateLink": {
+                    "id": "[parameters('apiManagementResourceId')]"
+                  },
+                  "groupId": "[variables('proxyOriginPrivateLinkGroupId')]",
+                  "privateLinkLocation": "[parameters('apiManagementLocation')]",
+                  "requestMessage": "Please approve this connection."
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('proxyOriginGroupName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}/{2}', variables('profileName'), parameters('proxyEndpointName'), variables('proxyRouteName'))]",
+              "properties": {
+                "originGroup": {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('proxyOriginGroupName'))]"
+                },
+                "supportedProtocols": [
+                  "Http",
+                  "Https"
+                ],
+                "patternsToMatch": [
+                  "/*"
+                ],
+                "forwardingProtocol": "HttpsOnly",
+                "linkToDefaultDomain": "Enabled",
+                "httpsRedirect": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', variables('profileName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('proxyEndpointName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', variables('profileName'), variables('proxyOriginGroupName'), variables('proxyOriginName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', variables('profileName'), variables('proxyOriginGroupName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "frontDoorId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles', variables('profileName'))).frontDoorId]"
+            },
+            "frontDoorProxyEndpointHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', variables('profileName'), parameters('proxyEndpointName'))).hostName]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'api-management')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "frontDoorEndpointApiManagementProxyHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door')).outputs.frontDoorProxyEndpointHostName.value]"
+    },
+    "apiManagementProxyHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management')).outputs.apiManagementProxyHostName.value]"
+    },
+    "apiManagementPortalHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management')).outputs.apiManagementDeveloperPortalHostName.value]"
+    }
+  }
+}

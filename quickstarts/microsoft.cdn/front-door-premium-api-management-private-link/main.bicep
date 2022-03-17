@@ -48,4 +48,5 @@ module frontDoor 'modules/front-door.bicep' = {
 }
 
 output frontDoorEndpointApiManagementProxyHostName string = frontDoor.outputs.frontDoorProxyEndpointHostName
+output apiManagementProxyHostName string = apiManagement.outputs.apiManagementProxyHostName
 output apiManagementPortalHostName string = apiManagement.outputs.apiManagementDeveloperPortalHostName
