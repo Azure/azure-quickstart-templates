@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1318.3566",
+      "templateHash": "12826743878525531229"
+    }
+  },
   "parameters": {
     "location": {
       "type": "string",
@@ -156,73 +163,51 @@
     }
   },
   "variables": {
-    "location": "[parameters('location')]",
     "erlocation": "[parameters('location')]",
-    "erCircuitName": "[parameters('erCircuitName')]",
-    "serviceProviderName": "[parameters('serviceProviderName')]",
-    "erpeeringLocation": "[parameters('erpeeringLocation')]",
-    "erSKU_Tier": "[parameters('erSKU_Tier')]",
-    "erSKU_Family": "[parameters('erSKU_Family')]",
-    "erSKU_Name": "[concat(variables('erSKU_Tier'),'_',variables('erSKU_Family'))]",
-    "bandwidthInMbps": "[parameters('bandwidthInMbps')]",
-    "peerASN": "[parameters('peerASN')]",
-    "primaryPeerAddressPrefix": "[parameters('primaryPeerAddressPrefix')]",
-    "secondaryPeerAddressPrefix": "[parameters('secondaryPeerAddressPrefix')]",
-    "vlanId": "[parameters('vlanId')]",
-    "vnetName": "[parameters('vnetName')]",
-    "subnet1Name": "[parameters('subnet1Name')]",
-    "vnetAddressSpace": "[parameters('vnetAddressSpace')]",
-    "subnet1Prefix": "[parameters('subnet1Prefix')]",
-    "gatewaySubnetPrefix": "[parameters('gatewaySubnetPrefix')]",
-    "gatewayName": "[parameters('gatewayName')]",
-    "gatewayPublicIPName": "[concat(variables('gatewayName'),'-pubIP')]",
-    "gatewaySku": "[parameters('gatewaySku')]",
-    "nsg": "nsg"
+    "erSKU_Name": "[format('{0}_{1}', parameters('erSKU_Tier'), parameters('erSKU_Family'))]",
+    "gatewayPublicIPName": "[format('{0}-pubIP', parameters('gatewayName'))]",
+    "nsgName": "nsg"
   },
   "resources": [
     {
-      "comments": "Create the ER circuit",
       "type": "Microsoft.Network/expressRouteCircuits",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('erCircuitName')]",
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('erCircuitName')]",
       "location": "[variables('erlocation')]",
       "sku": {
         "name": "[variables('erSKU_Name')]",
-        "tier": "[variables('erSKU_Tier')]",
-        "family": "[variables('erSKU_Family')]"
+        "tier": "[parameters('erSKU_Tier')]",
+        "family": "[parameters('erSKU_Family')]"
       },
       "properties": {
         "serviceProviderProperties": {
-          "serviceProviderName": "[variables('serviceProviderName')]",
-          "peeringLocation": "[variables('erpeeringLocation')]",
-          "bandwidthInMbps": "[variables('bandwidthInMbps')]"
+          "serviceProviderName": "[parameters('serviceProviderName')]",
+          "peeringLocation": "[parameters('erpeeringLocation')]",
+          "bandwidthInMbps": "[parameters('bandwidthInMbps')]"
         },
         "allowClassicOperations": false
       }
     },
     {
-      "comments": "Create ER private peering",
       "type": "Microsoft.Network/expressRouteCircuits/peerings",
-      "apiVersion": "2020-06-01",
-      "name": "[concat(variables('erCircuitName'),'/','AzurePrivatePeering')]",
-      "location": "[variables('erlocation')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/expressRouteCircuits', variables('erCircuitName'))]"
-      ],
+      "apiVersion": "2021-05-01",
+      "name": "[format('{0}/{1}', parameters('erCircuitName'), 'AzurePrivatePeering')]",
       "properties": {
         "peeringType": "AzurePrivatePeering",
-        "peerASN": "[variables('peerASN')]",
-        "primaryPeerAddressPrefix": "[variables('primaryPeerAddressPrefix')]",
-        "secondaryPeerAddressPrefix": "[variables('secondaryPeerAddressPrefix')]",
-        "vlanId": "[variables('vlanId')]"
-      }
+        "peerASN": "[parameters('peerASN')]",
+        "primaryPeerAddressPrefix": "[parameters('primaryPeerAddressPrefix')]",
+        "secondaryPeerAddressPrefix": "[parameters('secondaryPeerAddressPrefix')]",
+        "vlanId": "[parameters('vlanId')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/expressRouteCircuits', parameters('erCircuitName'))]"
+      ]
     },
     {
-      "comments": "NSG applied to the subnets in VNet1",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('nsg')]",
-      "location": "[variables('location')]",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('nsgName')]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -257,69 +242,62 @@
       }
     },
     {
-      "comments": "it builds a Virtual Network with GatewaySubnet",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('vnetName')]",
-      "location": "[variables('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg'))]"
-      ],
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('vnetAddressSpace')]"
+            "[parameters('vnetAddressSpace')]"
           ]
         },
         "subnets": [
           {
-            "name": "[variables('subnet1Name')]",
+            "name": "[parameters('subnet1Name')]",
             "properties": {
-              "addressPrefix": "[variables('subnet1Prefix')]",
+              "addressPrefix": "[parameters('subnet1Prefix')]",
               "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg'))]"
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
               }
             }
           },
           {
             "name": "GatewaySubnet",
             "properties": {
-              "addressPrefix": "[variables('gatewaySubnetPrefix')]"
+              "addressPrefix": "[parameters('gatewaySubnetPrefix')]"
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+      ]
     },
     {
-      "comments": "public IP of the ExpressRoute Gateway. Only public IP Dynamic allocation is supported",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-05-01",
       "name": "[variables('gatewayPublicIPName')]",
-      "location": "[variables('location')]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
-      "comments": "ExpressRoute Gateway in the GatewaySubnet",
       "type": "Microsoft.Network/virtualNetworkGateways",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('gatewayName')]",
-      "location": "[variables('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('gatewayPublicIPName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
-      ],
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('gatewayName')]",
+      "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
           {
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'GatewaySubnet')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'GatewaySubnet')]"
               },
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('gatewayPublicIPName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('gatewayPublicIPName'))]"
               }
             },
             "name": "gwIPconf"
@@ -327,25 +305,29 @@
         ],
         "gatewayType": "ExpressRoute",
         "sku": {
-          "name": "[variables('gatewaySku')]",
-          "tier": "[variables('gatewaySku')]"
+          "name": "[parameters('gatewaySku')]",
+          "tier": "[parameters('gatewaySku')]"
         },
         "vpnType": "RouteBased"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('gatewayPublicIPName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
     }
   ],
   "outputs": {
     "erCircuitName": {
       "type": "string",
-      "value": "[variables('erCircuitName')]"
+      "value": "[parameters('erCircuitName')]"
     },
     "gatewayName": {
       "type": "string",
-      "value": "[variables('gatewayName')]"
+      "value": "[parameters('gatewayName')]"
     },
     "gatewaySku": {
       "type": "string",
-      "value": "[variables('gatewaySku')]"
+      "value": "[parameters('gatewaySku')]"
     }
   }
 }
