@@ -41,7 +41,6 @@ resource configStoreKeyValue 'Microsoft.AppConfiguration/configurationStores/key
     contentType: contentType
     tags: tags
   }
-
 }]
 
 output reference_key_value_value string = configStoreKeyValue[0].properties.value
