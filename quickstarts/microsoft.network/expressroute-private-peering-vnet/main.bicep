@@ -1,4 +1,4 @@
-@description('Location for all resources deployed in the ARM template')
+@description('Location for all resources deployed in the Bicep file')
 param location string = resourceGroup().location
 
 @description('ExpressRoute peering location')
@@ -78,15 +78,13 @@ param gatewayName string = 'er-gw'
 ])
 param gatewaySku string = 'HighPerformance'
 
-var erlocation = location
-
 var erSKU_Name = '${erSKU_Tier}_${erSKU_Family}'
 var gatewayPublicIPName = '${gatewayName}-pubIP'
 var nsgName = 'nsg'
 
 resource erCircuit 'Microsoft.Network/expressRouteCircuits@2021-05-01' = {
   name: erCircuitName
-  location: erlocation
+  location: location
   sku: {
     name: erSKU_Name
     tier: erSKU_Tier
