@@ -26,6 +26,8 @@ The following resources are deployed as part of the solution:
 - API Management instance with a sample API.
   - The API Management instance must use a [SKU that supports private endpoints](https://docs.microsoft.com/azure/api-management/private-endpoint).
 
+Note that the API Management instance is deployed twice. The first time, it's deployed with public network access enabled. The second time, it's deployed with public network access disabled. This sequencing is required because API Management instances can't have public network access disabled at creation time, otherwise a deployment error occurs.
+
 ### Front Door Standard/Premium
 - A Front Door profile.
   - This sample must be deployed using the premium Front Door SKU, since this is required for Private Link integration.

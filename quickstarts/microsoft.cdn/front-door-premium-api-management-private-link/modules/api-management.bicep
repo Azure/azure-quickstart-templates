@@ -22,6 +22,13 @@ param skuName string
 @description('The number of worker instances of your API Management service that should be provisioned.')
 param skuCount int
 
+@description('Indicates whether or not public endpoint access is allowed for this API Management service.')
+@allowed([
+  'Enabled'
+  'Disabled'
+])
+param publicNetworkAccess string = 'Enabled'
+
 resource apiManagementService 'Microsoft.ApiManagement/service@2021-08-01' = {
   name: serviceName
   location: location
@@ -32,7 +39,7 @@ resource apiManagementService 'Microsoft.ApiManagement/service@2021-08-01' = {
   properties: {
     publisherName: publisherName
     publisherEmail: publisherEmail
-    publicNetworkAccess: 'Disabled'
+    publicNetworkAccess: publicNetworkAccess
   }
 }
 

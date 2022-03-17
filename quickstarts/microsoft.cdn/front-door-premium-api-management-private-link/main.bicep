@@ -25,8 +25,8 @@ param apiManagementSkuCount int = 1
 @description('The name of the Front Door endpoint to create for the API Management proxy gateway. This must be globally unique.')
 param frontDoorProxyEndpointName string = 'afd-proxy-${uniqueString(resourceGroup().id)}'
 
-module apiManagement 'modules/api-management.bicep' = {
-  name: 'api-management'
+module apiManagementDeployment1 'modules/api-management.bicep' = {
+  name: 'api-management-1'
   params: {
     location: location
     serviceName: apiManagementServiceName
@@ -34,6 +34,7 @@ module apiManagement 'modules/api-management.bicep' = {
     publisherEmail: apiManagementPublisherEmail
     skuName: apiManagementSkuName
     skuCount: apiManagementSkuCount
+    publicNetworkAccess: 'Enabled'
   }
 }
 
@@ -41,12 +42,28 @@ module frontDoor 'modules/front-door.bicep' = {
   name: 'front-door'
   params: {
     proxyEndpointName: frontDoorProxyEndpointName
-    proxyOriginHostName: apiManagement.outputs.apiManagementProxyHostName
-    apiManagementResourceId: apiManagement.outputs.apiManagementResourceId
-    apiManagementLocation: apiManagement.outputs.apiManagementLocation
+    proxyOriginHostName: apiManagementDeployment1.outputs.apiManagementProxyHostName
+    apiManagementResourceId: apiManagementDeployment1.outputs.apiManagementResourceId
+    apiManagementLocation: apiManagementDeployment1.outputs.apiManagementLocation
+  }
+}
+
+module apiManagementDeployment2 'modules/api-management.bicep' = {
+  name: 'api-management-2'
+  dependsOn: [
+    frontDoor
+  ]
+  params: {
+    location: location
+    serviceName: apiManagementServiceName
+    publisherName: apiManagementPublisherName
+    publisherEmail: apiManagementPublisherEmail
+    skuName: apiManagementSkuName
+    skuCount: apiManagementSkuCount
+    publicNetworkAccess: 'Disabled'
   }
 }
 
 output frontDoorEndpointApiManagementProxyHostName string = frontDoor.outputs.frontDoorProxyEndpointHostName
-output apiManagementProxyHostName string = apiManagement.outputs.apiManagementProxyHostName
-output apiManagementPortalHostName string = apiManagement.outputs.apiManagementDeveloperPortalHostName
+output apiManagementProxyHostName string = apiManagementDeployment2.outputs.apiManagementProxyHostName
+output apiManagementPortalHostName string = apiManagementDeployment2.outputs.apiManagementDeveloperPortalHostName
