@@ -20,3 +20,5 @@ By default this template does not deploy any resources to the Azure Stack Edge. 
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+
+`Tags: Azure Private 5G Core, Resource Manager templates, ARM templates`
