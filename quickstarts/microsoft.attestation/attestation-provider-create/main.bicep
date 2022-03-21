@@ -1,5 +1,5 @@
 @description('Name of the Attestation provider. Must be between 3 and 24 characters in length and use numbers and lower-case letters only.')
-param attestationProviderName string = uniqueString(resourceGroup().name, deployment().name)
+param attestationProviderName string = uniqueString(resourceGroup().name)
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
