@@ -19,11 +19,6 @@ param virtualMachineSize string = 'Standard_B1s'
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i in range(0, length(range(0, numberOfInstances))): {
   name: '${virtualMachineName}${range(0, numberOfInstances)[i]}'
   location: location
-  tags:{
-    'Owner':'sarkuma'
-    'Purpose':'test'
-    'DeleteBy':'03-2022'
-  }
   properties: {
     hardwareProfile: {
       vmSize: virtualMachineSize
