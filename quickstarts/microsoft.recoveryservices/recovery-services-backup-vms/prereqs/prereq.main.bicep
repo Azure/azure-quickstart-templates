@@ -19,6 +19,11 @@ param virtualMachineSize string = 'Standard_B1s'
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i in range(0, length(range(0, numberOfInstances))): {
   name: '${virtualMachineName}${range(0, numberOfInstances)[i]}'
   location: location
+  tags:{
+    'Owner':'sarkuma'
+    'Purpose':'test'
+    'DeleteBy':'03-2022'
+  }
   properties: {
     hardwareProfile: {
       vmSize: virtualMachineSize
@@ -56,14 +61,11 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i 
     networkProfile: {
       networkInterfaces: [
         {
-          id: resourceId('Microsoft.Network/networkInterfaces', '${networkInterfaceName}${range(0, numberOfInstances)[i]}')
+          id: networkInterface[i].id
         }
       ]
     }
   }
-  dependsOn: [
-    networkInterface
-  ]
 }]
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = [for i in range(0, length(range(0, numberOfInstances))): {
@@ -95,24 +97,19 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2020-11-01' = [fo
         name: 'ipconfig1'
         properties: {
           subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', '${virtualNetworkName}${range(0, numberOfInstances)[i]}', subnetName)
+            id: virtualNetwork[i].properties.subnets[0].id
           }
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: resourceId('Microsoft.Network/publicIpAddresses', '${publicIpAddressName}${range(0, numberOfInstances)[i]}')
+            id: publicIpAddress[i].id
           }
         }
       }
     ]
     networkSecurityGroup: {
-      id: resourceId('Microsoft.Network/networkSecurityGroups', '${networkSecurityGroupName}${range(0, numberOfInstances)[i]}')
+      id: networkSecurityGroup[i].id
     }
   }
-  dependsOn: [
-    networkSecurityGroup
-    publicIpAddress
-    virtualNetwork
-  ]
 }]
 
 resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2020-11-01' = [for i in range(0, length(range(0, numberOfInstances))): {
