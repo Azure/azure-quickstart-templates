@@ -16,12 +16,12 @@ param subnetPrefix string = '172.17.0.0/24'
 @description('Enable DDoS protection plan.')
 param ddosProtectionPlanEnabled bool = true
 
-resource ddosProtectionPlan 'Microsoft.Network/ddosProtectionPlans@2020-11-01' = {
+resource ddosProtectionPlan 'Microsoft.Network/ddosProtectionPlans@2021-05-01' = {
   name: ddosProtectionPlanName
   location: location
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-11-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: virtualNetworkName
   location: location
   properties: {
