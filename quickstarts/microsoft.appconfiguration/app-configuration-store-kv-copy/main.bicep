@@ -37,7 +37,7 @@ param keyData array = [
   }
 ]
 
-resource configStore 'Microsoft.AppConfiguration/configurationStores@2020-07-01-preview' = {
+resource configStore 'Microsoft.AppConfiguration/configurationStores@2021-10-01-preview' = {
   name: configStoreName
   location: location
   sku: {
@@ -45,7 +45,7 @@ resource configStore 'Microsoft.AppConfiguration/configurationStores@2020-07-01-
   }
 }
 
-resource configStoreNameKeyVaule 'Microsoft.AppConfiguration/configurationStores/keyValues@2020-07-01-preview' = [for item in keyData: {
+resource configStoreNameKeyVaule 'Microsoft.AppConfiguration/configurationStores/keyValues@2021-10-01-preview' = [for item in keyData: {
   name: '${configStoreName}/${(contains(item, 'label') ? '${item.key}$${item.label}' : item.key)}'
   properties: {
     value: item.value
@@ -57,5 +57,5 @@ resource configStoreNameKeyVaule 'Microsoft.AppConfiguration/configurationStores
   ]
 }]
 
-output KeyVauleReference string = reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', configStoreName, keyData[0].key), '2020-07-01-preview').value
-output KeyVauleObjectReference object = reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', configStoreName, keyData[0].key), '2020-07-01-preview')
+output KeyVauleReference string = reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', configStoreName, keyData[0].key), '2021-10-01-preview').value
+output KeyVauleObjectReference object = reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', configStoreName, keyData[0].key), '2021-10-01-preview')
