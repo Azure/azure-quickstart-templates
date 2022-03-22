@@ -47,7 +47,7 @@ var diskSizeGBParameters = {
   label: 'template'
 }
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -57,7 +57,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   properties: {}
 }
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2020-05-01' = {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   name: publicIPAddressName
   location: location
   properties: {
@@ -68,7 +68,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2020-05-01' = {
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-05-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -88,7 +88,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-05-01' = {
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2020-05-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   name: nicName
   location: location
   properties: {
@@ -112,7 +112,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-05-01' = {
   ]
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2019-12-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   name: vmName
   location: location
   properties: {
