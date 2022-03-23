@@ -26,7 +26,7 @@ The following resources are deployed as part of the solution:
 - API Management instance with a sample API.
   - The API Management instance must use a [SKU that supports private endpoints](https://docs.microsoft.com/azure/api-management/private-endpoint).
 
-Note that the API Management instance is deployed twice. The first time, it's deployed with public network access enabled. The second time, it's deployed with public network access disabled. This sequencing is required because API Management instances can't have public network access disabled at creation time, otherwise a deployment error occurs.
+Note that the API Management instance is deployed with public inbound network access enabled. This is because API Management instances can't have public network access disabled at creation time, otherwise a deployment error occurs. To disable public inbound network access, you need to approve the Front Door private endpoint and then redeploy the template, specifying `apiManagementEnablePublicNetworkAccess` = `false`.
 
 ### Front Door Standard/Premium
 - A Front Door profile.
@@ -55,8 +55,6 @@ To access the API proxy URL, get the hostname from the output named `frontDoorEn
 ```
 
 If you see an error page, wait a few minutes and try again.
-
-You can also attempt to access the API Management gateway directly. The host name is is emitted using the `apiManagementProxyHostName` deployment output. Any connection attempts you make to these host names should receive an error message, since your API Management instance is blocking incoming requests to your API Management instance unless they come through Front Door.
 
 You can access the developer portal by using the hostname specified in the `apiManagementPortalHostName` output value. Note the developer portal must be published before you can access it.
 

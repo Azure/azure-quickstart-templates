@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1318.3566",
-      "templateHash": "4152493856819109910"
+      "templateHash": "8982554373650442260"
     }
   },
   "parameters": {
@@ -55,6 +55,13 @@
         "description": "The number of worker instances of your API Management service that should be provisioned."
       }
     },
+    "apiManagementEnablePublicNetworkAccess": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Whether the API Management service should allow public network access."
+      }
+    },
     "frontDoorProxyEndpointName": {
       "type": "string",
       "defaultValue": "[format('afd-proxy-{0}', uniqueString(resourceGroup().id))]",
@@ -67,7 +74,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-10-01",
-      "name": "api-management-1",
+      "name": "api-management",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -93,7 +100,7 @@
             "value": "[parameters('apiManagementSkuCount')]"
           },
           "publicNetworkAccess": {
-            "value": "Enabled"
+            "value": "[if(parameters('apiManagementEnablePublicNetworkAccess'), 'Enabled', 'Disabled')]"
           }
         },
         "template": {
@@ -103,7 +110,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "4073873946321709003"
+              "templateHash": "17511537917814304256"
             }
           },
           "parameters": {
@@ -191,6 +198,10 @@
               "type": "string",
               "value": "[resourceId('Microsoft.ApiManagement/service', parameters('serviceName'))]"
             },
+            "apiManagementServiceName": {
+              "type": "string",
+              "value": "[parameters('serviceName')]"
+            },
             "apiManagementLocation": {
               "type": "string",
               "value": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('serviceName')), '2021-08-01', 'full').location]"
@@ -213,13 +224,13 @@
             "value": "[parameters('frontDoorProxyEndpointName')]"
           },
           "proxyOriginHostName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management-1')).outputs.apiManagementProxyHostName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management')).outputs.apiManagementProxyHostName.value]"
           },
           "apiManagementResourceId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management-1')).outputs.apiManagementResourceId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management')).outputs.apiManagementResourceId.value]"
           },
           "apiManagementLocation": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management-1')).outputs.apiManagementLocation.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management')).outputs.apiManagementLocation.value]"
           }
         },
         "template": {
@@ -375,145 +386,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'api-management-1')]"
-      ]
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
-      "name": "api-management-2",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "serviceName": {
-            "value": "[parameters('apiManagementServiceName')]"
-          },
-          "publisherName": {
-            "value": "[parameters('apiManagementPublisherName')]"
-          },
-          "publisherEmail": {
-            "value": "[parameters('apiManagementPublisherEmail')]"
-          },
-          "skuName": {
-            "value": "[parameters('apiManagementSkuName')]"
-          },
-          "skuCount": {
-            "value": "[parameters('apiManagementSkuCount')]"
-          },
-          "publicNetworkAccess": {
-            "value": "Disabled"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.4.1318.3566",
-              "templateHash": "4073873946321709003"
-            }
-          },
-          "parameters": {
-            "location": {
-              "type": "string",
-              "metadata": {
-                "description": "The location into which the API Management resources should be deployed."
-              }
-            },
-            "serviceName": {
-              "type": "string",
-              "metadata": {
-                "description": "The name of the API Management service instance to create. This must be globally unique."
-              }
-            },
-            "publisherName": {
-              "type": "string",
-              "metadata": {
-                "description": "The name of the API publisher. This information is used by API Management."
-              }
-            },
-            "publisherEmail": {
-              "type": "string",
-              "metadata": {
-                "description": "The email address of the API publisher. This information is used by API Management."
-              }
-            },
-            "skuName": {
-              "type": "string",
-              "allowedValues": [
-                "Premium",
-                "Standard",
-                "Basic",
-                "Developer"
-              ],
-              "metadata": {
-                "description": "The name of the SKU to use when creating the API Management service instance. This must be a SKU that supports private endpoints."
-              }
-            },
-            "skuCount": {
-              "type": "int",
-              "metadata": {
-                "description": "The number of worker instances of your API Management service that should be provisioned."
-              }
-            },
-            "publicNetworkAccess": {
-              "type": "string",
-              "defaultValue": "Enabled",
-              "allowedValues": [
-                "Enabled",
-                "Disabled"
-              ],
-              "metadata": {
-                "description": "Indicates whether or not public endpoint access is allowed for this API Management service."
-              }
-            }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.ApiManagement/service",
-              "apiVersion": "2021-08-01",
-              "name": "[parameters('serviceName')]",
-              "location": "[parameters('location')]",
-              "sku": {
-                "name": "[parameters('skuName')]",
-                "capacity": "[parameters('skuCount')]"
-              },
-              "properties": {
-                "publisherName": "[parameters('publisherName')]",
-                "publisherEmail": "[parameters('publisherEmail')]",
-                "publicNetworkAccess": "[parameters('publicNetworkAccess')]"
-              }
-            }
-          ],
-          "outputs": {
-            "apiManagementProxyHostName": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('serviceName'))).hostnameConfigurations[0].hostName]"
-            },
-            "apiManagementDeveloperPortalHostName": {
-              "type": "string",
-              "value": "[replace(reference(resourceId('Microsoft.ApiManagement/service', parameters('serviceName'))).developerPortalUrl, 'https://', '')]"
-            },
-            "apiManagementResourceId": {
-              "type": "string",
-              "value": "[resourceId('Microsoft.ApiManagement/service', parameters('serviceName'))]"
-            },
-            "apiManagementLocation": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('serviceName')), '2021-08-01', 'full').location]"
-            }
-          }
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'front-door')]"
+        "[resourceId('Microsoft.Resources/deployments', 'api-management')]"
       ]
     }
   ],
@@ -524,11 +397,11 @@
     },
     "apiManagementProxyHostName": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management-2')).outputs.apiManagementProxyHostName.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management')).outputs.apiManagementProxyHostName.value]"
     },
     "apiManagementPortalHostName": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management-2')).outputs.apiManagementDeveloperPortalHostName.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'api-management')).outputs.apiManagementDeveloperPortalHostName.value]"
     }
   }
 }

@@ -46,4 +46,5 @@ resource apiManagementService 'Microsoft.ApiManagement/service@2021-08-01' = {
 output apiManagementProxyHostName string = apiManagementService.properties.hostnameConfigurations[0].hostName
 output apiManagementDeveloperPortalHostName string = replace(apiManagementService.properties.developerPortalUrl, 'https://', '')
 output apiManagementResourceId string = apiManagementService.id
+output apiManagementServiceName string = apiManagementService.name
 output apiManagementLocation string = apiManagementService.location
