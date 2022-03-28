@@ -48,8 +48,6 @@ resource rbac 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = [fo
 @description('An array of fully qualified images names to import')
 param images array = [
   'docker.io/bitnami/external-dns:latest'
-  'quay.io/jetstack/cert-manager-cainjector:v1.7.2'
-  'ghcr.io/kedacore/keda-metrics-apiserver:main'
 ]
 
 //@batchSize(1)
