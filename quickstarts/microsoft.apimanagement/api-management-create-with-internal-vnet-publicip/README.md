@@ -14,7 +14,7 @@
 
 This template shows an example of how to deploy an Azure API Management service within your own virtual network's subnet in [internal mode](https://docs.microsoft.com/azure/api-management/api-management-using-with-internal-vnet). 
 In internal mode, The subnet is locked down with no client access from the internet. The gateway, developer portal, legacy developer portal, and Git endpoints are only accessible from within the virtual network. Being within the virtual network, the gateway can connect to your backends that are accessible only within your virtual network. 
-- The template creates a Premium tier API Management instance that is deployed to two availability zones. You may choose to deploy the API Management instance in the Developer tier; however, availability zones are not supported in that tier.
+- The template creates a Premium tier API Management instance that is deployed to two [availability zones](https://docs.microsoft.com/azure/api-management/zone-redundancy). You may choose to deploy the API Management instance in the Developer tier; however, availability zones are not supported in that tier.
 - The template deploys a virtual network and a dedicated subnet that hosts the API Management service.
 - The template obtains a Standard SKU public IP address from the customer's subscription.
 - The template also deploys a network security group on the API Management subnet, which is based on [recommended configurations](https://aka.ms/apim-vnet-common-issues).
