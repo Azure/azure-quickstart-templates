@@ -9,6 +9,10 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurepurview/azure-purview-deployment/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azurepurview/azure-purview-deployment/CredScanResult.svg)
 
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.azurepurview%2Fazure-purview-deployment%2Fazuredeploy.json)
+
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.azurepurview%2Fazure-purview-deployment%2Fazuredeploy.json)
+
 This template deploys an Azure Purview account using an Azure Resource Manager (ARM) template.
 
 For more information about Azure Purview, [see our overview page](/azure/purview/overview). For more information about deploying Azure Purview across your organization, [see our deployment best practices](/azure/purview/deployment-best-practices).
@@ -25,10 +29,8 @@ For more information about Azure Purview, [see our overview page](/azure/purview
 
 ## Deploy a custom template
 
-If your environment meets the prerequisites and you're familiar with using ARM templates, select the **Deploy to Azure** button. The template will open in the Azure portal.
+If your environment meets the prerequisites and you're familiar with using ARM templates, select the **Deploy to Azure** button at the top of the readme. The template will open in the Azure portal.
 The template will deploy an Azure Purview account into a new or existing resource group in your subscription.
-
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.azurepurview%2Fazure-purview-deployment%2Fazuredeploy.json)
 
 The following resources are defined in the template:
 
@@ -37,10 +39,6 @@ The following resources are defined in the template:
 The template performs the following tasks:
 
 * Creates an Azure Purview account in the specified resource group.
-
-## Visualize
-
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.azurepurview%2Fazure-purview-deployment%2Fazuredeploy.json)
 
 ## Open Azure Purview Studio
 
@@ -55,19 +53,6 @@ After your Azure Purview account is created, you'll use the Azure Purview Studio
 
 After deployment, the first activities are usually:
 
-* Create a collection
-* Register a resource
-* Scan the resource
-
-At this time, these actions aren't able to be taken through an Azure Resource Manager template. Follow the guides above to get started!
-
-## Clean up resources
-
-To clean up the resources deployed in this quickstart, delete the resource group, which deletes the resources in the resource group.
-You can do this either through the Azure portal, or using the PowerShell script below.
-
-```azurepowershell-interactive
-$resourceGroupName = Read-Host -Prompt "Enter the resource group name"
-Remove-AzResourceGroup -Name $resourceGroupName
-Write-Host "Press [ENTER] to continue..."
-```
+* [Create a collection](/azure/purview/quickstart-create-collection)
+* [Register a resource](/azure/purview/azure-purview-connector-overview)
+* [Scan the resource](/azure/purview/concept-scans-and-ingestion)
