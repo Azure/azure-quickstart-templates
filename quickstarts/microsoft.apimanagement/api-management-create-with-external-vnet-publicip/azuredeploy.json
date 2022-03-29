@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1318.3566",
+      "templateHash": "18282123698161484650"
+    }
+  },
   "parameters": {
     "publisherEmail": {
       "type": "string",
@@ -20,11 +27,11 @@
     },
     "sku": {
       "type": "string",
+      "defaultValue": "Premium",
       "allowedValues": [
         "Developer",
         "Premium"
       ],
-      "defaultValue": "Premium",
       "metadata": {
         "description": "The pricing tier of this API Management service"
       }
@@ -127,22 +134,22 @@
     },
     "dnsLabelPrefix": {
       "type": "string",
-      "defaultValue": "[toLower(concat(parameters('publicIpName'), '-', uniqueString(resourceGroup().id)))]",
+      "defaultValue": "[toLower(format('{0}-{1}', parameters('publicIpName'), uniqueString(resourceGroup().id)))]",
       "metadata": {
         "description": "Unique DNS name for the public IP address used to access the API management service."
       }
     }
   },
   "variables": {
-    "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]",
+    "apiManagementName": "[format('apiservice{0}', uniqueString(resourceGroup().id))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
-    "apimNsgName": "[concat('apimnsg', uniqueString(resourceGroup().id))]"
+    "nsgName": "[format('apimnsg{0}', uniqueString(resourceGroup().id))]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('apimNsgName')]",
       "apiVersion": "2020-06-01",
+      "name": "[variables('nsgName')]",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -402,8 +409,8 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-05-01",
       "name": "[parameters('publicIpName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -418,13 +425,10 @@
       }
     },
     {
-      "apiVersion": "2020-06-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('apimNsgName'))]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -437,23 +441,22 @@
             "properties": {
               "addressPrefix": "[parameters('subnetPrefix')]",
               "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('apimNsgName'))]"
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
               },
               "serviceEndpoints": "[parameters('apimSubnetServiceEndpoints')]"
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+      ]
     },
     {
-      "apiVersion": "2021-08-01",
-      "name": "[variables('apiManagementServiceName')]",
       "type": "Microsoft.ApiManagement/service",
+      "apiVersion": "2021-08-01",
+      "name": "[variables('apiManagementName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPName'))]"
-      ],
       "sku": {
         "name": "[parameters('sku')]",
         "capacity": "[parameters('skuCount')]"
@@ -463,7 +466,7 @@
         "publisherEmail": "[parameters('publisherEmail')]",
         "publisherName": "[parameters('publisherName')]",
         "virtualNetworkType": "External",
-        "publicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPName'))]",
+        "publicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]",
         "virtualNetworkConfiguration": {
           "subnetResourceId": "[variables('subnetRef')]"
         },
@@ -484,7 +487,11 @@
           "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30": false,
           "Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2": false
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
     }
   ]
 }
