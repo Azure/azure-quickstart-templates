@@ -5,12 +5,13 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1318.3566",
-      "templateHash": "14863589965562042491"
+      "templateHash": "11603667623260523240"
     }
   },
   "parameters": {
     "AcrName": {
       "type": "string",
+      "defaultValue": "[format('cr{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the Azure Container Registry"
       }
@@ -22,32 +23,11 @@
         "description": "The location to deploy the resources to"
       }
     },
-    "date": {
+    "forceUpdateTag": {
       "type": "string",
       "defaultValue": "[utcNow()]",
       "metadata": {
         "description": "How the deployment script should be forced to execute"
-      }
-    },
-    "azCliVersion": {
-      "type": "string",
-      "defaultValue": "2.30.0",
-      "metadata": {
-        "description": "Version of the Azure CLI to use"
-      }
-    },
-    "timeout": {
-      "type": "string",
-      "defaultValue": "PT30M",
-      "metadata": {
-        "description": "Deployment Script timeout"
-      }
-    },
-    "retention": {
-      "type": "string",
-      "defaultValue": "P1D",
-      "metadata": {
-        "description": "The retention period for the deployment script"
       }
     },
     "RbacRolesNeeded": {
@@ -61,7 +41,10 @@
     },
     "managedIdName": {
       "type": "string",
-      "defaultValue": "id-ContainerRegistryImport"
+      "defaultValue": "id-ContainerRegistryImport",
+      "metadata": {
+        "description": "Name of the Managed Identity resource"
+      }
     },
     "images": {
       "type": "array",
@@ -71,6 +54,18 @@
       "metadata": {
         "description": "An array of fully qualified images names to import"
       }
+    },
+    "cleanupPreference": {
+      "type": "string",
+      "defaultValue": "OnSuccess",
+      "metadata": {
+        "description": "When the script resource is cleaned up"
+      },
+      "allowedValues": [
+        "OnSuccess",
+        "OnExpiration",
+        "Always"
+      ]
     }
   },
   "resources": [
@@ -97,7 +92,7 @@
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2020-08-01-preview",
       "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('AcrName'))]",
-      "name": "[guid(parameters('RbacRolesNeeded')[copyIndex()], resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdName')))]",
+      "name": "[guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('AcrName')), parameters('RbacRolesNeeded')[copyIndex()], resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdName')))]",
       "properties": {
         "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('RbacRolesNeeded')[copyIndex()])]",
         "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdName'))).principalId]",
@@ -125,10 +120,10 @@
       },
       "kind": "AzureCLI",
       "properties": {
-        "forceUpdateTag": "[parameters('date')]",
-        "azCliVersion": "[parameters('azCliVersion')]",
-        "timeout": "[parameters('timeout')]",
-        "retentionInterval": "[parameters('retention')]",
+        "forceUpdateTag": "[parameters('forceUpdateTag')]",
+        "azCliVersion": "2.30.0",
+        "timeout": "PT30M",
+        "retentionInterval": "P1D",
         "environmentVariables": [
           {
             "name": "AcrName",
@@ -140,7 +135,7 @@
           }
         ],
         "scriptContent": "      #!/bin/bash\r\n      set -e\r\n\r\n      echo \"Importing Image: $imageName into ACR: $AcrName\"\r\n      az acr import -n $AcrName --source $imageName --force\r\n    ",
-        "cleanupPreference": "OnSuccess"
+        "cleanupPreference": "[parameters('cleanupPreference')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdName'))]",
