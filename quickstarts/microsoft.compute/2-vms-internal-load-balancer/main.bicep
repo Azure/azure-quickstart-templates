@@ -14,18 +14,18 @@ param location string = resourceGroup().location
 @description('Size of the virtual machines')
 param vmSize string = 'Standard_D2s_v3'
 
-var availabilitySetName_var = 'AvSet'
+var availabilitySetName = 'AvSet'
 var storageAccountType = 'Standard_LRS'
-var storageAccountName_var = uniqueString(resourceGroup().id)
-var virtualNetworkName_var = 'vNet'
+var storageAccountName = uniqueString(resourceGroup().id)
+var virtualNetworkName = 'vNet'
 var subnetName = 'backendSubnet'
-var loadBalancerName_var = 'ilb'
-var networkInterfaceName_var = 'nic'
-var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName_var, subnetName)
+var loadBalancerName = 'ilb'
+var networkInterfaceName = 'nic'
+var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
 var numberOfInstances = 2
 
-resource storageAccountName 'Microsoft.Storage/storageAccounts@2021-08-01' = {
-  name: storageAccountName_var
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+  name: storageAccountName
   location: location
   sku: {
     name: storageAccountType
@@ -33,8 +33,8 @@ resource storageAccountName 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   kind: 'StorageV2'
 }
 
-resource availabilitySetName 'Microsoft.Compute/availabilitySets@2021-11-01' = {
-  name: availabilitySetName_var
+resource availabilitySet 'Microsoft.Compute/availabilitySets@2021-11-01' = {
+  name: availabilitySetName
   location: location
   sku: {
     name: 'Aligned'
@@ -45,8 +45,8 @@ resource availabilitySetName 'Microsoft.Compute/availabilitySets@2021-11-01' = {
   }
 }
 
-resource virtualNetworkName 'Microsoft.Network/virtualNetworks@2021-05-01' = {
-  name: virtualNetworkName_var
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+  name: virtualNetworkName
   location: location
   properties: {
     addressSpace: {
@@ -65,8 +65,8 @@ resource virtualNetworkName 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource networkInterfaceName 'Microsoft.Network/networkInterfaces@2021-05-01' = [for i in range(0, numberOfInstances): {
-  name: concat(networkInterfaceName_var, i)
+resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = [for i in range(0, numberOfInstances): {
+  name: '${networkInterfaceName}${i}'
   location: location
   properties: {
     ipConfigurations: [
@@ -79,7 +79,7 @@ resource networkInterfaceName 'Microsoft.Network/networkInterfaces@2021-05-01' =
           }
           loadBalancerBackendAddressPools: [
             {
-              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName_var, 'BackendPool1')
+              id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, 'BackendPool1')
             }
           ]
         }
@@ -87,13 +87,13 @@ resource networkInterfaceName 'Microsoft.Network/networkInterfaces@2021-05-01' =
     ]
   }
   dependsOn: [
-    virtualNetworkName
-    loadBalancerName
+    virtualNetwork
+    loadBalancer
   ]
 }]
 
-resource loadBalancerName 'Microsoft.Network/loadBalancers@2021-05-01' = {
-  name: loadBalancerName_var
+resource loadBalancer 'Microsoft.Network/loadBalancers@2021-05-01' = {
+  name: loadBalancerName
   location: location
   sku: {
     name: 'Standard'
@@ -120,13 +120,13 @@ resource loadBalancerName 'Microsoft.Network/loadBalancers@2021-05-01' = {
       {
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerName_var, 'LoadBalancerFrontend')
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerName, 'LoadBalancerFrontend')
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName_var, 'BackendPool1')
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, 'BackendPool1')
           }
           probe: {
-            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerName_var, 'lbprobe')
+            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerName, 'lbprobe')
           }
           protocol: 'Tcp'
           frontendPort: 80
@@ -149,22 +149,22 @@ resource loadBalancerName 'Microsoft.Network/loadBalancers@2021-05-01' = {
     ]
   }
   dependsOn: [
-    virtualNetworkName
+    virtualNetwork
   ]
 }
 
 resource vmNamePrefix_resource 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in range(0, numberOfInstances): {
-  name: concat(vmNamePrefix, i)
+  name: '${vmNamePrefix}${i}'
   location: location
   properties: {
     availabilitySet: {
-      id: availabilitySetName.id
+      id: availabilitySet.id
     }
     hardwareProfile: {
       vmSize: vmSize
     }
     osProfile: {
-      computerName: concat(vmNamePrefix, i)
+      computerName: '${vmNamePrefix}${i}'
       adminUsername: adminUsername
       adminPassword: adminPassword
     }
@@ -182,20 +182,18 @@ resource vmNamePrefix_resource 'Microsoft.Compute/virtualMachines@2021-11-01' = 
     networkProfile: {
       networkInterfaces: [
         {
-          id: resourceId('Microsoft.Network/networkInterfaces', concat(networkInterfaceName_var, i))
+          id: resourceId('Microsoft.Network/networkInterfaces', '${networkInterfaceName}${i}')
         }
       ]
     }
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: true
-        storageUri: storageAccountName.properties.primaryEndpoints.blob
+        storageUri: storageAccount.properties.primaryEndpoints.blob
       }
     }
   }
   dependsOn: [
-    storageAccountName
-    networkInterfaceName
-    availabilitySetName
+    networkInterface
   ]
 }]
