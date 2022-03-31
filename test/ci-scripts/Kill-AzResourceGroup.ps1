@@ -13,7 +13,7 @@ param(
 Write-Host "Kill: $resourceGroupName"
 
 # Skip any resourceGroups in FF that have tried to deploy jobCollections - they can't be deleted
-# ICM #
+# ICM #289352324
 if ((Get-AzContext).Environment.Name -eq "AzureUSGovernment") {
     Write-Host "Running in FF..."
     $deployment = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName
@@ -37,10 +37,14 @@ $vaults = Get-AzRecoveryServicesVault -ResourceGroupName $ResourceGroupName -Ver
 
 foreach ($vault in $vaults) {
     Write-Host "Recovery Services Vaults..."
-    #Set-AzRecoveryServicesVaultContext -Vault $vault -Verbose - this is being deprecated use vaultId
-    # disable softDelete
+
+    & "$PSScriptRoot\Kill-AzRecoveryServicesVault.ps1" -ResourceGroup $ResourceGroupName -VaultName $vault.Name
+
+<#
+    Set-AzRecoveryServicesVaultContext -Vault $vault -Verbose - this is being deprecated use vaultId
+    disable softDelete
+
     Set-AzRecoveryServicesVaultProperty -VaultId $vault.ID -SoftDeleteFeatureState disable
-    
     # Storage Backups
     $rcs = Get-AzRecoveryServicesBackupContainer -VaultId $vault.ID -ContainerType AzureStorage -Verbose
     foreach ($c in $rcs) {
@@ -59,9 +63,9 @@ foreach ($vault in $vaults) {
         Unregister-AzRecoveryServicesBackupContainer -VaultId $vault.ID -Container $c -Verbose
     }
 
-
-
     #Remove-AzRecoveryServicesVault -Vault $vault -Verbose
+#>
+
 }
 
 #Note that for SQL Backup vaults the sequence of steps are different and not supported in the AzureRM cmdlets - see the remove-vaults.ps1 script for these steps until we can rewrite this
@@ -95,29 +99,26 @@ remove disasterRecovery pairing on eventhub namespaces and service bus namespace
  armclient POST /subscriptions/f42b4319-067a-4548-a650-33a1553b3a42/resourceGroups/qstci-c0749fa2-188e-8cef-ef73-7c2f7812a5e6/providers/Microsoft.EventHub/namespaces/ci1019f5770/disasterRecoveryConfigs/ci267c7c80899644b4/breakPairing?api-version=2017-04-01
 #>
 
-# Microsoft.DataProtection is not yet in AzureUSGovernment
-if ((Get-AzContext).Environment.Name -eq "AzureCloud") {
-    # The Az.DataProtection is not yet included with the rest of the Az module
-    if ($(Get-Module -ListAvailable Az.DataProtection) -eq $null) {
-        Write-Host "Installing Az.DataProtection module..."
-        Install-Module Az.DataProtection -Force -AllowClobber #| Out-Null # this is way too noisy for some reason
+# The Az.DataProtection is not yet included with the rest of the Az module
+if ($(Get-Module -ListAvailable Az.DataProtection) -eq $null) {
+    Write-Host "Installing Az.DataProtection module..."
+    Install-Module Az.DataProtection -Force -AllowClobber #| Out-Null # this is way too noisy for some reason
+}
+
+$vaults = Get-AzDataProtectionBackupVault -ResourceGroupName $ResourceGroupName #-Verbose 
+
+foreach ($vault in $vaults) {
+    Write-Host "Data Protection Vault: $($vault.name)"
+    $backupInstances = Get-AzDataProtectionBackupInstance -ResourceGroupName $ResourceGroupName -VaultName $vault.Name
+    foreach ($bi in $backupInstances) {
+        Write-Host "Removing Backup Instance: $($bi.name)"
+        Remove-AzDataProtectionBackupInstance -ResourceGroupName $ResourceGroupName -VaultName $vault.Name -Name $bi.Name 
     }
 
-    $vaults = Get-AzDataProtectionBackupVault -ResourceGroupName $ResourceGroupName #-Verbose 
-
-    foreach ($vault in $vaults) {
-        Write-Host "Data Protection Vault: $($vault.name)"
-        $backupInstances = Get-AzDataProtectionBackupInstance -ResourceGroupName $ResourceGroupName -VaultName $vault.Name
-        foreach ($bi in $backupInstances) {
-            Write-Host "Removing Backup Instance: $($bi.name)"
-            Remove-AzDataProtectionBackupInstance -ResourceGroupName $ResourceGroupName -VaultName $vault.Name -Name $bi.Name 
-        }
-    
-        $backupPolicies = Get-AzDataProtectionBackupPolicy -ResourceGroupName $ResourceGroupName -VaultName $vault.Name 
-        foreach ($bp in $backupPolicies) {
-            Write-Host "Removing backup policy: $($bp.name)"
-            Remove-AzDataProtectionBackupPolicy -ResourceGroupName $ResourceGroupName -VaultName $vault.name -Name $bp.Name   
-        }
+    $backupPolicies = Get-AzDataProtectionBackupPolicy -ResourceGroupName $ResourceGroupName -VaultName $vault.Name 
+    foreach ($bp in $backupPolicies) {
+        Write-Host "Removing backup policy: $($bp.name)"
+        Remove-AzDataProtectionBackupPolicy -ResourceGroupName $ResourceGroupName -VaultName $vault.name -Name $bp.Name   
     }
 }
 

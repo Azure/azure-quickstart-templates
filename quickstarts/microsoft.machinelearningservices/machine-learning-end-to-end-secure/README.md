@@ -17,7 +17,7 @@
 
 This set of templates demonstrates how to set up Azure Machine Learning end-to-end in a secure set up.
 
-This reference implementation includes the Workspace, a compute cluster, compute instance and attached private AKS cluster. It  includes the configuration of associated resources including Azure Key Vault, Azure Storage, Azure Application Insights and Azure Container Registry in a network-isolated setup.
+This reference implementation includes the Workspace, a compute cluster, compute instance and attached private AKS cluster. It  includes the configuration of associated resources including Azure Key Vault, Azure Storage, and Azure Container Registry in a network-isolated setup.
 
 ## Resources
 

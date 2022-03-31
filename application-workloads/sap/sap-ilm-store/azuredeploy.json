@@ -1,0 +1,181 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "azureADAppPrincipalID": {
+      "type": "string",
+      "metadata": {
+        "description": "Principal ID of the Azure Active Directory Application"
+      }
+    },
+    "newOrExistingRole": {
+      "type": "string",
+      "defaultValue": "existing",
+      "metadata": {
+        "description": "Use an existing Role or create a new custom Role Definition"
+      },
+      "allowedValues": [
+        "new",
+        "existing"
+      ]
+    },
+    "existingRoleID": {
+      "type": "string",
+      "defaultValue": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
+      "metadata": {
+        "description": "Role ID of an existing Role Definition"
+      }
+    },
+    "customRoleName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Role name for the new Custom Role Definition"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Storage Account"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of the Storage Account"
+      }
+    },
+    "storageSKUName": {
+      "type": "string",
+      "defaultValue": "Standard_RAGRS",
+      "metadata": {
+        "description": "Azure Storage Redundancy and Replication"
+      },
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Standard_ZRS",
+        "Premium_LRS",
+        "Premium_ZRS",
+        "Standard_GZRS",
+        "Standard_RAGZRS"
+      ]
+    },
+    "storageSKUTier": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "Performance tiers for block blob storage"
+      },
+      "allowedValues": [
+        "Standard",
+        "Premium"
+      ]
+    },
+    "storageKind": {
+      "type": "string",
+      "defaultValue": "StorageV2",
+      "metadata": {
+        "description": "Type of storage account"
+      },
+      "allowedValues": [
+        "Storage",
+        "StorageV2",
+        "BlobStorage",
+        "FileStorage",
+        "BlockBlobStorage"
+      ]
+    },
+    "accessTier": {
+      "type": "string",
+      "defaultValue": "Hot",
+      "metadata": {
+        "description": "Access tiers for Azure Blob Storage"
+      },
+      "allowedValues": [
+        "Hot",
+        "Cool"
+      ]
+    }
+  },
+  "variables": {
+    "roleDefinitionId": "[guid(subscription().id, string(parameters('customRoleName')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-02-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageSKUName')]",
+        "tier": "[parameters('storageSKUTier')]"
+      },
+      "kind": "[parameters('storageKind')]",
+      "properties": {
+        "accessTier": "[parameters('accessTier')]",
+        "allowSharedKeyAccess": false,
+        "supportsHttpsTrafficOnly": true,
+        "allowBlobPublicAccess": false,
+        "minimumTlsVersion": "TLS1_2"
+      }
+    },
+    {
+      "condition": "[equals(parameters('newOrExistingRole'),'new')]",
+      "type": "Microsoft.Authorization/roleDefinitions",
+      "apiVersion": "2018-07-01",
+      "name": "[variables('roleDefinitionId')]",
+      "properties": {
+        "roleName": "[parameters('customRoleName')]",
+        "description": "Role definition for ILM specific AD Application to access a Storage Account",
+        "type": "customRole",
+        "isCustom": true,
+        "permissions": [
+          {
+            "actions": [
+              "Microsoft.Storage/storageAccounts/blobServices/containers/write",
+              "Microsoft.Storage/storageAccounts/blobServices/containers/delete"
+            ],
+            "dataActions": [
+              "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
+              "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write",
+              "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete"
+            ]
+          }
+        ],
+        "assignableScopes": [
+          "[subscriptionResourceId('Microsoft.Resources/resourceGroups', resourceGroup().name)]"
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2018-07-01",
+      "name": "[guid(parameters('azureADAppPrincipalID'), if(equals(parameters('newOrExistingRole'), 'new'), resourceId('Microsoft.Authorization/roleDefinitions/', variables('roleDefinitionId')), resourceId('Microsoft.Authorization/roleDefinitions/', parameters('existingRoleID'))), resourceGroup().id)]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Authorization/roleDefinitions/', variables('roleDefinitionId'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[if(equals(parameters('newOrExistingRole'), 'new'), resourceId('Microsoft.Authorization/roleDefinitions/', variables('roleDefinitionId')), resourceId('Microsoft.Authorization/roleDefinitions/', parameters('existingRoleID')))]",
+        "principalId": "[parameters('azureADAppPrincipalID')]",
+        "principalType": "ServicePrincipal"
+      }
+    }
+  ],
+  "outputs": {
+    "StrorageAccountName": {
+      "type": "string",
+      "value": "[parameters('storageAccountName')]"
+    },
+    "storageBlobServiceEndpoint": {
+      "type": "string",
+      "value": "[reference(parameters('storageAccountName')).primaryEndpoints.blob]"
+    },
+    "RoleDefinition": {
+      "type": "string",
+      "value": "[if(equals(parameters('newOrExistingRole'), 'new'), parameters('customRoleName'), parameters('existingRoleID'))]"
+    }
+  }
+}

@@ -19,7 +19,7 @@
     [String] $ADFSSiteName = "adfs"
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
-    [String] $AdfsOidcAGName = "SPS-OIDC"
+    [String] $AdfsOidcAGName = "SPS-Subscription-OIDC"
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
 
     Node localhost
@@ -285,7 +285,7 @@
         AdfsApplicationGroup OidcGroup
         {
             Name        = $AdfsOidcAGName
-            Description = "OIDC setup for SharePoint"
+            Description = "OIDC for SharePoint Subscription"
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn   = "[AdfsFarm]CreateADFSFarm"
         }
@@ -295,7 +295,7 @@
             Name                       = "$AdfsOidcAGName - Native application"
             ApplicationGroupIdentifier = $AdfsOidcAGName
             Identifier                 = $AdfsOidcIdentifier
-            RedirectUri                = "https://$SPTrustedSitesName.$DomainFQDN/"
+            RedirectUri                = "https://*.$DomainFQDN/"
             DependsOn                  = "[AdfsApplicationGroup]OidcGroup"
         }
 
@@ -315,10 +315,26 @@
             IssuanceTransformRules        = @(
                 MSFT_AdfsIssuanceTransformRule
                 {
-                    TemplateName = "CustomClaims"
-                    Name         = "Email"
-                    CustomRule   = 'c:[Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]
-=> issue(claim = c);'
+                    TemplateName   = 'LdapClaims'
+                    Name           = 'Claims from Active Directory attributes'
+                    AttributeStore = 'Active Directory'
+                    LdapMapping    = @(
+                        MSFT_AdfsLdapMapping
+                        {
+                            LdapAttribute     = 'userPrincipalName'
+                            OutgoingClaimType = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn'
+                        }
+                        MSFT_AdfsLdapMapping
+                        {
+                            LdapAttribute     = 'mail'
+                            OutgoingClaimType = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
+                        }
+                        MSFT_AdfsLdapMapping
+                        {
+                            LdapAttribute     = 'tokenGroups(longDomainQualifiedName)'
+                            OutgoingClaimType = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
+                        }
+                    )
                 }
                 MSFT_AdfsIssuanceTransformRule
                 {
@@ -410,7 +426,7 @@ $AdfsSvcCreds = Get-Credential -Credential "adfssvc"
 $DomainFQDN = "contoso.local"
 $PrivateIP = "10.0.1.4"
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
 ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
