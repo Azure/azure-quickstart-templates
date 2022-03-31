@@ -1,5 +1,5 @@
 @description('Region where the Mobile Network will be deployed (must match the resource group region)')
-param location string = resourceGroup().location
+param location string = 'eastus'
 
 @description('The name for the private mobile network')
 param mobileNetworkName string
