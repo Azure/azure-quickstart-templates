@@ -27,7 +27,7 @@ var dataSourceType = 'Microsoft.Storage/storageAccounts/blobServices'
 var resourceType = 'Microsoft.Storage/storageAccounts'
 var retentionDuration = 'P${retentionDays}D'
 
-resource backupVault 'Microsoft.DataProtection/backupVaults@2021-01-01' = {
+resource backupVault 'Microsoft.DataProtection/backupVaults@2022-01-01' = {
   name: vaultName
   location: location
   identity: {
@@ -43,7 +43,7 @@ resource backupVault 'Microsoft.DataProtection/backupVaults@2021-01-01' = {
   }
 }
 
-resource backupPolicy 'Microsoft.DataProtection/backupVaults/backupPolicies@2021-01-01' = {
+resource backupPolicy 'Microsoft.DataProtection/backupVaults/backupPolicies@2022-01-01' = {
   parent: backupVault
   name: backupPolicyName
   properties: {
@@ -94,7 +94,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-prev
   }
 }
 
-resource backupInstance 'Microsoft.DataProtection/backupvaults/backupInstances@2021-01-01' = {
+resource backupInstance 'Microsoft.DataProtection/backupvaults/backupInstances@2022-01-01' = {
   parent: backupVault
   name: storageAccountName
   properties: {
@@ -112,6 +112,7 @@ resource backupInstance 'Microsoft.DataProtection/backupvaults/backupInstances@2
       policyId: backupPolicy.id
       name: backupPolicyName
     }
+    validationType: 'DeepValidation'
   }
   dependsOn: [
     roleAssignment
