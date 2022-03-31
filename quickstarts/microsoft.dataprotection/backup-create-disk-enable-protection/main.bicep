@@ -31,7 +31,7 @@ var repeatingTimeInterval = 'R/2021-05-20T22:00:00+00:00/PT4H'
 var roleNameGuidForDisk = guid(resourceGroup().id, roleDefinitionIdForDisk, backupVault.id)
 var roleNameGuidForSnapshotRG = guid(resourceGroup().id, roleDefinitionIdForSnapshotRG, backupVault.id)
 
-resource backupVault 'Microsoft.DataProtection/backupVaults@2021-01-01' = {
+resource backupVault 'Microsoft.DataProtection/backupVaults@2022-01-01' = {
   name: vaultName
   location: location
   identity: {
@@ -47,7 +47,7 @@ resource backupVault 'Microsoft.DataProtection/backupVaults@2021-01-01' = {
   }
 }
 
-resource backupPolicy 'Microsoft.DataProtection/backupVaults/backupPolicies@2021-01-01' = {
+resource backupPolicy 'Microsoft.DataProtection/backupVaults/backupPolicies@2022-01-01' = {
   parent: backupVault
   name: backupPolicyName
   properties: {
@@ -144,7 +144,7 @@ resource roleAssignmentForSnapshotRG 'Microsoft.Authorization/roleAssignments@20
   ]
 }
 
-resource backupInstance 'Microsoft.DataProtection/backupvaults/backupInstances@2021-01-01' = {
+resource backupInstance 'Microsoft.DataProtection/backupvaults/backupInstances@2022-01-01' = {
   parent: backupVault
   name: diskName
   properties: {
@@ -171,6 +171,7 @@ resource backupInstance 'Microsoft.DataProtection/backupvaults/backupInstances@2
         ]
       }
     }
+    validationType: 'DeepValidation'
   }
   dependsOn: [
     roleAssignmentForDisk
