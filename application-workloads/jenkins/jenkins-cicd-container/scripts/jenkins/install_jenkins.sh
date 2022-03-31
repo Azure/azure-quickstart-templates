@@ -7,6 +7,8 @@ Command
   $0
 Arguments
   --jenkins_fqdn|-jf       [Required] : Jenkins FQDN
+  --cluster_name|-cn       [Required] : Jenkins cluster name
+  --cluster_version|-cv    [Required] : Jenkins cluster version
   --vm_private_ip|-pi                 : The VM private ip used to configure Jenkins URL. If missing, jenkins_fqdn will be used instead
   --jenkins_release_type|-jrt         : The Jenkins release type (LTS or weekly or verified). By default it's set to LTS
   --jenkins_version_location|-jvl     : Url used to specify the version of Jenkins.
@@ -70,6 +72,14 @@ do
   case $key in
     --jenkins_fqdn|-jf)
       jenkins_fqdn="$1"
+      shift
+      ;;
+    --cluster_name|-cn)
+      cluster_name="$1"
+      shift
+      ;;
+    --cluster_version|-cv)
+      cluster_version="$1"
       shift
       ;;
     --vm_private_ip|-pi)
@@ -241,7 +251,7 @@ EOF
 )
 
 #update apt repositories
-wget -q -O - https://pkg.jenkins.io/debian/jenkins-ci.org.key | sudo apt-key add -
+wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
 
 if [ "$jenkins_release_type" == "weekly" ]; then
   sudo sh -c 'echo deb http://pkg.jenkins.io/debian binary/ > /etc/apt/sources.list.d/jenkins.list'
@@ -252,7 +262,8 @@ fi
 sudo add-apt-repository ppa:openjdk-r/ppa --yes
 
 echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/azure-cli/ wheezy main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
-sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 417A0893
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EB3E94ADBE1229CF
 sudo apt-get install apt-transport-https
 sudo apt-get update --yes
 
@@ -280,7 +291,7 @@ retry_until_successful sudo test -f /var/lib/jenkins/secrets/initialAdminPasswor
 retry_until_successful run_util_script "scripts/jenkins/run-cli-command.sh" -c "version"
 
 #We need to install workflow-aggregator so all the options in the auth matrix are valid
-plugins=(azure-vm-agents windows-azure-storage matrix-auth workflow-aggregator azure-app-service tfs azure-acs azure-container-agents)
+plugins=(azure-vm-agents windows-azure-storage matrix-auth workflow-aggregator azure-app-service azure-acs azure-container-agents)
 for plugin in "${plugins[@]}"; do
   run_util_script "scripts/jenkins/run-cli-command.sh" -c "install-plugin $plugin -deploy"
 done
@@ -470,4 +481,5 @@ sudo service nginx restart
 #install common tools
 sudo apt-get install git --yes
 sudo apt-get install azure-cli --yes
+sudo az aks install-cli --client-version ${cluster_version}
 sudo apt-get install xmlstarlet

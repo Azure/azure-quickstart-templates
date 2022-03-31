@@ -1,5 +1,15 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in January 10, 2022
+
+* Add SharePoint Server Subscription and make it the default choice.
+* Change Windows image of VM DC to Windows Server 2022 Azure Edition.
+* Change disk size of VM DC to 32 GB.
+* Change image of VM SQL to SQL Server 2019 on Windows Server 2022.
+* Change disk type of all virtual machines to StandardSSD_LRS.
+* Update DSC module SharePointDSC from 4.8 to 5.0.
+* Update DSC module ComputerManagementDsc from 8.4 to 8.5.
+
 ## Enhancements & bug-fixes - Published in October 4, 2021
 
 * Improve reliability of DSC module cChoco, which caused most of the deployment errors.

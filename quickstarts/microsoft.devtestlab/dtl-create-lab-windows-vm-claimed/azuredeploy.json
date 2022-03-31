@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1318.3566",
+      "templateHash": "12005381577413762019"
+    }
+  },
   "parameters": {
     "labName": {
       "type": "string",
@@ -35,57 +42,55 @@
       }
     },
     "password": {
-      "type": "securestring",
+      "type": "secureString",
       "metadata": {
         "description": "The password for the local account that will be created on the new vm."
       }
     }
   },
   "variables": {
-    "labSubnetName": "[concat(variables('labVirtualNetworkName'), 'Subnet')]",
+    "labSubnetName": "[format('{0}Subnet', variables('labVirtualNetworkName'))]",
     "labVirtualNetworkId": "[resourceId('Microsoft.DevTestLab/labs/virtualnetworks', parameters('labName'), variables('labVirtualNetworkName'))]",
-    "labVirtualNetworkName": "[concat('Dtl', parameters('labName'))]"
+    "labVirtualNetworkName": "[format('Dtl{0}', parameters('labName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.DevTestLab/labs",
-      "apiVersion": "2018-10-15-preview",
+      "apiVersion": "2018-09-15",
       "name": "[parameters('labName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.DevTestLab/labs/virtualnetworks",
+      "apiVersion": "2018-09-15",
+      "name": "[format('{0}/{1}', parameters('labName'), variables('labVirtualNetworkName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DevTestLab/labs', parameters('labName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DevTestLab/labs/virtualmachines",
+      "apiVersion": "2018-09-15",
+      "name": "[format('{0}/{1}', parameters('labName'), parameters('vmName'))]",
       "location": "[parameters('location')]",
-      "resources": [
-        {
-          "type": "virtualNetworks",
-          "apiVersion": "2018-10-15-preview",
-          "name": "[variables('labVirtualNetworkName')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.DevTestLab/labs', parameters('labName'))]"
-          ]
-        },
-        {
-          "type": "virtualMachines",
-          "apiVersion": "2018-10-15-preview",
-          "name": "[parameters('vmName')]",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.DevTestLab/labs', parameters('labName'))]",
-            "[resourceId('Microsoft.DevTestLab/labs/virtualnetworks', parameters('labName'), variables('labVirtualNetworkName'))]"
-          ],
-          "properties": {
-            "userName": "[parameters('userName')]",
-            "password": "[parameters('password')]",
-            "labVirtualNetworkId": "[variables('labVirtualNetworkId')]",
-            "labSubnetName": "[variables('labSubnetName')]",
-            "size": "[parameters('vmSize')]",
-            "allowClaim": "false",
-            "galleryImageReference": {
-              "offer": "WindowsServer",
-              "publisher": "MicrosoftWindowsServer",
-              "sku": "2019-Datacenter",
-              "osType": "Windows",
-              "version": "latest"
-            }
-          }
+      "properties": {
+        "userName": "[parameters('userName')]",
+        "password": "[parameters('password')]",
+        "labVirtualNetworkId": "[variables('labVirtualNetworkId')]",
+        "labSubnetName": "[variables('labSubnetName')]",
+        "size": "[parameters('vmSize')]",
+        "allowClaim": false,
+        "galleryImageReference": {
+          "offer": "WindowsServer",
+          "publisher": "MicrosoftWindowsServer",
+          "sku": "2019-Datacenter",
+          "osType": "Windows",
+          "version": "latest"
         }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DevTestLab/labs', parameters('labName'))]",
+        "[resourceId('Microsoft.DevTestLab/labs/virtualnetworks', parameters('labName'), variables('labVirtualNetworkName'))]"
       ]
     }
   ],
