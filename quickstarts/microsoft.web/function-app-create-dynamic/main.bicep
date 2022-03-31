@@ -52,6 +52,9 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
   name: functionAppName
   location: location
   kind: 'functionapp'
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: hostingPlan.id
     siteConfig: {
@@ -85,7 +88,10 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
           value: functionWorkerRuntime
         }
       ]
+      ftpsState: 'FtpsOnly'
+      minTlsVersion: '1.2'
     }
+    httpsOnly: true
   }
 }
 
