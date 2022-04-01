@@ -37,4 +37,4 @@ For more details about the key parameters see the [API reference documentation](
 | :------------- | :----------: | :------------- |
 | key | object | The properties of the created key. |
 
-```apiVersion: 2019-09-01```
+```apiVersion: 2021-10-01```
