@@ -64,7 +64,7 @@ var defaultStorageAccount = {
   type: 'Standard_LRS'
 }
 
-resource defaultStorageAccount_name 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   name: defaultStorageAccount.name
   location: location
   sku: {
@@ -74,7 +74,7 @@ resource defaultStorageAccount_name 'Microsoft.Storage/storageAccounts@2021-08-0
   properties: {}
 }
 
-resource clusterName_resource 'Microsoft.HDInsight/clusters@2021-06-01' = {
+resource cluster 'Microsoft.HDInsight/clusters@2021-06-01' = {
   name: clusterName
   location: location
   properties: {
@@ -93,10 +93,10 @@ resource clusterName_resource 'Microsoft.HDInsight/clusters@2021-06-01' = {
     storageProfile: {
       storageaccounts: [
         {
-          name: replace(replace(concat(defaultStorageAccount_name.properties.primaryEndpoints.blob), 'https:', ''), '/', '')
+          name: replace(replace(concat(storageAccount.properties.primaryEndpoints.blob), 'https:', ''), '/', '')
           isDefault: true
           container: clusterName
-          key: listKeys(defaultStorageAccount_name.id, '2019-06-01').keys[0].value
+          key: listKeys(storageAccount.id, '2021-08-01').keys[0].value
         }
       ]
     }
@@ -133,5 +133,5 @@ resource clusterName_resource 'Microsoft.HDInsight/clusters@2021-06-01' = {
   }
 }
 
-output storage object = defaultStorageAccount_name.properties
-output cluster object = clusterName_resource.properties
+output storage object = storageAccount.properties
+output cluster object = cluster.properties
