@@ -25,6 +25,7 @@ For more details about the key parameters see the [API reference documentation](
 | keyName | string | Yes | Specifies the name of the key to be created. |
 | attributes | string | No | The attributes of a key managed by the key vault service. |
 | crv | string | No | Elliptic curve name. |
+| exp | int | No | Expiry date in seconds since 1970-01-01T00:00:00Z. |
 | key_ops | string | No | JSON web key operations. Operations include: 'encrypt', 'decrypt', 'sign', 'verify', 'wrapKey', 'unwrapKey' |
 | key_size | string | No | The key size in bits. For example: 2048, 3072, or 4096 for RSA. |
 | kty | string | No | The type of key to create. |
@@ -36,4 +37,4 @@ For more details about the key parameters see the [API reference documentation](
 | :------------- | :----------: | :------------- |
 | key | object | The properties of the created key. |
 
-```apiVersion: 2019-09-01```
+```apiVersion: 2021-10-01```
