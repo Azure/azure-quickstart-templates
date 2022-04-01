@@ -98,10 +98,10 @@ resource cluster 'Microsoft.HDInsight/clusters@2021-06-01' = {
     storageProfile: {
       storageaccounts: [
         {
-          name: replace(replace(concat(reference(storageAccount.id, '2019-06-01').primaryEndpoints.blob), 'https:', ''), '/', '')
+          name: replace(replace(concat(reference(storageAccount.id, '2021-08-01').primaryEndpoints.blob), 'https:', ''), '/', '')
           isDefault: true
           container: clusterName
-          key: listKeys(storageAccount.id, '2019-06-01').keys[0].value
+          key: listKeys(storageAccount.id, '2021-08-01').keys[0].value
         }
       ]
     }
