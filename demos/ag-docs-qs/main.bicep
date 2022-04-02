@@ -147,7 +147,6 @@ resource virtualMachine_IIS 'Microsoft.Compute/virtualMachines/extensions@2021-1
     settings: {
       commandToExecute: 'powershell Add-WindowsFeature Web-Server; powershell Add-Content -Path "C:\\inetpub\\wwwroot\\Default.htm" -Value $($env:computername)'
     }
-    protectedSettings: {}
   }
   dependsOn: [
     virtualMachine
