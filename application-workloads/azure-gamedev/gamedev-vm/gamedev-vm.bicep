@@ -150,7 +150,7 @@ param environment string = 'production'
 param outTagsByResource object = {}
 
 @description('The base URI where artifacts required by this template are located including a trailing \'/\'')
-param _artifactsLocation string = deployment().properties.templateLink.uri
+param _artifactsLocation string = 'https://raw.githubusercontent.com/dciborow/azure-quickstart-templates/dciborow/gamedev-vm/application-workloads/azure-gamedev/gamedev-vm/'
 
 @description('The sasToken required to access _artifactsLocation.')
 @secure()
