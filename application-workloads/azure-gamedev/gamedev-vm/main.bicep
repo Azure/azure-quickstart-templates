@@ -38,42 +38,15 @@ param passwordAdministratorLogin string
 ])
 param remoteAccessTechnology string = 'RDP'
 
-param managedResourceGroupId string = ''
-
-resource solution_resource 'Microsoft.Solutions/applications@2017-09-01'  = {
+module gamedevvm 'gamedev-vm.bicep'  = {
   name    : 'gamingDevVM'
-  location: location
-  kind    : 'MarketPlace'
-  plan    : {
-    'name': 'game-dev-vm-amatest-plan'
-    'product': 'f39e77ad-ada5-4145-9291-643e6e3ce1b2'
-    'publisher': 'microsoftcorporation1602274591143'
-    'version': '0.1.121'
-  }
-  properties: {
-    managedResourceGroupId: (empty(managedResourceGroupId) ? '${subscription().id}/resourceGroups/${take('${resourceGroup().name}-mrg', 90)}' : managedResourceGroupId)
-    parameters: {
-      location: {
-        value: location
-      }
-      vmSize: {
-        value: vmSize
-      }
-      adminName: {
-        value: administratorLogin
-      }
-      adminPass: {
-        value: passwordAdministratorLogin
-      }
-      osType: {
-        value: osType
-      }
-      gameEngine: {
-        value: gameEngine
-      }
-      remoteAccessTechnology: {
-        value: remoteAccessTechnology
-      }
-    }
+  params: {
+    location: location
+    vmSize: vmSize
+    adminName: administratorLogin
+    adminPass: passwordAdministratorLogin
+    osType: osType
+    gameEngine: gameEngine
+    remoteAccessTechnology: remoteAccessTechnology
   }
 }
