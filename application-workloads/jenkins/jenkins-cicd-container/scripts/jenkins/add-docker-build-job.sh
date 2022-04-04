@@ -165,7 +165,7 @@ throw_if_empty --registry_user_name $registry_user_name
 throw_if_empty --registry_password $registry_password
 throw_if_empty --aks_resource_group_name $aks_resource_group_name
 throw_if_empty --aks_cluster_name $aks_cluster_name
-throw_if_empty --aks_cluster_name $mongodb_uri
+throw_if_empty --mongodb_uri $mongodb_uri
 
 #download dependencies
 job_xml=$(curl -s ${artifacts_location}scripts/jenkins/basic-docker-build-job.xml${artifacts_location_sas_token})

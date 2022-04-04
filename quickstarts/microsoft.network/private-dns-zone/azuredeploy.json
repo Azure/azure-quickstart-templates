@@ -1,10 +1,16 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "16081631543207635397"
+    }
+  },
   "parameters": {
     "privateDnsZoneName": {
       "type": "string",
-      "defaultValue": "contoso.com",
       "metadata": {
         "description": "Private DNS zone name"
       }
@@ -18,7 +24,7 @@
     },
     "vnetName": {
       "type": "string",
-      "defaultValue": "VNet1",
+      "defaultValue": "VNet",
       "metadata": {
         "description": "VNet name"
       }
@@ -27,35 +33,21 @@
       "type": "string",
       "defaultValue": "10.0.0.0/16",
       "metadata": {
-        "description": "Address prefix"
+        "description": "VNet Address prefix"
       }
     },
-    "subnet1Prefix": {
+    "subnetPrefix": {
       "type": "string",
       "defaultValue": "10.0.0.0/24",
       "metadata": {
-        "description": "Subnet 1 Prefix"
+        "description": "Subnet Prefix"
       }
     },
-    "subnet1Name": {
+    "subnetName": {
       "type": "string",
       "defaultValue": "App",
       "metadata": {
-        "description": "Subnet 1 Name"
-      }
-    },
-    "subnet2Prefix": {
-      "type": "string",
-      "defaultValue": "10.0.1.0/24",
-      "metadata": {
-        "description": "Subnet 2 Prefix"
-      }
-    },
-    "subnet2Name": {
-      "type": "string",
-      "defaultValue": "Utility",
-      "metadata": {
-        "description": "Subnet 2 Name"
+        "description": "Subnet Name"
       }
     },
     "location": {
@@ -66,10 +58,11 @@
       }
     }
   },
+  "functions": [],
   "resources": [
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-03-01",
       "name": "[parameters('vnetName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -77,57 +70,38 @@
           "addressPrefixes": [
             "[parameters('vnetAddressPrefix')]"
           ]
-        }
-      },
-      "resources": [
-        {
-          "apiVersion": "2020-05-01",
-          "type": "subnets",
-          "location": "[parameters('location')]",
-          "name": "[parameters('subnet1Name')]",
-          "dependsOn": [
-            "[parameters('vnetName')]"
-          ],
-          "properties": {
-            "addressPrefix": "[parameters('subnet1Prefix')]"
-          }
         },
-        {
-          "apiVersion": "2020-05-01",
-          "type": "subnets",
-          "location": "[parameters('location')]",
-          "name": "[parameters('subnet2Name')]",
-          "dependsOn": [
-            "[parameters('vnetName')]",
-            "[parameters('subnet1Name')]"
-          ],
-          "properties": {
-            "addressPrefix": "[parameters('subnet2Prefix')]"
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]"
+            }
           }
-        }
-      ]
+        ]
+      }
     },
     {
       "type": "Microsoft.Network/privateDnsZones",
-      "apiVersion": "2020-01-01",
+      "apiVersion": "2020-06-01",
       "name": "[parameters('privateDnsZoneName')]",
       "location": "global"
     },
     {
       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-      "apiVersion": "2020-01-01",
-      "name": "[concat(parameters('privateDnsZoneName'), '/', parameters('privateDnsZoneName'), '-link')]",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('privateDnsZoneName'), format('{0}-link', parameters('vnetName')))]",
       "location": "global",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
-      ],
       "properties": {
         "registrationEnabled": "[parameters('vmRegistration')]",
         "virtualNetwork": {
           "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
     }
   ]
 }

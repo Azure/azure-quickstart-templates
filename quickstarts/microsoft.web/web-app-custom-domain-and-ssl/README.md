@@ -15,5 +15,5 @@
 
 This template will create a web app with a custom domain. You can optionally add a SSL certificate to the custom domain.  If you want to add the SSL certficate you must complete the following steps before deployment:
 
-- Upload a certificate to KeyVault [here](https://github.com/Azure/azure-quickstart-templates/tree/master/201-web-app-certificate-from-key-vault)
+- Upload a certificate to KeyVault [here](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.web/web-app-certificate-from-key-vault)
 - Create the required DNS record for adding custom hostname as described [here](https://docs.microsoft.com/en-us/azure/app-service-web/web-sites-custom-domain-name)
