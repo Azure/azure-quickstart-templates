@@ -74,6 +74,28 @@ param naptEnabled string
 @description('The resource ID of the customLocation representing the ASE device where the packet core will be deployed. If this parameter is not specified then the 5G core will be created but will not be deployed to an ASE. [Collect custom location information](https://docs.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here.')
 param customLocation string = ''
 
+@description('An object containing all the properties for a packet core control plane, except for the custom location field.')
+var packetCoreControlPlanePropertiesBasic = {
+  mobileNetwork: {
+    id: exampleMobileNetwork.id
+  }
+  coreNetworkTechnology: coreNetworkTechnology
+  controlPlaneAccessInterface: {
+    ipv4Address: controlPlaneAccessIpAddress
+    ipv4Subnet: accessSubnet
+    ipv4Gateway: accessGateway
+    name: controlPlaneAccessInterfaceName
+  }
+}
+
+var customLocationProperty = !empty(customLocation) ? {
+  customLocation: {
+    id: customLocation
+  }
+} : {}
+
+var packetCoreControlPlanePropertiesFull = union(packetCoreControlPlanePropertiesBasic, customLocationProperty)
+
 resource exampleMobileNetwork 'Microsoft.MobileNetwork/mobileNetworks@2022-03-01-preview' = {
   name: mobileNetworkName
   location: location
@@ -210,21 +232,7 @@ resource exampleSimResources 'Microsoft.MobileNetwork/sims@2022-03-01-preview' =
 resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreControlPlanes@2022-03-01-preview' = {
   name: siteName
   location: location
-  properties: {
-    mobileNetwork: {
-      id: exampleMobileNetwork.id
-    }
-    coreNetworkTechnology: coreNetworkTechnology
-    customLocation: {
-      id: customLocation
-    } 
-    controlPlaneAccessInterface: {
-      ipv4Address: controlPlaneAccessIpAddress
-      ipv4Subnet: accessSubnet
-      ipv4Gateway: accessGateway
-      name: controlPlaneAccessInterfaceName
-    }
-  }
+  properties: packetCoreControlPlanePropertiesFull
 
   resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-03-01-preview' = {
     name: siteName
@@ -256,5 +264,5 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
         }
       }
     }
-  }  
+  }
 }
