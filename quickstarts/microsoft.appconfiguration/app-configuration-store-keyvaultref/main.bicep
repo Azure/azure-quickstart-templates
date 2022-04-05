@@ -5,7 +5,7 @@ param configStoreName string = 'appconfig${uniqueString(resourceGroup().id)}'
 param location string = resourceGroup().location
 
 @description('Specifies the name of the key-value resource. The name is a combination of key and label with $ as delimiter.')
-param keyValue string = 'KeyVaultReferenceSample'
+param keyValue string = 'key$label'
 
 @description('Format should be https://{vault-name}.{vault-DNS-suffix}/secrets/{secret-name}/{secret-version}. Secret version is optional.')
 param keyVaultSecretURL string
