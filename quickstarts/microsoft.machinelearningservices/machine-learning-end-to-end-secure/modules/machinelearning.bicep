@@ -51,7 +51,7 @@ param machineLearningPleName string
 @description('Enable public IP for Azure Machine Learning compute nodes')
 param amlComputePublicIp bool = true
  
-resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2022-02-01-preview' = {
+resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2021-04-01' = {
   name: machineLearningName
   location: location
   tags: tags
@@ -71,7 +71,7 @@ resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2022-02-0
 
     // configuration for workspaces with private link endpoint
     imageBuildCompute: 'cluster001'
-    publicNetworkAccess: 'Disabled'
+    allowPublicAccessWhenBehindVnet: false
   }
 }
 
