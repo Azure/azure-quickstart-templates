@@ -55,8 +55,11 @@ param userPlaneDataInterfaceSubnet string
 @description('The data subnet default gateway')
 param userPlaneDataInterfaceGateway string
 
-@description('The network address of the subnet from which IP addresses must be allocated to UEs, given in CIDR notation')
-param ueIpPoolPrefix string
+@description('The network address of the subnet from which dynamic IP addresses must be allocated to UEs, given in CIDR notation. Optional if userEquipmentStaticAddressPoolPrefix is specified. If both are specified, they must be the same size and not overlap.')
+param userEquipmentAddressPoolPrefix string = ''
+
+@description('The network address of the subnet from which static IP addresses must be allocated to UEs, given in CIDR notation. Optional if userEquipmentAddressPoolPrefix is specified. If both are specified, they must be the same size and not overlap.')
+param userEquipmentStaticAddressPoolPrefix string = ''
 
 @description('The name of the data network')
 param dataNetworkName string = 'internet'
@@ -256,9 +259,12 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
           ipv4Gateway: userPlaneDataInterfaceGateway
           name: userPlaneDataInterfaceName
         }
-        userEquipmentAddressPoolPrefix: [
-          ueIpPoolPrefix
-        ]
+        userEquipmentAddressPoolPrefix: empty(userEquipmentAddressPoolPrefix) ? [
+          userEquipmentAddressPoolPrefix
+        ] : null
+        userEquipmentStaticAddressPoolPrefix: empty(userEquipmentStaticAddressPoolPrefix) ? [
+          userEquipmentStaticAddressPoolPrefix
+        ] : null
         naptConfiguration: {
           enabled: naptEnabled
         }
