@@ -1,4 +1,4 @@
-# Create an Azure CosmosDB Account with Advanced Threat Protection (preview) enabled
+# Create an Azure Cosmos DB Account with Microsoft Defender for Azure Cosmos DB (preview) enabled
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-advanced-threat-protection-create-account/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.documentdb/cosmosdb-advanced-threat-protection-create-account/PublicDeployment.svg)
@@ -16,21 +16,8 @@
 
 <a href="http://armviz.io/#/?load=azuredeploy.json" target="_blank">
 
-This ARM template is intended to create a **CosmosDB Account** quickly with the **minimal required values** and **Advanced Threat Protection**.
+This ARM template is intended to create an **Azure Cosmos DB Account** quickly with the **minimal required values** and **Microsoft Defender for Azure Cosmos DB enabled**.
 
-CosmosDB Advanced Threat Protection is a unified package for advanced CosmosDB security capabilities. See the [official documentation]( https://go.microsoft.com/fwlink/?linkid=2097603) for more information.
+Microsoft Defender for Azure Cosmos DB is a unified package for advanced Cosmos DB security capabilities. See the [official documentation]( https://go.microsoft.com/fwlink/?linkid=2097603) for more information.
 
-`Tags : CosmosDB, Advanced Threat Protection`
-
-## Parameters
-The following parameters have default values allowing to deploy the template as-is without providing any parameter, but can be overriden at deployment time:
-
-`Name` : Name of the CosmosDB Account, default is a unique string calculated from the "cosmosdb" token and the resource group id.  
-
-`Location` : Location of the CosmosDB Account, default to the location of the resource group.  
-
-`Tier` : Offering type of the CosmosDB Account, default to Standard.
-
-`Advanced Threat Protection Enabled` : Advanced Threat Protection for the CosmosDB Account, default to true (enabled).
-
-
+`Tags : Azure Cosmos DB, Microsoft Defender for Azure Cosmos DB, Advanced Threat Protection`
