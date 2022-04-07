@@ -16,7 +16,7 @@ param authenticationType string = 'password'
 param adminPasswordOrKey string
 
 @description('Unique DNS Name for the Public IP used to access the Virtual Machine.')
-param dnsLabelPrefix string = toLower('simplelinuxvm-${uniqueString(resourceGroup().id)}')
+param dnsLabelPrefix string = toLower('${vmName}-${uniqueString(resourceGroup().id)}')
 
 @description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.')
 @allowed([
