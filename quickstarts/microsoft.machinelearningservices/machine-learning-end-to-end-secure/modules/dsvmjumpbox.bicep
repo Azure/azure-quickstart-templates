@@ -24,7 +24,7 @@ param adminPassword string
 
 var aadLoginExtensionName = 'AADLoginForWindows'
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2021-03-01' = {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2020-11-01' = {
   name: '${virtualMachineName}-nic'
   location: location
   properties: {
@@ -97,7 +97,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   }
 }
 
-resource virtualMachineName_aadLoginExtensionName 'Microsoft.Compute/virtualMachines/extensions@2021-03-01' = {
+resource virtualMachineName_aadLoginExtensionName 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = {
   name: '${virtualMachine.name}/${aadLoginExtensionName}'
   location: location
   properties: {
@@ -105,6 +105,7 @@ resource virtualMachineName_aadLoginExtensionName 'Microsoft.Compute/virtualMach
     type: aadLoginExtensionName
     typeHandlerVersion: '1.0'
     autoUpgradeMinorVersion: true
+    settings: {}
   }
 }
 

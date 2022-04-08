@@ -25,7 +25,7 @@ param aksSubnetId string
 param amlComputePublicIp bool
 
 @description('VM size for the default compute cluster')
-param amlComputeDefaultVmSize string = 'Standard_Ds3_v2'
+param amlComputeDefaultVmSize string
 
 resource machineLearningCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
   name: '${machineLearning}/cluster001'
