@@ -19,7 +19,7 @@ param alertProcessingRuleScope array = [
   subscription().id
 ]
 
-resource actionGroup 'microsoft.insights/actionGroups@2019-06-01' = {
+resource actionGroup 'Microsoft.Insights/actionGroups@2021-09-01' = {
   name: actionGroupName
   location: 'Global'
   properties: {
