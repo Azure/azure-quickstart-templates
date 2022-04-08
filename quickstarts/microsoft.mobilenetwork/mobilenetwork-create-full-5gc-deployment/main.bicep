@@ -218,15 +218,15 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
       id: exampleMobileNetwork.id
     }
     coreNetworkTechnology: coreNetworkTechnology
+    customLocation: empty(customLocation) ? null : {
+      id: customLocation
+    }
     controlPlaneAccessInterface: {
       ipv4Address: controlPlaneAccessIpAddress
       ipv4Subnet: accessSubnet
       ipv4Gateway: accessGateway
       name: controlPlaneAccessInterfaceName
     }
-    customLocation: empty(customLocation) ? {
-      id: customLocation
-    } : null
   }
 
   resource examplePacketCoreDataPlane 'packetCoreDataPlanes@2022-03-01-preview' = {
@@ -251,12 +251,12 @@ resource examplePacketCoreControlPlane 'Microsoft.MobileNetwork/packetCoreContro
           ipv4Gateway: userPlaneDataInterfaceGateway
           name: userPlaneDataInterfaceName
         }
-        userEquipmentAddressPoolPrefix: empty(userEquipmentAddressPoolPrefix) ? [
+        userEquipmentAddressPoolPrefix: empty(userEquipmentAddressPoolPrefix) ? null : [
           userEquipmentAddressPoolPrefix
-        ] : null
-        userEquipmentStaticAddressPoolPrefix: empty(userEquipmentStaticAddressPoolPrefix) ? [
+        ]
+        userEquipmentStaticAddressPoolPrefix: empty(userEquipmentStaticAddressPoolPrefix) ? null : [
           userEquipmentStaticAddressPoolPrefix
-        ] : null
+        ]
         naptConfiguration: {
           enabled: naptEnabled
         }
