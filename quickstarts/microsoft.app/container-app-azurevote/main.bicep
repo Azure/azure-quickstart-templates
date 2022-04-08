@@ -32,7 +32,7 @@ param minReplica int = 1
 @maxValue(25)
 param maxReplica int = 3
 
-param revision string = toLower(utcNow())
+param revision string = utcNow()
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   name: containerAppLogAnalyticsName
@@ -77,7 +77,7 @@ resource containerApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
       }
     }
     template: {
-      revisionSuffix: revision
+      revisionSuffix: 'firstrevision'
       containers: [
         {
           name: containerAppName
@@ -86,6 +86,14 @@ resource containerApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
             {
               name: 'REDIS'
               value: 'localhost'
+            }
+            {
+              name: 'VOTE1VALUE'
+              value: 'Azure Container Apps'
+            }
+            {
+              name: 'VOTE2VALUE'
+              value: 'Azure Kubernetes Service'
             }
           ]
           resources: {
