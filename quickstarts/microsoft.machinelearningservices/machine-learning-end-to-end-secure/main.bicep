@@ -164,7 +164,8 @@ module dsvm 'modules/dsvmjumpbox.bicep' = if (deployJumphost) {
     subnetId: '${vnet.outputs.id}/subnets/snet-training'
     adminUsername: dsvmJumpboxUsername
     adminPassword: dsvmJumpboxPassword
-    networkSecurityGroupId: nsg.outputs.networkSecurityGroup 
+    networkSecurityGroupId: nsg.outputs.networkSecurityGroup
+    vmSizeParameter: amlComputeDefaultVmSize
   }
 }
 

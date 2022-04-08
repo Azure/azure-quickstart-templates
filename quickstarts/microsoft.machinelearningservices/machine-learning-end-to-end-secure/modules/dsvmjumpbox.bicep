@@ -12,7 +12,7 @@ param networkSecurityGroupId string
 param virtualMachineName string
 
 @description('Virtual machine size')
-param vmSize string = 'Standard_DS3_v2'
+param vmSizeParameter string
 
 @description('Virtual machine admin username')
 param adminUsername string
@@ -50,7 +50,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   location: location
   properties: {
     hardwareProfile: {
-      vmSize: vmSize
+      vmSize: vmSizeParameter
     }
     storageProfile: {
       osDisk: {
@@ -106,7 +106,7 @@ resource virtualMachineName_aadLoginExtensionName 'Microsoft.Compute/virtualMach
     typeHandlerVersion: '1.0'
     autoUpgradeMinorVersion: true
     settings: {
-      mdmId: ''
+      mdmId: 'A'
     }
   }
 }
