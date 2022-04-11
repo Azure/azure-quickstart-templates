@@ -17,8 +17,9 @@
 
 ## Sample overview
 
-This template uses the DeploymentScript resource to create import a number of Container Images from public sources to an Azure Container Registry. A new Azure Container Registry is created.
+This template leverages the Import ACR module from the bicep registry to import public container images into an Azure Container Registry.. A new Azure Container Registry is created.
 
+See the [Import-ACR] module in the Bicep Registry for more information.
 See the [docs](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template?tabs=CLI) for more information on the deployment script resource.
 
 ## Deployment steps
