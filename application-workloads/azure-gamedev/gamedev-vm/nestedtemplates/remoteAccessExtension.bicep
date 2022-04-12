@@ -26,10 +26,10 @@ var remoteAccessExtension = {
     autoUpgradeMinorVersion: true
     settings: {
       fileUris: [
-        uri(_artifactsLocation, 'CreateDataDisk.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'MountFileShare.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'p4DepotSync.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'ibSetup.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/CreateDataDisk.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/MountFileShare.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/p4DepotSync.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/ibSetup.ps1${_artifactsLocationSasToken}')
       ]
       commandToExecute: 'powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command "./CreateDataDisk.ps1;./MountFileShare.ps1 ${mountFileShareParams};./p4DepotSync.ps1 ${p4Params};./ibSetup.ps1;${cmdGDKInstall}"'
     }
@@ -41,11 +41,11 @@ var remoteAccessExtension = {
     autoUpgradeMinorVersion: true
     settings: {
       fileUris: [
-        uri(_artifactsLocation, 'CreateDataDisk.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'MountFileShare.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'p4DepotSync.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'ibSetup.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'TeradiciRegCAS.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/CreateDataDisk.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/MountFileShare.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/p4DepotSync.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/ibSetup.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/TeradiciRegCAS.ps1${_artifactsLocationSasToken}')
       ]
     }
     protectedSettings: {
@@ -59,12 +59,12 @@ var remoteAccessExtension = {
     autoUpgradeMinorVersion: true
     settings: {
       fileUris: [
-        uri(_artifactsLocation, 'CreateDataDisk.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'MountFileShare.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'p4DepotSync.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'ibSetup.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'PostInstall.ps1${_artifactsLocationSasToken}')
-        uri(_artifactsLocation, 'PreInstall.zip${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/CreateDataDisk.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/MountFileShare.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/p4DepotSync.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/ibSetup.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/PostInstall.ps1${_artifactsLocationSasToken}')
+        uri(_artifactsLocation, 'scripts/PreInstall.zip${_artifactsLocationSasToken}')
       ]
       commandToExecute: 'powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command "./CreateDataDisk.ps1;./MountFileShare.ps1 ${mountFileShareParams};./p4DepotSync.ps1 ${p4Params};./ibSetup.ps1;${cmdGDKInstall};./PostInstall.ps1"'
     }
