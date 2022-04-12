@@ -69,6 +69,7 @@ var headers = context.Request.Headers
     .Select(h => string.Format("{0}: {1}", h.Key, String.Join(", ", h.Value).Replace("\"", "\\\""))).ToArray<string>();
 var jwtToken = context.Request.Headers.GetValueOrDefault("Authorization","").AsJwt();
 var userId = (context.User != null && context.User.Id != null) ? context.User.Id : (jwtToken != null && jwtToken.Subject != null ? jwtToken.Subject : string.Empty);
+var companyId = (context.Subscription != null && context.Subscription.Id != null) ? context.Subscription.Id : string.Empty;
 var cru = new JObject();
 if (context.User != null) {
   cru.Add("Email", context.User.Email);
@@ -85,7 +86,7 @@ return new JObject(
   new JProperty("uri", context.Request.OriginalUrl.ToString()),
   new JProperty("user_id", userId),
   new JProperty("contextRequestUser", crus),
-  new JProperty("company_id", ""),
+  new JProperty("company_id", companyId),
   new JProperty("request_headers", string.Join(";;", headers)),
   new JProperty("request_body", requestBody),
   new JProperty("contextTimestamp", context.Timestamp.ToString("o")),
