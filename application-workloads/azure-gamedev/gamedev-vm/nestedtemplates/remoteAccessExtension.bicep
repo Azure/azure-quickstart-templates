@@ -71,7 +71,7 @@ var remoteAccessExtension = {
   }
 }
 
-resource virtualMachine_remoteAccessExtension 'Microsoft.Compute/virtualMachines/extensions@2019-12-01' = {
+resource virtualMachine_remoteAccessExtension 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = {
   name      : '${virtualMachineName}/CustomScriptExtension-${remoteAccessTechnology}'
   location  : location
   properties: remoteAccessExtension[remoteAccessTechnology]

@@ -232,7 +232,7 @@ var publicIpId = {
   'none': ''
 }[publicIpNewOrExisting]
 
-resource partnercenter 'Microsoft.Resources/deployments@2020-06-01' = {
+resource partnercenter 'Microsoft.Resources/deployments@2021-04-01' = {
   name: 'pid-7837dd60-4ba8-419a-a26f-237bbe170773-partnercenter'
   properties: {
     mode: 'Incremental'
@@ -244,7 +244,7 @@ resource partnercenter 'Microsoft.Resources/deployments@2020-06-01' = {
   }
 }
 
-resource publicIp 'Microsoft.Network/publicIPAddresses@2021-03-01' = if (publicIpNewOrExisting == 'new') {
+resource publicIp 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (publicIpNewOrExisting == 'new') {
   name: publicIpName
   sku: {
     name: publicIpSku
@@ -265,7 +265,7 @@ module nsg_rules 'nsgRules.bicep' = {
   }
 }
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   name: nsgName_var
   location: location
   properties: {
@@ -273,7 +273,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-03-01' = if (vnetNewOrExisting == 'new') {
+resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = if (vnetNewOrExisting == 'new') {
   name: vnetName
   location: location
   properties: {
@@ -293,7 +293,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-03-01' = if (vnetNewOrExis
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2021-03-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   name: nicName_var
   location: location
   dependsOn: [
@@ -323,7 +323,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-03-01' = {
   }
 }
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-03-01' = {
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   name: vmName_var
   location: location
   plan: vmPlan
@@ -390,7 +390,7 @@ module remoteAccess 'remoteAccessExtension.bicep' = {
   }
 }
 
-resource virtualMachine_enableAAD 'Microsoft.Compute/virtualMachines/extensions@2019-12-01' = if(enableAAD) {
+resource virtualMachine_enableAAD 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = if(enableAAD) {
   name      : '${virtualMachine.name}/AADLoginForWindows'
   location  : location
   dependsOn : [

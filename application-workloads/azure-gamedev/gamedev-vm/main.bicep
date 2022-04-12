@@ -1,6 +1,13 @@
 
 param location string = resourceGroup().location
 
+@description('The base URI where artifacts required by this template are located including a trailing \'/\'')
+param _artifactsLocation string = ''
+
+@description('The sasToken required to access _artifactsLocation.')
+@secure()
+param _artifactsLocationSasToken string = ''
+
 @allowed([
   'ue_4_27'
   'ue_5_0ea'
@@ -48,5 +55,7 @@ module gamedevvm './nestedtemplates/gamedev-vm.bicep'  = {
     osType: osType
     gameEngine: gameEngine
     remoteAccessTechnology: remoteAccessTechnology
+    _artifactsLocation: _artifactsLocation
+    _artifactsLocationSasToken: _artifactsLocationSasToken
   }
 }
