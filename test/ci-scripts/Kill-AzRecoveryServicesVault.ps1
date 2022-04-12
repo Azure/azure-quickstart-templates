@@ -65,7 +65,7 @@ foreach($item in $protectableItemsSQL)
 	{
 		Disable-AzRecoveryServicesBackupProtection -Verbose -Item $item -VaultId $VaultToDelete.ID -RemoveRecoveryPoints -Force 
 	}
-
+Write-Host "Disabled and deleted SQL protectable items"
 
 foreach($item in $backupItemsVM)
     {
@@ -185,6 +185,8 @@ foreach($item in $pvtendpoints)
 		Remove-AzPrivateEndpoint -Name $pename -ResourceGroupName $ResourceGroup -Force #remove private endpoints
 	}
 Write-Host "Removed Private Endpoints"
+
+Start-Sleep 120 # sometimes it takes a while for items or config to be removed from the vault
 
 #Recheck ASR items in vault
 $fabricCount = 0
