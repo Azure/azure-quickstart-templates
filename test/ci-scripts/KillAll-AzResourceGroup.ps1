@@ -59,13 +59,13 @@ foreach ($rg in $azdoResourceGroups) {
 
         # if the resource group still exists after the first attempt, try again after a few minutes
         Write-Host "Checking for ResourceGroup: $($rg.ResourceGroupName)"
-        if ((Get-AzResourceGroup -Name $rg.ResourceGroupName -verbose -ErrorAction SilentlyContinue) -ne $null) {
+        if ($null -ne (Get-AzResourceGroup -Name $rg.ResourceGroupName -verbose -ErrorAction SilentlyContinue)) {
             Write-Host "Found the resource group - sleeping..." 
             Start-Sleep $SleepTime
             Write-Host "Second Attempt on ResourceGroup: $($rg.ResourceGroupName)"
             Write-Host "--------------------------------------------------------------------------"
             & $TTKPath/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName ($rg.ResourceGroupName) -verbose -ErrorAction $SecondErrorAction
-            if ((Get-AzResourceGroup -Name $rg.ResourceGroupName -verbose -ErrorAction SilentlyContinue) -ne $null) {
+            if ($null -ne (Get-AzResourceGroup -Name $rg.ResourceGroupName -verbose -ErrorAction SilentlyContinue)) {
                 Write-Host "=================================================================="
                 Write-Host " Failed to delete: $($rg.ResourceGroupName) "
                 Write-Host "=================================================================="
