@@ -42,6 +42,35 @@ foreach ($vault in $vaults) {
 
 }
 
+# OMS Solutions
+$oms = Get-AzResource -ResourceGroupName $ResourceGroupName -ResourceType "Microsoft.OperationsManagement/solutions"
+
+foreach($o in $oms){
+    # need to invoke REST to get the properties body
+    $r = Invoke-AzRestMethod -Method "GET" -Path "$($o.id)?api-version=2015-11-01-preview" -Verbose
+    $responseBody = $r.Content | ConvertFrom-JSon -Depth 30
+    $body = @{}
+    $properties = @{}
+    $properties['workSpaceResourceId'] = $responseBody.properties.workSpaceResourceId # tranfer the workspaceID
+    $properties['containedResources'] = @() # empty out arrays
+    $properties['referencedResources'] = @()
+    $plan = $responseBody.plan
+
+    $body['plan'] = $plan # transfer the plan
+    $body['properties'] = $properties
+    $body['location'] = $responseBody.location # transfer the location
+
+    $jsonBody = $body | ConvertTo-Json -Depth 30
+
+    # Write-Host $jsonBody
+
+    # re-PUT the resource with the empty properties body (arrays)
+    Invoke-AzRestMethod -Method "PUT" -Path "$($o.id)?api-version=2015-11-01-preview" -Payload $jsonBody -Verbose
+
+}
+# end OMS
+
+
 # The Az.DataProtection is not yet included with the rest of the Az module
 if ($(Get-Module -ListAvailable Az.DataProtection) -eq $null) {
     Write-Host "Installing Az.DataProtection module..."
