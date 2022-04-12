@@ -186,6 +186,7 @@ foreach($item in $pvtendpoints)
 	}
 Write-Host "Removed Private Endpoints"
 
+Write-Host "Sleeping for 120 seconds..."
 Start-Sleep 120 # sometimes it takes a while for items or config to be removed from the vault
 
 #Recheck ASR items in vault
