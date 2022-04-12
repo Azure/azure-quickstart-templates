@@ -31,12 +31,12 @@ param memorySize string = '1'
 @description('Minimum number of replicas that will be deployed')
 @minValue(0)
 @maxValue(25)
-param minReplica int = 1
+param minReplicas int = 1
 
 @description('Maximum number of replicas that will be deployed')
 @minValue(0)
 @maxValue(25)
-param maxReplica int = 3
+param maxReplicas int = 3
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2020-10-01' = {
   name: containerAppLogAnalyticsName
@@ -48,13 +48,10 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2020-10-01' = {
   }
 }
 
-resource containerAppEnv 'Microsoft.Web/kubeEnvironments@2021-02-01' = {
+resource containerAppEnv 'Microsoft.App/managedEnvironments@2022-01-01-preview' = {
   name: containerAppEnvName
   location: location
-  kind: 'containerenvironment'
   properties: {
-    type: 'managed'
-    internalLoadBalancerEnabled: false
     appLogsConfiguration: {
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
@@ -65,15 +62,15 @@ resource containerAppEnv 'Microsoft.Web/kubeEnvironments@2021-02-01' = {
   }
 }
 
-resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
+resource containerApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
   name: containerAppName
   location: location
   properties: {
-    kubeEnvironmentId: containerAppEnv.id
+    managedEnvironmentId: containerAppEnv.id
     configuration: {
       ingress: {
         external: true
-        targetport: targetPort
+        targetPort: targetPort
         allowInsecure: false
         traffic: [
           {
@@ -90,14 +87,14 @@ resource containerApp 'Microsoft.Web/containerApps@2021-03-01' = {
           name: containerAppName
           image: containerImage
           resources: {
-            cpu: cpuCore
+            cpu: json(cpuCore)
             memory: '${memorySize}Gi'
           }
         }
       ]
       scale: {
-        minReplica: minReplica
-        maxReplica: maxReplica
+        minReplicas: minReplicas
+        maxReplicas: maxReplicas
       }
     }
   }
