@@ -17,9 +17,6 @@ param vmSize string = 'Standard_D2_v3'
 @description('Specify the storage account name.')
 param storageAccountName string
 
-@description('Name of the resource group for the app config store.')
-param appConfigStoreResourceGroup string
-
 @description('App configuration store name.')
 param appConfigStoreName string
 
@@ -36,8 +33,6 @@ var subnetPrefix = '10.0.0.0/24'
 var publicIPAddressName = 'myPublicIP'
 var vmName = 'SimpleWinVM'
 var virtualNetworkName = 'MyVNET'
-var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
-var appConfigRef = resourceId(appConfigStoreResourceGroup, 'Microsoft.AppConfiguration/configurationStores', appConfigStoreName)
 var windowsOSVersionParameters = {
   key: vmSkuKey
   label: 'template'
@@ -45,6 +40,10 @@ var windowsOSVersionParameters = {
 var diskSizeGBParameters = {
   key: diskSizeKey
   label: 'template'
+}
+
+resource appConfigStore 'Microsoft.AppConfiguration/configurationStores@2021-10-01-preview' existing = {
+  name: appConfigStoreName
 }
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
@@ -101,15 +100,12 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
             id: publicIPAddress.id
           }
           subnet: {
-            id: subnetRef
+            id: virtualNetwork.properties.subnets[0].id
           }
         }
       }
     ]
   }
-  dependsOn: [
-    virtualNetwork
-  ]
 }
 
 resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
@@ -128,7 +124,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       imageReference: {
         publisher: 'MicrosoftWindowsServer'
         offer: 'WindowsServer'
-        sku: listKeyValue(appConfigRef, '2019-10-01', windowsOSVersionParameters).value
+        sku: listKeyValue(appConfigStore.id, '2019-10-01', windowsOSVersionParameters).value
         version: 'latest'
       }
       osDisk: {
@@ -136,7 +132,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       }
       dataDisks: [
         {
-          diskSizeGB: listKeyValue(appConfigRef, '2019-10-01', diskSizeGBParameters).value
+          diskSizeGB: listKeyValue(appConfigStore.id, '2019-10-01', diskSizeGBParameters).value
           lun: 0
           createOption: 'Empty'
         }
