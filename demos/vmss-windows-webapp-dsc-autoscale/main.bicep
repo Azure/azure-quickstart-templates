@@ -32,11 +32,11 @@ param adminUsername string = 'vmssadmin'
 param adminPassword string
 
 @description('The base URI where artifacts required by this template are located. For example, if stored on a public GitHub repo, you\'d use the following URI: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale/.')
-param artifactsLocation string = deployment().properties.templateLink.uri
+param _artifactsLocation string = deployment().properties.templateLink.uri
 
 @description('The sasToken required to access _artifactsLocation.  If your artifacts are stored on a public repo or public storage account you can leave this blank.')
 @secure()
-param artifactsLocationSasToken string = ''
+param _artifactsLocationSasToken string = ''
 
 @description('Location of the PowerShell DSC zip file relative to the URI specified in the _artifactsLocation, i.e. DSC/IISInstall.ps1.zip')
 param powershelldscZip string = 'DSC/InstallIIS.zip'
@@ -79,8 +79,8 @@ var osType = {
   version: 'latest'
 }
 var imageReference = osType
-var webDeployPackageFullPath = uri(artifactsLocation, '${webDeployPackage}${artifactsLocationSasToken}')
-var powershelldscZipFullPath = uri(artifactsLocation, '${powershelldscZip}${artifactsLocationSasToken}')
+var webDeployPackageFullPath = uri(_artifactsLocation, '${webDeployPackage}${_artifactsLocationSasToken}')
+var powershelldscZipFullPath = uri(_artifactsLocation, '${powershelldscZip}${_artifactsLocationSasToken}')
 
 resource loadBalancer 'Microsoft.Network/loadBalancers@2021-05-01' = {
   name: loadBalancerName
