@@ -182,7 +182,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in range(0, 
     networkProfile: {
       networkInterfaces: [
         {
-          id: resourceId('Microsoft.Network/networkInterfaces', 'id: ${networkInterfaceName}${i}')
+          id: '${networkInterfaceName}${i}'
         }
       ]
     }
