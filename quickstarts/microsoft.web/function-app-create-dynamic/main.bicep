@@ -61,11 +61,11 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
       appSettings: [
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, '2021-08-01').keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, '2021-08-01').keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'WEBSITE_CONTENTSHARE'
@@ -81,7 +81,7 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: reference(applicationInsights.id, '2020-02-02').InstrumentationKey
+          value: applicationInsights.properties.InstrumentationKey
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
@@ -99,7 +99,7 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: applicationInsightsName
   location: appInsightsLocation
   tags: {
-    'hidden-link:${resourceId('Microsoft.Web/sites', applicationInsightsName)}': 'Resource'
+    'hidden-link:${functionApp.id}': 'Resource'
   }
   kind: 'web'
   properties: {
