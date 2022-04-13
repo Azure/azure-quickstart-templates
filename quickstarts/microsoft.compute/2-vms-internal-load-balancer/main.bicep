@@ -153,7 +153,7 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2021-05-01' = {
   ]
 }
 
-resource vmNamePrefix_resource 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in range(0, numberOfInstances): {
+resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = [for i in range(0, numberOfInstances): {
   name: '${vmNamePrefix}${i}'
   location: location
   properties: {
