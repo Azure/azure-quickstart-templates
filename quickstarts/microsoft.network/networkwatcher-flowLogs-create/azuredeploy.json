@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1272.37030",
+      "templateHash": "5000154767734769106"
+    }
+  },
   "parameters": {
     "location": {
       "type": "string",
@@ -11,7 +18,7 @@
     },
     "NetworkWatcherName": {
       "type": "string",
-      "defaultValue": "[concat('NetworkWatcher_', parameters('location'))]",
+      "defaultValue": "[format('NetworkWatcher_{0}', parameters('location'))]",
       "metadata": {
         "description": "Name of the Network Watcher attached to your subscription. Format: NetworkWatcher_<region_name>"
       }
@@ -32,8 +39,8 @@
     "RetentionDays": {
       "type": "int",
       "defaultValue": 0,
-      "minValue": 0,
       "maxValue": 365,
+      "minValue": 0,
       "metadata": {
         "description": "Retention period in days. Default is zero which stands for permanent retention. Can be any Integer from 0 to 365"
       }
@@ -63,37 +70,63 @@
     }
   },
   "variables": {
-    "storageAccountName": "[concat('flowlogs', uniquestring(resourceGroup().id))]"
+    "storageAccountName": "[format('flowlogs{0}', uniqueString(resourceGroup().id))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2021-08-01",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('storageAccountType')]"
       },
       "kind": "StorageV2",
-      "properties": {
-      }
+      "properties": {}
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2020-10-01",
       "name": "deployFlowLogs",
       "resourceGroup": "NetworkWatcherRG",
-      "dependsOn": [
-        "[variables('storageAccountName')]"
-      ],
       "properties": {
-        "mode": "Incremental",
         "expressionEvaluationOptions": {
           "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "NetworkWatcherName": {
+            "value": "[parameters('NetworkWatcherName')]"
+          },
+          "FlowLogName": {
+            "value": "[parameters('FlowLogName')]"
+          },
+          "existingNSG": {
+            "value": "[parameters('existingNSG')]"
+          },
+          "RetentionDays": {
+            "value": "[parameters('RetentionDays')]"
+          },
+          "FlowLogsversion": {
+            "value": "[parameters('FlowLogsversion')]"
+          },
+          "storageAccountResourceId": {
+            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+          }
         },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1272.37030",
+              "templateHash": "5293634236120995437"
+            }
+          },
           "parameters": {
             "location": {
               "type": "string"
@@ -121,7 +154,7 @@
             {
               "type": "Microsoft.Network/networkWatchers/flowLogs",
               "apiVersion": "2020-06-01",
-              "name": "[concat(parameters('NetworkWatcherName'), '/', parameters('FlowLogName'))]",
+              "name": "[format('{0}/{1}', parameters('NetworkWatcherName'), parameters('FlowLogName'))]",
               "location": "[parameters('location')]",
               "properties": {
                 "targetResourceId": "[parameters('existingNSG')]",
@@ -138,31 +171,11 @@
               }
             }
           ]
-        },
-        "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "NetworkWatcherName": {
-            "value": "[parameters('NetworkWatcherName')]"
-          },
-          "FlowLogName": {
-            "value": "[parameters('FlowLogName')]"
-          },
-          "existingNSG": {
-            "value": "[parameters('existingNSG')]"
-          },
-          "RetentionDays": {
-            "value": "[parameters('RetentionDays')]"
-          },
-          "FlowLogsversion": {
-            "value": "[parameters('FlowLogsversion')]"
-          },
-          "storageAccountResourceId": {
-            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-          }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
     }
   ]
 }

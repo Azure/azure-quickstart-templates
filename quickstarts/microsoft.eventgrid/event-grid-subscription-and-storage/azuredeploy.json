@@ -1,10 +1,17 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1318.3566",
+      "templateHash": "113493511540352576"
+    }
+  },
   "parameters": {
-    "storageName": {
+    "storageAccountName": {
       "type": "string",
-      "defaultValue": "[concat('storage', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('storage{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Provide a unique name for the Blob Storage account."
       }
@@ -30,7 +37,7 @@
       }
     },
     "systemTopicName": {
-      "type": "String",
+      "type": "string",
       "defaultValue": "mystoragesystemtopic",
       "metadata": {
         "description": "Provide a name for the system topic."
@@ -40,8 +47,8 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
-      "name": "[parameters('storageName')]",
+      "apiVersion": "2021-08-01",
+      "name": "[parameters('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -53,24 +60,21 @@
     },
     {
       "type": "Microsoft.EventGrid/systemTopics",
-      "apiVersion": "2020-04-01-preview",
+      "apiVersion": "2021-12-01",
       "name": "[parameters('systemTopicName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[parameters('storageName')]"
-      ],
       "properties": {
-        "source": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageName'))]",
+        "source": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
         "topicType": "Microsoft.Storage.StorageAccounts"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
     },
     {
       "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
-      "apiVersion": "2020-04-01-preview",
-      "name": "[concat(parameters('systemTopicName'), '/', parameters('eventSubName'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.EventGrid/systemTopics', parameters('systemTopicName'))]"
-      ],
+      "apiVersion": "2021-12-01",
+      "name": "[format('{0}/{1}', parameters('systemTopicName'), parameters('eventSubName'))]",
       "properties": {
         "destination": {
           "properties": {
@@ -84,7 +88,10 @@
             "Microsoft.Storage.BlobDeleted"
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventGrid/systemTopics', parameters('systemTopicName'))]"
+      ]
     }
   ]
 }

@@ -18,7 +18,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-01-01' = {
   }
 }
 
-resource cdnProfile 'Microsoft.Cdn/profiles@2020-09-01' = {
+resource cdnProfile 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: profileName
   location: location
   tags: {
@@ -29,7 +29,7 @@ resource cdnProfile 'Microsoft.Cdn/profiles@2020-09-01' = {
   }
 }
 
-resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
+resource endpoint 'Microsoft.Cdn/profiles/endpoints@2021-06-01' = {
   parent: cdnProfile
   name: endpointName
   location: location

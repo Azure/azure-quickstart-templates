@@ -19,7 +19,7 @@ param CDNSku string = 'Standard_Microsoft'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
+resource profile 'Microsoft.Cdn/profiles@2021-06-01' = {
   name: profileName
   location: location
   sku: {
@@ -27,7 +27,7 @@ resource profile 'Microsoft.Cdn/profiles@2020-09-01' = {
   }
 }
 
-resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
+resource endpoint 'Microsoft.Cdn/profiles/endpoints@2021-06-01' = {
   parent: profile
   location: location
   name: endpointName
@@ -62,7 +62,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
             {
               name: 'IsDevice'
               parameters: {
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleIsDeviceConditionParameters'
+                typeName: 'DeliveryRuleIsDeviceConditionParameters'
                 operator: 'Equal'
                 matchValues: [
                   'Mobile'
@@ -74,7 +74,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
             {
               name: 'UrlRewrite'
               parameters: {
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleUrlRewriteActionParameters'
+                typeName: 'DeliveryRuleUrlRewriteActionParameters'
                 sourcePattern: '/standard'
                 destination: '/mobile'
               }
@@ -88,7 +88,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
             {
               name: 'RequestScheme'
               parameters: {
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleRequestSchemeConditionParameters'
+                typeName: 'DeliveryRuleRequestSchemeConditionParameters'
                 operator: 'Equal'
                 matchValues: [
                   'HTTP'
@@ -100,7 +100,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2020-09-01' = {
             {
               name: 'UrlRedirect'
               parameters: {
-                '@odata.type': '#Microsoft.Azure.Cdn.Models.DeliveryRuleUrlRedirectActionParameters'
+                typeName: 'DeliveryRuleUrlRedirectActionParameters'
                 redirectType: 'Found'
                 destinationProtocol: 'Https'
               }
