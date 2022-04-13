@@ -26,7 +26,4 @@ See the [docs](https://docs.microsoft.com/en-us/azure/azure-resource-manager/tem
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-## Notes
-
-
 `Tags: Acr, Import, AzureCli`
