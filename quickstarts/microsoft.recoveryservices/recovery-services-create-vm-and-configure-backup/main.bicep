@@ -52,7 +52,7 @@ var protectionContainer = 'iaasvmcontainer;iaasvmcontainerv2;${resourceGroup().n
 var protectedItem = 'vm;iaasvmcontainerv2;${resourceGroup().name};${vmName}'
 var networkSecurityGroupName = 'default-NSG'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -62,7 +62,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   properties: {}
 }
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   name: publicIPAddressName
   location: location
   properties: {
@@ -73,7 +73,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   }
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -95,7 +95,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-06-0
   }
 }
 
-resource vNet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource vNet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: vNetName
   location: location
   properties: {
@@ -118,7 +118,7 @@ resource vNet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2020-06-01' = {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   name: networkInterfaceName
   location: location
   properties: {
@@ -139,7 +139,7 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2020-06-01' = {
   }
 }
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2020-06-01' = {
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   name: vmName
   location: location
   properties: {
@@ -185,7 +185,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2020-06-01' = {
   }
 }
 
-resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2020-02-02' = {
+resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2022-01-01' = {
   name: vaultName
   location: location
   sku: {
@@ -195,7 +195,7 @@ resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2020-02-02' = 
   properties: {}
 }
 
-resource vaultName_backupFabric_protectionContainer_protectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2020-02-02' = {
+resource vaultName_backupFabric_protectionContainer_protectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2022-01-01' = {
   name: '${vaultName}/${backupFabric}/${protectionContainer}/${protectedItem}'
   properties: {
     protectedItemType: 'Microsoft.Compute/virtualMachines'

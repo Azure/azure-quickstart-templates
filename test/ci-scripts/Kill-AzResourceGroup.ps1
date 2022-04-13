@@ -37,63 +37,39 @@ $vaults = Get-AzRecoveryServicesVault -ResourceGroupName $ResourceGroupName -Ver
 
 foreach ($vault in $vaults) {
     Write-Host "Recovery Services Vaults..."
-    #Set-AzRecoveryServicesVaultContext -Vault $vault -Verbose - this is being deprecated use vaultId
-    # disable softDelete
-    Set-AzRecoveryServicesVaultProperty -VaultId $vault.ID -SoftDeleteFeatureState disable
-    
-    # Storage Backups
-    $rcs = Get-AzRecoveryServicesBackupContainer -VaultId $vault.ID -ContainerType AzureStorage -Verbose
-    foreach ($c in $rcs) {
-        Write-Host "Recovery Services Vault Disable (storage)..."
-        $bi = Get-AzRecoveryServicesBackupItem -VaultId $vault.ID -Container $c -WorkloadType AzureFiles -Verbose
-        Disable-AzRecoveryServicesBackupProtection -VaultId $vault.ID -Item $bi -RemoveRecoveryPoints -Verbose -Force
-        Unregister-AzRecoveryServicesBackupContainer -VaultId $vault.ID -Container $c -Verbose
-    }
-    
-    #VM Backups
-    $rcs = Get-AzRecoveryServicesBackupContainer -VaultId $vault.ID -ContainerType AzureVM -Verbose
-    foreach ($c in $rcs) {
-        Write-Host "Recovery Services Vault Disable (AzureVM)..."
-        $bi = Get-AzRecoveryServicesBackupItem -VaultId $vault.ID -Container $c -WorkloadType AzureVM -Verbose
-        Disable-AzRecoveryServicesBackupProtection -VaultId $vault.ID -Item $bi -RemoveRecoveryPoints -Verbose -Force
-        Unregister-AzRecoveryServicesBackupContainer -VaultId $vault.ID -Container $c -Verbose
-    }
 
-
-
-    #Remove-AzRecoveryServicesVault -Vault $vault -Verbose
-}
-
-#Note that for SQL Backup vaults the sequence of steps are different and not supported in the AzureRM cmdlets - see the remove-vaults.ps1 script for these steps until we can rewrite this
-<#From public documentation, I see following steps prior to Delete Vault:
-Stop Protection with Delete backup data: https://docs.microsoft.com/en-us/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force
-
-$bkpItem = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureWorkload -WorkloadType MSSQL -Name "<backup item name>" -VaultId $targetVault.ID
-Disable-AzRecoveryServicesBackupProtection -Item $bkpItem -VaultId $targetVault.ID -RemoveRecoveryPoints
-Unregister SQL VM: https://docs.microsoft.com/en-us/azure/backup/backup-azure-sql-automation#unregister-sql-vm
-$SQLContainer = Get-AzRecoveryServicesBackupContainer -ContainerType AzureVMAppContainer -FriendlyName <VM name> -VaultId $targetvault.ID
-Unregister-AzRecoveryServicesBackupContainer -Container $SQLContainer -VaultId $targetvault.ID
-ïƒ˜	Backup item name = msdb
-ïƒ˜	VM name = sqlvmbackupdemo
-
-foreach($vault in $vaults){
-    $item = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureWorkload -WorkloadType MSSQL -VaultId $vault.ID -Verbose
-    Disable-AzRecoveryServicesBackupProtection -Item $item -VaultId $vault.ID -RemoveRecoveryPoints -Verbose -Force
-    #Unregister SQL VM: https://docs.microsoft.com/en-us/azure/backup/backup-azure-sql-automation#unregister-sql-vm
-    $SQLContainer = Get-AzRecoveryServicesBackupContainer -ContainerType AzureVMAppContainer -VaultId $vault.ID #-FriendlyName <VM name>
-    Unregister-AzRecoveryServicesBackupContainer -Container $SQLContainer -VaultId $vault.ID
+    & "$PSScriptRoot\Kill-AzRecoveryServicesVault.ps1" -ResourceGroup $ResourceGroupName -VaultName $vault.Name
 
 }
-#>
 
-<#
-remove disasterRecovery pairing on eventhub namespaces and service bus namespaces - no way to do this in PowerShell that we know of...
- Get-AzureRmEventHubNamespace | ft id
- >>first list the pairing (will need to get the namespaces from the resourceGroup)
- armclient GET /subscriptions/f42b4319-067a-4548-a650-33a1553b3a42/resourceGroups/qstci-c0749fa2-188e-8cef-ef73-7c2f7812a5e6/providers/Microsoft.EventHub/namespaces/ci1019f5770/disasterRecoveryConfigs?api-version=2017-04-01
- >>then break the pairing - this must be done on the primary namespace, no idea how you tell beforehand... check the partnerNamespace property and the role property on the GET in the previous step
- armclient POST /subscriptions/f42b4319-067a-4548-a650-33a1553b3a42/resourceGroups/qstci-c0749fa2-188e-8cef-ef73-7c2f7812a5e6/providers/Microsoft.EventHub/namespaces/ci1019f5770/disasterRecoveryConfigs/ci267c7c80899644b4/breakPairing?api-version=2017-04-01
-#>
+# OMS Solutions
+$oms = Get-AzResource -ResourceGroupName $ResourceGroupName -ResourceType "Microsoft.OperationsManagement/solutions"
+
+foreach($o in $oms){
+    # need to invoke REST to get the properties body
+    $r = Invoke-AzRestMethod -Method "GET" -Path "$($o.id)?api-version=2015-11-01-preview" -Verbose
+    $responseBody = $r.Content | ConvertFrom-JSon -Depth 30
+    $body = @{}
+    $properties = @{}
+    $properties['workSpaceResourceId'] = $responseBody.properties.workSpaceResourceId # tranfer the workspaceID
+    $properties['containedResources'] = @() # empty out arrays
+    $properties['referencedResources'] = @()
+    $plan = $responseBody.plan
+
+    $body['plan'] = $plan # transfer the plan
+    $body['properties'] = $properties
+    $body['location'] = $responseBody.location # transfer the location
+
+    $jsonBody = $body | ConvertTo-Json -Depth 30
+
+    # Write-Host $jsonBody
+
+    # re-PUT the resource with the empty properties body (arrays)
+    Invoke-AzRestMethod -Method "PUT" -Path "$($o.id)?api-version=2015-11-01-preview" -Payload $jsonBody -Verbose
+
+}
+# end OMS
+
 
 # The Az.DataProtection is not yet included with the rest of the Az module
 if ($(Get-Module -ListAvailable Az.DataProtection) -eq $null) {
