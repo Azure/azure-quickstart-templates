@@ -11,7 +11,7 @@ param location string = resourceGroup().location
 param skuName string = 'S1'
 
 @description('The number of IoT Hub units.')
-param skuUnits string = '1'
+param skuUnits int = 1
 
 var iotHubKey = 'iothubowner'
 
@@ -35,9 +35,8 @@ resource provisioningService 'Microsoft.Devices/provisioningServices@2021-10-15'
   properties: {
     iotHubs: [
       {
-        connectionString: 'HostName=${iotHub.properties.hostName};SharedAccessKeyName=${iotHubKey};SharedAccessKey=${listkeys(resourceId('Microsoft.Devices/Iothubs/Iothubkeys', iotHubName, iotHubKey), '2020-03-01').primaryKey}'
+        connectionString: 'HostName=${iotHub.properties.hostName};SharedAccessKeyName=${iotHubKey};SharedAccessKey=${iotHub.listkeys().value}'
         location: location
-        name: iotHub.properties.hostName
       }
     ]
   }
