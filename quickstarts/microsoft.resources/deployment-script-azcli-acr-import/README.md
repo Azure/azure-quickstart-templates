@@ -17,9 +17,9 @@
 
 ## Sample overview
 
-This template leverages the Import ACR module from the bicep registry to import public container images into an Azure Container Registry.. A new Azure Container Registry is created.
+This template leverages the Import ACR module from the bicep registry to import public container images into an Azure Container Registry. A new Azure Container Registry is created.
 
-See the [Import-ACR] module in the Bicep Registry for more information.
+See the [Import-ACR](https://github.com/Azure/bicep-registry-modules/blob/main/modules/deployment-scripts/import-acr/README.md) module in the Bicep Registry for more information.
 See the [docs](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template?tabs=CLI) for more information on the deployment script resource.
 
 ## Deployment steps
@@ -27,6 +27,5 @@ See the [docs](https://docs.microsoft.com/en-us/azure/azure-resource-manager/tem
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 ## Notes
 
-The AzureCLI is used in preference to Azure PowerShell primarily to provide a sample of using the Azure CLI DeploymentScripts.
 
 `Tags: Acr, Import, AzureCli`
