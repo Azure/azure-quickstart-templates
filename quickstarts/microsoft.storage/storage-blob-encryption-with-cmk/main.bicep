@@ -36,7 +36,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
       name: 'standard'
       family: 'A'
     }
-    enableSoftDelete: false
+    enableSoftDelete: true
     enablePurgeProtection: true
     enabledForDiskEncryption: true
     tenantId: tenantId
