@@ -32,11 +32,11 @@ param samplePython2RunbookName string = 'AzureAutomationTutorialPython2'
 param samplePython2RunbookDescription string = 'An example runbook that gets all the Resource Manager resources by using the Run As account (service principal).'
 
 @description('URI to artifacts location')
-param artifactsLocation string = deployment().properties.templateLink.uri
+param _artifactsLocation string = deployment().properties.templateLink.uri
 
 @description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated')
 @secure()
-param artifactsLocationSasToken string = ''
+param _artifactsLocationSasToken string = ''
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
   name: workspaceName
@@ -76,7 +76,7 @@ resource runbook1 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' 
     logVerbose: false
     description: sampleGraphicalRunbookDescription
     publishContentLink: {
-      uri: uri(artifactsLocation, 'scripts/AzureAutomationTutorial.graphrunbook${artifactsLocationSasToken}')
+      uri: uri(_artifactsLocation, 'scripts/AzureAutomationTutorial.graphrunbook${_artifactsLocationSasToken}')
       version: '1.0.0.0'
     }
   }
@@ -92,7 +92,7 @@ resource runbook2 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' 
     logVerbose: false
     description: samplePowerShellRunbookDescription
     publishContentLink: {
-      uri: uri(artifactsLocation, 'scripts/AzureAutomationTutorial.ps1${artifactsLocationSasToken}')
+      uri: uri(_artifactsLocation, 'scripts/AzureAutomationTutorial.ps1${_artifactsLocationSasToken}')
       version: '1.0.0.0'
     }
   }
@@ -108,7 +108,7 @@ resource runbook3 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' 
     logVerbose: false
     description: samplePython2RunbookDescription
     publishContentLink: {
-      uri: uri(artifactsLocation, 'scripts/AzureAutomationTutorialPython2.py${artifactsLocationSasToken}')
+      uri: uri(_artifactsLocation, 'scripts/AzureAutomationTutorialPython2.py${_artifactsLocationSasToken}')
       version: '1.0.0.0'
     }
   }
