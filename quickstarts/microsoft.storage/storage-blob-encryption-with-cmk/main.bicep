@@ -28,7 +28,7 @@ resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@
   name: userAssignedIdentityName  
 }
 
-resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: keyVaultName
   location: location
   properties: {
@@ -56,7 +56,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
   }
 }
 
-resource kvKey 'Microsoft.KeyVault/vaults/keys@2021-06-01-preview' = {
+resource kvKey 'Microsoft.KeyVault/vaults/keys@2021-10-01' = {
   parent: keyVault
   name: keyVaultKeyName
   properties: {
