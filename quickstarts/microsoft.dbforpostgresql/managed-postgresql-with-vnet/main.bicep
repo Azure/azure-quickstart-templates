@@ -78,7 +78,7 @@ var firewallrules = [
   }
 ]
 
-resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -90,7 +90,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
   parent: vnet
   name: subnetName
   properties: {
