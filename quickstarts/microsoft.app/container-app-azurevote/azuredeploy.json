@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1008.15138",
-      "templateHash": "6220213040958471409"
+      "version": "0.4.1318.3566",
+      "templateHash": "1578767747963280195"
     }
   },
   "parameters": {
@@ -42,32 +42,18 @@
         "description": "Specifies the location for all resources."
       }
     },
-    "containerImage": {
+    "frontendContainerImage": {
       "type": "string",
-      "defaultValue": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+      "defaultValue": "mcr.microsoft.com/azuredocs/azure-vote-front:v1",
       "metadata": {
         "description": "Specifies the docker container image to deploy."
       }
     },
-    "targetPort": {
-      "type": "int",
-      "defaultValue": 80,
-      "metadata": {
-        "description": "Specifies the container port."
-      }
-    },
-    "cpuCore": {
+    "backendContainerImage": {
       "type": "string",
-      "defaultValue": "0.5",
+      "defaultValue": "mcr.microsoft.com/oss/bitnami/redis:6.0.8",
       "metadata": {
-        "description": "Number of CPU cores the container can use. Can be with a maximum of two decimals."
-      }
-    },
-    "memorySize": {
-      "type": "string",
-      "defaultValue": "1",
-      "metadata": {
-        "description": "Amount of memory (in gibibytes, GiB) allocated to the container up to 4GiB. Can be with a maximum of two decimals. Ratio with CPU cores must be equal to 2."
+        "description": "Specifies the docker container image to deploy for the Redis backend."
       }
     },
     "minReplica": {
@@ -89,11 +75,10 @@
       }
     }
   },
-  "functions": [],
   "resources": [
     {
       "type": "Microsoft.OperationalInsights/workspaces",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2021-06-01",
       "name": "[parameters('containerAppLogAnalyticsName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -103,19 +88,16 @@
       }
     },
     {
-      "type": "Microsoft.Web/kubeEnvironments",
-      "apiVersion": "2021-02-01",
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2022-01-01-preview",
       "name": "[parameters('containerAppEnvName')]",
       "location": "[parameters('location')]",
-      "kind": "containerenvironment",
       "properties": {
-        "type": "managed",
-        "internalLoadBalancerEnabled": false,
         "appLogsConfiguration": {
           "destination": "log-analytics",
           "logAnalyticsConfiguration": {
             "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName'))).customerId]",
-            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName')), '2020-10-01').primarySharedKey]"
+            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('containerAppLogAnalyticsName')), '2021-06-01').primarySharedKey]"
           }
         }
       },
@@ -124,16 +106,16 @@
       ]
     },
     {
-      "type": "Microsoft.Web/containerApps",
-      "apiVersion": "2021-03-01",
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2022-01-01-preview",
       "name": "[parameters('containerAppName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "kubeEnvironmentId": "[resourceId('Microsoft.Web/kubeEnvironments', parameters('containerAppEnvName'))]",
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvName'))]",
         "configuration": {
           "ingress": {
             "external": true,
-            "targetport": "[parameters('targetPort')]",
+            "targetPort": 80,
             "allowInsecure": false,
             "traffic": [
               {
@@ -148,28 +130,58 @@
           "containers": [
             {
               "name": "[parameters('containerAppName')]",
-              "image": "[parameters('containerImage')]",
+              "image": "[parameters('frontendContainerImage')]",
+              "env": [
+                {
+                  "name": "REDIS",
+                  "value": "localhost"
+                }
+              ],
               "resources": {
-                "cpu": "[parameters('cpuCore')]",
-                "memory": "[format('{0}Gi', parameters('memorySize'))]"
+                "cpu": "[json('.25')]",
+                "memory": ".5Gi"
+              }
+            },
+            {
+              "name": "redis",
+              "image": "[parameters('backendContainerImage')]",
+              "env": [
+                {
+                  "name": "ALLOW_EMPTY_PASSWORD",
+                  "value": "yes"
+                }
+              ],
+              "resources": {
+                "cpu": "[json('.25')]",
+                "memory": ".5Gi"
               }
             }
           ],
           "scale": {
-            "minReplica": "[parameters('minReplica')]",
-            "maxReplica": "[parameters('maxReplica')]"
+            "minReplicas": "[parameters('minReplica')]",
+            "maxReplicas": "[parameters('maxReplica')]",
+            "rules": [
+              {
+                "name": "http-requests",
+                "http": {
+                  "metadata": {
+                    "concurrentRequests": "10"
+                  }
+                }
+              }
+            ]
           }
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/kubeEnvironments', parameters('containerAppEnvName'))]"
+        "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvName'))]"
       ]
     }
   ],
   "outputs": {
     "containerAppFQDN": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Web/containerApps', parameters('containerAppName'))).configuration.ingress.fqdn]"
+      "value": "[reference(resourceId('Microsoft.App/containerApps', parameters('containerAppName'))).configuration.ingress.fqdn]"
     }
   }
 }
