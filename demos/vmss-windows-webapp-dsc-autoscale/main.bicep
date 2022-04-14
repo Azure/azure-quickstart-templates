@@ -189,7 +189,7 @@ resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2021-11-01' = {
                   name: ipConfigName
                   properties: {
                     subnet: {
-                      id: resourceId('Microsoft.Network/virtualNetworks/subnets', vNetName, subnetName)
+                      id: subnetName
                     }
                     loadBalancerBackendAddressPools: [
                       {
@@ -198,7 +198,7 @@ resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2021-11-01' = {
                     ]
                     loadBalancerInboundNatPools: [
                       {
-                        id: resourceId('Microsoft.Network/loadBalancers/inboundNatPools', loadBalancerName, natPoolName)
+                        id: natPoolName
                       }
                     ]
                   }
