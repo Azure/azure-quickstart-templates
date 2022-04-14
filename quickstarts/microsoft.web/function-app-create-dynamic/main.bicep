@@ -98,9 +98,6 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: applicationInsightsName
   location: appInsightsLocation
-  tags: {
-    'hidden-link:${functionApp.id}': 'Resource'
-  }
   kind: 'web'
   properties: {
     Application_Type: 'web'
