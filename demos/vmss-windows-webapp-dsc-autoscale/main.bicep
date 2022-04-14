@@ -326,4 +326,4 @@ resource autoscalehost 'Microsoft.Insights/autoscalesettings@2021-05-01-preview'
   }
 }
 
-output applicationUrl string = 'http://${publicIPAddress.properties.dnsSettings.fqdn}/MyApp'
+output applicationUrl string = uri('http://${publicIPAddress.properties.dnsSettings.fqdn}', '/MyApp')
