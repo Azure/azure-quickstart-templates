@@ -379,7 +379,7 @@ resource exampleApim 'Microsoft.ApiManagement/service@2021-08-01' = {
     name: sku
     capacity: skuCount
   }
-  zones: ((length(availabilityZones) == 0) ? json('null') : availabilityZones)
+  zones: ((length(availabilityZones) == 0) ? null : availabilityZones)
   properties: {
     publisherEmail: publisherEmail
     publisherName: publisherName
