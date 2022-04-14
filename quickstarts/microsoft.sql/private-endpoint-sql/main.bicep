@@ -18,7 +18,7 @@ param VmSize string = 'Standard_D2_v3'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-var vnetName_var = 'myVirtualNetwork'
+var vnetName = 'myVirtualNetwork'
 var vnetAddressPrefix = '10.0.0.0/16'
 var subnet1Prefix = '10.0.0.0/24'
 var subnet1Name = 'mySubnet'
@@ -68,7 +68,7 @@ resource database 'Microsoft.Sql/servers/databases@2021-11-01-preview' = {
 }
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
-  name: vnetName_var
+  name: vnetName
   location: location
   properties: {
     addressSpace: {
@@ -121,7 +121,7 @@ resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   ]
 }
 
-resource privateDnsZone_privateDnsZone_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   parent: privateDnsZone
   name: '${privateDnsZoneName}-link'
   location: 'global'
