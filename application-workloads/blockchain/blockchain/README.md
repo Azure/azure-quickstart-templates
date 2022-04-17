@@ -18,3 +18,4 @@ This Microsoft Azure Resource Manager template deploys a single VM and allows yo
 Options for blockchain software include:
 
 - [groestlcoin](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/groestlcoin.md)
+- [vertcoin](https://github.com/Azure/azure-quickstart-templates/blob/master/application-workloads/blockchain/blockchain/details/vertcoin.md)
