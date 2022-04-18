@@ -15,7 +15,7 @@ You can deploy these samples directly through the Azure Portal or by using the s
 
 To deploy a sample using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
 
-To deploy the sample via the command line (using [Azure PowerShell](https://docs.microsoft.com/en-us/powershell/azure/overview) or the [Azure CLI 1.0](https://docs.microsoft.com/en-us/azure/cli-install-nodejs)) you can use the scripts below.
+To deploy the sample via the command line (using [Azure PowerShell](https://docs.microsoft.com/en-us/powershell/azure/overview) or the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)) you can use the scripts below.
 
 Simply execute the script and pass in the folder name of the sample you want to deploy.
 
@@ -29,16 +29,16 @@ For example:
 
 ### Bash
 
-Please ensure that you have [node and npm](https://docs.npmjs.com/getting-started/installing-node), [jq](https://stedolan.github.io/jq/download/) and [azure-cli](https://docs.microsoft.com/en-us/azure/cli-install-nodejs) installed.
+Please ensure that you have [node and npm](https://docs.npmjs.com/getting-started/installing-node), [jq](https://stedolan.github.io/jq/download/) and [azure-cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) installed.
 
 ```bash
-./azure-group-deploy.sh -a [foldername] -l eastus
+./az-group-deploy.sh -a [foldername] -l eastus
 ```
 
-+ If you see the following error: "syntax error near unexpected token `$'in\r''", run this command: 'dos2unix azure-group-deploy.sh'.
++ If you see the following error: "syntax error near unexpected token `$'in\r''", run this command: 'dos2unix az-group-deploy.sh'.
 + If you see the following error: "jq: command not found", run this command: "sudo apt install jq".
 + If you see the following error: "node: not found", install node and npm.
-+ If you see the following error: "azure-group-deploy.sh is not a command", make sure you run "chmod +x azure-group-deploy.sh".
++ If you see the following error: "az-group-deploy.sh is not a command", make sure you run "chmod +x az-group-deploy.sh".
 
 ## Uploading Artifacts
 
@@ -55,7 +55,7 @@ one will be created by the script or reused if it already exists (think of this 
 ### Bash (explicit staging)
 
 ```bash
-./azure-group-deploy.sh -a [foldername] -l eastus -u
+./az-group-deploy.sh -a [foldername] -l eastus -u
 ```
 
 ## Contribution Guide
