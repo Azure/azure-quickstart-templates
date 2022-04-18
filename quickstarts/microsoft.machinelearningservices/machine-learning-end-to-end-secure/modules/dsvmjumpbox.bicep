@@ -106,7 +106,7 @@ resource virtualMachineName_aadLoginExtensionName 'Microsoft.Compute/virtualMach
     typeHandlerVersion: '1.0'
     autoUpgradeMinorVersion: true
     settings: {
-      mdmId: 'A'
+      commandToExecute: 'echo .'
     }
   }
 }
