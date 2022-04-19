@@ -39,7 +39,7 @@ param dsvmJumpboxPassword string
 param amlComputePublicIp bool = true
 
 @description('VM size for the default compute cluster')
-param amlComputeDefaultVmSize string = 'Standard_DS3_v2'
+param amlComputeDefaultVmSize string = 'Standard_D2s_v3'
 
 // Variables
 var name = toLower('${prefix}')

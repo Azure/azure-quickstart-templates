@@ -18,7 +18,7 @@ param workspaceName string
 param computeName string
 
 @description('Size of the virtual machine')
-param vmSizeParam string = 'Standard_DS2_v2'
+param vmSizeParam string // = 'Standard_DS2_v2'
 
 resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-07-01' = {
   name: aksClusterName
