@@ -103,7 +103,7 @@ module machineLearningCompute 'machinelearningcompute.bicep' = {
     prefix: prefix
     tags: tags
     amlComputePublicIp: amlComputePublicIp
-    amlComputeDefaultVmSize: amlComputeDefaultVmSize
+    vmSize: amlComputeDefaultVmSize
   }
   dependsOn: [
     machineLearning

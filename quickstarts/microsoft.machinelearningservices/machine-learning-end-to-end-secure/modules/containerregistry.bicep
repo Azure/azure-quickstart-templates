@@ -80,7 +80,7 @@ resource containerRegistryPrivateEndpoint 'Microsoft.Network/privateEndpoints@20
 
 resource acrPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateDnsZoneName
-  location: 'global'
+  location: location
 }
 
 resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
@@ -99,7 +99,7 @@ resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
 
 resource acrPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${acrPrivateDnsZone.name}/${uniqueString(containerRegistry.id)}'
-  location: 'global'
+  location: location
   properties: {
     registrationEnabled: false
     virtualNetwork: {

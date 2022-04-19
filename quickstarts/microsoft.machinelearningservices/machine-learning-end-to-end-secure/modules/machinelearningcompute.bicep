@@ -25,7 +25,7 @@ param aksSubnetId string
 param amlComputePublicIp bool
 
 @description('VM size for the default compute cluster')
-param amlComputeDefaultVmSize string
+param vmSize string
 
 resource machineLearningCluster001 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
   name: '${machineLearning}/cluster001'
@@ -41,7 +41,7 @@ resource machineLearningCluster001 'Microsoft.MachineLearningServices/workspaces
     disableLocalAuth: true
     properties: {
       vmPriority: 'Dedicated'
-      vmSize: amlComputeDefaultVmSize
+      vmSize: vmSize
       enableNodePublicIp: amlComputePublicIp
       isolatedNetwork: false
       osType: 'Linux'
@@ -80,7 +80,7 @@ resource machineLearningComputeInstance001 'Microsoft.MachineLearningServices/wo
       subnet: {
         id: computeSubnetId
       }
-      vmSize: amlComputeDefaultVmSize
+      vmSize: vmSize
     }
   }
 }
