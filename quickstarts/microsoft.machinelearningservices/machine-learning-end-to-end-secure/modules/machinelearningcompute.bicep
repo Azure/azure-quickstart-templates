@@ -95,5 +95,6 @@ module machineLearningAksCompute 'privateaks.bicep' = {
     computeName: aksName
     aksSubnetId: aksSubnetId
     workspaceName: machineLearning
+    vmSize: vmSize
   }
 }

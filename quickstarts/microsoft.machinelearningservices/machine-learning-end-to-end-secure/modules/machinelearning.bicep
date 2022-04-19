@@ -52,7 +52,7 @@ param machineLearningPleName string
 param amlComputePublicIp bool = true
 
 @description('VM size for the default compute cluster')
-param amlComputeDefaultVmSize string
+param vmSize string
  
 resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2022-01-01-preview' = {
   name: machineLearningName
@@ -103,7 +103,7 @@ module machineLearningCompute 'machinelearningcompute.bicep' = {
     prefix: prefix
     tags: tags
     amlComputePublicIp: amlComputePublicIp
-    vmSize: amlComputeDefaultVmSize
+    vmSize: vmSize
   }
   dependsOn: [
     machineLearning

@@ -145,7 +145,7 @@ module azuremlWorkspace 'modules/machinelearning.bicep' = {
     // compute
     amlComputePublicIp: amlComputePublicIp
     mlAksName: 'aks-${name}-${uniqueSuffix}'
-    amlComputeDefaultVmSize: amlComputeDefaultVmSize
+    vmSize: amlComputeDefaultVmSize
   }
   dependsOn: [
     keyvault
