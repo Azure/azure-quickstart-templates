@@ -18,7 +18,7 @@ param workspaceName string
 param computeName string
 
 @description('Size of the virtual machine')
-param vmSize string = 'Standard_DS2_v2'
+param vmSizeParam string = 'Standard_DS2_v2'
 
 resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-07-01' = {
   name: aksClusterName
@@ -34,7 +34,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-07-01' = {
       {
         name: toLower('agentpool')
         count: 3
-        vmSize: vmSize
+        vmSize: vmSizeParam
         osDiskSizeGB: 128
         vnetSubnetID: aksSubnetId
         maxPods: 110
