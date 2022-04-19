@@ -23,7 +23,7 @@ var privateDnsZoneName = 'privatelink${environment().suffixes.acrLoginServer}'
 
 var groupName = 'registry' 
 
-resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-preview' = {
+resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-09-01' = {
   name: containerRegistryNameCleaned
   location: location
   tags: tags
@@ -32,7 +32,6 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2020-11-01-pr
   }
   properties: {
     adminUserEnabled: true
-    anonymousPullEnabled: false
     dataEndpointEnabled: false
     networkRuleBypassOptions: 'AzureServices'
     networkRuleSet: {

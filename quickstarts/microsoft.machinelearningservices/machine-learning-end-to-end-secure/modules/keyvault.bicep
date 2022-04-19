@@ -19,7 +19,7 @@ param virtualNetworkId string
 
 var privateDnsZoneName = 'privatelink${environment().suffixes.keyvaultDns}'
 
-resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: keyvaultName
   location: location
   tags: tags
