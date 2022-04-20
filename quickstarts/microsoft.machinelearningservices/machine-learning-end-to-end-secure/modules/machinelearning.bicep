@@ -107,7 +107,7 @@ module machineLearningCompute 'machinelearningcompute.bicep' = {
   }
   dependsOn: [
     machineLearning
-    // machineLearningPrivateEndpoint
+    machineLearningPrivateEndpoint
   ]
 }
 

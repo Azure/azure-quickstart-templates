@@ -56,22 +56,22 @@ resource amlPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
 }
 
-// resource amlPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-//   name: '${amlPrivateDnsZone.name}/${uniqueString(workspaceArmId)}'
-//   location: 'global'
-//   properties: {
-//     registrationEnabled: false
-//     virtualNetwork: {
-//       id: virtualNetworkId
-//     }
-//   }
-// }
+resource amlPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: '${amlPrivateDnsZone.name}/${uniqueString(workspaceArmId)}'
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: virtualNetworkId
+    }
+  }
+}
 
-// // Notebook
-// resource notebookPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-//   name: privateAznbDnsZoneName[toLower(environment().name)]
-//   location: 'global'
-// }
+// Notebook
+resource notebookPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: privateAznbDnsZoneName[toLower(environment().name)]
+  location: 'global'
+}
 
 // resource notebookPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
 //   name: '${notebookPrivateDnsZone.name}/${uniqueString(workspaceArmId)}'
