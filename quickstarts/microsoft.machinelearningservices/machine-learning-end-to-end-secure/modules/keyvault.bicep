@@ -71,7 +71,7 @@ resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' =
   location: 'global'
 }
 
-resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-11-01' = {
   name: '${keyVaultPrivateEndpoint.name}/vault-PrivateDnsZoneGroup'
   properties:{
     privateDnsZoneConfigs: [
