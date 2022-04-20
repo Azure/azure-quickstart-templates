@@ -84,22 +84,26 @@ resource notebookPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtu
   }
 }
 
-// resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
-//   name: '${machineLearningPrivateEndpoint.name}/amlworkspace-PrivateDnsZoneGroup'
-//   properties:{
-//     privateDnsZoneConfigs: [
-//       {
-//         name: privateDnsZoneName[environment().name]
-//         properties:{
-//           privateDnsZoneId: amlPrivateDnsZone.id
-//         }
-//       }
-//       {
-//         name: privateAznbDnsZoneName[environment().name]
-//         properties:{
-//           privateDnsZoneId: notebookPrivateDnsZone.id
-//         }
-//       }
-//     ]
-//   }
-// }
+resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+  name: '${machineLearningPrivateEndpoint.name}/amlworkspace-PrivateDnsZoneGroup'
+  properties:{
+    privateDnsZoneConfigs: [
+      {
+        name: privateDnsZoneName[environment().name]
+        properties:{
+          privateDnsZoneId: amlPrivateDnsZone.id
+        }
+      }
+      {
+        name: privateAznbDnsZoneName[environment().name]
+        properties:{
+          privateDnsZoneId: notebookPrivateDnsZone.id
+        }
+      }
+    ]
+  }
+  dependsOn: [
+    amlPrivateDnsZone
+    notebookPrivateDnsZone
+  ]
+}
