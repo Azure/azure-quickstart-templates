@@ -72,7 +72,8 @@ resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' =
 }
 
 resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
-  name: '${keyVaultPrivateEndpoint.name}/vault-PrivateDnsZoneGroup'
+  parent: keyVaultPrivateEndpoint
+  name: '${keyVaultPrivateEndpoint.name}-vault-PrivateDnsZoneGroup'
   properties:{
     privateDnsZoneConfigs: [
       {
