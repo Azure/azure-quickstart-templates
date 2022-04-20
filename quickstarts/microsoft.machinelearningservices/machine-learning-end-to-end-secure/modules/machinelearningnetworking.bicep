@@ -58,7 +58,7 @@ resource amlPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
 
 resource amlPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${amlPrivateDnsZone.name}/${uniqueString(workspaceArmId)}'
-  location: location
+  location: 'global'
   properties: {
     registrationEnabled: false
     virtualNetwork: {
@@ -75,7 +75,7 @@ resource notebookPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' =
 
 resource notebookPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${notebookPrivateDnsZone.name}/${uniqueString(workspaceArmId)}'
-  location: location
+  location: 'global'
   properties: {
     registrationEnabled: false
     virtualNetwork: {
@@ -84,7 +84,7 @@ resource notebookPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtu
   }
 }
 
-resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-05-01' = {
   name: '${machineLearningPrivateEndpoint.name}/amlworkspace-PrivateDnsZoneGroup'
   properties:{
     privateDnsZoneConfigs: [
