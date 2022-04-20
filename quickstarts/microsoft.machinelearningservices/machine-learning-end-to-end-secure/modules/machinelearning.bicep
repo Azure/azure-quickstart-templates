@@ -78,18 +78,18 @@ resource machineLearning 'Microsoft.MachineLearningServices/workspaces@2022-01-0
   }
 }
 
-module machineLearningPrivateEndpoint 'machinelearningnetworking.bicep' = {
-  name: 'machineLearningNetworking'
-  scope: resourceGroup()
-  params: {
-    location: location
-    tags: tags
-    virtualNetworkId: virtualNetworkId
-    workspaceArmId: machineLearning.id
-    subnetId: subnetId
-    machineLearningPleName: machineLearningPleName
-  }
-}
+// module machineLearningPrivateEndpoint 'machinelearningnetworking.bicep' = {
+//   name: 'machineLearningNetworking'
+//   scope: resourceGroup()
+//   params: {
+//     location: location
+//     tags: tags
+//     virtualNetworkId: virtualNetworkId
+//     workspaceArmId: machineLearning.id
+//     subnetId: subnetId
+//     machineLearningPleName: machineLearningPleName
+//   }
+// }
 
 module machineLearningCompute 'machinelearningcompute.bicep' = {
   name: 'machineLearningComputes'
@@ -107,7 +107,7 @@ module machineLearningCompute 'machinelearningcompute.bicep' = {
   }
   dependsOn: [
     machineLearning
-    machineLearningPrivateEndpoint
+    // machineLearningPrivateEndpoint
   ]
 }
 
