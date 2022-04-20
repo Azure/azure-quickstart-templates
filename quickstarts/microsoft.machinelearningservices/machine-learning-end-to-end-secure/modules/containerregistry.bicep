@@ -83,7 +83,6 @@ resource acrPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
 }
 
 resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
-  parent: containerRegistryPrivateEndpoint
   name: '${containerRegistryPrivateEndpoint.name}-${groupName}-PrivateDnsZoneGroup'
   properties:{
     privateDnsZoneConfigs: [
