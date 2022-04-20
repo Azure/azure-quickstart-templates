@@ -53,7 +53,7 @@ resource machineLearningPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020
 
 resource amlPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateDnsZoneName[toLower(environment().name)]
-  location: location
+  location: 'global'
 }
 
 resource amlPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
@@ -70,7 +70,7 @@ resource amlPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNet
 // Notebook
 resource notebookPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: privateAznbDnsZoneName[toLower(environment().name)]
-  location: location
+  location: 'global'
 }
 
 resource notebookPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
