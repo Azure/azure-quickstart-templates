@@ -33,10 +33,10 @@ param dsvmJumpboxUsername string
 @secure()
 @minLength(8)
 @description('Jumphost virtual machine password')
-param dsvmJumpboxPassword string = newGuid()
+param dsvmJumpboxPassword string
 
 @description('Enable public IP for Azure Machine Learning compute nodes')
-param amlComputePublicIp bool = false
+param amlComputePublicIp bool = true
 
 @description('VM size for the default compute cluster')
 param amlComputeDefaultVmSize string = 'Standard_DS3_v2'
