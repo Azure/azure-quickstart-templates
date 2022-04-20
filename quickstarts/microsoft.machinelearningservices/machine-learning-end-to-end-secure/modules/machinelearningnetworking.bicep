@@ -56,50 +56,50 @@ resource amlPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
 }
 
-resource amlPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: '${amlPrivateDnsZone.name}/${uniqueString(workspaceArmId)}'
-  location: 'global'
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: virtualNetworkId
-    }
-  }
-}
+// resource amlPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+//   name: '${amlPrivateDnsZone.name}/${uniqueString(workspaceArmId)}'
+//   location: 'global'
+//   properties: {
+//     registrationEnabled: false
+//     virtualNetwork: {
+//       id: virtualNetworkId
+//     }
+//   }
+// }
 
-// Notebook
-resource notebookPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: privateAznbDnsZoneName[toLower(environment().name)]
-  location: 'global'
-}
+// // Notebook
+// resource notebookPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+//   name: privateAznbDnsZoneName[toLower(environment().name)]
+//   location: 'global'
+// }
 
-resource notebookPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: '${notebookPrivateDnsZone.name}/${uniqueString(workspaceArmId)}'
-  location: 'global'
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: virtualNetworkId
-    }
-  }
-}
+// resource notebookPrivateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+//   name: '${notebookPrivateDnsZone.name}/${uniqueString(workspaceArmId)}'
+//   location: 'global'
+//   properties: {
+//     registrationEnabled: false
+//     virtualNetwork: {
+//       id: virtualNetworkId
+//     }
+//   }
+// }
 
-resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
-  name: '${machineLearningPrivateEndpoint.name}/amlworkspace-PrivateDnsZoneGroup'
-  properties:{
-    privateDnsZoneConfigs: [
-      {
-        name: privateDnsZoneName[environment().name]
-        properties:{
-          privateDnsZoneId: amlPrivateDnsZone.id
-        }
-      }
-      {
-        name: privateAznbDnsZoneName[environment().name]
-        properties:{
-          privateDnsZoneId: notebookPrivateDnsZone.id
-        }
-      }
-    ]
-  }
-}
+// resource privateEndpointDns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+//   name: '${machineLearningPrivateEndpoint.name}/amlworkspace-PrivateDnsZoneGroup'
+//   properties:{
+//     privateDnsZoneConfigs: [
+//       {
+//         name: privateDnsZoneName[environment().name]
+//         properties:{
+//           privateDnsZoneId: amlPrivateDnsZone.id
+//         }
+//       }
+//       {
+//         name: privateAznbDnsZoneName[environment().name]
+//         properties:{
+//           privateDnsZoneId: notebookPrivateDnsZone.id
+//         }
+//       }
+//     ]
+//   }
+// }
